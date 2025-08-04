@@ -1,7 +1,6 @@
 // js/services/event-effects/effectAdriftPassenger.js
-import { formatCredits } from '../../utils/utils.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
-import { calculateInventoryUsed } from '../../utils/utils.js';
 
 export function resolveAdriftPassenger(gameState, effectData, outcome, simulationService) {
     const ship = simulationService._getActiveShip();
