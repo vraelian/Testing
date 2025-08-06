@@ -1,18 +1,11 @@
 // js/services/simulation/MarketService.js
 import { GAME_RULES } from '../../data/constants.js';
 import { COMMODITIES, MARKETS } from '../../data/gamedata.js';
-import { skewedRandom } from '../../utils/utils.js';
+import { skewedRandom } from '../../utils.js';
 
 export class MarketService {
     constructor(gameState) {
         this.gameState = gameState;
-    }
-
-    initializeMarketData() {
-        this._calculateGalacticAverages();
-        this._seedInitialMarketPrices();
-        this._seedInitialMarketInventory();
-        this._recordPriceHistory();
     }
 
     evolveMarketPrices() {
@@ -53,37 +46,6 @@ export class MarketService {
                     inventoryItem.quantity = 0;
                 }
             });
-        });
-    }
-
-    _calculateGalacticAverages() {
-        this.gameState.market.galacticAverages = {};
-        COMMODITIES.forEach(good => {
-            this.gameState.market.galacticAverages[good.id] = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
-        });
-    }
-
-    _seedInitialMarketPrices() {
-        MARKETS.forEach(location => {
-            this.gameState.market.prices[location.id] = {};
-            COMMODITIES.forEach(good => {
-                let price = this.gameState.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.5);
-                price *= (location.modifiers[good.id] || 1.0);
-                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(price));
-            });
-        });
-    }
-
-    _seedInitialMarketInventory() {
-        MARKETS.forEach(m => {
-            this.gameState.market.inventory[m.id] = {};
-            COMMODITIES.forEach(c => {
-                const avail = this._getTierAvailability(c.tier);
-                let quantity = skewedRandom(avail.min, avail.max);
-                if (m.modifiers[c.id] && m.modifiers[c.id] > 1.0) quantity = Math.floor(quantity * 1.5);
-                if (m.specialDemand && m.specialDemand[c.id]) quantity = 0;
-                this.gameState.market.inventory[m.id][c.id] = { quantity: Math.max(0, quantity) };
-             });
         });
     }
 

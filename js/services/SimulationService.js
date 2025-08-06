@@ -2,26 +2,19 @@
 import { CONFIG } from '../data/config.js';
 import { SHIPS, COMMODITIES, MARKETS, RANDOM_EVENTS, AGE_EVENTS, PERKS } from '../data/gamedata.js';
 import { DATE_CONFIG } from '../data/dateConfig.js';
-import { calculateInventoryUsed, formatCredits } from '../utils/utils.js';
+import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 
 export class SimulationService {
-    constructor(gameState, uiManager, marketService) {
+    constructor(gameState, uiManager) {
         this.gameState = gameState;
         this.uiManager = uiManager;
-        this.marketService = marketService;
         this.tutorialService = null; // Will be set later
     }
 
     setTutorialService(tutorialService) {
         this.tutorialService = tutorialService;
-    }
-
-    startNewGame(playerName) {
-        this.gameState.startNewGame(playerName);
-        this.marketService.initializeMarketData(); // Delegate market setup
-        this.showIntroSequence();
     }
 
     setScreen(navId, screenId) {
@@ -380,7 +373,7 @@ export class SimulationService {
             this._checkAgeEvents();
 
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
-                this.marketService.evolveMarketPrices();
+                this._evolveMarketPrices();
                 this._applyGarnishment();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
@@ -407,6 +400,21 @@ export class SimulationService {
         this.gameState.setState({});
     }
 
+    _evolveMarketPrices() {
+        MARKETS.forEach(location => {
+            COMMODITIES.forEach(good => {
+                const price = this.gameState.market.prices[location.id][good.id];
+                const avg = this.gameState.market.galacticAverages[good.id];
+                const mod = location.modifiers[good.id] || 1.0;
+                const baseline = avg * mod;
+                const volatility = (Math.random() - 0.5) * 2 * GAME_RULES.DAILY_PRICE_VOLATILITY;
+                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
+                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(price + price * volatility + reversion));
+            });
+        });
+        this.gameState._recordPriceHistory();
+    }
+    
     _checkForRandomEvent(destinationId, force = false) {
         if (!force && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
 
@@ -435,7 +443,7 @@ export class SimulationService {
 
     _applyEventEffects(outcome) {
         outcome.effects.forEach(effect => {
-            applyEffect(this.gameState, effect, outcome, this);
+            applyEffect(this.gameState, effect, outcome);
         });
         this.gameState.setState({});
     }

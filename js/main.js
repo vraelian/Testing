@@ -4,8 +4,6 @@ import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
-import { DebugService } from './services/DebugService.js';
-import { MarketService } from './services/simulation/MarketService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -53,21 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager();
-        const marketService = new MarketService(gameState);
-        const simulationService = new SimulationService(gameState, uiManager, marketService);
+        const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService);
-        const debugService = new DebugService(gameState, simulationService, uiManager);
         
         // Now that all services are created, inject dependencies
         simulationService.setTutorialService(tutorialService);
 
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService);
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
         if (!hasSave) {
             gameState.startNewGame(playerName);
-            marketService.initializeMarketData(); // Correctly initialize market
             simulationService.showIntroSequence();
         }
 

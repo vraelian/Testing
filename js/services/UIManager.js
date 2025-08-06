@@ -1,9 +1,8 @@
 // js/services/UIManager.js
 import { CONFIG } from '../data/config.js';
 import { SHIPS, COMMODITIES, MARKETS, LOCATION_VISUALS, PERKS, TUTORIAL_DATA } from '../data/gamedata.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils/utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, UI_SETTINGS } from '../data/constants.js';
-import { ObjectPool } from '../utils/ObjectPool.js'; // Import the new ObjectPool
+import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 
 export class UIManager {
     constructor() {
@@ -17,21 +16,6 @@ export class UIManager {
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.CARGO]: 'Cargo', [SCREEN_IDS.HANGAR]: 'Hangar' } },
             [NAV_IDS.ADMIN]: { label: 'Admin', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
-
-        this.floatingTextPool = new ObjectPool(
-            () => { // createFn: How to create a new floating text element
-                const el = document.createElement('div');
-                el.className = 'floating-text';
-                document.body.appendChild(el);
-                return el;
-            },
-            (el) => { // resetFn: How to reset an element for reuse
-                el.style.display = 'block';
-                el.style.opacity = '1';
-                el.className = 'floating-text'; // Reset class to restart animation
-            }
-        );
-
         this._cacheDOM();
 
         window.addEventListener('resize', () => {
@@ -695,7 +679,7 @@ export class UIManager {
         progressContainer.classList.remove('hidden');
         progressBar.style.width = '0%';
         modal.classList.remove('hidden');
-        const duration = UI_SETTINGS.TRAVEL_ANIMATION_DURATION;
+        const duration = 2500;
         let startTime = null;
         const fromEmoji = LOCATION_VISUALS[from.id] || '❓';
         const toEmoji = LOCATION_VISUALS[to.id] || '❓';
@@ -888,16 +872,14 @@ export class UIManager {
     }
     
     createFloatingText(text, x, y, color = '#fde047') {
-        const el = this.floatingTextPool.get();
+        const el = document.createElement('div');
         el.textContent = text;
+        el.className = 'floating-text';
         el.style.left = `${x - 20}px`;
         el.style.top = `${y - 40}px`;
         el.style.color = color;
-        
-        setTimeout(() => {
-            el.style.display = 'none';
-            this.floatingTextPool.release(el);
-        }, UI_SETTINGS.FLOATING_TEXT_DURATION);
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2450);
     }
 
     showToast(toastId, message, duration = 3000) {

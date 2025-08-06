@@ -1,16 +1,15 @@
 // js/services/EventManager.js
-import { formatCredits } from '../utils/utils.js';
+import { formatCredits } from '../utils.js';
 import { SHIPS, COMMODITIES, MARKETS } from '../data/gamedata.js';
-import { calculateInventoryUsed } from '../utils/utils.js';
-import { ACTION_IDS, DEBUG_KEYS } from '../data/constants.js';
+import { calculateInventoryUsed } from '../utils.js';
+import { ACTION_IDS } from '../data/constants.js';
 
 export class EventManager {
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService) {
+    constructor(gameState, simulationService, uiManager, tutorialService) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
-        this.debugService = debugService; // Store the debug service
         
         this.refuelInterval = null;
         this.repairInterval = null;
@@ -222,6 +221,12 @@ export class EventManager {
     }
     
     _handleKeyDown(e) {
+        // Prevent debug keys if a tutorial is active
+        if (this.tutorialService.activeBatchId && ['!', '@', '#', '$'].includes(e.key)) {
+            this.uiManager.showToast('debugToast', 'Debug keys disabled during tutorial.');
+            return;
+        }
+
         if (e.key === 'Escape') {
             this.gameState.popupsDisabled = !this.gameState.popupsDisabled;
             this.uiManager.showToast('debugToast', `Pop-ups ${this.gameState.popupsDisabled ? 'Disabled' : 'Enabled'}`);
@@ -236,16 +241,46 @@ export class EventManager {
              return;
         }
 
-        // Check if the pressed key is a debug key
-        if (Object.values(DEBUG_KEYS).includes(e.key)) {
-            // Prevent debug keys if a tutorial is active
-            if (this.tutorialService.activeBatchId) {
-                this.uiManager.showToast('debugToast', 'Debug keys disabled during tutorial.');
-                return;
-            }
-            // Delegate to the debug service
-            this.debugService.handleKeyPress(e.key);
-            return;
+        if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
+        let message = '';
+        switch(e.key) {
+            case '!':
+                this.gameState.player.credits += 500000000000;
+                message = 'Debug: +500B Credits.';
+                break;
+            case '@':
+                const ship = this.simulationService._getActiveShip();
+                this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
+
+                const possibleDestinations = MARKETS.filter(m => m.id !== this.gameState.currentLocationId && this.gameState.player.unlockedLocationIds.includes(m.id));
+                if (possibleDestinations.length > 0) {
+                    const randomDestination = possibleDestinations[Math.floor(Math.random() * possibleDestinations.length)];
+                    this.simulationService.initiateTravel(randomDestination.id, { forceEvent: true });
+                    message = `Debug: Refilled fuel & force-traveling to ${randomDestination.name} with event.`;
+                } else {
+                    message = `Debug: No available destinations.`;
+                }
+                break;
+            case '#':
+                Object.keys(SHIPS).forEach(shipId => {
+                    if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+                        const newShip = SHIPS[shipId];
+                        this.gameState.player.ownedShipIds.push(shipId);
+                        this.gameState.player.shipStates[shipId] = { health: newShip.maxHealth, fuel: newShip.maxFuel, hullAlerts: { one: false, two: false } };
+                        this.gameState.player.inventories[shipId] = {};
+                        COMMODITIES.forEach(c => { this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 }; });
+                    }
+                });
+                message = 'Debug: All ships added.';
+                break;
+            case '$':
+                this.simulationService._advanceDays(366);
+                message = `Debug: Time advanced 1 year and 1 day.`;
+                break;
+        }
+        if (message) {
+            this.uiManager.showToast('debugToast', message);
+            this.gameState.setState({});
         }
     }
 
