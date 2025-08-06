@@ -391,7 +391,7 @@ export class SimulationService {
             });
 
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
-                const interest = this.uiManager.calculateWeeklyInterest(this.gameState.player);
+                const interest = this.gameState.player.weeklyInterestAmount;
                 this.gameState.player.debt += interest;
                 this._logTransaction('loan', interest, 'Weekly interest charge');
                 this.gameState.lastInterestChargeDay = this.gameState.day;
@@ -443,7 +443,7 @@ export class SimulationService {
 
     _applyEventEffects(outcome) {
         outcome.effects.forEach(effect => {
-            applyEffect(this.gameState, effect, outcome);
+            applyEffect(this.gameState, this, effect, outcome);
         });
         this.gameState.setState({});
     }
