@@ -43,39 +43,14 @@ export class GameState {
     setState(partialState) {
         Object.assign(this, partialState);
         this._notify();
-        // this.saveGame();
     }
     
     getState() {
         return JSON.parse(JSON.stringify(this));
     }
 
-    saveGame() {
-        // try {
-        //     const stateToSave = { ...this };
-        //     delete stateToSave.subscribers;
-        //     localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        // } catch (error) {
-        //     console.error("Error saving game state:", error);
-        // }
-    }
-
     loadGame() {
         return false;
-        // try {
-        //     const serializedState = localStorage.getItem(SAVE_KEY);
-        //     if (serializedState === null) return false;
-            
-        //     const loadedState = JSON.parse(serializedState);
-        //     Object.assign(this, loadedState);
-        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(MARKETS);
-        //     this._notify();
-        //     return true;
-        // } catch (error) {
-        //     console.warn("Could not parse save data. Starting new game.", error);
-        //     localStorage.removeItem(SAVE_KEY);
-        //     return false;
-        // }
     }
 
     startNewGame(playerName) {
@@ -107,11 +82,8 @@ export class GameState {
             }
         };
 
-        COMMODITIES.forEach(c => { initialState.player.inventories.starter[c.id] = { quantity: 0, avgCost: 0 }; });
-        
-        MARKETS.forEach(m => {
-            initialState.intel.available[m.id] = (Math.random() < 0.3);
-        });
+        // Initialize empty inventories
+        COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
         
         Object.assign(this, initialState);
         this.setState({});

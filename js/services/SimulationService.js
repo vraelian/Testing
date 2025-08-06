@@ -2,7 +2,7 @@
 import { CONFIG } from '../data/config.js';
 import { SHIPS, COMMODITIES, MARKETS, RANDOM_EVENTS, AGE_EVENTS, PERKS } from '../data/gamedata.js';
 import { DATE_CONFIG } from '../data/dateConfig.js';
-import { calculateInventoryUsed, formatCredits } from '../utils.js';
+import { calculateInventoryUsed, formatCredits } from '../utils/utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 
@@ -435,7 +435,7 @@ export class SimulationService {
 
     _applyEventEffects(outcome) {
         outcome.effects.forEach(effect => {
-            applyEffect(this.gameState, effect, outcome);
+            applyEffect(this.gameState, effect, outcome, this);
         });
         this.gameState.setState({});
     }

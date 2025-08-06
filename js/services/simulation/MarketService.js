@@ -1,7 +1,7 @@
 // js/services/simulation/MarketService.js
 import { GAME_RULES } from '../../data/constants.js';
 import { COMMODITIES, MARKETS } from '../../data/gamedata.js';
-import { skewedRandom } from '../../utils.js';
+import { skewedRandom } from '../../utils/utils.js';
 
 export class MarketService {
     constructor(gameState) {

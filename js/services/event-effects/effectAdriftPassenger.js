@@ -1,5 +1,5 @@
 // js/services/event-effects/effectAdriftPassenger.js
-import { formatCredits, calculateInventoryUsed } from '../../utils.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils/utils.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
 
 export function resolveAdriftPassenger(gameState, effectData, outcome, simulationService) {

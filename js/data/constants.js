@@ -118,16 +118,4 @@ export const GAME_RULES = Object.freeze({
     RANDOM_EVENT_CHANCE: 0.07,
 });
 
-export const UI_SETTINGS = Object.freeze({
-    TRAVEL_ANIMATION_DURATION: 2500,
-    FLOATING_TEXT_DURATION: 2450,
-});
-
-export const DEBUG_KEYS = Object.freeze({
-    ADD_CREDITS: '!',
-    FORCE_EVENT: '@',
-    UNLOCK_SHIPS: '#',
-    ADVANCE_YEAR: '$',
-});
-
 export const SAVE_KEY = 'orbitalTraderSave_v2';

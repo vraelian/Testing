@@ -1,7 +1,7 @@
 // js/services/UIManager.js
 import { CONFIG } from '../data/config.js';
 import { SHIPS, COMMODITIES, MARKETS, LOCATION_VISUALS, PERKS, TUTORIAL_DATA } from '../data/gamedata.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils/utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, UI_SETTINGS } from '../data/constants.js';
 import { ObjectPool } from '../utils/ObjectPool.js'; // Import the new ObjectPool
 

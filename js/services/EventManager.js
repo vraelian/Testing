@@ -1,7 +1,7 @@
 // js/services/EventManager.js
-import { formatCredits } from '../utils.js';
+import { formatCredits } from '../utils/utils.js';
 import { SHIPS, COMMODITIES, MARKETS } from '../data/gamedata.js';
-import { calculateInventoryUsed } from '../utils.js';
+import { calculateInventoryUsed } from '../utils/utils.js';
 import { ACTION_IDS, DEBUG_KEYS } from '../data/constants.js';
 
 export class EventManager {
