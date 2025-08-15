@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Now that all services are created, inject dependencies
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
+        missionService.setSimulationService(simulationService); // Complete the dependency link
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService);
 
         // --- Game Initialization ---

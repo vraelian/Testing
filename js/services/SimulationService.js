@@ -418,13 +418,11 @@ export class SimulationService {
         this.gameState.player.credits -= totalCost;
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
         
-        if (this.missionService) {
-            this.missionService.checkTriggers();
-        }
         this._checkMilestones();
         
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
+        this.missionService.checkTriggers();
 
         return true;
         // [/hands-off]
@@ -463,13 +461,11 @@ export class SimulationService {
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
-        if (this.missionService) {
-            this.missionService.checkTriggers();
-        }
         this._checkMilestones();
         
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
+        this.missionService.checkTriggers();
 
         return totalSaleValue;
         // [/hands-off]
