@@ -828,6 +828,7 @@ export class SimulationService {
             }
         });
         this.gameState.setState({});
+        this.uiManager.render(this.gameState.getState());
         return result;
         // [/hands-off]
     }

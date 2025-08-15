@@ -3,3 +3,6 @@
 
 # Development scripts
 combine.sh
+
+# Build output
+dist/
