@@ -371,6 +371,22 @@
     "tutorials": {
       "_type": "TutorialState"
     },
+    "missions": {
+        "activeMissionId": {
+            "_type": "string",
+            "nullable": true
+        },
+        "completedMissionIds": {
+            "_type": "array",
+            "items": "string"
+        },
+        "missionProgress": {
+            "_type": "object"
+        },
+        "activeMissionObjectivesMet": {
+            "_type": "boolean"
+        }
+    },
     "TRAVEL_DATA": {
       "_type": "object",
       "properties": {
@@ -451,6 +467,10 @@
     "F017": {
       "path": "./js/services/UIManager.js",
       "role": "UI_RENDERER"
+    },
+    "F018": {
+        "path": "./js/services/MissionService.js",
+        "role": "LOGIC_SERVICE"
     }
   },
   "function_index": {
@@ -1612,6 +1632,78 @@
         "UIManager.applyTutorialHighlight",
         "UIManager.showSkipTutorialModal"
       ]
+    },
+    "MissionService.acceptMission": {
+        "asset_id": "F018",
+        "description": "Accepts a mission and sets it as the player's active mission.",
+        "params": [
+            {
+                "name": "missionId",
+                "type": "string"
+            }
+        ],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionId",
+            "missions.missionProgress"
+        ],
+        "calls": [
+            "MissionService.checkTriggers",
+            "UIManager.render"
+        ]
+    },
+    "MissionService.abandonMission": {
+        "asset_id": "F018",
+        "description": "Abandons the currently active mission.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionId",
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "GameState.setState",
+            "UIManager.render"
+        ]
+    },
+    "MissionService.checkTriggers": {
+        "asset_id": "F018",
+        "description": "Checks if the objectives for the active mission have been met.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "GameState.setState",
+            "UIManager.render",
+            "UIManager.flashObjectiveProgress"
+        ]
+    },
+    "MissionService.completeActiveMission": {
+        "asset_id": "F018",
+        "description": "Completes the active mission, granting rewards and updating mission state.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "player.inventories",
+            "missions.completedMissionIds",
+            "missions.activeMissionId",
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "SimulationService._grantRewards",
+            "GameState.setState",
+            "UIManager.render"
+        ]
     }
   }
 }

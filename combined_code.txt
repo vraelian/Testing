@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.01, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>Orbital Trading v19.141</title>
+    <title>Orbital Trading v20.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css?v=1754200888545">
@@ -25,7 +25,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p id="version-display">Version 19.141</p>
+            <p id="version-display">Version 20.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
             <p class="mt-1">Designed by Devon C.</p>
         </footer>
@@ -6598,6 +6598,9 @@ build();
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [20.00] - 2025-08-15
+- implemented V1 MissionEngine
+
 ## [19.14] - 2025-08-11
 - intro overhaul
 - shipyard/hanger tutorial v1
@@ -7014,6 +7017,22 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "tutorials": {
       "_type": "TutorialState"
     },
+    "missions": {
+        "activeMissionId": {
+            "_type": "string",
+            "nullable": true
+        },
+        "completedMissionIds": {
+            "_type": "array",
+            "items": "string"
+        },
+        "missionProgress": {
+            "_type": "object"
+        },
+        "activeMissionObjectivesMet": {
+            "_type": "boolean"
+        }
+    },
     "TRAVEL_DATA": {
       "_type": "object",
       "properties": {
@@ -7094,6 +7113,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F017": {
       "path": "./js/services/UIManager.js",
       "role": "UI_RENDERER"
+    },
+    "F018": {
+        "path": "./js/services/MissionService.js",
+        "role": "LOGIC_SERVICE"
     }
   },
   "function_index": {
@@ -8255,6 +8278,78 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "UIManager.applyTutorialHighlight",
         "UIManager.showSkipTutorialModal"
       ]
+    },
+    "MissionService.acceptMission": {
+        "asset_id": "F018",
+        "description": "Accepts a mission and sets it as the player's active mission.",
+        "params": [
+            {
+                "name": "missionId",
+                "type": "string"
+            }
+        ],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionId",
+            "missions.missionProgress"
+        ],
+        "calls": [
+            "MissionService.checkTriggers",
+            "UIManager.render"
+        ]
+    },
+    "MissionService.abandonMission": {
+        "asset_id": "F018",
+        "description": "Abandons the currently active mission.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionId",
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "GameState.setState",
+            "UIManager.render"
+        ]
+    },
+    "MissionService.checkTriggers": {
+        "asset_id": "F018",
+        "description": "Checks if the objectives for the active mission have been met.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "GameState.setState",
+            "UIManager.render",
+            "UIManager.flashObjectiveProgress"
+        ]
+    },
+    "MissionService.completeActiveMission": {
+        "asset_id": "F018",
+        "description": "Completes the active mission, granting rewards and updating mission state.",
+        "params": [],
+        "returns": {
+            "type": "void"
+        },
+        "mutates_state": [
+            "player.inventories",
+            "missions.completedMissionIds",
+            "missions.activeMissionId",
+            "missions.activeMissionObjectivesMet"
+        ],
+        "calls": [
+            "SimulationService._grantRewards",
+            "GameState.setState",
+            "UIManager.render"
+        ]
     }
   }
 }

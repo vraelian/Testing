@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [20.00] - 2025-08-15
+- implemented V1 MissionEngine
+
 ## [19.14] - 2025-08-11
 - intro overhaul
 - shipyard/hanger tutorial v1
