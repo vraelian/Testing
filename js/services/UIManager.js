@@ -473,6 +473,13 @@ export class UIManager {
         // [/hands-off]
     }
 
+    /**
+     * Determines the list of ships available for sale at the current location.
+     * This logic is shared between mobile and desktop views.
+     * @param {object} gameState The current game state.
+     * @returns {Array<Array<string, object>>} A list of ship entries, [id, shipObject].
+     * @private
+     */
     _getShipyardInventory(gameState) {
         const { player, currentLocationId, market, introSequenceActive } = gameState;
         if (introSequenceActive) {
@@ -515,11 +522,10 @@ export class UIManager {
 
     _renderHangarScreenMobile(gameState, shipyardHighlightClass, hangarHighlightClass) {
         // [hands-off]
-        const { player, tutorials } = gameState;
+        const { player } = gameState;
         const shipsForSale = this._getShipyardInventory(gameState);
-        const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
         const shipyardHtml = shipsForSale.length > 0 
-            ? shipsForSale.map(([id, ship]) => this._getHangarItemHtmlMobile(gameState, id, 'shipyard')).join('')
+            ? shipsForSale.map(([id]) => this._getHangarItemHtmlMobile(gameState, id, 'shipyard')).join('')
             : '<p class="text-center text-gray-500 text-sm p-4">No new ships available.</p>';
         const hangarHtml = player.ownedShipIds.length > 0
             ? player.ownedShipIds.map(id => this._getHangarItemHtmlMobile(gameState, id, 'hangar')).join('')
