@@ -100,10 +100,6 @@ export class EventManager {
                     this.simulationService.missionService.completeActiveMission();
                     this.uiManager.hideModal('mission-modal');
                     break;
-                case 'complete-mission':
-                    this.simulationService.missionService.completeActiveMission();
-                    this.uiManager.hideModal('mission-modal');
-                    break;
                 case 'show-ship-detail':
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;

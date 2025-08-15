@@ -57,44 +57,51 @@ export class MissionService {
     checkTriggers() {
         const { activeMissionId } = this.gameState.missions;
         if (!activeMissionId) {
-            this.gameState.missions.activeMissionObjectivesMet = false;
+            if (this.gameState.missions.activeMissionObjectivesMet) {
+                this.gameState.missions.activeMissionObjectivesMet = false;
+                this.gameState.setState({}); // Notify of change
+            }
             return;
         }
-
+    
         const mission = MISSIONS[activeMissionId];
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         if (!mission || !inventory) {
             this.gameState.missions.activeMissionObjectivesMet = false;
             return;
         }
-
+    
         let allObjectivesMet = true;
+        let progressChanged = false;
+    
         mission.objectives.forEach(obj => {
             if (obj.type === 'have_item') {
                 const currentQuantity = inventory[obj.goodId]?.quantity || 0;
-                
-                // Update progress tracker
                 const progress = this.gameState.missions.missionProgress[activeMissionId];
+    
                 if (!progress.objectives[obj.goodId]) {
                     progress.objectives[obj.goodId] = { current: 0 };
                 }
+    
                 if (progress.objectives[obj.goodId].current !== currentQuantity) {
                     progress.objectives[obj.goodId].current = currentQuantity;
-                    this.uiManager.flashObjectiveProgress();
+                    progressChanged = true;
                 }
-
+    
                 if (currentQuantity < obj.quantity) {
                     allObjectivesMet = false;
                 }
             }
         });
-
-        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet) {
+    
+        // Only update state and re-render if there's a change.
+        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet || progressChanged) {
             this.gameState.missions.activeMissionObjectivesMet = allObjectivesMet;
-            this.gameState.setState({});
-            this.uiManager.render(this.gameState.getState());
-        } else {
-             this.uiManager.renderStickyBar(this.gameState.getState());
+            this.gameState.setState({}); // Set the new state
+            this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
+            if (progressChanged) {
+                this.uiManager.flashObjectiveProgress();
+            }
         }
     }
 
