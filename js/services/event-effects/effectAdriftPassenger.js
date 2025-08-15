@@ -16,7 +16,7 @@ import { COMMODITY_IDS } from '../../data/constants.js';
  * @param {SimulationService} simulationService - The simulation service instance, used here to log transactions.
  * @param {object} effectData - The raw effect data from the event definition in gamedata.js (not used in this specific function but part of the standard signature).
  * @param {object} outcome - The chosen outcome object from gamedata.js. This function will modify its `description` property.
- * @returns {void}
+ * @returns {object} An object containing the outcome key and any dynamic data for the description.
  */
 export function resolveAdriftPassenger(gameState, simulationService, effectData, outcome) {
     const ship = simulationService._getActiveShip();
@@ -32,16 +32,16 @@ export function resolveAdriftPassenger(gameState, simulationService, effectData,
 
     if (calculateInventoryUsed(inventory) + 40 <= ship.cargoCapacity) {
         inventory[COMMODITY_IDS.CYBERNETICS].quantity += 40;
-        outcome.description = `In gratitude, the passenger gives you a crate of <span class="hl-green">40 Cybernetics</span>.`;
+        return { key: 'reward_cybernetics' };
     } else if (gameState.player.debt > 0) {
         const paid = Math.floor(gameState.player.debt * 0.20);
         gameState.player.debt -= paid;
         simulationService._logTransaction('event', paid, 'Passenger paid off debt');
-        outcome.description = `Seeing your tight cargo, the passenger pays off 20% of your debt, reducing it by <span class="hl-green">${formatCredits(paid)}</span>.`;
+        return { key: 'reward_debt_paid', amount: formatCredits(paid) };
     } else {
         const credits = Math.floor(gameState.player.credits * 0.05);
         gameState.player.credits += credits;
         simulationService._logTransaction('event', credits, 'Passenger payment');
-        outcome.description = `With no room and no debt, the passenger transfers you <span class="hl-green">${formatCredits(credits)}</span>.`;
+        return { key: 'reward_credits', amount: formatCredits(credits) };
     }
 }

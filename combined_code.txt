@@ -491,6 +491,7 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
  * @property {object} [size] - The size of the toast.
  * @property {object} completion - The action required to complete the step.
  * @property {?string} nextStepId - The ID of the next step in the batch.
+ * @property {boolean} [isSkippable=true] - Whether the step can be skipped by the player.
  */
 
 /**
@@ -556,7 +557,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: 'hangar_2'
+                nextStepId: 'hangar_2',
+                isSkippable: true
             },
             {
                 stepId: 'hangar_2',
@@ -565,7 +567,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementQuery: '.ship-list-item-mobile[data-context="shipyard"]',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
-                nextStepId: 'hangar_3'
+                nextStepId: 'hangar_3',
+                isSkippable: true
             },
             {
                 stepId: 'hangar_3',
@@ -574,7 +577,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementId: 'starport-hangar-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top-center' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
-                nextStepId: null
+                nextStepId: null,
+                isSkippable: false
             }
         ]
     },
@@ -588,7 +592,8 @@ export const INTRO_SEQUENCE_V1 = {
                 highlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: 'finance_2'
+                nextStepId: 'finance_2',
+                isSkippable: false
             },
             {
                 stepId: 'finance_2',
@@ -596,7 +601,8 @@ export const INTRO_SEQUENCE_V1 = {
                 highlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: null
+                nextStepId: null,
+                isSkippable: false
             }
         ]
     }
@@ -717,7 +723,11 @@ export const RANDOM_EVENTS = [
                 outcomes: [
                     {
                         chance: 1.0,
-                        description: 'You offer the stranded spacer a fuel cell...',
+                        descriptions: {
+                            'reward_cybernetics': `In gratitude, the passenger gives you a crate of <span class="hl-green">40 Cybernetics</span>.`,
+                            'reward_debt_paid': `Seeing your tight cargo, the passenger pays off 20% of your debt, reducing it by <span class="hl-green">{amount}</span>.`,
+                            'reward_credits': `With no room and no debt, the passenger transfers you <span class="hl-green">{amount}</span>.`
+                        },
                         effects: [ { type: 'ADRIFT_PASSENGER' } ]
                     }
                 ]
@@ -1246,7 +1256,8 @@ export class MissionService {
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
-        this.checkTriggers(); // Run an initial check in case objectives are already met
+        this.checkTriggers(); // Run an initial check in case objectives are already met.
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**
@@ -1267,44 +1278,51 @@ export class MissionService {
     checkTriggers() {
         const { activeMissionId } = this.gameState.missions;
         if (!activeMissionId) {
-            this.gameState.missions.activeMissionObjectivesMet = false;
+            if (this.gameState.missions.activeMissionObjectivesMet) {
+                this.gameState.missions.activeMissionObjectivesMet = false;
+                this.gameState.setState({}); // Notify of change
+            }
             return;
         }
-
+    
         const mission = MISSIONS[activeMissionId];
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         if (!mission || !inventory) {
             this.gameState.missions.activeMissionObjectivesMet = false;
             return;
         }
-
+    
         let allObjectivesMet = true;
+        let progressChanged = false;
+    
         mission.objectives.forEach(obj => {
             if (obj.type === 'have_item') {
                 const currentQuantity = inventory[obj.goodId]?.quantity || 0;
-                
-                // Update progress tracker
                 const progress = this.gameState.missions.missionProgress[activeMissionId];
+    
                 if (!progress.objectives[obj.goodId]) {
                     progress.objectives[obj.goodId] = { current: 0 };
                 }
+    
                 if (progress.objectives[obj.goodId].current !== currentQuantity) {
                     progress.objectives[obj.goodId].current = currentQuantity;
-                    this.uiManager.flashObjectiveProgress();
+                    progressChanged = true;
                 }
-
+    
                 if (currentQuantity < obj.quantity) {
                     allObjectivesMet = false;
                 }
             }
         });
-
-        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet) {
+    
+        // Only update state and re-render if there's a change.
+        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet || progressChanged) {
             this.gameState.missions.activeMissionObjectivesMet = allObjectivesMet;
-            this.gameState.setState({});
-            this.uiManager.render(this.gameState.getState());
-        } else {
-             this.uiManager.renderStickyBar(this.gameState.getState());
+            this.gameState.setState({}); // Set the new state
+            this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
+            if (progressChanged) {
+                this.uiManager.flashObjectiveProgress();
+            }
         }
     }
 
@@ -1325,16 +1343,11 @@ export class MissionService {
             }
         });
 
-        // 2. Grant rewards
-        mission.rewards.forEach(reward => {
-            if (reward.type === 'credits') {
-                this.gameState.player.credits += reward.amount;
-                if(this.simulationService) {
-                     this.simulationService._logTransaction('mission', reward.amount, `Reward: ${mission.name}`);
-                }
-                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
-            }
-        });
+        // 2. Grant rewards via SimulationService
+        if (this.simulationService) {
+            this.simulationService._grantRewards(mission.rewards, mission.name);
+        }
+
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
@@ -2241,10 +2254,18 @@ export class SimulationService {
         let random = Math.random();
         const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) ||
         choice.outcomes[choice.outcomes.length - 1];
-
-        this._applyEventEffects(chosenOutcome);
-
-        this.uiManager.queueModal('event-modal', event.title, chosenOutcome.description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
+    
+        const effectResult = this._applyEventEffects(chosenOutcome);
+    
+        let description = chosenOutcome.description;
+        if (effectResult && chosenOutcome.descriptions) {
+            description = chosenOutcome.descriptions[effectResult.key];
+            if (effectResult.amount) {
+                description = description.replace('{amount}', effectResult.amount);
+            }
+        }
+    
+        this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
         // [/hands-off]
     }
 
@@ -2254,10 +2275,15 @@ export class SimulationService {
      */
     _applyEventEffects(outcome) {
         // [hands-off]
+        let result = null;
         outcome.effects.forEach(effect => {
-            applyEffect(this.gameState, this, effect, outcome);
+            const effectResult = applyEffect(this.gameState, this, effect, outcome);
+            if (effectResult) {
+                result = effectResult;
+            }
         });
         this.gameState.setState({});
+        return result;
         // [/hands-off]
     }
 
@@ -2552,6 +2578,22 @@ export class SimulationService {
         // [/hands-off]
     }
 
+    /**
+     * Applies a list of reward objects to the player's state.
+     * @param {Array<object>} rewards - An array of reward objects, e.g., [{ type: 'credits', amount: 10000 }].
+     * @param {string} sourceName - The name of the source of the rewards (e.g., mission name).
+     */
+    _grantRewards(rewards, sourceName) {
+        rewards.forEach(reward => {
+            if (reward.type === 'credits') {
+                this.gameState.player.credits += reward.amount;
+                this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
+                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+            }
+            // Future reward types like 'item' or 'ship' can be handled here.
+        });
+    }
+
     // --- Debugging and Development Tools ---
 
     /**
@@ -2611,7 +2653,7 @@ import { COMMODITY_IDS } from '../../data/constants.js';
  * @param {SimulationService} simulationService - The simulation service instance, used here to log transactions.
  * @param {object} effectData - The raw effect data from the event definition in gamedata.js (not used in this specific function but part of the standard signature).
  * @param {object} outcome - The chosen outcome object from gamedata.js. This function will modify its `description` property.
- * @returns {void}
+ * @returns {object} An object containing the outcome key and any dynamic data for the description.
  */
 export function resolveAdriftPassenger(gameState, simulationService, effectData, outcome) {
     const ship = simulationService._getActiveShip();
@@ -2627,17 +2669,17 @@ export function resolveAdriftPassenger(gameState, simulationService, effectData,
 
     if (calculateInventoryUsed(inventory) + 40 <= ship.cargoCapacity) {
         inventory[COMMODITY_IDS.CYBERNETICS].quantity += 40;
-        outcome.description = `In gratitude, the passenger gives you a crate of <span class="hl-green">40 Cybernetics</span>.`;
+        return { key: 'reward_cybernetics' };
     } else if (gameState.player.debt > 0) {
         const paid = Math.floor(gameState.player.debt * 0.20);
         gameState.player.debt -= paid;
         simulationService._logTransaction('event', paid, 'Passenger paid off debt');
-        outcome.description = `Seeing your tight cargo, the passenger pays off 20% of your debt, reducing it by <span class="hl-green">${formatCredits(paid)}</span>.`;
+        return { key: 'reward_debt_paid', amount: formatCredits(paid) };
     } else {
         const credits = Math.floor(gameState.player.credits * 0.05);
         gameState.player.credits += credits;
         simulationService._logTransaction('event', credits, 'Passenger payment');
-        outcome.description = `With no room and no debt, the passenger transfers you <span class="hl-green">${formatCredits(credits)}</span>.`;
+        return { key: 'reward_credits', amount: formatCredits(credits) };
     }
 }
 --- END OF FILE: ./js/services/event-effects/effectAdriftPassenger.js ---
@@ -2764,10 +2806,6 @@ export class EventManager {
                     break;
                 case 'abandon-mission':
                     this.simulationService.missionService.abandonMission();
-                    this.uiManager.hideModal('mission-modal');
-                    break;
-                case 'complete-mission':
-                    this.simulationService.missionService.completeActiveMission();
                     this.uiManager.hideModal('mission-modal');
                     break;
                 case 'complete-mission':
@@ -3865,6 +3903,23 @@ export class UIManager {
         // [/hands-off]
     }
 
+    _getShipyardInventory(gameState) {
+        const { player, currentLocationId, market, introSequenceActive } = gameState;
+        if (introSequenceActive) {
+            if (player.ownedShipIds.length > 0) {
+                return [];
+            } else {
+                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
+                return introShipIds.map(id => ([id, SHIPS[id]]));
+            }
+        } else {
+            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
+            return shipsForSaleIds
+                .map(id => ([id, SHIPS[id]]))
+                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
+        }
+    }
+
     renderHangarScreen(gameState) {
         // [hands-off]
         const { tutorials } = gameState;
@@ -3890,28 +3945,12 @@ export class UIManager {
 
     _renderHangarScreenMobile(gameState, shipyardHighlightClass, hangarHighlightClass) {
         // [hands-off]
-        const { player, currentLocationId, market, introSequenceActive, tutorials } = gameState;
-        let shipsForSale;
-        if (introSequenceActive) {
-            if (player.ownedShipIds.length > 0) {
-                shipsForSale = [];
-            } else {
-                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                shipsForSale = introShipIds.map(id => ([id, SHIPS[id]]));
-            }
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            shipsForSale = shipsForSaleIds
-                .map(id => ([id, SHIPS[id]]))
-                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-        }
-
+        const { player, tutorials } = gameState;
+        const shipsForSale = this._getShipyardInventory(gameState);
         const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-
         const shipyardHtml = shipsForSale.length > 0 
             ? shipsForSale.map(([id, ship]) => this._getHangarItemHtmlMobile(gameState, id, 'shipyard')).join('')
             : '<p class="text-center text-gray-500 text-sm p-4">No new ships available.</p>';
-
         const hangarHtml = player.ownedShipIds.length > 0
             ? player.ownedShipIds.map(id => this._getHangarItemHtmlMobile(gameState, id, 'hangar')).join('')
             : '<p class="text-center text-gray-500 text-sm p-4">Your hangar is empty.</p>';
@@ -3932,22 +3971,8 @@ export class UIManager {
 
     _renderHangarScreenDesktop(gameState, shipyardHighlightClass, hangarHighlightClass) {
         // [hands-off]
-        const { player, currentLocationId, market, introSequenceActive, tutorials } = gameState;
-        let shipsForSale;
-        if (introSequenceActive) {
-            if (player.ownedShipIds.length > 0) {
-                shipsForSale = [];
-            } else {
-                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                shipsForSale = introShipIds.map(id => ([id, SHIPS[id]]));
-            }
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            shipsForSale = shipsForSaleIds
-                .map(id => ([id, SHIPS[id]]))
-                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-        }
-
+        const { player, tutorials } = gameState;
+        const shipsForSale = this._getShipyardInventory(gameState);
         const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
         let shipyardHtml;
 
@@ -4806,11 +4831,8 @@ export class UIManager {
         this.cache.tutorialToastNextBtn.style.display = isInfoStep ? 'inline-block' : 'none';
         this.cache.tutorialToastNextBtn.onclick = onNext;
 
-        const isIntro = gameState.tutorials.activeBatchId?.startsWith('intro_');
-        const hasShip = gameState.player.ownedShipIds.length > 0;
-        const nonSkippableSteps = ['hangar_3', 'finance_1', 'finance_2'];
-        const isNonSkippable = nonSkippableSteps.includes(step.stepId);
-        const showSkipButton = (!isIntro || hasShip) && !isNonSkippable;
+        // Use the new isSkippable property from the step data.
+        const showSkipButton = step.isSkippable !== false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         // [/hands-off]
@@ -7856,43 +7878,6 @@ body {
     animation: flash-green 0.7s ease-in-out;
 }
 
-/* --- Mission Turn-In Shimmer/Glimmer Effect --- */
-@keyframes shimmer-effect {
-    0% { background-position: -600px 0; }
-    100% { background-position: 600px 0; }
-}
-@keyframes glimmer-effect {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
-.mission-turn-in {
-    overflow: hidden;
-    position: relative;
-    --glow-color: #fde047;
-    animation: glow-border 2s infinite, shimmer-effect 3s linear infinite;
-    background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
-    background-repeat: no-repeat;
-    background-size: 400px 100%;
-}
-.mission-turn-in::before {
-    content: '★';
-    position: absolute;
-    color: #fde047;
-    font-size: 12px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 1.5s infinite;
-    top: 10%; left: 20%;
-}
-.mission-turn-in::after {
-    content: '✧';
-    position: absolute;
-    color: #fde047;
-    font-size: 10px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 2s infinite reverse;
-    bottom: 15%; right: 10%;
-    animation-delay: -0.5s;
-}
 
 /* --- Mission Turn-In Shimmer/Glimmer Effect --- */
 @keyframes shimmer-effect {

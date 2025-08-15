@@ -36,7 +36,8 @@ export class MissionService {
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
-        this.checkTriggers(); // Run an initial check in case objectives are already met
+        this.checkTriggers(); // Run an initial check in case objectives are already met.
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**
@@ -122,16 +123,11 @@ export class MissionService {
             }
         });
 
-        // 2. Grant rewards
-        mission.rewards.forEach(reward => {
-            if (reward.type === 'credits') {
-                this.gameState.player.credits += reward.amount;
-                if(this.simulationService) {
-                     this.simulationService._logTransaction('mission', reward.amount, `Reward: ${mission.name}`);
-                }
-                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
-            }
-        });
+        // 2. Grant rewards via SimulationService
+        if (this.simulationService) {
+            this.simulationService._grantRewards(mission.rewards, mission.name);
+        }
+
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);

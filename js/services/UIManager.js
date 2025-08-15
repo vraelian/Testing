@@ -473,6 +473,23 @@ export class UIManager {
         // [/hands-off]
     }
 
+    _getShipyardInventory(gameState) {
+        const { player, currentLocationId, market, introSequenceActive } = gameState;
+        if (introSequenceActive) {
+            if (player.ownedShipIds.length > 0) {
+                return [];
+            } else {
+                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
+                return introShipIds.map(id => ([id, SHIPS[id]]));
+            }
+        } else {
+            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
+            return shipsForSaleIds
+                .map(id => ([id, SHIPS[id]]))
+                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
+        }
+    }
+
     renderHangarScreen(gameState) {
         // [hands-off]
         const { tutorials } = gameState;
@@ -498,28 +515,12 @@ export class UIManager {
 
     _renderHangarScreenMobile(gameState, shipyardHighlightClass, hangarHighlightClass) {
         // [hands-off]
-        const { player, currentLocationId, market, introSequenceActive, tutorials } = gameState;
-        let shipsForSale;
-        if (introSequenceActive) {
-            if (player.ownedShipIds.length > 0) {
-                shipsForSale = [];
-            } else {
-                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                shipsForSale = introShipIds.map(id => ([id, SHIPS[id]]));
-            }
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            shipsForSale = shipsForSaleIds
-                .map(id => ([id, SHIPS[id]]))
-                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-        }
-
+        const { player, tutorials } = gameState;
+        const shipsForSale = this._getShipyardInventory(gameState);
         const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-
         const shipyardHtml = shipsForSale.length > 0 
             ? shipsForSale.map(([id, ship]) => this._getHangarItemHtmlMobile(gameState, id, 'shipyard')).join('')
             : '<p class="text-center text-gray-500 text-sm p-4">No new ships available.</p>';
-
         const hangarHtml = player.ownedShipIds.length > 0
             ? player.ownedShipIds.map(id => this._getHangarItemHtmlMobile(gameState, id, 'hangar')).join('')
             : '<p class="text-center text-gray-500 text-sm p-4">Your hangar is empty.</p>';
@@ -540,22 +541,8 @@ export class UIManager {
 
     _renderHangarScreenDesktop(gameState, shipyardHighlightClass, hangarHighlightClass) {
         // [hands-off]
-        const { player, currentLocationId, market, introSequenceActive, tutorials } = gameState;
-        let shipsForSale;
-        if (introSequenceActive) {
-            if (player.ownedShipIds.length > 0) {
-                shipsForSale = [];
-            } else {
-                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                shipsForSale = introShipIds.map(id => ([id, SHIPS[id]]));
-            }
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            shipsForSale = shipsForSaleIds
-                .map(id => ([id, SHIPS[id]]))
-                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-        }
-
+        const { player, tutorials } = gameState;
+        const shipsForSale = this._getShipyardInventory(gameState);
         const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
         let shipyardHtml;
 
@@ -1414,11 +1401,8 @@ export class UIManager {
         this.cache.tutorialToastNextBtn.style.display = isInfoStep ? 'inline-block' : 'none';
         this.cache.tutorialToastNextBtn.onclick = onNext;
 
-        const isIntro = gameState.tutorials.activeBatchId?.startsWith('intro_');
-        const hasShip = gameState.player.ownedShipIds.length > 0;
-        const nonSkippableSteps = ['hangar_3', 'finance_1', 'finance_2'];
-        const isNonSkippable = nonSkippableSteps.includes(step.stepId);
-        const showSkipButton = (!isIntro || hasShip) && !isNonSkippable;
+        // Use the new isSkippable property from the step data.
+        const showSkipButton = step.isSkippable !== false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         // [/hands-off]

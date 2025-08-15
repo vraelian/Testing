@@ -30,6 +30,7 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
  * @property {object} [size] - The size of the toast.
  * @property {object} completion - The action required to complete the step.
  * @property {?string} nextStepId - The ID of the next step in the batch.
+ * @property {boolean} [isSkippable=true] - Whether the step can be skipped by the player.
  */
 
 /**
@@ -95,7 +96,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: 'hangar_2'
+                nextStepId: 'hangar_2',
+                isSkippable: true
             },
             {
                 stepId: 'hangar_2',
@@ -104,7 +106,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementQuery: '.ship-list-item-mobile[data-context="shipyard"]',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
-                nextStepId: 'hangar_3'
+                nextStepId: 'hangar_3',
+                isSkippable: true
             },
             {
                 stepId: 'hangar_3',
@@ -113,7 +116,8 @@ export const INTRO_SEQUENCE_V1 = {
                 mobileHighlightElementId: 'starport-hangar-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top-center' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
-                nextStepId: null
+                nextStepId: null,
+                isSkippable: false
             }
         ]
     },
@@ -127,7 +131,8 @@ export const INTRO_SEQUENCE_V1 = {
                 highlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: 'finance_2'
+                nextStepId: 'finance_2',
+                isSkippable: false
             },
             {
                 stepId: 'finance_2',
@@ -135,7 +140,8 @@ export const INTRO_SEQUENCE_V1 = {
                 highlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                nextStepId: null
+                nextStepId: null,
+                isSkippable: false
             }
         ]
     }
@@ -256,7 +262,11 @@ export const RANDOM_EVENTS = [
                 outcomes: [
                     {
                         chance: 1.0,
-                        description: 'You offer the stranded spacer a fuel cell...',
+                        descriptions: {
+                            'reward_cybernetics': `In gratitude, the passenger gives you a crate of <span class="hl-green">40 Cybernetics</span>.`,
+                            'reward_debt_paid': `Seeing your tight cargo, the passenger pays off 20% of your debt, reducing it by <span class="hl-green">{amount}</span>.`,
+                            'reward_credits': `With no room and no debt, the passenger transfers you <span class="hl-green">{amount}</span>.`
+                        },
                         effects: [ { type: 'ADRIFT_PASSENGER' } ]
                     }
                 ]

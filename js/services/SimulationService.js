@@ -799,10 +799,18 @@ export class SimulationService {
         let random = Math.random();
         const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) ||
         choice.outcomes[choice.outcomes.length - 1];
-
-        this._applyEventEffects(chosenOutcome);
-
-        this.uiManager.queueModal('event-modal', event.title, chosenOutcome.description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
+    
+        const effectResult = this._applyEventEffects(chosenOutcome);
+    
+        let description = chosenOutcome.description;
+        if (effectResult && chosenOutcome.descriptions) {
+            description = chosenOutcome.descriptions[effectResult.key];
+            if (effectResult.amount) {
+                description = description.replace('{amount}', effectResult.amount);
+            }
+        }
+    
+        this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
         // [/hands-off]
     }
 
@@ -812,10 +820,15 @@ export class SimulationService {
      */
     _applyEventEffects(outcome) {
         // [hands-off]
+        let result = null;
         outcome.effects.forEach(effect => {
-            applyEffect(this.gameState, this, effect, outcome);
+            const effectResult = applyEffect(this.gameState, this, effect, outcome);
+            if (effectResult) {
+                result = effectResult;
+            }
         });
         this.gameState.setState({});
+        return result;
         // [/hands-off]
     }
 
@@ -1108,6 +1121,22 @@ export class SimulationService {
 
         // We don't call setState here as it will be called at the end of _advanceDays
         // [/hands-off]
+    }
+
+    /**
+     * Applies a list of reward objects to the player's state.
+     * @param {Array<object>} rewards - An array of reward objects, e.g., [{ type: 'credits', amount: 10000 }].
+     * @param {string} sourceName - The name of the source of the rewards (e.g., mission name).
+     */
+    _grantRewards(rewards, sourceName) {
+        rewards.forEach(reward => {
+            if (reward.type === 'credits') {
+                this.gameState.player.credits += reward.amount;
+                this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
+                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+            }
+            // Future reward types like 'item' or 'ship' can be handled here.
+        });
     }
 
     // --- Debugging and Development Tools ---
