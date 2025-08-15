@@ -5,12 +5,31 @@ const https = require('https');
 
 // --- Configuration ---
 const SOURCE_DIR = 'js';
-const ENTRY_POINT = 'main.js';
-const STYLESHEET = 'style.css';
 const HTML_FILE = 'index.html';
+const STYLESHEET = 'style.css';
 const OUTPUT_DIR = 'dist';
 const OUTPUT_JS = 'bundle.min.js';
 const MINIFIER_API_URL = 'https://www.toptal.com/developers/javascript-minifier/api/raw';
+
+// A specific, hardcoded order to ensure dependencies are met correctly.
+const FILE_ORDER = [
+    'data/constants.js',
+    'data/dateConfig.js',
+    'utils.js',
+    'data/gamedata.js',
+    'data/config.js',
+    'services/simulation/MarketService.js',
+    'services/event-effects/effectSpaceRace.js',
+    'services/event-effects/effectAdriftPassenger.js',
+    'services/eventEffectResolver.js',
+    'services/GameState.js',
+    'services/UIManager.js',
+    'services/MissionService.js',
+    'services/TutorialService.js',
+    'services/SimulationService.js',
+    'services/EventManager.js',
+    'main.js'
+];
 
 /**
  * A simple logger for the build process.
@@ -39,7 +58,6 @@ function minifyCode(code) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Content-Length': Buffer.byteLength(data.toString())
             }
         };
 
@@ -48,18 +66,11 @@ function minifyCode(code) {
                 return reject(new Error(`API responded with status code: ${res.statusCode}`));
             }
             let minifiedCode = '';
-            res.on('data', (chunk) => {
-                minifiedCode += chunk;
-            });
-            res.on('end', () => {
-                resolve(minifiedCode);
-            });
+            res.on('data', (chunk) => minifiedCode += chunk);
+            res.on('end', () => resolve(minifiedCode));
         });
 
-        req.on('error', (e) => {
-            reject(e);
-        });
-
+        req.on('error', (e) => reject(e));
         req.write(data.toString());
         req.end();
     });
@@ -75,22 +86,20 @@ async function build() {
         await fs.mkdir(OUTPUT_DIR, { recursive: true });
         log(`Output directory '${OUTPUT_DIR}' is ready.`);
 
-        // 2. Read all JS files and combine them
-        const jsFiles = await fs.readdir(path.join(__dirname, SOURCE_DIR));
+        // 2. Read all JS files in the correct order and combine them
         let combinedJs = '';
-        // A simple way to order files: main.js last. A more robust solution
-        // would parse the import tree, but this works for this project structure.
-        const sortedFiles = jsFiles.sort((a, b) => a === ENTRY_POINT ? 1 : b === ENTRY_POINT ? -1 : 0);
-
-        for (const file of sortedFiles) {
-            if (file.endsWith('.js')) {
-                const content = await fs.readFile(path.join(__dirname, SOURCE_DIR, file), 'utf-8');
+        for (const file of FILE_ORDER) {
+            const filePath = path.join(__dirname, SOURCE_DIR, file);
+            try {
+                const content = await fs.readFile(filePath, 'utf-8');
                 // Remove ES module syntax as we are combining files manually
                 const cleanContent = content.replace(/import .* from .*/g, '').replace(/export /g, '');
                 combinedJs += `\n// --- ${file} ---\n` + cleanContent;
+            } catch (error) {
+                throw new Error(`Failed to read file: ${filePath}. Make sure it exists.`);
             }
         }
-        log('Combined all JavaScript files.');
+        log('Combined all JavaScript files in the correct order.');
 
         // 3. Minify (obfuscate) the combined code
         log('Obfuscating code via minification...');
