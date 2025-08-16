@@ -483,10 +483,92 @@ export const MARKETS = [
 ];
 
 export const TUTORIAL_DATA = {
-    ...INTRO_SEQUENCE_V1.tutorials
+    ...INTRO_SEQUENCE_V1.tutorials,
+    'intro_missions': {
+      id: "intro_missions",
+      title: "First Steps",
+      trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
+      steps: [
+        { "stepId": "mission_1_1", "text": "This is the Mission Terminal. Your career starts here. Contracts, favors, deliveries... this is how you'll make a name for yourself. Let's find you your first job.", "highlightElementId": "missions-screen", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
+        { "stepId": "mission_1_2", "text": "That one looks like a simple local job. Select it to see the details.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
+        { "stepId": "mission_1_3", "text": "The foreman can't pay, but he's giving you the cargo. Accept the contract.", "highlightElementQuery": "[data-action='accept-mission']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
+        { "stepId": "mission_1_4", "text": "Job accepted. The 5 Plasteel are in your cargo hold. Your active objective is now displayed here. Time to get moving. Go to Navigation.", "highlightElementId": "mission-sticky-bar", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_5", "isSkippable": false },
+        { "stepId": "mission_1_5", "text": "This is your route. Notice the fuel cost—every trip has one. Travel to Luna.", "highlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_6", "isSkippable": false },
+        { "stepId": "mission_1_6", "text": "You've arrived. The refinery is ready for your delivery. The objective bar is glowing—that means you can turn in the mission here. Click it.", "highlightElementId": "mission-sticky-bar", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_7", "isSkippable": false },
+        { "stepId": "mission_1_7", "text": "Mission complete... but that trip cost you fuel, and fuel costs credits. That small profit might have just been a net loss. Favors don't pay off Guild loans. For the next run, we find a real margin.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
+        { "stepId": "mission_2_1", "text": "Relying on handouts won't work. The real money is in playing the markets yourself—buying low and selling high. Let's find an opportunity right here on Luna.", "highlightElementQuery": "[data-screen-id='market']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false },
+        { "stepId": "mission_2_2", "text": "You're on Luna, where industrial output is high. See the price of Plasteel? The 'MKT' indicator shows it's cheap. Now, remember the construction on Mars? They'll pay a premium. That's your margin.", "highlightElementId": "item-card-container-plasteel", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_3", "isSkippable": false },
+        { "stepId": "mission_2_3", "text": "A new contract is available that lines up with this opportunity. Go to the Mission Terminal.", "highlightElementQuery": "[data-nav-id='admin']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false },
+        { "stepId": "mission_2_4", "text": "This is the kind of contract you look for. Accept it, then go buy the Plasteel on Luna and deliver it to Mars to complete the mission.", "highlightElementQuery": "[data-mission-id='mission_tutorial_02']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_1", "isSkippable": false },
+        { "stepId": "mission_3_1", "text": "Excellent work. Profit in the bank. Your efficiency has been noted. A priority contract just came through on the terminal. It looks... official.", "highlightElementQuery": "[data-screen-id='missions']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_3_2", "isSkippable": false },
+        { "stepId": "mission_3_2", "text": "A contract from the Terran Alliance. This is your final evaluation, Captain. Complete this, and you're on your own.", "highlightElementQuery": "[data-mission-id='mission_tutorial_03']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_3", "isSkippable": false },
+        { "stepId": "mission_3_3", "text": "Contract complete. You've successfully navigated a multi-stop trade route. The training protocols are now disengaged. Your reputation is your own to build. The system is open to you. Fly smart, Captain.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false }
+      ]
+    }
 };
 
 export const MISSIONS = {
+    'mission_tutorial_01': {
+        id: "mission_tutorial_01",
+        name: "The Dockworker's Favor",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        description: "New ship, huh? Look, I'm in a bind. My scheduled cargo bot is down. It's only 5 units of Plasteel that need to get to the Luna refinery, but it's holding up my manifest. Can't pay you, but you can have the Plasteel. Whatever you sell it for is yours. Just get it there.",
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
+        ],
+        completion: {
+            "locationId": "loc_luna",
+            "title": "Favor Complete",
+            "text": "The Dock Foreman sends his thanks. The Plasteel has been delivered.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [],
+        providedCargo: [
+            { "goodId": "plasteel", "quantity": 5 }
+        ]
+    },
+    'mission_tutorial_02': {
+        id: "mission_tutorial_02",
+        name: "The Mars Margin",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        description: "Our construction crews are running low on Plasteel. We need a freelance captain to source and deliver 25 units to our depot on Mars. We'll make it worth your while.",
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 25 }
+        ],
+        completion: {
+            "locationId": "loc_mars",
+            "title": "Delivery Complete",
+            "text": "The construction foreman thanks you for the Plasteel. Your payment has been transferred.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [
+            { "type": "credits", "amount": 2500 }
+        ]
+    },
+    'mission_tutorial_03': {
+        id: "mission_tutorial_03",
+        name: "The Terran Contract",
+        type: "DELIVERY",
+        host: "GUILD",
+        isRepeatable: false,
+        description: "Urgent acquisition required: 10 units of Martian-grown Hydroponics for agricultural analysis. Premium offered for prompt delivery to the orbital stations of Earth.",
+        objectives: [
+            { "type": "have_item", "goodId": "hydroponics", "quantity": 10 }
+        ],
+        completion: {
+            "locationId": "loc_earth",
+            "title": "Contract Fulfilled",
+            "text": "The Terran Alliance R&D Division confirms receipt of the samples. Your payment has been authorized.",
+            "buttonText": "Deliver Samples"
+        },
+        rewards: [
+            { "type": "credits", "amount": 15000 }
+        ]
+    },
     'guild_01': {
         id: 'guild_01',
         name: 'A Golden Opportunity',

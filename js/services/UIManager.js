@@ -10,7 +10,7 @@ export class UIManager {
         this.modalQueue = [];
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
-        this.activeTutorialHighlight = null;
+        this.activeTutorialHighlights = []; // Changed to handle multiple highlights
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
 
@@ -1423,29 +1423,32 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        // [hands-off]
-        if (this.activeTutorialHighlight) {
-            this.activeTutorialHighlight.classList.remove('tutorial-highlight');
-        }
+        this.activeTutorialHighlights.forEach(el => el.classList.remove('tutorial-highlight'));
+        this.activeTutorialHighlights = [];
 
-        let elementId = null;
-        if (step) {
-            elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        }
+        if (!step) return;
+
+        let elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
+        let elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery;
 
         if (elementId) {
             const element = document.getElementById(elementId);
             if (element) {
                 element.classList.add('tutorial-highlight');
-                this.activeTutorialHighlight = element;
+                this.activeTutorialHighlights.push(element);
                 if (elementId !== 'starport-shipyard-panel' && elementId !== 'starport-hangar-panel') {
-                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
-        } else {
-            this.activeTutorialHighlight = null;
         }
-        // [/hands-off]
+
+        if (elementQuery) {
+            const elements = document.querySelectorAll(elementQuery);
+            elements.forEach(element => {
+                element.classList.add('tutorial-highlight');
+                this.activeTutorialHighlights.push(element);
+            });
+        }
     }
 
     showSkipTutorialModal(onConfirm) {

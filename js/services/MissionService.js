@@ -36,6 +36,7 @@ export class MissionService {
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
+        this.simulationService.grantMissionCargo(missionId);
         this.checkTriggers(); // Run an initial check in case objectives are already met.
         this.uiManager.render(this.gameState.getState());
     }

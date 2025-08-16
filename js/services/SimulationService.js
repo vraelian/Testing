@@ -4,7 +4,7 @@
  * It modifies the GameState based on user actions and simulated events.
  */
 import { CONFIG } from '../data/config.js';
-import { SHIPS, COMMODITIES, MARKETS, RANDOM_EVENTS, AGE_EVENTS, PERKS, INTRO_SEQUENCE_V1, TUTORIAL_DATA } from '../data/gamedata.js';
+import { SHIPS, COMMODITIES, MARKETS, RANDOM_EVENTS, AGE_EVENTS, PERKS, INTRO_SEQUENCE_V1, TUTORIAL_DATA, MISSIONS } from '../data/gamedata.js';
 import { DATE_CONFIG } from '../data/dateConfig.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS } from '../data/constants.js';
@@ -240,6 +240,7 @@ export class SimulationService {
         
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
              this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+             this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
 
         // Force a full re-render to unlock all the buttons
@@ -1138,6 +1139,34 @@ export class SimulationService {
             }
             // Future reward types like 'item' or 'ship' can be handled here.
         });
+    }
+
+    /**
+     * Grants cargo to the player's active ship inventory as part of a mission.
+     * @param {string} missionId - The ID of the mission providing the cargo.
+     */
+    grantMissionCargo(missionId) {
+        const mission = MISSIONS[missionId];
+        if (!mission || !mission.providedCargo) {
+            return;
+        }
+
+        const inventory = this._getActiveInventory();
+        if (!inventory) {
+            console.error("Cannot grant mission cargo: No active inventory found.");
+            return;
+        }
+
+        mission.providedCargo.forEach(cargo => {
+            if (!inventory[cargo.goodId]) {
+                inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[cargo.goodId].quantity += cargo.quantity;
+        });
+
+        if (this.missionService) {
+            this.missionService.checkTriggers();
+        }
     }
 
     // --- Debugging and Development Tools ---
