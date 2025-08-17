@@ -84,6 +84,7 @@ export class EventManager {
             switch(action) {
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
+                    actionData = { type: 'ACTION', action: 'show-mission-modal' };
                     return; // Stop further processing
                 case 'close-modal':
                     this.uiManager.hideModal('mission-modal');
@@ -91,6 +92,7 @@ export class EventManager {
                 case 'accept-mission':
                     this.simulationService.missionService.acceptMission(missionId);
                     this.uiManager.hideModal('mission-modal');
+                    actionData = { type: 'ACTION', action: 'accept-mission' };
                     break;
                 case 'abandon-mission':
                     this.simulationService.missionService.abandonMission();
@@ -99,6 +101,7 @@ export class EventManager {
                 case 'complete-mission':
                     this.simulationService.missionService.completeActiveMission();
                     this.uiManager.hideModal('mission-modal');
+                    actionData = { type: 'ACTION', action: 'complete-mission' };
                     break;
                 case 'show-ship-detail':
                     this.uiManager.showShipDetailModal(state, shipId, context);
@@ -108,6 +111,7 @@ export class EventManager {
                     break;
                 case ACTION_IDS.TRAVEL:
                     this.simulationService.travelTo(locationId);
+                    actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
                 case ACTION_IDS.BUY_SHIP: 
                     if (this.simulationService.buyShip(shipId)) {

@@ -86,10 +86,12 @@ export class TutorialService {
             this.gameState.tutorials.seenBatchIds.push(batchId);
         }
 
-        const firstStepId = batch.steps[0].stepId;
-        this._displayStep(firstStepId);
         this.gameState.setState(this.gameState);
         this.uiManager.render(this.gameState.getState());
+        
+        const firstStepId = batch.steps[0].stepId;
+        this._displayStep(firstStepId);
+
     }
 
     /**

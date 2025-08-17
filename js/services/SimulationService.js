@@ -1193,8 +1193,8 @@ export class SimulationService {
         this.tutorialService.activeBatchId = null;
         this.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(TUTORIAL_DATA);
+        this.gameState.tutorials.activeStepId = null; // Redundant, but keeping for clarity
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(TUTORIAL_DATA).filter(id => id !== 'intro_missions');
 
         this.gameState.player.credits = 10000;
         this.gameState.player.ownedShipIds = [];
@@ -1202,6 +1202,7 @@ export class SimulationService {
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
 
         document.getElementById('game-container').classList.remove('hidden');
-        this.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+        this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+        this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
     }
 }

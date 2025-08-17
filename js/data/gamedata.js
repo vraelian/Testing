@@ -568,45 +568,5 @@ export const MISSIONS = {
         rewards: [
             { "type": "credits", "amount": 15000 }
         ]
-    },
-    'guild_01': {
-        id: 'guild_01',
-        name: 'A Golden Opportunity',
-        type: 'DELIVERY',
-        host: "GUILD",
-        isRepeatable: false,
-        description: 'The Guild requires a shipment of Plasteel for a construction project on Luna. Discretion is paramount. Deliver 50 units and you will be rewarded.',
-        objectives: [
-            { type: 'have_item', goodId: COMMODITY_IDS.PLASTEEL, quantity: 50 }
-        ],
-        completion: {
-            locationId: LOCATION_IDS.LUNA,
-            title: "Delivery Complete",
-            text: "The Merchant's Guild eagerly accepts delivery of 50 Plasteel. Your promptness has been noted.",
-            buttonText: "Deliver Plasteel"
-        },
-        rewards: [
-            { type: 'credits', amount: 25000 }
-        ]
-    },
-    'syndicate_01': {
-        id: 'syndicate_01',
-        name: 'Syndicate Science',
-        type: 'ACQUISITION',
-        host: 'SYNDICATE',
-        isRepeatable: false,
-        description: "Our research division on Venus requires a sample of Hydroponics for analysis. Acquire 25 units and deliver them. Your contribution will be noted.",
-        objectives: [
-            { type: 'have_item', goodId: COMMODITY_IDS.HYDROPONICS, quantity: 25 }
-        ],
-        completion: {
-            locationId: LOCATION_IDS.VENUS,
-            title: "Acquisition Complete",
-            text: "The Venetian Syndicate thanks you for the timely delivery. The Hydroponics will be put to good use.",
-            buttonText: "Deliver Hydroponics"
-        },
-        rewards: [
-            { type: 'credits', amount: 50000 }
-        ]
     }
 };
