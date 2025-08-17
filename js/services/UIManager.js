@@ -90,17 +90,21 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        // [hands-off]
-        const { activeNav, activeScreen, lastActiveScreen, introSequenceActive } = gameState;
-        const isDisabled = introSequenceActive ? 'disabled' : '';
-        const lockedClass = introSequenceActive ? 'btn-intro-locked' : '';
-
+        const { activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials } = gameState;
+        const navLock = tutorials.activeBatchId === 'intro_missions' ? tutorials.navLock : null;
+    
         const navButtons = Object.entries(this.navStructure).map(([navId, navData]) => {
             const isActive = navId === activeNav;
             const screenId = lastActiveScreen[navId] || Object.keys(navData.screens)[0];
+            
+            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
+            const isDisabledByTutorial = navLock && navLock !== navId;
+            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
+            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
+
             return `
                 <button class="btn btn-header theme-${navId} ${isActive ? 'btn-nav-active' : ''} ${lockedClass}" 
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" ${isDisabled}>
+                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
                     ${navData.label}
                 </button>`;
         }).join('');
@@ -110,14 +114,18 @@ export class UIManager {
         const themeClass = `theme-${activeNav}`;
         const subNavButtons = Object.entries(activeSubNav).map(([screenId, screenLabel]) => {
             const isActive = screenId === activeScreen;
+            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
+            const isDisabledByTutorial = !!navLock;
+            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
+            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
+
             return `
                 <button class="btn btn-sub-nav ${isActive ? 'btn-sub-nav-active' : ''} ${lockedClass}"
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${activeNav}" data-screen-id="${screenId}" ${isDisabled}>
+                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${activeNav}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
                     ${screenLabel}
                 </button>`;
         }).join('');
         this.cache.subNavBar.innerHTML = `<div class="flex justify-center w-full gap-2 md:gap-4 mt-3 ${themeClass}">${subNavButtons}</div>`;
-        // [/hands-off]
     }
 
     renderActiveScreen(gameState) {
