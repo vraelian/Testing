@@ -202,6 +202,12 @@ export class EventManager {
 
         if (state.isGameOver) return;
 
+        const missionModal = e.target.closest('#mission-modal');
+        if (missionModal && e.target.id === 'mission-modal') {
+            this.uiManager.hideModal('mission-modal');
+            return;
+        }
+
         // --- Modal Dismissal ---
         const shipDetailModal = e.target.closest('#ship-detail-modal');
         if (shipDetailModal && !e.target.closest('#ship-detail-content')) {

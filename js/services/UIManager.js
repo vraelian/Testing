@@ -1419,7 +1419,7 @@ export class UIManager {
         this.cache.tutorialToastNextBtn.onclick = onNext;
 
         // Use the new isSkippable property from the step data.
-        const showSkipButton = step.isSkippable !== false;
+        const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         // [/hands-off]
@@ -1626,7 +1626,6 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
-                modal.querySelector('#mission-modal-close').onclick = closeHandler;
                 modal.querySelector('#mission-modal-title').textContent = mission.name;
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
                 modal.querySelector('#mission-modal-description').innerHTML = mission.description;
@@ -1654,10 +1653,6 @@ export class UIManager {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.classList.add('mission-turn-in', `host-${mission.host.toLowerCase()}`);
 
-                modal.querySelector('#mission-modal-close').onclick = () => {
-                     modalContent.classList.remove('mission-turn-in', `host-${mission.host.toLowerCase()}`);
-                     closeHandler();
-                };
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
