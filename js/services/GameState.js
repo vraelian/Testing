@@ -117,7 +117,8 @@ export class GameState {
                 activeBatchId: null,
                 activeStepId: null,
                 seenBatchIds: [],
-                skippedTutorialBatches: []
+                skippedTutorialBatches: [],
+                navLock: null
             },
             missions: {
                 activeMissionId: null,

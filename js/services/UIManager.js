@@ -91,14 +91,14 @@ export class UIManager {
 
     renderNavigation(gameState) {
         const { activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials } = gameState;
-        const navLock = tutorials.activeBatchId === 'intro_missions' ? tutorials.navLock : null;
+        const { navLock } = tutorials;
     
         const navButtons = Object.entries(this.navStructure).map(([navId, navData]) => {
             const isActive = navId === activeNav;
             const screenId = lastActiveScreen[navId] || Object.keys(navData.screens)[0];
             
             const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
-            const isDisabledByTutorial = navLock && navLock !== navId;
+            const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = isDisabledByIntro || isDisabledByTutorial;
             const lockedClass = isDisabled ? 'btn-intro-locked' : '';
 
@@ -115,7 +115,7 @@ export class UIManager {
         const subNavButtons = Object.entries(activeSubNav).map(([screenId, screenLabel]) => {
             const isActive = screenId === activeScreen;
             const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
-            const isDisabledByTutorial = !!navLock;
+            const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
             const isDisabled = isDisabledByIntro || isDisabledByTutorial;
             const lockedClass = isDisabled ? 'btn-intro-locked' : '';
 
@@ -1448,7 +1448,7 @@ export class UIManager {
         if (!step) return;
 
         let elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        let elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery;
+        let elementQuery = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementQuery; // Corrected typo here
 
         if (elementId) {
             const element = document.getElementById(elementId);
@@ -1634,6 +1634,7 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
+                modal.querySelector('#mission-modal-close').onclick=closeHandler,
                 modal.querySelector('#mission-modal-title').textContent = mission.name;
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
                 modal.querySelector('#mission-modal-description').innerHTML = mission.description;
@@ -1660,6 +1661,11 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.classList.add('mission-turn-in', `host-${mission.host.toLowerCase()}`);
+
+                modal.querySelector('#mission-modal-close').onclick = () => {
+                    modalContent.classList.remove('mission-turn-in', `host-${mission.host.toLowerCase()}`);
+                    closeHandler();
+                };
 
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";

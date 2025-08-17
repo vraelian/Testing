@@ -133,7 +133,7 @@ export class TutorialService {
     }
 
     /**
-     * Displays a specific tutorial step by its ID.
+     * Displays a specific tutorial step by its ID and manages navigation locks.
      * @param {string} stepId The ID of the step to display.
      * @private
      */
@@ -145,20 +145,37 @@ export class TutorialService {
             this._endBatch();
             return;
         }
-        
+
+        // Set NavLock based on tutorial data
+        if (batch.navLock) {
+            if (step.navLock) {
+                this.gameState.tutorials.navLock = step.navLock;
+            } else {
+                // If no specific lock, lock to the current screen
+                const currentScreenId = this.gameState.activeScreen;
+                const currentNavId = this.screenToNavMap[currentScreenId];
+                this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
+            }
+        } else {
+            this.gameState.tutorials.navLock = null;
+        }
+
         if (step.completion.action === ACTION_IDS.BUY_ITEM && this.gameState.player.credits < 1000) {
             return;
         }
 
         this.activeStepId = stepId;
         this.gameState.tutorials.activeStepId = stepId;
-
+        
         this.uiManager.showTutorialToast({
             step: step,
             onSkip: () => this.uiManager.showSkipTutorialModal(() => this.skipActiveTutorial()),
             onNext: () => this.advanceStep(),
             gameState: this.gameState.getState()
         });
+
+        // Re-render to apply the navLock changes immediately
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**
@@ -171,6 +188,7 @@ export class TutorialService {
         this.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
         this.gameState.tutorials.activeStepId = null;
+        this.gameState.tutorials.navLock = null; // Clear the nav lock
     }
 
     /**
