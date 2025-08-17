@@ -1448,7 +1448,7 @@ export class UIManager {
         if (!step) return;
 
         let elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        let elementQuery = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementQuery; // Corrected typo here
+        let elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery; // Corrected typo here
 
         if (elementId) {
             const element = document.getElementById(elementId);
@@ -1567,8 +1567,8 @@ export class UIManager {
                         <div><span class="text-gray-500">Cargo:</span><span class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-2">
-                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
-                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
+                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${id}">Board</button>`}
+                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${id}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
                     </div>
                 </div>`;
         }
@@ -1634,7 +1634,6 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
-                modal.querySelector('#mission-modal-close').onclick=closeHandler,
                 modal.querySelector('#mission-modal-title').textContent = mission.name;
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
                 modal.querySelector('#mission-modal-description').innerHTML = mission.description;
@@ -1647,7 +1646,8 @@ export class UIManager {
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) {
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}">Abandon Mission</button>`;
+                    const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${anotherMissionActive ? 'disabled' : ''}>Accept</button>`;
                 }
@@ -1661,11 +1661,6 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.classList.add('mission-turn-in', `host-${mission.host.toLowerCase()}`);
-
-                modal.querySelector('#mission-modal-close').onclick = () => {
-                    modalContent.classList.remove('mission-turn-in', `host-${mission.host.toLowerCase()}`);
-                    closeHandler();
-                };
 
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";

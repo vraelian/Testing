@@ -516,6 +516,7 @@ export const MISSIONS = {
         type: "DELIVERY",
         host: "STATION",
         isRepeatable: false,
+        isAbandonable: false,
         description: "New ship, huh? Look, I'm in a bind. My scheduled cargo bot is down. It's only 5 units of Plasteel that need to get to the Luna refinery, but it's holding up my manifest. Can't pay you, but you can have the Plasteel. Whatever you sell it for is yours. Just get it there.",
         objectives: [
             { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
@@ -537,6 +538,7 @@ export const MISSIONS = {
         type: "DELIVERY",
         host: "STATION",
         isRepeatable: false,
+        isAbandonable: false,
         description: "Our construction crews are running low on Plasteel. We need a freelance captain to source and deliver 25 units to our depot on Mars. We'll make it worth your while.",
         prerequisites: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
@@ -560,6 +562,7 @@ export const MISSIONS = {
         type: "DELIVERY",
         host: "GUILD",
         isRepeatable: false,
+        isAbandonable: false,
         description: "Urgent acquisition required: 10 units of Martian-grown Hydroponics for agricultural analysis. Premium offered for prompt delivery to the orbital stations of Earth.",
         prerequisites: [
             { "type": "mission_completed", "missionId": "mission_tutorial_02" }
