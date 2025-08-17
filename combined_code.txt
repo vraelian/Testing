@@ -3240,7 +3240,7 @@ export class MarketService {
 
 
 --- START OF FILE: ./js/services/SimulationService.js ---
-// ./js/services/SimulationService.js
+// js/services/SimulationService.js
 /**
  * @fileoverview Core game engine for player actions, time progression, and event triggers.
  * It modifies the GameState based on user actions and simulated events.
@@ -3345,7 +3345,6 @@ export class SimulationService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        
         // Disable button on click to prevent spamming
         button.onclick = (e) => {
             e.target.disabled = true;
@@ -3379,7 +3378,6 @@ export class SimulationService {
     handleIntroClick(e) {
         const button = e.target.closest('button');
         if (!button) return;
-
         const targetId = button.id;
         
         if (targetId === 'intro-next-btn') {
@@ -3393,7 +3391,7 @@ export class SimulationService {
             if (!playerName) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a name on the contract. Please provide your legal mark.");
                 // Re-enable the button so the user can try again after the error
-                button.disabled = false; 
+                button.disabled = false;
                 this._showNextIntroModal();
             } else {
                 this.gameState.player.name = playerName;
@@ -3419,7 +3417,6 @@ export class SimulationService {
         const showApprovalModal = () => {
             const title = 'Loan Approved';
             const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been approved.<br><span class="credits-text-pulsing">⌬25,000</span> is ready to transfer to your account.`;
-
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
@@ -3428,6 +3425,7 @@ export class SimulationService {
                 
                 // Add loan amount to existing starting credits
                 this.gameState.player.credits += 25000;
+
                 setTimeout(() => {
                     document.getElementById('game-container').classList.remove('hidden');
                     this.uiManager.render(this.gameState.getState()); // Initial render
@@ -3435,7 +3433,7 @@ export class SimulationService {
                     this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
                 }, 2000);
             };
- 
+
             this.uiManager.queueModal('event-modal', title, description, null, {
                 contentClass: 'text-center',
                 customSetup: (modal, closeHandler) => {
@@ -3479,12 +3477,12 @@ export class SimulationService {
         const finalStep = INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-        
+
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
              this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
-
+        
         // Force a full re-render to unlock all the buttons
         this.uiManager.render(this.gameState.getState());
     }
@@ -3592,6 +3590,7 @@ export class SimulationService {
         
         activeShipState.health -= totalHullDamageValue;
         this._checkHullWarnings(activeShip.id);
+
         if (activeShipState.health <= 0) {
             this._handleShipDestruction(activeShip.id);
             return;
@@ -3606,7 +3605,7 @@ export class SimulationService {
         const fromLocation = MARKETS.find(m => m.id === fromId);
         const destination = MARKETS.find(m => m.id === locationId);
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
-
+        
         this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, () => {
             this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
         });
@@ -3639,10 +3638,9 @@ export class SimulationService {
         const price = this.uiManager.getItemPrice(state, goodId);
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false;
-        }
-        if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`);
-        return false; }
+
+        if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
+        if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
         
         const activeShip = this._getActiveShip();
         const activeInventory = this._getActiveInventory();
@@ -3650,8 +3648,7 @@ export class SimulationService {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
             return false;
         }
-        if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low.");
-        return false; }
+        if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         this.gameState.market.inventory[state.currentLocationId][goodId].quantity -= quantity;
         const item = activeInventory[goodId];
@@ -3660,7 +3657,6 @@ export class SimulationService {
         
         this.gameState.player.credits -= totalCost;
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
-        
         this._checkMilestones();
         this.missionService.checkTriggers();
         
@@ -3709,7 +3705,7 @@ export class SimulationService {
         
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
-
+        
         return totalSaleValue;
         // [/hands-off]
     }
@@ -3731,6 +3727,7 @@ export class SimulationService {
         this._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.addShipToHangar(shipId);
         this.uiManager.queueModal('event-modal', "Acquisition Complete", `The ${ship.name} has been transferred to your hangar.`);
+
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
         }
@@ -3770,6 +3767,7 @@ export class SimulationService {
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
         delete this.gameState.player.shipStates[shipId];
         delete this.gameState.player.inventories[shipId];
+
         this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
@@ -3791,8 +3789,7 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
-        // Full render on ship change
+        this.uiManager.render(this.gameState.getState()); // Full render on ship change
         // [/hands-off]
     }
 
@@ -3949,6 +3946,7 @@ export class SimulationService {
     _advanceDays(days) {
         // [hands-off]
         let marketUpdated = false;
+
         // This loop simulates the passage of time, one day at a time.
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) return;
@@ -3956,6 +3954,7 @@ export class SimulationService {
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
+
             // Check for player's birthday to grant an experience bonus.
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.playerAge++;
@@ -3991,6 +3990,7 @@ export class SimulationService {
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
                 }
             });
+
             // Apply weekly interest to any outstanding debt.
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
                 const interest = this.gameState.player.weeklyInterestAmount;
@@ -4017,10 +4017,12 @@ export class SimulationService {
     _checkForRandomEvent(destinationId, force = false) {
         // [hands-off]
         if (!force && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
+
         const activeShip = this._getActiveShip();
         const validEvents = RANDOM_EVENTS.filter(event => 
             event.precondition(this.gameState.getState(), activeShip, this._getActiveInventory.bind(this))
         );
+
         if (validEvents.length === 0) return false;
 
         const event = validEvents[Math.floor(Math.random() * validEvents.length)];
@@ -4040,8 +4042,7 @@ export class SimulationService {
         const event = RANDOM_EVENTS.find(e => e.id === eventId);
         const choice = event.choices[choiceIndex];
         let random = Math.random();
-        const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) ||
-        choice.outcomes[choice.outcomes.length - 1];
+        const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) || choice.outcomes[choice.outcomes.length - 1];
     
         const effectResult = this._applyEventEffects(chosenOutcome);
     
@@ -4151,8 +4152,7 @@ export class SimulationService {
 
     /**
      * Consolidates multiple buy/sell actions of the same commodity on the same day
-     * into a single transaction log entry.
-     * This prevents spamming the finance log
+     * into a single transaction log entry. This prevents spamming the finance log
      * when a player makes many small trades.
      * e.g., "Bought 1x Plasteel" + "Bought 1x Plasteel" becomes "Bought 2x Plasteel".
      */
@@ -4161,6 +4161,7 @@ export class SimulationService {
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
+
         // Find an entry from today for the same item and action
         const existingEntry = log.find(entry => 
             entry.day === this.gameState.day &&
@@ -4169,6 +4170,7 @@ export class SimulationService {
             entry.description.endsWith(` ${goodName}`) &&
             ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0)) // Make sure we don't merge buys and sells
         );
+
         if (existingEntry) {
             existingEntry.amount += transactionValue;
             existingEntry.balance = this.gameState.player.credits;
@@ -4200,6 +4202,7 @@ export class SimulationService {
         // [hands-off]
         const log = this.gameState.player.financeLog;
         const lastEntry = log.length > 0 ? log[log.length - 1] : null;
+        
         if (lastEntry && lastEntry.day === this.gameState.day && lastEntry.type === type) {
             // Update the last entry
             lastEntry.amount += amount;
@@ -4229,7 +4232,7 @@ export class SimulationService {
                 }
                 if (milestone.unlocksLocation && !this.gameState.player.unlockedLocationIds.includes(milestone.unlocksLocation)) {
                     this.gameState.player.unlockedLocationIds.push(milestone.unlocksLocation);
-        
+                    
                     const newLocation = MARKETS.find(m => m.id === milestone.unlocksLocation);
                     message += `<br><br><span class="hl-blue">New Destination:</span> Access to <span class="hl">${newLocation.name}</span> has been granted.`;
                     changed = true;
@@ -4252,6 +4255,7 @@ export class SimulationService {
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+
         if (healthPct <= 15 && !shipState.hullAlerts.two) {
             this.uiManager.showToast('hullWarningToast', `System Warning: Hull Health at ${Math.floor(healthPct)}%.`);
             shipState.hullAlerts.two = true;
@@ -4275,6 +4279,7 @@ export class SimulationService {
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
         delete this.gameState.player.shipStates[shipId];
         delete this.gameState.player.inventories[shipId];
+
         if (this.gameState.player.ownedShipIds.length === 0) {
             this._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
         } else {
@@ -4332,6 +4337,7 @@ export class SimulationService {
     _updateShipyardStock() {
         // [hands-off]
         const { player } = this.gameState;
+
         // Iterate over all locations the player has unlocked.
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];
@@ -4421,6 +4427,7 @@ export class SimulationService {
     addShipToHangar(shipId) {
         const ship = SHIPS[shipId];
         if (!ship) return;
+
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
         this.gameState.player.inventories[shipId] = {};
