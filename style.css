@@ -1020,9 +1020,12 @@ body {
     border-color: #8f9acc;
 }
 @keyframes blue-pulse-glow {
-    0%, 100% { box-shadow: 0 0 8px rgba(96, 165, 250, 0.3), inset 0 0 8px rgba(96, 165, 250, 0.1); } 50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+    0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
 }
 .mission-active {
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+    border-width: 3px;
     border-color: rgba(96, 165, 250, 0.7);
 }
 .mission-active .sci-fi-frame::before, .mission-active .sci-fi-frame::after {
