@@ -1643,11 +1643,18 @@ export class UIManager {
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
                 modal.querySelector('#mission-modal-description').innerHTML = mission.description;
                 
-                const rewardsHtml = mission.rewards.map(r => {
-                    if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-                    return r.type.toUpperCase();
-                }).join(', ');
-                modal.querySelector('#mission-modal-rewards').innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (mission.rewards && mission.rewards.length > 0) {
+                    const rewardsHtml = mission.rewards.map(r => {
+                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        return r.type.toUpperCase();
+                    }).join(', ');
+                    rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
+                    rewardsEl.style.display = 'block';
+                } else {
+                    rewardsEl.innerHTML = '';
+                    rewardsEl.style.display = 'none';
+                }
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) {
@@ -1676,11 +1683,18 @@ export class UIManager {
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
                 
-                const rewardsHtml = mission.rewards.map(r => {
-                    if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-                    return r.type.toUpperCase();
-                }).join(', ');
-                modal.querySelector('#mission-modal-rewards').innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (mission.rewards && mission.rewards.length > 0) {
+                    const rewardsHtml = mission.rewards.map(r => {
+                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        return r.type.toUpperCase();
+                    }).join(', ');
+                    rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                    rewardsEl.style.display = 'block';
+                } else {
+                    rewardsEl.innerHTML = '';
+                    rewardsEl.style.display = 'none';
+                }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
