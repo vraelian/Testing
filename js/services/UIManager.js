@@ -1567,8 +1567,8 @@ export class UIManager {
                         <div><span class="text-gray-500">Cargo:</span><span class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-2">
-                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${id}">Board</button>`}
-                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${id}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
+                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
+                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
                     </div>
                 </div>`;
         }
@@ -1628,9 +1628,14 @@ export class UIManager {
     }
 
     _showMissionDetailsModal(mission) {
-        const { missions } = this.lastKnownState;
+        const { missions, tutorials } = this.lastKnownState;
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
+
+        // Tutorial-specific logic to prevent accepting the first mission too early.
+        const isTutorialMissionOne = mission.id === 'mission_tutorial_01';
+        const isWrongTutorialStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_1_1';
+        const shouldBeDisabled = anotherMissionActive || (isTutorialMissionOne && isWrongTutorialStep);
 
         const options = {
             customSetup: (modal, closeHandler) => {
@@ -1649,7 +1654,7 @@ export class UIManager {
                     const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
-                    buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${anotherMissionActive ? 'disabled' : ''}>Accept</button>`;
+                    buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
                 }
             }
         };
@@ -1661,6 +1666,11 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.classList.add('mission-turn-in', `host-${mission.host.toLowerCase()}`);
+                
+                modal.querySelector('#mission-modal-close').onclick = () => {
+                     modalContent.classList.remove('mission-turn-in', `host-${mission.host.toLowerCase()}`);
+                     closeHandler();
+                };
 
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
