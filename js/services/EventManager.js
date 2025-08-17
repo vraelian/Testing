@@ -85,7 +85,7 @@ export class EventManager {
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
                     actionData = { type: 'ACTION', action: 'show-mission-modal' };
-                    return; // Stop further processing
+                    break; // FIX: Removed 'return'
                 case 'close-modal':
                     this.uiManager.hideModal('mission-modal');
                     return; // Stop further processing
