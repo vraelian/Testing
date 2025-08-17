@@ -43,11 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager();
+        const missionService = new MissionService(gameState, uiManager);
         const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
-        const missionService = new MissionService(gameState, uiManager);
         
         // Now that all services are created, inject dependencies
+        uiManager.setMissionService(missionService); // Allow UIManager to access MissionService
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService); // Complete the dependency link

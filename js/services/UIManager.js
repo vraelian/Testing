@@ -13,6 +13,7 @@ export class UIManager {
         this.activeTutorialHighlights = []; // Changed to handle multiple highlights
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
+        this.missionService = null; // To be injected
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.SERVICES]: 'Services' } },
@@ -30,6 +31,15 @@ export class UIManager {
             }
         });
     }
+
+    /**
+     * Injects the MissionService after instantiation to avoid circular dependencies.
+     * @param {import('./MissionService.js').MissionService} missionService
+     */
+    setMissionService(missionService) {
+        this.missionService = missionService;
+    }
+
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
@@ -626,7 +636,7 @@ export class UIManager {
 
     renderMissionsScreen(gameState) {
         const { missions, currentLocationId } = gameState;
-        const { activeMissionId, completedMissionIds, activeMissionObjectivesMet } = missions;
+        const { activeMissionId, activeMissionObjectivesMet } = missions;
 
         const getMissionCardHtml = (mission, status) => {
             let statusClass = '';
@@ -663,12 +673,13 @@ export class UIManager {
         if (activeMission) {
             missionsHtml += getMissionCardHtml(activeMission, 'active');
         }
-
-        Object.values(MISSIONS).forEach(mission => {
-            if (mission.id !== activeMissionId && !completedMissionIds.includes(mission.id)) {
+        
+        if (this.missionService) {
+            const availableMissions = this.missionService.getAvailableMissions();
+            availableMissions.forEach(mission => {
                 missionsHtml += getMissionCardHtml(mission, 'available');
-            }
-        });
+            });
+        }
 
         if (missionsHtml === '') {
             missionsHtml = '<p class="text-center text-gray-500 text-lg">No missions available at this terminal.</p>';

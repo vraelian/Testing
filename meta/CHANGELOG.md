@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [20.01] - 2025-08-16
+- Implemented mission prerequisite system. Missions now only appear when their conditions are met.
+
 ## [20.00] - 2025-08-15
 - implemented V1 MissionEngine
 

@@ -385,6 +385,14 @@
         },
         "activeMissionObjectivesMet": {
             "_type": "boolean"
+        },
+        "prerequisites": {
+            "_type": "array",
+            "items": {
+                "type": "string",
+                "missionId": "string"
+            },
+            "optional": true
         }
     },
     "TRAVEL_DATA": {

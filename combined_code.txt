@@ -1938,11 +1938,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager();
+        const missionService = new MissionService(gameState, uiManager);
         const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
-        const missionService = new MissionService(gameState, uiManager);
         
         // Now that all services are created, inject dependencies
+        uiManager.setMissionService(missionService); // Allow UIManager to access MissionService
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService); // Complete the dependency link
@@ -2691,6 +2692,9 @@ export const MISSIONS = {
         host: "STATION",
         isRepeatable: false,
         description: "Our construction crews are running low on Plasteel. We need a freelance captain to source and deliver 25 units to our depot on Mars. We'll make it worth your while.",
+        prerequisites: [
+            { "type": "mission_completed", "missionId": "mission_tutorial_01" }
+        ],
         objectives: [
             { "type": "have_item", "goodId": "plasteel", "quantity": 25 }
         ],
@@ -2711,6 +2715,9 @@ export const MISSIONS = {
         host: "GUILD",
         isRepeatable: false,
         description: "Urgent acquisition required: 10 units of Martian-grown Hydroponics for agricultural analysis. Premium offered for prompt delivery to the orbital stations of Earth.",
+        prerequisites: [
+            { "type": "mission_completed", "missionId": "mission_tutorial_02" }
+        ],
         objectives: [
             { "type": "have_item", "goodId": "hydroponics", "quantity": 10 }
         ],
@@ -2981,11 +2988,49 @@ export class MissionService {
     }
 
     /**
+     * Checks if all prerequisites for a given mission are met.
+     * @param {string} missionId The ID of the mission to check.
+     * @returns {boolean} True if all prerequisites are met, false otherwise.
+     */
+    arePrerequisitesMet(missionId) {
+        const mission = MISSIONS[missionId];
+        if (!mission || !mission.prerequisites) {
+            return true; // No prerequisites, so it's met.
+        }
+
+        return mission.prerequisites.every(prereq => {
+            switch (prereq.type) {
+                case 'mission_completed':
+                    return this.gameState.missions.completedMissionIds.includes(prereq.missionId);
+                // Future prerequisite types like 'player_level' or 'item_owned' can be added here.
+                default:
+                    return false; // Unknown prerequisite type fails validation.
+            }
+        });
+    }
+    
+    /**
+     * Gets a list of all missions that are currently available to the player.
+     * A mission is available if it's not active, not completed, and its prerequisites are met.
+     * @returns {Array<object>} An array of available mission objects.
+     */
+    getAvailableMissions() {
+        const { activeMissionId, completedMissionIds } = this.gameState.missions;
+        return Object.values(MISSIONS).filter(mission => {
+            const isAvailable =
+                mission.id !== activeMissionId &&
+                !completedMissionIds.includes(mission.id) &&
+                this.arePrerequisitesMet(mission.id);
+            return isAvailable;
+        });
+    }
+
+    /**
      * Accepts a new mission, setting it as the active mission.
      * @param {string} missionId The ID of the mission to accept.
      */
     acceptMission(missionId) {
-        if (this.gameState.missions.activeMissionId || !MISSIONS[missionId]) {
+        if (this.gameState.missions.activeMissionId || !MISSIONS[missionId] || !this.arePrerequisitesMet(missionId)) {
             return;
         }
         this.gameState.missions.activeMissionId = missionId;
@@ -5217,6 +5262,7 @@ export class UIManager {
         this.activeTutorialHighlights = []; // Changed to handle multiple highlights
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
+        this.missionService = null; // To be injected
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.SERVICES]: 'Services' } },
@@ -5234,6 +5280,15 @@ export class UIManager {
             }
         });
     }
+
+    /**
+     * Injects the MissionService after instantiation to avoid circular dependencies.
+     * @param {import('./MissionService.js').MissionService} missionService
+     */
+    setMissionService(missionService) {
+        this.missionService = missionService;
+    }
+
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
@@ -5830,7 +5885,7 @@ export class UIManager {
 
     renderMissionsScreen(gameState) {
         const { missions, currentLocationId } = gameState;
-        const { activeMissionId, completedMissionIds, activeMissionObjectivesMet } = missions;
+        const { activeMissionId, activeMissionObjectivesMet } = missions;
 
         const getMissionCardHtml = (mission, status) => {
             let statusClass = '';
@@ -5867,12 +5922,13 @@ export class UIManager {
         if (activeMission) {
             missionsHtml += getMissionCardHtml(activeMission, 'active');
         }
-
-        Object.values(MISSIONS).forEach(mission => {
-            if (mission.id !== activeMissionId && !completedMissionIds.includes(mission.id)) {
+        
+        if (this.missionService) {
+            const availableMissions = this.missionService.getAvailableMissions();
+            availableMissions.forEach(mission => {
                 missionsHtml += getMissionCardHtml(mission, 'available');
-            }
-        });
+            });
+        }
 
         if (missionsHtml === '') {
             missionsHtml = '<p class="text-center text-gray-500 text-lg">No missions available at this terminal.</p>';
@@ -6957,6 +7013,9 @@ build();
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [20.01] - 2025-08-16
+- Implemented mission prerequisite system. Missions now only appear when their conditions are met.
+
 ## [20.00] - 2025-08-15
 - implemented V1 MissionEngine
 
@@ -7390,6 +7449,14 @@ All notable changes to the Orbital Trading project will be documented in this fi
         },
         "activeMissionObjectivesMet": {
             "_type": "boolean"
+        },
+        "prerequisites": {
+            "_type": "array",
+            "items": {
+                "type": "string",
+                "missionId": "string"
+            },
+            "optional": true
         }
     },
     "TRAVEL_DATA": {

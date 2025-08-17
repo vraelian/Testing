@@ -25,11 +25,49 @@ export class MissionService {
     }
 
     /**
+     * Checks if all prerequisites for a given mission are met.
+     * @param {string} missionId The ID of the mission to check.
+     * @returns {boolean} True if all prerequisites are met, false otherwise.
+     */
+    arePrerequisitesMet(missionId) {
+        const mission = MISSIONS[missionId];
+        if (!mission || !mission.prerequisites) {
+            return true; // No prerequisites, so it's met.
+        }
+
+        return mission.prerequisites.every(prereq => {
+            switch (prereq.type) {
+                case 'mission_completed':
+                    return this.gameState.missions.completedMissionIds.includes(prereq.missionId);
+                // Future prerequisite types like 'player_level' or 'item_owned' can be added here.
+                default:
+                    return false; // Unknown prerequisite type fails validation.
+            }
+        });
+    }
+    
+    /**
+     * Gets a list of all missions that are currently available to the player.
+     * A mission is available if it's not active, not completed, and its prerequisites are met.
+     * @returns {Array<object>} An array of available mission objects.
+     */
+    getAvailableMissions() {
+        const { activeMissionId, completedMissionIds } = this.gameState.missions;
+        return Object.values(MISSIONS).filter(mission => {
+            const isAvailable =
+                mission.id !== activeMissionId &&
+                !completedMissionIds.includes(mission.id) &&
+                this.arePrerequisitesMet(mission.id);
+            return isAvailable;
+        });
+    }
+
+    /**
      * Accepts a new mission, setting it as the active mission.
      * @param {string} missionId The ID of the mission to accept.
      */
     acceptMission(missionId) {
-        if (this.gameState.missions.activeMissionId || !MISSIONS[missionId]) {
+        if (this.gameState.missions.activeMissionId || !MISSIONS[missionId] || !this.arePrerequisitesMet(missionId)) {
             return;
         }
         this.gameState.missions.activeMissionId = missionId;

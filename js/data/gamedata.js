@@ -536,6 +536,9 @@ export const MISSIONS = {
         host: "STATION",
         isRepeatable: false,
         description: "Our construction crews are running low on Plasteel. We need a freelance captain to source and deliver 25 units to our depot on Mars. We'll make it worth your while.",
+        prerequisites: [
+            { "type": "mission_completed", "missionId": "mission_tutorial_01" }
+        ],
         objectives: [
             { "type": "have_item", "goodId": "plasteel", "quantity": 25 }
         ],
@@ -556,6 +559,9 @@ export const MISSIONS = {
         host: "GUILD",
         isRepeatable: false,
         description: "Urgent acquisition required: 10 units of Martian-grown Hydroponics for agricultural analysis. Premium offered for prompt delivery to the orbital stations of Earth.",
+        prerequisites: [
+            { "type": "mission_completed", "missionId": "mission_tutorial_02" }
+        ],
         objectives: [
             { "type": "have_item", "goodId": "hydroponics", "quantity": 10 }
         ],
