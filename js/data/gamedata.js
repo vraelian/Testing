@@ -88,6 +88,7 @@ export const INTRO_SEQUENCE_V1 = {
     'intro_hangar': {
         title: 'Your First Ship',
         trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_HANGAR' },
+        navLock: true,
         steps: [
             {
                 stepId: 'hangar_1',
@@ -124,6 +125,7 @@ export const INTRO_SEQUENCE_V1 = {
     'intro_finance': {
         title: 'Managing Your Debt',
         trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_FINANCE' },
+        navLock: true,
         steps: [
             {
                 stepId: 'finance_1',

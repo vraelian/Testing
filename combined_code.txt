@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.01, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>Orbital Trading v20.01</title>
+    <title>Orbital Trading v20.02</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css?v=1754200888545">
@@ -25,7 +25,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p id="version-display">Version 20.01</p>
+            <p id="version-display">Version 20.02</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
             <p class="mt-1">Designed by Devon C.</p>
         </footer>
@@ -2243,6 +2243,7 @@ export const INTRO_SEQUENCE_V1 = {
     'intro_hangar': {
         title: 'Your First Ship',
         trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_HANGAR' },
+        navLock: true,
         steps: [
             {
                 stepId: 'hangar_1',
@@ -2279,6 +2280,7 @@ export const INTRO_SEQUENCE_V1 = {
     'intro_finance': {
         title: 'Managing Your Debt',
         trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_FINANCE' },
+        navLock: true,
         steps: [
             {
                 stepId: 'finance_1',
@@ -3477,7 +3479,10 @@ export class SimulationService {
         const finalStep = INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-
+    
+        // Manually re-apply the navLock for the "Earn Your Fortune" modal.
+        this.gameState.tutorials.navLock = { navId: NAV_IDS.ADMIN, screenId: SCREEN_IDS.FINANCE };
+    
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
              this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
@@ -6928,11 +6933,18 @@ export class UIManager {
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
                 modal.querySelector('#mission-modal-description').innerHTML = mission.description;
                 
-                const rewardsHtml = mission.rewards.map(r => {
-                    if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-                    return r.type.toUpperCase();
-                }).join(', ');
-                modal.querySelector('#mission-modal-rewards').innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (mission.rewards && mission.rewards.length > 0) {
+                    const rewardsHtml = mission.rewards.map(r => {
+                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        return r.type.toUpperCase();
+                    }).join(', ');
+                    rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
+                    rewardsEl.style.display = 'block';
+                } else {
+                    rewardsEl.innerHTML = '';
+                    rewardsEl.style.display = 'none';
+                }
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) {
@@ -6961,11 +6973,18 @@ export class UIManager {
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
                 
-                const rewardsHtml = mission.rewards.map(r => {
-                    if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-                    return r.type.toUpperCase();
-                }).join(', ');
-                modal.querySelector('#mission-modal-rewards').innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (mission.rewards && mission.rewards.length > 0) {
+                    const rewardsHtml = mission.rewards.map(r => {
+                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        return r.type.toUpperCase();
+                    }).join(', ');
+                    rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                    rewardsEl.style.display = 'block';
+                } else {
+                    rewardsEl.innerHTML = '';
+                    rewardsEl.style.display = 'none';
+                }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
@@ -7062,6 +7081,9 @@ build();
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+## [20.02] - 2025-08-17
+- Polished introduction sequence with gated navigation access
+- UI polish
 
 ## [20.01] - 2025-08-16
 - Implemented mission prerequisite system. Missions now only appear when their conditions are met.

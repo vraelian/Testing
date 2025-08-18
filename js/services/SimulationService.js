@@ -235,7 +235,10 @@ export class SimulationService {
         const finalStep = INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-
+    
+        // Manually re-apply the navLock for the "Earn Your Fortune" modal.
+        this.gameState.tutorials.navLock = { navId: NAV_IDS.ADMIN, screenId: SCREEN_IDS.FINANCE };
+    
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
              this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
