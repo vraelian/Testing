@@ -1110,17 +1110,27 @@ export class UIManager {
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         if (!modal) {
+            console.error(`UIManager Error: Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
+            return this.processModalQueue(); // Attempt to process the next modal if available
+        }
+        if (!modal) {
             console.error(`Modal with ID ${modalId} not found.`);
             return this.processModalQueue();
         }
 
-        const titleEl = modal.querySelector('#' + modalId.replace('-modal', '-title'));
-        const descEl = modal.querySelector('#' + modalId.replace('-modal', '-description')) || modal.querySelector('#' + modalId.replace('-modal', '-scenario'));
-        
-        if(titleEl) titleEl.innerHTML = title;
-        if(descEl) {
+        // Use a more specific selector for mission modals to prevent conflicts.
+        const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
+        const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
+
+        const titleEl = modal.querySelector(`#${titleElId}`);
+        const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
+
+        if (titleEl) titleEl.innerHTML = title;
+        if (descEl) {
             descEl.innerHTML = description;
-            descEl.className = 'mb-6 text-lg';
+            // Reset classes for mission modal, which has its own styling, but keep defaults for others.
+            descEl.className = 'my-4 text-gray-300'; 
+            if(modalId !== 'mission-modal') descEl.classList.add('mb-6', 'text-lg');
             if (options.contentClass) {
                 descEl.classList.add(options.contentClass);
             }
@@ -1654,9 +1664,6 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
-                modal.querySelector('#mission-modal-title').textContent = mission.name;
-                modal.querySelector('#mission-modal-type').textContent = mission.type;
-                modal.querySelector('#mission-modal-description').innerHTML = mission.description;
                 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
