@@ -285,7 +285,6 @@ export class SimulationService {
             }
         }
 
-        // [hands-off]
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
         if (state.currentLocationId === locationId) {
@@ -313,12 +312,14 @@ export class SimulationService {
             return;
         }
 
-        if (this._checkForRandomEvent(locationId)) {
-            return;
+        const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
+        if (!isFirstTutorialFlight) {
+            if (this._checkForRandomEvent(locationId)) {
+                return;
+            }
         }
 
         this.initiateTravel(locationId);
-        // [/hands-off]
     }
 
     /**
@@ -327,7 +328,6 @@ export class SimulationService {
      * @param {object} [eventMods={}] - Modifications to travel from a random event.
      */
     initiateTravel(locationId, eventMods = {}) {
-        // [hands-off]
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
@@ -381,21 +381,24 @@ export class SimulationService {
         const destination = MARKETS.find(m => m.id === locationId);
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
         
-        this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, () => {
-            this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
-        });
-        // [/hands-off]
+        const finalCallback = () => {
+            if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+            } else {
+                this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+            }
+        };
+        
+        this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, finalCallback);
     }
     
     /**
      * Resumes travel after a random event has been resolved.
      */
     resumeTravel() {
-        // [hands-off]
         if (!this.gameState.pendingTravel) return;
         const { destinationId, ...eventMods } = this.gameState.pendingTravel;
         this.initiateTravel(destinationId, eventMods);
-        // [/hands-off]
     }
 
     /**
@@ -405,7 +408,6 @@ export class SimulationService {
      * @returns {boolean} - True if the purchase was successful, false otherwise.
      */
     buyItem(goodId, quantity) {
-        // [hands-off]
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return false;
         
@@ -439,7 +441,6 @@ export class SimulationService {
         this.uiManager.render(this.gameState.getState());
 
         return true;
-        // [/hands-off]
     }
 
     /**
@@ -449,7 +450,6 @@ export class SimulationService {
      * @returns {number} - The total value of the sale, or 0 if failed.
      */
     sellItem(goodId, quantity) {
-        // [hands-off]
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return 0;
         
@@ -482,7 +482,6 @@ export class SimulationService {
         this.uiManager.render(this.gameState.getState());
         
         return totalSaleValue;
-        // [/hands-off]
     }
 
     /**
@@ -491,7 +490,6 @@ export class SimulationService {
      * @returns {boolean} - True if the purchase was successful.
      */
     buyShip(shipId) {
-        // [hands-off]
         const ship = SHIPS[shipId];
         if (this.gameState.player.credits < ship.price) {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
@@ -510,7 +508,6 @@ export class SimulationService {
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
         return true;
-        // [/hands-off]
     }
 
     /**
@@ -519,7 +516,6 @@ export class SimulationService {
      * @returns {number|false} - The sale price, or false if the sale is not allowed.
      */
     sellShip(shipId) {
-        // [hands-off]
         const state = this.gameState.getState();
         if (state.player.ownedShipIds.length <= 1) {
             this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your last remaining ship.");
@@ -547,7 +543,6 @@ export class SimulationService {
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
         return salePrice;
-        // [/hands-off]
     }
 
     /**
@@ -555,7 +550,6 @@ export class SimulationService {
      * @param {string} shipId - The ID of the ship to make active.
      */
     setActiveShip(shipId) {
-        // [hands-off]
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
 
@@ -565,14 +559,12 @@ export class SimulationService {
 
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState()); // Full render on ship change
-        // [/hands-off]
     }
 
     /**
      * Pays off the player's entire outstanding debt.
      */
     payOffDebt() {
-        // [hands-off]
         if (this.gameState.isGameOver) return;
         const { player } = this.gameState;
         if (player.credits < player.debt) {
@@ -591,7 +583,6 @@ export class SimulationService {
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
         this.uiManager.renderFinanceScreen(this.gameState.getState());
-        // [/hands-off]
     }
     
     /**
@@ -599,7 +590,6 @@ export class SimulationService {
      * @param {object} loanData - Contains amount, fee, and interest for the loan.
      */
     takeLoan(loanData) {
-        // [hands-off]
         const { player, day } = this.gameState;
         if (player.debt > 0) {
             this.uiManager.queueModal('event-modal', "Loan Unavailable", `You must pay off your existing debt first.`);
@@ -625,7 +615,6 @@ export class SimulationService {
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
         this.uiManager.renderFinanceScreen(this.gameState.getState());
-        // [/hands-off]
     }
 
     /**
@@ -633,7 +622,6 @@ export class SimulationService {
      * @param {number} cost - The credit cost of the intel.
      */
     purchaseIntel(cost) {
-        // [hands-off]
         const { player, currentLocationId, day } = this.gameState;
         if (player.credits < cost) {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You can't afford this intel.");
@@ -662,7 +650,6 @@ export class SimulationService {
         }
         this.gameState.setState({});
         this.uiManager.updateStickyBar(this.gameState.getState());
-        // [/hands-off]
     }
 
     /**
@@ -670,7 +657,6 @@ export class SimulationService {
      * @returns {number} - The cost of the fuel tick.
      */
     refuelTick() {
-        // [hands-off]
         const state = this.gameState;
         const ship = this._getActiveShip();
         if (ship.fuel >= ship.maxFuel) return 0;
@@ -686,7 +672,6 @@ export class SimulationService {
         this._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
         this.gameState.setState({});
         return costPerTick;
-        // [/hands-off]
     }
 
     /**
@@ -694,7 +679,6 @@ export class SimulationService {
      * @returns {number} - The cost of the repair tick.
      */
     repairTick() {
-        // [hands-off]
         const state = this.gameState;
         const ship = this._getActiveShip();
         if (ship.health >= ship.maxHealth) return 0;
@@ -711,7 +695,6 @@ export class SimulationService {
         this._checkHullWarnings(ship.id);
         this.gameState.setState({});
         return costPerTick;
-        // [/hands-off]
     }
 
     /**
@@ -719,7 +702,6 @@ export class SimulationService {
      * @param {number} days - The number of days to advance.
      */
     _advanceDays(days) {
-        // [hands-off]
         let marketUpdated = false;
 
         // This loop simulates the passage of time, one day at a time.
@@ -780,7 +762,6 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        // [/hands-off]
     }
     
     /**
@@ -790,7 +771,6 @@ export class SimulationService {
      * @returns {boolean} - True if an event was triggered.
      */
     _checkForRandomEvent(destinationId, force = false) {
-        // [hands-off]
         if (!force && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
 
         const activeShip = this._getActiveShip();
@@ -804,7 +784,6 @@ export class SimulationService {
         this.gameState.setState({ pendingTravel: { destinationId } });
         this.uiManager.showRandomEventModal(event, (eventId, choiceIndex) => this._resolveEventChoice(eventId, choiceIndex));
         return true;
-        // [/hands-off]
     }
 
     /**
@@ -813,7 +792,6 @@ export class SimulationService {
      * @param {number} choiceIndex - The index of the choice the player made.
      */
     _resolveEventChoice(eventId, choiceIndex) {
-        // [hands-off]
         const event = RANDOM_EVENTS.find(e => e.id === eventId);
         const choice = event.choices[choiceIndex];
         let random = Math.random();
@@ -830,7 +808,6 @@ export class SimulationService {
         }
     
         this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
-        // [/hands-off]
     }
 
     /**
@@ -838,7 +815,6 @@ export class SimulationService {
      * @param {object} outcome - The outcome object containing effects.
      */
     _applyEventEffects(outcome) {
-        // [hands-off]
         let result = null;
         outcome.effects.forEach(effect => {
             const effectResult = applyEffect(this.gameState, this, effect, outcome);
@@ -849,14 +825,12 @@ export class SimulationService {
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
         return result;
-        // [/hands-off]
     }
 
     /**
      * Checks for and triggers age-based narrative events.
      */
     _checkAgeEvents() {
-        // [hands-off]
         AGE_EVENTS.forEach(event => {
             if (this.gameState.player.seenEvents.includes(event.id)) return;
             if ((event.trigger.day && this.gameState.day >= event.trigger.day) || (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
@@ -864,7 +838,6 @@ export class SimulationService {
                 this.uiManager.showAgeEventModal(event, (choice) => this._applyPerk(choice));
             }
         });
-        // [/hands-off]
     }
 
     /**
@@ -872,7 +845,6 @@ export class SimulationService {
      * @param {object} choice - The choice object from the event data.
      */
     _applyPerk(choice) {
-        // [hands-off]
         if (choice.perkId) this.gameState.player.activePerks[choice.perkId] = true;
         if (choice.playerTitle) this.gameState.player.playerTitle = choice.playerTitle;
         if (choice.perkId === PERK_IDS.MERCHANT_GUILD_SHIP) {
@@ -880,7 +852,6 @@ export class SimulationService {
             this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild has delivered a new ${SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
         }
         this.gameState.setState({});
-        // [/hands-off]
     }
 
     /**
@@ -888,12 +859,10 @@ export class SimulationService {
      * @returns {object|null} - The active ship's data, or null if no ship is active.
      */
     _getActiveShip() {
-        // [hands-off]
         const state = this.gameState;
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
         return { id: activeId, ...SHIPS[activeId], ...state.player.shipStates[activeId] };
-        // [/hands-off]
     }
 
     /**
@@ -901,10 +870,8 @@ export class SimulationService {
      * @returns {object|null} - The active ship's inventory object, or null.
      */
     _getActiveInventory() {
-        // [hands-off]
         if (!this.gameState.player.activeShipId) return null;
         return this.gameState.player.inventories[this.gameState.player.activeShipId];
-        // [/hands-off]
     }
 
     /**
@@ -914,7 +881,6 @@ export class SimulationService {
      * @param {string} description - A brief description of the transaction.
      */
     _logTransaction(type, amount, description) {
-        // [hands-off]
         this.gameState.player.financeLog.push({ 
             day: this.gameState.day,
             type: type, 
@@ -922,7 +888,6 @@ export class SimulationService {
             balance: this.gameState.player.credits,
             description: description
         });
-        // [/hands-off]
     }
 
     /**
@@ -932,7 +897,6 @@ export class SimulationService {
      * e.g., "Bought 1x Plasteel" + "Bought 1x Plasteel" becomes "Bought 2x Plasteel".
      */
     _logConsolidatedTrade(goodName, quantity, transactionValue) {
-        // [hands-off]
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
@@ -964,7 +928,6 @@ export class SimulationService {
             // No existing entry for this item today, push a new one.
             this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
         }
-        // [/hands-off]
     }
 
     /**
@@ -974,7 +937,6 @@ export class SimulationService {
      * @param {string} description - The description for a new entry if one doesn't exist.
      */
     _logConsolidatedTransaction(type, amount, description) {
-        // [hands-off]
         const log = this.gameState.player.financeLog;
         const lastEntry = log.length > 0 ? log[log.length - 1] : null;
         
@@ -986,7 +948,6 @@ export class SimulationService {
             // It's a new day or a different type, so push a new entry
             this._logTransaction(type, amount, description);
         }
-        // [/hands-off]
     }
 
     /**
@@ -994,7 +955,6 @@ export class SimulationService {
      * @returns {boolean} - True if a milestone was reached and state was changed.
      */
     _checkMilestones() {
-        // [hands-off]
         let changed = false;
         CONFIG.COMMODITY_MILESTONES.forEach(milestone => {
             if (this.gameState.player.credits >= milestone.threshold && !this.gameState.player.seenCommodityMilestones.includes(milestone.threshold)) {
@@ -1018,7 +978,6 @@ export class SimulationService {
             }
         });
         return changed;
-        // [/hands-off]
     }
 
     /**
@@ -1026,7 +985,6 @@ export class SimulationService {
      * @param {string} shipId - The ID of the ship to check.
      */
     _checkHullWarnings(shipId) {
-        // [hands-off]
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
@@ -1041,7 +999,6 @@ export class SimulationService {
 
         if (healthPct > 30) shipState.hullAlerts.one = false;
         if (healthPct > 15) shipState.hullAlerts.two = false;
-        // [/hands-off]
     }
 
     /**
@@ -1049,7 +1006,6 @@ export class SimulationService {
      * @param {string} shipId - The ID of the destroyed ship.
      */
     _handleShipDestruction(shipId) {
-        // [hands-off]
         const shipName = SHIPS[shipId].name;
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
         delete this.gameState.player.shipStates[shipId];
@@ -1064,7 +1020,6 @@ export class SimulationService {
             this.uiManager.queueModal('event-modal', 'Vessel Lost', message);
         }
         this.gameState.setState({});
-        // [/hands-off]
     }
 
     /**
@@ -1072,20 +1027,17 @@ export class SimulationService {
      * @param {string} message - The game over message to display.
      */
     _gameOver(message) {
-        // [hands-off]
         this.gameState.setState({ isGameOver: true });
         this.uiManager.queueModal('event-modal', "Game Over", message, () => {
             localStorage.removeItem(SAVE_KEY);
             window.location.reload();
         }, { buttonText: 'Restart' });
-        // [/hands-off]
     }
     
     /**
      * Applies weekly credit garnishment if the player's loan is delinquent.
      */
     _applyGarnishment() {
-        // [hands-off]
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
@@ -1101,7 +1053,6 @@ export class SimulationService {
                 player.seenGarnishmentWarning = true;
             }
         }
-        // [/hands-off]
     }
     
     /**
@@ -1110,7 +1061,6 @@ export class SimulationService {
      * available for sale are periodically refreshed.
      */
     _updateShipyardStock() {
-        // [hands-off]
         const { player } = this.gameState;
 
         // Iterate over all locations the player has unlocked.
@@ -1145,7 +1095,6 @@ export class SimulationService {
         });
 
         // We don't call setState here as it will be called at the end of _advanceDays
-        // [/hands-off]
     }
 
     /**
