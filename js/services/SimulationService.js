@@ -271,6 +271,20 @@ export class SimulationService {
      * @param {string} locationId - The ID of the destination market.
      */
     travelTo(locationId) {
+        const { tutorials } = this.gameState;
+        const { navLock } = tutorials;
+
+        // Guard clause for tutorial-forced navigation
+        if (navLock && navLock.screenId === SCREEN_IDS.NAVIGATION && navLock.enabledElementQuery) {
+            const match = navLock.enabledElementQuery.match(/data-location-id='([^']*)'/);
+            if (match && match[1]) {
+                const requiredLocationId = match[1];
+                if (locationId !== requiredLocationId) {
+                    return; // Exit without traveling if it's not the required destination
+                }
+            }
+        }
+
         // [hands-off]
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
