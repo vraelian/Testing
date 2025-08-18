@@ -65,9 +65,7 @@ export class EventManager {
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
-                if (this.gameState.missions.activeMissionId) {
-                    this.uiManager.showMissionModal(this.gameState.missions.activeMissionId);
-                }
+                this.simulationService.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
             });
         }
     }

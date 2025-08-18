@@ -1082,7 +1082,7 @@ body {
     width: 100%;
     max-width: 1200px;
     padding: 0 1.5rem;
-    pointer-events: none;
+    cursor: pointer;
     z-index: 50;
 }
 .sticky-content {
@@ -1097,6 +1097,11 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.bottom-sticky-bar:hover .sticky-content {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 @keyframes flash-green {
     0%, 100% { color: #34d399; }
@@ -1112,10 +1117,7 @@ body {
     0% { background-position: -600px 0; }
     100% { background-position: 600px 0; }
 }
-@keyframes glimmer-effect {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
+
 .mission-turn-in {
     overflow: hidden;
     position: relative;
@@ -1124,23 +1126,4 @@ body {
     background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
     background-repeat: no-repeat;
     background-size: 400px 100%;
-}
-.mission-turn-in::before {
-    content: '★';
-    position: absolute;
-    color: #fde047;
-    font-size: 12px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 1.5s infinite;
-    top: 10%; left: 20%;
-}
-.mission-turn-in::after {
-    content: '✧';
-    position: absolute;
-    color: #fde047;
-    font-size: 10px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 2s infinite reverse;
-    bottom: 15%; right: 10%;
-    animation-delay: -0.5s;
 }

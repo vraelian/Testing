@@ -2652,7 +2652,7 @@ export const TUTORIAL_DATA = {
         { "stepId": "mission_1_3", "text": "The foreman can't pay, but he's giving you the cargo. Accept the contract.", "highlightElementQuery": "[data-action='accept-mission']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
         { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now marked as active in your terminal.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
         { "stepId": "mission_1_5", "text": "The 5 Plasteel are in your cargo hold. Time to get moving. Go to Navigation.", "highlightElementQuery": "[data-nav-id='ship']", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
-        { "stepId": "mission_1_6", "text": "This is your route. Notice the fuel cost—every trip has one. Travel to Luna.", "highlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
+        { "stepId": "mission_1_6", "text": "This is your route. Notice the fuel cost—every trip has one. Travel to Luna.", "highlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
         { "stepId": "mission_1_7", "text": "You've arrived. The refinery is ready for your delivery. The objective bar is glowing—that means you can turn in the mission here. Click it.", "highlightElementId": "mission-sticky-bar", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false },
         { "stepId": "mission_1_8", "text": "Mission complete... but that trip cost you fuel, and fuel costs credits. That small profit might have just been a net loss. Favors don't pay off Guild loans. For the next run, we find a real margin.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
         { "stepId": "mission_2_1", "text": "Relying on handouts won't work. The real money is in playing the markets yourself—buying low and selling high. Let's find an opportunity right here on Luna.", "highlightElementQuery": "[data-screen-id='market']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": "starport", "screenId": "market" } },
@@ -3515,6 +3515,20 @@ export class SimulationService {
      * @param {string} locationId - The ID of the destination market.
      */
     travelTo(locationId) {
+        const { tutorials } = this.gameState;
+        const { navLock } = tutorials;
+
+        // Guard clause for tutorial-forced navigation
+        if (navLock && navLock.screenId === SCREEN_IDS.NAVIGATION && navLock.enabledElementQuery) {
+            const match = navLock.enabledElementQuery.match(/data-location-id='([^']*)'/);
+            if (match && match[1]) {
+                const requiredLocationId = match[1];
+                if (locationId !== requiredLocationId) {
+                    return; // Exit without traveling if it's not the required destination
+                }
+            }
+        }
+
         // [hands-off]
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
@@ -4607,9 +4621,7 @@ export class EventManager {
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
-                if (this.gameState.missions.activeMissionId) {
-                    this.uiManager.showMissionModal(this.gameState.missions.activeMissionId);
-                }
+                this.simulationService.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
             });
         }
     }
@@ -4620,6 +4632,7 @@ export class EventManager {
         // --- Priority Action Handling ---
         const actionTarget = e.target.closest('[data-action]');
         if (actionTarget) {
+            if (actionTarget.hasAttribute('disabled')) return;
             const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
             let actionData = null;
             
@@ -5579,8 +5592,13 @@ export class UIManager {
     }
 
     renderNavigationScreen(gameState) {
-        // [hands-off]
-        const { player, currentLocationId, TRAVEL_DATA } = gameState;
+        const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
+        const { navLock } = tutorials;
+    
+        // Determine if there's a specific element that should be enabled
+        const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
+        const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
+        
         this.cache.navigationScreen.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             ${MARKETS
@@ -5588,7 +5606,19 @@ export class UIManager {
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
                     const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}">
+    
+                    // Determine if this card should be disabled
+                    let isDisabled = false;
+                    if (isNavLocked && enabledElementQuery) {
+                        // A bit of a workaround to check if the current location matches the query selector
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
+                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
+                    }
+                    const disabledClass = isDisabled ? 'disabled-location' : '';
+    
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
+                                 data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -5609,7 +5639,6 @@ export class UIManager {
                 }).join('')
             }
             </div>`;
-        // [/hands-off]
     }
 
     renderServicesScreen(gameState) {
@@ -10224,13 +10253,13 @@ body {
     }
 
     #tutorial-toast-container {
-        top: auto !important;
-        bottom: 1rem !important;
-        left: 1rem !important;
-        right: 1rem !important;
-        transform: none !important;
-        width: auto !important;
-        max-width: 100%;
+        top: 80% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: 90% !important;
+        max-width: 350px;
     }
     
     #ship-detail-modal {
@@ -10408,7 +10437,7 @@ body {
     width: 100%;
     max-width: 1200px;
     padding: 0 1.5rem;
-    pointer-events: none;
+    cursor: pointer;
     z-index: 50;
 }
 .sticky-content {
@@ -10423,6 +10452,11 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.bottom-sticky-bar:hover .sticky-content {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 @keyframes flash-green {
     0%, 100% { color: #34d399; }
@@ -10438,10 +10472,7 @@ body {
     0% { background-position: -600px 0; }
     100% { background-position: 600px 0; }
 }
-@keyframes glimmer-effect {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
+
 .mission-turn-in {
     overflow: hidden;
     position: relative;
@@ -10450,25 +10481,6 @@ body {
     background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
     background-repeat: no-repeat;
     background-size: 400px 100%;
-}
-.mission-turn-in::before {
-    content: '★';
-    position: absolute;
-    color: #fde047;
-    font-size: 12px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 1.5s infinite;
-    top: 10%; left: 20%;
-}
-.mission-turn-in::after {
-    content: '✧';
-    position: absolute;
-    color: #fde047;
-    font-size: 10px;
-    text-shadow: 0 0 5px #fde047;
-    animation: glimmer-effect 2s infinite reverse;
-    bottom: 15%; right: 10%;
-    animation-delay: -0.5s;
 }
 --- END OF FILE: ./style.css ---
 
