@@ -289,8 +289,13 @@ export class UIManager {
     }
 
     renderNavigationScreen(gameState) {
-        // [hands-off]
-        const { player, currentLocationId, TRAVEL_DATA } = gameState;
+        const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
+        const { navLock } = tutorials;
+    
+        // Determine if there's a specific element that should be enabled
+        const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
+        const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
+        
         this.cache.navigationScreen.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             ${MARKETS
@@ -298,7 +303,19 @@ export class UIManager {
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
                     const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}">
+    
+                    // Determine if this card should be disabled
+                    let isDisabled = false;
+                    if (isNavLocked && enabledElementQuery) {
+                        // A bit of a workaround to check if the current location matches the query selector
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
+                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
+                    }
+                    const disabledClass = isDisabled ? 'disabled-location' : '';
+    
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
+                                 data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -319,7 +336,6 @@ export class UIManager {
                 }).join('')
             }
             </div>`;
-        // [/hands-off]
     }
 
     renderServicesScreen(gameState) {
