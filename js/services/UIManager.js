@@ -1649,7 +1649,6 @@ export class UIManager {
         const anotherMissionActive = missions.activeMissionId && !isActive;
 
         // Tutorial-specific logic to prevent accepting the first mission too early.
-        const isTutorialMissionOne = mission.id === 'mission_tutorial_01';
         const isWrongTutorialStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_1_1';
         const shouldBeDisabled = anotherMissionActive || (isTutorialMissionOne && isWrongTutorialStep);
 
@@ -1676,7 +1675,7 @@ export class UIManager {
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
-                } else {
+                } else { 
                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
                 }
             }
@@ -1688,13 +1687,6 @@ export class UIManager {
         const options = {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
-                modalContent.classList.add('mission-turn-in', `host-${mission.host.toLowerCase()}`);
-                
-                modal.querySelector('#mission-modal-close').onclick = () => {
-                     modalContent.classList.remove('mission-turn-in', `host-${mission.host.toLowerCase()}`);
-                     closeHandler();
-                };
-
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
