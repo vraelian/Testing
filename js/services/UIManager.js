@@ -1678,8 +1678,7 @@ export class UIManager {
                 }
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
-                if (isActive) {
-                    // modal.querySelector('#mission-modal-close').onclick = closeHandler;
+                if (isActive) { // modal.querySelector('#mission-modal-close').onclick = closeHandler;
                     const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else { 
