@@ -78,6 +78,7 @@ export class EventManager {
         // --- Priority Action Handling ---
         const actionTarget = e.target.closest('[data-action]');
         if (actionTarget) {
+            if (actionTarget.hasAttribute('disabled')) return;
             const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
             let actionData = null;
             
