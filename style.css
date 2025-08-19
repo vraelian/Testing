@@ -57,7 +57,7 @@ body {
     pointer-events: none;
 }
 .btn-header {
-     padding: 0.5rem 1.5rem;
+     padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
      flex: 1;
      background-blend-mode: overlay;
@@ -71,7 +71,7 @@ body {
 }
 
 .btn-sub-nav {
-    padding: 0.25rem 0.8rem;
+    padding: 0.1rem 0.8rem;
     font-size: 0.9rem;
     flex: 1;
     background-blend-mode: overlay;
@@ -930,14 +930,17 @@ body {
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 1rem;
     
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
 }
 
 #sticky-bar {
-    margin-top: 0.5rem;
+    margin-top: 0.2rem;
+}
+
+#sticky-bar .ship-hud {
+    padding: 0.15rem;
 }
 
 /* --- Sci-Fi Frame & Polish --- */
