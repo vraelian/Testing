@@ -769,7 +769,7 @@ body {
 }
 
 #top-bar-container.has-sticky-bar {
-    padding-bottom: 0.75rem;
+    padding: 0.5rem 1rem;
 }
 
 
@@ -931,7 +931,7 @@ body {
     background-color: rgba(12, 16, 29, 0.85); 
     backdrop-filter: blur(10px); /* Apply blur effect */
     -webkit-backdrop-filter: blur(10px); /* Safari support */
-    padding: 0.17rem 1rem;
+    padding: 0.3rem 1rem;
     
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); /* Subtle shadow */
 }
