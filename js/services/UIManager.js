@@ -44,6 +44,7 @@ export class UIManager {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
             navBar: document.getElementById('nav-bar'),
+            topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
             statusScreen: document.getElementById(`${SCREEN_IDS.STATUS}-screen`),
@@ -125,7 +126,7 @@ export class UIManager {
                     ${screenLabel}
                 </button>`;
         }).join('');
-        this.cache.subNavBar.innerHTML = `<div class="flex justify-center w-full gap-2 md:gap-4 mt-3 ${themeClass}">${subNavButtons}</div>`;
+        this.cache.subNavBar.innerHTML = `<div class="flex justify-center w-full gap-2 md:gap-4 ${themeClass}">${subNavButtons}</div>`;
     }
 
     renderActiveScreen(gameState) {
@@ -217,6 +218,11 @@ export class UIManager {
                 
                 `;
                 break;
+        }
+        if (this.cache.stickyBar.innerHTML.trim() !== '') {
+            this.cache.topBarContainer.classList.add('has-sticky-bar');
+        } else {
+            this.cache.topBarContainer.classList.remove('has-sticky-bar');
         }
         // [/hands-off]
     }
