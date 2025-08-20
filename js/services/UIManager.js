@@ -1664,13 +1664,12 @@ export class UIManager {
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
 
-        // --- FIX START ---
-        // These variables were previously undefined, causing the ReferenceError.
         const isTutorialMissionOne = mission.id === 'mission_tutorial_01';
-        const isWrongTutorialStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_1_2';
-        // --- FIX END ---
-        
-        const shouldBeDisabled = anotherMissionActive || (isTutorialMissionOne && isWrongTutorialStep);
+
+        let shouldBeDisabled = anotherMissionActive;
+        if (isTutorialMissionOne) {
+            shouldBeDisabled = false;
+        }
 
         const options = {
             customSetup: (modal, closeHandler) => {
