@@ -79,9 +79,9 @@ export const INTRO_SEQUENCE_V1 = {
     },
     {
         id: 'final',
-        title: 'Earn Your Fortune',
-        description: "Interest on your debt grows every week. Visit the market in any Starport to begin your career and start earning credits!",
-        buttonText: 'Board the {shipName}'
+        title: 'Low On Credits!',
+        description: "Interest on your debt grows every week. It's time to make some credits. Let's view the Mission Terminal here on Mars!",
+        buttonText: 'View Missions'
     }
   ],
   tutorials: {
