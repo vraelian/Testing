@@ -1178,4 +1178,27 @@ export class SimulationService {
         this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
         this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
     }
+
+    /**
+     * A debug function to skip the intro and start at the "profit margin" tutorial step.
+     */
+    debugProfitStart() {
+        this.gameState.introSequenceActive = false;
+        this.tutorialService.activeBatchId = null;
+        this.tutorialService.activeStepId = null;
+        this.gameState.tutorials.activeBatchId = null;
+        this.gameState.tutorials.activeStepId = null;
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(TUTORIAL_DATA).filter(id => id !== 'intro_missions');
+
+        this.gameState.player.credits = 10000;
+        this.gameState.player.ownedShipIds = [];
+        this.addShipToHangar(SHIP_IDS.WANDERER);
+        this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        this.gameState.missions.completedMissionIds.push('mission_tutorial_01');
+        this.gameState.currentLocationId = LOCATION_IDS.LUNA;
+
+        document.getElementById('game-container').classList.remove('hidden');
+        this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+        this.tutorialService.triggerBatch('intro_missions', 'mission_1_8');
+    }
 }

@@ -84,7 +84,7 @@ export class EventManager {
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
                     actionData = { type: 'ACTION', action: 'show-mission-modal' };
-                    return; // Stop further processing
+                    break; // ensure we hit checkState below
                 case 'accept-mission':
                     this.simulationService.missionService.acceptMission(missionId);
                     this.uiManager.hideModal('mission-modal');
@@ -312,18 +312,8 @@ export class EventManager {
                 message = 'Debug: All ships added.';
                 break;
             case '@':
-                const ship = this.simulationService._getActiveShip();
-                if (ship) {
-                    this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
-                    const possibleDestinations = MARKETS.filter(m => m.id !== this.gameState.currentLocationId && this.gameState.player.unlockedLocationIds.includes(m.id));
-                    if (possibleDestinations.length > 0) {
-                        const randomDestination = possibleDestinations[Math.floor(Math.random() * possibleDestinations.length)];
-                        this.simulationService.initiateTravel(randomDestination.id, { forceEvent: true });
-                        message = `Debug: Refilled fuel & force-traveling to ${randomDestination.name} with event.`;
-                    } else {
-                        message = `Debug: No available destinations.`;
-                    }
-                }
+                this.simulationService.debugProfitStart();
+                message = 'Debug: Skipped to profit tutorial.';
                 break;
             case '%':
                 this.gameState.player.credits += 1000000000000;

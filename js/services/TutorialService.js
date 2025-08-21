@@ -61,10 +61,11 @@ export class TutorialService {
     }
 
     /**
-     * Starts a specific tutorial batch by its ID.
+     * Starts a specific tutorial batch by its ID, optionally from a specific step.
      * @param {string} batchId The ID of the tutorial batch to start.
+     * @param {string|null} [startStepId=null] The ID of the step to start from. If null, starts from the beginning.
      */
-    triggerBatch(batchId) {
+    triggerBatch(batchId, startStepId = null) {
         if (!TUTORIAL_DATA[batchId]) return;
         const batch = TUTORIAL_DATA[batchId];
 
@@ -89,7 +90,7 @@ export class TutorialService {
         this.gameState.setState(this.gameState);
         this.uiManager.render(this.gameState.getState());
         
-        const firstStepId = batch.steps[0].stepId;
+        const firstStepId = startStepId || batch.steps[0].stepId;
         this._displayStep(firstStepId);
 
     }
