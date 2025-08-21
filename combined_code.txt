@@ -488,6 +488,7 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
  * @property {string} [mobileHighlightElementId] - The ID of a single UI element to highlight on mobile.
  * @property {string} [highlightElementQuery] - A query selector for multiple UI elements to highlight.
  * @property {string} [mobileHighlightElementQuery] - A query selector for multiple UI elements to highlight on mobile.
+ * @property {string} [highlightClasses] - CSS classes to apply to the highlighted element(s), e.g., 'btn-pulse-green'. Defaults to 'tutorial-highlight'.
  * @property {object} position - The positioning of the toast.
  * @property {object} [size] - The size of the toast.
  * @property {object} completion - The action required to complete the step.
@@ -554,7 +555,7 @@ export const INTRO_SEQUENCE_V1 = {
         steps: [
             {
                 stepId: 'hangar_1',
-                text: 'Welcome to the <b>Shipyard</b> on <b>Mars</b>!<br><br>Every station has a port from which you can trade ships and manage your <b>Hangar</b>.',
+                text: 'Welcome to the <b>Shipyard</b> on Mars!<br><br>Every station has a port from which you can trade ships and manage your hangar.',
                 highlightElementId: 'starport-shipyard-panel',
                 mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },
@@ -564,7 +565,7 @@ export const INTRO_SEQUENCE_V1 = {
             },
             {
                 stepId: 'hangar_2',
-                text: "Now that you've got some <b class='hl-yellow font-bold'>extra credits</b>, it's time to buy your first ship! Select one of the options in the <b>Shipyard</b>. Choose carefully...",
+                text: "Now that you've got some <b class='hl-yellow font-bold'>extra credits</b>, it's time to buy your first ship. Select one of the options in the <b>Shipyard</b>. Choose carefully...",
                 highlightElementQuery: '.ship-card button[data-action="buy-ship"]',
                 mobileHighlightElementQuery: '.ship-list-item-mobile[data-context="shipyard"]',
                 position: { desktop: 'bottom-right', mobile: 'top' },
@@ -574,9 +575,10 @@ export const INTRO_SEQUENCE_V1 = {
             },
             {
                 stepId: 'hangar_3',
-                text: 'Congratulations! Your new vessel is now in your <b>Hangar</b>.<br><br><b class="hl-yellow font-bold">Board</b> it to make it your <b>active</b> ship.',
-                highlightElementId: 'starport-hangar-panel',
-                mobileHighlightElementId: 'starport-hangar-panel-mobile',
+                text: 'Congratulations! Your new vessel is now in your <b>Hangar</b>. Select it and <b class="hl-yellow font-bold">Board</b> to make it your active ship.',
+                highlightElementQuery: '#starport-hangar-panel [data-action="select-ship"]',
+                mobileHighlightElementQuery: '#starport-hangar-panel-mobile [data-action="show-ship-detail"]',
+                highlightClasses: 'btn-pulse-green',
                 position: { desktop: 'bottom-right', mobile: 'top-center' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
                 nextStepId: null,
@@ -591,8 +593,9 @@ export const INTRO_SEQUENCE_V1 = {
         steps: [
             {
                 stepId: 'finance_1',
-                text: "That was a big purchase, but don't worry - you've still got some <b class='hl-yellow font-bold'>credits</b> left over!<br><br>Your transaction history and <b>debts</b> can be viewed in your <b>Finances</b>.",
+                text: "That was a big purchase, but don't worry - you've still got some credits left over! All of your transaction history and debts can be viewed in your <b>Finances</b>.",
                 highlightElementQuery: '[data-screen-id="finance"]',
+                highlightClasses: 'btn-pulse-green',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: 'finance_2',
@@ -602,6 +605,7 @@ export const INTRO_SEQUENCE_V1 = {
                 stepId: 'finance_2',
                 text: "Your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>180 days</b>. You will need to earn <b class='hl-yellow font-bold'>credits</b> to pay off your debt!",
                 highlightElementId: 'finance-debt-panel',
+                mobileHighlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: null,
@@ -954,12 +958,12 @@ export const TUTORIAL_DATA = {
       trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
       navLock: true,
       steps: [
-        { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn credits and improve your reputation. It appears that the <b>Mars</b> station has put in a <b>Delivery</b> request.", "highlightElementId": "missions-screen", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
+        { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn credits and improve your reputation. It appears that the Mars station has put in a <b>Delivery</b> request.", "highlightElementId": "missions-screen", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
         { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
         { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "highlightElementQuery": "[data-action='accept-mission']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
         { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship, the {shipName}.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-        { "stepId": "mission_1_5", "text": "It's time to go the moon, spacer! Proceed to your <b>Ship Navigation</b> terminal.", "highlightElementQuery": "[data-nav-id='ship']", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
-        { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear and tear</b> on your ship. Select the <b>Moon</b> to lift from Mars.", "highlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+        { "stepId": "mission_1_5", "text": "It's time to go the moon, spacer! Proceed to your <b>Ship Navigation</b> terminal.", "highlightElementQuery": "[data-nav-id='ship'], [data-screen-id='navigation']", "highlightClasses": "btn-pulse-green", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
+        { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear and tear</b> on your ship. Select the <b>Moon</b> to lift from Mars.", "highlightElementQuery": "[data-location-id='loc_luna']", "mobileHighlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
         { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "highlightElementId": "mission-sticky-bar", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
         { "stepId": "mission_1_8", "text": "Mission complete! However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. Let's find a real <b class='hl-yellow font-bold'>profit margin.</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
         { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "highlightElementQuery": "[data-nav-id='admin']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
@@ -4309,7 +4313,7 @@ export class UIManager {
             loanHtml = `
                <div id="finance-debt-panel">
                  <h4 class="font-orbitron text-xl mb-2">Debt</h4>
-                 <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">${formatCredits(player.debt, false)}</p>
+                 <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
                  <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
                      Pay Off Full Amount
                  </button>
@@ -5045,31 +5049,34 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        this.activeTutorialHighlights.forEach(el => el.classList.remove('tutorial-highlight'));
+        // Clear previous highlights and their custom classes
+        this.activeTutorialHighlights.forEach(({ element, classes }) => {
+            element.classList.remove(...classes);
+        });
         this.activeTutorialHighlights = [];
-
+    
         if (!step) return;
-
-        let elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        let elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery; // Corrected typo here
-
-        if (elementId) {
-            const element = document.getElementById(elementId);
+    
+        const elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
+        const elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery;
+        const highlightClasses = (step.highlightClasses || 'tutorial-highlight').split(' ');
+    
+        const applyClasses = (element) => {
             if (element) {
-                element.classList.add('tutorial-highlight');
-                this.activeTutorialHighlights.push(element);
+                element.classList.add(...highlightClasses);
+                this.activeTutorialHighlights.push({ element, classes: highlightClasses });
                 if (elementId !== 'starport-shipyard-panel' && elementId !== 'starport-hangar-panel') {
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
+        };
+    
+        if (elementId) {
+            applyClasses(document.getElementById(elementId));
         }
-
+    
         if (elementQuery) {
-            const elements = document.querySelectorAll(elementQuery);
-            elements.forEach(element => {
-                element.classList.add('tutorial-highlight');
-                this.activeTutorialHighlights.push(element);
-            });
+            document.querySelectorAll(elementQuery).forEach(applyClasses);
         }
     }
 

@@ -738,7 +738,7 @@ export class UIManager {
             loanHtml = `
                <div id="finance-debt-panel">
                  <h4 class="font-orbitron text-xl mb-2">Debt</h4>
-                 <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">${formatCredits(player.debt, false)}</p>
+                 <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
                  <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
                      Pay Off Full Amount
                  </button>
@@ -1474,31 +1474,34 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        this.activeTutorialHighlights.forEach(el => el.classList.remove('tutorial-highlight'));
+        // Clear previous highlights and their custom classes
+        this.activeTutorialHighlights.forEach(({ element, classes }) => {
+            element.classList.remove(...classes);
+        });
         this.activeTutorialHighlights = [];
-
+    
         if (!step) return;
-
-        let elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        let elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery; // Corrected typo here
-
-        if (elementId) {
-            const element = document.getElementById(elementId);
+    
+        const elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
+        const elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery;
+        const highlightClasses = (step.highlightClasses || 'tutorial-highlight').split(' ');
+    
+        const applyClasses = (element) => {
             if (element) {
-                element.classList.add('tutorial-highlight');
-                this.activeTutorialHighlights.push(element);
+                element.classList.add(...highlightClasses);
+                this.activeTutorialHighlights.push({ element, classes: highlightClasses });
                 if (elementId !== 'starport-shipyard-panel' && elementId !== 'starport-hangar-panel') {
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
+        };
+    
+        if (elementId) {
+            applyClasses(document.getElementById(elementId));
         }
-
+    
         if (elementQuery) {
-            const elements = document.querySelectorAll(elementQuery);
-            elements.forEach(element => {
-                element.classList.add('tutorial-highlight');
-                this.activeTutorialHighlights.push(element);
-            });
+            document.querySelectorAll(elementQuery).forEach(applyClasses);
         }
     }
 
