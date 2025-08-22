@@ -1,7 +1,6 @@
 // js/services/GameState.js
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
-import { SHIPS, COMMODITIES, MARKETS } from '../data/gamedata.js';
-import { DATE_CONFIG } from '../data/dateConfig.js';
+import { DB } from '../data/database.js';
 import { skewedRandom } from '../utils.js';
 
 function procedurallyGenerateTravelData(markets) {
@@ -34,14 +33,14 @@ function procedurallyGenerateTravelData(markets) {
  * The GameState class holds all mutable data for the game session.
  * Static data (ship base stats, commodity types) is imported from /data files.
  * Dynamic data (player credits, ship health, cargo) is stored here.
- * For example, `SHIPS` from gamedata.js contains max health, while
+ * For example, `DB.SHIPS` from database.js contains max health, while
  * `player.shipStates` contains the *current* health of each owned ship.
  */
 export class GameState {
     constructor() {
         this.state = {};
         this.subscribers = [];
-        this.TRAVEL_DATA = procedurallyGenerateTravelData(MARKETS);
+        this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
     }
 
     subscribe(callback) {
@@ -80,7 +79,7 @@ export class GameState {
             
         //     const loadedState = JSON.parse(serializedState);
         //     Object.assign(this, loadedState);
-        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(MARKETS);
+        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
         //     this._notify();
         //     return true;
         // } catch (error) {
@@ -92,7 +91,7 @@ export class GameState {
 
     startNewGame(playerName) {
         const initialState = {
-            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false, popupsDisabled: false,
+            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
             introSequenceActive: true, // This flag will control the UI lockdown.
             lastActiveScreen: {
                 [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
@@ -101,14 +100,14 @@ export class GameState {
             },
             pendingTravel: null,
             player: {
-                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
+                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0, // Track progress through the intro sequence
                 credits: 10000, debt: 0, weeklyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 unlockedCommodityLevel: 1, unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
-                shipStates: { [SHIP_IDS.WANDERER]: { health: SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
+                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
                 inventories: { }
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
@@ -129,14 +128,14 @@ export class GameState {
         };
 
         initialState.player.inventories[SHIP_IDS.WANDERER] = {};
-        COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
+        DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
 
-        MARKETS.forEach(m => {
+        DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
             initialState.intel.available[m.id] = (Math.random() < 0.3); // Using literal instead of CONFIG for now
             initialState.market.inventory[m.id] = {};
             initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] }; // Initialize shipyard stock
-            COMMODITIES.forEach(c => {
+            DB.COMMODITIES.forEach(c => {
                 initialState.market.priceHistory[m.id][c.id] = [];
                 const avail = this._getTierAvailability(c.tier);
                 let quantity = skewedRandom(avail.min, avail.max);
@@ -167,15 +166,15 @@ export class GameState {
 
     _calculateGalacticAverages() {
         this.market.galacticAverages = {};
-        COMMODITIES.forEach(good => {
+        DB.COMMODITIES.forEach(good => {
             this.market.galacticAverages[good.id] = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
         });
     }
 
     _seedInitialMarketPrices() {
-        MARKETS.forEach(location => {
+        DB.MARKETS.forEach(location => {
             this.market.prices[location.id] = {};
-            COMMODITIES.forEach(good => {
+            DB.COMMODITIES.forEach(good => {
                 let price = this.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.5);
                 price *= (location.modifiers[good.id] || 1.0);
                 this.market.prices[location.id][good.id] = Math.max(1, Math.round(price));

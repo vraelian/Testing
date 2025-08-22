@@ -1,6 +1,5 @@
 // js/services/UIManager.js
-import { CONFIG } from '../data/config.js';
-import { SHIPS, COMMODITIES, MARKETS, LOCATION_VISUALS, PERKS, TUTORIAL_DATA, MISSIONS } from '../data/gamedata.js';
+import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS } from '../data/constants.js';
 
@@ -78,7 +77,7 @@ export class UIManager {
         if (!gameState || !gameState.player) return;
         this.lastKnownState = gameState;
         
-        const location = MARKETS.find(l => l.id === gameState.currentLocationId);
+        const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.gameContainer.className = `game-container p-4 md:p-8 ${location.bg}`;
         }
@@ -180,7 +179,7 @@ export class UIManager {
         }
     
         const shipState = player.shipStates[player.activeShipId];
-        const shipStatic = SHIPS[player.activeShipId];
+        const shipStatic = DB.SHIPS[player.activeShipId];
     
         switch(activeScreen) {
             case SCREEN_IDS.NAVIGATION:
@@ -228,7 +227,7 @@ export class UIManager {
     renderStatusScreen(gameState) {
         // [hands-off]
         const { player, day } = gameState;
-        const shipStatic = SHIPS[player.activeShipId];
+        const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
         const inventory = player.inventories[player.activeShipId];
         const cargoUsed = calculateInventoryUsed(inventory);
@@ -303,7 +302,7 @@ export class UIManager {
         
         this.cache.navigationScreen.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            ${MARKETS
+            ${DB.MARKETS
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
@@ -346,18 +345,18 @@ export class UIManager {
     renderServicesScreen(gameState) {
         // [hands-off]
         const { player, currentLocationId } = gameState;
-        const shipStatic = SHIPS[player.activeShipId];
+        const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
-        const currentMarket = MARKETS.find(m => m.id === currentLocationId);
+        const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
 
         let fuelPrice = currentMarket.fuelPrice / 2;
         if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-            fuelPrice *= (1 - PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+            fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         
         let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
         if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-            costPerRepairTick *= (1 - PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+            costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
 
         const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
@@ -389,7 +388,7 @@ export class UIManager {
         // [hands-off]
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
         const { player } = gameState;
-        const shipStatic = SHIPS[player.activeShipId];
+        const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
         const creditsEl = document.getElementById('services-credits-display');
@@ -417,7 +416,7 @@ export class UIManager {
 
     renderMarketScreen(gameState) {
         // [hands-off]
-        const availableCommodities = COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
+        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
         const marketHtml = availableCommodities.map(good => {
             return this.isMobile ? this._getMarketItemHtmlMobile(good, gameState) : this._getMarketItemHtmlDesktop(good, gameState);
         }).join('');
@@ -429,10 +428,10 @@ export class UIManager {
         // [hands-off]
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         const { player, market, currentLocationId } = gameState;
-        const availableCommodities = COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
-        const shipStatic = SHIPS[player.activeShipId];
+        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
+        const shipStatic = DB.SHIPS[player.activeShipId];
         const cargoUsed = calculateInventoryUsed(player.inventories[player.activeShipId]);
-        const currentLocation = MARKETS.find(m => m.id === currentLocationId);
+        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
 
         availableCommodities.forEach(good => {
             const goodId = good.id;
@@ -495,7 +494,7 @@ export class UIManager {
         if (ownedGoods.length > 0) {
             content = `<div class="flex justify-center flex-wrap gap-4">
                 ${ownedGoods.map(([goodId, item]) => {
-                    const good = COMMODITIES.find(c => c.id === goodId);
+                    const good = DB.COMMODITIES.find(c => c.id === goodId);
                     const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
                     return `<div class="p-2 rounded-lg border-2 ${good.styleClass} cargo-item-tooltip" style="filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));" data-tooltip="${tooltipText}"><div class="font-semibold text-sm commodity-name text-outline">${good.name}</div><div class="text-lg text-center text-cyan-300 text-outline">(${item.quantity})</div></div>`;
                 }).join('')}
@@ -526,12 +525,12 @@ export class UIManager {
                 return [];
             } else {
                 const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                return introShipIds.map(id => ([id, SHIPS[id]]));
+                return introShipIds.map(id => ([id, DB.SHIPS[id]]));
             }
         } else {
             const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
             return shipsForSaleIds
-                .map(id => ([id, SHIPS[id]]))
+                .map(id => ([id, DB.SHIPS[id]]))
                 .filter(([id, ship]) => !player.ownedShipIds.includes(id));
         }
     }
@@ -592,7 +591,7 @@ export class UIManager {
 
         const hangarHtml = player.ownedShipIds.length > 0
             ? player.ownedShipIds.map(id => {
-                const shipStatic = SHIPS[id];
+                const shipStatic = DB.SHIPS[id];
                 const shipDynamic = player.shipStates[id];
                 const shipInventory = player.inventories[id];
                 const cargoUsed = calculateInventoryUsed(shipInventory);
@@ -623,7 +622,7 @@ export class UIManager {
     _getHangarItemHtmlMobile(gameState, shipId, context) {
         // [hands-off]
         const { player, tutorials } = gameState;
-        const shipStatic = SHIPS[shipId];
+        const shipStatic = DB.SHIPS[shipId];
         let statusText, statusColor;
 
         if (context === 'shipyard') {
@@ -686,7 +685,7 @@ export class UIManager {
         };
 
         let missionsHtml = '';
-        const activeMission = activeMissionId ? MISSIONS[activeMissionId] : null;
+        const activeMission = activeMissionId ? DB.MISSIONS[activeMissionId] : null;
         if (activeMission) {
             missionsHtml += getMissionCardHtml(activeMission, 'active');
         }
@@ -810,7 +809,7 @@ export class UIManager {
         const sellPrice = this.getItemPrice(gameState, good.id, true);
         const galacticAvg = market.galacticAverages[good.id];
         const marketStock = market.inventory[currentLocationId][good.id];
-        const currentLocation = MARKETS.find(m => m.id === currentLocationId);
+        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
         const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
         const buyDisabled = isSpecialDemand ? 'disabled' : '';
         const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
@@ -858,7 +857,7 @@ export class UIManager {
         const sellPrice = this.getItemPrice(gameState, good.id, true);
         const galacticAvg = market.galacticAverages[good.id];
         const marketStock = market.inventory[currentLocationId][good.id];
-        const currentLocation = MARKETS.find(m => m.id === currentLocationId);
+        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
         const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
         const buyDisabled = isSpecialDemand ? 'disabled' : '';
         const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
@@ -956,13 +955,13 @@ export class UIManager {
     getItemPrice(gameState, goodId, isSelling = false) {
         // [hands-off]
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
-        const market = MARKETS.find(m => m.id === gameState.currentLocationId);
+        const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
             price *= market.specialDemand[goodId].bonus;
         }
         const intel = gameState.intel.active;
         if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
-            price *= (intel.type === 'demand') ? CONFIG.INTEL_DEMAND_MOD : CONFIG.INTEL_DEPRESSION_MOD;
+            price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
         }
         return Math.max(1, Math.round(price));
         // [/hands-off]
@@ -995,8 +994,8 @@ export class UIManager {
         
         const duration = 2500;
         let startTime = null;
-        const fromEmoji = LOCATION_VISUALS[from.id] || '❓';
-        const toEmoji = LOCATION_VISUALS[to.id] || '❓';
+        const fromEmoji = DB.LOCATION_VISUALS[from.id] || '❓';
+        const toEmoji = DB.LOCATION_VISUALS[to.id] || '❓';
         const shipEmoji = '🚀';
 
         let stars = [];
@@ -1387,7 +1386,7 @@ export class UIManager {
         // [hands-off]
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
         if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">Check back next week!!</div>`;
-        const good = COMMODITIES.find(c => c.id === goodId);
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
         const staticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
         const width = 280, height = 140, padding = 35;
         const prices = history.map(p => p.price);
@@ -1417,7 +1416,7 @@ export class UIManager {
         
         let processedText = step.text;
         if (processedText.includes('{shipName}')) {
-            const shipName = SHIPS[gameState.player.activeShipId]?.name || 'your ship';
+            const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
             processedText = processedText.replace(/{shipName}/g, shipName);
         }
         if (processedText.includes('{playerName}')) {
@@ -1497,7 +1496,7 @@ export class UIManager {
             list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
         } else {
             seenBatches.forEach(batchId => {
-                const batchData = TUTORIAL_DATA[batchId];
+                const batchData = DB.TUTORIAL_DATA[batchId];
                 if (batchData) {
                     const li = document.createElement('li');
                     li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
@@ -1516,7 +1515,7 @@ export class UIManager {
     showShipDetailModal(gameState, shipId, context) {
         // [hands-off]
         const { player, tutorials } = gameState;
-        const shipStatic = SHIPS[shipId];
+        const shipStatic = DB.SHIPS[shipId];
         let modalContentHtml;
     
         if (context === 'shipyard') {
@@ -1580,14 +1579,14 @@ export class UIManager {
         const objectiveProgressEl = document.getElementById('sticky-objective-progress');
     
         if (gameState.missions.activeMissionId) {
-            const mission = MISSIONS[gameState.missions.activeMissionId];
+            const mission = DB.MISSIONS[gameState.missions.activeMissionId];
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
     
             const objective = mission.objectives[0];
             const current = progress.objectives[objective.goodId]?.current ?? 0;
             const target = objective.quantity;
-            const goodName = COMMODITIES.find(c => c.id === objective.goodId).name;
-            const locationName = MARKETS.find(m => m.id === mission.completion.locationId).name;
+            const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
+            const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
     
             objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
@@ -1603,7 +1602,7 @@ export class UIManager {
     }
 
     showMissionModal(missionId) {
-        const mission = MISSIONS[missionId];
+        const mission = DB.MISSIONS[missionId];
         if (!mission) return;
     
         const { missions, currentLocationId } = this.lastKnownState;

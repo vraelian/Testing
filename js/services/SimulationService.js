@@ -3,9 +3,7 @@
  * @fileoverview Core game engine for player actions, time progression, and event triggers.
  * It modifies the GameState based on user actions and simulated events.
  */
-import { CONFIG } from '../data/config.js';
-import { SHIPS, COMMODITIES, MARKETS, RANDOM_EVENTS, AGE_EVENTS, PERKS, INTRO_SEQUENCE_V1, TUTORIAL_DATA, MISSIONS } from '../data/gamedata.js';
-import { DATE_CONFIG } from '../data/dateConfig.js';
+import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
@@ -53,7 +51,7 @@ export class SimulationService {
      * Displays the next modal in the intro sequence based on the current step.
      */
     _showNextIntroModal() {
-        const step = INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
+        const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
         if (!step) {
             this._endIntroSequence();
             return;
@@ -232,8 +230,8 @@ export class SimulationService {
      */
     _endIntroSequence() {
         this.gameState.introSequenceActive = false;
-        const finalStep = INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
-        const shipName = SHIPS[this.gameState.player.activeShipId].name;
+        const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
+        const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
     
         // Manually re-apply the navLock for the "Earn Your Fortune" modal.
@@ -300,7 +298,7 @@ export class SimulationService {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-            requiredFuel = Math.round(requiredFuel * PERKS[PERK_IDS.NAVIGATOR].fuelMod);
+            requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
         if (activeShip.maxFuel < requiredFuel) {
@@ -333,8 +331,8 @@ export class SimulationService {
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
 
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-            travelInfo.time = Math.round(travelInfo.time * PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * PERKS[PERK_IDS.NAVIGATOR].fuelMod);
+            travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
@@ -359,7 +357,7 @@ export class SimulationService {
 
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
-        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         const eventHullDamageValue = activeShip.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
@@ -377,8 +375,8 @@ export class SimulationService {
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
 
-        const fromLocation = MARKETS.find(m => m.id === fromId);
-        const destination = MARKETS.find(m => m.id === locationId);
+        const fromLocation = DB.MARKETS.find(m => m.id === fromId);
+        const destination = DB.MARKETS.find(m => m.id === locationId);
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
         
         const finalCallback = () => {
@@ -411,7 +409,7 @@ export class SimulationService {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return false;
         
-        const good = COMMODITIES.find(c=>c.id===goodId);
+        const good = DB.COMMODITIES.find(c=>c.id===goodId);
         const price = this.uiManager.getItemPrice(state, goodId);
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -453,7 +451,7 @@ export class SimulationService {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return 0;
         
-        const good = COMMODITIES.find(c=>c.id===goodId);
+        const good = DB.COMMODITIES.find(c=>c.id===goodId);
         const activeInventory = this._getActiveInventory();
         const item = activeInventory[goodId];
         if (!item || item.quantity < quantity) return 0;
@@ -464,7 +462,7 @@ export class SimulationService {
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             totalSaleValue += profit * totalBonus;
         }
         
@@ -490,7 +488,7 @@ export class SimulationService {
      * @returns {boolean} - True if the purchase was successful.
      */
     buyShip(shipId) {
-        const ship = SHIPS[shipId];
+        const ship = DB.SHIPS[shipId];
         if (this.gameState.player.credits < ship.price) {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
             return false;
@@ -530,7 +528,7 @@ export class SimulationService {
             return false;
         }
 
-        const ship = SHIPS[shipId];
+        const ship = DB.SHIPS[shipId];
         const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
         this.gameState.player.credits += salePrice;
         this._logTransaction('ship', salePrice, `Sold ${ship.name}`);
@@ -632,11 +630,11 @@ export class SimulationService {
         this._logTransaction('intel', -cost, 'Purchased market intel');
         this.gameState.intel.available[currentLocationId] = false;
 
-        const otherMarkets = MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLocationIds.includes(m.id));
+        const otherMarkets = DB.MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLocationIds.includes(m.id));
         if (otherMarkets.length === 0) return;
 
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];
-        const availableCommodities = COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
+        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
         
         if (commodity) {
@@ -661,9 +659,9 @@ export class SimulationService {
         const ship = this._getActiveShip();
         if (ship.fuel >= ship.maxFuel) return 0;
 
-        let costPerTick = MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
+        let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            costPerTick *= (1 - PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+            costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         if (state.player.credits < costPerTick) return 0;
 
@@ -685,7 +683,7 @@ export class SimulationService {
         
         let costPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            costPerTick *= (1 - PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+            costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
         if (state.player.credits < costPerTick) return 0;
         
@@ -710,7 +708,7 @@ export class SimulationService {
             this.gameState.day++;
 
             const dayOfYear = (this.gameState.day - 1) % 365;
-            const currentYear = DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
+            const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
 
             // Check for player's birthday to grant an experience bonus.
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
@@ -742,7 +740,7 @@ export class SimulationService {
             // Passively repair any ships the player owns but is not currently flying.
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
-                    const ship = SHIPS[shipId];
+                    const ship = DB.SHIPS[shipId];
                     const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
                 }
@@ -774,7 +772,7 @@ export class SimulationService {
         if (!force && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
 
         const activeShip = this._getActiveShip();
-        const validEvents = RANDOM_EVENTS.filter(event => 
+        const validEvents = DB.RANDOM_EVENTS.filter(event => 
             event.precondition(this.gameState.getState(), activeShip, this._getActiveInventory.bind(this))
         );
 
@@ -792,7 +790,7 @@ export class SimulationService {
      * @param {number} choiceIndex - The index of the choice the player made.
      */
     _resolveEventChoice(eventId, choiceIndex) {
-        const event = RANDOM_EVENTS.find(e => e.id === eventId);
+        const event = DB.RANDOM_EVENTS.find(e => e.id === eventId);
         const choice = event.choices[choiceIndex];
         let random = Math.random();
         const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) || choice.outcomes[choice.outcomes.length - 1];
@@ -831,7 +829,7 @@ export class SimulationService {
      * Checks for and triggers age-based narrative events.
      */
     _checkAgeEvents() {
-        AGE_EVENTS.forEach(event => {
+        DB.AGE_EVENTS.forEach(event => {
             if (this.gameState.player.seenEvents.includes(event.id)) return;
             if ((event.trigger.day && this.gameState.day >= event.trigger.day) || (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
                 this.gameState.player.seenEvents.push(event.id);
@@ -849,7 +847,7 @@ export class SimulationService {
         if (choice.playerTitle) this.gameState.player.playerTitle = choice.playerTitle;
         if (choice.perkId === PERK_IDS.MERCHANT_GUILD_SHIP) {
             this.addShipToHangar(SHIP_IDS.STALWART);
-            this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild has delivered a new ${SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
+            this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild has delivered a new ${DB.SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
         }
         this.gameState.setState({});
     }
@@ -862,7 +860,7 @@ export class SimulationService {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
-        return { id: activeId, ...SHIPS[activeId], ...state.player.shipStates[activeId] };
+        return { id: activeId, ...DB.SHIPS[activeId], ...state.player.shipStates[activeId] };
     }
 
     /**
@@ -956,7 +954,7 @@ export class SimulationService {
      */
     _checkMilestones() {
         let changed = false;
-        CONFIG.COMMODITY_MILESTONES.forEach(milestone => {
+        DB.CONFIG.COMMODITY_MILESTONES.forEach(milestone => {
             if (this.gameState.player.credits >= milestone.threshold && !this.gameState.player.seenCommodityMilestones.includes(milestone.threshold)) {
                 this.gameState.player.seenCommodityMilestones.push(milestone.threshold);
                 let message = milestone.message;
@@ -968,7 +966,7 @@ export class SimulationService {
                 if (milestone.unlocksLocation && !this.gameState.player.unlockedLocationIds.includes(milestone.unlocksLocation)) {
                     this.gameState.player.unlockedLocationIds.push(milestone.unlocksLocation);
                     
-                    const newLocation = MARKETS.find(m => m.id === milestone.unlocksLocation);
+                    const newLocation = DB.MARKETS.find(m => m.id === milestone.unlocksLocation);
                     message += `<br><br><span class="hl-blue">New Destination:</span> Access to <span class="hl">${newLocation.name}</span> has been granted.`;
                     changed = true;
                 }
@@ -986,7 +984,7 @@ export class SimulationService {
      */
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
-        const shipStatic = SHIPS[shipId];
+        const shipStatic = DB.SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
 
         if (healthPct <= 15 && !shipState.hullAlerts.two) {
@@ -1006,7 +1004,7 @@ export class SimulationService {
      * @param {string} shipId - The ID of the destroyed ship.
      */
     _handleShipDestruction(shipId) {
-        const shipName = SHIPS[shipId].name;
+        const shipName = DB.SHIPS[shipId].name;
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
         delete this.gameState.player.shipStates[shipId];
         delete this.gameState.player.inventories[shipId];
@@ -1015,7 +1013,7 @@ export class SimulationService {
             this._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
         } else {
             this.gameState.player.activeShipId = this.gameState.player.ownedShipIds[0];
-            const newShipName = SHIPS[this.gameState.player.activeShipId].name;
+            const newShipName = DB.SHIPS[this.gameState.player.activeShipId].name;
             const message = `The ${shipName} suffered a catastrophic hull breach and was destroyed. All cargo was lost.<br><br>You now command your backup vessel, the ${newShipName}.`;
             this.uiManager.queueModal('event-modal', 'Vessel Lost', message);
         }
@@ -1075,8 +1073,8 @@ export class SimulationService {
             }
 
             // Generate new stock for the day.
-            const commonShips = Object.entries(SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
-            const rareShips = Object.entries(SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
+            const commonShips = Object.entries(DB.SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
+            const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             
             const shipsForSaleIds = [...commonShips.map(entry => entry[0])];
             
@@ -1118,7 +1116,7 @@ export class SimulationService {
      * @param {string} missionId - The ID of the mission providing the cargo.
      */
     grantMissionCargo(missionId) {
-        const mission = MISSIONS[missionId];
+        const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) {
             return;
         }
@@ -1149,13 +1147,13 @@ export class SimulationService {
      * @param {string} shipId - The ID of the ship to add.
      */
     addShipToHangar(shipId) {
-        const ship = SHIPS[shipId];
+        const ship = DB.SHIPS[shipId];
         if (!ship) return;
 
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
         this.gameState.player.inventories[shipId] = {};
-        COMMODITIES.forEach(c => { this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 }; });
+        DB.COMMODITIES.forEach(c => { this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 }; });
     }
 
     /**
@@ -1167,7 +1165,7 @@ export class SimulationService {
         this.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
         this.gameState.tutorials.activeStepId = null; // Redundant, but keeping for clarity
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(TUTORIAL_DATA).filter(id => id !== 'intro_missions');
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA).filter(id => id !== 'intro_missions');
 
         this.gameState.player.credits = 10000;
         this.gameState.player.ownedShipIds = [];
@@ -1188,7 +1186,7 @@ export class SimulationService {
         this.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
         this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(TUTORIAL_DATA).filter(id => id !== 'intro_missions');
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA).filter(id => id !== 'intro_missions');
 
         this.gameState.player.credits = 10000;
         this.gameState.player.ownedShipIds = [];
