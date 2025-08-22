@@ -1,5 +1,5 @@
 // js/utils.js
-import { DATE_CONFIG } from './data/dateConfig.js';
+import { DB } from './data/database.js';
 
 export function formatCredits(amount, withSymbol = true) {
     const num = Math.floor(amount);
@@ -27,19 +27,19 @@ function getDaySuffix(day) {
 }
 
 export function getDateFromDay(dayNumber) {
-    const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
+    const year = DB.DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
     let dayOfYear = (dayNumber - 1) % 365;
-    const dayOfWeek = DATE_CONFIG.DAY_NAMES[(dayNumber - 1 + DATE_CONFIG.START_DAY_OF_WEEK) % 7];
+    const dayOfWeek = DB.DATE_CONFIG.DAY_NAMES[(dayNumber - 1 + DB.DATE_CONFIG.START_DAY_OF_WEEK) % 7];
     let monthIndex = 0;
-    for (let i = 0; i < DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
-        if (dayOfYear < DATE_CONFIG.DAYS_IN_MONTH[i]) {
+    for (let i = 0; i < DB.DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
+        if (dayOfYear < DB.DATE_CONFIG.DAYS_IN_MONTH[i]) {
             monthIndex = i;
             break;
         }
-        dayOfYear -= DATE_CONFIG.DAYS_IN_MONTH[i];
+        dayOfYear -= DB.DATE_CONFIG.DAYS_IN_MONTH[i];
     }
     const dayOfMonth = dayOfYear + 1;
-    const monthName = DATE_CONFIG.MONTH_NAMES[monthIndex];
+    const monthName = DB.DATE_CONFIG.MONTH_NAMES[monthIndex];
     return `${dayOfWeek}, ${monthName} ${dayOfMonth}${getDaySuffix(dayOfMonth)}, ${year}`;
 }
 

@@ -3,6 +3,17 @@ import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS } from '../data/constants.js';
 
+// Import all screen rendering components
+import { renderHangarScreen } from '../ui/components/HangarScreen.js';
+import { renderMarketScreen } from '../ui/components/MarketScreen.js';
+import { renderStatusScreen } from '../ui/components/StatusScreen.js';
+import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
+import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
+import { renderCargoScreen } from '../ui/components/CargoScreen.js';
+import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
+import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
+import { renderIntelScreen } from '../ui/components/IntelScreen.js';
+
 export class UIManager {
     constructor() {
         this.isMobile = window.innerWidth <= 768;
@@ -128,7 +139,6 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState) {
-        // [hands-off]
         const activeScreenEl = document.getElementById(`${gameState.activeScreen}-screen`);
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.style.display = 'none';
@@ -140,21 +150,37 @@ export class UIManager {
         }
 
         switch (gameState.activeScreen) {
-            case SCREEN_IDS.STATUS: this.renderStatusScreen(gameState); break;
-            case SCREEN_IDS.NAVIGATION: this.renderNavigationScreen(gameState); break;
-            case SCREEN_IDS.SERVICES: this.renderServicesScreen(gameState); break;
-            case SCREEN_IDS.MARKET: this.renderMarketScreen(gameState); break;
-            case SCREEN_IDS.CARGO: this.renderCargoScreen(gameState); break;
-            case SCREEN_IDS.HANGAR: this.renderHangarScreen(gameState); break;
-            case SCREEN_IDS.MISSIONS: this.renderMissionsScreen(gameState); break;
-            case SCREEN_IDS.FINANCE: this.renderFinanceScreen(gameState); break;
-            case SCREEN_IDS.INTEL: this.renderIntelScreen(gameState); break;
+            case SCREEN_IDS.STATUS:
+                this.cache.statusScreen.innerHTML = renderStatusScreen(gameState);
+                break;
+            case SCREEN_IDS.NAVIGATION:
+                this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
+                break;
+            case SCREEN_IDS.SERVICES:
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                break;
+            case SCREEN_IDS.MARKET:
+                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile);
+                break;
+            case SCREEN_IDS.CARGO:
+                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
+                break;
+            case SCREEN_IDS.HANGAR:
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
+                break;
+            case SCREEN_IDS.MISSIONS:
+                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                break;
+            case SCREEN_IDS.FINANCE:
+                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+                break;
+            case SCREEN_IDS.INTEL:
+                this.cache.intelScreen.innerHTML = renderIntelScreen();
+                break;
         }
-        // [/hands-off]
     }
 
     updateStickyBar(gameState) {
-        // [hands-off]
         const { activeScreen, player } = gameState;
         this.cache.stickyBar.innerHTML = '';
     
@@ -222,170 +248,9 @@ export class UIManager {
         } else {
             this.cache.topBarContainer.classList.remove('has-sticky-bar');
         }
-        // [/hands-off]
-    }
-    renderStatusScreen(gameState) {
-        // [hands-off]
-        const { player, day } = gameState;
-        const shipStatic = DB.SHIPS[player.activeShipId];
-        const shipState = player.shipStates[player.activeShipId];
-        const inventory = player.inventories[player.activeShipId];
-        const cargoUsed = calculateInventoryUsed(inventory);
-
-        this.cache.statusScreen.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-                <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border border-slate-700">
-                    <div class="text-left pl-4">
-                        <span class="block text-lg text-gray-400 uppercase tracking-widest">Day</span>
-                        <span class="text-4xl font-bold font-orbitron">${day}</span>
-                    </div>
-                    <div class="text-right flex flex-col items-end">
-                        <p class="text-xs text-cyan-200/80 mb-2 font-roboto-mono text-right">${getDateFromDay(day)}</p>
-                        <div class="mt-2 pt-2 border-t border-slate-500/50">
-                            <div class="text-right">
-                                <p class="text-gray-400 text-sm tracking-wider">Vessel</p>
-                                <p>${shipStatic.name}</p>
-                                <p>Class: ${shipStatic.class}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-1 flex flex-col gap-4">
-                    <div class="ship-hud">
-                        <h4 class="font-orbitron text-xl text-center mb-3 text-cyan-300">Ship Status</h4>
-                        <div class="flex flex-col gap-y-2 text-sm">
-                            <div class="tooltip-container" data-tooltip="Ship integrity. Damaged by travel.">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                                        <span class="text-gray-400">Hull:</span>
-                                    </div>
-                                    <span class="font-bold text-green-300">${Math.floor(shipState.health)}%</span>
-                                </div>
-                            </div>
-                            <div class="tooltip-container" data-tooltip="Propulsion system fuel levels.">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                                        <span class="text-gray-400">Fuel:</span>
-                                    </div>
-                                    <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
-                                </div>
-                            </div>
-                            <div class="tooltip-container" data-tooltip="Active ship's current/max cargo space.">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 000 2h6a1 1 0 100-2H6z" /><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H4z" clip-rule="evenodd" /></svg>
-                                        <span class="text-gray-400">Cargo:</span>
-                                    </div>
-                                    <span class="font-bold text-amber-300">${cargoUsed}/${shipStatic.cargoCapacity}</span>
-                                </div>
-                            </div>
-                         </div>
-                    </div>
-                    <div class="text-center text-lg text-cyan-200 font-orbitron flex items-center justify-center gap-2">
-                        <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
-                    </div>
-                </div>
-            </div>`;
-        // [/hands-off]
-    }
-
-    renderNavigationScreen(gameState) {
-        const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
-        const { navLock } = tutorials;
-    
-        // Determine if there's a specific element that should be enabled
-        const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
-        const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
-        
-        this.cache.navigationScreen.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            ${DB.MARKETS
-                .filter(loc => player.unlockedLocationIds.includes(loc.id))
-                .map(location => {
-                    const isCurrent = location.id === currentLocationId;
-                    const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
-    
-                    // Determine if this card should be disabled
-                    let isDisabled = false;
-                    if (isNavLocked && enabledElementQuery) {
-                        // A bit of a workaround to check if the current location matches the query selector
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
-                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
-                    }
-                    const disabledClass = isDisabled ? 'disabled-location' : '';
-    
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
-                        <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
-                        <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
-                        ${isCurrent 
-                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
-                            : `<div class="flex justify-around items-center text-center">
-                                   <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
-                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.time}</span><span class="block text-xs text-gray-400">Days</span></div>
-                                   </div>
-                                   <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.fuelCost}</span><span class="block text-xs text-gray-400">Fuel</span></div>
-                                   </div>
-                               </div>`
-                        }
-                      </div>
-                      </div>`;
-                }).join('')
-            }
-            </div>`;
-    }
-
-    renderServicesScreen(gameState) {
-        // [hands-off]
-        const { player, currentLocationId } = gameState;
-        const shipStatic = DB.SHIPS[player.activeShipId];
-        const shipState = player.shipStates[player.activeShipId];
-        const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
-
-        let fuelPrice = currentMarket.fuelPrice / 2;
-        if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-            fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
-        }
-        
-        let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
-        if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-            costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
-        }
-
-        const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-        const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-        
-        this.cache.servicesScreen.innerHTML = `
-             <div class="text-center mb-4">
-                <h3 class="text-2xl font-orbitron">Station Services at ${currentMarket.name}</h3>
-                <div id="services-credits-display" class="text-lg text-cyan-300 mt-2"><span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span></div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
-                    <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                    <p class="mb-3">Price: <span class="font-bold text-cyan-300">${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                    <button id="refuel-btn" class="btn btn-green w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-                </div>
-                <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
-                    <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                    <p class="mb-3">Price: <span class="font-bold text-cyan-300">${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                    <button id="repair-btn" class="btn btn-blue w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
-                </div>
-            </div>`;
-        // [/hands-off]
     }
 
     updateServicesScreen(gameState) {
-        // [hands-off]
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
         const { player } = gameState;
         const shipStatic = DB.SHIPS[player.activeShipId];
@@ -411,21 +276,9 @@ export class UIManager {
             repairBar.style.width = `${healthPct}%`;
             repairBtn.disabled = shipState.health >= shipStatic.maxHealth;
         }
-        // [/hands-off]
-    }
-
-    renderMarketScreen(gameState) {
-        // [hands-off]
-        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
-        const marketHtml = availableCommodities.map(good => {
-            return this.isMobile ? this._getMarketItemHtmlMobile(good, gameState) : this._getMarketItemHtmlDesktop(good, gameState);
-        }).join('');
-        this.cache.marketScreen.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
-        // [/hands-off]
     }
 
     updateMarketScreen(gameState) {
-        // [hands-off]
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         const { player, market, currentLocationId } = gameState;
         const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
@@ -441,7 +294,6 @@ export class UIManager {
             const playerItem = player.inventories[player.activeShipId][goodId];
             const marketStock = market.inventory[currentLocationId][goodId];
             const price = this.getItemPrice(gameState, goodId);
-            const sellPrice = this.getItemPrice(gameState, goodId, true);
     
             const pInvEl = document.getElementById(`p-inv-${goodId}`);
             if (pInvEl) {
@@ -457,13 +309,6 @@ export class UIManager {
             const priceEl = document.getElementById(`price-${goodId}`);
             if(priceEl) {
                 priceEl.innerHTML = formatCredits(price);
-            }
-    
-            const galacticAvg = market.galacticAverages[goodId];
-            const indicatorsEl = document.getElementById(`indicators-${goodId}`);
-            if (indicatorsEl) {
-                const { marketIndicatorHtml, plIndicatorHtml } = this._getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, this.isMobile);
-                indicatorsEl.innerHTML = this.isMobile ? marketIndicatorHtml : `${marketIndicatorHtml || ''}${plIndicatorHtml || ''}`;
             }
     
             const buyBtn = document.getElementById(`buy-btn-${goodId}`);
@@ -482,478 +327,9 @@ export class UIManager {
             if (sellBtn) sellBtn.disabled = noneToSell;
             if (maxSellBtn) maxSellBtn.disabled = noneToSell;
         });
-        // [/hands-off]
-    }
-
-    renderCargoScreen(gameState) {
-        // [hands-off]
-        const inventory = gameState.player.inventories[gameState.player.activeShipId];
-        const ownedGoods = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
-        
-        let content;
-        if (ownedGoods.length > 0) {
-            content = `<div class="flex justify-center flex-wrap gap-4">
-                ${ownedGoods.map(([goodId, item]) => {
-                    const good = DB.COMMODITIES.find(c => c.id === goodId);
-                    const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
-                    return `<div class="p-2 rounded-lg border-2 ${good.styleClass} cargo-item-tooltip" style="filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));" data-tooltip="${tooltipText}"><div class="font-semibold text-sm commodity-name text-outline">${good.name}</div><div class="text-lg text-center text-cyan-300 text-outline">(${item.quantity})</div></div>`;
-                }).join('')}
-            </div>`;
-        } else {
-            content = '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
-        }
-
-        this.cache.cargoScreen.innerHTML = `
-            <div class="mt-8 pt-6">
-                <h3 class="text-2xl font-orbitron text-center mb-4">Active Ship Cargo Manifest</h3>
-                ${content}
-            </div>`;
-        // [/hands-off]
-    }
-
-    /**
-     * Determines the list of ships available for sale at the current location.
-     * This logic is shared between mobile and desktop views.
-     * @param {object} gameState The current game state.
-     * @returns {Array<Array<string, object>>} A list of ship entries, [id, shipObject].
-     * @private
-     */
-    _getShipyardInventory(gameState) {
-        const { player, currentLocationId, market, introSequenceActive } = gameState;
-        if (introSequenceActive) {
-            if (player.ownedShipIds.length > 0) {
-                return [];
-            } else {
-                const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-                return introShipIds.map(id => ([id, DB.SHIPS[id]]));
-            }
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            return shipsForSaleIds
-                .map(id => ([id, DB.SHIPS[id]]))
-                .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-        }
-    }
-
-    renderHangarScreen(gameState) {
-        // [hands-off]
-        if (!this.isMobile) {
-            this._renderHangarScreenDesktop(gameState);
-        } else {
-            this._renderHangarScreenMobile(gameState);
-        }
-        // [/hands-off]
-    }
-
-
-    _renderHangarScreenMobile(gameState) {
-        // [hands-off]
-        const { player } = gameState;
-        const shipsForSale = this._getShipyardInventory(gameState);
-        const shipyardHtml = shipsForSale.length > 0 
-            ? shipsForSale.map(([id]) => this._getHangarItemHtmlMobile(gameState, id, 'shipyard')).join('')
-            : '<p class="text-center text-gray-500 text-sm p-4">No new ships available.</p>';
-        const hangarHtml = player.ownedShipIds.length > 0
-            ? player.ownedShipIds.map(id => this._getHangarItemHtmlMobile(gameState, id, 'hangar')).join('')
-            : '<p class="text-center text-gray-500 text-sm p-4">Your hangar is empty.</p>';
-
-        this.cache.hangarScreen.innerHTML = `
-            <div class="flex flex-col gap-6">
-                <div id="starport-shipyard-panel-mobile">
-                    <h2 class="text-2xl font-orbitron text-cyan-300 mb-2 text-center">Shipyard</h2>
-                    <div class="starport-panel-mobile space-y-2">${shipyardHtml}</div>
-                </div>
-                <div id="starport-hangar-panel-mobile">
-                    <h2 class="text-2xl font-orbitron text-cyan-300 mb-2 text-center">Hangar</h2>
-                    <div class="starport-panel-mobile space-y-2">${hangarHtml}</div>
-                </div>
-            </div>`;
-            // [/hands-off]
-    }
-
-    _renderHangarScreenDesktop(gameState) {
-        // [hands-off]
-        const { player, tutorials } = gameState;
-        const shipsForSale = this._getShipyardInventory(gameState);
-        const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-        let shipyardHtml;
-
-        if (shipsForSale.length > 0) {
-            shipyardHtml = shipsForSale.map(([id, ship]) => {
-                const canAfford = player.credits >= ship.price;
-                const isDisabled = !canAfford || isHangarTutStep1Active;
-                return `<div class="ship-card p-4 flex flex-col space-y-3"><div class="flex justify-between items-start"><div><h3 class="text-xl font-orbitron text-cyan-300">${ship.name}</h3><p class="text-sm text-gray-400">Class ${ship.class}</p></div><div class="text-right"><p class="text-lg font-bold text-cyan-300">${formatCredits(ship.price)}</p></div></div><p class="text-sm text-gray-400 flex-grow">${ship.lore}</p><div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2"><div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${ship.maxHealth}</span></div><div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${ship.maxFuel}</span></div><div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${ship.cargoCapacity}</span></div></div><button class="btn w-full mt-2" 
-                 data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${id}" ${isDisabled ? 'disabled' : ''}>Purchase</button></div>`;
-            }).join('');
-        } else {
-            shipyardHtml = '<p class="text-center text-gray-500">No new ships available at this location.</p>';
-        }
-
-        const hangarHtml = player.ownedShipIds.length > 0
-            ? player.ownedShipIds.map(id => {
-                const shipStatic = DB.SHIPS[id];
-                const shipDynamic = player.shipStates[id];
-                const shipInventory = player.inventories[id];
-                const cargoUsed = calculateInventoryUsed(shipInventory);
-                const isActive = id === player.activeShipId;
-                const canSell = player.ownedShipIds.length > 1 && !isActive;
-                const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-                return `<div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}"><h3 class="text-xl font-orbitron ${isActive ? 'text-yellow-300' : 'text-cyan-300'} hanger-ship-name" data-tooltip="${shipStatic.lore}">${shipStatic.name}</h3><p class="text-sm text-gray-400 flex-grow">Class ${shipStatic.class}</p><div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2"><div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</span></div><div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</span></div><div><span class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</span></div></div><div class="grid grid-cols-2 gap-2 mt-2">${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${id}">Board</button>`}<button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${id}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button></div></div>`;
-            }).join('')
-            : '<p class="text-center text-gray-500">Your hangar is empty.</p>';
-
-        this.cache.hangarScreen.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 relative">
-                <div id="starport-shipyard-panel">
-                    <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Shipyard</h2>
-                    <div class="starport-panel space-y-4">${shipyardHtml}</div>
-                </div>
-                <div class="w-full my-4 border-t-2 border-slate-600 lg:hidden"></div>
-                <div class="absolute left-1/2 top-0 h-full w-px bg-slate-600 hidden lg:block"></div>
-                <div id="starport-hangar-panel">
-                    <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Hangar</h2>
-                    <div class="starport-panel space-y-4">${hangarHtml}</div>
-                </div>
-            </div>`;
-        // [/hands-off]
-    }
-
-
-    _getHangarItemHtmlMobile(gameState, shipId, context) {
-        // [hands-off]
-        const { player, tutorials } = gameState;
-        const shipStatic = DB.SHIPS[shipId];
-        let statusText, statusColor;
-
-        if (context === 'shipyard') {
-            statusText = formatCredits(shipStatic.price);
-            statusColor = player.credits >= shipStatic.price ? 'text-cyan-300' : 'text-red-400';
-        } else { // context === 'hangar'
-            const isActive = shipId === player.activeShipId;
-            statusText = isActive ? 'ACTIVE' : 'STORED';
-            statusColor = isActive ? 'text-yellow-300' : 'text-gray-400';
-        }
-
-        const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-        const isDisabled = isHangarTutStep1Active && context === 'shipyard';
-
-        return `
-            <div class="ship-list-item-mobile p-3 flex justify-between items-center ${isDisabled ? 'disabled' : ''}" data-action="show-ship-detail" data-ship-id="${shipId}" data-context="${context}">
-                <div>
-                    <p class="font-orbitron ${statusColor}">${shipStatic.name}</p>
-                    <p class="text-xs text-gray-500">Class ${shipStatic.class}</p>
-                </div>
-                <div class="font-roboto-mono text-right text-sm ${statusColor}">
-                    ${statusText}
-                </div>
-            </div>`;
-        // [/hands-off]
-    }
-
-    renderMissionsScreen(gameState) {
-        const { missions, currentLocationId } = gameState;
-        const { activeMissionId, activeMissionObjectivesMet } = missions;
-
-        const getMissionCardHtml = (mission, status) => {
-            let statusClass = '';
-            if (status === 'active') statusClass = 'mission-active';
-            if (status === 'completed') statusClass = 'mission-complete';
-            if (status === 'active' && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId) {
-                statusClass += ' mission-turn-in';
-            }
-
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-            const rewardText = mission.rewards.map(r => {
-                if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-                return r.type.toUpperCase();
-            }).join(', ');
-
-            return `
-                <div class="mission-card sci-fi-frame ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                    <div class="flex justify-between items-center w-full text-xs mb-1">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                            <span class="mission-type">${mission.type}</span>
-                        </div>
-                        <span class="mission-host">${mission.host}</span>
-                    </div>
-                    <div class="flex justify-between items-end w-full">
-                        <p class="font-bold text-base">${mission.name}</p>
-                        <span class="mission-reward">${rewardText}</span>
-                    </div>
-                </div>`;
-        };
-
-        let missionsHtml = '';
-        const activeMission = activeMissionId ? DB.MISSIONS[activeMissionId] : null;
-        if (activeMission) {
-            missionsHtml += getMissionCardHtml(activeMission, 'active');
-        }
-        
-        if (this.missionService) {
-            const availableMissions = this.missionService.getAvailableMissions();
-            availableMissions.forEach(mission => {
-                missionsHtml += getMissionCardHtml(mission, 'available');
-            });
-        }
-
-        if (missionsHtml === '') {
-            missionsHtml = '<p class="text-center text-gray-500 text-lg">No missions available at this terminal.</p>';
-        }
-
-        this.cache.missionsScreen.innerHTML = `
-            <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300">Mission Terminal</h1>
-            <div class="space-y-3 max-w-2xl mx-auto">
-                ${missionsHtml}
-            </div>
-        `;
-    }
-
-    renderFinanceScreen(gameState) {
-        // [hands-off]
-        const { player, day } = gameState;
-        let loanHtml;
-        if (player.debt > 0) {
-            let garnishmentTimerHtml = '';
-            if (player.loanStartDate) {
-                const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
-                if (daysRemaining > 0) {
-                    garnishmentTimerHtml = `<p class="text-xs text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
-                }
-            }
-            loanHtml = `
-               <div id="finance-debt-panel">
-                 <h4 class="font-orbitron text-xl mb-2">Debt</h4>
-                 <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
-                 <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
-                     Pay Off Full Amount
-                 </button>
-                 ${garnishmentTimerHtml}
-               </div>`;
-        } else {
-            const dynamicLoanAmount = Math.floor(player.credits * 3.5);
-            const dynamicLoanFee = Math.floor(dynamicLoanAmount * 0.1);
-            const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.01);
-            const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
-            const loanButtonsHtml = [
-                { key: '10000', amount: 10000, fee: 600, interest: 125 },
-                { key: 'dynamic', ...dynamicLoanData }
-            ].map((loan) => {
-                const tooltipText = `Fee: ${formatCredits(loan.fee, false)}\nInterest: ${formatCredits(loan.interest, false)} / 7d`;
-                return `<button class="btn btn-loan w-full p-2 mt-2 loan-btn-tooltip" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''} data-tooltip="${tooltipText}">
-                            <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
-                        </button>`;
-            }).join('');
-            loanHtml = `<h4 class="font-orbitron text-xl mb-2">Financing</h4><div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>`;
-        }
-
-        const logEntries = [...player.financeLog].reverse().map(entry => {
-            const amountColor = entry.amount > 0 ? 'text-green-400' : 'text-red-400';
-            const sign = entry.amount > 0 ? '+' : '';
-            return `
-                <div class="grid grid-cols-4 gap-2 p-2 border-b border-slate-700 text-sm">
-                    <span class="text-gray-400">${entry.day}</span>
-                    <span class="col-span-2">${entry.description}</span>
-                    <span class="${amountColor} text-right">${sign}${formatCredits(entry.amount, false)}</span>
-                </div>
-            `;
-    
-           }).join('');
-
-        this.cache.financeScreen.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="md:col-span-1 bg-black/20 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border border-slate-700 text-center">
-                    ${loanHtml}
-                </div>
-                <div class="md:col-span-2">
-                     <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                     <div class="bg-black/20 p-4 rounded-lg shadow-lg panel-border border border-slate-700 h-96 overflow-y-auto">
-                        <div class="grid grid-cols-4 gap-2 p-2 border-b-2 border-slate-500 font-bold text-gray-300">
-                           <span>Day</span>
-                           <span class="col-span-2">Description</span>
-                           <span class="text-right">Amount</span>
-                        </div>
-                        ${logEntries || '<p class="text-center text-gray-500 p-4">No transactions recorded.</p>'}
-                     </div>
-                </div>
-            </div>
-        `;
-        // [/hands-off]
-    }
-
-    renderIntelScreen(gameState) {
-        // [hands-off]
-        this.cache.intelScreen.innerHTML = `
-            <div class="text-center p-8 flex flex-col items-center gap-4">
-                 <div id="tutorial-button-container" class="tutorial-container relative">
-                    <button class="btn btn-header">Tutorial Log</button>
-                    <div id="tutorial-log-modal" class="tutorial-tooltip">
-                        <h3 id="tutorial-log-title" class="text-2xl font-orbitron mb-4 text-center">Tutorial Log</h3>
-                        <ul id="tutorial-log-list" class="space-y-2"></ul>
-                    </div>
-                </div>
-                <div id="lore-button-container" class="lore-container relative">
-                    <button class="btn btn-header">Story So Far...</button>
-                    <div class="lore-tooltip">
-                        <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p><br><p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p><br><p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p><br><p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
-                    </div>
-                </div>
-            </div>`;
-        // [/hands-off]
-    }
-    _getMarketItemHtmlDesktop(good, gameState) {
-        // [hands-off]
-        const { player, market, currentLocationId } = gameState;
-        const playerItem = player.inventories[player.activeShipId][good.id];
-        const price = this.getItemPrice(gameState, good.id);
-        const sellPrice = this.getItemPrice(gameState, good.id, true);
-        const galacticAvg = market.galacticAverages[good.id];
-        const marketStock = market.inventory[currentLocationId][good.id];
-        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
-        const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-        const buyDisabled = isSpecialDemand ? 'disabled' : '';
-        const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-        const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
-        const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
-        const { marketIndicatorHtml, plIndicatorHtml } = this._getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, false);
-        return `
-        <div class="item-card-container" id="item-card-container-${good.id}">
-            <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border ${good.styleClass} transition-colors shadow-md h-32">
-                <div class="flex flex-col h-full justify-between flex-grow self-start pt-1">
-                    <div>
-                        <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                         <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
-                    </div>
-                    <div class="text-sm self-start pb-1 text-outline flex items-center gap-3">
-                        <span>Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</span>
-                        <div id="indicators-${good.id}" class="flex items-center gap-2">${marketIndicatorHtml}${plIndicatorHtml}</div>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <div class="flex flex-col items-center"><div class="flex flex-col space-y-1">
-                        <button id="buy-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.BUY_ITEM}" data-good-id="${good.id}" ${buyDisabled}>Buy</button>
-                        <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
-                    </div></div>
-                    <div class="flex flex-col items-center">
-                        <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}">+</button>
-                        <input type="number" class="qty-input p-2 my-1" id="qty-${good.id}" data-good-id="${good.id}" value="1" min="1">
-                        <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}">-</button>
-                    </div>
-                    <div class="flex flex-col items-center"><div class="flex flex-col space-y-1">
-                        <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}">Sell</button>
-                        <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}">Max</button>
-                    </div></div>
-                </div>
-            </div>
-        </div>`;
-        // [/hands-off]
-    }
-
-    _getMarketItemHtmlMobile(good, gameState) {
-        // [hands-off]
-        const { player, market, currentLocationId } = gameState;
-        const playerItem = player.inventories[player.activeShipId][good.id];
-        const price = this.getItemPrice(gameState, good.id);
-        const sellPrice = this.getItemPrice(gameState, good.id, true);
-        const galacticAvg = market.galacticAverages[good.id];
-        const marketStock = market.inventory[currentLocationId][good.id];
-        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
-        const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-        const buyDisabled = isSpecialDemand ? 'disabled' : '';
-        const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-        const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
-        const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
-        const { marketIndicatorHtml } = this._getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, true);
-        return `
-        <div class="item-card-container" id="item-card-container-${good.id}">
-            <div class="bg-black/20 p-4 rounded-lg flex flex-col border ${good.styleClass} shadow-md">
-                <div class="flex justify-between items-start w-full mb-2">
-                    <div class="flex-grow">
-                        <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                        <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
-                    </div>
-                    <div class="text-right text-sm flex-shrink-0 ml-2 text-outline">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</div>
-                </div>
-                <div id="indicators-${good.id}">${marketIndicatorHtml}</div>
-                <div class="flex justify-end items-end mt-2">
-                    <div class="mobile-controls-wrapper">
-                        <div class="flex flex-col items-center space-y-1">
-                            <button id="buy-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.BUY_ITEM}" data-good-id="${good.id}" ${buyDisabled}>Buy</button>
-                            <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
-                        </div>
-                        <div class="flex flex-col items-center space-y-1">
-                            <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}">+</button>
-                            <input type="number" class="qty-input" id="qty-${good.id}-mobile" data-good-id="${good.id}" value="1" min="1">
-                            <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}">-</button>
-                        </div>
-                        <div class="flex flex-col items-center space-y-1">
-                            <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}">Sell</button>
-                            <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}">Max</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-        // [/hands-off]
-    }
-
-    _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, isMobile) {
-        // [hands-off]
-        const marketDiff = price - galacticAvg;
-        const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
-        const marketSign = marketPct > 0 ? '+' : '';
-        let marketColor = marketPct < -15 ? 'text-red-400' : (marketPct > 15 ? 'text-green-400' : 'text-white');
-        let marketArrowSVG = this._getArrowSvg(marketPct > 15 ? 'up' : marketPct < -15 ? 'down' : 'neutral');
-        if (isMobile) {
-            let mobileHtml = `<div class="mobile-indicator-wrapper text-sm text-outline">`;
-            mobileHtml += `<div class="flex items-center ${marketColor}"><span>MKT: ${marketSign}${marketPct}%</span> ${marketArrowSVG}</div>`;
-            
-            if (playerItem && playerItem.avgCost > 0) {
-                const spreadPerUnit = sellPrice - playerItem.avgCost;
-                if (Math.abs(spreadPerUnit) > 0.01) {
-                    const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-                    const plColor = spreadPerUnit >= 0 ? 'text-green-400' : 'text-red-400';
-                    const plSign = plPct > 0 ? '+' : '';
-                    let plArrowSVG = this._getArrowSvg(spreadPerUnit > 0 ? 'up' : 'down');
-                    mobileHtml += `<div class="flex items-center ${plColor}"><span>P/L: ${plSign}${plPct}%</span> ${plArrowSVG}</div>`;
-                }
-            }
-            mobileHtml += `</div>`;
-            return { marketIndicatorHtml: mobileHtml, plIndicatorHtml: '' };
-        } else {
-            const marketIndicatorHtml = `<div class="flex items-center gap-2"><div class="market-indicator-stacked ${marketColor}"><span class="text-xs opacity-80">MKT</span><span>${marketSign}${marketPct}%</span></div>${marketArrowSVG}</div>`;
-            let plIndicatorHtml = '';
-            if (playerItem && playerItem.avgCost > 0) {
-                const spreadPerUnit = sellPrice - playerItem.avgCost;
-                if (Math.abs(spreadPerUnit) > 0.01) {
-                    const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-                    const plColor = spreadPerUnit >= 0 ? 'text-green-400' : 'text-red-400';
-                    const plSign = plPct > 0 ? '+' : '';
-                    let plArrowSVG = this._getArrowSvg(spreadPerUnit > 0 ? 'up' : 'down');
-                    plIndicatorHtml = `<div class="flex items-center gap-2"><div class="market-indicator-stacked ${plColor}"><span class="text-xs opacity-80">P/L</span><span>${plSign}${plPct}%</span></div>${plArrowSVG}</div>`;
-                }
-            }
-            return { marketIndicatorHtml, plIndicatorHtml };
-        }
-        // [/hands-off]
-    }
-
-    _getArrowSvg(direction) {
-        // [hands-off]
-        const path = {
-            up: 'M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z',
-            down: 'M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z',
-            neutral: 'M5 12h14'
-        };
-        const fill = direction === 'neutral' ? 'none' : 'currentColor';
-        const stroke = direction === 'neutral' ? 'currentColor' : 'none';
-        const strokeWidth = direction === 'neutral' ? '3' : '0';
-        return `<svg class="indicator-arrow" viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"><path d="${path[direction]}"/></svg>`;
-        // [/hands-off]
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // [hands-off]
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
@@ -964,10 +340,8 @@ export class UIManager {
             price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
         }
         return Math.max(1, Math.round(price));
-        // [/hands-off]
     }
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        // [hands-off]
         const modal = document.getElementById('travel-animation-modal');
         const statusText = document.getElementById('travel-status-text');
         const arrivalLore = document.getElementById('travel-arrival-lore');
@@ -1084,43 +458,32 @@ export class UIManager {
             modal.classList.add('hidden');
             if (finalCallback) finalCallback();
         };
-        // [/hands-off]
     }
 
     queueModal(modalId, title, description, callback = null, options = {}) {
-        // [hands-off]
         this.modalQueue.push({ modalId, title, description, callback, options });
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
             this.processModalQueue();
         }
-        // [/hands-off]
     }
 
     processModalQueue() {
-        // [hands-off]
         if (this.modalQueue.length === 0) return;
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         if (!modal) {
             console.error(`UIManager Error: Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
-            return this.processModalQueue(); // Attempt to process the next modal if available
-        }
-        if (!modal) {
-            console.error(`Modal with ID ${modalId} not found.`);
             return this.processModalQueue();
         }
 
-        // Use a more specific selector for mission modals to prevent conflicts.
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
-
         const titleEl = modal.querySelector(`#${titleElId}`);
         const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
 
         if (titleEl) titleEl.innerHTML = title;
         if (descEl) {
             descEl.innerHTML = description;
-            // Reset classes for mission modal, which has its own styling, but keep defaults for others.
             descEl.className = 'my-4 text-gray-300'; 
             if(modalId !== 'mission-modal') descEl.classList.add('mb-6', 'text-lg');
             if (options.contentClass) {
@@ -1156,11 +519,9 @@ export class UIManager {
         
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-        // [/hands-off]
     }
 
     showRandomEventModal(event, choicesCallback) {
-        // [hands-off]
         this.queueModal('random-event-modal', event.title, event.scenario, null, {
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
@@ -1177,11 +538,9 @@ export class UIManager {
                 });
             }
         });
-        // [/hands-off]
     }
 
     showAgeEventModal(event, choiceCallback) {
-        // [hands-off]
         const modal = document.getElementById('age-event-modal');
         document.getElementById('age-event-title').innerHTML = event.title;
         document.getElementById('age-event-description').innerHTML = event.description;
@@ -1199,11 +558,9 @@ export class UIManager {
         });
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-        // [/hands-off]
     }
 
     hideModal(modalId) {
-        // [hands-off]
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('modal-hiding');
@@ -1215,11 +572,9 @@ export class UIManager {
                 }
             }, { once: true });
         }
-        // [/hands-off]
     }
     
     showProcessingAnimation(playerName, callback) {
-        // [hands-off]
         const modal = this.cache.processingModal;
         if (!modal) return;
     
@@ -1243,11 +598,9 @@ export class UIManager {
                 if (callback) callback();
             }, 1000);
         }, 4000);
-        // [/hands-off]
     }
 
     createFloatingText(text, x, y, color = '#fde047') {
-        // [hands-off]
         const el = document.createElement('div');
         el.textContent = text;
         el.className = 'floating-text';
@@ -1256,11 +609,9 @@ export class UIManager {
         el.style.color = color;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 2450);
-        // [/hands-off]
     }
 
     showToast(toastId, message, duration = 3000) {
-        // [hands-off]
         const toast = this.cache[toastId];
         if (!toast) return;
         toast.textContent = message;
@@ -1270,11 +621,9 @@ export class UIManager {
             toast.style.opacity = '0';
             setTimeout(() => toast.classList.add('hidden'), 300);
         }, duration);
-        // [/hands-off]
     }
     
     showGraph(anchorEl, gameState) {
-        // [hands-off]
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
         const action = anchorEl.dataset.action;
@@ -1289,20 +638,16 @@ export class UIManager {
         
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
-        // [/hands-off]
     }
 
     hideGraph() {
-        // [hands-off]
         if (this.activeGraphAnchor) {
             this.cache.graphTooltip.style.display = 'none';
             this.activeGraphAnchor = null;
         }
-        // [/hands-off]
     }
     
     updateGraphTooltipPosition() {
-        // [hands-off]
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
@@ -1335,30 +680,24 @@ export class UIManager {
         
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
-        // [/hands-off]
     }
 
     showGenericTooltip(anchorEl, content) {
-        // [hands-off]
         this.activeGenericTooltipAnchor = anchorEl;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
         tooltip.style.display = 'block';
         this.updateGenericTooltipPosition();
-        // [/hands-off]
     }
 
     hideGenericTooltip() {
-        // [hands-off]
         if (this.activeGenericTooltipAnchor) {
             this.cache.genericTooltip.style.display = 'none';
             this.activeGenericTooltipAnchor = null;
         }
-        // [/hands-off]
     }
 
     updateGenericTooltipPosition() {
-        // [hands-off]
         if (!this.activeGenericTooltipAnchor) return;
         const tooltip = this.cache.genericTooltip;
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
@@ -1379,11 +718,9 @@ export class UIManager {
 
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
-        // [/hands-off]
     }
 
     _renderPriceGraph(goodId, gameState, playerItem) {
-        // [hands-off]
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
         if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">Check back next week!!</div>`;
         const good = DB.COMMODITIES.find(c => c.id === goodId);
@@ -1408,10 +745,8 @@ export class UIManager {
         svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" /><text x="${getX(prices.length - 1)}" y="${getY(prices[prices.length - 1]) - 5}" fill="#60a5fa" font-size="10" font-family="Roboto Mono" text-anchor="middle">Price</text>`;
         svg += `<text x="${padding - 5}" y="${getY(minVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text><text x="${padding - 5}" y="${getY(maxVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text></svg>`;
         return svg;
-        // [/hands-off]
     }
     showTutorialToast({ step, onSkip, onNext, gameState }) {
-        // [hands-off]
         const toast = this.cache.tutorialToastContainer;
         
         let processedText = step.text;
@@ -1442,19 +777,15 @@ export class UIManager {
         this.cache.tutorialToastNextBtn.style.display = isInfoStep ? 'inline-block' : 'none';
         this.cache.tutorialToastNextBtn.onclick = onNext;
 
-        // Use the new isSkippable property from the step data.
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
-        // [/hands-off]
     }
 
 
     hideTutorialToast() {
-        // [hands-off]
         this.cache.tutorialToastContainer.classList.add('hidden');
         this.applyTutorialHighlight(null);
-        // [/hands-off]
     }
     
     applyTutorialHighlight(step) {
@@ -1462,7 +793,6 @@ export class UIManager {
     }
 
     showSkipTutorialModal(onConfirm) {
-        // [hands-off]
         const modal = this.cache.skipTutorialModal;
         modal.classList.remove('hidden');
         
@@ -1477,11 +807,9 @@ export class UIManager {
 
         this.cache.skipTutorialConfirmBtn.onclick = confirmHandler;
         this.cache.skipTutorialCancelBtn.onclick = cancelHandler;
-        // [/hands-off]
     }
 
     showTutorialLogModal({ seenBatches, onSelect }) {
-        // [hands-off]
         const logModal = document.getElementById('tutorial-log-modal');
         const list = document.getElementById('tutorial-log-list');
 
@@ -1509,11 +837,9 @@ export class UIManager {
             });
         }
         logModal.classList.add('visible');
-        // [/hands-off]
     }
 
     showShipDetailModal(gameState, shipId, context) {
-        // [hands-off]
         const { player, tutorials } = gameState;
         const shipStatic = DB.SHIPS[shipId];
         let modalContentHtml;
@@ -1569,7 +895,6 @@ export class UIManager {
         modalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-        // [/hands-off]
     }
     
     renderStickyBar(gameState) {
@@ -1687,7 +1012,6 @@ export class UIManager {
     }
 
     flashObjectiveProgress() {
-        // [hands-off]
         const progressEl = document.getElementById('sticky-objective-progress');
         if (progressEl) {
             progressEl.classList.add('objective-progress-flash');
@@ -1695,6 +1019,5 @@ export class UIManager {
                 progressEl.classList.remove('objective-progress-flash');
             }, 700);
         }
-        // [/hands-off]
     }
 }

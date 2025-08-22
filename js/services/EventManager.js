@@ -1,6 +1,6 @@
 // js/services/EventManager.js
 import { formatCredits } from '../utils.js';
-import { SHIPS, COMMODITIES, MARKETS } from '../data/gamedata.js';
+import { DB } from '../data/database.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 
@@ -111,7 +111,7 @@ export class EventManager {
                     break;
                 case ACTION_IDS.BUY_SHIP: 
                     if (this.simulationService.buyShip(shipId)) {
-                        const price = SHIPS[shipId].price;
+                        const price = DB.SHIPS[shipId].price;
                         this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
                         actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
                         this.uiManager.hideModal('ship-detail-modal');
@@ -304,7 +304,7 @@ export class EventManager {
                 message = 'Debug: +100k Credits.';
                 break;
             case '$':
-                Object.keys(SHIPS).forEach(shipId => {
+                Object.keys(DB.SHIPS).forEach(shipId => {
                     if (!this.gameState.player.ownedShipIds.includes(shipId)) {
                         this.simulationService.addShipToHangar(shipId);
                     }
@@ -320,7 +320,7 @@ export class EventManager {
                 const activeShip = this.simulationService._getActiveShip();
                 const inventory = this.simulationService._getActiveInventory();
                 if (activeShip && inventory) {
-                    COMMODITIES.forEach(c => {
+                    DB.COMMODITIES.forEach(c => {
                         if (calculateInventoryUsed(inventory) < activeShip.cargoCapacity) {
                             inventory[c.id].quantity = (inventory[c.id].quantity || 0) + 1;
                         }

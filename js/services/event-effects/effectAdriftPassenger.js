@@ -1,6 +1,7 @@
 // js/services/event-effects/effectAdriftPassenger.js
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
+import { DB } from '../../data/database.js';
 
 /**
  * @typedef {import('../../services/GameState.js').GameState} GameState

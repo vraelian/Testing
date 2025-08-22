@@ -1,6 +1,6 @@
 // js/services/simulation/MarketService.js
 import { GAME_RULES } from '../../data/constants.js';
-import { COMMODITIES, MARKETS } from '../../data/gamedata.js';
+import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
 
 export class MarketService {
@@ -9,8 +9,8 @@ export class MarketService {
     }
 
     evolveMarketPrices() {
-        MARKETS.forEach(location => {
-            COMMODITIES.forEach(good => {
+        DB.MARKETS.forEach(location => {
+            DB.COMMODITIES.forEach(good => {
                 if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
                 const price = this.gameState.market.prices[location.id][good.id];
@@ -28,8 +28,8 @@ export class MarketService {
     }
     
     replenishMarketInventory() {
-        MARKETS.forEach(market => {
-            COMMODITIES.forEach(c => {
+        DB.MARKETS.forEach(market => {
+            DB.COMMODITIES.forEach(c => {
                  if (c.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
@@ -64,9 +64,9 @@ export class MarketService {
 
     _recordPriceHistory() {
         if (!this.gameState || !this.gameState.market) return;
-        MARKETS.forEach(market => {
+        DB.MARKETS.forEach(market => {
             if (!this.gameState.market.priceHistory[market.id]) this.gameState.market.priceHistory[market.id] = {};
-            COMMODITIES.forEach(good => {
+            DB.COMMODITIES.forEach(good => {
                 if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
                 if (!this.gameState.market.priceHistory[market.id][good.id]) this.gameState.market.priceHistory[market.id][good.id] = [];
                 

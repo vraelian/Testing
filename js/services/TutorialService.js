@@ -2,7 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of interactive tutorials.
  */
-import { TUTORIAL_DATA } from '../data/gamedata.js';
+import { DB } from '../data/database.js';
 import { TUTORIAL_ACTION_TYPES, ACTION_IDS } from '../data/constants.js';
 
 export class TutorialService {
@@ -34,7 +34,7 @@ export class TutorialService {
      */
     checkState(actionData = null) {
         if (this.activeBatchId && this.activeStepId) {
-            const batch = TUTORIAL_DATA[this.activeBatchId];
+            const batch = DB.TUTORIAL_DATA[this.activeBatchId];
             const step = batch.steps.find(s => s.stepId === this.activeStepId);
 
             if (step && this._matchesCondition(step.completion, actionData)) {
@@ -43,8 +43,8 @@ export class TutorialService {
             return;
         }
 
-        for (const batchId in TUTORIAL_DATA) {
-            const batch = TUTORIAL_DATA[batchId];
+        for (const batchId in DB.TUTORIAL_DATA) {
+            const batch = DB.TUTORIAL_DATA[batchId];
             const hasBeenSeen = this.gameState.tutorials.seenBatchIds.includes(batchId);
             const isSkipped = this.gameState.tutorials.skippedTutorialBatches.includes(batchId);
             
@@ -66,8 +66,8 @@ export class TutorialService {
      * @param {string|null} [startStepId=null] The ID of the step to start from. If null, starts from the beginning.
      */
     triggerBatch(batchId, startStepId = null) {
-        if (!TUTORIAL_DATA[batchId]) return;
-        const batch = TUTORIAL_DATA[batchId];
+        if (!DB.TUTORIAL_DATA[batchId]) return;
+        const batch = DB.TUTORIAL_DATA[batchId];
 
         // If the tutorial is triggered by a screen load, switch to that screen
         if (batch.trigger.type === TUTORIAL_ACTION_TYPES.SCREEN_LOAD) {
@@ -113,7 +113,7 @@ export class TutorialService {
     advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
 
-        const batch = TUTORIAL_DATA[this.activeBatchId];
+        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
         
         this.uiManager.hideTutorialToast();
@@ -140,7 +140,7 @@ export class TutorialService {
      */
     _displayStep(stepId) {
         if (!this.activeBatchId) return;
-        const batch = TUTORIAL_DATA[this.activeBatchId];
+        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const step = batch.steps.find(s => s.stepId === stepId);
         if (!step) {
             this._endBatch();

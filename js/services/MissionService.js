@@ -2,7 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  */
-import { MISSIONS, COMMODITIES, SHIPS } from '../data/gamedata.js';
+import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
 
 export class MissionService {
@@ -30,7 +30,7 @@ export class MissionService {
      * @returns {boolean} True if all prerequisites are met, false otherwise.
      */
     arePrerequisitesMet(missionId) {
-        const mission = MISSIONS[missionId];
+        const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.prerequisites) {
             return true; // No prerequisites, so it's met.
         }
@@ -53,7 +53,7 @@ export class MissionService {
      */
     getAvailableMissions() {
         const { activeMissionId, completedMissionIds } = this.gameState.missions;
-        return Object.values(MISSIONS).filter(mission => {
+        return Object.values(DB.MISSIONS).filter(mission => {
             const isAvailable =
                 mission.id !== activeMissionId &&
                 !completedMissionIds.includes(mission.id) &&
@@ -67,7 +67,7 @@ export class MissionService {
      * @param {string} missionId The ID of the mission to accept.
      */
     acceptMission(missionId) {
-        if (this.gameState.missions.activeMissionId || !MISSIONS[missionId] || !this.arePrerequisitesMet(missionId)) {
+        if (this.gameState.missions.activeMissionId || !DB.MISSIONS[missionId] || !this.arePrerequisitesMet(missionId)) {
             return;
         }
         this.gameState.missions.activeMissionId = missionId;
@@ -104,7 +104,7 @@ export class MissionService {
             return;
         }
     
-        const mission = MISSIONS[activeMissionId];
+        const mission = DB.MISSIONS[activeMissionId];
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         if (!mission || !inventory) {
             this.gameState.missions.activeMissionObjectivesMet = false;
@@ -152,7 +152,7 @@ export class MissionService {
         const { activeMissionId } = this.gameState.missions;
         if (!activeMissionId || !this.gameState.missions.activeMissionObjectivesMet) return;
 
-        const mission = MISSIONS[activeMissionId];
+        const mission = DB.MISSIONS[activeMissionId];
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
         // 1. Deduct objective items

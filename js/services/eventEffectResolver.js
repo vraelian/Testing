@@ -2,7 +2,7 @@
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
-import { MARKETS, COMMODITIES } from '../data/gamedata.js';
+import { DB } from '../data/database.js';
 import { COMMODITY_IDS } from '../data/constants.js';
 
 const effectHandlers = {
@@ -48,7 +48,7 @@ const effectHandlers = {
     'add_cargo': (gameState, simulationService, effect, outcome) => {
         const ship = simulationService._getActiveShip();
         const inventory = simulationService._getActiveInventory();
-        const commodity = COMMODITIES.find(c => c.id === effect.value.id);
+        const commodity = DB.COMMODITIES.find(c => c.id === effect.value.id);
         // This effect is conditional. Only add cargo if there is space.
         if (calculateInventoryUsed(inventory) + effect.value.quantity <= ship.cargoCapacity) {
             inventory[effect.value.id].quantity += effect.value.quantity;
@@ -82,7 +82,7 @@ const effectHandlers = {
         }
     },
     'set_new_random_destination': (gameState, simulationService, effect) => {
-        const otherMarkets = MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
+        const otherMarkets = DB.MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
         if(otherMarkets.length > 0) gameState.pendingTravel.destinationId = otherMarkets[Math.floor(Math.random() * otherMarkets.length)].id;
     }
 };
