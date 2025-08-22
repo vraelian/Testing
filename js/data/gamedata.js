@@ -93,7 +93,7 @@ export const INTRO_SEQUENCE_V1 = {
         steps: [
             {
                 stepId: 'hangar_1',
-                text: 'Welcome to the <b>Shipyard</b> on Mars!<br><br>Every station has a port from which you can trade ships and manage your hangar.',
+                text: 'Welcome to the <b>Shipyard</b> on Mars! Every station has a port from which you can trade ships and manage your hangar.',
                 highlightElementId: 'starport-shipyard-panel',
                 mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },

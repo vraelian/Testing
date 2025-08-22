@@ -10,7 +10,7 @@ export class UIManager {
         this.modalQueue = [];
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
-        this.activeTutorialHighlights = []; // Changed to handle multiple highlights
+        this.activeTutorialHighlights = []; // Now stores objects { element, classes }
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
