@@ -10,7 +10,6 @@ export class UIManager {
         this.modalQueue = [];
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
-        this.activeTutorialHighlights = []; // Now stores objects { element, classes }
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
@@ -539,28 +538,16 @@ export class UIManager {
 
     renderHangarScreen(gameState) {
         // [hands-off]
-        const { tutorials } = gameState;
-        let shipyardHighlightClass = '';
-        let hangarHighlightClass = '';
-
-        if (tutorials.activeBatchId === 'intro_hangar') {
-            if (tutorials.activeStepId === 'hangar_1' || tutorials.activeStepId === 'hangar_2') {
-                shipyardHighlightClass = 'tutorial-highlight';
-            } else if (tutorials.activeStepId === 'hangar_3') {
-                hangarHighlightClass = 'tutorial-highlight';
-            }
-        }
-
         if (!this.isMobile) {
-            this._renderHangarScreenDesktop(gameState, shipyardHighlightClass, hangarHighlightClass);
+            this._renderHangarScreenDesktop(gameState);
         } else {
-            this._renderHangarScreenMobile(gameState, shipyardHighlightClass, hangarHighlightClass);
+            this._renderHangarScreenMobile(gameState);
         }
         // [/hands-off]
     }
 
 
-    _renderHangarScreenMobile(gameState, shipyardHighlightClass, hangarHighlightClass) {
+    _renderHangarScreenMobile(gameState) {
         // [hands-off]
         const { player } = gameState;
         const shipsForSale = this._getShipyardInventory(gameState);
@@ -573,11 +560,11 @@ export class UIManager {
 
         this.cache.hangarScreen.innerHTML = `
             <div class="flex flex-col gap-6">
-                <div id="starport-shipyard-panel-mobile" class="${shipyardHighlightClass}">
+                <div id="starport-shipyard-panel-mobile">
                     <h2 class="text-2xl font-orbitron text-cyan-300 mb-2 text-center">Shipyard</h2>
                     <div class="starport-panel-mobile space-y-2">${shipyardHtml}</div>
                 </div>
-                <div id="starport-hangar-panel-mobile" class="${hangarHighlightClass}">
+                <div id="starport-hangar-panel-mobile">
                     <h2 class="text-2xl font-orbitron text-cyan-300 mb-2 text-center">Hangar</h2>
                     <div class="starport-panel-mobile space-y-2">${hangarHtml}</div>
                 </div>
@@ -585,7 +572,7 @@ export class UIManager {
             // [/hands-off]
     }
 
-    _renderHangarScreenDesktop(gameState, shipyardHighlightClass, hangarHighlightClass) {
+    _renderHangarScreenDesktop(gameState) {
         // [hands-off]
         const { player, tutorials } = gameState;
         const shipsForSale = this._getShipyardInventory(gameState);
@@ -618,13 +605,13 @@ export class UIManager {
 
         this.cache.hangarScreen.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 relative">
-                <div id="starport-shipyard-panel" class="${shipyardHighlightClass}">
+                <div id="starport-shipyard-panel">
                     <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Shipyard</h2>
                     <div class="starport-panel space-y-4">${shipyardHtml}</div>
                 </div>
                 <div class="w-full my-4 border-t-2 border-slate-600 lg:hidden"></div>
                 <div class="absolute left-1/2 top-0 h-full w-px bg-slate-600 hidden lg:block"></div>
-                <div id="starport-hangar-panel" class="${hangarHighlightClass}">
+                <div id="starport-hangar-panel">
                     <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Hangar</h2>
                     <div class="starport-panel space-y-4">${hangarHtml}</div>
                 </div>
@@ -1438,8 +1425,6 @@ export class UIManager {
         }
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        this.applyTutorialHighlight(step);
-
         toast.className = 'hidden fixed p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto';
         
         let positionClass;
@@ -1474,35 +1459,7 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        // Clear previous highlights and their custom classes
-        this.activeTutorialHighlights.forEach(({ element, classes }) => {
-            element.classList.remove(...classes);
-        });
-        this.activeTutorialHighlights = [];
-    
-        if (!step) return;
-    
-        const elementId = this.isMobile && step.mobileHighlightElementId ? step.mobileHighlightElementId : step.highlightElementId;
-        const elementQuery = this.isMobile && step.mobileHighlightElementQuery ? step.mobileHighlightElementQuery : step.highlightElementQuery;
-        const highlightClasses = (step.highlightClasses || 'tutorial-highlight').split(' ');
-    
-        const applyClasses = (element) => {
-            if (element) {
-                element.classList.add(...highlightClasses);
-                this.activeTutorialHighlights.push({ element, classes: highlightClasses });
-                if (elementId !== 'starport-shipyard-panel' && elementId !== 'starport-hangar-panel') {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        };
-    
-        if (elementId) {
-            applyClasses(document.getElementById(elementId));
-        }
-    
-        if (elementQuery) {
-            document.querySelectorAll(elementQuery).forEach(applyClasses);
-        }
+        // This function is intentionally left empty to disable the highlighting feature.
     }
 
     showSkipTutorialModal(onConfirm) {

@@ -779,20 +779,20 @@ body {
 }
 
 .tutorial-highlight {
-    animation: green-pulse 2s infinite;
-    border-radius: 8px;
     position: relative;
     z-index: 99;
 }
 
-.tt-top-center { top: 5%; left: 50%; transform: translateX(-50%); }
+.tt-top-center { top: 5%;
+    left: 50%; transform: translateX(-50%); }
 .tt-left { top: 50%; left: 2%; transform: translateY(-50%);
 }
 .tt-right { top: 50%; right: 2%; transform: translateY(-50%);
 }
 .tt-bottom-center { bottom: 5%; left: 50%; transform: translateX(-50%); }
 .tt-bottom-right { bottom: 5%;
-    right: 2%; }
+    right: 2%;
+}
 
 .starport-panel-mobile {
     background-color: rgba(10, 20, 40, 0.5);
@@ -839,7 +839,8 @@ body {
     } 
     .btn-header {
         padding: 0.2rem 0.6rem;
-        font-size: 0.8rem; /* Keep original font size */
+        font-size: 0.8rem;
+        /* Keep original font size */
         flex: 1;
         min-width: 0;
         width: auto;

@@ -22,11 +22,6 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
  * @typedef {object} IntroTutorialStep
  * @property {string} stepId - Unique ID for the tutorial step.
  * @property {string} text - The text displayed in the tutorial toast.
- * @property {string} [highlightElementId] - The ID of a single UI element to highlight.
- * @property {string} [mobileHighlightElementId] - The ID of a single UI element to highlight on mobile.
- * @property {string} [highlightElementQuery] - A query selector for multiple UI elements to highlight.
- * @property {string} [mobileHighlightElementQuery] - A query selector for multiple UI elements to highlight on mobile.
- * @property {string} [highlightClasses] - CSS classes to apply to the highlighted element(s), e.g., 'btn-pulse-green'. Defaults to 'tutorial-highlight'.
  * @property {object} position - The positioning of the toast.
  * @property {object} [size] - The size of the toast.
  * @property {object} completion - The action required to complete the step.
@@ -94,8 +89,6 @@ export const INTRO_SEQUENCE_V1 = {
             {
                 stepId: 'hangar_1',
                 text: 'Welcome to the <b>Shipyard</b> on Mars! Every station has a port from which you can trade ships and manage your hangar.',
-                highlightElementId: 'starport-shipyard-panel',
-                mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: 'hangar_2',
@@ -104,8 +97,6 @@ export const INTRO_SEQUENCE_V1 = {
             {
                 stepId: 'hangar_2',
                 text: "Now that you've got some <b class='hl-yellow font-bold'>extra credits</b>, it's time to buy your first ship. Select one of the options in the <b>Shipyard</b>. Choose carefully...",
-                highlightElementQuery: '.ship-card button[data-action="buy-ship"]',
-                mobileHighlightElementQuery: '.ship-list-item-mobile[data-context="shipyard"]',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
                 nextStepId: 'hangar_3',
@@ -114,9 +105,6 @@ export const INTRO_SEQUENCE_V1 = {
             {
                 stepId: 'hangar_3',
                 text: 'Congratulations! Your new vessel is now in your <b>Hangar</b>. Select it and <b class="hl-yellow font-bold">Board</b> to make it your active ship.',
-                highlightElementQuery: '#starport-hangar-panel [data-action="select-ship"]',
-                mobileHighlightElementQuery: '#starport-hangar-panel-mobile [data-action="show-ship-detail"]',
-                highlightClasses: 'btn-pulse-green',
                 position: { desktop: 'bottom-right', mobile: 'top-center' },
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
                 nextStepId: null,
@@ -132,8 +120,6 @@ export const INTRO_SEQUENCE_V1 = {
             {
                 stepId: 'finance_1',
                 text: "That was a big purchase, but don't worry - you've still got some credits left over! All of your transaction history and debts can be viewed in your <b>Finances</b>.",
-                highlightElementQuery: '[data-screen-id="finance"]',
-                highlightClasses: 'btn-pulse-green',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: 'finance_2',
@@ -142,8 +128,6 @@ export const INTRO_SEQUENCE_V1 = {
             {
                 stepId: 'finance_2',
                 text: "Your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>180 days</b>. You will need to earn <b class='hl-yellow font-bold'>credits</b> to pay off your debt!",
-                highlightElementId: 'finance-debt-panel',
-                mobileHighlightElementId: 'finance-debt-panel',
                 position: { desktop: 'bottom-right', mobile: 'top' },
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: null,
@@ -496,21 +480,21 @@ export const TUTORIAL_DATA = {
       trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
       navLock: true,
       steps: [
-        { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn credits and improve your reputation. It appears that the Mars station has put in a <b>Delivery</b> request.", "highlightElementId": "missions-screen", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
-        { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
-        { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "highlightElementQuery": "[data-action='accept-mission']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
-        { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship, the {shipName}.", "highlightElementQuery": "[data-mission-id='mission_tutorial_01']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-        { "stepId": "mission_1_5", "text": "It's time to go the moon, spacer! Proceed to your <b>Ship Navigation</b> terminal.", "highlightElementQuery": "[data-nav-id='ship'], [data-screen-id='navigation']", "highlightClasses": "btn-pulse-green", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
-        { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear and tear</b> on your ship. Select the <b>Moon</b> to lift from Mars.", "highlightElementQuery": "[data-location-id='loc_luna']", "mobileHighlightElementQuery": "[data-location-id='loc_luna']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
-        { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "highlightElementId": "mission-sticky-bar", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+        { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn credits and improve your reputation. It appears that the Mars station has put in a <b>Delivery</b> request.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
+        { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
+        { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
+        { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship, the {shipName}.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
+        { "stepId": "mission_1_5", "text": "It's time to go the moon, spacer! Proceed to your <b>Ship Navigation</b> terminal.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
+        { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear and tear</b> on your ship. Select the <b>Moon</b> to lift from Mars.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+        { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
         { "stepId": "mission_1_8", "text": "Mission complete! However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. Let's find a real <b class='hl-yellow font-bold'>profit margin.</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
-        { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "highlightElementQuery": "[data-nav-id='admin']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-        { "stepId": "mission_2_1", "text": "Relying on handouts won't work. The real money is in playing the markets yourself—buying low and selling high. Let's find an opportunity right here on Luna.", "highlightElementQuery": "[data-screen-id='market']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": "starport", "screenId": "market" } },
-        { "stepId": "mission_2_2", "text": "You're on Luna, where industrial output is high. See the price of Plasteel? The 'MKT' indicator shows it's cheap. Now, remember the construction on Mars? They'll pay a premium. That's your margin.", "highlightElementId": "item-card-container-plasteel", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_3", "isSkippable": false },
-        { "stepId": "mission_2_3", "text": "A new contract is available that lines up with this opportunity. Go to the Mission Terminal.", "highlightElementQuery": "[data-nav-id='admin']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-        { "stepId": "mission_2_4", "text": "This is the kind of contract you look for. Accept it, then go buy the Plasteel on Luna and deliver it to Mars to complete the mission.", "highlightElementQuery": "[data-mission-id='mission_tutorial_02']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_1", "isSkippable": false },
-        { "stepId": "mission_3_1", "text": "Excellent work. Profit in the bank. Your efficiency has been noted. A priority contract just came through on the terminal. It looks... official.", "highlightElementQuery": "[data-screen-id='missions']", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_3_2", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-        { "stepId": "mission_3_2", "text": "A contract from the Terran Alliance. This is your final evaluation, Captain. Complete this, and you're on your own.", "highlightElementQuery": "[data-mission-id='mission_tutorial_03']", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_3", "isSkippable": false },
+        { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+        { "stepId": "mission_2_1", "text": "Relying on handouts won't work. The real money is in playing the markets yourself—buying low and selling high. Let's find an opportunity right here on Luna.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": "starport", "screenId": "market" } },
+        { "stepId": "mission_2_2", "text": "You're on Luna, where industrial output is high. See the price of Plasteel? The 'MKT' indicator shows it's cheap. Now, remember the construction on Mars? They'll pay a premium. That's your margin.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_3", "isSkippable": false },
+        { "stepId": "mission_2_3", "text": "A new contract is available that lines up with this opportunity. Go to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+        { "stepId": "mission_2_4", "text": "This is the kind of contract you look for. Accept it, then go buy the Plasteel on Luna and deliver it to Mars to complete the mission.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_1", "isSkippable": false },
+        { "stepId": "mission_3_1", "text": "Excellent work. Profit in the bank. Your efficiency has been noted. A priority contract just came through on the terminal. It looks... official.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_3_2", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+        { "stepId": "mission_3_2", "text": "A contract from the Terran Alliance. This is your final evaluation, Captain. Complete this, and you're on your own.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_3", "isSkippable": false },
         { "stepId": "mission_3_3", "text": "Contract complete. You've successfully navigated a multi-stop trade route. The training protocols are now disengaged. Your reputation is your own to build. The system is open to you. Fly smart, Captain.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false }
       ]
     }

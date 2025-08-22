@@ -1637,7 +1637,6 @@
       },
       "mutates_state": [],
       "calls": [
-        "UIManager.applyTutorialHighlight",
         "UIManager.showSkipTutorialModal"
       ]
     },
