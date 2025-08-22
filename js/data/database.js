@@ -82,63 +82,7 @@ export const DB = {
             description: "Interest on your debt grows every week. It's time to make some credits. Let's view the Mission Terminal here on Mars!",
             buttonText: 'View Missions'
         }
-      ],
-      tutorials: {
-        'intro_hangar': {
-            title: 'Your First Ship',
-            trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_HANGAR' },
-            navLock: true,
-            steps: [
-                {
-                    stepId: 'hangar_1',
-                    text: 'Welcome to the <b>Shipyard</b> on Mars! Every station has a port from which you can trade ships and manage your hangar.',
-                    position: { desktop: 'bottom-right', mobile: 'top' },
-                    completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                    nextStepId: 'hangar_2',
-                    isSkippable: true
-                },
-                {
-                    stepId: 'hangar_2',
-                    text: "Now that you've got some <b class='hl-yellow font-bold'>extra credits</b>, it's time to buy your first ship. Select one of the options in the <b>Shipyard</b>. Choose carefully...",
-                    position: { desktop: 'bottom-right', mobile: 'top' },
-                    completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
-                    nextStepId: 'hangar_3',
-                    isSkippable: true
-                },
-                {
-                    stepId: 'hangar_3',
-                    text: 'Congratulations! Your new vessel is now in your <b>Hangar</b>. Select it and <b class="hl-yellow font-bold">Board</b> to make it your active ship.',
-                    position: { desktop: 'bottom-right', mobile: 'top-center' },
-                    completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
-                    nextStepId: null,
-                    isSkippable: false
-                }
-            ]
-        },
-        'intro_finance': {
-            title: 'Managing Your Debt',
-            trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_FINANCE' },
-            navLock: true,
-            steps: [
-                {
-                    stepId: 'finance_1',
-                    text: "That was a big purchase, but don't worry - you've still got some credits left over! All of your transaction history and debts can be viewed in your <b>Finances</b>.",
-                    position: { desktop: 'bottom-right', mobile: 'top' },
-                    completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                    nextStepId: 'finance_2',
-                    isSkippable: false
-                },
-                {
-                    stepId: 'finance_2',
-                    text: "Your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>180 days</b>. You will need to earn <b class='hl-yellow font-bold'>credits</b> to pay off your debt!",
-                    position: { desktop: 'bottom-right', mobile: 'top' },
-                    completion: { type: TUTORIAL_ACTION_TYPES.INFO },
-                    nextStepId: null,
-                    isSkippable: false
-                }
-            ]
-        }
-      }
+      ]
     },
 
     LOCATION_VISUALS: {
@@ -474,34 +418,6 @@ export const DB = {
         { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", modifiers: { [COMMODITY_IDS.ANTIMATTER]: 2.5, [COMMODITY_IDS.FOLDED_DRIVES]: 1.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 1.2 }, specialDemand: { [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 1.75 } } },
         { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", modifiers: { [COMMODITY_IDS.SENTIENT_AI]: 2.0, [COMMODITY_IDS.PROCESSORS]: 1.8, [COMMODITY_IDS.CRYO_PODS]: 1.3 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
     ],
-
-    TUTORIAL_DATA: {
-        ...this.INTRO_SEQUENCE_V1.tutorials,
-        'intro_missions': {
-          id: "intro_missions",
-          title: "First Steps",
-          trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
-          navLock: true,
-          steps: [
-            { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn credits and improve your reputation. It appears that the Mars station has put in a <b>Delivery</b> request.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
-            { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
-            { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
-            { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship, the {shipName}.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-            { "stepId": "mission_1_5", "text": "It's time to go the moon, spacer! Proceed to your <b>Ship Navigation</b> terminal.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
-            { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear and tear</b> on your ship. Select the <b>Moon</b> to lift from Mars.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
-            { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-            { "stepId": "mission_1_8", "text": "Mission complete! However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. Let's find a real <b class='hl-yellow font-bold'>profit margin.</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
-            { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-            { "stepId": "mission_2_1", "text": "Relying on handouts won't work. The real money is in playing the markets yourself—buying low and selling high. Let's find an opportunity right here on Luna.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": "starport", "screenId": "market" } },
-            { "stepId": "mission_2_2", "text": "You're on Luna, where industrial output is high. See the price of Plasteel? The 'MKT' indicator shows it's cheap. Now, remember the construction on Mars? They'll pay a premium. That's your margin.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_3", "isSkippable": false },
-            { "stepId": "mission_2_3", "text": "A new contract is available that lines up with this opportunity. Go to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-            { "stepId": "mission_2_4", "text": "This is the kind of contract you look for. Accept it, then go buy the Plasteel on Luna and deliver it to Mars to complete the mission.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_1", "isSkippable": false },
-            { "stepId": "mission_3_1", "text": "Excellent work. Profit in the bank. Your efficiency has been noted. A priority contract just came through on the terminal. It looks... official.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_3_2", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-            { "stepId": "mission_3_2", "text": "A contract from the Terran Alliance. This is your final evaluation, Captain. Complete this, and you're on your own.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_3_3", "isSkippable": false },
-            { "stepId": "mission_3_3", "text": "Contract complete. You've successfully navigated a multi-stop trade route. The training protocols are now disengaged. Your reputation is your own to build. The system is open to you. Fly smart, Captain.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false }
-          ]
-        }
-    },
 
     MISSIONS: {
         'mission_tutorial_01': {
