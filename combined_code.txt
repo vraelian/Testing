@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.01, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>Orbital Trading v20.31</title>
+    <title>Orbital Trading v20.32</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css?v=1754200888545">
@@ -25,7 +25,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p id="version-display">Version 20.31</p>
+            <p id="version-display">Version 20.32</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
             <p class="mt-1">Designed by Devon C.</p>
         </footer>
@@ -555,7 +555,7 @@ export const INTRO_SEQUENCE_V1 = {
         steps: [
             {
                 stepId: 'hangar_1',
-                text: 'Welcome to the <b>Shipyard</b> on Mars!<br><br>Every station has a port from which you can trade ships and manage your hangar.',
+                text: 'Welcome to the <b>Shipyard</b> on Mars! Every station has a port from which you can trade ships and manage your hangar.',
                 highlightElementId: 'starport-shipyard-panel',
                 mobileHighlightElementId: 'starport-shipyard-panel-mobile',
                 position: { desktop: 'bottom-right', mobile: 'top' },
@@ -3585,7 +3585,7 @@ export class UIManager {
         this.modalQueue = [];
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
-        this.activeTutorialHighlights = []; // Changed to handle multiple highlights
+        this.activeTutorialHighlights = []; // Now stores objects { element, classes }
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
@@ -5178,7 +5178,7 @@ export class UIManager {
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
-                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
+                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${id}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
                     </div>
                 </div>`;
         }
