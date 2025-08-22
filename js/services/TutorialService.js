@@ -161,10 +161,6 @@ export class TutorialService {
             this.gameState.tutorials.navLock = null;
         }
 
-        if (step.completion.action === ACTION_IDS.BUY_ITEM && this.gameState.player.credits < 1000) {
-            return;
-        }
-
         this.activeStepId = stepId;
         this.gameState.tutorials.activeStepId = stepId;
         
