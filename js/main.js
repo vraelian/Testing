@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasSave = gameState.loadGame();
         if (!hasSave) {
             gameState.startNewGame('');
+            simulationService._advanceDays(7); // Start with 1 week of history
             // The intro sequence is now responsible for revealing the game container and the first render.
             simulationService.startIntroSequence();
         }

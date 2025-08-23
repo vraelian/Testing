@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.01, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>Orbital Trading v20.35</title>
+    <title>Orbital Trading v20.36</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css?v=1754200888545">
@@ -25,7 +25,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p id="version-display">Version 20.35</p>
+            <p id="version-display">Version 20.36</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
             <p class="mt-1">Designed by Devon C.</p>
         </footer>
@@ -1073,6 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasSave = gameState.loadGame();
         if (!hasSave) {
             gameState.startNewGame('');
+            simulationService._advanceDays(7); // Start with 1 week of history
             // The intro sequence is now responsible for revealing the game container and the first render.
             simulationService.startIntroSequence();
         }
@@ -3068,7 +3069,7 @@ export class SimulationService {
         }
         
         if (marketUpdated && this.gameState.activeScreen === SCREEN_IDS.MARKET) {
-            this.uiManager.renderMarketScreen(this.gameState.getState());
+            this.uiManager.render(this.gameState.getState());
         }
 
         this.gameState.setState({});
@@ -3776,6 +3777,19 @@ export class EventManager {
                     qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
                     break;
                 }
+                 case ACTION_IDS.SHOW_PRICE_GRAPH:
+                case ACTION_IDS.SHOW_FINANCE_GRAPH: {
+                    if (this.uiManager.isMobile) {
+                        if (this.activeTooltipTarget === actionTarget) {
+                            this.uiManager.hideGraph();
+                            this.activeTooltipTarget = null;
+                        } else {
+                            this.uiManager.showGraph(actionTarget, this.gameState.getState());
+                            this.activeTooltipTarget = actionTarget;
+                        }
+                    }
+                    break;
+                }
             }
             if (actionData) {
                 this.tutorialService.checkState(actionData);
@@ -3802,42 +3816,23 @@ export class EventManager {
             this.uiManager.hideModal('ship-detail-modal');
             return;
         }
-
-
-        // --- Mobile Tooltip Handling (only if no action was taken) ---
+        
+        // --- Mobile Generic Tooltip Handling (if no action was taken) ---
         if (this.uiManager.isMobile) {
-            const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
-            const commodityTooltipTarget = e.target.closest('.commodity-name-tooltip');
-            const cargoTooltipTarget = e.target.closest('.cargo-item-tooltip');
-            const hangerTooltipTarget = e.target.closest('.hanger-ship-name');
-
-            const newTarget = graphTarget || commodityTooltipTarget ||
-                cargoTooltipTarget || hangerTooltipTarget;
-
-            if (this.activeTooltipTarget) {
-                const isClickingSameTarget = this.activeTooltipTarget === newTarget;
-                this.uiManager.hideGraph();
-                this.uiManager.hideGenericTooltip();
-                this.activeTooltipTarget = null;
-                if (isClickingSameTarget) {
-                    return;
-                }
-            }
-            
-            if (newTarget) {
-                if (newTarget.dataset.action?.includes(ACTION_IDS.SHOW_PRICE_GRAPH) || newTarget.dataset.action?.includes(ACTION_IDS.SHOW_FINANCE_GRAPH)) {
-                    this.uiManager.showGraph(newTarget, this.gameState.getState());
+            const tooltipTarget = e.target.closest('[data-tooltip]');
+            if (tooltipTarget && !tooltipTarget.dataset.action) { // Ensure it's not a graph icon
+                if (this.activeTooltipTarget === tooltipTarget) {
+                    this.uiManager.hideGenericTooltip();
+                    this.activeTooltipTarget = null;
                 } else {
-                    const tooltipText = newTarget.dataset.tooltip;
-                    if (tooltipText) {
-                        this.uiManager.showGenericTooltip(newTarget, tooltipText);
-                    }
+                    this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip);
+                    this.activeTooltipTarget = tooltipTarget;
                 }
-                this.activeTooltipTarget = newTarget;
-                return;
+                return; // Stop further processing
             }
         }
-        
+
+
         // --- Lore/Tutorial Tooltip Handling (All Devices) ---
         const tutorialTrigger = e.target.closest('.tutorial-container');
         const loreTrigger = e.target.closest('.lore-container');
@@ -5001,11 +4996,8 @@ export class UIManager {
         let leftPos, topPos;
         
         if (this.isMobile) {
-            leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-            topPos = rect.top - tooltipHeight - 10;
-             if (topPos < 10) {
-                topPos = rect.bottom + 10;
-            }
+            leftPos = rect.left - tooltipWidth - 10; // Position to the left of the anchor
+            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
         } else {
             if (this.activeGraphAnchor.dataset.action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
                 leftPos = rect.left - tooltipWidth - 10;
@@ -5046,8 +5038,8 @@ export class UIManager {
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-        let topPos = rect.top - tooltipHeight - 10;
+        let leftPos = rect.right + 10; // Position to the right of the anchor
+        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
 
         if (topPos < 10) {
             topPos = rect.bottom + 10;
@@ -7631,7 +7623,10 @@ body {
 
 .commodity-name { font-family: 'Roboto Mono', monospace; font-size: 1rem;
 }
-.price-text { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+.price-text { 
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
+    font-size: 1.35rem; 
+}
 .text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
@@ -8281,6 +8276,7 @@ body {
     background-repeat: no-repeat;
     background-size: 400px 100%;
 }
+
 --- END OF FILE: ./style.css ---
 
 

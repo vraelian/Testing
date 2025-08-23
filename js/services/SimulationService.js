@@ -756,7 +756,7 @@ export class SimulationService {
         }
         
         if (marketUpdated && this.gameState.activeScreen === SCREEN_IDS.MARKET) {
-            this.uiManager.renderMarketScreen(this.gameState.getState());
+            this.uiManager.render(this.gameState.getState());
         }
 
         this.gameState.setState({});

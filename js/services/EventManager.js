@@ -184,6 +184,19 @@ export class EventManager {
                     qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
                     break;
                 }
+                 case ACTION_IDS.SHOW_PRICE_GRAPH:
+                case ACTION_IDS.SHOW_FINANCE_GRAPH: {
+                    if (this.uiManager.isMobile) {
+                        if (this.activeTooltipTarget === actionTarget) {
+                            this.uiManager.hideGraph();
+                            this.activeTooltipTarget = null;
+                        } else {
+                            this.uiManager.showGraph(actionTarget, this.gameState.getState());
+                            this.activeTooltipTarget = actionTarget;
+                        }
+                    }
+                    break;
+                }
             }
             if (actionData) {
                 this.tutorialService.checkState(actionData);
@@ -210,41 +223,23 @@ export class EventManager {
             this.uiManager.hideModal('ship-detail-modal');
             return;
         }
-
-        // --- Mobile Tooltip Handling (only if no action was taken) ---
+        
+        // --- Mobile Generic Tooltip Handling (if no action was taken) ---
         if (this.uiManager.isMobile) {
-            const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
-            const commodityTooltipTarget = e.target.closest('.commodity-name-tooltip');
-            const cargoTooltipTarget = e.target.closest('.cargo-item-tooltip');
-            const hangerTooltipTarget = e.target.closest('.hanger-ship-name');
-
-            const newTarget = graphTarget || commodityTooltipTarget ||
-                cargoTooltipTarget || hangerTooltipTarget;
-
-            if (this.activeTooltipTarget) {
-                const isClickingSameTarget = this.activeTooltipTarget === newTarget;
-                this.uiManager.hideGraph();
-                this.uiManager.hideGenericTooltip();
-                this.activeTooltipTarget = null;
-                if (isClickingSameTarget) {
-                    return;
-                }
-            }
-            
-            if (newTarget) {
-                if (newTarget.dataset.action?.includes(ACTION_IDS.SHOW_PRICE_GRAPH) || newTarget.dataset.action?.includes(ACTION_IDS.SHOW_FINANCE_GRAPH)) {
-                    this.uiManager.showGraph(newTarget, this.gameState.getState());
+            const tooltipTarget = e.target.closest('[data-tooltip]');
+            if (tooltipTarget && !tooltipTarget.dataset.action) { // Ensure it's not a graph icon
+                if (this.activeTooltipTarget === tooltipTarget) {
+                    this.uiManager.hideGenericTooltip();
+                    this.activeTooltipTarget = null;
                 } else {
-                    const tooltipText = newTarget.dataset.tooltip;
-                    if (tooltipText) {
-                        this.uiManager.showGenericTooltip(newTarget, tooltipText);
-                    }
+                    this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip);
+                    this.activeTooltipTarget = tooltipTarget;
                 }
-                this.activeTooltipTarget = newTarget;
-                return;
+                return; // Stop further processing
             }
         }
-        
+
+
         // --- Lore/Tutorial Tooltip Handling (All Devices) ---
         const tutorialTrigger = e.target.closest('.tutorial-container');
         const loreTrigger = e.target.closest('.lore-container');
