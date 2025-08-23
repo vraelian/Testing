@@ -681,11 +681,8 @@ export class UIManager {
         let leftPos, topPos;
         
         if (this.isMobile) {
-            leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-            topPos = rect.top - tooltipHeight - 10;
-             if (topPos < 10) {
-                topPos = rect.bottom + 10;
-            }
+            leftPos = rect.left - tooltipWidth - 10; // Position to the left of the anchor
+            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
         } else {
             if (this.activeGraphAnchor.dataset.action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
                 leftPos = rect.left - tooltipWidth - 10;
@@ -726,8 +723,8 @@ export class UIManager {
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-        let topPos = rect.top - tooltipHeight - 10;
+        let leftPos = rect.right + 10; // Position to the right of the anchor
+        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
 
         if (topPos < 10) {
             topPos = rect.bottom + 10;
