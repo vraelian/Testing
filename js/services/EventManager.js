@@ -211,7 +211,6 @@ export class EventManager {
             return;
         }
 
-
         // --- Mobile Tooltip Handling (only if no action was taken) ---
         if (this.uiManager.isMobile) {
             const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
