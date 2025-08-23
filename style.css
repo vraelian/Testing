@@ -303,11 +303,11 @@ body {
 }
 
 @keyframes pulse-green-glow {
-    0%, 100% { text-shadow: 0 0 3px #34d399, 0 0 5px #34d399; }
-    50% { text-shadow: 0 0 8px #4ade80, 0 0 12px #4ade80; }
+    0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; }
+    50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; }
 }
 .pulse-green-glow {
-    animation: pulse-green-glow 2s infinite;
+    animation: pulse-green-glow 2s infinite; /* Keep original animation duration */
 }
 
 .location-card {
@@ -530,8 +530,8 @@ body {
 .hl { color: #fde047; font-weight: 700; }
 .hl-blue { color: #60a5fa; font-weight: 700; }
 .hl-red { color: #f87171; font-weight: 700;
-}
-.hl-green { color: #34d399; font-weight: 700; }
+ }
+.hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
 
 #hull-warning-toast {

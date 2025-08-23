@@ -6,7 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
-import { ACTION_IDS } from '../../data/constants.js';
+import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
  * Renders the entire Market screen, adapting for mobile or desktop layouts.
@@ -26,15 +26,21 @@ export function renderMarketScreen(gameState, isMobile) {
 }
 
 function _getMarketItemHtmlDesktop(good, gameState) {
-    const { player, market, currentLocationId } = gameState;
+    const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
     const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
+    
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
+    const isLockedForTutorial = isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL;
+
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-    const buyDisabled = isSpecialDemand ? 'disabled' : '';
+    const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
+    const sellDisabled = isLockedForTutorial ? 'disabled' : '';
+
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
     const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
@@ -58,13 +64,13 @@ function _getMarketItemHtmlDesktop(good, gameState) {
                     <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
                 </div></div>
                 <div class="flex flex-col items-center">
-                    <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}">+</button>
-                    <input type="number" class="qty-input p-2 my-1" id="qty-${good.id}" data-good-id="${good.id}" value="1" min="1">
-                    <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}">-</button>
+                    <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}" ${sellDisabled}>+</button>
+                    <input type="number" class="qty-input p-2 my-1" id="qty-${good.id}" data-good-id="${good.id}" value="1" min="1" ${sellDisabled}>
+                    <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}" ${sellDisabled}>-</button>
                 </div>
                 <div class="flex flex-col items-center"><div class="flex flex-col space-y-1">
-                    <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}">Sell</button>
-                    <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}">Max</button>
+                    <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}" ${sellDisabled}>Sell</button>
+                    <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}" ${sellDisabled}>Max</button>
                 </div></div>
             </div>
         </div>
@@ -72,15 +78,21 @@ function _getMarketItemHtmlDesktop(good, gameState) {
 }
 
 function _getMarketItemHtmlMobile(good, gameState) {
-    const { player, market, currentLocationId } = gameState;
+    const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
     const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
+
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
+    const isLockedForTutorial = isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL;
+
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-    const buyDisabled = isSpecialDemand ? 'disabled' : '';
+    const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
+    const sellDisabled = isLockedForTutorial ? 'disabled' : '';
+
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
     const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
@@ -103,13 +115,13 @@ function _getMarketItemHtmlMobile(good, gameState) {
                         <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
                     </div>
                     <div class="flex flex-col items-center space-y-1">
-                        <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}">+</button>
-                        <input type="number" class="qty-input" id="qty-${good.id}-mobile" data-good-id="${good.id}" value="1" min="1">
-                        <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}">-</button>
+                        <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}" ${sellDisabled}>+</button>
+                        <input type="number" class="qty-input" id="qty-${good.id}-mobile" data-good-id="${good.id}" value="1" min="1" ${sellDisabled}>
+                        <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}" ${sellDisabled}>-</button>
                     </div>
                     <div class="flex flex-col items-center space-y-1">
-                        <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}">Sell</button>
-                        <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}">Max</button>
+                        <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}" ${sellDisabled}>Sell</button>
+                        <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}" ${sellDisabled}>Max</button>
                     </div>
                 </div>
             </div>

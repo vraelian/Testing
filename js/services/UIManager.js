@@ -1,7 +1,7 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS } from '../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -191,6 +191,7 @@ export class UIManager {
                 SCREEN_IDS.HANGAR,
                 SCREEN_IDS.SERVICES,
                 SCREEN_IDS.FINANCE,
+                SCREEN_IDS.MISSIONS,
             ];
             if (creditOnlyScreens.includes(activeScreen)) {
                 this.cache.stickyBar.innerHTML = `
@@ -240,6 +241,15 @@ export class UIManager {
                         </div>
                     </div>
                 
+                `;
+                break;
+            case SCREEN_IDS.MISSIONS:
+                this.cache.stickyBar.innerHTML = `
+                     <div class="ship-hud text-center">
+                        <div class="flex justify-around items-center font-roboto-mono">
+                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
+                        </div>
+                    </div>
                 `;
                 break;
         }
@@ -330,6 +340,19 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
+        // Tutorial override for Plasteel on the Moon
+        if (
+            gameState.tutorials.activeBatchId === 'intro_missions' &&
+            gameState.tutorials.activeStepId === 'mission_2_2' &&
+            goodId === COMMODITY_IDS.PLASTEEL &&
+            gameState.currentLocationId === LOCATION_IDS.LUNA
+        ) {
+            const plasteel = DB.COMMODITIES.find(c => c.id === COMMODITY_IDS.PLASTEEL);
+            const galacticAvg = (plasteel.basePriceRange[0] + plasteel.basePriceRange[1]) / 2;
+            return Math.round(galacticAvg * 1.8); // Guarantee a high price
+        }
+
+
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
@@ -948,11 +971,11 @@ export class UIManager {
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
 
-        const isTutorialMissionOne = mission.id === 'mission_tutorial_01';
-
         let shouldBeDisabled = anotherMissionActive;
-        if (isTutorialMissionOne) {
-            shouldBeDisabled = false;
+
+        // Tutorial-specific logic to lock the "Mars Margin" mission.
+        if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
+            shouldBeDisabled = true;
         }
 
         const options = {
