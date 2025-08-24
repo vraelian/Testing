@@ -794,8 +794,14 @@ export class UIManager {
         toast.classList.remove('hidden');
 
         const isInfoStep = step.completion.type === 'INFO';
-        this.cache.tutorialToastNextBtn.style.display = isInfoStep ? 'inline-block' : 'none';
-        this.cache.tutorialToastNextBtn.onclick = onNext;
+        if (isInfoStep) {
+            const nextButtonText = step.buttonText || 'Next &rarr;';
+            this.cache.tutorialToastNextBtn.innerHTML = nextButtonText;
+            this.cache.tutorialToastNextBtn.style.display = 'inline-block';
+            this.cache.tutorialToastNextBtn.onclick = onNext;
+        } else {
+            this.cache.tutorialToastNextBtn.style.display = 'none';
+        }
 
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
