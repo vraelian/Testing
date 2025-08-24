@@ -63,7 +63,7 @@ export const DB = {
                 <p><span class="text-gray-400">INTEREST RATE:</span> 1.3% (Weekly)</p>
             </div>
             <div class="border-t border-slate-600 my-4"></div>
-            <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment, subject to interest accrual as stipulated by the Merchant's Guild Interstellar Commerce Mandates. All financial agreements are recognized across all systems.</p>
+            <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment, subject to monthly interest accrual as stipulated by the Merchant's Guild Interstellar Commerce Mandates. All financial agreements are recognized across all systems.</p>
           `,
           buttonText: 'Accept Terms',
           buttonClass: 'btn-pulse-gold'
@@ -79,7 +79,7 @@ export const DB = {
         {
             id: 'final',
             title: 'Low On Credits!',
-            description: "Interest on your debt grows every week. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
+            description: "Interest on your debt grows every month. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
             buttonText: 'View Missions'
         }
       ]
