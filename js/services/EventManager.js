@@ -73,6 +73,14 @@ export class EventManager {
     _handleClick(e) {
         const state = this.gameState.getState();
 
+        // Dismiss any active tooltip if clicking inside it
+        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
+            this.uiManager.hideGraph();
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
+            return;
+        }
+
         // --- Priority Action Handling ---
         const actionTarget = e.target.closest('[data-action]');
         if (actionTarget) {
@@ -187,6 +195,7 @@ export class EventManager {
                  case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH: {
                     if (this.uiManager.isMobile) {
+                        this.uiManager.hideGenericTooltip(); // Hide other tooltip
                         if (this.activeTooltipTarget === actionTarget) {
                             this.uiManager.hideGraph();
                             this.activeTooltipTarget = null;
@@ -227,7 +236,8 @@ export class EventManager {
         // --- Mobile Generic Tooltip Handling (if no action was taken) ---
         if (this.uiManager.isMobile) {
             const tooltipTarget = e.target.closest('[data-tooltip]');
-            if (tooltipTarget && !tooltipTarget.dataset.action) { // Ensure it's not a graph icon
+            if (tooltipTarget) {
+                this.uiManager.hideGraph(); // Hide other tooltip
                 if (this.activeTooltipTarget === tooltipTarget) {
                     this.uiManager.hideGenericTooltip();
                     this.activeTooltipTarget = null;
