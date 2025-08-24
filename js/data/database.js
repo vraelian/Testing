@@ -500,7 +500,7 @@ export const DB = {
             steps: [
                 {
                     stepId: 'hangar_1',
-                    text: "Welcome to the <b>Shipyard</b> on Mars! Every station has a port from which you can trade ships and manage your hangar.",
+                    text: "Welcome to the <b>Shipyard</b> on <b>Mars!</b><br><br>Every station has a port from which you can trade ships and manage your hangar.",
                     position: { desktop: 'bottom-right', mobile: 'top' },
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: 'hangar_2',
@@ -566,7 +566,7 @@ export const DB = {
                 { "stepId": "mission_2_2", "text": "This is the <b>Moon</b> Market. Observe the <b class='hl-green font-bold'>MKT</b> indicator for plasteel - the market is <b class='hl-green font-bold'>paying more than usual</b> for industrial goods.<br><br>Selling your plasteel would be highly profitable! Do so now.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
                 { "stepId": "mission_2_3", "text": "Pure profit!<br><br>Let's check the Admin <b>Mission Terminal</b> again.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
                 { "stepId": "mission_2_4", "text": "This mission offers a credit reward. Accept <b>The Mars Margin</b>  .", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
-                { "stepId": "mission_3_1", "text": "A <b>Mars</b> crew needs plasteel, but you're on the <b>Moon</b>! Plasteel is expensive here, but much cheaper on <b>Mars</b>. Acquire 2 plasteel and deliver it to the crew on <b>Mars</b> to complete the mission.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna'], [data-location-id='loc_mars']" } },
+                { "stepId": "mission_3_1", "text": "Plasteel is cheaper on <b>Mars</b>.<br><br>Acquire plasteel and complete this mission on <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
                 { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }

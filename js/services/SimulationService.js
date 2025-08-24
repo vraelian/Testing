@@ -172,7 +172,7 @@ export class SimulationService {
     _startProcessingSequence() {
         const showApprovalModal = () => {
             const title = 'Loan Approved';
-            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been approved.<br><span class="credits-text-pulsing">⌬25,000</span> is ready to transfer to your account.`;
+            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been approved.<br><br><span class="credits-text-pulsing">⌬25,000</span> is ready to transfer to your account.`;
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
@@ -274,12 +274,10 @@ export class SimulationService {
 
         // Guard clause for tutorial-forced navigation
         if (navLock && navLock.screenId === SCREEN_IDS.NAVIGATION && navLock.enabledElementQuery) {
-            const match = navLock.enabledElementQuery.match(/data-location-id='([^']*)'/);
-            if (match && match[1]) {
-                const requiredLocationId = match[1];
-                if (locationId !== requiredLocationId) {
-                    return; // Exit without traveling if it's not the required destination
-                }
+            // The enabledElementQuery might contain multiple valid destinations (e.g., "[data-location-id='loc_luna'], [data-location-id='loc_mars']")
+            // We check if the clicked locationId is part of the allowed query string.
+            if (!navLock.enabledElementQuery.includes(`[data-location-id='${locationId}']`)) {
+                return; // Exit without traveling if it's not one of the required destinations
             }
         }
 
