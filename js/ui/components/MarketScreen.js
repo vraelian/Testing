@@ -34,8 +34,9 @@ function _getMarketItemHtmlDesktop(good, gameState) {
     const marketStock = market.inventory[currentLocationId]?.[good.id];
     const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
     
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isLockedForTutorial = isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL;
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2'; // Keep this for specific plasteel logic
+    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
+    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
     const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
@@ -86,8 +87,9 @@ function _getMarketItemHtmlMobile(good, gameState) {
     const marketStock = market.inventory[currentLocationId]?.[good.id];
     const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
 
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isLockedForTutorial = isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL;
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2'; // Keep this for specific plasteel logic
+    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
+    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
     const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
