@@ -973,10 +973,7 @@ export class UIManager {
         const { missions, tutorials } = this.lastKnownState;
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
-
         let shouldBeDisabled = anotherMissionActive;
-
-        // Tutorial-specific logic to lock the "Mars Margin" mission.
         if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
         }
@@ -1007,6 +1004,9 @@ export class UIManager {
                 }
             }
         };
+        if (mission.id === 'mission_tutorial_01' && tutorials.activeStepId === 'mission_1_1') {
+            shouldBeDisabled = true;
+        }
         this.queueModal('mission-modal', mission.name, mission.description, null, options);
     }
 
