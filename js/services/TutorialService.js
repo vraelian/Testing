@@ -148,16 +148,16 @@ export class TutorialService {
         }
 
         // Set NavLock based on tutorial data
-        if (batch.navLock) {
-            if (step.navLock) {
-                this.gameState.tutorials.navLock = step.navLock;
-            } else {
-                // If no specific lock, lock to the current screen
-                const currentScreenId = this.gameState.activeScreen;
-                const currentNavId = this.screenToNavMap[currentScreenId];
-                this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
-            }
+        if (step.hasOwnProperty('navLock')) {
+            // If the step explicitly defines navLock (even if it's null), use its value.
+            this.gameState.tutorials.navLock = step.navLock;
+        } else if (batch.navLock) {
+            // Otherwise, if the batch is locked and the step has no override, lock to the current screen.
+            const currentScreenId = this.gameState.activeScreen;
+            const currentNavId = this.screenToNavMap[currentScreenId];
+            this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
         } else {
+            // If neither the step nor the batch defines a lock, ensure it's unlocked.
             this.gameState.tutorials.navLock = null;
         }
 
