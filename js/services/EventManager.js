@@ -95,8 +95,8 @@ export class EventManager {
                     break; // ensure we hit checkState below
                 case 'accept-mission':
                     this.simulationService.missionService.acceptMission(missionId);
-                    this.uiManager.hideModal('mission-modal');
-                    actionData = { type: 'ACTION', action: 'accept-mission' };
+                    this.uiManager.hideModal('mission-modal'); // Hide the modal after accepting
+                    actionData = { type: 'ACTION', action: 'accept-mission', missionId: missionId };
                     break;
                 case 'abandon-mission':
                     this.simulationService.missionService.abandonMission();
