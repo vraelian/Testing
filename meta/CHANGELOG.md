@@ -1,6 +1,13 @@
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [21.00] - 2025-08-24
+- intro completed
+- tutorial completed
+- removed tutorial highlighting
+- writing polish
+
 ## [20.02] - 2025-08-17
 - Polished introduction sequence with gated navigation access
 - UI polish
