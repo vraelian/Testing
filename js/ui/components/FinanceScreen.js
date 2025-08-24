@@ -37,13 +37,13 @@ export function renderFinanceScreen(gameState) {
     } else {
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
         const dynamicLoanFee = Math.floor(dynamicLoanAmount * 0.1);
-        const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.01);
+        const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
         const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
         const loanButtonsHtml = [
-            { key: '10000', amount: 10000, fee: 600, interest: 125 },
+            { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            const tooltipText = `Fee: ${formatCredits(loan.fee, false)}\\nInterest: ${formatCredits(loan.interest, false)} / 7d`;
+            const tooltipText = `Fee: ${formatCredits(loan.fee, false)}\\nInterest: ${formatCredits(loan.interest, false)} / 30d`;
             return `<button class="btn btn-loan w-full p-2 mt-2 loan-btn-tooltip" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''} data-tooltip="${tooltipText}">
                         <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
                     </button>`;

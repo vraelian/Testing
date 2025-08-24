@@ -983,6 +983,7 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
+                modal.querySelector('#mission-modal-type').textContent = mission.type;
                 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {

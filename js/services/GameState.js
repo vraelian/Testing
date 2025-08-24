@@ -102,7 +102,7 @@ export class GameState {
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0, // Track progress through the intro sequence
-                credits: 3000, debt: 0, weeklyInterestAmount: 0,
+                credits: 3000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 unlockedCommodityLevel: 1, unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
                 seenCommodityMilestones: [], financeLog: [],

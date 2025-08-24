@@ -153,7 +153,7 @@ export class SimulationService {
                 this.gameState.player.name = playerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
-                this.gameState.player.weeklyInterestAmount = 325; // ~1.3% of 25k
+                this.gameState.player.monthlyInterestAmount = 1300;
 
                 // Remove the free starter ship and prepare for purchase
                 this.gameState.player.ownedShipIds = [];
@@ -574,7 +574,7 @@ export class SimulationService {
         player.credits -= debtAmount;
         this._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
         player.debt = 0;
-        player.weeklyInterestAmount = 0;
+        player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
 
         this._checkMilestones();
@@ -604,7 +604,7 @@ export class SimulationService {
         this._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
         player.debt += loanData.amount;
-        player.weeklyInterestAmount = loanData.interest;
+        player.monthlyInterestAmount = loanData.interest;
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
@@ -696,7 +696,7 @@ export class SimulationService {
     }
 
     /**
-     * Advances game time by a number of days, triggering daily and weekly events.
+     * Advances game time by a number of days, triggering daily and monthly events.
      * @param {number} days - The number of days to advance.
      */
     _advanceDays(days) {
@@ -721,13 +721,10 @@ export class SimulationService {
             // Check for and trigger major narrative/perk events.
             this._checkAgeEvents();
 
-            // The main weekly "tick" for updating market prices and applying financial changes.
+            // The main weekly "tick" for updating market prices.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.evolveMarketPrices();
                 this.marketService.replenishMarketInventory();
-                this._applyGarnishment();
-                // The shipyard stock is now updated for all locations on the weekly tick,
-                // ensuring consistency with other market data refreshes.
                 this._updateShipyardStock();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
                 marketUpdated = true;
@@ -746,11 +743,11 @@ export class SimulationService {
                 }
             });
 
-            // Apply weekly interest to any outstanding debt.
+            // Apply monthly interest to any outstanding debt.
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
-                const interest = this.gameState.player.weeklyInterestAmount;
+                const interest = this.gameState.player.monthlyInterestAmount;
                 this.gameState.player.debt += interest;
-                this._logTransaction('loan', interest, 'Weekly interest charge');
+                this._logTransaction('loan', interest, 'Monthly interest charge');
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
         }
@@ -1033,7 +1030,7 @@ export class SimulationService {
     }
     
     /**
-     * Applies weekly credit garnishment if the player's loan is delinquent.
+     * Applies monthly credit garnishment if the player's loan is delinquent.
      */
     _applyGarnishment() {
         const { player, day } = this.gameState;
@@ -1042,11 +1039,11 @@ export class SimulationService {
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
                 this.uiManager.showToast('garnishmentToast', `14% of credits garnished: -${formatCredits(garnishedAmount, false)}`);
-                this._logTransaction('debt', -garnishedAmount, 'Weekly credit garnishment');
+                this._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
             }
 
             if (!player.seenGarnishmentWarning) {
-                const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits weekly until the debt is paid.";
+                const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits monthly until the debt is paid.";
                 this.uiManager.queueModal('event-modal', "Credit Garnishment Notice", msg, null, { buttonClass: 'bg-red-800/80' });
                 player.seenGarnishmentWarning = true;
             }

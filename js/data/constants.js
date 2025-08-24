@@ -105,7 +105,7 @@ export const GAME_RULES = Object.freeze({
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5, // Repair 5% of max hull per tick
     FUEL_SCALAR: 3, // Base multiplier for travel fuel costs
-    INTEREST_INTERVAL: 7,
+    INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
     HULL_DECAY_PER_TRAVEL_DAY: 1 / 7,
     SHIP_SELL_MODIFIER: 0.75,
