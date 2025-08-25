@@ -44,19 +44,18 @@ function _getMarketItemHtml(good, gameState) {
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
-    const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
         <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border ${good.styleClass} transition-colors shadow-md h-32">
-            <div class="flex flex-col justify-between flex-grow self-start pt-1">
+            <div class="flex flex-col h-full justify-between flex-grow self-start pt-1">
                 <div>
                     <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                    <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
+                    <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span></p>
+                    <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-1 price-text text-outline" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
                 </div>
                 <div class="text-sm self-start pb-1 text-outline flex items-center gap-3">
-                    <span>Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</span>
                     <div id="indicators-${good.id}" class="flex items-center gap-2">${indicatorHtml}</div>
                 </div>
             </div>
@@ -112,7 +111,7 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     }
 
     // Always stack the indicators vertically
-    return `<div class="flex flex-col items-start gap-1">${marketIndicatorHtml}${plIndicatorHtml}</div>`;
+    return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
 
 
