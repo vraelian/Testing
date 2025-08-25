@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [22.00] - 2025-08-24
+- transaction visual overhaul
+- indicator overhaul
+
 ## [21.00] - 2025-08-24
 - intro completed
 - tutorial completed

@@ -55,7 +55,7 @@ export class EventManager {
              this.uiManager.render(this.gameState.getState());
         });
         window.addEventListener('scroll', () => {
-            if (this.uiManager.isMobile && this.activeTooltipTarget) {
+            if (this.activeTooltipTarget) {
                 this.uiManager.hideGraph();
                 this.uiManager.hideGenericTooltip();
                 this.activeTooltipTarget = null;
@@ -81,8 +81,16 @@ export class EventManager {
             return;
         }
 
-        // --- Priority Action Handling ---
         const actionTarget = e.target.closest('[data-action]');
+
+        // Dismiss active tooltip if clicking outside of its trigger
+        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
+            this.uiManager.hideGraph();
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
+        }
+
+        // --- Priority Action Handling ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
             const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;

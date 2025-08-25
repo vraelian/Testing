@@ -674,30 +674,20 @@ export class UIManager {
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
-        
-        const rect = this.activeGraphAnchor.getBoundingClientRect();
+
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos, topPos;
         
-        if (this.isMobile) {
-            leftPos = rect.left - tooltipWidth - 10; // Position to the left of the anchor
-            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
-        } else {
-            if (this.activeGraphAnchor.dataset.action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
-                leftPos = rect.left - tooltipWidth - 10;
-                topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-            } else {
-                leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-                topPos = rect.bottom + 5;
-            }
-        }
-        
+        // Center the tooltip in the viewport
+        let leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
+        let topPos = (window.innerHeight / 2) - (tooltipHeight / 2);
+
+        // Ensure it doesn't go off-screen
         if (leftPos < 10) leftPos = 10;
-        if (leftPos + tooltipWidth > window.innerWidth) leftPos = window.innerWidth - tooltipWidth - 10;
+        if ((leftPos + tooltipWidth) > window.innerWidth) leftPos = window.innerWidth - tooltipWidth - 10;
         if (topPos < 10) topPos = 10;
-        if (topPos + tooltipHeight > window.innerHeight) topPos = rect.top - tooltipHeight - 5;
-        
+        if ((topPos + tooltipHeight) > window.innerHeight) topPos = window.innerHeight - tooltipHeight - 10;
+
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
