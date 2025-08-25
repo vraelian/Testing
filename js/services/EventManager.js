@@ -145,37 +145,51 @@ export class EventManager {
                     this.uiManager.showToast('starport-unlock-tooltip', "Pay off your initial loan to access the Starport!");
                     break;
                 
-                case ACTION_IDS.BUY_ITEM: 
-                case ACTION_IDS.SELL_ITEM: {
-                    const qtyInput = document.getElementById(`qty-${goodId}`) ||
-                        document.getElementById(`qty-${goodId}-mobile`);
+                case 'toggle-trade-mode': {
+                    const controls = actionTarget.closest('.transaction-controls');
+                    if (controls) {
+                        const currentMode = controls.getAttribute('data-mode');
+                        const newMode = currentMode === 'buy' ? 'sell' : 'buy';
+                        controls.setAttribute('data-mode', newMode);
+                    }
+                    break;
+                }
+                case 'confirm-trade': {
+                    const controls = actionTarget.closest('.transaction-controls');
+                    if (!controls) break;
+
+                    const currentMode = controls.getAttribute('data-mode');
+                    const qtyInput = controls.querySelector('input');
                     const quantity = parseInt(qtyInput.value, 10) || 1;
+
                     if (quantity > 0) {
-                        const result = (action === ACTION_IDS.BUY_ITEM)
+                        const result = (currentMode === 'buy')
                             ? this.simulationService.buyItem(goodId, quantity)
                             : this.simulationService.sellItem(goodId, quantity);
+
                         if (result) {
-                            const value = (action === ACTION_IDS.BUY_ITEM) ?
-                                this.uiManager.getItemPrice(state, goodId) * quantity : result;
-                            const text = action === ACTION_IDS.BUY_ITEM ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
-                            const color = action === ACTION_IDS.BUY_ITEM ? '#f87171' : '#34d399';
+                            const value = (currentMode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : result;
+                            const text = currentMode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
+                            const color = currentMode === 'buy' ? '#f87171' : '#34d399';
                             this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
                             qtyInput.value = '1';
-                            actionData = { type: 'ACTION', action: action, goodId: goodId };
+                            actionData = { type: 'ACTION', action: currentMode === 'buy' ? 'buy-item' : 'sell-item', goodId: goodId };
                         }
                     }
                     break;
                 }
-                case ACTION_IDS.SET_MAX_BUY: 
-                case ACTION_IDS.SET_MAX_SELL: {
-                    const qtyInput = document.getElementById(`qty-${goodId}`) ||
-                        document.getElementById(`qty-${goodId}-mobile`);
+                case 'set-max-trade': {
+                    const controls = actionTarget.closest('.transaction-controls');
+                    if (!controls) break;
+
+                    const currentMode = controls.getAttribute('data-mode');
+                    const qtyInput = controls.querySelector('input');
                     const ship = this.simulationService._getActiveShip();
                     const inventory = this.simulationService._getActiveInventory();
-                    
-                    if (action === ACTION_IDS.SET_MAX_SELL) {
+
+                    if (currentMode === 'sell') {
                         qtyInput.value = inventory[goodId] ? inventory[goodId].quantity : 0;
-                    } else {
+                    } else { // 'buy'
                         const price = this.uiManager.getItemPrice(state, goodId);
                         const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
                         const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
@@ -186,8 +200,9 @@ export class EventManager {
                 }
                 case ACTION_IDS.INCREMENT: 
                 case ACTION_IDS.DECREMENT: {
-                    const qtyInput = document.getElementById(`qty-${goodId}`) ||
-                        document.getElementById(`qty-${goodId}-mobile`);
+                     const controls = actionTarget.closest('.transaction-controls');
+                    if (!controls) break;
+                    const qtyInput = controls.querySelector('input');
                     let val = parseInt(qtyInput.value) || 0;
                     qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
                     break;

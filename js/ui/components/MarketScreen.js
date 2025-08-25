@@ -17,15 +17,15 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 export function renderMarketScreen(gameState, isMobile) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
-        return isMobile 
-            ? _getMarketItemHtmlMobile(good, gameState) 
-            : _getMarketItemHtmlDesktop(good, gameState);
+        // For this visual overhaul, we'll use the same detailed layout for both.
+        // The responsive design is handled in CSS.
+        return _getMarketItemHtml(good, gameState);
     }).join('');
 
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
 }
 
-function _getMarketItemHtmlDesktop(good, gameState) {
+function _getMarketItemHtml(good, gameState) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
@@ -33,107 +33,52 @@ function _getMarketItemHtmlDesktop(good, gameState) {
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
     const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
-    
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2'; // Keep this for specific plasteel logic
+
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
     const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
     const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
     const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
-    const sellDisabled = isLockedForTutorial ? 'disabled' : '';
+    const sellDisabled = isLockedForTutorial ? 'disabled' : ''; // This might need separate logic later if we lock only one action
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
     const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
     const { marketIndicatorHtml, plIndicatorHtml } = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, false);
+
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
         <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border ${good.styleClass} transition-colors shadow-md h-32">
             <div class="flex flex-col h-full justify-between flex-grow self-start pt-1">
                 <div>
                     <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                     <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
+                    <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
                 </div>
                 <div class="text-sm self-start pb-1 text-outline flex items-center gap-3">
                     <span>Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</span>
                     <div id="indicators-${good.id}" class="flex items-center gap-2">${marketIndicatorHtml}${plIndicatorHtml}</div>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <div class="flex flex-col items-center"><div class="flex flex-col space-y-1">
-                    <button id="buy-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.BUY_ITEM}" data-good-id="${good.id}" ${buyDisabled}>Buy</button>
-                    <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
-                </div></div>
-                <div class="flex flex-col items-center">
-                    <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}" ${sellDisabled}>+</button>
-                    <input type="number" class="qty-input p-2 my-1" id="qty-${good.id}" data-good-id="${good.id}" value="1" min="1" ${sellDisabled}>
-                    <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}" ${sellDisabled}>-</button>
+             <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+                <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
+                    <div class="toggle-thumb"></div>
+                    <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
                 </div>
-                <div class="flex flex-col items-center"><div class="flex flex-col space-y-1">
-                    <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}" ${sellDisabled}>Sell</button>
-                    <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}" ${sellDisabled}>Max</button>
-                </div></div>
-            </div>
-        </div>
-    </div>`;
-}
-
-function _getMarketItemHtmlMobile(good, gameState) {
-    const { player, market, currentLocationId, tutorials } = gameState;
-    const playerItem = player.inventories[player.activeShipId]?.[good.id];
-    const price = getItemPrice(gameState, good.id);
-    const sellPrice = getItemPrice(gameState, good.id, true);
-    const galacticAvg = market.galacticAverages[good.id];
-    const marketStock = market.inventory[currentLocationId]?.[good.id];
-    const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
-
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2'; // Keep this for specific plasteel logic
-    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
-    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
-
-    const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-    const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
-    const sellDisabled = isLockedForTutorial ? 'disabled' : '';
-
-    const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
-    const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
-    const { marketIndicatorHtml } = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, true);
-    return `
-    <div class="item-card-container" id="item-card-container-${good.id}">
-        <div class="bg-black/20 p-4 rounded-lg flex flex-col border ${good.styleClass} shadow-md">
-            <div class="flex justify-between items-start w-full mb-2">
-                <div class="flex-grow">
-                    <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                    <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
+                <div class="qty-stepper">
+                    <button class="qty-down" data-action="decrement" data-good-id="${good.id}">▼</button>
+                    <input type="number" value="1" id="qty-${good.id}" min="1">
+                    <button class="qty-up" data-action="increment" data-good-id="${good.id}">▲</button>
                 </div>
-                <div class="text-right text-sm flex-shrink-0 ml-2 text-outline">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</div>
-            </div>
-
-            <div class="mobile-indicator-wrapper" id="indicators-${good.id}">
-                ${marketIndicatorHtml}
-            </div>
-            
-            <div class="flex justify-end items-end mt-2">
-                <div class="mobile-controls-wrapper">
-                    <div class="flex flex-col items-center space-y-1">
-                        <button id="buy-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.BUY_ITEM}" data-good-id="${good.id}" ${buyDisabled}>Buy</button>
-                        <button id="max-buy-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_BUY}" data-good-id="${good.id}" ${buyDisabled}>Max</button>
-                    </div>
-                    <div class="flex flex-col items-center space-y-1">
-                        <button class="qty-btn" data-action="${ACTION_IDS.INCREMENT}" data-good-id="${good.id}" ${sellDisabled}>+</button>
-                        <input type="number" class="qty-input" id="qty-${good.id}-mobile" data-good-id="${good.id}" value="1" min="1" ${sellDisabled}>
-                        <button class="qty-btn" data-action="${ACTION_IDS.DECREMENT}" data-good-id="${good.id}" ${sellDisabled}>-</button>
-                    </div>
-                    <div class="flex flex-col items-center space-y-1">
-                        <button id="sell-btn-${good.id}" class="btn item-btn" data-action="${ACTION_IDS.SELL_ITEM}" data-good-id="${good.id}" ${sellDisabled}>Sell</button>
-                        <button id="max-sell-btn-${good.id}" class="btn btn-sm item-btn" data-action="${ACTION_IDS.SET_MAX_SELL}" data-good-id="${good.id}" ${sellDisabled}>Max</button>
-                    </div>
+                <div class="action-group">
+                    <button class="btn confirm-btn" data-action="confirm-trade" data-good-id="${good.id}">Confirm</button>
+                    <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
                 </div>
             </div>
         </div>
     </div>`;
 }
+
 
 /**
  * Generates the HTML for the MKT and P/L indicators based on the selected "Minimalist w/ BG" style.
@@ -183,7 +128,7 @@ function getItemPrice(gameState, goodId, isSelling = false) {
     let price = gameState.market.prices[gameState.currentLocationId][goodId];
     const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
     if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
-        price *= market.specialDemand[goodId].bonus;
+        price *= market.specialDemand[good.id].bonus;
     }
     const intel = gameState.intel.active;
     if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
