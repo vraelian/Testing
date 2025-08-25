@@ -483,11 +483,11 @@ body {
 .indicator-pill {
     padding: 0.1em 0.5em;
     border-radius: 99px;
-    font-size: 0.75em;
+    font-size: 0.63em;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 0.3em;
+    gap: 0.2em;
     text-shadow: none; /* Remove inherited text outline */
 }
 .indicator-pill.positive { background-color: rgb(16, 185, 129); color: #dcfce7; }
@@ -1126,7 +1126,7 @@ body {
 }
 
 /* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
-.transaction-controls { position: absolute; bottom: 0.75rem; right: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: var(--module-width); font-family: var(--font-family); font-size: var(--font-size); }
+.transaction-controls { position: absolute; bottom: 0.75rem; right: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: var(--module-width); font-family: var(--font-family); font-size: var(--font-size); }
 .toggle-switch { width: 100%; height: var(--toggle-height); border-radius: 99px; display: flex; align-items: center; padding: 3px; position: relative; cursor: pointer; transition: all 0.3s ease-in-out; }
 .toggle-thumb { width: 50%; height: 100%; border-radius: 99px; position: absolute; left: 3px; transition: all 0.3s ease-in-out; }
 .toggle-labels { width: 100%; display: flex; justify-content: space-around; position: relative; z-index: 1; font-weight: bold; font-size: 0.8em; }

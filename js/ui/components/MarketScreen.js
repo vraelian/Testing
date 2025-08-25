@@ -45,19 +45,19 @@ function _getMarketItemHtml(good, gameState) {
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
     const graphIcon = `<span class="graph-icon" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">📈</span>`;
-    const { marketIndicatorHtml, plIndicatorHtml } = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, false);
+    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
         <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border ${good.styleClass} transition-colors shadow-md h-32">
-            <div class="flex flex-col h-full justify-between flex-grow self-start pt-1">
+            <div class="flex flex-col justify-between flex-grow self-start pt-1">
                 <div>
                     <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
                     <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-2 price-text text-outline flex items-center">${formatCredits(price)}</p>
                 </div>
                 <div class="text-sm self-start pb-1 text-outline flex items-center gap-3">
                     <span>Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</span>
-                    <div id="indicators-${good.id}" class="flex items-center gap-2">${marketIndicatorHtml}${plIndicatorHtml}</div>
+                    <div id="indicators-${good.id}" class="flex items-center gap-2">${indicatorHtml}</div>
                 </div>
             </div>
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
@@ -81,16 +81,15 @@ function _getMarketItemHtml(good, gameState) {
 
 
 /**
- * Generates the HTML for the MKT and P/L indicators based on the selected "Minimalist w/ BG" style.
+ * Generates the HTML for the MKT and P/L indicators, ensuring they always stack vertically.
  * @param {number} price - The current market price.
  * @param {number} sellPrice - The current sell price (including special demand).
  * @param {number} galacticAvg - The galactic average price.
  * @param {object} playerItem - The player's inventory item for this commodity.
- * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
- * @returns {object} An object containing the HTML for the market and P/L indicators.
+ * @returns {string} An HTML string containing the vertically stacked indicators.
  * @private
  */
-function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, isMobile) {
+function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     // Market Indicator Logic
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
@@ -112,14 +111,8 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, isMobile) 
         }
     }
 
-    if (isMobile) {
-        // For mobile, stack the indicators vertically if both exist
-        const combinedHtml = `<div class="flex flex-col items-start gap-1">${marketIndicatorHtml}${plIndicatorHtml}</div>`;
-        return { marketIndicatorHtml: combinedHtml };
-    } else {
-        // For desktop, they are returned separately to be placed in a flex row
-        return { marketIndicatorHtml, plIndicatorHtml };
-    }
+    // Always stack the indicators vertically
+    return `<div class="flex flex-col items-start gap-1">${marketIndicatorHtml}${plIndicatorHtml}</div>`;
 }
 
 
