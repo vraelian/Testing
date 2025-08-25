@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.01, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>Orbital Trading v20.37</title>
+    <title>Orbital Trading v21.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css?v=1754200888545">
@@ -25,7 +25,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p id="version-display">Version 20.37</p>
+            <p id="version-display">Version 21.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
             <p class="mt-1">Designed by Devon C.</p>
         </footer>
@@ -925,7 +925,11 @@ function _getMarketItemHtmlMobile(good, gameState) {
                 </div>
                 <div class="text-right text-sm flex-shrink-0 ml-2 text-outline">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span> ${graphIcon}</div>
             </div>
-            <div id="indicators-${good.id}">${marketIndicatorHtml}</div>
+
+            <div class="mobile-indicator-wrapper" id="indicators-${good.id}">
+                ${marketIndicatorHtml}
+            </div>
+            
             <div class="flex justify-end items-end mt-2">
                 <div class="mobile-controls-wrapper">
                     <div class="flex flex-col items-center space-y-1">
@@ -947,56 +951,48 @@ function _getMarketItemHtmlMobile(good, gameState) {
     </div>`;
 }
 
+/**
+ * Generates the HTML for the MKT and P/L indicators based on the selected "Minimalist w/ BG" style.
+ * @param {number} price - The current market price.
+ * @param {number} sellPrice - The current sell price (including special demand).
+ * @param {number} galacticAvg - The galactic average price.
+ * @param {object} playerItem - The player's inventory item for this commodity.
+ * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
+ * @returns {object} An object containing the HTML for the market and P/L indicators.
+ * @private
+ */
 function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem, isMobile) {
+    // Market Indicator Logic
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
-    let marketColor = marketPct < -15 ? 'text-red-400' : (marketPct > 15 ? 'text-green-400' : 'text-white');
-    let marketArrowSVG = _getArrowSvg(marketPct > 15 ? 'up' : marketPct < -15 ? 'down' : 'neutral');
+    let marketClass = marketPct < -15 ? 'negative' : (marketPct > 15 ? 'positive' : 'neutral');
+    let marketIcon = marketPct < -15 ? '▼' : (marketPct > 15 ? '▲' : '●');
+    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
+
+    // P/L Indicator Logic
+    let plIndicatorHtml = '';
+    if (playerItem && playerItem.avgCost > 0) {
+        const spreadPerUnit = sellPrice - playerItem.avgCost;
+        if (Math.abs(spreadPerUnit) > 0.01) {
+            const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
+            const plSign = plPct > 0 ? '+' : '';
+            let plClass = spreadPerUnit >= 0 ? 'positive' : 'negative';
+            let plIcon = spreadPerUnit >= 0 ? '▲' : '▼';
+            plIndicatorHtml = `<div class="indicator-pill ${plClass}">${plIcon} P/L: ${plSign}${plPct}%</div>`;
+        }
+    }
+
     if (isMobile) {
-        let mobileHtml = `<div class="mobile-indicator-wrapper text-sm text-outline">`;
-        mobileHtml += `<div class="flex items-center ${marketColor}"><span>MKT: ${marketSign}${marketPct}%</span> ${marketArrowSVG}</div>`;
-        
-        if (playerItem && playerItem.avgCost > 0) {
-            const spreadPerUnit = sellPrice - playerItem.avgCost;
-            if (Math.abs(spreadPerUnit) > 0.01) {
-                const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-                const plColor = spreadPerUnit >= 0 ? 'text-green-400' : 'text-red-400';
-                const plSign = plPct > 0 ? '+' : '';
-                let plArrowSVG = _getArrowSvg(spreadPerUnit > 0 ? 'up' : 'down');
-                mobileHtml += `<div class="flex items-center ${plColor}"><span>P/L: ${plSign}${plPct}%</span> ${plArrowSVG}</div>`;
-            }
-        }
-        mobileHtml += `</div>`;
-        return { marketIndicatorHtml: mobileHtml, plIndicatorHtml: '' };
+        // For mobile, stack the indicators vertically if both exist
+        const combinedHtml = `<div class="flex flex-col items-start gap-1">${marketIndicatorHtml}${plIndicatorHtml}</div>`;
+        return { marketIndicatorHtml: combinedHtml };
     } else {
-        const marketIndicatorHtml = `<div class="flex items-center gap-2"><div class="market-indicator-stacked ${marketColor}"><span class="text-xs opacity-80">MKT</span><span>${marketSign}${marketPct}%</span></div>${marketArrowSVG}</div>`;
-        let plIndicatorHtml = '';
-        if (playerItem && playerItem.avgCost > 0) {
-            const spreadPerUnit = sellPrice - playerItem.avgCost;
-            if (Math.abs(spreadPerUnit) > 0.01) {
-                const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-                const plColor = spreadPerUnit >= 0 ? 'text-green-400' : 'text-red-400';
-                const plSign = plPct > 0 ? '+' : '';
-                let plArrowSVG = _getArrowSvg(spreadPerUnit > 0 ? 'up' : 'down');
-                plIndicatorHtml = `<div class="flex items-center gap-2"><div class="market-indicator-stacked ${plColor}"><span class="text-xs opacity-80">P/L</span><span>${plSign}${plPct}%</span></div>${plArrowSVG}</div>`;
-            }
-        }
+        // For desktop, they are returned separately to be placed in a flex row
         return { marketIndicatorHtml, plIndicatorHtml };
     }
 }
 
-function _getArrowSvg(direction) {
-    const path = {
-        up: 'M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z',
-        down: 'M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z',
-        neutral: 'M5 12h14'
-    };
-    const fill = direction === 'neutral' ? 'none' : 'currentColor';
-    const stroke = direction === 'neutral' ? 'currentColor' : 'none';
-    const strokeWidth = direction === 'neutral' ? '3' : '0';
-    return `<svg class="indicator-arrow" viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"><path d="${path[direction]}"/></svg>`;
-}
 
 // This function needs to be accessible from this component, so it's duplicated from UIManager
 function getItemPrice(gameState, goodId, isSelling = false) {
@@ -7641,23 +7637,21 @@ body {
 .text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
-.market-indicator-stacked {
-    display: flex;
-    flex-direction: column;
+/* --- [[START]] INDICATOR STYLES --- */
+.indicator-pill {
+    padding: 0.1em 0.5em;
+    border-radius: 99px;
+    font-size: 0.75em;
+    font-weight: 700;
+    display: inline-flex;
     align-items: center;
-    line-height: 1;
-    font-family: 'Aldrich', sans-serif;
-    font-size: 0.9rem;
-    text-shadow: 0 1px 2px #000;
+    gap: 0.3em;
+    text-shadow: none; /* Remove inherited text outline */
 }
-
-.indicator-arrow {
-    width: 1.1em;
-    height: 1.1em;
-    display: inline-block;
-    margin-left: 2px;
-    filter: drop-shadow(0 0 2px black) drop-shadow(0 0 2px black);
-}
+.indicator-pill.positive { background-color: rgb(16, 185, 129); color: #dcfce7; }
+.indicator-pill.negative { background-color: rgb(220, 38, 38); color: #fee2e2; }
+.indicator-pill.neutral { background-color: rgb(115, 115, 115); color: #e5e5e5; }
+/* --- [[END]] INDICATOR STYLES --- */
 
 .graph-icon {
     cursor: pointer;
@@ -7889,6 +7883,7 @@ body {
     bottom: 0.5rem;
     left: 1rem;
     line-height: 1.2;
+    font-size: 0.75em; /* Scale down by 25% */
 }
 
 #random-event-choices-container .btn {
@@ -8039,10 +8034,6 @@ body {
         width: 30px;
         height: 24px;
         line-height: 22px;
-    }
-    .indicator-arrow {
-        margin-left: 0.2rem;
-        margin-right: 0.2rem;
     }
     .travel-info-mobile {
         flex-direction: column;
