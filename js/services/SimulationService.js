@@ -460,7 +460,7 @@ export class SimulationService {
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             totalSaleValue += profit * totalBonus;
         }
         
@@ -760,20 +760,31 @@ export class SimulationService {
     /**
      * Checks for and triggers a random event.
      * @param {string} destinationId - The intended destination, used to resume travel.
-     * @param {boolean} [force=false] - If true, bypasses the chance roll.
+     * @param {boolean|number} [force=false] - If true, bypasses the chance roll. If a number, triggers a specific event index.
      * @returns {boolean} - True if an event was triggered.
      */
     _checkForRandomEvent(destinationId, force = false) {
-        if (!force && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
+        if (force === false && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
 
         const activeShip = this._getActiveShip();
-        const validEvents = DB.RANDOM_EVENTS.filter(event => 
-            event.precondition(this.gameState.getState(), activeShip, this._getActiveInventory.bind(this))
-        );
+        let event;
 
-        if (validEvents.length === 0) return false;
+        if (typeof force === 'number') {
+            event = DB.RANDOM_EVENTS[force];
+        } else {
+             const validEvents = DB.RANDOM_EVENTS.filter(event => 
+                event.precondition(this.gameState.getState(), activeShip, this._getActiveInventory.bind(this))
+            );
+            if (validEvents.length === 0) return false;
+            event = validEvents[Math.floor(Math.random() * validEvents.length)];
+        }
+        
+        if (!event) {
+            console.warn(`Debug event trigger failed for index: ${force}`);
+            this.gameState.player.debugEventIndex = 0; // Reset index if out of bounds
+            return false;
+        }
 
-        const event = validEvents[Math.floor(Math.random() * validEvents.length)];
         this.gameState.setState({ pendingTravel: { destinationId } });
         this.uiManager.showRandomEventModal(event, (eventId, choiceIndex) => this._resolveEventChoice(eventId, choiceIndex));
         return true;
@@ -1152,46 +1163,36 @@ export class SimulationService {
     }
 
     /**
-     * A debug function to bypass the intro and set up a standard play state.
+     * A debug function to skip the intro and set up a standard play state.
      */
-    debugQuickStart() {
+    debugMarketSkip() {
         this.gameState.introSequenceActive = false;
         this.tutorialService.activeBatchId = null;
         this.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null; // Redundant, but keeping for clarity
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA).filter(id => id !== 'intro_missions');
-
-        this.gameState.player.credits = 10000;
+        this.gameState.tutorials.activeStepId = null; 
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
+        
+        this.gameState.player.credits = 45000;
         this.gameState.player.ownedShipIds = [];
         this.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
 
         document.getElementById('game-container').classList.remove('hidden');
-        this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
-        this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
+        this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
     }
-
+    
     /**
-     * A debug function to skip the intro and start at the "profit margin" tutorial step.
+     * A debug function to trigger a random event in order.
      */
-    debugProfitStart() {
-        this.gameState.introSequenceActive = false;
-        this.tutorialService.activeBatchId = null;
-        this.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA).filter(id => id !== 'intro_missions');
-
-        this.gameState.player.credits = 10000;
-        this.gameState.player.ownedShipIds = [];
-        this.addShipToHangar(SHIP_IDS.WANDERER);
-        this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
-        this.gameState.missions.completedMissionIds.push('mission_tutorial_01');
-        this.gameState.currentLocationId = LOCATION_IDS.LUNA;
-
-        document.getElementById('game-container').classList.remove('hidden');
-        this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
-        this.tutorialService.triggerBatch('intro_missions', 'mission_1_8');
+    debugTriggerRandomEvent() {
+        const state = this.gameState.getState();
+        const otherMarkets = DB.MARKETS.filter(m => m.id !== state.currentLocationId);
+        if (otherMarkets.length > 0) {
+            const destinationId = otherMarkets[Math.floor(Math.random() * otherMarkets.length)].id;
+            this._checkForRandomEvent(destinationId, this.gameState.player.debugEventIndex);
+            this.gameState.player.debugEventIndex = (this.gameState.player.debugEventIndex + 1) % DB.RANDOM_EVENTS.length;
+        }
     }
 }

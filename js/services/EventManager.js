@@ -323,8 +323,12 @@ export class EventManager {
         let message = '';
         switch(e.key) {
             case '!':
-                this.simulationService.debugQuickStart();
-                message = 'Debug: Quick Start';
+                this.simulationService.debugMarketSkip();
+                message = 'Debug: Market Skip';
+                break;
+            case '@':
+                this.simulationService.debugTriggerRandomEvent();
+                message = `Debug: Forcing Event ${this.gameState.player.debugEventIndex}`;
                 break;
             case '#':
                 this.gameState.player.credits += 100000;
@@ -337,10 +341,6 @@ export class EventManager {
                     }
                 });
                 message = 'Debug: All ships added.';
-                break;
-            case '@':
-                this.simulationService.debugProfitStart();
-                message = 'Debug: Skipped to profit tutorial.';
                 break;
             case '%':
                 this.gameState.player.credits += 1000000000000;
