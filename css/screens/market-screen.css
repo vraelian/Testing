@@ -1,4 +1,16 @@
 /* css/screens/market-screen.css */
+@keyframes warm-shift {
+    0% { background-color: #fca5a5; }
+    33% { background-color: #f97316; }
+    66% { background-color: #c084fc; }
+    100% { background-color: #fca5a5; }
+}
+@keyframes dark-shift {
+    0% { background-color: #000000; }
+    50% { background-color: #4c1d95; }
+    100% { background-color: #000000; }
+}
+
 .item-card-container {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     position: relative;
@@ -113,14 +125,13 @@
 .confirm-btn { background: var(--active-primary); color: var(--active-text-dark); }
 .max-btn { background: var(--max-bg); color: var(--max-text); }
 .transaction-controls[data-mode="sell"] .toggle-thumb { left: calc(50% - 3px); }
-@keyframes warm-shift {
-    0% { background-color: #fca5a5; }
-    33% { background-color: #f97316; }
-    66% { background-color: #c084fc; }
-    100% { background-color: #fca5a5; }
-}
-@keyframes dark-shift {
-    0% { background-color: #000000; }
-    50% { background-color: #4c1d95; }
-    100% { background-color: #000000; }
+
+@media (max-width: 768px) {
+    .mobile-indicator-wrapper {
+        position: absolute;
+        bottom: 0.5rem;
+        left: 1rem;
+        line-height: 1.2;
+        font-size: 0.75em;
+    }
 }
