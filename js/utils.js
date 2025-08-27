@@ -4,7 +4,7 @@
  * such as formatting numbers, calculating inventory usage, and handling date conversions.
  * These helpers are used throughout the application to standardize common operations.
  */
-import { DB } from './data/database.js';
+import { DATE_CONFIG } from './data/database.js';
 
 /**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
@@ -57,19 +57,19 @@ function getDaySuffix(day) {
  * @returns {string} The fully formatted date string.
  */
 export function getDateFromDay(dayNumber) {
-    const year = DB.DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
+    const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
     let dayOfYear = (dayNumber - 1) % 365;
-    const dayOfWeek = DB.DATE_CONFIG.DAY_NAMES[(dayNumber - 1 + DB.DATE_CONFIG.START_DAY_OF_WEEK) % 7];
+    const dayOfWeek = DATE_CONFIG.DAY_NAMES[(dayNumber - 1 + DATE_CONFIG.START_DAY_OF_WEEK) % 7];
     let monthIndex = 0;
-    for (let i = 0; i < DB.DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
-        if (dayOfYear < DB.DATE_CONFIG.DAYS_IN_MONTH[i]) {
+    for (let i = 0; i < DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
+        if (dayOfYear < DATE_CONFIG.DAYS_IN_MONTH[i]) {
             monthIndex = i;
             break;
         }
-        dayOfYear -= DB.DATE_CONFIG.DAYS_IN_MONTH[i];
+        dayOfYear -= DATE_CONFIG.DAYS_IN_MONTH[i];
     }
     const dayOfMonth = dayOfYear + 1;
-    const monthName = DB.DATE_CONFIG.MONTH_NAMES[monthIndex];
+    const monthName = DATE_CONFIG.MONTH_NAMES[monthIndex];
     return `${dayOfWeek}, ${monthName} ${dayOfMonth}${getDaySuffix(dayOfMonth)}, ${year}`;
 }
 

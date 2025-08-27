@@ -7,6 +7,15 @@
  */
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS } from './constants.js';
 
+// --- In-Game Date Configuration ---
+export const DATE_CONFIG = {
+    START_YEAR: 2140,
+    START_DAY_OF_WEEK: 1, // 0 = Sunday, 1 = Monday, etc.
+    DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+    MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    DAY_NAMES: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+};
+
 export const DB = {
     // --- Core Game Configuration ---
     CONFIG: {
@@ -26,14 +35,7 @@ export const DB = {
         ]
     },
 
-    // --- In-Game Date Configuration ---
-    DATE_CONFIG: {
-        START_YEAR: 2140,
-        START_DAY_OF_WEEK: 1, // 0 = Sunday, 1 = Monday, etc.
-        DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
-        MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-        DAY_NAMES: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    },
+    DATE_CONFIG: DATE_CONFIG,
 
     // --- New Game Introduction Sequence ---
     INTRO_SEQUENCE_V1: {
