@@ -1,0 +1,293 @@
+/* css/global.css */
+:root {
+    --module-width: 100px;
+    --font-size: 0.6rem;
+    --border-radius: 20px;
+    --toggle-height: 30px;
+    --stepper-height: 30px;
+    --button-height: 28px;
+    --font-family: 'Orbitron', sans-serif;
+    --buy-primary: #196a8f;
+    --buy-secondary-bg: #1e2a3e;
+    --buy-secondary-border: #3c4e68;
+    --buy-text-light: #8ca4b5;
+    --buy-text-dark: #ddf3f8;
+    --sell-primary: #a73535;
+    --sell-secondary-bg: #293342;
+    --sell-secondary-border: #63686e;
+    --sell-text-light: #ff9999;
+    --sell-text-dark: #f7cfcf;
+    --max-bg: #303946;
+    --max-text: #a5aab1;
+}
+
+body {
+    font-family: 'Exo 2', sans-serif;
+    background-color: #0c101d;
+    color: #d0d8e8;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+    touch-action: manipulation; /* Helps prevent double-tap zoom */
+}
+.font-orbitron { font-family: 'Orbitron', sans-serif; }
+.font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+
+.game-container {
+    max-width: 1200px;
+    margin: auto;
+    border: 2px solid #3a4a6a;
+    border-radius: 15px;
+    transition: background 0.5s ease-out;
+    box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+}
+.btn {
+    transition: all 0.3s ease;
+    border: 1px solid #4a6a8a;
+    border-radius: 8px;
+    background-color: #22304a;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    padding: 0.5rem 0.75rem;
+    color: #c0d0f0;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+#restart-game-container .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.875rem;
+}
+.btn:hover:not(:disabled) {
+    background-color: #32405a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    color: #e0f0ff;
+}
+.btn:disabled, [disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
+.btn-intro-locked {
+    filter: grayscale(1);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.screen {
+    display: none;
+}
+.active-screen {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+@keyframes pulse-green-border {
+    0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
+    border-color: #10b981; }
+    50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
+    border-color: #34d399; }
+}
+@keyframes pulse-gold-border {
+    0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3);
+    border-color: #D4AF37; }
+    50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5);
+    border-color: #FFD700; }
+}
+@keyframes credits-pulse-glow {
+  0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
+  50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; }
+  100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
+}
+@keyframes pulse-green-glow {
+    0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; }
+    50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; }
+}
+@keyframes float-up {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-60px);
+    opacity: 0; }
+}
+@keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+@keyframes green-pulse {
+    0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+    50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
+    100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+}
+@keyframes blue-pulse-glow {
+    0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+}
+@keyframes flash-green {
+    0%, 100% { color: #34d399; }
+    50% { color: #f0fdf4; }
+}
+@keyframes shimmer-effect {
+    0% { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+}
+
+.highlight-current {
+    border-color: #facc15;
+}
+.btn-pulse-green {
+    animation: pulse-green-border 2s infinite;
+}
+.btn-pulse-gold {
+    animation: pulse-gold-border 2s infinite;
+}
+.btn-pulse {
+    animation: pulse-green-border 2.5s infinite;
+}
+.credits-text-pulsing {
+  color: #bae6fd;
+  animation: credits-pulse-glow 2.5s infinite ease-in-out;
+}
+.pulse-green-glow {
+    animation: pulse-green-glow 2s infinite;
+}
+.hl { color: #fde047; font-weight: 700; }
+.hl-blue { color: #60a5fa; font-weight: 700; }
+.hl-red { color: #f87171; font-weight: 700;
+ }
+.hl-green { color: #16a34a; font-weight: 700; }
+.hl-yellow { color: #facc15; font-weight: 700; }
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+
+#save-toast, #garnishment-toast, #hull-warning-toast, #debug-toast, #starport-unlock-tooltip {
+    z-index: 101;
+}
+#garnishment-toast {
+     background-color: #991b1b;
+     border: 1px solid #f87171;
+     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
+}
+#hull-warning-toast {
+    background-color: #166534;
+    border: 1px solid #34d399;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.7);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+[data-tooltip] { position: relative; }
+.tooltip-container[data-tooltip]:hover::after,
+.cargo-item-tooltip[data-tooltip]:hover::after,
+.commodity-name-tooltip[data-tooltip]:hover::after,
+.hanger-ship-name[data-tooltip]:hover::after,
+.tooltip-active::after,
+.tooltip-container-below[data-tooltip]:hover::after,
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    background-color: #111827;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    width: max-content;
+    max-width: 250px;
+    word-wrap: break-word;
+    text-align: center;
+    z-index: 100;
+    display: block;
+    pointer-events: none;
+    font-family: 'Exo 2', sans-serif;
+    left: 105%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    font-family: 'Roboto Mono', monospace;
+}
+.tooltip-container-below[data-tooltip]:hover::after {
+    top: 100%;
+    margin-top: 5px;
+}
+
+#graph-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.75rem;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.generic-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border-radius: 6px;
+    padding: 5px 10px;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #fff;
+    font-family: 'Exo 2', sans-serif;
+    max-width: 60vw;
+}
+
+.panel-border {
+    position: relative;
+}
+.panel-border::before, .panel-border::after {
+    content: '';
+    position: absolute; width: 15px; height: 15px;
+    border-color: #7a9ac0; border-style: solid;
+}
+.panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
+    border-top-left-radius: 10px; }
+.panel-border::after { bottom: -2px; right: -2px;
+    border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
+
+.floating-text {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+    z-index: 100;
+    animation: float-up 2.5s forwards ease-out;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 15vh;
+    }
+
+    .cargo-item-tooltip[data-tooltip]:hover::after,
+    .commodity-name-tooltip[data-tooltip]:hover::after,
+    .hanger-ship-name[data-tooltip]:hover::after {
+        display: none;
+    }
+
+    #header-main {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}

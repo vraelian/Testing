@@ -1,0 +1,48 @@
+/* css/screens/hangar-screen.css */
+.starport-panel {
+    background-color: rgba(10, 20, 40, 0.5);
+    border: 1px solid #2a3a5a;
+    border-radius: 10px;
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.starport-panel::-webkit-scrollbar {
+    display: none;
+}
+.ship-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+}
+
+.starport-panel-mobile {
+    background-color: rgba(10, 20, 40, 0.5);
+    border: 1px solid #2a3a5a;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+.ship-list-item-mobile {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ship-list-item-mobile:hover {
+    background-color: #1f2937;
+}
+
+@media (max-width: 768px) {
+    #ship-detail-modal {
+        align-items: center;
+    }
+
+    #ship-detail-modal .modal-content {
+        border-radius: 15px;
+        width: 90%;
+        max-width: 100%;
+    }
+}

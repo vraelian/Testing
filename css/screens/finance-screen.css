@@ -1,0 +1,10 @@
+/* css/screens/finance-screen.css */
+@media (max-width: 768px) {
+    #finance-screen .grid-cols-4 {
+        grid-template-columns: 0.5fr 2fr 1fr;
+        font-size: 0.8rem;
+    }
+    #finance-screen .grid-cols-4 > span:nth-child(2) {
+        grid-column: span 1;
+    }
+}
