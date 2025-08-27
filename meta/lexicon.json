@@ -413,7 +413,7 @@
       "role": "DOCUMENT_ROOT"
     },
     "F002": {
-      "path": "./style.css",
+      "path": "./css/global.css",
       "role": "STYLE_SHEET"
     },
     "F003": {
@@ -469,8 +469,8 @@
       "role": "LOGIC_SERVICE"
     },
     "F016": {
-      "path": "./js/services/eventEffectResolver.js",
-      "role": "LOGIC_HELPER"
+        "path": "./js/services/eventEffectResolver.js",
+        "role": "LOGIC_HELPER"
     },
     "F017": {
       "path": "./js/services/UIManager.js",
@@ -479,6 +479,46 @@
     "F018": {
         "path": "./js/services/MissionService.js",
         "role": "LOGIC_SERVICE"
+    },
+    "F019": {
+        "path": "./css/navigation.css",
+        "role": "STYLE_SHEET"
+    },
+    "F020": {
+        "path": "./css/modals.css",
+        "role": "STYLE_SHEET"
+    },
+    "F021": {
+        "path": "./css/hud.css",
+        "role": "STYLE_SHEET"
+    },
+    "F022": {
+        "path": "./css/missions.css",
+        "role": "STYLE_SHEET"
+    },
+    "F023": {
+        "path": "./css/tutorial.css",
+        "role": "STYLE_SHEET"
+    },
+    "F024": {
+        "path": "./css/debug.css",
+        "role": "STYLE_SHEET"
+    },
+    "F025": {
+        "path": "./css/screens/market-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F026": {
+        "path": "./css/screens/hangar-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F027": {
+        "path": "./css/screens/navigation-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F028": {
+        "path": "./css/screens/finance-screen.css",
+        "role": "STYLE_SHEET"
     }
   },
   "function_index": {

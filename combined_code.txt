@@ -205,8 +205,6 @@
 </body>
 </html>
 --- END OF FILE: ./index.html ---
-
-
 --- START OF FILE: ./css/missions.css ---
 /* css/missions.css */
 .mission-card {
@@ -289,8 +287,6 @@
     animation: flash-green 0.7s ease-in-out;
 }
 --- END OF FILE: ./css/missions.css ---
-
-
 --- START OF FILE: ./css/debug.css ---
 /* css/debug.css */
 #debug-panel {
@@ -407,8 +403,6 @@
     padding: 0;
 }
 --- END OF FILE: ./css/debug.css ---
-
-
 --- START OF FILE: ./css/tutorial.css ---
 /* css/tutorial.css */
 @keyframes shimmer {
@@ -530,8 +524,6 @@
     }
 }
 --- END OF FILE: ./css/tutorial.css ---
-
-
 --- START OF FILE: ./css/hud.css ---
 /* css/hud.css */
 #top-bar-container {
@@ -649,8 +641,6 @@
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 --- END OF FILE: ./css/hud.css ---
-
-
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 :root {
@@ -946,8 +936,6 @@ body {
     }
 }
 --- END OF FILE: ./css/global.css ---
-
-
 --- START OF FILE: ./css/modals.css ---
 /* css/modals.css */
 .modal-visible {
@@ -1125,8 +1113,6 @@ body {
     border-radius: 4px;
 }
 --- END OF FILE: ./css/modals.css ---
-
-
 --- START OF FILE: ./css/screens/market-screen.css ---
 /* css/screens/market-screen.css */
 .item-card-container {
@@ -1244,8 +1230,6 @@ body {
 .max-btn { background: var(--max-bg); color: var(--max-text); }
 .transaction-controls[data-mode="sell"] .toggle-thumb { left: calc(50% - 3px); }
 --- END OF FILE: ./css/screens/market-screen.css ---
-
-
 --- START OF FILE: ./css/screens/finance-screen.css ---
 /* css/screens/finance-screen.css */
 @media (max-width: 768px) {
@@ -1258,8 +1242,6 @@ body {
     }
 }
 --- END OF FILE: ./css/screens/finance-screen.css ---
-
-
 --- START OF FILE: ./css/screens/hangar-screen.css ---
 /* css/screens/hangar-screen.css */
 .starport-panel {
@@ -1310,13 +1292,9 @@ body {
     }
 }
 --- END OF FILE: ./css/screens/hangar-screen.css ---
-
-
 --- START OF FILE: ./css/screens/navigation-screen.css ---
 
 --- END OF FILE: ./css/screens/navigation-screen.css ---
-
-
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */
 .btn-header {
@@ -1407,8 +1385,6 @@ body {
     transform: translateY(1px) !important;
 }
 --- END OF FILE: ./css/navigation.css ---
-
-
 --- START OF FILE: ./js/ui/components/StatusScreen.js ---
 // js/ui/components/StatusScreen.js
 /**
@@ -1490,8 +1466,6 @@ export function renderStatusScreen(gameState) {
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/StatusScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/HangarScreen.js ---
 // js/ui/components/HangarScreen.js
 /**
@@ -1660,8 +1634,6 @@ function _getShipyardInventory(gameState) {
     }
 }
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
 // js/ui/components/IntelScreen.js
 /**
@@ -1693,8 +1665,6 @@ export function renderIntelScreen() {
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/IntelScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/NavigationScreen.js ---
 // js/ui/components/NavigationScreen.js
 /**
@@ -1760,8 +1730,6 @@ export function renderNavigationScreen(gameState) {
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/NavigationScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/MissionsScreen.js ---
 // js/ui/components/MissionsScreen.js
 /**
@@ -1836,8 +1804,6 @@ export function renderMissionsScreen(gameState, missionService) {
     `;
 }
 --- END OF FILE: ./js/ui/components/MissionsScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/FinanceScreen.js ---
 // js/ui/components/FinanceScreen.js
 /**
@@ -1924,8 +1890,6 @@ export function renderFinanceScreen(gameState) {
     `;
 }
 --- END OF FILE: ./js/ui/components/FinanceScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/ServicesScreen.js ---
 // js/ui/components/ServicesScreen.js
 /**
@@ -1982,8 +1946,6 @@ export function renderServicesScreen(gameState) {
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/ServicesScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/CargoScreen.js ---
 // js/ui/components/CargoScreen.js
 /**
@@ -2023,8 +1985,6 @@ export function renderCargoScreen(gameState) {
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/CargoScreen.js ---
-
-
 --- START OF FILE: ./js/ui/components/MarketScreen.js ---
 // js/ui/components/MarketScreen.js
 /**
@@ -2157,8 +2117,6 @@ function getItemPrice(gameState, goodId, isSelling = false) {
     return Math.max(1, Math.round(price));
 }
 --- END OF FILE: ./js/ui/components/MarketScreen.js ---
-
-
 --- START OF FILE: ./js/main.js ---
 /**
  * @file main.js
@@ -2237,8 +2195,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 --- END OF FILE: ./js/main.js ---
-
-
 --- START OF FILE: ./js/utils.js ---
 // js/utils.js
 import { DB } from './data/database.js';
@@ -2290,8 +2246,6 @@ export function skewedRandom(min, max) {
     return Math.floor(min + (max - min) * Math.pow(rand, 0.5));
 }
 --- END OF FILE: ./js/utils.js ---
-
-
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 
@@ -2416,8 +2370,6 @@ export const GAME_RULES = Object.freeze({
 
 export const SAVE_KEY = 'orbitalTraderSave_v2';
 --- END OF FILE: ./js/data/constants.js ---
-
-
 --- START OF FILE: ./js/data/database.js ---
 /**
  * @fileoverview
@@ -2994,8 +2946,6 @@ export const DB = {
     }
 };
 --- END OF FILE: ./js/data/database.js ---
-
-
 --- START OF FILE: ./js/services/GameState.js ---
 // js/services/GameState.js
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
@@ -3183,8 +3133,6 @@ export class GameState {
     }
 }
 --- END OF FILE: ./js/services/GameState.js ---
-
-
 --- START OF FILE: ./js/services/MissionService.js ---
 // js/services/MissionService.js
 /**
@@ -3367,8 +3315,6 @@ export class MissionService {
     }
 }
 --- END OF FILE: ./js/services/MissionService.js ---
-
-
 --- START OF FILE: ./js/services/simulation/MarketService.js ---
 // js/services/simulation/MarketService.js
 import { GAME_RULES } from '../../data/constants.js';
@@ -3455,8 +3401,6 @@ export class MarketService {
     }
 }
 --- END OF FILE: ./js/services/simulation/MarketService.js ---
-
-
 --- START OF FILE: ./js/services/SimulationService.js ---
 // js/services/SimulationService.js
 /**
@@ -4657,8 +4601,6 @@ export class SimulationService {
     }
 }
 --- END OF FILE: ./js/services/SimulationService.js ---
-
-
 --- START OF FILE: ./js/services/event-effects/effectAdriftPassenger.js ---
 // js/services/event-effects/effectAdriftPassenger.js
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
@@ -4709,8 +4651,6 @@ export function resolveAdriftPassenger(gameState, simulationService, effectData,
     }
 }
 --- END OF FILE: ./js/services/event-effects/effectAdriftPassenger.js ---
-
-
 --- START OF FILE: ./js/services/event-effects/effectSpaceRace.js ---
 // js/services/event-effects/effectSpaceRace.js
 import { formatCredits } from '../../utils.js';
@@ -4731,8 +4671,6 @@ export function resolveSpaceRace(gameState, simulationService, effectData, outco
     }
 }
 --- END OF FILE: ./js/services/event-effects/effectSpaceRace.js ---
-
-
 --- START OF FILE: ./js/services/EventManager.js ---
 // js/services/EventManager.js
 import { formatCredits } from '../utils.js';
@@ -5155,8 +5093,6 @@ export class EventManager {
     }
 }
 --- END OF FILE: ./js/services/EventManager.js ---
-
-
 --- START OF FILE: ./js/services/TutorialService.js ---
 // ./js/services/TutorialService.js
 /**
@@ -5385,8 +5321,6 @@ export class TutorialService {
     }
 }
 --- END OF FILE: ./js/services/TutorialService.js ---
-
-
 --- START OF FILE: ./js/services/eventEffectResolver.js ---
 // js/services/event-effects/effectResolver.js
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
@@ -5486,8 +5420,6 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
     }
 }
 --- END OF FILE: ./js/services/eventEffectResolver.js ---
-
-
 --- START OF FILE: ./js/services/UIManager.js ---
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
@@ -6530,8 +6462,6 @@ export class UIManager {
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
-
-
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 
@@ -6596,8 +6526,6 @@ All notable changes to the Orbital Trading project will be documented in this fi
 ## [19.04] - 2025-07-XX
 - Major refactor of game logic into distinct services (`GameState`, `SimulationService`, `EventManager`).
 --- END OF FILE: ./meta/CHANGELOG.md ---
-
-
 --- START OF FILE: ./meta/lexicon.json ---
 {
   "project_info": {
@@ -7014,7 +6942,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "role": "DOCUMENT_ROOT"
     },
     "F002": {
-      "path": "./style.css",
+      "path": "./css/global.css",
       "role": "STYLE_SHEET"
     },
     "F003": {
@@ -7070,8 +6998,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "role": "LOGIC_SERVICE"
     },
     "F016": {
-      "path": "./js/services/eventEffectResolver.js",
-      "role": "LOGIC_HELPER"
+        "path": "./js/services/eventEffectResolver.js",
+        "role": "LOGIC_HELPER"
     },
     "F017": {
       "path": "./js/services/UIManager.js",
@@ -7080,6 +7008,46 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F018": {
         "path": "./js/services/MissionService.js",
         "role": "LOGIC_SERVICE"
+    },
+    "F019": {
+        "path": "./css/navigation.css",
+        "role": "STYLE_SHEET"
+    },
+    "F020": {
+        "path": "./css/modals.css",
+        "role": "STYLE_SHEET"
+    },
+    "F021": {
+        "path": "./css/hud.css",
+        "role": "STYLE_SHEET"
+    },
+    "F022": {
+        "path": "./css/missions.css",
+        "role": "STYLE_SHEET"
+    },
+    "F023": {
+        "path": "./css/tutorial.css",
+        "role": "STYLE_SHEET"
+    },
+    "F024": {
+        "path": "./css/debug.css",
+        "role": "STYLE_SHEET"
+    },
+    "F025": {
+        "path": "./css/screens/market-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F026": {
+        "path": "./css/screens/hangar-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F027": {
+        "path": "./css/screens/navigation-screen.css",
+        "role": "STYLE_SHEET"
+    },
+    "F028": {
+        "path": "./css/screens/finance-screen.css",
+        "role": "STYLE_SHEET"
     }
   },
   "function_index": {
@@ -8316,10 +8284,6 @@ All notable changes to the Orbital Trading project will be documented in this fi
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
-
-
 --- START OF FILE: ./.git ---
 
 --- END OF FILE: ./.git ---
-
-
