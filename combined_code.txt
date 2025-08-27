@@ -935,6 +935,50 @@ body {
         justify-content: center;
     }
 }
+@media (max-width: 768px) {
+    .btn-header {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: 0;
+        width: auto;
+    }
+    .btn-sub-nav {
+        padding: 0.4rem 0.5rem;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.6rem;
+    }
+    .commodity-name {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+    .mobile-controls-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .mobile-controls-wrapper .item-btn {
+        width: 65px;
+        height: 32px;
+        padding: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+    .mobile-controls-wrapper .btn-sm {
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    .mobile-controls-wrapper .qty-input {
+        width: 44px;
+        height: 32px;
+        font-size: 1rem;
+        padding: 0;
+    }
+    .mobile-controls-wrapper .qty-btn {
+        width: 30px;
+        height: 24px;
+        line-height: 22px;
+    }
+}
 --- END OF FILE: ./css/global.css ---
 --- START OF FILE: ./css/modals.css ---
 /* css/modals.css */
@@ -1229,6 +1273,17 @@ body {
 .confirm-btn { background: var(--active-primary); color: var(--active-text-dark); }
 .max-btn { background: var(--max-bg); color: var(--max-text); }
 .transaction-controls[data-mode="sell"] .toggle-thumb { left: calc(50% - 3px); }
+@keyframes warm-shift {
+    0% { background-color: #fca5a5; }
+    33% { background-color: #f97316; }
+    66% { background-color: #c084fc; }
+    100% { background-color: #fca5a5; }
+}
+@keyframes dark-shift {
+    0% { background-color: #000000; }
+    50% { background-color: #4c1d95; }
+    100% { background-color: #000000; }
+}
 --- END OF FILE: ./css/screens/market-screen.css ---
 --- START OF FILE: ./css/screens/finance-screen.css ---
 /* css/screens/finance-screen.css */
@@ -1293,7 +1348,33 @@ body {
 }
 --- END OF FILE: ./css/screens/hangar-screen.css ---
 --- START OF FILE: ./css/screens/navigation-screen.css ---
+/* css/screens/navigation-screen.css */
+.location-card {
+    display: flex;
+    flex-direction: column;
+    border-width: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+.location-card p {
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+.location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
+.location-card.disabled-current { cursor: pointer; }
+.location-card-footer {
+    margin-top: auto;
+}
 
+@media (max-width: 768px) {
+    .travel-info-mobile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
 --- END OF FILE: ./css/screens/navigation-screen.css ---
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */

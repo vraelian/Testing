@@ -1,0 +1,27 @@
+/* css/screens/navigation-screen.css */
+.location-card {
+    display: flex;
+    flex-direction: column;
+    border-width: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+.location-card p {
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+.location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
+.location-card.disabled-current { cursor: pointer; }
+.location-card-footer {
+    margin-top: auto;
+}
+
+@media (max-width: 768px) {
+    .travel-info-mobile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
