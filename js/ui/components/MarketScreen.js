@@ -12,20 +12,21 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * Renders the entire Market screen, adapting for mobile or desktop layouts.
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
+ * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
         // For this visual overhaul, we'll use the same detailed layout for both.
         // The responsive design is handled in CSS.
-        return _getMarketItemHtml(good, gameState);
+        return _getMarketItemHtml(good, gameState, getItemPrice);
     }).join('');
 
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
 }
 
-function _getMarketItemHtml(good, gameState) {
+function _getMarketItemHtml(good, gameState, getItemPrice) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);

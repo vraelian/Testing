@@ -2059,20 +2059,21 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * Renders the entire Market screen, adapting for mobile or desktop layouts.
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
+ * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
         // For this visual overhaul, we'll use the same detailed layout for both.
         // The responsive design is handled in CSS.
-        return _getMarketItemHtml(good, gameState);
+        return _getMarketItemHtml(good, gameState, getItemPrice);
     }).join('');
 
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
 }
 
-function _getMarketItemHtml(good, gameState) {
+function _getMarketItemHtml(good, gameState, getItemPrice) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
@@ -4884,11 +4885,10 @@ import { DB } from '../../data/database.js';
  *
  * @param {GameState} gameState - The mutable game state object.
  * @param {SimulationService} simulationService - The simulation service instance, used here to log transactions.
- * @param {object} effectData - The raw effect data from the event definition (not used in this specific function).
  * @param {object} outcome - The chosen outcome object from the database.
  * @returns {object} An object containing a `key` to select the correct description and a dynamic `amount` for formatting.
  */
-export function resolveAdriftPassenger(gameState, simulationService, effectData, outcome) {
+export function resolveAdriftPassenger(gameState, simulationService, outcome) {
     const ship = simulationService._getActiveShip();
     const shipState = gameState.player.shipStates[ship.id];
     const inventory = simulationService._getActiveInventory();
@@ -5977,7 +5977,7 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile);
+                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);

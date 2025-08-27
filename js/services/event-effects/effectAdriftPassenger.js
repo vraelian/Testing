@@ -22,11 +22,10 @@ import { DB } from '../../data/database.js';
  *
  * @param {GameState} gameState - The mutable game state object.
  * @param {SimulationService} simulationService - The simulation service instance, used here to log transactions.
- * @param {object} effectData - The raw effect data from the event definition (not used in this specific function).
  * @param {object} outcome - The chosen outcome object from the database.
  * @returns {object} An object containing a `key` to select the correct description and a dynamic `amount` for formatting.
  */
-export function resolveAdriftPassenger(gameState, simulationService, effectData, outcome) {
+export function resolveAdriftPassenger(gameState, simulationService, outcome) {
     const ship = simulationService._getActiveShip();
     const shipState = gameState.player.shipStates[ship.id];
     const inventory = simulationService._getActiveInventory();
