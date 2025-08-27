@@ -1,14 +1,14 @@
 // js/ui/components/NavigationScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Navigation screen.
- * It displays the available travel destinations and their fuel/time costs.
+ * @fileoverview This file contains the rendering logic for the Navigation screen.
+ * It displays the available travel destinations as interactive cards, showing the
+ * fuel and time costs for each potential journey.
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Navigation screen.
+ * Renders the entire Navigation screen UI.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Navigation screen.
  */
@@ -16,7 +16,7 @@ export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
     const { navLock } = tutorials;
 
-    // Determine if there's a specific element that should be enabled
+    // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
     const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
     
@@ -28,10 +28,10 @@ export function renderNavigationScreen(gameState) {
                 const isCurrent = location.id === currentLocationId;
                 const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
 
-                // Determine if this card should be disabled
+                // Determine if this card should be disabled due to a tutorial lock.
                 let isDisabled = false;
                 if (isNavLocked && enabledElementQuery) {
-                    // A bit of a workaround to check if the current location matches the query selector
+                    // A workaround to check if this location card matches the tutorial's enabled element query.
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
                     isDisabled = !tempDiv.querySelector(enabledElementQuery);

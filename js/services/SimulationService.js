@@ -1,7 +1,8 @@
 // js/services/SimulationService.js
 /**
- * @fileoverview Core game engine for player actions, time progression, and event triggers.
- * It modifies the GameState based on user actions and simulated events.
+ * @fileoverview This file contains the SimulationService class, which acts as the core game engine.
+ * It is responsible for all primary game logic, including player actions (travel, trade, etc.),
+ * time progression, and event triggers. It is the only service that should directly modify the GameState.
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
@@ -9,6 +10,10 @@ import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK
 import { applyEffect } from './eventEffectResolver.js';
 import { MarketService } from './simulation/MarketService.js';
 
+/**
+ * @class SimulationService
+ * @description Manages the core game loop, player actions, and state changes.
+ */
 export class SimulationService {
     /**
      * @param {import('./GameState.js').GameState} gameState - The central state object.
@@ -17,14 +22,14 @@ export class SimulationService {
     constructor(gameState, uiManager) {
         this.gameState = gameState;
         this.uiManager = uiManager;
-        this.tutorialService = null; // Will be set later
-        this.missionService = null; // Will be set later
+        this.tutorialService = null; // Injected post-instantiation.
+        this.missionService = null;  // Injected post-instantiation.
         this.marketService = new MarketService(gameState);
     }
 
     /**
-     * Injects the TutorialService after all services have been instantiated to avoid circular dependencies.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService
+     * Injects the TutorialService after all services have been instantiated.
+     * @param {import('./TutorialService.js').TutorialService} tutorialService - The tutorial management service.
      */
     setTutorialService(tutorialService) {
         this.tutorialService = tutorialService;
@@ -32,14 +37,14 @@ export class SimulationService {
 
     /**
      * Injects the MissionService after all services have been instantiated.
-     * @param {import('./MissionService.js').MissionService} missionService
+     * @param {import('./MissionService.js').MissionService} missionService - The mission management service.
      */
     setMissionService(missionService) {
         this.missionService = missionService;
     }
 
     /**
-     * Kicks off the V1 interactive introduction sequence.
+     * Kicks off the interactive new game introduction sequence.
      */
     startIntroSequence() {
         if (!this.gameState.introSequenceActive) return;
@@ -48,7 +53,8 @@ export class SimulationService {
     }
 
     /**
-     * Displays the next modal in the intro sequence based on the current step.
+     * Displays the next modal in the introduction sequence based on the current step in the game state.
+     * @private
      */
     _showNextIntroModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
@@ -63,6 +69,7 @@ export class SimulationService {
         };
         let modalId = 'event-modal';
 
+        // Use specialized modals for steps that require unique layouts or inputs.
         if (step.id === 'charter' || step.id === 'signature') {
             modalId = `${step.id}-modal`;
             options.customSetup = (modal, closeHandler) => { this._setupIntroModal(modal, step, closeHandler) };
@@ -77,9 +84,8 @@ export class SimulationService {
                 if(step.buttonClass) button.classList.add(step.buttonClass);
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
-                // Disable button on click to prevent spamming
                 button.onclick = (e) => {
-                    e.target.disabled = true;
+                    e.target.disabled = true; // Prevent spamming.
                     closeHandler();
                 };
                 btnContainer.appendChild(button);
@@ -90,10 +96,11 @@ export class SimulationService {
     }
 
     /**
-     * Custom setup logic for the interactive charter and signature modals.
-     * @param {HTMLElement} modal - The modal element.
-     * @param {object} step - The current intro step data.
-     * @param {function} closeHandler - The function to call to close the modal.
+     * Performs custom setup for interactive modals in the intro, like the signature input.
+     * @param {HTMLElement} modal - The modal element to be configured.
+     * @param {object} step - The current intro step data from the database.
+     * @param {function} closeHandler - The function to call to close the modal and continue the sequence.
+     * @private
      */
     _setupIntroModal(modal, step, closeHandler) {
         const buttonContainer = modal.querySelector(`#${step.id}-button-container`);
@@ -101,7 +108,6 @@ export class SimulationService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        // Disable button on click to prevent spamming
         button.onclick = (e) => {
             e.target.disabled = true;
             closeHandler();
@@ -110,12 +116,11 @@ export class SimulationService {
 
         if (step.id === 'signature') {
             const input = modal.querySelector('#signature-input');
-            input.value = ''; // Clear it
+            input.value = '';
             button.id = 'intro-submit-btn';
             button.disabled = true;
             
-            // Re-assign onclick for the signature button to just the close handler,
-            // as the actual logic is handled in handleIntroClick.
+            // The actual logic is in handleIntroClick; this just closes the modal.
             button.onclick = closeHandler;
 
             input.oninput = () => {
@@ -127,8 +132,7 @@ export class SimulationService {
     }
 
     /**
-     * Handles all click events that are intercepted by the EventManager
-     * while the intro sequence is active. This function manages the flow of the introduction.
+     * Handles all delegated click events during the intro sequence to manage its flow.
      * @param {Event} e - The click event object.
      */
     handleIntroClick(e) {
@@ -141,21 +145,20 @@ export class SimulationService {
             this.gameState.player.introStep++;
             this._showNextIntroModal();
         } else if (targetId === 'intro-submit-btn') {
-            button.disabled = true; // Disable immediately
+            button.disabled = true;
             const input = document.getElementById('signature-input');
             let playerName = input.value.trim().replace(/[^a-zA-Z0-9 ]/g, '');
             if (!playerName) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a name on the contract. Please provide your legal mark.");
-                // Re-enable the button so the user can try again after the error
                 button.disabled = false;
-                this._showNextIntroModal();
+                this._showNextIntroModal(); // Re-show signature modal.
             } else {
                 this.gameState.player.name = playerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 1300;
 
-                // Remove the free starter ship and prepare for purchase
+                // Remove the default starter ship to prepare for the tutorial purchase.
                 this.gameState.player.ownedShipIds = [];
                 delete this.gameState.player.shipStates[SHIP_IDS.WANDERER];
                 delete this.gameState.player.inventories[SHIP_IDS.WANDERER];
@@ -167,7 +170,8 @@ export class SimulationService {
     }
 
     /**
-     * Handles the animated sequence for loan processing and approval.
+     * Manages the animated sequence for loan processing and transitions to the main game UI.
+     * @private
      */
     _startProcessingSequence() {
         const showApprovalModal = () => {
@@ -179,12 +183,11 @@ export class SimulationService {
                 
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
-                // Add loan amount to existing starting credits
                 this.gameState.player.credits += 25000;
 
                 setTimeout(() => {
                     document.getElementById('game-container').classList.remove('hidden');
-                    this.uiManager.render(this.gameState.getState()); // Initial render
+                    this.uiManager.render(this.gameState.getState()); // Initial render of main UI.
                     this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                     this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
                 }, 2000);
@@ -213,8 +216,9 @@ export class SimulationService {
     }
     
     /**
-     * Continues the intro sequence after a tutorial batch is completed.
+     * Continues the intro sequence after a tutorial batch (e.g., Hangar) is completed.
      * @param {string} completedBatchId - The ID of the tutorial batch that just finished.
+     * @private
      */
     _continueIntroSequence(completedBatchId) {
         if (completedBatchId === 'intro_hangar') {
@@ -226,7 +230,8 @@ export class SimulationService {
     }
 
     /**
-     * Finalizes the intro sequence, unlocks the UI, and shows the final message.
+     * Finalizes the intro sequence, unlocks the UI, and shows the final introductory modal.
+     * @private
      */
     _endIntroSequence() {
         this.gameState.introSequenceActive = false;
@@ -234,7 +239,7 @@ export class SimulationService {
         const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
     
-        // Manually re-apply the navLock for the "Earn Your Fortune" modal.
+        // Temporarily re-apply a navLock for the final modal to guide the player.
         this.gameState.tutorials.navLock = { navId: NAV_IDS.ADMIN, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
@@ -242,12 +247,12 @@ export class SimulationService {
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
         
-        // Force a full re-render to unlock all the buttons
+        // Force a full re-render to unlock all UI elements now that the intro is over.
         this.uiManager.render(this.gameState.getState());
     }
 
     /**
-     * Sets the active navigation tab and screen, triggering a re-render.
+     * Sets the active navigation tab and screen, triggering a full UI re-render.
      * @param {string} navId - The ID of the main navigation tab (e.g., 'ship', 'starport').
      * @param {string} screenId - The ID of the sub-navigation screen to display.
      */
@@ -265,19 +270,17 @@ export class SimulationService {
     }
 
     /**
-     * Initiates travel to a new location if the player has enough fuel.
+     * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
      */
     travelTo(locationId) {
         const { tutorials } = this.gameState;
         const { navLock } = tutorials;
 
-        // Guard clause for tutorial-forced navigation
+        // Prevent travel if a tutorial has locked navigation to a specific destination.
         if (navLock && navLock.screenId === SCREEN_IDS.NAVIGATION && navLock.enabledElementQuery) {
-            // The enabledElementQuery might contain multiple valid destinations (e.g., "[data-location-id='loc_luna'], [data-location-id='loc_mars']")
-            // We check if the clicked locationId is part of the allowed query string.
             if (!navLock.enabledElementQuery.includes(`[data-location-id='${locationId}']`)) {
-                return; // Exit without traveling if it's not one of the required destinations
+                return; // Exit if it's not the required destination.
             }
         }
 
@@ -308,10 +311,11 @@ export class SimulationService {
             return;
         }
 
+        // Skip random event check during the first tutorial flight for a smoother experience.
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
         if (!isFirstTutorialFlight) {
             if (this._checkForRandomEvent(locationId)) {
-                return;
+                return; // Pause travel if a random event is triggered.
             }
         }
 
@@ -319,20 +323,22 @@ export class SimulationService {
     }
 
     /**
-     * Executes the core travel logic, applying fuel costs, hull damage, and advancing time.
+     * Executes the core travel logic: applies fuel costs and hull damage, advances time, and shows the animation.
      * @param {string} locationId - The destination location ID.
-     * @param {object} [eventMods={}] - Modifications to travel from a random event.
+     * @param {object} [eventMods={}] - Modifications to travel parameters from a random event.
      */
     initiateTravel(locationId, eventMods = {}) {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
 
+        // Apply perk-based travel modifiers.
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
+        // Apply event-based travel modifiers.
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
@@ -346,9 +352,9 @@ export class SimulationService {
             return;
         }
 
-        // Force an event if the debug key was used
+        // Trigger a specific debug event if forced.
         if (eventMods.forceEvent) {
-            if (this._checkForRandomEvent(locationId, true)) { // Pass true to bypass chance roll
+            if (this._checkForRandomEvent(locationId, true)) {
                 return;
             }
         }
@@ -389,7 +395,7 @@ export class SimulationService {
     }
     
     /**
-     * Resumes travel after a random event has been resolved.
+     * Resumes a pending travel action after it was interrupted by an event.
      */
     resumeTravel() {
         if (!this.gameState.pendingTravel) return;
@@ -460,7 +466,7 @@ export class SimulationService {
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             totalSaleValue += profit * totalBonus;
         }
         
@@ -649,8 +655,8 @@ export class SimulationService {
     }
 
     /**
-     * Processes one "tick" of refueling, costing credits and adding fuel.
-     * @returns {number} - The cost of the fuel tick.
+     * Processes one "tick" of refueling while the button is held, costing credits and adding fuel.
+     * @returns {number} - The cost of the fuel tick, or 0 if no fuel was added.
      */
     refuelTick() {
         const state = this.gameState;
@@ -671,8 +677,8 @@ export class SimulationService {
     }
 
     /**
-     * Processes one "tick" of repairing, costing credits and restoring health.
-     * @returns {number} - The cost of the repair tick.
+     * Processes one "tick" of repairing while the button is held, costing credits and restoring health.
+     * @returns {number} - The cost of the repair tick, or 0 if no repairs were made.
      */
     repairTick() {
         const state = this.gameState;
@@ -694,13 +700,13 @@ export class SimulationService {
     }
 
     /**
-     * Advances game time by a number of days, triggering daily and monthly events.
-     * @param {number} days - The number of days to advance.
+     * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
+     * @param {number} days - The integer number of days to advance.
+     * @private
      */
     _advanceDays(days) {
         let marketUpdated = false;
 
-        // This loop simulates the passage of time, one day at a time.
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) return;
             this.gameState.day++;
@@ -716,10 +722,9 @@ export class SimulationService {
                 this.uiManager.queueModal('event-modal', `Captain ${this.gameState.player.name}`, `You are now ${this.gameState.player.playerAge}. You feel older and wiser.<br><br>Your experience now grants you an additional 1% profit on all trades.`);
             }
 
-            // Check for and trigger major narrative/perk events.
             this._checkAgeEvents();
 
-            // The main weekly "tick" for updating market prices.
+            // The main weekly "tick" for updating market prices and stock.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.evolveMarketPrices();
                 this.marketService.replenishMarketInventory();
@@ -728,6 +733,7 @@ export class SimulationService {
                 marketUpdated = true;
             }
 
+            // Expire old intel.
             if (this.gameState.intel.active && this.gameState.day > this.gameState.intel.active.endDay) {
                 this.gameState.intel.active = null;
             }
@@ -758,10 +764,11 @@ export class SimulationService {
     }
     
     /**
-     * Checks for and triggers a random event.
-     * @param {string} destinationId - The intended destination, used to resume travel.
-     * @param {boolean|number} [force=false] - If true, bypasses the chance roll. If a number, triggers a specific event index.
-     * @returns {boolean} - True if an event was triggered.
+     * Checks for and triggers a random event based on a probability roll.
+     * @param {string} destinationId - The intended travel destination, used to resume travel after the event.
+     * @param {boolean|number} [force=false] - If true, bypasses the chance roll. If a number, triggers a specific event by index.
+     * @returns {boolean} - True if an event was triggered, false otherwise.
+     * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
         if (force === false && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
@@ -781,7 +788,7 @@ export class SimulationService {
         
         if (!event) {
             console.warn(`Debug event trigger failed for index: ${force}`);
-            this.gameState.player.debugEventIndex = 0; // Reset index if out of bounds
+            this.gameState.player.debugEventIndex = 0; // Reset index if out of bounds.
             return false;
         }
 
@@ -794,6 +801,7 @@ export class SimulationService {
      * Resolves the player's choice in a random event and applies the outcome.
      * @param {string} eventId - The ID of the event being resolved.
      * @param {number} choiceIndex - The index of the choice the player made.
+     * @private
      */
     _resolveEventChoice(eventId, choiceIndex) {
         const event = DB.RANDOM_EVENTS.find(e => e.id === eventId);
@@ -804,6 +812,7 @@ export class SimulationService {
         const effectResult = this._applyEventEffects(chosenOutcome);
     
         let description = chosenOutcome.description;
+        // If the effect returned a dynamic description key, use it.
         if (effectResult && chosenOutcome.descriptions) {
             description = chosenOutcome.descriptions[effectResult.key];
             if (effectResult.amount) {
@@ -815,8 +824,9 @@ export class SimulationService {
     }
 
     /**
-     * Applies a list of effects from a chosen event outcome.
-     * @param {object} outcome - The outcome object containing effects.
+     * Applies a list of effects from a chosen event outcome by calling the effect resolver.
+     * @param {object} outcome - The outcome object from the database containing an array of effects.
+     * @private
      */
     _applyEventEffects(outcome) {
         let result = null;
@@ -832,7 +842,8 @@ export class SimulationService {
     }
 
     /**
-     * Checks for and triggers age-based narrative events.
+     * Checks for and triggers age-based narrative events based on game progression.
+     * @private
      */
     _checkAgeEvents() {
         DB.AGE_EVENTS.forEach(event => {
@@ -845,8 +856,9 @@ export class SimulationService {
     }
 
     /**
-     * Applies a perk or reward from an age event choice.
-     * @param {object} choice - The choice object from the event data.
+     * Applies a perk or special reward from an Age Event choice.
+     * @param {object} choice - The choice object from the event data in the database.
+     * @private
      */
     _applyPerk(choice) {
         if (choice.perkId) this.gameState.player.activePerks[choice.perkId] = true;
@@ -859,8 +871,9 @@ export class SimulationService {
     }
 
     /**
-     * Retrieves the fully composed state of the currently active ship.
+     * Retrieves a composite object of the player's active ship, combining static and dynamic data.
      * @returns {object|null} - The active ship's data, or null if no ship is active.
+     * @private
      */
     _getActiveShip() {
         const state = this.gameState;
@@ -870,8 +883,9 @@ export class SimulationService {
     }
 
     /**
-     * Retrieves the inventory of the currently active ship.
+     * Retrieves the inventory object of the currently active ship.
      * @returns {object|null} - The active ship's inventory object, or null.
+     * @private
      */
     _getActiveInventory() {
         if (!this.gameState.player.activeShipId) return null;
@@ -883,6 +897,7 @@ export class SimulationService {
      * @param {string} type - The category of the transaction (e.g., 'trade', 'loan').
      * @param {number} amount - The credit amount (positive for income, negative for expense).
      * @param {string} description - A brief description of the transaction.
+     * @private
      */
     _logTransaction(type, amount, description) {
         this.gameState.player.financeLog.push({ 
@@ -895,68 +910,66 @@ export class SimulationService {
     }
 
     /**
-     * Consolidates multiple buy/sell actions of the same commodity on the same day
-     * into a single transaction log entry. This prevents spamming the finance log
-     * when a player makes many small trades.
-     * e.g., "Bought 1x Plasteel" + "Bought 1x Plasteel" becomes "Bought 2x Plasteel".
+     * Logs a trade transaction, consolidating multiple trades of the same item on the same day.
+     * @param {string} goodName - The name of the commodity traded.
+     * @param {number} quantity - The amount of the commodity traded.
+     * @param {number} transactionValue - The total credit value of the transaction.
+     * @private
      */
     _logConsolidatedTrade(goodName, quantity, transactionValue) {
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
 
-        // Find an entry from today for the same item and action
+        // Find a matching entry from today for the same item and action type.
         const existingEntry = log.find(entry => 
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
             entry.description.endsWith(` ${goodName}`) &&
-            ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0)) // Make sure we don't merge buys and sells
+            ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0))
         );
 
         if (existingEntry) {
             existingEntry.amount += transactionValue;
             existingEntry.balance = this.gameState.player.credits;
-            // Extract current quantity from description "Bought 10x Water Ice"
             const match = existingEntry.description.match(/\s(\d+)x\s/);
             if (match) {
                 const currentQty = parseInt(match[1], 10);
                 const newQty = currentQty + quantity;
                 existingEntry.description = `${actionWord} ${newQty}x ${goodName}`;
-            } else {
-                // Fallback, should not happen.
-                existingEntry.description += ` & ${quantity}x more`;
             }
-
         } else {
-            // No existing entry for this item today, push a new one.
+            // No existing entry for this item today, so push a new one.
             this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
         }
     }
 
     /**
-     * Consolidates multiple identical transaction types (like fuel or repairs) on the same day.
-     * @param {string} type - The category of transaction.
+     * Consolidates recurring transactions like fuel or repairs on the same day into one log entry.
+     * @param {string} type - The category of transaction (e.g., 'fuel', 'repair').
      * @param {number} amount - The amount to add to the existing entry.
      * @param {string} description - The description for a new entry if one doesn't exist.
+     * @private
      */
     _logConsolidatedTransaction(type, amount, description) {
         const log = this.gameState.player.financeLog;
         const lastEntry = log.length > 0 ? log[log.length - 1] : null;
         
         if (lastEntry && lastEntry.day === this.gameState.day && lastEntry.type === type) {
-            // Update the last entry
+            // Update the last entry if it matches.
             lastEntry.amount += amount;
             lastEntry.balance = this.gameState.player.credits;
         } else {
-            // It's a new day or a different type, so push a new entry
+            // Otherwise, push a new entry.
             this._logTransaction(type, amount, description);
         }
     }
 
     /**
-     * Checks if the player's credit total has reached a new milestone.
+     * Checks if the player's credit total has reached a new progression milestone.
      * @returns {boolean} - True if a milestone was reached and state was changed.
+     * @private
      */
     _checkMilestones() {
         let changed = false;
@@ -985,8 +998,9 @@ export class SimulationService {
     }
 
     /**
-     * Shows toast warnings to the player if their hull health is low.
+     * Shows toast warnings to the player if their active ship's hull health is low.
      * @param {string} shipId - The ID of the ship to check.
+     * @private
      */
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
@@ -1006,8 +1020,9 @@ export class SimulationService {
     }
 
     /**
-     * Handles the destruction of a player ship.
+     * Handles the destruction of a player ship and the potential game over condition.
      * @param {string} shipId - The ID of the destroyed ship.
+     * @private
      */
     _handleShipDestruction(shipId) {
         const shipName = DB.SHIPS[shipId].name;
@@ -1027,8 +1042,9 @@ export class SimulationService {
     }
 
     /**
-     * Ends the game and displays a game over message.
+     * Ends the game, sets the gameOver flag, and displays a final message to the player.
      * @param {string} message - The game over message to display.
+     * @private
      */
     _gameOver(message) {
         this.gameState.setState({ isGameOver: true });
@@ -1039,7 +1055,8 @@ export class SimulationService {
     }
     
     /**
-     * Applies monthly credit garnishment if the player's loan is delinquent.
+     * Applies a monthly credit garnishment if the player's loan is delinquent.
+     * @private
      */
     _applyGarnishment() {
         const { player, day } = this.gameState;
@@ -1060,25 +1077,20 @@ export class SimulationService {
     }
     
     /**
-     * Updates the shipyard stock for all unlocked locations. This function is called
-     * on a weekly basis from the _advanceDays game loop. It ensures that the ships
-     * available for sale are periodically refreshed.
+     * Updates the shipyard stock for all unlocked locations on a weekly basis.
+     * @private
      */
     _updateShipyardStock() {
         const { player } = this.gameState;
 
-        // Iterate over all locations the player has unlocked.
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];
             
-            // If stock for the current day already exists, do nothing for this location.
-            // This prevents re-rolling stock multiple times if the weekly tick is triggered
-            // more than once without a day change (which shouldn't happen, but is safe).
             if (stock && stock.day === this.gameState.day) {
-                return;
+                return; // Stock has already been generated for this day.
             }
 
-            // Generate new stock for the day.
+            // Filter ships that can be sold at this location and are not already owned.
             const commonShips = Object.entries(DB.SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             
@@ -1091,20 +1103,18 @@ export class SimulationService {
                 }
             });
 
-            // Update the game state with the new stock for this location.
             this.gameState.market.shipyardStock[locationId] = {
                 day: this.gameState.day,
                 shipsForSale: shipsForSaleIds
             };
         });
-
-        // We don't call setState here as it will be called at the end of _advanceDays
     }
 
     /**
-     * Applies a list of reward objects to the player's state.
+     * Applies a list of reward objects to the player's state from a source like a mission.
      * @param {Array<object>} rewards - An array of reward objects, e.g., [{ type: 'credits', amount: 10000 }].
      * @param {string} sourceName - The name of the source of the rewards (e.g., mission name).
+     * @private
      */
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
@@ -1113,12 +1123,12 @@ export class SimulationService {
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
-            // Future reward types like 'item' or 'ship' can be handled here.
+            // NOTE: Future reward types like 'item' or 'ship' can be handled here.
         });
     }
 
     /**
-     * Grants cargo to the player's active ship inventory as part of a mission.
+     * Grants specific cargo items to the player's active ship inventory as part of a mission.
      * @param {string} missionId - The ID of the mission providing the cargo.
      */
     grantMissionCargo(missionId) {
@@ -1148,8 +1158,7 @@ export class SimulationService {
     // --- Debugging and Development Tools ---
 
     /**
-     * A utility function to add a specified ship to the player's hangar.
-     * This is used by debug commands and potentially by future game events.
+     * Utility function to add a specified ship to the player's hangar.
      * @param {string} shipId - The ID of the ship to add.
      */
     addShipToHangar(shipId) {
@@ -1163,7 +1172,7 @@ export class SimulationService {
     }
 
     /**
-     * A debug function to skip the intro and set up a standard play state.
+     * Debug function to skip the intro and set up a standard play state.
      */
     debugMarketSkip() {
         this.gameState.introSequenceActive = false;
@@ -1184,7 +1193,7 @@ export class SimulationService {
     }
     
     /**
-     * A debug function to trigger a random event in order.
+     * Debug function to cycle through and trigger all random events in order.
      */
     debugTriggerRandomEvent() {
         const state = this.gameState.getState();

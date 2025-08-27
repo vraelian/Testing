@@ -1,14 +1,14 @@
 // js/ui/components/StatusScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the main Status screen.
- * It displays the current date, ship status, and player information.
+ * @fileoverview This file contains the rendering logic for the main Status screen.
+ * It serves as the primary dashboard for the player, displaying the current date,
+ * active ship information, and essential ship status metrics like hull, fuel, and cargo.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../../utils.js';
 
 /**
- * Renders the entire Status screen.
+ * Renders the entire Status screen UI.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Status screen.
  */

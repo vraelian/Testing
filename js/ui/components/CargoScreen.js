@@ -1,14 +1,14 @@
 // js/ui/components/CargoScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Cargo screen.
- * It displays the contents of the active ship's cargo hold.
+ * @fileoverview This file contains the rendering logic for the Cargo screen.
+ * It is responsible for displaying the contents of the player's active ship's cargo hold,
+ * including item quantities and tooltips with lore and average cost.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 
 /**
- * Renders the entire Cargo screen.
+ * Renders the entire Cargo screen UI.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Cargo screen.
  */

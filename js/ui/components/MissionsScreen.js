@@ -1,25 +1,32 @@
 // js/ui/components/MissionsScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Missions screen.
- * It displays the active mission and a list of available missions.
+ * @fileoverview This file contains the rendering logic for the Missions screen.
+ * It is responsible for displaying the currently active mission and a list of all
+ * available missions for the player.
  */
 import { DB } from '../../data/database.js';
 
 /**
- * Renders the entire Missions screen.
+ * Renders the entire Missions screen UI.
  * @param {object} gameState - The current state of the game.
- * @param {object} missionService - An instance of the MissionService.
+ * @param {import('../../services/MissionService.js').MissionService} missionService - An instance of the MissionService to fetch available missions.
  * @returns {string} The HTML content for the Missions screen.
  */
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, currentLocationId } = gameState;
     const { activeMissionId, activeMissionObjectivesMet } = missions;
 
+    /**
+     * Generates the HTML for a single mission card.
+     * @param {object} mission - The mission object from the database.
+     * @param {string} status - The status of the mission ('active', 'completed', 'available').
+     * @returns {string} The HTML for the mission card.
+     */
     const getMissionCardHtml = (mission, status) => {
         let statusClass = '';
         if (status === 'active') statusClass = 'mission-active';
         if (status === 'completed') statusClass = 'mission-complete';
+        // Special class for an active mission that is ready to be turned in at the current location.
         if (status === 'active' && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId) {
             statusClass += ' mission-turn-in';
         }

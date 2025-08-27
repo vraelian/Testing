@@ -3,24 +3,27 @@ import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } fro
 import { DB } from '../data/database.js';
 import { skewedRandom } from '../utils.js';
 
+/**
+ * Procedurally generates the travel data matrix, calculating the time and fuel cost
+ * for travel between every pair of locations in the game.
+ * @param {Array<object>} markets - The array of market objects from the database.
+ * @returns {object} A nested object where `travelData[fromId][toId]` contains travel info.
+ */
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
     markets.forEach((fromMarket, i) => {
         travelData[fromMarket.id] = {};
         markets.forEach((toMarket, j) => {
             if (i === j) return;
-            // Simple index difference as a proxy for orbital distance.
+            // Simple index difference is used as a proxy for orbital distance.
             const distance = Math.abs(i - j);
-            // Fuel/Time is based on distance, with some randomness to make routes feel unique.
             const fuelTime = distance * 2 + Math.floor(Math.random() * 3);
-            // Fuel cost scales with distance and how "far out" the destination is.
             let fuelCost = Math.round(fuelTime * GAME_RULES.FUEL_SCALAR * (1 + (j / markets.length) * 0.5));
             let travelTime;
-            // Special case for Earth-Luna, the milk run.
+            // Special case for Earth-Luna to make it a quick, early-game trip.
             if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
                 travelTime = 1 + Math.floor(Math.random() * 3);
             } else {
-                // Standard travel time calculation.
                 travelTime = 15 + (distance * 10) + Math.floor(Math.random() * 5);
             }
             travelData[fromMarket.id][toMarket.id] = { time: travelTime, fuelCost: Math.max(1, fuelCost) };
@@ -30,11 +33,12 @@ function procedurallyGenerateTravelData(markets) {
 }
 
 /**
- * The GameState class holds all mutable data for the game session.
- * Static data (ship base stats, commodity types) is imported from /data files.
- * Dynamic data (player credits, ship health, cargo) is stored here.
- * For example, `DB.SHIPS` from database.js contains max health, while
- * `player.shipStates` contains the *current* health of each owned ship.
+ * @class GameState
+ * @description Holds all mutable data for the game session, acting as the single source of truth.
+ * Static data (e.g., ship base stats, commodity types) is imported from the /data directory.
+ * Dynamic data (e.g., player credits, ship health, cargo inventories) is stored and managed here.
+ * For example, `DB.SHIPS` contains a ship's max health, while `player.shipStates` in this class
+ * contains the *current* health of each ship the player owns.
  */
 export class GameState {
     constructor() {
@@ -43,24 +47,45 @@ export class GameState {
         this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
     }
 
+    /**
+     * Subscribes a callback function to be executed whenever the game state changes.
+     * @param {function} callback - The function to call on state changes.
+     */
     subscribe(callback) {
         this.subscribers.push(callback);
     }
 
+    /**
+     * Notifies all subscribed components that the state has changed.
+     * @private
+     */
     _notify() {
         this.subscribers.forEach(callback => callback(this));
     }
 
+    /**
+     * Updates the game state by merging a partial state object and notifies subscribers.
+     * This is the primary method for mutating the game state.
+     * @param {object} partialState - An object containing the properties of the state to update.
+     */
     setState(partialState) {
         Object.assign(this, partialState);
         this._notify();
-        // this.saveGame();
+        // this.saveGame(); // NOTE: Saving is currently disabled.
     }
     
+    /**
+     * Returns a deep copy of the current game state to prevent direct mutation.
+     * @returns {object} A JSON-serialized and parsed copy of the game state.
+     */
     getState() {
         return JSON.parse(JSON.stringify(this));
     }
 
+    /**
+     * Saves the current game state to localStorage.
+     * NOTE: This functionality is currently disabled.
+     */
     saveGame() {
         // try {
         //     const stateToSave = { ...this };
@@ -71,6 +96,11 @@ export class GameState {
         // }
     }
 
+    /**
+     * Loads the game state from localStorage.
+     * NOTE: This functionality is currently disabled and will always start a new game.
+     * @returns {boolean} True if a game was successfully loaded, false otherwise.
+     */
     loadGame() {
         return false;
         // try {
@@ -89,10 +119,15 @@ export class GameState {
         // }
     }
 
+    /**
+     * Initializes the game state for a new game session, setting all player, market,
+     * and other dynamic data to their default starting values.
+     * @param {string} playerName - The name entered by the player.
+     */
     startNewGame(playerName) {
         const initialState = {
             day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
-            introSequenceActive: true, // This flag will control the UI lockdown.
+            introSequenceActive: true,
             lastActiveScreen: {
                 [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
                 [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
@@ -101,7 +136,7 @@ export class GameState {
             pendingTravel: null,
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
-                introStep: 0, // Track progress through the intro sequence
+                introStep: 0,
                 credits: 3000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 unlockedCommodityLevel: 1, unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
@@ -133,9 +168,9 @@ export class GameState {
 
         DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
-            initialState.intel.available[m.id] = (Math.random() < 0.3); // Using literal instead of CONFIG for now
+            initialState.intel.available[m.id] = (Math.random() < 0.3);
             initialState.market.inventory[m.id] = {};
-            initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] }; // Initialize shipyard stock
+            initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] };
             DB.COMMODITIES.forEach(c => {
                 initialState.market.priceHistory[m.id][c.id] = [];
                 const avail = this._getTierAvailability(c.tier);
@@ -152,6 +187,13 @@ export class GameState {
         this.setState({});
     }
 
+    /**
+     * Returns the minimum and maximum potential stock for a commodity based on its tier.
+     * Higher tier commodities are rarer.
+     * @param {number} tier - The tier of the commodity.
+     * @returns {{min: number, max: number}} An object with min and max stock values.
+     * @private
+     */
     _getTierAvailability(tier) {
         switch (tier) {
             case 1: return { min: 6, max: 240 };
@@ -165,6 +207,11 @@ export class GameState {
         }
     }
 
+    /**
+     * Calculates the baseline galactic average price for all commodities.
+     * This is used as a reference point for market price fluctuations.
+     * @private
+     */
     _calculateGalacticAverages() {
         this.market.galacticAverages = {};
         DB.COMMODITIES.forEach(good => {
@@ -172,6 +219,11 @@ export class GameState {
         });
     }
 
+    /**
+     * Seeds the initial market prices for all commodities at all locations.
+     * Prices are based on the galactic average with randomness and location-specific modifiers applied.
+     * @private
+     */
     _seedInitialMarketPrices() {
         DB.MARKETS.forEach(location => {
             this.market.prices[location.id] = {};

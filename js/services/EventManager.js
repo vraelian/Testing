@@ -1,10 +1,25 @@
 // js/services/EventManager.js
+/**
+ * @fileoverview This file contains the EventManager class, which is responsible for handling all user input
+ * for the application. It binds event listeners to the DOM and translates user interactions (clicks, key presses, etc.)
+ * into calls to the SimulationService, acting as the primary bridge between the UI and the game's logic.
+ */
 import { formatCredits } from '../utils.js';
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 
+/**
+ * @class EventManager
+ * @description Listens for and processes all user inputs, delegating actions to the appropriate services.
+ */
 export class EventManager {
+    /**
+     * @param {import('./GameState.js').GameState} gameState The central game state object.
+     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
+     * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
+     */
     constructor(gameState, simulationService, uiManager, tutorialService) {
         this.gameState = gameState;
         this.simulationService = simulationService;
@@ -16,14 +31,18 @@ export class EventManager {
         this.activeTooltipTarget = null;
     }
 
+    /**
+     * Binds all necessary global event listeners to the document body.
+     * This includes click delegation, tooltip handling, and hold-to-act button logic.
+     */
     bindEvents() {
         document.body.addEventListener('click', (e) => this._handleClick(e));
-        document.body.addEventListener('dblclick', (e) => e.preventDefault()); // Prevent double-tap zoom
+        document.body.addEventListener('dblclick', (e) => e.preventDefault()); // Prevents double-tap zoom on mobile.
         document.body.addEventListener('mouseover', (e) => this._handleMouseOver(e));
         document.body.addEventListener('mouseout', (e) => this._handleMouseOut(e));
         document.addEventListener('keydown', (e) => this._handleKeyDown(e));
 
-        // Refuel and repair buttons will be created dynamically, need to use event delegation
+        // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) this._startRefueling(refuelBtn);
@@ -44,14 +63,16 @@ export class EventManager {
                 this._startRepairing(repairBtn); 
             }
         });
+        // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
             document.addEventListener(evt, () => {
                 this._stopRefueling();
                 this._stopRepairing();
             });
         });
+
+        // Re-render on resize to handle responsive layout changes.
         window.addEventListener('resize', () => {
-             // Re-render on resize to handle mobile/desktop layout changes
              this.uiManager.render(this.gameState.getState());
         });
         window.addEventListener('scroll', () => {
@@ -62,6 +83,7 @@ export class EventManager {
             }
         }, { passive: true });
         
+        // Make the mission sticky bar clickable to navigate to the missions screen.
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
@@ -70,10 +92,16 @@ export class EventManager {
         }
     }
 
+    /**
+     * Central click handler for the entire application, using event delegation.
+     * It determines the action based on the `data-action` attribute of the clicked element.
+     * @param {Event} e The click event object.
+     * @private
+     */
     _handleClick(e) {
         const state = this.gameState.getState();
 
-        // Dismiss any active tooltip if clicking inside it
+        // Dismiss any active tooltip if clicking inside it.
         if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
@@ -83,27 +111,28 @@ export class EventManager {
 
         const actionTarget = e.target.closest('[data-action]');
 
-        // Dismiss active tooltip if clicking outside of its trigger
+        // Dismiss active tooltip if clicking outside of its trigger element.
         if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
         }
 
-        // --- Priority Action Handling ---
+        // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
             const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
-            let actionData = null;
+            let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
+                // Mission Actions
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
                     actionData = { type: 'ACTION', action: 'show-mission-modal' };
-                    break; // ensure we hit checkState below
+                    break;
                 case 'accept-mission':
                     this.simulationService.missionService.acceptMission(missionId);
-                    this.uiManager.hideModal('mission-modal'); // Hide the modal after accepting
+                    this.uiManager.hideModal('mission-modal');
                     actionData = { type: 'ACTION', action: 'accept-mission', missionId: missionId };
                     break;
                 case 'abandon-mission':
@@ -115,6 +144,8 @@ export class EventManager {
                     this.uiManager.hideModal('mission-modal');
                     actionData = { type: 'ACTION', action: 'complete-mission' };
                     break;
+
+                // Ship & Navigation Actions
                 case 'show-ship-detail':
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
@@ -145,6 +176,8 @@ export class EventManager {
                     actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
                     this.uiManager.hideModal('ship-detail-modal');
                     break;
+
+                // Finance & Intel Actions
                 case ACTION_IDS.PAY_DEBT: this.simulationService.payOffDebt(); break;
                 case ACTION_IDS.TAKE_LOAN: this.simulationService.takeLoan(JSON.parse(loanDetails)); break;
                 case ACTION_IDS.PURCHASE_INTEL: this.simulationService.purchaseIntel(parseInt(cost));
@@ -153,6 +186,7 @@ export class EventManager {
                     this.uiManager.showToast('starport-unlock-tooltip', "Pay off your initial loan to access the Starport!");
                     break;
                 
+                // Market Transaction Controls
                 case 'toggle-trade-mode': {
                     const controls = actionTarget.closest('.transaction-controls');
                     if (controls) {
@@ -215,10 +249,12 @@ export class EventManager {
                     qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
                     break;
                 }
+
+                // Tooltip & Graph Actions
                  case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH: {
                     if (this.uiManager.isMobile) {
-                        this.uiManager.hideGenericTooltip(); // Hide other tooltip
+                        this.uiManager.hideGenericTooltip(); // Hide other tooltip.
                         if (this.activeTooltipTarget === actionTarget) {
                             this.uiManager.hideGraph();
                             this.activeTooltipTarget = null;
@@ -236,6 +272,9 @@ export class EventManager {
             return; // Action was handled, so we stop here.
         }
 
+        // --- Fallback Handlers (Intro, Modals, etc.) ---
+
+        // Handle clicks during the intro sequence.
         if (state.introSequenceActive && !state.tutorials.activeBatchId) {
             this.simulationService.handleIntroClick(e);
             return;
@@ -243,24 +282,25 @@ export class EventManager {
 
         if (state.isGameOver) return;
 
+        // Dismiss mission modal by clicking the backdrop.
         const missionModal = e.target.closest('#mission-modal');
         if (missionModal && e.target.id === 'mission-modal') {
             this.uiManager.hideModal('mission-modal');
             return;
         }
 
-        // --- Modal Dismissal ---
+        // Dismiss ship detail modal by clicking the backdrop.
         const shipDetailModal = e.target.closest('#ship-detail-modal');
         if (shipDetailModal && !e.target.closest('#ship-detail-content')) {
             this.uiManager.hideModal('ship-detail-modal');
             return;
         }
         
-        // --- Mobile Generic Tooltip Handling (if no action was taken) ---
+        // Handle mobile-specific generic tooltips (tap to show, tap again to hide).
         if (this.uiManager.isMobile) {
             const tooltipTarget = e.target.closest('[data-tooltip]');
             if (tooltipTarget) {
-                this.uiManager.hideGraph(); // Hide other tooltip
+                this.uiManager.hideGraph(); // Hide graph if it's open.
                 if (this.activeTooltipTarget === tooltipTarget) {
                     this.uiManager.hideGenericTooltip();
                     this.activeTooltipTarget = null;
@@ -268,12 +308,11 @@ export class EventManager {
                     this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip);
                     this.activeTooltipTarget = tooltipTarget;
                 }
-                return; // Stop further processing
+                return;
             }
         }
 
-
-        // --- Lore/Tutorial Tooltip Handling (All Devices) ---
+        // Handle lore/tutorial log tooltips on all devices.
         const tutorialTrigger = e.target.closest('.tutorial-container');
         const loreTrigger = e.target.closest('.lore-container');
 
@@ -299,6 +338,11 @@ export class EventManager {
         }
     }
 
+    /**
+     * Handles mouseover events, primarily for showing graphs on desktop.
+     * @param {Event} e The mouseover event object.
+     * @private
+     */
     _handleMouseOver(e) {
         if (this.uiManager.isMobile) return;
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
@@ -307,6 +351,11 @@ export class EventManager {
         }
     }
 
+    /**
+     * Handles mouseout events, primarily for hiding graphs on desktop.
+     * @param {Event} e The mouseout event object.
+     * @private
+     */
     _handleMouseOut(e) {
         if (this.uiManager.isMobile) return;
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
@@ -315,6 +364,11 @@ export class EventManager {
         }
     }
     
+    /**
+     * Handles keydown events, primarily for debug shortcuts.
+     * @param {Event} e The keydown event object.
+     * @private
+     */
     _handleKeyDown(e) {
         const state = this.gameState.getState();
         if (state.isGameOver || e.ctrlKey || e.metaKey) return;
@@ -368,18 +422,32 @@ export class EventManager {
         }
     }
 
+    /**
+     * Starts the refueling process when the button is held down.
+     * @param {HTMLElement} buttonElement - The refuel button element.
+     * @private
+     */
     _startRefueling(buttonElement) {
         if (this.gameState.isGameOver || this.refuelInterval) return;
         this._refuelTick(buttonElement); 
-        // The service tick is called every 1000ms (1 second) while the button is held.
+        // A service tick is called every 1000ms (1 second) while the button is held.
         this.refuelInterval = setInterval(() => this._refuelTick(buttonElement), 1000);
     }
 
+    /**
+     * Stops the refueling process.
+     * @private
+     */
     _stopRefueling() {
         clearInterval(this.refuelInterval);
         this.refuelInterval = null;
     }
 
+    /**
+     * Executes a single "tick" of refueling.
+     * @param {HTMLElement} buttonElement - The refuel button element, used for positioning the floating text.
+     * @private
+     */
     _refuelTick(buttonElement) {
         const cost = this.simulationService.refuelTick();
         if (cost > 0) {
@@ -393,18 +461,32 @@ export class EventManager {
         }
     }
 
+    /**
+     * Starts the repair process when the button is held down.
+     * @param {HTMLElement} buttonElement - The repair button element.
+     * @private
+     */
     _startRepairing(buttonElement) {
         if (this.gameState.isGameOver || this.repairInterval) return;
         this._repairTick(buttonElement);
-        // The service tick is called every 1000ms (1 second) while the button is held.
+        // A service tick is called every 1000ms (1 second) while the button is held.
         this.repairInterval = setInterval(() => this._repairTick(buttonElement), 1000);
     }
 
+    /**
+     * Stops the repair process.
+     * @private
+     */
     _stopRepairing() {
         clearInterval(this.repairInterval);
         this.repairInterval = null;
     }
 
+    /**
+     * Executes a single "tick" of repairing.
+     * @param {HTMLElement} buttonElement - The repair button element, used for positioning the floating text.
+     * @private
+     */
     _repairTick(buttonElement) {
         const cost = this.simulationService.repairTick();
         if (cost > 0) {

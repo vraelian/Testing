@@ -1,15 +1,15 @@
 // js/ui/components/ServicesScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Station Services screen.
- * It displays options for refueling and repairing the player's active ship.
+ * @fileoverview This file contains the rendering logic for the Station Services screen.
+ * It displays options for refueling and repairing the player's active ship, calculating
+ * costs based on the current location and any active player perks.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Services screen.
+ * Renders the entire Services screen UI.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Services screen.
  */
@@ -19,11 +19,13 @@ export function renderServicesScreen(gameState) {
     const shipState = player.shipStates[player.activeShipId];
     const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
 
+    // Calculate fuel price, applying perks if applicable.
     let fuelPrice = currentMarket.fuelPrice / 2;
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
     
+    // Calculate repair price per tick, applying perks if applicable.
     let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);

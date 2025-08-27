@@ -1,15 +1,15 @@
 // js/ui/components/FinanceScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Finance screen.
- * It displays the player's debt, loan options, and transaction history.
+ * @fileoverview This file contains the rendering logic for the Finance screen.
+ * It displays the player's current debt status or available loan options,
+ * as well as a detailed log of all financial transactions.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 
 /**
- * Renders the entire Finance screen.
+ * Renders the entire Finance screen UI.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Finance screen.
  */
@@ -17,6 +17,7 @@ export function renderFinanceScreen(gameState) {
     const { player, day } = gameState;
     let loanHtml;
 
+    // Display the current debt panel if the player has debt.
     if (player.debt > 0) {
         let garnishmentTimerHtml = '';
         if (player.loanStartDate) {
@@ -35,6 +36,7 @@ export function renderFinanceScreen(gameState) {
              ${garnishmentTimerHtml}
            </div>`;
     } else {
+        // Otherwise, display available loan options.
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
         const dynamicLoanFee = Math.floor(dynamicLoanAmount * 0.1);
         const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
@@ -51,6 +53,7 @@ export function renderFinanceScreen(gameState) {
         loanHtml = `<h4 class="font-orbitron text-xl mb-2">Financing</h4><div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>`;
     }
 
+    // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
         const amountColor = entry.amount > 0 ? 'text-green-400' : 'text-red-400';
         const sign = entry.amount > 0 ? '+' : '';

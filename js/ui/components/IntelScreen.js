@@ -1,12 +1,11 @@
 // js/ui/components/IntelScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Intel screen.
- * It displays options for viewing the tutorial log and game lore.
+ * @fileoverview This file contains the rendering logic for the Intel screen.
+ * It provides the player with access to the tutorial log and the game's lore.
  */
 
 /**
- * Renders the entire Intel screen.
+ * Renders the entire Intel screen UI, which includes buttons to view the tutorial log and game lore.
  * @returns {string} The HTML content for the Intel screen.
  */
 export function renderIntelScreen() {

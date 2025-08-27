@@ -1,21 +1,21 @@
 /**
  * @fileoverview
  * This file serves as the central database for all static game data.
- * It consolidates information from the previous gamedata.js, config.js,
- * and dateConfig.js files into a single, authoritative source. This improves
- * maintainability and clarity by providing a unified structure for all
- * core game content and configuration.
+ * It consolidates information from previous data, config, and content files
+ * into a single, authoritative source. This improves maintainability and clarity
+ * by providing a unified structure for all core game content and configuration.
  */
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS } from './constants.js';
 
 export const DB = {
-    // --- FROM FORMER config.js ---
+    // --- Core Game Configuration ---
     CONFIG: {
         INTEL_COST_PERCENTAGE: 0.20,
         INTEL_MIN_CREDITS: 5000,
         INTEL_CHANCE: 0.3,
         INTEL_DEMAND_MOD: 1.8,
         INTEL_DEPRESSION_MOD: 0.5,
+        // Defines credit thresholds for unlocking new commodities, locations, and narrative events.
         COMMODITY_MILESTONES: [
             { threshold: 30000, unlockLevel: 2, message: "Your growing reputation has unlocked access to more advanced industrial hardware.<br>New opportunities await." },
             { threshold: 300000, unlockLevel: 3, message: "Word of your success is spreading. High-tech biological and medical markets are now open to you.", unlocksLocation: LOCATION_IDS.URANUS },
@@ -26,16 +26,16 @@ export const DB = {
         ]
     },
 
-    // --- FROM FORMER dateConfig.js ---
+    // --- In-Game Date Configuration ---
     DATE_CONFIG: {
         START_YEAR: 2140,
-        START_DAY_OF_WEEK: 1,
+        START_DAY_OF_WEEK: 1, // 0 = Sunday, 1 = Monday, etc.
         DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
         MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
         DAY_NAMES: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     },
 
-    // --- FROM FORMER gamedata.js ---
+    // --- New Game Introduction Sequence ---
     INTRO_SEQUENCE_V1: {
       modals: [
         {
@@ -85,6 +85,7 @@ export const DB = {
       ]
     },
 
+    // --- Visual Representations for Locations ---
     LOCATION_VISUALS: {
         [LOCATION_IDS.EARTH]: '🌍',
         [LOCATION_IDS.LUNA]: '🌕',
@@ -100,16 +101,18 @@ export const DB = {
         [LOCATION_IDS.KEPLER]: '👁️'
     },
 
+    // --- Player Perks and Their Effects ---
     PERKS: {
         [PERK_IDS.TRADEMASTER]: { profitBonus: 0.05 },
         [PERK_IDS.NAVIGATOR]: { fuelMod: 0.9, hullDecayMod: 0.9, travelTimeMod: 0.9 },
         [PERK_IDS.VENETIAN_SYNDICATE]: { fuelDiscount: 0.25, repairDiscount: 0.25 }
     },
 
+    // --- Narrative Events Triggered by Game Progression ---
     AGE_EVENTS: [
         {
             id: 'captain_choice',
-            trigger: { day: 366 },
+            trigger: { day: 366 }, // Triggers after one full year of gameplay.
             title: 'Captain Who?',
             description: "You've successfully navigated many trades and run a tight ship. Your crew depends on you... but what kind of captain will you be?",
             choices: [
@@ -119,7 +122,7 @@ export const DB = {
         },
         {
             id: 'friends_with_benefits',
-            trigger: { credits: 50000 },
+            trigger: { credits: 50000 }, // Triggers upon reaching 50,000 credits.
             title: 'Friends with Benefits',
             description: 'An ally in need is an ally indeed.',
             choices: [
@@ -129,12 +132,13 @@ export const DB = {
         }
     ],
 
+    // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: [
         {
             id: 'distress_call',
             title: 'Distress Call',
             scenario: 'You pick up a distress signal from a small, damaged ship. They are out of fuel and requesting an emergency transfer to restart their reactor.',
-            precondition: (gameState, activeShip) => activeShip.fuel >= 20,
+            precondition: (gameState, activeShip) => activeShip.fuel >= 20, // Event can only trigger if player has enough fuel to offer.
             choices: [
                 {
                     title: 'Offer Aid (20 Fuel)',
@@ -370,6 +374,7 @@ export const DB = {
         }
     ],
 
+    // --- Ship Data ---
     SHIPS: {
         [SHIP_IDS.WANDERER]: { name: 'Wanderer', class: 'C', price: 25000, maxHealth: 100, cargoCapacity: 50, maxFuel: 100, saleLocationId: null, lore: 'The All-Rounder. A reliable, if unspectacular, light freighter. Its balanced stats make it a good choice for new captains finding their niche.' },
         [SHIP_IDS.STALWART]: { name: 'Stalwart', class: 'C', price: 25000, maxHealth: 150, cargoCapacity: 75, maxFuel: 80, saleLocationId: LOCATION_IDS.MARS, lore: 'The Hauler. A workhorse of the inner worlds. Slow and cumbersome, but boasts an impressive cargo capacity for its price point.' },
@@ -387,6 +392,7 @@ export const DB = {
         [SHIP_IDS.BEHEMOTH]: { name: 'Behemoth', class: 'O', price: 32000000, maxHealth: 600, cargoCapacity: 6000, maxFuel: 600, saleLocationId: LOCATION_IDS.EXCHANGE, isRare: true, lore: 'An orbital-class freighter that dwarfs even the largest stations. It is a legend among traders, rumored to be a mobile black market in its own right.' }
     },
 
+    // --- Tradable Commodities Data ---
     COMMODITIES: [
         { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', basePriceRange: [25, 500], tier: 1, unlockLevel: 1, styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.' },
         { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', basePriceRange: [1000, 4000], tier: 1, unlockLevel: 1, styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.' },
@@ -404,6 +410,7 @@ export const DB = {
         { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', basePriceRange: [40000000000, 100000000000], tier: 7, unlockLevel: 6, styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.' }
     ],
 
+    // --- Market and Location Data ---
     MARKETS: [
         { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", modifiers: { [COMMODITY_IDS.SENTIENT_AI]: 0.7, [COMMODITY_IDS.PROPELLANT]: 1.8, [COMMODITY_IDS.CLONED_ORGANS]: 1.5, [COMMODITY_IDS.PLASTEEL]: 1.2 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 1.75 } } },
         { id: LOCATION_IDS.LUNA, name: 'The Moon', description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", modifiers: { [COMMODITY_IDS.PROPELLANT]: 0.8, [COMMODITY_IDS.PLASTEEL]: 1.5, [COMMODITY_IDS.WATER_ICE]: 1.4 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
@@ -419,7 +426,9 @@ export const DB = {
         { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", modifiers: { [COMMODITY_IDS.SENTIENT_AI]: 2.0, [COMMODITY_IDS.PROCESSORS]: 1.8, [COMMODITY_IDS.CRYO_PODS]: 1.3 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
     ],
 
+    // --- Mission Data ---
     MISSIONS: {
+        // The initial tutorial mission chain.
         'mission_tutorial_01': {
             id: "mission_tutorial_01",
             name: "The Dockworker's Favor",
@@ -438,7 +447,7 @@ export const DB = {
                 "buttonText": "Deliver Plasteel"
             },
             rewards: [],
-            providedCargo: [
+            providedCargo: [ // Cargo given to the player on mission acceptance.
                 { "goodId": "plasteel", "quantity": 7 }
             ]
         },
@@ -450,7 +459,7 @@ export const DB = {
             isRepeatable: false,
             isAbandonable: false,
             description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat. They are paying a premium for prompt delivery.",
-            prerequisites: [
+            prerequisites: [ // This mission only becomes available after 'mission_tutorial_01' is complete.
                 { "type": "mission_completed", "missionId": "mission_tutorial_01" }
             ],
             objectives: [
@@ -492,11 +501,12 @@ export const DB = {
         }
     },
 
+    // --- Tutorial System Data ---
     TUTORIAL_DATA: {
         'intro_hangar': {
             title: 'Your First Ship',
             trigger: { type: TUTORIAL_ACTION_TYPES.ACTION, action: 'INTRO_START_HANGAR' },
-            navLock: true,
+            navLock: true, // If true, UI navigation is restricted during this tutorial batch.
             steps: [
                 {
                     stepId: 'hangar_1',

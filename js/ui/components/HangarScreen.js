@@ -1,16 +1,16 @@
 // js/ui/components/HangarScreen.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Hangar screen.
+ * @fileoverview This file contains the rendering logic for the Hangar screen.
  * It is responsible for displaying both the player's owned ships (Hangar)
  * and the ships available for purchase at the current location (Shipyard).
+ * It also handles switching between desktop and mobile layouts.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 
 /**
- * Renders the entire Hangar screen, adapting for mobile or desktop layouts.
+ * Renders the entire Hangar screen, delegating to the appropriate function based on screen size.
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @returns {string} The HTML content for the Hangar screen.
@@ -24,7 +24,7 @@ export function renderHangarScreen(gameState, isMobile) {
 }
 
 /**
- * Renders the mobile version of the Hangar screen.
+ * Renders the mobile version of the Hangar screen, which uses a list-based view.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the mobile Hangar screen.
  * @private
@@ -55,7 +55,7 @@ function _renderHangarScreenMobile(gameState) {
 }
 
 /**
- * Renders the desktop version of the Hangar screen.
+ * Renders the desktop version of the Hangar screen, which uses a two-panel card view.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the desktop Hangar screen.
  * @private
@@ -109,7 +109,7 @@ function _renderHangarScreenDesktop(gameState) {
  * Generates the HTML for a single ship item in the mobile hangar/shipyard list.
  * @param {object} gameState - The current state of the game.
  * @param {string} shipId - The ID of the ship to render.
- * @param {string} context - 'shipyard' or 'hangar'.
+ * @param {string} context - The context in which the item is being rendered ('shipyard' or 'hangar').
  * @returns {string} The HTML for the list item.
  * @private
  */
@@ -143,13 +143,14 @@ function _getHangarItemHtmlMobile(gameState, shipId, context) {
 }
 
 /**
- * Determines the list of ships available for sale at the current location.
+ * Retrieves the list of ships currently available for sale at the docked location.
  * @param {object} gameState The current game state.
- * @returns {Array<Array<string, object>>} A list of ship entries, [id, shipObject].
+ * @returns {Array<Array<string, object>>} A list of ship entries, where each entry is an array of `[id, shipObject]`.
  * @private
  */
 function _getShipyardInventory(gameState) {
     const { player, currentLocationId, market, introSequenceActive } = gameState;
+    // During the intro, show a fixed, limited set of ships for the tutorial purchase.
     if (introSequenceActive) {
         if (player.ownedShipIds.length > 0) {
             return [];
@@ -158,6 +159,7 @@ function _getShipyardInventory(gameState) {
             return introShipIds.map(id => ([id, DB.SHIPS[id]]));
         }
     } else {
+        // In normal gameplay, show the dynamically stocked ships for the current location.
         const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
         return shipsForSaleIds
             .map(id => ([id, DB.SHIPS[id]]))

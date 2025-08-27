@@ -1,4 +1,9 @@
 // js/services/event-effects/effectAdriftPassenger.js
+/**
+ * @fileoverview This file contains the specific logic for resolving the "Adrift Passenger"
+ * random event outcome. It demonstrates a conditional effect that changes based on the
+ * player's current cargo space and debt status.
+ */
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
@@ -10,20 +15,23 @@ import { DB } from '../../data/database.js';
 
 /**
  * Resolves the "Adrift Passenger" event outcome where the player gives them a fuel cell.
- * The outcome is conditional, depending on the player's available cargo space and current debt status.
- * This function modifies the outcome description directly to reflect the result.
+ * The reward is conditional:
+ * 1. If the player has enough cargo space, they receive Cybernetics.
+ * 2. If not, and they have debt, the passenger pays off a portion of it.
+ * 3. If they have no cargo space and no debt, they receive credits instead.
  *
  * @param {GameState} gameState - The mutable game state object.
  * @param {SimulationService} simulationService - The simulation service instance, used here to log transactions.
- * @param {object} effectData - The raw effect data from the event definition in gamedata.js (not used in this specific function but part of the standard signature).
- * @param {object} outcome - The chosen outcome object from gamedata.js. This function will modify its `description` property.
- * @returns {object} An object containing the outcome key and any dynamic data for the description.
+ * @param {object} effectData - The raw effect data from the event definition (not used in this specific function).
+ * @param {object} outcome - The chosen outcome object from the database.
+ * @returns {object} An object containing a `key` to select the correct description and a dynamic `amount` for formatting.
  */
 export function resolveAdriftPassenger(gameState, simulationService, effectData, outcome) {
     const ship = simulationService._getActiveShip();
     const shipState = gameState.player.shipStates[ship.id];
     const inventory = simulationService._getActiveInventory();
 
+    // The cost of the choice is paid first.
     shipState.fuel = Math.max(0, shipState.fuel - 30);
 
     // Ensure the awarded commodity exists in the inventory before attempting to modify it.
@@ -31,6 +39,7 @@ export function resolveAdriftPassenger(gameState, simulationService, effectData,
         inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
     }
 
+    // Determine the reward based on player's current state.
     if (calculateInventoryUsed(inventory) + 40 <= ship.cargoCapacity) {
         inventory[COMMODITY_IDS.CYBERNETICS].quantity += 40;
         return { key: 'reward_cybernetics' };

@@ -113,18 +113,3 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     // Always stack the indicators vertically
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
-
-
-// This function needs to be accessible from this component, so it's duplicated from UIManager
-function getItemPrice(gameState, goodId, isSelling = false) {
-    let price = gameState.market.prices[gameState.currentLocationId][goodId];
-    const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
-    if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
-        price *= market.specialDemand[good.id].bonus;
-    }
-    const intel = gameState.intel.active;
-    if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
-        price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
-    }
-    return Math.max(1, Math.round(price));
-}

@@ -340,7 +340,7 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // Tutorial override for Plasteel on the Moon
+        // Tutorial override for Plasteel on the Moon to guarantee a profitable trade.
         if (
             gameState.tutorials.activeBatchId === 'intro_missions' &&
             gameState.tutorials.activeStepId === 'mission_2_2' &&
@@ -349,15 +349,17 @@ export class UIManager {
         ) {
             const plasteel = DB.COMMODITIES.find(c => c.id === COMMODITY_IDS.PLASTEEL);
             const galacticAvg = (plasteel.basePriceRange[0] + plasteel.basePriceRange[1]) / 2;
-            return Math.round(galacticAvg * 1.8); // Guarantee a high price
+            return Math.round(galacticAvg * 1.8);
         }
 
 
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
+        // Apply a bonus if the location has a special demand for this item.
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
             price *= market.specialDemand[goodId].bonus;
         }
+        // Apply intel modifiers if active.
         const intel = gameState.intel.active;
         if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
             price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
@@ -793,6 +795,7 @@ export class UIManager {
             this.cache.tutorialToastNextBtn.style.display = 'none';
         }
 
+        // Per design, the tutorial skip button is permanently disabled for the player.
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;

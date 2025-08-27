@@ -1,16 +1,22 @@
 // ./js/services/TutorialService.js
 /**
- * @fileoverview Manages the state and flow of interactive tutorials.
+ * @fileoverview This file contains the TutorialService class, which manages the state
+ * and flow of all interactive tutorials in the game. It checks for trigger conditions,
+ * displays tutorial steps, and locks UI navigation to guide the player.
  */
 import { DB } from '../data/database.js';
 import { TUTORIAL_ACTION_TYPES, ACTION_IDS } from '../data/constants.js';
 
+/**
+ * @class TutorialService
+ * @description Manages the state and flow of interactive tutorials.
+ */
 export class TutorialService {
     /**
-     * @param {import('./GameState.js').GameState} gameState The game's state.
-     * @param {import('./UIManager.js').UIManager} uiManager The UI manager.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The game logic simulator.
-     * @param {object} navStructure The navigation structure from UIManager.
+     * @param {import('./GameState.js').GameState} gameState The game's central state object.
+     * @param {import('./UIManager.js').UIManager} uiManager The UI manager for rendering updates.
+     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic simulator.
+     * @param {object} navStructure The navigation structure from UIManager, used to map screens to nav tabs.
      */
     constructor(gameState, uiManager, simulationService, navStructure) {
         this.gameState = gameState;
@@ -19,7 +25,7 @@ export class TutorialService {
         this.activeBatchId = null;
         this.activeStepId = null;
 
-        // Create a map of screenId -> navId for easy lookup
+        // Create a map of screenId -> navId for easy lookup when tutorials need to force navigation.
         this.screenToNavMap = {};
         for (const navId in navStructure) {
             for (const screenId in navStructure[navId].screens) {
@@ -29,10 +35,12 @@ export class TutorialService {
     }
 
     /**
-     * Checks the current game action or state against tutorial triggers and completion conditions.
-     * @param {object} [actionData=null] Data about the action that just occurred.
+     * Checks the current game action or state against tutorial triggers and step completion conditions.
+     * This is the main entry point for the tutorial system, called after player actions or screen loads.
+     * @param {object} [actionData=null] Data about the action that just occurred (e.g., { type: 'ACTION', action: 'buy-ship' }).
      */
     checkState(actionData = null) {
+        // If a tutorial is currently active, check if the action completes the current step.
         if (this.activeBatchId && this.activeStepId) {
             const batch = DB.TUTORIAL_DATA[this.activeBatchId];
             const step = batch.steps.find(s => s.stepId === this.activeStepId);
@@ -43,13 +51,12 @@ export class TutorialService {
             return;
         }
 
+        // If no tutorial is active, check if the action triggers a new tutorial batch.
         for (const batchId in DB.TUTORIAL_DATA) {
             const batch = DB.TUTORIAL_DATA[batchId];
             const hasBeenSeen = this.gameState.tutorials.seenBatchIds.includes(batchId);
             const isSkipped = this.gameState.tutorials.skippedTutorialBatches.includes(batchId);
             
-            // Allow intro tutorials to trigger even if their screen is already loaded
-            const isIntroTutorial = batchId.startsWith('intro_');
             if (!hasBeenSeen && !isSkipped) {
                 const triggerAction = actionData || { type: TUTORIAL_ACTION_TYPES.SCREEN_LOAD, screenId: this.gameState.activeScreen };
                 if (this._matchesCondition(batch.trigger, triggerAction)) {
@@ -61,15 +68,15 @@ export class TutorialService {
     }
 
     /**
-     * Starts a specific tutorial batch by its ID, optionally from a specific step.
-     * @param {string} batchId The ID of the tutorial batch to start.
-     * @param {string|null} [startStepId=null] The ID of the step to start from. If null, starts from the beginning.
+     * Starts a specific tutorial batch by its ID.
+     * @param {string} batchId The unique identifier of the tutorial batch to start.
+     * @param {string|null} [startStepId=null] The ID of a specific step to start from. If null, starts from the beginning.
      */
     triggerBatch(batchId, startStepId = null) {
         if (!DB.TUTORIAL_DATA[batchId]) return;
         const batch = DB.TUTORIAL_DATA[batchId];
 
-        // If the tutorial is triggered by a screen load, switch to that screen
+        // If the tutorial is triggered by loading a specific screen, navigate to that screen first.
         if (batch.trigger.type === TUTORIAL_ACTION_TYPES.SCREEN_LOAD) {
             const targetScreenId = batch.trigger.screenId;
             if (this.gameState.activeScreen !== targetScreenId) {
@@ -96,7 +103,7 @@ export class TutorialService {
     }
 
     /**
-     * Skips the currently active tutorial batch.
+     * Skips the currently active tutorial batch, preventing it from triggering again.
      */
     skipActiveTutorial() {
         if (!this.activeBatchId) return;
@@ -108,7 +115,7 @@ export class TutorialService {
     }
     
     /**
-     * Advances the tutorial to the next step, or ends it if completed.
+     * Advances the tutorial to the next step in the current batch, or ends the batch if it's the final step.
      */
     advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
@@ -123,18 +130,18 @@ export class TutorialService {
         } else {
             const completedBatchId = this.activeBatchId;
             this._endBatch(); 
+            // If the completed tutorial was part of the intro sequence, continue the sequence.
             if (this.gameState.introSequenceActive && completedBatchId?.startsWith('intro_')) {
                 this.simulationService._continueIntroSequence(completedBatchId);
             }
         }
         
-        // Force a full re-render after a step advances. This ensures any UI elements
-        // that depend on the tutorial's state (like disabled buttons) are correctly updated.
+        // Force a full re-render after a step advances to update any UI elements affected by the tutorial's state.
         this.uiManager.render(this.gameState.getState());
     }
 
     /**
-     * Displays a specific tutorial step by its ID and manages navigation locks.
+     * Displays a specific tutorial step by its ID and manages UI navigation locks.
      * @param {string} stepId The ID of the step to display.
      * @private
      */
@@ -147,17 +154,17 @@ export class TutorialService {
             return;
         }
 
-        // Set NavLock based on tutorial data
+        // Apply navigation lock based on tutorial data.
         if (step.hasOwnProperty('navLock')) {
-            // If the step explicitly defines navLock (even if it's null), use its value.
+            // A step can explicitly define its own lock (or null to unlock).
             this.gameState.tutorials.navLock = step.navLock;
         } else if (batch.navLock) {
-            // Otherwise, if the batch is locked and the step has no override, lock to the current screen.
+            // Otherwise, inherit the lock from the parent batch.
             const currentScreenId = this.gameState.activeScreen;
             const currentNavId = this.screenToNavMap[currentScreenId];
             this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
         } else {
-            // If neither the step nor the batch defines a lock, ensure it's unlocked.
+            // Ensure navigation is unlocked if no lock is specified.
             this.gameState.tutorials.navLock = null;
         }
 
@@ -171,7 +178,7 @@ export class TutorialService {
             gameState: this.gameState.getState()
         });
 
-        // Re-render to apply the navLock changes immediately
+        // Re-render to apply navLock changes immediately.
         this.uiManager.render(this.gameState.getState());
     }
 
@@ -185,18 +192,19 @@ export class TutorialService {
         this.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
         this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.navLock = null; // Clear the nav lock
+        this.gameState.tutorials.navLock = null; // Clear any active navigation lock.
     }
 
     /**
-     * Checks if an action matches a tutorial step's completion or trigger condition.
-     * @param {object|object[]} condition The condition to check.
+     * Checks if a player action matches a tutorial step's completion or trigger condition.
+     * @param {object|object[]} condition The condition object or array of conditions from the database.
      * @param {object} actionData The action performed by the player.
-     * @returns {boolean} True if the condition is met.
+     * @returns {boolean} True if the condition(s) are met.
      * @private
      */
     _matchesCondition(condition, actionData) {
         if (!condition || !actionData) return false;
+        // A condition can be an array of multiple sub-conditions that must all be true.
         if (Array.isArray(condition)) {
             return condition.every(c => this._matchesSingleCondition(c, actionData));
         }
@@ -204,7 +212,7 @@ export class TutorialService {
     }
     
     /**
-     * Helper for _matchesCondition to check a single condition object.
+     * Helper for _matchesCondition to check a single condition object against a player action.
      * @param {object} condition The single condition object.
      * @param {object} actionData The action performed by the player.
      * @returns {boolean} True if the single condition is met.
@@ -217,8 +225,8 @@ export class TutorialService {
                 return condition.screenId === actionData.screenId;
             case TUTORIAL_ACTION_TYPES.ACTION:
                 return condition.action === actionData.action;
-            case TUTORIAL_ACTION_TYPES.INFO: // Always true when checked, relies on manual "Next" click
-                return true;
+            case TUTORIAL_ACTION_TYPES.INFO:
+                return true; // Info steps are always completed by the "Next" button, not a game action.
             default:
                 return false;
         }
