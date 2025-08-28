@@ -13,13 +13,12 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
+ * @param {object} [debugState={}] - The current state from the DebugService.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice, debugState = {}) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
-        // For this visual overhaul, we'll use the same detailed layout for both.
-        // The responsive design is handled in CSS.
         return _getMarketItemHtml(good, gameState, getItemPrice);
     }).join('');
 
@@ -40,26 +39,21 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
     const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-    const buyDisabled = (isSpecialDemand || isLockedForTutorial) ? 'disabled' : '';
-    const sellDisabled = isLockedForTutorial ? 'disabled' : ''; // This might need separate logic later if we lock only one action
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
+    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? `(${playerItem.quantity})` : '';
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
-        <div class="bg-black/20 p-4 rounded-lg flex justify-between items-center border ${good.styleClass} transition-colors shadow-md h-32">
-            <div class="flex flex-col h-full justify-between flex-grow self-start pt-1">
-                <div>
-                    <p class="font-bold commodity-name text-outline"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span><span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                    <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span></p>
-                    <p id="price-${good.id}" class="font-roboto-mono text-xl font-bold text-left pt-1 price-text text-outline" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
-                </div>
-                <div class="text-sm self-start pb-1 text-outline flex items-center gap-3">
-                    <div id="indicators-${good.id}" class="flex items-center gap-2">${indicatorHtml}</div>
-                </div>
-            </div>
+        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+            <p class="player-inventory-text" id="p-inv-${good.id}">${playerInvDisplay}</p>
+            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span></p>
+            <p id="price-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
+            
+            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
@@ -81,16 +75,15 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
 
 /**
- * Generates the HTML for the MKT and P/L indicators, ensuring they always stack vertically.
+ * Generates the HTML for the MKT and P/L indicators.
  * @param {number} price - The current market price.
- * @param {number} sellPrice - The current sell price (including special demand).
+ * @param {number} sellPrice - The current sell price.
  * @param {number} galacticAvg - The galactic average price.
- * @param {object} playerItem - The player's inventory item for this commodity.
- * @returns {string} An HTML string containing the vertically stacked indicators.
+ * @param {object} playerItem - The player's inventory item.
+ * @returns {string} An HTML string containing the indicators.
  * @private
  */
 function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
-    // Market Indicator Logic
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
@@ -98,7 +91,6 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     let marketIcon = marketPct < -15 ? '▼' : (marketPct > 15 ? '▲' : '●');
     const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
-    // P/L Indicator Logic
     let plIndicatorHtml = '';
     if (playerItem && playerItem.avgCost > 0) {
         const spreadPerUnit = sellPrice - playerItem.avgCost;
@@ -111,6 +103,5 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
         }
     }
 
-    // Always stack the indicators vertically
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
