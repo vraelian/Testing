@@ -2,7 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
-## [22.00] - 2025-08-24
+## [22.00] - 2025-08-28
+- CSS Refactor
+
+## [21.01] - 2025-08-24
 - transaction visual overhaul
 - indicator overhaul
 
