@@ -25,11 +25,13 @@ import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
+import { DebugService } from './services/DebugService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
+    const DEV_MODE = true; // Guard for development features.
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
@@ -54,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const missionService = new MissionService(gameState, uiManager);
         const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
+        let debugService = null;
+
+        if (DEV_MODE) {
+            debugService = new DebugService(uiManager);
+            debugService.init();
+        }
         
         // --- Dependency Injection ---
         // Services are created first, then dependencies are injected to avoid circular reference issues during instantiation.
@@ -61,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService);
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();

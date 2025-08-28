@@ -1,22 +1,79 @@
 /* css/screens/market-screen.css */
+:root {
+    /* Card Appearance */
+    --market-card-height: 128px;
+    --market-card-border-radius: 8px;
+    --market-card-gradient-angle: 45deg;
+    
+    /* Positioning */
+    --market-card-info-top: 12px;
+    --market-card-info-left: 16px;
+    --market-card-module-top: 12px;
+    --market-card-module-right: 12px;
+    
+    /* Spacing */
+    --market-card-info-v-gap: 4px;
+
+    /* Name Text */
+    --market-card-name-font-size: 1rem;
+    --market-card-name-color: #ffffff;
+    --market-card-name-text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+
+    /* Price Text */
+    --market-card-price-font-size: 1.35rem;
+    --market-card-price-color: #7dd3fc;
+    --market-card-price-text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+
+    /* Module */
+    --market-card-module-width: 100px;
+    --market-card-module-v-gap: 5.6px;
+    --market-card-module-toggle-height: 30px;
+    --market-card-module-stepper-height: 30px;
+    --market-card-module-button-height: 28px;
+
+    /* Indicators */
+    --market-card-indicator-top: 86px;
+    --market-card-indicator-left: 16px;
+    --market-card-indicator-font-size: 0.75em;
+    --market-card-indicator-padding: 0.1em 0.5em;
+    --market-card-indicator-positive-bg: rgb(16, 185, 129);
+    --market-card-indicator-negative-bg: rgb(220, 38, 38);
+    --market-card-indicator-neutral-bg: rgb(115, 115, 115);
+}
+
 .item-card-container {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     position: relative;
 }
 
+/* This is the main card element */
 .item-card-container > div {
     position: relative;
+    height: var(--market-card-height);
+    border-radius: var(--market-card-border-radius);
+    padding: 0;
+}
+
+/* This is the info block container. Replaces flexbox layout. */
+.item-card-container .flex-col.h-full {
+    position: absolute;
+    top: var(--market-card-info-top);
+    left: var(--market-card-info-left);
+    gap: var(--market-card-info-v-gap);
+    height: auto; /* Override h-full */
 }
 
 .commodity-name {
     font-family: 'Roboto Mono', monospace;
-    font-size: 1rem;
+    font-size: var(--market-card-name-font-size);
+    color: var(--market-card-name-color);
+    text-shadow: var(--market-card-name-text-shadow);
 }
 
 .price-text {
-    font-size: 1.35rem;
-    color: #7dd3fc;
-    text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
+    font-size: var(--market-card-price-font-size);
+    color: var(--market-card-price-color);
+    text-shadow: var(--market-card-price-text-shadow);
 }
 
 .avail-text {
@@ -24,27 +81,37 @@
 }
 
 /* --- [[START]] INDICATOR STYLES --- */
+.item-card-container .flex.items-center.gap-2 {
+    position: absolute;
+    top: var(--market-card-indicator-top);
+    left: var(--market-card-indicator-left);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
 .indicator-pill {
-    padding: 0.1em 0.5em;
+    padding: var(--market-card-indicator-padding);
     border-radius: 99px;
-    font-size: 0.75em;
+    font-size: var(--market-card-indicator-font-size);
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 0.3em;
-    text-shadow: none; /* Remove inherited text outline */
+    text-shadow: none;
 }
 
 .indicator-pill.positive {
-    background-color: rgb(16, 185, 129);
+    background-color: var(--market-card-indicator-positive-bg);
     color: #dcfce7;
 }
 .indicator-pill.negative {
-    background-color: rgb(220, 38, 38);
+    background-color: var(--market-card-indicator-negative-bg);
     color: #fee2e2;
 }
 .indicator-pill.neutral {
-    background-color: rgb(115, 115, 115);
+    background-color: var(--market-card-indicator-neutral-bg);
     color: #e5e5e5;
 }
 /* --- [[END]] INDICATOR STYLES --- */
@@ -53,62 +120,86 @@
 /* --- [[START]] COMMODITY CARD STYLES --- */
 .item-style-1 {
     border-color: #60a5fa;
-    background: linear-gradient(45deg, #93c5fd, #2563eb);
+    --market-card-gradient-color1: #93c5fd;
+    --market-card-gradient-color2: #2563eb;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #eff6ff;
 }
 .item-style-2 {
     border-color: #a3a3a3;
-    background: linear-gradient(45deg, #d4d4d4, #525252);
+    --market-card-gradient-color1: #d4d4d4;
+    --market-card-gradient-color2: #525252;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #fafafa;
 }
 .item-style-3 {
     border-color: #166534;
-    background: linear-gradient(45deg, #22c55e, #15803d);
+    --market-card-gradient-color1: #22c55e;
+    --market-card-gradient-color2: #15803d;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #dcfce7;
 }
 .item-style-4 {
     border-color: #e5e5e5;
-    background: linear-gradient(45deg, #f3f4f6, #cccccc);
+    --market-card-gradient-color1: #f3f4f6;
+    --market-card-gradient-color2: #cccccc;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #ffffff;
 }
 .item-style-5 {
     border-color: #c084fc;
-    background: linear-gradient(45deg, #e9d5ff, #a855f7);
+    --market-card-gradient-color1: #e9d5ff;
+    --market-card-gradient-color2: #a855f7;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #faf5ff;
 }
 .item-style-6 {
     border-color: #93c5fd;
-    background: linear-gradient(45deg, #bfdbfe, #3b82f6);
+    --market-card-gradient-color1: #bfdbfe;
+    --market-card-gradient-color2: #3b82f6;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #eff6ff;
 }
 .item-style-7 {
     border-color: #84cc16;
-    background: linear-gradient(45deg, #a7f3d0, #4d7c0f);
+    --market-card-gradient-color1: #a7f3d0;
+    --market-card-gradient-color2: #4d7c0f;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #f0fdf4;
 }
 .item-style-8 {
     border-color: #a5f3fc;
-    background: linear-gradient(45deg, #e0f2fe, #22d3ee);
+    --market-card-gradient-color1: #e0f2fe;
+    --market-card-gradient-color2: #22d3ee;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #f0f9ff;
 }
 .item-style-9 {
     border-color: #fcd34d;
-    background: linear-gradient(45deg, #fcd34d, #d2b48c);
+    --market-card-gradient-color1: #fcd34d;
+    --market-card-gradient-color2: #d2b48c;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #fffbeb;
 }
 .item-style-10 {
     border-color: #fda4af;
-    background: linear-gradient(45deg, #fecaca 70%, #b91c1c);
+    --market-card-gradient-color1: #fecaca;
+    --market-card-gradient-color2: #b91c1c;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #fef2f2;
 }
 .item-style-11 {
     border-color: #c4b5fd;
-    background: linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a);
+    --market-card-gradient-color1: #a78bfa;
+    --market-card-gradient-color2: #312e81;
+    background: linear-gradient(165deg, var(--market-card-gradient-color1), var(--market-card-gradient-color2), #1e3a8a);
     color: #f5f3ff;
 }
 .item-style-12 {
     border-color: #fca5a5;
-    background: linear-gradient(45deg, #1f2937 40%, #7f1d1d, #b91c1c);
+    --market-card-gradient-color1: #1f2937;
+    --market-card-gradient-color2: #b91c1c;
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1) 40%, #7f1d1d, var(--market-card-gradient-color2));
     color: #fee2e2;
 }
 .item-style-13 {
@@ -128,19 +219,19 @@
 /* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
 .transaction-controls {
     position: absolute;
-    bottom: 0.75rem;
-    right: 0.75rem;
+    top: var(--market-card-module-top);
+    right: var(--market-card-module-right);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.35rem;
-    width: var(--module-width);
+    gap: var(--market-card-module-v-gap);
+    width: var(--market-card-module-width);
     font-family: var(--font-family);
     font-size: var(--font-size);
 }
 .toggle-switch {
     width: 100%;
-    height: var(--toggle-height);
+    height: var(--market-card-module-toggle-height);
     border-radius: 99px;
     display: flex;
     align-items: center;
@@ -174,7 +265,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: var(--stepper-height);
+    height: var(--market-card-module-stepper-height);
     border-radius: var(--border-radius);
     padding: 0 0.5rem;
     transition: all 0.3s ease-in-out;
@@ -208,7 +299,7 @@
 }
 .action-group .btn {
     flex: 1;
-    height: var(--button-height);
+    height: var(--market-card-module-button-height);
     border: none;
     border-radius: 99px;
     font-weight: bold;

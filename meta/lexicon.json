@@ -519,6 +519,10 @@
     "F028": {
         "path": "./css/screens/finance-screen.css",
         "role": "STYLE_SHEET"
+    },
+    "F029": {
+        "path": "./js/services/DebugService.js",
+        "role": "DEBUG_TOOL"
     }
   },
   "function_index": {
@@ -1357,7 +1361,7 @@
           "type": "object"
         },
         {
-           "name": "simulationService",
+          "name": "simulationService",
           "type": "object"
         },
         {
@@ -1369,7 +1373,7 @@
         "type": "void"
       },
       "mutates_state": [],
-       "calls": []
+      "calls": []
     },
     "TutorialService.checkState": {
       "asset_id": "F015",
@@ -1584,7 +1588,7 @@
           "type": "state_schema"
         },
         {
-          "name": "simulationService",
+           "name": "simulationService",
            "type": "object"
         },
         {
@@ -1751,6 +1755,40 @@
             "GameState.setState",
             "UIManager.render"
         ]
+    },
+    "DebugService.constructor": {
+      "asset_id": "F029",
+      "description": "Initializes the DebugService.",
+      "params": [
+        { "name": "uiManager", "type": "object" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": []
+    },
+    "DebugService.init": {
+      "asset_id": "F029",
+      "description": "Initializes the lil-gui debug panel, creating all folders, controllers, and listeners to manipulate CSS variables in real-time.",
+      "params": [],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": ["DebugService.updateCssVariable", "DebugService.updateTextShadows", "DebugService.exportCssDeltas"]
+    },
+    "DebugService.toggleVisibility": {
+      "asset_id": "F029",
+      "description": "Toggles the visibility of the debug panel UI.",
+      "params": [],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": []
+    },
+    "DebugService.exportCssDeltas": {
+      "asset_id": "F029",
+      "description": "Compares the current visual state against the defaults and logs a CSS :root block of only the changed variables to the console.",
+      "params": [],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": ["DebugService.getCssVarForKey", "DebugService.getCssValueForKey"]
     }
   }
 }

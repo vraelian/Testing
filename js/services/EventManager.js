@@ -19,12 +19,14 @@ export class EventManager {
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
      * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
+     * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
+        this.debugService = debugService;
         
         this.refuelInterval = null;
         this.repairInterval = null;
@@ -372,8 +374,15 @@ export class EventManager {
     _handleKeyDown(e) {
         const state = this.gameState.getState();
         if (state.isGameOver || e.ctrlKey || e.metaKey) return;
+
+        // --- Debug/Dev Keys ---
+        if (e.code === 'Backquote') {
+            if (this.debugService) {
+                this.debugService.toggleVisibility();
+            }
+            return;
+        }
     
-        // --- Debug Keys ---
         let message = '';
         switch(e.key) {
             case '!':
