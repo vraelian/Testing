@@ -30,13 +30,13 @@ export class DebugService {
         // --- State object updated with values from screenshots ---
         this.state = {
             // Card Appearance
-            cardHeight: 128,
-            cardBorderRadius: 8,
+            cardHeight: 145,
+            cardBorderRadius: 21,
 
             // Name Text
-            infoTop: 12,
+            infoTop: 7,
             infoLeft: 16,
-            nameFontSize: 1.1,
+            nameFontSize: 1.2,
             nameColor: '#ffffff',
             nameOutlineWidth: 1,
             nameOutlineColor: '#000000',
@@ -70,9 +70,9 @@ export class DebugService {
             availShadowColor: '#554a4a',
 
             // Price Text
-            priceTop: 52,
+            priceTop: 59,
             priceLeft: 16,
-            priceFontSize: 1.5,
+            priceFontSize: 1.7,
             priceColor: '#2fe1f9',
             priceFontFamily: "'Roboto Mono', monospace",
             priceOutlineWidth: 1,
@@ -85,11 +85,11 @@ export class DebugService {
             priceShadowColor: '#28d5d7',
             
             // Indicators
-            indicatorTop: 81,
+            indicatorTop: 109,
             indicatorLeft: 16,
-            indicatorHSpacing: 0,
+            indicatorHSpacing: 6,
             indicatorVSpacing: 3,
-            indicatorFontSize: 0.55,
+            indicatorFontSize: 0.6,
             indicatorPositiveColor: '#ffffff',
             indicatorNegativeColor: '#fee2e2',
             indicatorNeutralColor: '#e5e5e5',
@@ -100,7 +100,7 @@ export class DebugService {
             // Transaction Module
             moduleTop: 10,
             moduleWidth: 123,
-            moduleVGap: 6.3,
+            moduleVGap: 14.1,
             moduleToggleHeight: 20,
             moduleStepperHeight: 40,
             moduleStepperArrowSize: 1.4,

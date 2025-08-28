@@ -204,7 +204,7 @@ export class EventManager {
 
                     const currentMode = controls.getAttribute('data-mode');
                     const qtyInput = controls.querySelector('input');
-                    const quantity = parseInt(qtyInput.value, 10) || 1;
+                    const quantity = parseInt(qtyInput.value, 10) || 0;
 
                     if (quantity > 0) {
                         const result = (currentMode === 'buy')
@@ -216,7 +216,9 @@ export class EventManager {
                             const text = currentMode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                             const color = currentMode === 'buy' ? '#f87171' : '#34d399';
                             this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
-                            qtyInput.value = '1';
+                            if (currentMode === 'buy') {
+                                qtyInput.value = '0';
+                            }
                             actionData = { type: 'ACTION', action: currentMode === 'buy' ? 'buy-item' : 'sell-item', goodId: goodId };
                         }
                     }
@@ -248,7 +250,7 @@ export class EventManager {
                     if (!controls) break;
                     const qtyInput = controls.querySelector('input');
                     let val = parseInt(qtyInput.value) || 0;
-                    qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
+                    qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(0, val - 1);
                     break;
                 }
 

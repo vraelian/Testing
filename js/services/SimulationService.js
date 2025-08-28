@@ -458,7 +458,10 @@ export class SimulationService {
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         const activeInventory = this._getActiveInventory();
         const item = activeInventory[goodId];
-        if (!item || item.quantity < quantity) return 0;
+        if (!item || item.quantity < quantity) {
+            this.uiManager.queueModal('event-modal', "Insufficient Inventory", `You do not have ${quantity} units of ${good.name} to sell.`);
+            return 0;
+        }
 
         this.gameState.market.inventory[state.currentLocationId][goodId].quantity += quantity;
         const price = this.uiManager.getItemPrice(state, goodId, true);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 22.00</title>
+    <title>Orbital Trading 22.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 22.00</p>
+            <p>Version 22.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1171,7 +1171,7 @@ body {
     /* Indicators */
     --market-card-indicator-top: 81px;
     --market-card-indicator-left: 16px;
-    --market-card-indicator-h-spacing: 0px;
+    --market-card-indicator-h-spacing: 4px;
     --market-card-indicator-v-spacing: 3px;
     --market-card-indicator-font-size: 0.55em;
     --market-card-indicator-padding: 0.1em 0.5em;
@@ -1206,15 +1206,6 @@ body {
     text-shadow: var(--market-card-name-text-shadow);
 }
 
-.player-inventory-text {
-    position: absolute;
-    top: var(--market-card-pinv-top);
-    left: var(--market-card-pinv-left);
-    font-size: var(--market-card-pinv-font-size);
-    color: var(--market-card-pinv-color);
-    text-shadow: var(--market-card-pinv-text-shadow);
-}
-
 .price-text {
     position: absolute;
     top: var(--market-card-price-top);
@@ -1240,9 +1231,9 @@ body {
     top: var(--market-card-indicator-top);
     left: var(--market-card-indicator-left);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: var(--market-card-indicator-v-spacing);
+    gap: var(--market-card-indicator-h-spacing);
     margin-top: var(--market-card-price-indicator-v-gap);
 }
 
@@ -1426,7 +1417,7 @@ body {
     transition: all 0.3s ease-in-out;
 }
 .qty-stepper input {
-    width: 60%;
+    width: 30%;
     background: none;
     border: none;
     text-align: center;
@@ -2380,15 +2371,14 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? `(${playerItem.quantity})` : '';
+    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="player-inventory-text" id="p-inv-${good.id}">${playerInvDisplay}</p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span></p>
+            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
             <p id="price-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
             
             <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
@@ -2400,7 +2390,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
                 </div>
                 <div class="qty-stepper">
                     <button class="qty-down" data-action="decrement" data-good-id="${good.id}">▼</button>
-                    <input type="number" value="1" id="qty-${good.id}" min="1">
+                    <input type="number" value="0" id="qty-${good.id}" min="0">
                     <button class="qty-up" data-action="increment" data-good-id="${good.id}">▲</button>
                 </div>
                 <div class="action-group">
@@ -2426,8 +2416,10 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
-    let marketClass = marketPct < -15 ? 'negative' : (marketPct > 15 ? 'positive' : 'neutral');
-    let marketIcon = marketPct < -15 ? '▼' : (marketPct > 15 ? '▲' : '●');
+    let marketClass = 'neutral';
+    if (marketPct > 5) marketClass = 'positive';
+    if (marketPct < -5) marketClass = 'negative';
+    let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
     const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
     let plIndicatorHtml = '';
@@ -3437,13 +3429,13 @@ export class DebugService {
         // --- State object updated with values from screenshots ---
         this.state = {
             // Card Appearance
-            cardHeight: 128,
-            cardBorderRadius: 8,
+            cardHeight: 145,
+            cardBorderRadius: 21,
 
             // Name Text
-            infoTop: 12,
+            infoTop: 7,
             infoLeft: 16,
-            nameFontSize: 1.1,
+            nameFontSize: 1.2,
             nameColor: '#ffffff',
             nameOutlineWidth: 1,
             nameOutlineColor: '#000000',
@@ -3477,9 +3469,9 @@ export class DebugService {
             availShadowColor: '#554a4a',
 
             // Price Text
-            priceTop: 52,
+            priceTop: 59,
             priceLeft: 16,
-            priceFontSize: 1.5,
+            priceFontSize: 1.7,
             priceColor: '#2fe1f9',
             priceFontFamily: "'Roboto Mono', monospace",
             priceOutlineWidth: 1,
@@ -3492,11 +3484,11 @@ export class DebugService {
             priceShadowColor: '#28d5d7',
             
             // Indicators
-            indicatorTop: 81,
+            indicatorTop: 109,
             indicatorLeft: 16,
-            indicatorHSpacing: 0,
+            indicatorHSpacing: 6,
             indicatorVSpacing: 3,
-            indicatorFontSize: 0.55,
+            indicatorFontSize: 0.6,
             indicatorPositiveColor: '#ffffff',
             indicatorNegativeColor: '#fee2e2',
             indicatorNeutralColor: '#e5e5e5',
@@ -3507,7 +3499,7 @@ export class DebugService {
             // Transaction Module
             moduleTop: 10,
             moduleWidth: 123,
-            moduleVGap: 6.3,
+            moduleVGap: 14.1,
             moduleToggleHeight: 20,
             moduleStepperHeight: 40,
             moduleStepperArrowSize: 1.4,
@@ -4714,7 +4706,10 @@ export class SimulationService {
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         const activeInventory = this._getActiveInventory();
         const item = activeInventory[goodId];
-        if (!item || item.quantity < quantity) return 0;
+        if (!item || item.quantity < quantity) {
+            this.uiManager.queueModal('event-modal', "Insufficient Inventory", `You do not have ${quantity} units of ${good.name} to sell.`);
+            return 0;
+        }
 
         this.gameState.market.inventory[state.currentLocationId][goodId].quantity += quantity;
         const price = this.uiManager.getItemPrice(state, goodId, true);
@@ -5763,7 +5758,7 @@ export class EventManager {
 
                     const currentMode = controls.getAttribute('data-mode');
                     const qtyInput = controls.querySelector('input');
-                    const quantity = parseInt(qtyInput.value, 10) || 1;
+                    const quantity = parseInt(qtyInput.value, 10) || 0;
 
                     if (quantity > 0) {
                         const result = (currentMode === 'buy')
@@ -5775,7 +5770,9 @@ export class EventManager {
                             const text = currentMode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                             const color = currentMode === 'buy' ? '#f87171' : '#34d399';
                             this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
-                            qtyInput.value = '1';
+                            if (currentMode === 'buy') {
+                                qtyInput.value = '0';
+                            }
                             actionData = { type: 'ACTION', action: currentMode === 'buy' ? 'buy-item' : 'sell-item', goodId: goodId };
                         }
                     }
@@ -5807,7 +5804,7 @@ export class EventManager {
                     if (!controls) break;
                     const qtyInput = controls.querySelector('input');
                     let val = parseInt(qtyInput.value) || 0;
-                    qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(1, val - 1);
+                    qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(0, val - 1);
                     break;
                 }
 
@@ -7104,20 +7101,18 @@ export class UIManager {
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
-
-        const tooltipWidth = tooltip.offsetWidth;
+    
+        const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
-        
-        // Center the tooltip in the viewport
-        let leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-        let topPos = (window.innerHeight / 2) - (tooltipHeight / 2);
-
+    
+        let topPos = rect.top - tooltipHeight - 10; // Position above the anchor
+        let leftPos = rect.left; // Align with the left edge of the anchor
+    
         // Ensure it doesn't go off-screen
-        if (leftPos < 10) leftPos = 10;
-        if ((leftPos + tooltipWidth) > window.innerWidth) leftPos = window.innerWidth - tooltipWidth - 10;
-        if (topPos < 10) topPos = 10;
-        if ((topPos + tooltipHeight) > window.innerHeight) topPos = window.innerHeight - tooltipHeight - 10;
-
+        if (topPos < 10) {
+            topPos = rect.bottom + 10;
+        }
+    
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
@@ -7474,6 +7469,10 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [22.10] - 2025-08-28
+- debug gui for visual overhauls added
+- market screen visuals updated
 
 ## [22.00] - 2025-08-28
 - CSS Refactor

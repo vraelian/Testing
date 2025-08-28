@@ -41,15 +41,14 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
     const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
-    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? `(${playerItem.quantity})` : '';
+    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="player-inventory-text" id="p-inv-${good.id}">${playerInvDisplay}</p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span></p>
+            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
             <p id="price-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
             
             <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
@@ -61,7 +60,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
                 </div>
                 <div class="qty-stepper">
                     <button class="qty-down" data-action="decrement" data-good-id="${good.id}">▼</button>
-                    <input type="number" value="1" id="qty-${good.id}" min="1">
+                    <input type="number" value="0" id="qty-${good.id}" min="0">
                     <button class="qty-up" data-action="increment" data-good-id="${good.id}">▲</button>
                 </div>
                 <div class="action-group">
@@ -87,8 +86,10 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
-    let marketClass = marketPct < -15 ? 'negative' : (marketPct > 15 ? 'positive' : 'neutral');
-    let marketIcon = marketPct < -15 ? '▼' : (marketPct > 15 ? '▲' : '●');
+    let marketClass = 'neutral';
+    if (marketPct > 5) marketClass = 'positive';
+    if (marketPct < -5) marketClass = 'negative';
+    let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
     const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
     let plIndicatorHtml = '';

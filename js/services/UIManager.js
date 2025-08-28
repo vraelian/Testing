@@ -676,20 +676,18 @@ export class UIManager {
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
-
-        const tooltipWidth = tooltip.offsetWidth;
+    
+        const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
-        
-        // Center the tooltip in the viewport
-        let leftPos = (window.innerWidth / 2) - (tooltipWidth / 2);
-        let topPos = (window.innerHeight / 2) - (tooltipHeight / 2);
-
+    
+        let topPos = rect.top - tooltipHeight - 10; // Position above the anchor
+        let leftPos = rect.left; // Align with the left edge of the anchor
+    
         // Ensure it doesn't go off-screen
-        if (leftPos < 10) leftPos = 10;
-        if ((leftPos + tooltipWidth) > window.innerWidth) leftPos = window.innerWidth - tooltipWidth - 10;
-        if (topPos < 10) topPos = 10;
-        if ((topPos + tooltipHeight) > window.innerHeight) topPos = window.innerHeight - tooltipHeight - 10;
-
+        if (topPos < 10) {
+            topPos = rect.bottom + 10;
+        }
+    
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }

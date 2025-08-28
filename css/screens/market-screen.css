@@ -55,7 +55,7 @@
     /* Indicators */
     --market-card-indicator-top: 81px;
     --market-card-indicator-left: 16px;
-    --market-card-indicator-h-spacing: 0px;
+    --market-card-indicator-h-spacing: 4px;
     --market-card-indicator-v-spacing: 3px;
     --market-card-indicator-font-size: 0.55em;
     --market-card-indicator-padding: 0.1em 0.5em;
@@ -90,15 +90,6 @@
     text-shadow: var(--market-card-name-text-shadow);
 }
 
-.player-inventory-text {
-    position: absolute;
-    top: var(--market-card-pinv-top);
-    left: var(--market-card-pinv-left);
-    font-size: var(--market-card-pinv-font-size);
-    color: var(--market-card-pinv-color);
-    text-shadow: var(--market-card-pinv-text-shadow);
-}
-
 .price-text {
     position: absolute;
     top: var(--market-card-price-top);
@@ -124,9 +115,9 @@
     top: var(--market-card-indicator-top);
     left: var(--market-card-indicator-left);
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: var(--market-card-indicator-v-spacing);
+    gap: var(--market-card-indicator-h-spacing);
     margin-top: var(--market-card-price-indicator-v-gap);
 }
 
@@ -310,7 +301,7 @@
     transition: all 0.3s ease-in-out;
 }
 .qty-stepper input {
-    width: 60%;
+    width: 30%;
     background: none;
     border: none;
     text-align: center;
