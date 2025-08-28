@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [22.10] - 2025-08-28
+- debug gui for visual overhauls added
+- market screen visuals updated
+
 ## [22.00] - 2025-08-28
 - CSS Refactor
 
