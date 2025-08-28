@@ -215,10 +215,8 @@ export class EventManager {
                             const value = (currentMode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : result;
                             const text = currentMode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                             const color = currentMode === 'buy' ? '#f87171' : '#34d399';
-                            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
-                            if (currentMode === 'buy') {
-                                qtyInput.value = '0';
-                            }
+
+                            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);                            
                             actionData = { type: 'ACTION', action: currentMode === 'buy' ? 'buy-item' : 'sell-item', goodId: goodId };
                         }
                     }

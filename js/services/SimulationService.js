@@ -440,7 +440,8 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
+        this.uiManager.updateMarketScreen(this.gameState.getState());
+        this.uiManager.updateStickyBar(this.gameState.getState());
 
         return true;
     }
@@ -484,7 +485,8 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
+        this.uiManager.updateMarketScreen(this.gameState.getState());
+        this.uiManager.updateStickyBar(this.gameState.getState());
         
         return totalSaleValue;
     }
