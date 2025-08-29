@@ -70,14 +70,14 @@ export class DebugService {
             availShadowColor: '#554a4a',
 
             // Price Text
-            priceTop: 59,
+            priceTop: 68,
             priceLeft: 16,
-            priceFontSize: 1.8,
-            priceColor: '#2fe1f9',
+            priceFontSize: 1.75,
+            priceColor: '#29f1ff',
             priceFontFamily: "'Roboto Mono', monospace",
             priceOutlineWidth: 1.1,
-            priceOutlineColor: '#000000',
-            priceGlowColor: '#2fe1f9',
+            priceOutlineColor: '#001fb8',
+            priceGlowColor: '#16a8bb',
             priceGlowRadius: 20,
             priceShadowX: 0,
             priceShadowY: 0,
@@ -98,15 +98,15 @@ export class DebugService {
             priceIndicatorVGap: 7,
 
             // Transaction Module
-            moduleTop: 9,
-            moduleWidth: 123,
+            moduleTop: 13,
+            moduleWidth: 122,
             moduleVGap: 7.1,
             moduleToggleHeight: 25,
             moduleStepperHeight: 50,
             moduleStepperArrowSize: 1.4,
-            moduleButtonHeight: 35,
-            moduleFontSize: 0.75,
-            buyColor: '#196a8f',
+            moduleButtonHeight: 29,
+            moduleFontSize: 0.85,
+            buyColor: '#146171',
             sellColor: '#a73535',
         };
         this.defaults = { ...this.state };

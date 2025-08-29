@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 22.10</title>
+    <title>Orbital Trading 22.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 22.10</p>
+            <p>Version 22.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1124,13 +1124,13 @@ body {
     /* Positioning */
     --market-card-info-top: 12px;
     --market-card-info-left: 16px;
-    --market-card-module-top: 9px;
+    --market-card-module-top: 13px;
     --market-card-module-right: 12px;
     --market-card-pinv-top: 34px;
     --market-card-pinv-left: 74px;
     --market-card-avail-top: 34px;
     --market-card-avail-left: 17px;
-    --market-card-price-top: 52px;
+    --market-card-price-top: 68px;
     --market-card-price-left: 16px;
     
     /* Spacing */
@@ -1152,21 +1152,36 @@ body {
     --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
-    --market-card-price-font-size: 1.8rem;
-    --market-card-price-color: #2fe1f9;
+    --market-card-price-font-size: 1.75rem;
+    --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 20px #2fe1f9, -1.1px -1.1px 0 #000000, 1.1px -1.1px 0 #000000, -1.1px 1.1px 0 #000000, 1.1px 1.1px 0 #000000, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #16a8bb, -1.1px -1.1px 0 #001fb8, 1.1px -1.1px 0 #001fb8, -1.1px 1.1px 0 #001fb8, 1.1px 1.1px 0 #001fb8, 0px 0px 20px #28d5d7;
 
     /* Module */
-    --market-card-module-width: 123px;
+    --market-card-module-width: 122px;
     --market-card-module-v-gap: 7.1px;
     --market-card-module-toggle-height: 25px;
     --market-card-module-stepper-height: 50px;
-    --market-card-module-button-height: 35px;
+    --market-card-module-button-height: 29px;
     --market-card-module-stepper-arrow-size: 1.4em;
-    --font-size: 0.75rem; /* Overriding global for module */
-    --buy-primary: #196a8f;
+    --font-size: 0.85rem; /* Overriding global for module */
+    
+    /* Glassy Theme Colors */
+    --buy-primary: #146171;
     --sell-primary: #a73535;
+    --buy-secondary-bg: linear-gradient(145deg, rgba(20,20,30,0.2), rgba(0,0,0,0.5));
+    --buy-secondary-border: 1px solid rgba(255,255,255,0.1);
+    --buy-text-light: #c8d8e8;
+    --buy-text-dark: #ffffff;
+    
+    --sell-secondary-bg: linear-gradient(145deg, rgba(30,20,20,0.2), rgba(0,0,0,0.5));
+    --sell-secondary-border: 1px solid rgba(255,255,255,0.1);
+    --sell-text-light: #e8c8c8;
+    --sell-text-dark: #ffffff;
+
+    --max-bg: rgba(48, 57, 70, 0.7);
+    --max-text: #a5aab1;
+
 
     /* Indicators */
     --market-card-indicator-top: 81px;
@@ -1462,6 +1477,7 @@ body {
 }
 .action-group .btn:active {
     transform: scale(0.95);
+    filter: brightness(1.2) saturate(1.5);
 }
 
 /* Dynamic Theming */
@@ -1479,9 +1495,10 @@ body {
     --active-text-light: var(--sell-text-light);
     --active-text-dark: var(--sell-text-dark);
 }
-.toggle-switch {
+.toggle-switch, .qty-stepper {
     background: var(--active-secondary-bg);
-    border: 1px solid var(--active-secondary-border);
+    border: var(--active-secondary-border);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
 }
 .toggle-thumb {
     background: var(--active-primary);
@@ -1493,8 +1510,6 @@ body {
     color: var(--active-text-dark);
 }
 .qty-stepper {
-    background: var(--active-secondary-bg);
-    border: 1px solid var(--active-secondary-border);
     color: var(--active-text-light);
 }
 .qty-stepper button {
@@ -3469,14 +3484,14 @@ export class DebugService {
             availShadowColor: '#554a4a',
 
             // Price Text
-            priceTop: 59,
+            priceTop: 68,
             priceLeft: 16,
-            priceFontSize: 1.8,
-            priceColor: '#2fe1f9',
+            priceFontSize: 1.75,
+            priceColor: '#29f1ff',
             priceFontFamily: "'Roboto Mono', monospace",
             priceOutlineWidth: 1.1,
-            priceOutlineColor: '#000000',
-            priceGlowColor: '#2fe1f9',
+            priceOutlineColor: '#001fb8',
+            priceGlowColor: '#16a8bb',
             priceGlowRadius: 20,
             priceShadowX: 0,
             priceShadowY: 0,
@@ -3497,15 +3512,15 @@ export class DebugService {
             priceIndicatorVGap: 7,
 
             // Transaction Module
-            moduleTop: 9,
-            moduleWidth: 123,
+            moduleTop: 13,
+            moduleWidth: 122,
             moduleVGap: 7.1,
             moduleToggleHeight: 25,
             moduleStepperHeight: 50,
             moduleStepperArrowSize: 1.4,
-            moduleButtonHeight: 35,
-            moduleFontSize: 0.75,
-            buyColor: '#196a8f',
+            moduleButtonHeight: 29,
+            moduleFontSize: 0.85,
+            buyColor: '#146171',
             sellColor: '#a73535',
         };
         this.defaults = { ...this.state };
@@ -7469,6 +7484,9 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [22.20] - 2025-08-28
+- transaction module visual overhaul
 
 ## [22.10] - 2025-08-28
 - debug gui for visual overhauls added

@@ -8,13 +8,13 @@
     /* Positioning */
     --market-card-info-top: 12px;
     --market-card-info-left: 16px;
-    --market-card-module-top: 9px;
+    --market-card-module-top: 13px;
     --market-card-module-right: 12px;
     --market-card-pinv-top: 34px;
     --market-card-pinv-left: 74px;
     --market-card-avail-top: 34px;
     --market-card-avail-left: 17px;
-    --market-card-price-top: 52px;
+    --market-card-price-top: 68px;
     --market-card-price-left: 16px;
     
     /* Spacing */
@@ -36,21 +36,36 @@
     --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
-    --market-card-price-font-size: 1.8rem;
-    --market-card-price-color: #2fe1f9;
+    --market-card-price-font-size: 1.75rem;
+    --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 20px #2fe1f9, -1.1px -1.1px 0 #000000, 1.1px -1.1px 0 #000000, -1.1px 1.1px 0 #000000, 1.1px 1.1px 0 #000000, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #16a8bb, -1.1px -1.1px 0 #001fb8, 1.1px -1.1px 0 #001fb8, -1.1px 1.1px 0 #001fb8, 1.1px 1.1px 0 #001fb8, 0px 0px 20px #28d5d7;
 
     /* Module */
-    --market-card-module-width: 123px;
+    --market-card-module-width: 122px;
     --market-card-module-v-gap: 7.1px;
     --market-card-module-toggle-height: 25px;
     --market-card-module-stepper-height: 50px;
-    --market-card-module-button-height: 35px;
+    --market-card-module-button-height: 29px;
     --market-card-module-stepper-arrow-size: 1.4em;
-    --font-size: 0.75rem; /* Overriding global for module */
-    --buy-primary: #196a8f;
+    --font-size: 0.85rem; /* Overriding global for module */
+    
+    /* Glassy Theme Colors */
+    --buy-primary: #146171;
     --sell-primary: #a73535;
+    --buy-secondary-bg: linear-gradient(145deg, rgba(20,20,30,0.2), rgba(0,0,0,0.5));
+    --buy-secondary-border: 1px solid rgba(255,255,255,0.1);
+    --buy-text-light: #c8d8e8;
+    --buy-text-dark: #ffffff;
+    
+    --sell-secondary-bg: linear-gradient(145deg, rgba(30,20,20,0.2), rgba(0,0,0,0.5));
+    --sell-secondary-border: 1px solid rgba(255,255,255,0.1);
+    --sell-text-light: #e8c8c8;
+    --sell-text-dark: #ffffff;
+
+    --max-bg: rgba(48, 57, 70, 0.7);
+    --max-text: #a5aab1;
+
 
     /* Indicators */
     --market-card-indicator-top: 81px;
@@ -346,6 +361,7 @@
 }
 .action-group .btn:active {
     transform: scale(0.95);
+    filter: brightness(1.2) saturate(1.5);
 }
 
 /* Dynamic Theming */
@@ -363,9 +379,10 @@
     --active-text-light: var(--sell-text-light);
     --active-text-dark: var(--sell-text-dark);
 }
-.toggle-switch {
+.toggle-switch, .qty-stepper {
     background: var(--active-secondary-bg);
-    border: 1px solid var(--active-secondary-border);
+    border: var(--active-secondary-border);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
 }
 .toggle-thumb {
     background: var(--active-primary);
@@ -377,8 +394,6 @@
     color: var(--active-text-dark);
 }
 .qty-stepper {
-    background: var(--active-secondary-bg);
-    border: 1px solid var(--active-secondary-border);
     color: var(--active-text-light);
 }
 .qty-stepper button {
