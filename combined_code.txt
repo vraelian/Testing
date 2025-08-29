@@ -44,7 +44,6 @@
     <div id="save-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-cyan-500/80 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50">Checkpoint Saved</div>
     <div id="garnishment-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50"></div>
     <div id="hull-warning-toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50"></div>
-    <div id="debug-toast" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50"></div>
     <div id="starport-unlock-tooltip" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/90 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50 border border-yellow-500 text-center">
         Pay off your initial loan to access the Starport!
     </div>
@@ -813,14 +812,8 @@ body {
 .hl-yellow { color: #facc15; font-weight: 700; }
 .text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
-#save-toast, #garnishment-toast, #hull-warning-toast, #debug-toast, #starport-unlock-tooltip {
+#save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
     z-index: 101;
-}
-
-#debug-toast {
-    top: 6.5rem; 
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 #garnishment-toast {
@@ -1144,7 +1137,7 @@ body {
     --market-card-price-indicator-v-gap: 7px;
 
     /* Name Text */
-    --market-card-name-font-size: 1.1rem;
+    --market-card-name-font-size: 0.95rem;
     --market-card-name-color: #ffffff;
     --market-card-name-text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000, -0.5px 0px 3px #000000;
 
@@ -4806,10 +4799,6 @@ export class SimulationService {
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
         this._checkMilestones();
         this.missionService.checkTriggers();
-
-        if (quantity / (marketStock + quantity) > 0.5) {
-             this.uiManager.showToast('debugToast', `Supply Alert: ${good.name} stocks are low, driving up local prices.`);
-        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -4859,15 +4848,6 @@ export class SimulationService {
         
         this._checkMilestones();
         this.missionService.checkTriggers();
-
-        const basePrice = this.uiManager.getItemPrice(state, goodId, true);
-        if (effectivePricePerUnit < basePrice * 0.95) {
-            this.uiManager.showToast('debugToast', `Market Advisory: High volume of ${good.name} is impacting local demand.`);
-        }
-        if (effectivePricePerUnit < basePrice * 0.75) {
-            const locationName = DB.MARKETS.find(m => m.id === state.currentLocationId).name;
-            this.uiManager.showToast('debugToast', `Market Saturated: Prices for ${good.name} on ${locationName} have dropped significantly.`);
-        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -5399,10 +5379,8 @@ export class SimulationService {
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
 
         if (healthPct <= 15 && !shipState.hullAlerts.two) {
-            this.uiManager.showToast('hullWarningToast', `System Warning: Hull Health at ${Math.floor(healthPct)}%.`);
             shipState.hullAlerts.two = true;
         } else if (healthPct <= 30 && !shipState.hullAlerts.one) {
-            this.uiManager.showToast('hullWarningToast', `System Warning: Hull Health at ${Math.floor(healthPct)}%.`);
             shipState.hullAlerts.one = true;
         }
 
@@ -5455,7 +5433,6 @@ export class SimulationService {
             const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
-                this.uiManager.showToast('garnishmentToast', `14% of credits garnished: -${formatCredits(garnishedAmount, false)}`);
                 this._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
             }
 
@@ -6119,7 +6096,6 @@ export class EventManager {
         }
     
         if (message) {
-            this.uiManager.showToast('debugToast', message);
             this.gameState.setState({});
             this.uiManager.render(this.gameState.getState());
         }
@@ -6632,7 +6608,6 @@ export class UIManager {
             saveToast: document.getElementById('save-toast'),
             garnishmentToast: document.getElementById('garnishment-toast'),
             hullWarningToast: document.getElementById('hull-warning-toast'),
-            marketToast: document.getElementById('debug-toast'), // Re-using debug-toast for market alerts
             starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
@@ -7180,21 +7155,6 @@ export class UIManager {
         el.style.color = color;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 2450);
-    }
-
-    showToast(toastId, message, duration = 6000) {
-        const toast = this.cache[toastId];
-        if (!toast) return;
-
-        toast.textContent = message;
-        toast.style.backgroundColor = '#d97706'; // Orange color for market toasts
-        toast.classList.remove('hidden');
-        toast.style.opacity = '1';
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.classList.add('hidden'), 300);
-        }, duration);
     }
     
     showGraph(anchorEl, gameState) {

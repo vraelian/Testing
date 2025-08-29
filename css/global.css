@@ -169,14 +169,8 @@ body {
 .hl-yellow { color: #facc15; font-weight: 700; }
 .text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
-#save-toast, #garnishment-toast, #hull-warning-toast, #debug-toast, #starport-unlock-tooltip {
+#save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
     z-index: 101;
-}
-
-#debug-toast {
-    top: 6.5rem; 
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 #garnishment-toast {

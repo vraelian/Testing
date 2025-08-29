@@ -425,7 +425,6 @@ export class EventManager {
         }
     
         if (message) {
-            this.uiManager.showToast('debugToast', message);
             this.gameState.setState({});
             this.uiManager.render(this.gameState.getState());
         }

@@ -478,10 +478,6 @@ export class SimulationService {
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
         this._checkMilestones();
         this.missionService.checkTriggers();
-
-        if (quantity / (marketStock + quantity) > 0.5) {
-             this.uiManager.showToast('debugToast', `Supply Alert: ${good.name} stocks are low, driving up local prices.`);
-        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -531,15 +527,6 @@ export class SimulationService {
         
         this._checkMilestones();
         this.missionService.checkTriggers();
-
-        const basePrice = this.uiManager.getItemPrice(state, goodId, true);
-        if (effectivePricePerUnit < basePrice * 0.95) {
-            this.uiManager.showToast('debugToast', `Market Advisory: High volume of ${good.name} is impacting local demand.`);
-        }
-        if (effectivePricePerUnit < basePrice * 0.75) {
-            const locationName = DB.MARKETS.find(m => m.id === state.currentLocationId).name;
-            this.uiManager.showToast('debugToast', `Market Saturated: Prices for ${good.name} on ${locationName} have dropped significantly.`);
-        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -1071,10 +1058,8 @@ export class SimulationService {
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
 
         if (healthPct <= 15 && !shipState.hullAlerts.two) {
-            this.uiManager.showToast('hullWarningToast', `System Warning: Hull Health at ${Math.floor(healthPct)}%.`);
             shipState.hullAlerts.two = true;
         } else if (healthPct <= 30 && !shipState.hullAlerts.one) {
-            this.uiManager.showToast('hullWarningToast', `System Warning: Hull Health at ${Math.floor(healthPct)}%.`);
             shipState.hullAlerts.one = true;
         }
 
@@ -1127,7 +1112,6 @@ export class SimulationService {
             const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
-                this.uiManager.showToast('garnishmentToast', `14% of credits garnished: -${formatCredits(garnishedAmount, false)}`);
                 this._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
             }
 

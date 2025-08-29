@@ -21,7 +21,7 @@
     --market-card-price-indicator-v-gap: 7px;
 
     /* Name Text */
-    --market-card-name-font-size: 1.1rem;
+    --market-card-name-font-size: 0.95rem;
     --market-card-name-color: #ffffff;
     --market-card-name-text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000, -0.5px 0px 3px #000000;
 

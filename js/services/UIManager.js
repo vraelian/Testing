@@ -69,7 +69,6 @@ export class UIManager {
             saveToast: document.getElementById('save-toast'),
             garnishmentToast: document.getElementById('garnishment-toast'),
             hullWarningToast: document.getElementById('hull-warning-toast'),
-            marketToast: document.getElementById('debug-toast'), // Re-using debug-toast for market alerts
             starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
@@ -617,21 +616,6 @@ export class UIManager {
         el.style.color = color;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 2450);
-    }
-
-    showToast(toastId, message, duration = 6000) {
-        const toast = this.cache[toastId];
-        if (!toast) return;
-
-        toast.textContent = message;
-        toast.style.backgroundColor = '#d97706'; // Orange color for market toasts
-        toast.classList.remove('hidden');
-        toast.style.opacity = '1';
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.classList.add('hidden'), 300);
-        }, duration);
     }
     
     showGraph(anchorEl, gameState) {
