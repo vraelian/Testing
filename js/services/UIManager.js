@@ -67,8 +67,6 @@ export class UIManager {
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             saveToast: document.getElementById('save-toast'),
-            garnishmentToast: document.getElementById('garnishment-toast'),
-            hullWarningToast: document.getElementById('hull-warning-toast'),
             starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),

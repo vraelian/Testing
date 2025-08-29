@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [22.30] - 2025-08-29
+- debug/market toasts removed
+- economy adjusted
+
 ## [22.20] - 2025-08-28
 - transaction module visual overhaul
 
