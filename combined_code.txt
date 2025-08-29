@@ -1124,12 +1124,12 @@ body {
     /* Positioning */
     --market-card-info-top: 12px;
     --market-card-info-left: 16px;
-    --market-card-module-top: 10px;
+    --market-card-module-top: 9px;
     --market-card-module-right: 12px;
     --market-card-pinv-top: 34px;
     --market-card-pinv-left: 74px;
     --market-card-avail-top: 34px;
-    --market-card-avail-left: 21px;
+    --market-card-avail-left: 17px;
     --market-card-price-top: 52px;
     --market-card-price-left: 16px;
     
@@ -1149,19 +1149,19 @@ body {
     /* Avail Text */
     --market-card-avail-font-size: 0.65rem;
     --market-card-avail-color: #ffffff;
-    --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 2px #554a4a;
+    --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
-    --market-card-price-font-size: 1.5rem;
+    --market-card-price-font-size: 1.8rem;
     --market-card-price-color: #2fe1f9;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 1px #2fe1f9, -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #2fe1f9, -1.1px -1.1px 0 #000000, 1.1px -1.1px 0 #000000, -1.1px 1.1px 0 #000000, 1.1px 1.1px 0 #000000, 0px 0px 20px #28d5d7;
 
     /* Module */
     --market-card-module-width: 123px;
-    --market-card-module-v-gap: 6.3px;
-    --market-card-module-toggle-height: 20px;
-    --market-card-module-stepper-height: 40px;
+    --market-card-module-v-gap: 7.1px;
+    --market-card-module-toggle-height: 25px;
+    --market-card-module-stepper-height: 50px;
     --market-card-module-button-height: 35px;
     --market-card-module-stepper-arrow-size: 1.4em;
     --font-size: 0.75rem; /* Overriding global for module */
@@ -3458,26 +3458,26 @@ export class DebugService {
 
             // Availability Text
             availTop: 34,
-            availLeft: 21,
+            availLeft: 17,
             availFontSize: 0.65,
             availColor: '#ffffff',
             availOutlineWidth: 0.7,
             availOutlineColor: '#292929',
             availShadowX: -0.5,
             availShadowY: 1.5,
-            availShadowBlur: 2,
+            availShadowBlur: 3.5,
             availShadowColor: '#554a4a',
 
             // Price Text
             priceTop: 59,
             priceLeft: 16,
-            priceFontSize: 1.7,
+            priceFontSize: 1.8,
             priceColor: '#2fe1f9',
             priceFontFamily: "'Roboto Mono', monospace",
-            priceOutlineWidth: 1,
+            priceOutlineWidth: 1.1,
             priceOutlineColor: '#000000',
             priceGlowColor: '#2fe1f9',
-            priceGlowRadius: 1,
+            priceGlowRadius: 20,
             priceShadowX: 0,
             priceShadowY: 0,
             priceShadowBlur: 20,
@@ -3497,11 +3497,11 @@ export class DebugService {
             priceIndicatorVGap: 7,
 
             // Transaction Module
-            moduleTop: 10,
+            moduleTop: 9,
             moduleWidth: 123,
-            moduleVGap: 14.1,
-            moduleToggleHeight: 20,
-            moduleStepperHeight: 40,
+            moduleVGap: 7.1,
+            moduleToggleHeight: 25,
+            moduleStepperHeight: 50,
             moduleStepperArrowSize: 1.4,
             moduleButtonHeight: 35,
             moduleFontSize: 0.75,
