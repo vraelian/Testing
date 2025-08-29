@@ -290,53 +290,7 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const { player, market, currentLocationId } = gameState;
-        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
-        const shipStatic = DB.SHIPS[player.activeShipId];
-        const cargoUsed = calculateInventoryUsed(player.inventories[player.activeShipId]);
-        const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
-
-        availableCommodities.forEach(good => {
-            const goodId = good.id;
-            const cardContainer = document.getElementById(`item-card-container-${goodId}`);
-            if (!cardContainer) return;
-    
-            const playerItem = player.inventories[player.activeShipId][goodId];
-            const marketStock = market.inventory[currentLocationId][goodId];
-            const price = this.getItemPrice(gameState, goodId);
-    
-            const pInvEl = document.getElementById(`p-inv-${goodId}`);
-            if (pInvEl) {
-                pInvEl.innerHTML = playerItem && playerItem.quantity > 0 ? ` <span class='text-cyan-300'>(${playerItem.quantity})</span>` : '';
-    
-            }
-    
-            const mStockEl = document.getElementById(`m-stock-${goodId}`);
-            if (mStockEl) {
-                mStockEl.innerHTML = marketStock.quantity;
-            }
-
-            const priceEl = document.getElementById(`price-${goodId}`);
-            if(priceEl) {
-                priceEl.innerHTML = formatCredits(price);
-            }
-    
-            const buyBtn = document.getElementById(`buy-btn-${goodId}`);
-            const maxBuyBtn = document.getElementById(`max-buy-btn-${goodId}`);
-            const sellBtn = document.getElementById(`sell-btn-${goodId}`);
-            const maxSellBtn = document.getElementById(`max-sell-btn-${goodId}`);
-            
-            const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-            const cannotAfford = player.credits < price;
-            const noSpace = cargoUsed >= shipStatic.cargoCapacity;
-            const outOfStock = marketStock.quantity <= 0;
-            if (buyBtn) buyBtn.disabled = !!(isSpecialDemand || cannotAfford || noSpace || outOfStock);
-            if (maxBuyBtn) maxBuyBtn.disabled = !!(isSpecialDemand || cannotAfford || noSpace || outOfStock);
-    
-            const noneToSell = !playerItem || playerItem.quantity <= 0;
-            if (sellBtn) sellBtn.disabled = noneToSell;
-            if (maxSellBtn) maxSellBtn.disabled = noneToSell;
-        });
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
@@ -636,12 +590,15 @@ export class UIManager {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showToast(toastId, message, duration = 3000) {
+    showToast(toastId, message, duration = 6000) {
         const toast = this.cache[toastId];
         if (!toast) return;
+
         toast.textContent = message;
+        toast.style.backgroundColor = '#d97706'; // Orange color for market toasts
         toast.classList.remove('hidden');
         toast.style.opacity = '1';
+
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.classList.add('hidden'), 300);

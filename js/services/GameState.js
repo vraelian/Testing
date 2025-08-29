@@ -177,7 +177,11 @@ export class GameState {
                 let quantity = skewedRandom(avail.min, avail.max);
                 if (m.modifiers[c.id] && m.modifiers[c.id] > 1.0) quantity = Math.floor(quantity * 1.5);
                 if (m.specialDemand && m.specialDemand[c.id]) quantity = 0;
-                initialState.market.inventory[m.id][c.id] = { quantity: Math.max(0, quantity) };
+                initialState.market.inventory[m.id][c.id] = { 
+                    quantity: Math.max(0, quantity),
+                    marketPressure: 0.0,
+                    lastPlayerInteractionTimestamp: 0
+                };
             });
         });
 

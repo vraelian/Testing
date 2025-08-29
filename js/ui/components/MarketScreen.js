@@ -52,6 +52,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             <p id="price-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
             
             <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+            
+            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
 
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">

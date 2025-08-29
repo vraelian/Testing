@@ -404,6 +404,42 @@ export class SimulationService {
     }
 
     /**
+     * Calculates the effect of diminishing returns on a sale.
+     * @param {string} goodId The ID of the commodity being sold.
+     * @param {number} quantity The amount being sold.
+     * @param {string} locationId The ID of the market location.
+     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
+     * @private
+     */
+    _calculateDiminishingReturns(goodId, quantity, locationId) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const marketStock = this.gameState.market.inventory[locationId][goodId].quantity;
+        const basePrice = this.uiManager.getItemPrice(this.gameState.getState(), goodId, true);
+        
+        const threshold = marketStock * 0.1;
+        if (quantity <= threshold) {
+            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
+        }
+
+        const excessRatio = quantity / marketStock;
+        let reduction = 0;
+
+        if (good.tier <= 2) { // Low-Tier
+            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
+        } else if (good.tier <= 5) { // Mid-Tier
+            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
+        } else { // High-Tier
+            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
+        }
+        
+        const effectivePrice = basePrice * (1 - reduction);
+        return {
+            totalPrice: Math.floor(effectivePrice * quantity),
+            effectivePricePerUnit: effectivePrice
+        };
+    }
+
+    /**
      * Handles the purchase of a specified quantity of a commodity from the current market.
      * @param {string} goodId - The COMMODITY_ID of the item to purchase.
      * @param {number} quantity - The integer amount to buy.
@@ -429,15 +465,23 @@ export class SimulationService {
         }
         if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
-        this.gameState.market.inventory[state.currentLocationId][goodId].quantity -= quantity;
-        const item = activeInventory[goodId];
-        item.avgCost = ((item.quantity * item.avgCost) + totalCost) / (item.quantity + quantity);
-        item.quantity += quantity;
+        const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
+        inventoryItem.quantity -= quantity;
+        inventoryItem.marketPressure -= (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+
+        const playerInvItem = activeInventory[goodId];
+        playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
+        playerInvItem.quantity += quantity;
         
         this.gameState.player.credits -= totalCost;
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
         this._checkMilestones();
         this.missionService.checkTriggers();
+
+        if (quantity / (marketStock + quantity) > 0.5) {
+             this.uiManager.showToast('debugToast', `Supply Alert: ${good.name} stocks are low, driving up local prices.`);
+        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -464,10 +508,9 @@ export class SimulationService {
             return 0;
         }
 
-        this.gameState.market.inventory[state.currentLocationId][goodId].quantity += quantity;
-        const price = this.uiManager.getItemPrice(state, goodId, true);
-        let totalSaleValue = price * quantity;
-
+        const { totalPrice, effectivePricePerUnit } = this._calculateDiminishingReturns(goodId, quantity, state.currentLocationId);
+        let totalSaleValue = totalPrice;
+        
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
@@ -478,11 +521,25 @@ export class SimulationService {
         this.gameState.player.credits += totalSaleValue;
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
+
+        const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
+        inventoryItem.quantity += quantity;
+        inventoryItem.marketPressure += (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
         this._checkMilestones();
         this.missionService.checkTriggers();
+
+        const basePrice = this.uiManager.getItemPrice(state, goodId, true);
+        if (effectivePricePerUnit < basePrice * 0.95) {
+            this.uiManager.showToast('debugToast', `Market Advisory: High volume of ${good.name} is impacting local demand.`);
+        }
+        if (effectivePricePerUnit < basePrice * 0.75) {
+            const locationName = DB.MARKETS.find(m => m.id === state.currentLocationId).name;
+            this.uiManager.showToast('debugToast', `Market Saturated: Prices for ${good.name} on ${locationName} have dropped significantly.`);
+        }
         
         this.gameState.setState({});
         this.uiManager.updateMarketScreen(this.gameState.getState());
@@ -731,6 +788,7 @@ export class SimulationService {
 
             // The main weekly "tick" for updating market prices and stock.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
+                this.marketService.checkForSystemStateChange();
                 this.marketService.evolveMarketPrices();
                 this.marketService.replenishMarketInventory();
                 this._updateShipyardStock();

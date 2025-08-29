@@ -2,7 +2,8 @@
 /**
  * @fileoverview This file contains the MarketService class, which handles the simulation
  * of the in-game economy. This includes evolving commodity prices over time based on
- * volatility and mean reversion, as well as replenishing market inventories.
+ * volatility and market pressure, replenishing market inventories with persistence,
+ * and managing system-wide economic states.
  */
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
@@ -18,35 +19,67 @@ export class MarketService {
      */
     constructor(gameState) {
         this.gameState = gameState;
+        this._currentSystemState = null;
+        this._systemStateExpirationDay = 0;
+    }
+
+    /**
+     * Checks if the current system-wide economic state should change and applies a new one if necessary.
+     */
+    checkForSystemStateChange() {
+        if (this.gameState.day > this._systemStateExpirationDay) {
+            const systemStates = Object.keys(DB.SYSTEM_STATES);
+            const selectedStateKey = systemStates[Math.floor(Math.random() * systemStates.length)];
+            this._currentSystemState = DB.SYSTEM_STATES[selectedStateKey];
+            this._systemStateExpirationDay = this.gameState.day + this._currentSystemState.duration;
+        }
     }
 
     /**
      * Simulates one week of market price changes for all commodities at all locations.
-     * Prices fluctuate based on volatility and a tendency to revert to a baseline average.
+     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
+     * and player-driven market pressure.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
             DB.COMMODITIES.forEach(good => {
                 if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
+                const inventoryItem = this.gameState.market.inventory[location.id][good.id];
                 const price = this.gameState.market.prices[location.id][good.id];
                 const avg = this.gameState.market.galacticAverages[good.id];
                 const mod = location.modifiers[good.id] || 1.0;
                 const baseline = avg * mod;
 
-                // A random fluctuation for daily market noise.
-                const volatility = (Math.random() - 0.5) * 2 * GAME_RULES.DAILY_PRICE_VOLATILITY;
+                // A random fluctuation based on the commodity's inherent volatility.
+                const volatility = (Math.random() - 0.5) * 2 * good.volatility;
                 // A pull back towards the location's baseline price.
                 const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
+
+                // Apply player-driven market pressure (positive pressure = surplus = lower price).
+                const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(price + price * volatility + reversion));
+                let newPrice = price + (price * volatility) + reversion + pressureEffect;
+                
+                // Apply system state modifiers.
+                if (this._currentSystemState?.modifiers?.commodity[good.id]?.price) {
+                    newPrice *= this._currentSystemState.modifiers.commodity[good.id].price;
+                }
+                
+                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(newPrice));
+
+                // Decay market pressure over time.
+                inventoryItem.marketPressure *= 0.85; // 15% decay per week
+                if (Math.abs(inventoryItem.marketPressure) < 0.001) {
+                    inventoryItem.marketPressure = 0;
+                }
             });
         });
         this._recordPriceHistory();
     }
     
     /**
-     * Simulates the weekly replenishment of commodity stock at all markets.
+     * Simulates the weekly replenishment of commodity stock at all markets, respecting market memory.
      */
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
@@ -54,12 +87,24 @@ export class MarketService {
                  if (c.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
-                const avail = this._getTierAvailability(c.tier);
-                const maxStock = avail.max;
-                const replenishRate = 0.1; // Replenish 10% of max stock per weekly cycle.
-
-                if (inventoryItem.quantity < maxStock) {
-                    inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
+                
+                // Market Memory Check: If player hasn't touched this market in 60 days, reset it.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 60) {
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                    inventoryItem.lastPlayerInteractionTimestamp = 0; // Reset timestamp
+                    inventoryItem.marketPressure = 0; // Reset pressure
+                } else {
+                    // Standard, slow replenishment.
+                    const maxStock = c.canonicalAvailability[1] * (market.availabilityModifier?.[c.id] ?? 1.0);
+                    const replenishRate = 0.1; // Replenish 10% of max stock per weekly cycle.
+                    if (inventoryItem.quantity < maxStock) {
+                        inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
+                    }
+                }
+                
+                // Apply system state modifiers.
+                if (this._currentSystemState?.modifiers?.commodity[c.id]?.availability) {
+                    inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
                 }
 
                 // Ensure locations with special demand for an item never have it in stock to sell.
@@ -71,22 +116,16 @@ export class MarketService {
     }
 
     /**
-     * Returns the minimum and maximum potential stock for a commodity based on its tier.
-     * @param {number} tier - The tier of the commodity.
-     * @returns {{min: number, max: number}} An object with min and max stock values.
+     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
+     * @param {object} market - The market object from the database.
+     * @param {object} commodity - The commodity object from the database.
+     * @returns {number} The calculated baseline stock quantity.
      * @private
      */
-    _getTierAvailability(tier) {
-        switch (tier) {
-            case 1: return { min: 6, max: 240 };
-            case 2: return { min: 4, max: 200 };
-            case 3: return { min: 3, max: 120 };
-            case 4: return { min: 2, max: 40 };
-            case 5: return { min: 1, max: 20 };
-            case 6: return { min: 0, max: 20 };
-            case 7: return { min: 0, max: 10 };
-            default: return { min: 0, max: 5 };
-        }
+    _calculateBaselineStock(market, commodity) {
+        const [min, max] = commodity.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
+        return Math.floor(skewedRandom(min, max) * modifier);
     }
 
     /**
