@@ -48,12 +48,11 @@ export class MarketService {
                 const inventoryItem = this.gameState.market.inventory[location.id][good.id];
                 const price = this.gameState.market.prices[location.id][good.id];
                 const avg = this.gameState.market.galacticAverages[good.id];
-                const mod = location.modifiers[good.id] || 1.0;
-                const baseline = avg * mod;
+                const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
                 const volatility = (Math.random() - 0.5) * 2 * good.volatility;
-                // A pull back towards the location's baseline price.
+                // A pull back towards the galactic baseline price.
                 const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).

@@ -173,10 +173,13 @@ export class GameState {
             initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] };
             DB.COMMODITIES.forEach(c => {
                 initialState.market.priceHistory[m.id][c.id] = [];
-                const avail = this._getTierAvailability(c.tier);
-                let quantity = skewedRandom(avail.min, avail.max);
-                if (m.modifiers[c.id] && m.modifiers[c.id] > 1.0) quantity = Math.floor(quantity * 1.5);
+                
+                const [min, max] = c.canonicalAvailability;
+                const modifier = m.availabilityModifier?.[c.id] ?? 1.0;
+                let quantity = Math.floor(skewedRandom(min, max) * modifier);
+
                 if (m.specialDemand && m.specialDemand[c.id]) quantity = 0;
+
                 initialState.market.inventory[m.id][c.id] = { 
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
@@ -189,26 +192,6 @@ export class GameState {
         this._calculateGalacticAverages();
         this._seedInitialMarketPrices();
         this.setState({});
-    }
-
-    /**
-     * Returns the minimum and maximum potential stock for a commodity based on its tier.
-     * Higher tier commodities are rarer.
-     * @param {number} tier - The tier of the commodity.
-     * @returns {{min: number, max: number}} An object with min and max stock values.
-     * @private
-     */
-    _getTierAvailability(tier) {
-        switch (tier) {
-            case 1: return { min: 6, max: 240 };
-            case 2: return { min: 4, max: 200 };
-            case 3: return { min: 3, max: 120 };
-            case 4: return { min: 2, max: 40 };
-            case 5: return { min: 1, max: 20 };
-            case 6: return { min: 0, max: 20 };
-            case 7: return { min: 0, max: 10 };
-            default: return { min: 0, max: 5 };
-        }
     }
 
     /**
@@ -225,15 +208,14 @@ export class GameState {
 
     /**
      * Seeds the initial market prices for all commodities at all locations.
-     * Prices are based on the galactic average with randomness and location-specific modifiers applied.
+     * Prices are based on the galactic average with randomness applied.
      * @private
      */
     _seedInitialMarketPrices() {
         DB.MARKETS.forEach(location => {
             this.market.prices[location.id] = {};
             DB.COMMODITIES.forEach(good => {
-                let price = this.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.5);
-                price *= (location.modifiers[good.id] || 1.0);
+                let price = this.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.15); // +/- 7.5% variance
                 this.market.prices[location.id][good.id] = Math.max(1, Math.round(price));
             });
         });

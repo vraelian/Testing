@@ -23,6 +23,7 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
+        this.marketTransactionState = {}; // To store quantity and mode
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.SERVICES]: 'Services' } },
@@ -68,7 +69,7 @@ export class UIManager {
             saveToast: document.getElementById('save-toast'),
             garnishmentToast: document.getElementById('garnishment-toast'),
             hullWarningToast: document.getElementById('hull-warning-toast'),
-            debugToast: document.getElementById('debug-toast'),
+            marketToast: document.getElementById('debug-toast'), // Re-using debug-toast for market alerts
             starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
@@ -160,7 +161,8 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
+                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
+                this._restoreMarketTransactionState();
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
@@ -290,7 +292,34 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
-        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
+        this._saveMarketTransactionState();
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
+        this._restoreMarketTransactionState();
+    }
+
+    _saveMarketTransactionState() {
+        const controls = document.querySelectorAll('.transaction-controls');
+        controls.forEach(control => {
+            const goodId = control.dataset.goodId;
+            const qtyInput = control.querySelector('input');
+            const mode = control.dataset.mode;
+            this.marketTransactionState[goodId] = {
+                quantity: qtyInput.value,
+                mode: mode
+            };
+        });
+    }
+
+    _restoreMarketTransactionState() {
+        for (const goodId in this.marketTransactionState) {
+            const state = this.marketTransactionState[goodId];
+            const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
+            if (control) {
+                const qtyInput = control.querySelector('input');
+                qtyInput.value = state.quantity;
+                control.setAttribute('data-mode', state.mode);
+            }
+        }
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {

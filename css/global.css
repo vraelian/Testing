@@ -172,6 +172,13 @@ body {
 #save-toast, #garnishment-toast, #hull-warning-toast, #debug-toast, #starport-unlock-tooltip {
     z-index: 101;
 }
+
+#debug-toast {
+    top: 6.5rem; 
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 #garnishment-toast {
      background-color: #991b1b;
      border: 1px solid #f87171;
