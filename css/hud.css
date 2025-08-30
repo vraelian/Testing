@@ -2,7 +2,7 @@
 #top-bar-container {
     z-index: 10; /* Lowered z-index slightly */
     width: 100%; /* Ensure it spans the full width of the parent */
-    border-radius: 15px 15px 0 0; /* Match parent container's top corners */
+    border-radius: 15px; /* Match parent container's top corners */
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);

@@ -177,12 +177,12 @@ export class EventManager {
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
                 case ACTION_IDS.SET_SCREEN:
-                    if (navId === state.activeNav) {
-                        // Toggle sub-nav visibility if clicking the active nav tab
+                    // Only toggle if a main nav tab (DIV) was clicked.
+                    if (navId === state.activeNav && actionTarget.tagName === 'DIV') {
                         this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
-                        this.uiManager.render(this.gameState.getState()); // Re-render to apply change
+                        this.uiManager.render(this.gameState.getState());
                     } else {
-                        // Switch to a new tab, ensure sub-nav is visible
+                        // For new tabs or sub-nav clicks, ensure sub-nav is visible and set the screen.
                         this.gameState.subNavCollapsed = false;
                         this.simulationService.setScreen(navId, screenId);
                     }
