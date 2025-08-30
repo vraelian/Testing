@@ -8090,7 +8090,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "NavId": [
         "ship",
         "starport",
-        "admin"
+        "data"
       ],
       "ActionId": [
         "set-screen",
@@ -8280,16 +8280,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "path": "./js/data/constants.js",
       "role": "DATA_DEFINITION"
     },
-    "F006": {
-      "path": "./js/data/gamedata.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F007": {
-      "path": "./js/data/config.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F008": {
-      "path": "./js/data/dateConfig.js",
+     "F006": {
+      "path": "./js/data/database.js",
       "role": "DATA_DEFINITION"
     },
     "F009": {
@@ -8404,7 +8396,6 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "introSequenceActive"
       ],
       "calls": [
-        "GameState._getTierAvailability",
         "GameState._calculateGalacticAverages",
         "GameState._seedInitialMarketPrices",
         "GameState.setState"
@@ -8468,7 +8459,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
     },
     "GameState._seedInitialMarketPrices": {
       "asset_id": "F009",
-      "description": "Sets the initial market price for every commodity at every location, applying randomness and location-specific modifiers.",
+      "description": "Sets the initial market price for every commodity at every location, applying randomness.",
       "params": [],
       "returns": {
         "type": "void"
@@ -8503,23 +8494,6 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "mutates_state": [
         "market.inventory"
       ],
-      "calls": [
-        "MarketService._getTierAvailability"
-      ]
-    },
-    "MarketService._getTierAvailability": {
-      "asset_id": "F010",
-      "description": "Returns the min and max potential stock for a commodity based on its tier.",
-      "params": [
-        {
-          "name": "tier",
-          "type": "integer"
-        }
-      ],
-      "returns": {
-        "type": "object"
-      },
-      "mutates_state": [],
       "calls": []
     },
     "MarketService._recordPriceHistory": {
@@ -8567,7 +8541,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "description": "Central handler for all click events during the intro sequence. It advances lore modals, processes the signature, and triggers the transition to the main game.",
         "params": [{"name": "e", "type": "Event"}],
         "returns": { "type": "void" },
-        "mutates_state": ["player.introStep", "player.name", "player.credits", "player.debt", "player.loanStartDate", "player.weeklyInterestAmount", "player.ownedShipIds", "player.shipStates", "player.inventories", "player.activeShipId"],
+        "mutates_state": ["player.introStep", "player.name", "player.credits", "player.debt", "player.loanStartDate", "player.monthlyInterestAmount", "player.ownedShipIds", "player.shipStates", "player.inventories", "player.activeShipId"],
         "calls": ["SimulationService._showNextIntroModal", "UIManager.queueModal", "SimulationService.setScreen", "TutorialService.checkState"]
     },
     "SimulationService._continueIntroSequence": {
@@ -8824,7 +8798,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "player.credits",
         "player.financeLog",
         "player.debt",
-        "player.weeklyInterestAmount",
+        "player.monthlyInterestAmount",
         "player.loanStartDate"
       ],
       "calls": [
@@ -8850,7 +8824,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "player.credits",
         "player.financeLog",
         "player.debt",
-        "player.weeklyInterestAmount",
+        "player.monthlyInterestAmount",
         "player.loanStartDate"
       ],
       "calls": [
