@@ -64,12 +64,13 @@
 }
 
 .hull-fill { background-color: #2ecc71; }
-.fuel-fill { background-color: #f1c40f; }
-.cargo-fill { background-color: #e74c3c; }
+.fuel-fill { background-color: #3b82f6; }
+.cargo-fill { background-color: #f59e0b; }
 
 .status-tooltip {
     position: absolute;
-    bottom: 120%;
+    top: 100%;
+    margin-top: 5px;
     left: 50%;
     transform: translateX(-50%);
     background-color: #111;
@@ -86,6 +87,15 @@
     transition: opacity 0.2s, border-color 0.5s ease-out;
     visibility: hidden;
 }
+
+.fuel-group .status-tooltip {
+    transform: translateX(calc(-50% - 52px));
+}
+
+.cargo-group .status-tooltip {
+    transform: translateX(calc(-50% - 104px));
+}
+
 
 .status-tooltip.visible {
     opacity: 1;

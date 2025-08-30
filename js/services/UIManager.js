@@ -133,17 +133,17 @@ export class UIManager {
     
             statusPodHtml = `
                 <div class="status-pod">
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group hull-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">F</span>
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>

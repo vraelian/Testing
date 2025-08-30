@@ -593,12 +593,13 @@
 }
 
 .hull-fill { background-color: #2ecc71; }
-.fuel-fill { background-color: #f1c40f; }
-.cargo-fill { background-color: #e74c3c; }
+.fuel-fill { background-color: #3b82f6; }
+.cargo-fill { background-color: #f59e0b; }
 
 .status-tooltip {
     position: absolute;
-    bottom: 120%;
+    top: 100%;
+    margin-top: 5px;
     left: 50%;
     transform: translateX(-50%);
     background-color: #111;
@@ -615,6 +616,15 @@
     transition: opacity 0.2s, border-color 0.5s ease-out;
     visibility: hidden;
 }
+
+.fuel-group .status-tooltip {
+    transform: translateX(calc(-50% - 52px));
+}
+
+.cargo-group .status-tooltip {
+    transform: translateX(calc(-50% - 104px));
+}
+
 
 .status-tooltip.visible {
     opacity: 1;
@@ -6944,17 +6954,17 @@ export class UIManager {
     
             statusPodHtml = `
                 <div class="status-pod">
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group hull-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">F</span>
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
-                    <div class="status-bar-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
