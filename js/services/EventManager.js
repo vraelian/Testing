@@ -90,7 +90,7 @@ export class EventManager {
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
-                this.simulationService.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+                this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
     }
@@ -177,7 +177,16 @@ export class EventManager {
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
                 case ACTION_IDS.SET_SCREEN:
-                    this.simulationService.setScreen(navId, screenId);
+                    if (navId === state.activeNav) {
+                        // Toggle sub-nav visibility if clicking the active nav tab
+                        this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
+                        this.uiManager.render(this.gameState.getState()); // Re-render to apply change
+                    } else {
+                        // Switch to a new tab, ensure sub-nav is visible
+                        this.gameState.subNavCollapsed = false;
+                        this.simulationService.setScreen(navId, screenId);
+                    }
+                    actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: navId, screenId: screenId };
                     break;
                 case ACTION_IDS.TRAVEL:
                     this.simulationService.travelTo(locationId);

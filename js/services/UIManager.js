@@ -88,7 +88,8 @@ export class UIManager {
         
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
-            this.cache.gameContainer.className = `game-container p-4 md:p-8 ${location.bg}`;
+            this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
+            this.cache.gameContainer.className = `game-container ${location.bg}`;
         }
         
         this.renderNavigation(gameState);
@@ -98,7 +99,7 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        const { player, currentLocationId, activeNav, lastActiveScreen, introSequenceActive, tutorials } = gameState;
+        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials, subNavCollapsed } = gameState;
         const { navLock } = tutorials;
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
@@ -117,11 +118,11 @@ export class UIManager {
         // Main Nav Tabs & Status Pod
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
-            const screenId = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
+            const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${navId}-tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}">${this.navStructure[navId].label}</div>`;
+            return `<div class="tab ${navId}-tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
     
         let statusPodHtml = '';
@@ -159,10 +160,11 @@ export class UIManager {
             const isActive = navId === activeNav;
             const subNavButtons = Object.keys(screens).map(screenId => {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
+                 const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${isSubNavActive ? 'active' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
-            return `<div class="nav-sub ${!isActive ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
+            return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
     
         this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;

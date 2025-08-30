@@ -127,6 +127,7 @@ export class GameState {
     startNewGame(playerName) {
         const initialState = {
             day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
+            subNavCollapsed: false,
             introSequenceActive: true,
             lastActiveScreen: {
                 [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
