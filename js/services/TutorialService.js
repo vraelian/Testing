@@ -5,7 +5,7 @@
  * displays tutorial steps, and locks UI navigation to guide the player.
  */
 import { DB } from '../data/database.js';
-import { TUTORIAL_ACTION_TYPES, ACTION_IDS } from '../data/constants.js';
+import { TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from '../data/constants.js';
 
 /**
  * @class TutorialService
@@ -224,6 +224,9 @@ export class TutorialService {
             case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
                 return condition.screenId === actionData.screenId;
             case TUTORIAL_ACTION_TYPES.ACTION:
+                if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
+                    return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
+                }
                 return condition.action === actionData.action;
             case TUTORIAL_ACTION_TYPES.INFO:
                 return true; // Info steps are always completed by the "Next" button, not a game action.

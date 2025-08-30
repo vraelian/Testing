@@ -4,32 +4,119 @@
     top: 0.75rem;
     z-index: 999;
 
-    max-width: 98%;
+    max-width: 1200px; /* Changed from 98% for consistency */
     margin-left: auto;
     margin-right: auto;
-    border-radius: 15px;
+    border-radius: 10px; /* Slightly smaller radius to match inner elements */
     background-color: rgba(12, 16, 29, 0.85);
-    backdrop-filter: blur(10px); /* Apply blur effect */
-    -webkit-backdrop-filter: blur(10px); /* Safari support */
-    padding-top: 0.6rem;
-    padding-bottom: 0.25rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0; /* Padding is now handled by inner elements */
 
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); /* Subtle shadow */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    border: none; /* Border is now on inner elements */
 }
 
-#top-bar-container.has-sticky-bar {
+/* DEPRECATED: This rule is no longer necessary with the new design. */
+/* #top-bar-container.has-sticky-bar {
     padding: 0.5rem 1rem;
-}
+} */
 
-#sticky-bar {
+/* DEPRECATED: The old sticky bar is no longer used. */
+/* #sticky-bar {
     margin-top: 0.6rem;
 }
-
 #sticky-bar .ship-hud {
     padding: 0.15rem;
+} */
+
+
+/* --- [[START]] NEW BULKHEAD STYLES (Concept 207+) --- */
+.context-bar {
+    background: var(--theme-grad);
+    color: var(--theme-text);
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-family: 'Share Tech Mono', monospace;
+    border-bottom: 2px solid rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
+
+.credit-text {
+    text-shadow: 0 0 5px rgba(0, 191, 255, 0.7);
+}
+
+.status-pod {
+    flex-grow: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-bar-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.status-bar-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+.status-bar {
+    width: 32px;
+    height: 8px;
+    background-color: #222;
+    border: 1px solid #111;
+    overflow: hidden;
+}
+
+.status-bar .fill {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+.hull-fill { background-color: #2ecc71; }
+.fuel-fill { background-color: #f1c40f; }
+.cargo-fill { background-color: #e74c3c; }
+
+.status-tooltip {
+    position: absolute;
+    bottom: 120%; /* Position above the bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #111;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 20;
+    border: 1px solid var(--theme-main, #555); /* Concept 207 style */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    visibility: hidden;
+}
+
+.status-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- [[END]] NEW BULKHEAD STYLES --- */
+
 
 .ship-hud {
     background-color: rgba(10, 20, 40, 0.5);

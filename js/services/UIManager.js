@@ -26,9 +26,9 @@ export class UIManager {
         this.marketTransactionState = {}; // To store quantity and mode
 
         this.navStructure = {
-            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.SERVICES]: 'Services' } },
-            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.CARGO]: 'Cargo', [SCREEN_IDS.HANGAR]: 'Hangar' } },
-            [NAV_IDS.ADMIN]: { label: 'Admin', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
+            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
+            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
+            [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
 
         this._cacheDOM();
@@ -98,42 +98,75 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        const { activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials } = gameState;
+        const { player, currentLocationId, activeNav, lastActiveScreen, introSequenceActive, tutorials } = gameState;
         const { navLock } = tutorials;
+        const location = DB.MARKETS.find(l => l.id === currentLocationId);
+        const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
+        const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
+        const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
+        
+        const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
-        const navButtons = Object.entries(this.navStructure).map(([navId, navData]) => {
+        // Context Bar
+        const contextBarHtml = `
+            <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
+                <span>${location?.name || 'In Transit'}</span>
+                <span class="credit-text">⌬: ${formatCredits(player.credits, false)}</span>
+            </div>`;
+    
+        // Main Nav Tabs & Status Pod
+        const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
-            const screenId = lastActiveScreen[navId] || Object.keys(navData.screens)[0];
-            
-            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
+            const screenId = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
-            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
-            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
-
-            return `
-                <button class="btn btn-header theme-${navId} ${isActive ? 'btn-nav-active' : ''} ${lockedClass}" 
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
-                    ${navData.label}
-                </button>`;
+            const isDisabled = introSequenceActive || isDisabledByTutorial;
+            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
+            return `<div class="tab ${navId}-tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}">${this.navStructure[navId].label}</div>`;
         }).join('');
-        this.cache.navBar.innerHTML = `<div class="flex justify-around w-full gap-2 md:gap-4">${navButtons}</div>`;
-
-        const activeSubNav = this.navStructure[activeNav]?.screens || {};
-        const themeClass = `theme-${activeNav}`;
-        const subNavButtons = Object.entries(activeSubNav).map(([screenId, screenLabel]) => {
-            const isActive = screenId === activeScreen;
-            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
-            const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
-            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
-            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
-
-            return `
-                <button class="btn btn-sub-nav ${isActive ? 'btn-sub-nav-active' : ''} ${lockedClass}"
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${activeNav}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
-                    ${screenLabel}
-                </button>`;
+    
+        let statusPodHtml = '';
+        if (activeShipStatic && activeShipState && inventory) {
+            const cargoUsed = calculateInventoryUsed(inventory);
+            const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
+            const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
+            const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+    
+            statusPodHtml = `
+                <div class="status-pod">
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">H</span>
+                        <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
+                    </div>
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">F</span>
+                        <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
+                    </div>
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">C</span>
+                        <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
+                        <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
+                    </div>
+                </div>`;
+        }
+    
+        const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
+    
+        // Sub Nav Bars
+        const subNavsHtml = Object.keys(this.navStructure).map(navId => {
+            const screens = this.navStructure[navId].screens;
+            const isActive = navId === activeNav;
+            const subNavButtons = Object.keys(screens).map(screenId => {
+                 const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
+                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+            }).join('');
+            return `<div class="nav-sub ${!isActive ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
-        this.cache.subNavBar.innerHTML = `<div class="flex justify-center w-full gap-2 md:gap-4 ${themeClass}">${subNavButtons}</div>`;
+    
+        this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
     renderActiveScreen(gameState) {
@@ -180,83 +213,10 @@ export class UIManager {
     }
 
     updateStickyBar(gameState) {
-        const { activeScreen, player } = gameState;
-        this.cache.stickyBar.innerHTML = '';
-    
-        if (!player.activeShipId) {
-            const creditOnlyScreens = [
-                SCREEN_IDS.MARKET,
-                SCREEN_IDS.CARGO,
-                SCREEN_IDS.HANGAR,
-                SCREEN_IDS.SERVICES,
-                SCREEN_IDS.FINANCE,
-                SCREEN_IDS.MISSIONS,
-            ];
-            if (creditOnlyScreens.includes(activeScreen)) {
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                        </div>
-                     </div>
-                `;
-            }
-            return;
-        }
-    
-        const shipState = player.shipStates[player.activeShipId];
-        const shipStatic = DB.SHIPS[player.activeShipId];
-    
-        switch(activeScreen) {
-            case SCREEN_IDS.NAVIGATION:
-                const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-                this.cache.stickyBar.innerHTML = `
-                    <div class="ship-hud">
-                        <div class="flex items-center justify-between">
-                             <div class="flex items-center space-x-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                <span class="text-gray-400">Fuel:</span>
-                            </div>
-                            <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
-                        </div>
-                        <div class="mt-1">
-                            <div class="hud-stat-bar"><div style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-                        </div>
-                    </div>
-                `;
-                break;
-            case SCREEN_IDS.MARKET:
-            case SCREEN_IDS.CARGO:
-            case SCREEN_IDS.HANGAR:
-            case SCREEN_IDS.SERVICES:
-            case SCREEN_IDS.FINANCE:
-                const cargoUsed = calculateInventoryUsed(player.inventories[player.activeShipId]);
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                            <span class="text-gray-500">|</span>
-                            <span>Cargo: ${cargoUsed}/${shipStatic.cargoCapacity}</span>
-                        </div>
-                    </div>
-                
-                `;
-                break;
-            case SCREEN_IDS.MISSIONS:
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                        </div>
-                    </div>
-                `;
-                break;
-        }
-        if (this.cache.stickyBar.innerHTML.trim() !== '') {
-            this.cache.topBarContainer.classList.add('has-sticky-bar');
-        } else {
-            this.cache.topBarContainer.classList.remove('has-sticky-bar');
-        }
+        // This function is now deprecated as its content is part of the new renderNavigation.
+        // It's kept to avoid breaking the main render loop but does nothing.
+        this.cache.stickyBar.innerHTML = ''; 
+        this.cache.topBarContainer.classList.remove('has-sticky-bar');
     }
 
     updateServicesScreen(gameState) {

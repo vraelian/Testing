@@ -28,7 +28,7 @@ export const SCREEN_IDS = Object.freeze({
 export const NAV_IDS = Object.freeze({
     SHIP: 'ship',
     STARPORT: 'starport',
-    ADMIN: 'admin',
+    DATA: 'data',
 });
 
 /**

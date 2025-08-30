@@ -131,7 +131,7 @@ export class GameState {
             lastActiveScreen: {
                 [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
                 [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
-                [NAV_IDS.ADMIN]: SCREEN_IDS.MISSIONS,
+                [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
             pendingTravel: null,
             player: {

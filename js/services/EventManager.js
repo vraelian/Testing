@@ -31,6 +31,7 @@ export class EventManager {
         this.refuelInterval = null;
         this.repairInterval = null;
         this.activeTooltipTarget = null;
+        this.activeStatusTooltip = null;
     }
 
     /**
@@ -102,8 +103,15 @@ export class EventManager {
      */
     _handleClick(e) {
         const state = this.gameState.getState();
+        const actionTarget = e.target.closest('[data-action]');
+        
+        // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
+        if (this.activeStatusTooltip && !e.target.closest('[data-action="toggle-tooltip"]')) {
+            this.activeStatusTooltip.classList.remove('visible');
+            this.activeStatusTooltip = null;
+        }
 
-        // Dismiss any active tooltip if clicking inside it.
+        // Dismiss any active graph/generic tooltip if clicking inside it.
         if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
@@ -111,9 +119,7 @@ export class EventManager {
             return;
         }
 
-        const actionTarget = e.target.closest('[data-action]');
-
-        // Dismiss active tooltip if clicking outside of its trigger element.
+        // Dismiss active graph/generic tooltip if clicking outside of its trigger element.
         if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
@@ -127,6 +133,25 @@ export class EventManager {
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
+                // Bulkhead UI Actions
+                case 'toggle-tooltip': {
+                    const tooltip = actionTarget.querySelector('.status-tooltip');
+                    if (!tooltip) return;
+                    // If we clicked the trigger for the currently active tooltip, hide it.
+                    if (this.activeStatusTooltip === tooltip) {
+                        tooltip.classList.remove('visible');
+                        this.activeStatusTooltip = null;
+                    } else {
+                        // Otherwise, hide any old tooltip and show the new one.
+                        if (this.activeStatusTooltip) {
+                            this.activeStatusTooltip.classList.remove('visible');
+                        }
+                        tooltip.classList.add('visible');
+                        this.activeStatusTooltip = tooltip;
+                    }
+                    return; // This action doesn't affect game state, so stop here.
+                }
+
                 // Mission Actions
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
@@ -301,7 +326,7 @@ export class EventManager {
         // Handle mobile-specific generic tooltips (tap to show, tap again to hide).
         if (this.uiManager.isMobile) {
             const tooltipTarget = e.target.closest('[data-tooltip]');
-            if (tooltipTarget) {
+            if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) { // Ensure it's not a status pod tooltip
                 this.uiManager.hideGraph(); // Hide graph if it's open.
                 if (this.activeTooltipTarget === tooltipTarget) {
                     this.uiManager.hideGenericTooltip();
