@@ -48,8 +48,8 @@
         Pay off your initial loan to access the Starport!
     </div>
 
-    <main id="game-container" class="game-container p-4 md:p-8 hidden">
-        <div id="top-bar-container" class="panel-border border border-slate-700">
+    <main id="game-container" class="game-container px-4 md:px-8 pb-4 md:pb-8 hidden">
+        <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
                 <div id="sub-nav-bar"></div>
@@ -526,37 +526,135 @@
 --- START OF FILE: ./css/hud.css ---
 /* css/hud.css */
 #top-bar-container {
-    position: sticky;
-    top: 0.75rem;
-    z-index: 999;
-
-    max-width: 98%;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 15px;
+    z-index: 10; /* Lowered z-index slightly */
+    width: 100%; /* Ensure it spans the full width of the parent */
+    border-radius: 15px 15px 0 0; /* Match parent container's top corners */
     background-color: rgba(12, 16, 29, 0.85);
-    backdrop-filter: blur(10px); /* Apply blur effect */
-    -webkit-backdrop-filter: blur(10px); /* Safari support */
-    padding-top: 0.6rem;
-    padding-bottom: 0.25rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); /* Subtle shadow */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden; /* Hide anything that might poke out from rounded corners */
 }
 
-#top-bar-container.has-sticky-bar {
-    padding: 0.5rem 1rem;
+.context-bar {
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-family: 'Share Tech Mono', monospace;
+    border-bottom: 2px solid rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    transition: background 0.5s ease-out, color 0.5s ease-out;
 }
 
-#sticky-bar {
-    margin-top: 0.6rem;
+.credit-text {
+    text-shadow: 0 0 5px rgba(0, 191, 255, 0.7);
 }
 
-#sticky-bar .ship-hud {
-    padding: 0.15rem;
+.status-pod {
+    flex-grow: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
 }
 
+.status-bar-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.status-bar-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+.status-bar {
+    width: 32px;
+    height: 8px;
+    background-color: #222;
+    border: 1px solid #111;
+    overflow: hidden;
+}
+
+.status-bar .fill {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+.hull-fill { background-color: #2ecc71; }
+.fuel-fill { background-color: #f1c40f; }
+.cargo-fill { background-color: #e74c3c; }
+
+.status-tooltip {
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #111;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 20;
+    border: 1px solid #555;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, border-color 0.5s ease-out;
+    visibility: hidden;
+}
+
+.status-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- [[START]] LOCATION THEMES --- */
+[data-location-theme="loc_mars"] .context-bar,
+[data-location-theme="loc_mars"] .tab.active {
+    background: linear-gradient(135deg, #d32f2f, #ff6f61);
+    color: #ffffff;
+    border-top-color: #ffcdd2;
+}
+[data-location-theme="loc_mars"] .nav-sub a {
+    color: #ff8a80;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80; }
+
+[data-location-theme="loc_earth"] .context-bar,
+[data-location-theme="loc_earth"] .tab.active {
+    background: linear-gradient(135deg, #00796b, #4dd0e1);
+    color: #ffffff;
+    border-top-color: #b2dfdb;
+}
+[data-location-theme="loc_earth"] .nav-sub a {
+    color: #80cbc4;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4; }
+
+[data-location-theme="loc_luna"] .context-bar,
+[data-location-theme="loc_luna"] .tab.active {
+    background: linear-gradient(135deg, #757575, #e0e0e0);
+    color: #212121;
+    border-top-color: #ffffff;
+}
+[data-location-theme="loc_luna"] .nav-sub a {
+    color: #9e9e9e;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e; }
+/* --- [[END]] LOCATION THEMES --- */
+
+/* DEPRECATED STYLES - Kept for non-nav UI elements */
 .ship-hud {
     background-color: rgba(10, 20, 40, 0.5);
     border: 2px solid #2a3a5a;
@@ -1621,6 +1719,110 @@ body {
 --- END OF FILE: ./css/screens/navigation-screen.css ---
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */
+
+/* --- [[START]] NEW BULKHEAD STYLES (Concept 207+) --- */
+.nav-wrapper {
+    background-color: #383838;
+    background-image: radial-gradient(circle, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 10px 10px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 10px;
+    border-bottom: 1px solid #111;
+    border-radius: 0 0 15px 15px; /* Round the bottom corners */
+}
+
+.nav-main {
+    display: flex;
+}
+
+.tab {
+    padding: 6px 12px;
+    color: #a0aec0; /* Default text color */
+    opacity: 0.7; /* Default opacity */
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    position: relative;
+    background-color: #444;
+    border-top: 1px solid #666;
+    margin-right: -6px;
+    transition: all 0.2s;
+    text-decoration: none;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.tab.disabled {
+    pointer-events: none;
+    filter: grayscale(1);
+    opacity: 0.3;
+}
+
+.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%); }
+.starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
+
+.tab.active {
+    opacity: 1;
+    z-index: 2;
+    transform: scale(1.05);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+}
+
+.nav-sub {
+    background-color: #222;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid #333;
+    overflow: hidden;
+    border-radius: 0 0 13px 13px; /* Match parent rounding */
+}
+
+.nav-sub a {
+    flex-grow: 1;
+    text-align: center;
+    opacity: 0.8;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 7px 0;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.2s;
+    background-color: #3a3a3a;
+    border-right: 1px solid #1c1c1c;
+    border-left: 1px solid #4a4a4a;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 12px));
+    margin-bottom: -5px;
+    draggable: false;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.nav-sub a.disabled {
+    pointer-events: none;
+    filter: grayscale(1);
+    opacity: 0.3;
+}
+
+
+.nav-sub a:first-child { border-left: none; }
+.nav-sub a:last-child { border-right: none; }
+
+.nav-sub a:hover:not(.disabled) {
+    opacity: 1;
+    color: #fff;
+    background-color: #4a4a4a;
+}
+/* --- [[END]] NEW BULKHEAD STYLES --- */
+
+
+/* --- [[START]] DEPRECATED STYLES --- */
+/* The styles below are no longer used by the navigation system but are kept for other UI elements. */
 .btn-header {
      padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
@@ -1715,6 +1917,7 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* .btn-header rules are no longer needed for navigation but might be used elsewhere. */
     .btn-header {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;
@@ -1722,12 +1925,14 @@ body {
         min-width: 0;
         width: auto;
     }
+     /* .btn-sub-nav rules are no longer needed for navigation but might be used elsewhere. */
     .btn-sub-nav {
         padding: 0.4rem 0.5rem;
         padding: 0.15rem 0.5rem;
         font-size: 0.6rem;
     }
 }
+/* --- [[END]] DEPRECATED STYLES --- */
 --- END OF FILE: ./css/navigation.css ---
 --- START OF FILE: ./js/ui/components/StatusScreen.js ---
 // js/ui/components/StatusScreen.js
@@ -2670,7 +2875,7 @@ export const SCREEN_IDS = Object.freeze({
 export const NAV_IDS = Object.freeze({
     SHIP: 'ship',
     STARPORT: 'starport',
-    ADMIN: 'admin',
+    DATA: 'data',
 });
 
 /**
@@ -2833,7 +3038,7 @@ export const SAVE_KEY = 'orbitalTraderSave_v2';
  * into a single, authoritative source. This improves maintainability and clarity
  * by providing a unified structure for all core game content and configuration.
  */
-import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS } from './constants.js';
+import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -3274,18 +3479,18 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cloned_organs': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.VENUS, name: 'Venus', description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'antimatter': 0.0 }, specialDemand: { [COMMODITY_IDS.ANTIMATTER]: { lore: 'All antimatter is requisitioned for classified military projects, leaving none for public sale. However, the naval authority pays handsomely for it.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'On this lawless frontier, functional cloned organs are too valuable to ever be sold on the open market. However, they will pay handsomely for them.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The outcasts of Pluto have a special interest in acquiring AI Cores.', bonus: 1.5 } } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.0, 'antimatter': 0.1, 'folded_drives': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'The Exchange has an insatiable, and illegal, demand for Cloned Organs.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: { }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
+        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(135deg, #4dd0e1, #00796b)', textColor: '#ffffff' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cloned_organs': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 2.0 } } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(135deg, #e0e0e0, #757575)', textColor: '#212121' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(135deg, #e57373, #d32f2f)', textColor: '#ffffff' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(135deg, #fff176, #fbc02d)', textColor: '#3e2723' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(135deg, #a1887f, #5d4037)', textColor: '#ffffff' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(135deg, #fce4ec, #e91e63)', textColor: '#ffffff' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(135deg, #ffb74d, #f57c00)', textColor: '#ffffff' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
+        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(135deg, #b3e5fc, #0277bd)', textColor: '#ffffff' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(135deg, #5c6bc0, #1a237e)', textColor: '#ffffff' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'antimatter': 0.0 }, specialDemand: { [COMMODITY_IDS.ANTIMATTER]: { lore: 'All antimatter is requisitioned for classified military projects, leaving none for public sale. However, the naval authority pays handsomely for it.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(135deg, #90a4ae, #37474f)', textColor: '#ffffff' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'On this lawless frontier, functional cloned organs are too valuable to ever be sold on the open market. However, they will pay handsomely for them.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The outcasts of Pluto have a special interest in acquiring AI Cores.', bonus: 1.5 } } },
+        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(135deg, #7b1fa2, #4a148c)', textColor: '#ffffff' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.0, 'antimatter': 0.1, 'folded_drives': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'The Exchange has an insatiable, and illegal, demand for Cloned Organs.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 2.0 } } },
+        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(135deg, #c2185b, #880e4f)', textColor: '#ffffff' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: { }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
     ],
 
     // --- Mission Data ---
@@ -3429,14 +3634,14 @@ export const DB = {
                 { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
                 { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
                 { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship. The dockworker even threw in extra!", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-                { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation" } },
-                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear</b> on your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": "ship", "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
-                { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+                { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
+                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear</b> on your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+                { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
-                { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
-                { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the Starport to visit the <b>Moon</b> station's <b>Market</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": "starport", "screenId": "market" } },
+                { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
+                { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the Starport to visit the <b>Moon</b> station's <b>Market</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } },
                 { "stepId": "mission_2_2", "text": "This is the <b>Moon</b> Market. Observe the <b class='hl-green font-bold'>MKT</b> indicator for plasteel - the market is <b class='hl-green font-bold'>paying more than usual</b> for industrial goods.<br><br>Selling your plasteel would be highly profitable! Do so now.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
-                { "stepId": "mission_2_3", "text": "Pure profit!<br><br>Let's check the Admin <b>Mission Terminal</b> again.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": "admin", "screenId": "missions" } },
+                { "stepId": "mission_2_3", "text": "Pure profit!<br><br>Let's check the Data <b>Mission Terminal</b> again.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_2_4", "text": "This mission offers a credit reward. Accept <b>The Mars Margin</b>  .", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
                 { "stepId": "mission_3_1", "text": "Plasteel is cheaper on <b>Mars</b>.<br><br>Acquire plasteel and complete this mission on <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
                 { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
@@ -3888,7 +4093,7 @@ export class GameState {
             lastActiveScreen: {
                 [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
                 [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
-                [NAV_IDS.ADMIN]: SCREEN_IDS.MISSIONS,
+                [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
             pendingTravel: null,
             player: {
@@ -5702,6 +5907,7 @@ export class EventManager {
         this.refuelInterval = null;
         this.repairInterval = null;
         this.activeTooltipTarget = null;
+        this.activeStatusTooltip = null;
     }
 
     /**
@@ -5773,8 +5979,15 @@ export class EventManager {
      */
     _handleClick(e) {
         const state = this.gameState.getState();
+        const actionTarget = e.target.closest('[data-action]');
+        
+        // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
+        if (this.activeStatusTooltip && !e.target.closest('[data-action="toggle-tooltip"]')) {
+            this.activeStatusTooltip.classList.remove('visible');
+            this.activeStatusTooltip = null;
+        }
 
-        // Dismiss any active tooltip if clicking inside it.
+        // Dismiss any active graph/generic tooltip if clicking inside it.
         if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
@@ -5782,9 +5995,7 @@ export class EventManager {
             return;
         }
 
-        const actionTarget = e.target.closest('[data-action]');
-
-        // Dismiss active tooltip if clicking outside of its trigger element.
+        // Dismiss active graph/generic tooltip if clicking outside of its trigger element.
         if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
@@ -5798,6 +6009,25 @@ export class EventManager {
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
+                // Bulkhead UI Actions
+                case 'toggle-tooltip': {
+                    const tooltip = actionTarget.querySelector('.status-tooltip');
+                    if (!tooltip) return;
+                    // If we clicked the trigger for the currently active tooltip, hide it.
+                    if (this.activeStatusTooltip === tooltip) {
+                        tooltip.classList.remove('visible');
+                        this.activeStatusTooltip = null;
+                    } else {
+                        // Otherwise, hide any old tooltip and show the new one.
+                        if (this.activeStatusTooltip) {
+                            this.activeStatusTooltip.classList.remove('visible');
+                        }
+                        tooltip.classList.add('visible');
+                        this.activeStatusTooltip = tooltip;
+                    }
+                    return; // This action doesn't affect game state, so stop here.
+                }
+
                 // Mission Actions
                 case 'show-mission-modal':
                     this.uiManager.showMissionModal(missionId);
@@ -5972,7 +6202,7 @@ export class EventManager {
         // Handle mobile-specific generic tooltips (tap to show, tap again to hide).
         if (this.uiManager.isMobile) {
             const tooltipTarget = e.target.closest('[data-tooltip]');
-            if (tooltipTarget) {
+            if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) { // Ensure it's not a status pod tooltip
                 this.uiManager.hideGraph(); // Hide graph if it's open.
                 if (this.activeTooltipTarget === tooltipTarget) {
                     this.uiManager.hideGenericTooltip();
@@ -6188,7 +6418,7 @@ export class EventManager {
  * displays tutorial steps, and locks UI navigation to guide the player.
  */
 import { DB } from '../data/database.js';
-import { TUTORIAL_ACTION_TYPES, ACTION_IDS } from '../data/constants.js';
+import { TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from '../data/constants.js';
 
 /**
  * @class TutorialService
@@ -6407,6 +6637,9 @@ export class TutorialService {
             case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
                 return condition.screenId === actionData.screenId;
             case TUTORIAL_ACTION_TYPES.ACTION:
+                if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
+                    return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
+                }
                 return condition.action === actionData.action;
             case TUTORIAL_ACTION_TYPES.INFO:
                 return true; // Info steps are always completed by the "Next" button, not a game action.
@@ -6565,9 +6798,9 @@ export class UIManager {
         this.marketTransactionState = {}; // To store quantity and mode
 
         this.navStructure = {
-            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.SERVICES]: 'Services' } },
-            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.CARGO]: 'Cargo', [SCREEN_IDS.HANGAR]: 'Hangar' } },
-            [NAV_IDS.ADMIN]: { label: 'Admin', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
+            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
+            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
+            [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
 
         this._cacheDOM();
@@ -6637,42 +6870,75 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        const { activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials } = gameState;
+        const { player, currentLocationId, activeNav, lastActiveScreen, introSequenceActive, tutorials } = gameState;
         const { navLock } = tutorials;
+        const location = DB.MARKETS.find(l => l.id === currentLocationId);
+        const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
+        const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
+        const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
+        
+        const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
-        const navButtons = Object.entries(this.navStructure).map(([navId, navData]) => {
+        // Context Bar
+        const contextBarHtml = `
+            <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
+                <span>${location?.name || 'In Transit'}</span>
+                <span class="credit-text">⌬: ${formatCredits(player.credits, false)}</span>
+            </div>`;
+    
+        // Main Nav Tabs & Status Pod
+        const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
-            const screenId = lastActiveScreen[navId] || Object.keys(navData.screens)[0];
-            
-            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
+            const screenId = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
-            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
-            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
-
-            return `
-                <button class="btn btn-header theme-${navId} ${isActive ? 'btn-nav-active' : ''} ${lockedClass}" 
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
-                    ${navData.label}
-                </button>`;
+            const isDisabled = introSequenceActive || isDisabledByTutorial;
+            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
+            return `<div class="tab ${navId}-tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}">${this.navStructure[navId].label}</div>`;
         }).join('');
-        this.cache.navBar.innerHTML = `<div class="flex justify-around w-full gap-2 md:gap-4">${navButtons}</div>`;
-
-        const activeSubNav = this.navStructure[activeNav]?.screens || {};
-        const themeClass = `theme-${activeNav}`;
-        const subNavButtons = Object.entries(activeSubNav).map(([screenId, screenLabel]) => {
-            const isActive = screenId === activeScreen;
-            const isDisabledByIntro = introSequenceActive && !tutorials.activeBatchId;
-            const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
-            const isDisabled = isDisabledByIntro || isDisabledByTutorial;
-            const lockedClass = isDisabled ? 'btn-intro-locked' : '';
-
-            return `
-                <button class="btn btn-sub-nav ${isActive ? 'btn-sub-nav-active' : ''} ${lockedClass}"
-                        data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${activeNav}" data-screen-id="${screenId}" ${isDisabled ? 'disabled' : ''}>
-                    ${screenLabel}
-                </button>`;
+    
+        let statusPodHtml = '';
+        if (activeShipStatic && activeShipState && inventory) {
+            const cargoUsed = calculateInventoryUsed(inventory);
+            const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
+            const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
+            const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+    
+            statusPodHtml = `
+                <div class="status-pod">
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">H</span>
+                        <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
+                    </div>
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">F</span>
+                        <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
+                    </div>
+                    <div class="status-bar-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">C</span>
+                        <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
+                        <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
+                    </div>
+                </div>`;
+        }
+    
+        const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
+    
+        // Sub Nav Bars
+        const subNavsHtml = Object.keys(this.navStructure).map(navId => {
+            const screens = this.navStructure[navId].screens;
+            const isActive = navId === activeNav;
+            const subNavButtons = Object.keys(screens).map(screenId => {
+                 const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
+                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+            }).join('');
+            return `<div class="nav-sub ${!isActive ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
-        this.cache.subNavBar.innerHTML = `<div class="flex justify-center w-full gap-2 md:gap-4 ${themeClass}">${subNavButtons}</div>`;
+    
+        this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
     renderActiveScreen(gameState) {
@@ -6719,83 +6985,10 @@ export class UIManager {
     }
 
     updateStickyBar(gameState) {
-        const { activeScreen, player } = gameState;
-        this.cache.stickyBar.innerHTML = '';
-    
-        if (!player.activeShipId) {
-            const creditOnlyScreens = [
-                SCREEN_IDS.MARKET,
-                SCREEN_IDS.CARGO,
-                SCREEN_IDS.HANGAR,
-                SCREEN_IDS.SERVICES,
-                SCREEN_IDS.FINANCE,
-                SCREEN_IDS.MISSIONS,
-            ];
-            if (creditOnlyScreens.includes(activeScreen)) {
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                        </div>
-                     </div>
-                `;
-            }
-            return;
-        }
-    
-        const shipState = player.shipStates[player.activeShipId];
-        const shipStatic = DB.SHIPS[player.activeShipId];
-    
-        switch(activeScreen) {
-            case SCREEN_IDS.NAVIGATION:
-                const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-                this.cache.stickyBar.innerHTML = `
-                    <div class="ship-hud">
-                        <div class="flex items-center justify-between">
-                             <div class="flex items-center space-x-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                <span class="text-gray-400">Fuel:</span>
-                            </div>
-                            <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
-                        </div>
-                        <div class="mt-1">
-                            <div class="hud-stat-bar"><div style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-                        </div>
-                    </div>
-                `;
-                break;
-            case SCREEN_IDS.MARKET:
-            case SCREEN_IDS.CARGO:
-            case SCREEN_IDS.HANGAR:
-            case SCREEN_IDS.SERVICES:
-            case SCREEN_IDS.FINANCE:
-                const cargoUsed = calculateInventoryUsed(player.inventories[player.activeShipId]);
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                            <span class="text-gray-500">|</span>
-                            <span>Cargo: ${cargoUsed}/${shipStatic.cargoCapacity}</span>
-                        </div>
-                    </div>
-                
-                `;
-                break;
-            case SCREEN_IDS.MISSIONS:
-                this.cache.stickyBar.innerHTML = `
-                     <div class="ship-hud text-center">
-                        <div class="flex justify-around items-center font-roboto-mono">
-                            <span class="credits-text-pulsing">${formatCredits(player.credits)}</span>
-                        </div>
-                    </div>
-                `;
-                break;
-        }
-        if (this.cache.stickyBar.innerHTML.trim() !== '') {
-            this.cache.topBarContainer.classList.add('has-sticky-bar');
-        } else {
-            this.cache.topBarContainer.classList.remove('has-sticky-bar');
-        }
+        // This function is now deprecated as its content is part of the new renderNavigation.
+        // It's kept to avoid breaking the main render loop but does nothing.
+        this.cache.stickyBar.innerHTML = ''; 
+        this.cache.topBarContainer.classList.remove('has-sticky-bar');
     }
 
     updateServicesScreen(gameState) {
@@ -9421,6 +9614,1284 @@ All notable changes to the Orbital Trading project will be documented in this fi
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
+--- START OF FILE: ./style.css ---
+/* style.css */
+:root {
+    --module-width: 100px;
+    --font-size: 0.6rem;
+    --border-radius: 20px;
+    --toggle-height: 30px;
+    --stepper-height: 30px;
+    --button-height: 28px;
+    --font-family: 'Orbitron', sans-serif;
+    --buy-primary: #196a8f;
+    --buy-secondary-bg: #1e2a3e;
+    --buy-secondary-border: #3c4e68;
+    --buy-text-light: #8ca4b5;
+    --buy-text-dark: #ddf3f8;
+    --sell-primary: #a73535;
+    --sell-secondary-bg: #293342;
+    --sell-secondary-border: #63686e;
+    --sell-text-light: #ff9999;
+    --sell-text-dark: #f7cfcf;
+    --max-bg: #303946;
+    --max-text: #a5aab1;
+}
+
+body {
+    font-family: 'Exo 2', sans-serif;
+    background-color: #0c101d;
+    color: #d0d8e8;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+    touch-action: manipulation; /* Helps prevent double-tap zoom */
+}
+.font-orbitron { font-family: 'Orbitron', sans-serif; }
+.font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+
+.game-container {
+    max-width: 1200px;
+    margin: auto;
+    border: 2px solid #3a4a6a;
+    border-radius: 15px;
+    transition: background 0.5s ease-out;
+    box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+}
+.btn {
+    transition: all 0.3s ease;
+    border: 1px solid #4a6a8a;
+    border-radius: 8px;
+    background-color: #22304a;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    padding: 0.5rem 0.75rem;
+    color: #c0d0f0;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+#restart-game-container .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.875rem;
+}
+.btn:hover:not(:disabled) {
+    background-color: #32405a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    color: #e0f0ff;
+}
+.btn:disabled, [disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
+.btn-intro-locked {
+    filter: grayscale(1);
+    opacity: 0.3;
+    pointer-events: none;
+}
+.btn-header {
+     padding: 0.2rem 1.5rem;
+     font-size: 1.125rem;
+     flex: 1;
+     background-blend-mode: overlay;
+     background-image: linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.1));
+}
+
+.btn-sub-nav {
+    padding: 0.05rem 0.8rem;
+    font-size: 0.67rem;
+    flex: 1;
+    background-blend-mode: overlay;
+    border-width: 1px;
+    background-image: linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.1));
+    transition: all 0.2s ease-in-out;
+}
+ #sub-nav-bar > div {
+    margin-top: 0.375rem;
+ }
+.btn-sub-nav:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.btn-sub-nav-active {
+    transform: translateY(1px);
+    border-width: 3px !important;
+}
+.btn-sub-nav-active:hover:not(:disabled) {
+    transform: translateY(1px) !important;
+}
+
+.theme-ship { --glow-color: #34d399; }
+.theme-ship .btn-sub-nav, .theme-ship.btn-header {
+    background-color: #144234;
+    border-color: #23785d;
+    color: #a7f3d0;
+}
+.theme-ship .btn-sub-nav:hover:not(:disabled), .theme-ship.btn-header:hover:not(:disabled) {
+    background-color: #1a5643;
+    color: #dcfce7;
+}
+.theme-ship .btn-sub-nav-active, .theme-ship.btn-nav-active {
+    background-color: #1a5643 !important;
+    border-color: #34d399 !important;
+    color: #f0fdf4 !important;
+}
+
+.theme-starport { --glow-color: #60a5fa; }
+.theme-starport .btn-sub-nav, .theme-starport.btn-header {
+    background-color: #1e3a8a;
+    border-color: #3b82f6;
+    color: #bfdbfe;
+}
+.theme-starport .btn-sub-nav:hover:not(:disabled), .theme-starport.btn-header:hover:not(:disabled) {
+    background-color: #1e40af;
+    color: #dbeafe;
+}
+.theme-starport .btn-sub-nav-active, .theme-starport.btn-nav-active {
+    background-color: #1e40af !important;
+    border-color: #60a5fa !important;
+    color: #eff6ff !important;
+}
+
+.theme-admin { --glow-color: #fb923c; }
+.theme-admin .btn-sub-nav, .theme-admin.btn-header {
+    background-color: #7c2d12;
+    border-color: #f97316;
+    color: #fed7aa;
+}
+.theme-admin .btn-sub-nav:hover:not(:disabled), .theme-admin.btn-header:hover:not(:disabled) {
+    background-color: #9a3412;
+    color: #ffedd5;
+}
+.theme-admin .btn-sub-nav-active, .theme-admin.btn-nav-active {
+    background-color: #9a3412 !important;
+    border-color: #fb923c !important;
+    color: #fff7ed !important;
+}
+
+.btn-nav-active {
+    border-width: 3px !important;
+    transform: translateY(1px);
+}
+.btn-nav-active:hover:not(:disabled) {
+    transform: translateY(1px) !important;
+}
+
+#refuel-btn:active:not(:disabled), #repair-btn:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.screen {
+    display: none;
+}
+.active-screen {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+.modal-visible {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+.modal-hiding {
+    animation: fadeOut 0.5s ease-in forwards;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(12, 16, 29, 0.95);
+    display: flex; align-items: center;
+    justify-content: center; z-index: 200;
+}
+.age-event-modal.modal-backdrop {
+    align-items: flex-start;
+    padding-top: 15vh;
+}
+.modal-content {
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid #3a4a6a;
+    border-radius: 15px; padding: 2rem; max-width: 500px;
+    width: 90%; text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+}
+.modal-content h3 {
+    text-align: center;
+}
+.modal-content .flex.justify-center {
+    justify-content: center;
+}
+#charter-description > .text-justify {
+    text-align: justify;
+}
+
+
+.modal-theme-gold .modal-content {
+    border-color: #D4AF37;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+}
+
+.modal-theme-admin .modal-content, .modal-theme-admin.modal-content {
+    background: #0c101d;
+    border-color: #4a6a8a;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#signature-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid #a3a3a3;
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 2px;
+}
+
+.age-event-modal .modal-content {
+    background: rgba(240, 240, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 2px solid #D4AF37;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+    max-width: 600px;
+}
+.age-event-modal h3 { color: #FFD700; }
+.age-event-modal p { color: #f0f0f0; }
+
+.perk-button {
+    background: #C0C0C0;
+    color: #111827;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: left;
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.perk-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 15px #FFD700, 0 0 25px #FFD700;
+    border-color: #FFD700;
+}
+.perk-button h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.875rem;
+    color: #0c101d;
+    text-align: center;
+}
+.perk-button p {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.highlight-current {
+    border-color: #facc15;
+}
+ @keyframes pulse-green-border {
+    0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
+    border-color: #10b981; }
+    50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
+    border-color: #34d399; }
+}
+.btn-pulse-green {
+    animation: pulse-green-border 2s infinite;
+}
+
+@keyframes pulse-gold-border {
+    0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3);
+    border-color: #D4AF37; }
+    50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5);
+    border-color: #FFD700; }
+}
+
+.btn-pulse-gold {
+    animation: pulse-gold-border 2s infinite;
+}
+
+.btn-pulse {
+    animation: pulse-green-border 2.5s infinite;
+}
+
+@keyframes credits-pulse-glow {
+  0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
+  50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; }
+  100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
+}
+.credits-text-pulsing {
+  color: #bae6fd;
+  animation: credits-pulse-glow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-green-glow {
+    0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; }
+    50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; }
+}
+.pulse-green-glow {
+    animation: pulse-green-glow 2s infinite; /* Keep original animation duration */
+}
+
+.location-card {
+    display: flex;
+    flex-direction: column;
+    border-width: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+.location-card p {
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+.location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
+.location-card.disabled-current { cursor: pointer; }
+.location-card-footer {
+    margin-top: auto;
+}
+
+.item-card-container {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+#debug-toast, #garnishment-toast, #save-toast, #hull-warning-toast, #starport-unlock-tooltip {
+    z-index: 101;
+}
+
+#debug-toast, #garnishment-toast {
+    background-color: #9a3412;
+    border: 1px solid #fb923c;
+    box-shadow: 0 0 15px rgba(251, 146, 60, 0.7);
+}
+#garnishment-toast {
+     background-color: #991b1b;
+     border: 1px solid #f87171;
+     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
+}
+
+[data-tooltip] { position: relative; }
+.tooltip-container[data-tooltip]:hover::after,
+.cargo-item-tooltip[data-tooltip]:hover::after,
+.commodity-name-tooltip[data-tooltip]:hover::after,
+.hanger-ship-name[data-tooltip]:hover::after,
+.tooltip-active::after,
+.tooltip-container-below[data-tooltip]:hover::after,
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    background-color: #111827;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    width: max-content;
+    max-width: 250px;
+    word-wrap: break-word;
+    text-align: center;
+    z-index: 100;
+    display: block;
+    pointer-events: none;
+    font-family: 'Exo 2', sans-serif;
+    left: 105%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    font-family: 'Roboto Mono', monospace;
+}
+
+.tooltip-container-below[data-tooltip]:hover::after {
+    top: 100%;
+    margin-top: 5px;
+}
+
+#graph-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.75rem;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.generic-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border-radius: 6px;
+    padding: 5px 10px;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #fff;
+    font-family: 'Exo 2', sans-serif;
+    max-width: 60vw;
+}
+
+.panel-border {
+    position: relative;
+}
+.panel-border::before, .panel-border::after {
+    content: '';
+    position: absolute; width: 15px; height: 15px;
+    border-color: #7a9ac0; border-style: solid;
+}
+.panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
+    border-top-left-radius: 10px; }
+.panel-border::after { bottom: -2px; right: -2px;
+    border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
+
+.ship-hud {
+    background-color: rgba(10, 20, 40, 0.5);
+    border: 2px solid #2a3a5a;
+    padding: 0.45rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.ship-hud::before, .ship-hud::after {
+    content: '';
+    position: absolute; width: 15px; height: 15px;
+    border-color: #7a9ac0; border-style: solid;
+}
+.ship-hud::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
+    border-top-left-radius: 10px; }
+.ship-hud::after { bottom: -2px; right: -2px;
+    border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
+
+.hud-stat-bar { background-color: #1a253c;
+    border-radius: 3px; overflow: hidden; height: 6px;
+}
+.hud-stat-bar > div { transition: width 0.5s ease-out;
+    height: 100%; }
+
+.commodity-name { font-family: 'Roboto Mono', monospace; font-size: 1rem;
+}
+.price-text {
+    font-size: 1.35rem;
+    color: #7dd3fc;
+    text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
+}
+.avail-text {
+    font-size: 0.8rem; /* 2 points smaller than 1rem */
+}
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+/* --- [[START]] INDICATOR STYLES --- */
+.indicator-pill {
+    padding: 0.1em 0.5em;
+    border-radius: 99px;
+    font-size: 0.75em;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    text-shadow: none; /* Remove inherited text outline */
+}
+.indicator-pill.positive { background-color: rgb(16, 185, 129); color: #dcfce7; }
+.indicator-pill.negative { background-color: rgb(220, 38, 38); color: #fee2e2; }
+.indicator-pill.neutral { background-color: rgb(115, 115, 115); color: #e5e5e5; }
+/* --- [[END]] INDICATOR STYLES --- */
+
+.graph-icon {
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 0.5rem;
+    margin: -0.5rem;
+}
+.graph-icon:hover {
+    opacity: 1;
+}
+.graph-point {
+    cursor: pointer;
+    transition: r 0.2s ease;
+}
+.graph-point:hover {
+    r: 6;
+}
+
+.hl { color: #fde047; font-weight: 700; }
+.hl-blue { color: #60a5fa; font-weight: 700; }
+.hl-red { color: #f87171; font-weight: 700;
+ }
+.hl-green { color: #16a34a; font-weight: 700; }
+.hl-yellow { color: #facc15; font-weight: 700; }
+
+#hull-warning-toast {
+    background-color: #166534;
+    border: 1px solid #34d399;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.7);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.starport-panel {
+    background-color: rgba(10, 20, 40, 0.5);
+    border: 1px solid #2a3a5a;
+    border-radius: 10px;
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.starport-panel::-webkit-scrollbar {
+    display: none;
+}
+.ship-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+}
+@keyframes warm-shift {
+    0% { background-color: #fca5a5; }
+    33% { background-color: #f97316; }
+    66% { background-color: #c084fc; }
+    100% { background-color: #fca5a5; }
+}
+@keyframes dark-shift {
+    0% { background-color: #000000; }
+    50% { background-color: #4c1d95; }
+    100% { background-color: #000000; }
+}
+
+.item-card-container > div {
+    position: relative;
+}
+
+.item-style-1 { border-color: #60a5fa;
+    background: linear-gradient(45deg, #93c5fd, #2563eb); color: #eff6ff;
+}
+.item-style-2 { border-color: #a3a3a3;
+    background: linear-gradient(45deg, #d4d4d4, #525252); color: #fafafa; }
+.item-style-3 { border-color: #166534;
+    background: linear-gradient(45deg, #22c55e, #15803d); color: #dcfce7;
+}
+.item-style-4 { border-color: #e5e5e5;
+    background: linear-gradient(45deg, #f3f4f6, #cccccc); color: #ffffff; }
+.item-style-5 { border-color: #c084fc;
+    background: linear-gradient(45deg, #e9d5ff, #a855f7); color: #faf5ff;
+}
+.item-style-6 { border-color: #93c5fd;
+    background: linear-gradient(45deg, #bfdbfe, #3b82f6); color: #eff6ff; }
+.item-style-7 { border-color: #84cc16;
+    background: linear-gradient(45deg, #a7f3d0, #4d7c0f); color: #f0fdf4;
+}
+.item-style-8 { border-color: #a5f3fc;
+    background: linear-gradient(45deg, #e0f2fe, #22d3ee); color: #f0f9ff; }
+.item-style-9 { border-color: #fcd34d;
+    background: linear-gradient(45deg, #fcd34d, #d2b48c); color: #fffbeb;
+}
+.item-style-10 { border-color: #fda4af;
+    background: linear-gradient(45deg, #fecaca 70%, #b91c1c); color: #fef2f2;
+}
+.item-style-11 { border-color: #c4b5fd;
+    background: linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a);
+    color: #f5f3ff;}
+.item-style-12 { border-color: #fca5a5;
+    background: linear-gradient(45deg, #1f2937 40%, #7f1d1d, #b91c1c);
+    color: #fee2e2; }
+.item-style-13 { border-color: #a78bfa;
+    background-color: #000;
+    animation: dark-shift 5s ease infinite; color: #fde047; }
+.item-style-14 { border-color: #f9a8d4;
+    background-color: #fca5a5; animation: warm-shift 4s ease infinite; color: #fff;
+}
+
+.floating-text {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+    z-index: 100;
+    animation: float-up 2.5s forwards ease-out;
+}
+@keyframes float-up {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-60px);
+    opacity: 0; }
+}
+
+#travel-animation-content {
+    width: 90%;
+    max-width: 800px;
+    padding: 0;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border-color: #4a6a8a;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#travel-header-panel, #travel-footer-panel {
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    background-color: rgba(12, 16, 29, 0.5);
+    z-index: 10;
+}
+#travel-header-panel {
+    border-bottom: 1px solid #3a4a6a;
+    min-height: 80px;
+}
+#travel-footer-panel {
+    border-top: 1px solid #3a4a6a;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#travel-canvas {
+    width: 100%;
+    height: 150px;
+    display: block;
+}
+#travel-arrival-lore, #travel-readout-container, #travel-confirm-button {
+    opacity: 0;
+    transition: opacity 0.75s ease-in-out;
+}
+#travel-status-text {
+    transition: all 0.5s ease;
+}
+@keyframes pulse-white {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
+    50% { box-shadow: 0 0 16px rgba(255, 255, 255, 0.8); }
+}
+.lore-container {
+    cursor: pointer;
+    display: inline;
+    color: #a3b8ee;
+    font-style: italic;
+    font-weight: bold;
+}
+.lore-tooltip {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    max-width: 90vw;
+    max-height: 55vh;
+    overflow-y: auto;
+    background-color: #1f2937;
+    border: 2px solid #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #d0d8e8;
+    z-index: 60;
+    text-align: left;
+    font-style: normal;
+    animation: pulse-white 2.5s infinite;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.tutorial-tooltip {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    max-width: 90vw;
+    max-height: 55vh;
+    overflow-y: auto;
+    background-color: #1f2937;
+    border: 2px solid #10b981;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #d0d8e8;
+    z-index: 60;
+    text-align: left;
+    font-style: normal;
+    animation: pulse-green-border 2.5s infinite;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.lore-tooltip.visible, .tutorial-tooltip.visible {
+    display: block;
+}
+.lore-tooltip::-webkit-scrollbar, .tutorial-tooltip::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-indicator-wrapper {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 1rem;
+    line-height: 1.2;
+    font-size: 0.75em; /* Scale down by 25% */
+}
+
+#random-event-choices-container .btn {
+    text-align: center;
+}
+
+@keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+@keyframes green-pulse {
+    0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+    50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
+    100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+}
+
+#tutorial-toast-container {
+    background-color: rgba(13, 42, 42, 0.95);
+    color: #f0fff0;
+    border: 2px solid transparent;
+    border-image: linear-gradient(to right, #d4af37, #fde047, #d4af37);
+    border-image-slice: 1;
+    animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out;
+    background-image: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+    background-repeat: no-repeat;
+    background-size: 200px 100%;
+    z-index: 100;
+    max-width: 350px;
+}
+
+#top-bar-container.has-sticky-bar {
+    padding: 0.5rem 1rem;
+}
+
+
+
+#tutorial-toast-text {
+    text-align: left;
+}
+
+.tutorial-highlight {
+    position: relative;
+    z-index: 99;
+}
+
+.tt-top-center { top: 5%;
+    left: 50%; transform: translateX(-50%); }
+.tt-left { top: 50%; left: 2%; transform: translateY(-50%);
+}
+.tt-right { top: 50%; right: 2%; transform: translateY(-50%);
+}
+.tt-bottom-center { bottom: 5%; left: 50%; transform: translateX(-50%); }
+.tt-bottom-right { bottom: 5%;
+    right: 2%;
+}
+
+.starport-panel-mobile {
+    background-color: rgba(10, 20, 40, 0.5);
+    border: 1px solid #2a3a5a;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+.ship-list-item-mobile {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ship-list-item-mobile:hover {
+    background-color: #1f2937;
+}
+#ship-detail-modal {
+    align-items: center;
+    justify-content: center;
+}
+#ship-detail-modal .modal-content {
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    margin: 0;
+    padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 15vh;
+    }
+
+    .cargo-item-tooltip[data-tooltip]:hover::after,
+    .commodity-name-tooltip[data-tooltip]:hover::after,
+    .hanger-ship-name[data-tooltip]:hover::after {
+        display: none;
+    }
+
+    #header-main {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .btn-header {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+        /* Keep original font size */
+        flex: 1;
+        min-width: 0;
+        width: auto;
+    }
+    .btn-sub-nav {
+        padding: 0.4rem 0.5rem;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.6rem;
+    }
+
+    #finance-screen .grid-cols-4 {
+        grid-template-columns: 0.5fr 2fr 1fr;
+        font-size: 0.8rem;
+    }
+    #finance-screen .grid-cols-4 > span:nth-child(2) {
+        grid-column: span 1;
+    }
+
+    .commodity-name {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+    .mobile-controls-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .mobile-controls-wrapper .item-btn {
+        width: 65px;
+        height: 32px;
+        padding: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+    .mobile-controls-wrapper .btn-sm {
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    .mobile-controls-wrapper .qty-input {
+        width: 44px;
+        height: 32px;
+        font-size: 1rem;
+        padding: 0;
+    }
+    .mobile-controls-wrapper .qty-btn {
+        width: 30px;
+        height: 24px;
+        line-height: 22px;
+    }
+    .travel-info-mobile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    #tutorial-toast-container {
+        top: 80% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: 90% !important;
+        max-width: 350px;
+    }
+
+    #ship-detail-modal {
+        align-items: center;
+    }
+
+    #ship-detail-modal .modal-content {
+        border-radius: 15px;
+        width: 90%;
+        max-width: 100%;
+    }
+}
+
+#top-bar-container {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 999;
+
+    max-width: 98%;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 15px;
+    background-color: rgba(12, 16, 29, 0.85);
+    backdrop-filter: blur(10px); /* Apply blur effect */
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
+    padding-top: 0.6rem;
+    padding-bottom: 0.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4); /* Subtle shadow */
+}
+
+#sticky-bar {
+    margin-top: 0.6rem;
+}
+
+#sticky-bar .ship-hud {
+    padding: 0.15rem;
+}
+
+/* --- Sci-Fi Frame & Polish --- */
+.sci-fi-frame {
+    /* Base styling for sci-fi frame */
+    position: relative;
+    border: 1px solid #2a3a5a;
+    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5);
+}
+.sci-fi-frame::before, .sci-fi-frame::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-color: #7a9ac0; /* Default border color */
+    border-style: solid;
+    transition: border-color 0.3s; /* Smooth transition for border color */
+}
+.sci-fi-frame::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-top-left-radius: 8px; /* Top-left corner */
+}
+.sci-fi-frame::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-bottom-right-radius: 8px; /* Bottom-right corner */
+}
+
+
+/* --- Mission System Styles --- */
+.mission-card {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.mission-card:hover .sci-fi-frame::before, .mission-card:hover .sci-fi-frame::after {
+    border-color: rgba(96, 165, 250, 0.7);
+}
+.mission-type {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    letter-spacing: 0.1em;
+}
+.mission-host {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #d1d5db;
+}
+.mission-reward {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    color: #facc15;
+    text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
+}
+.host-guild {
+    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border-color: #FFD700;
+}
+.host-syndicate {
+    background: linear-gradient(105deg, rgba(179, 134, 71, 0.35) 0%, rgba(168, 85, 247, 0.25) 100%);
+    border-color: #b38647;
+}
+.host-unknown {
+    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    border-color: #5f616b;
+}
+.host-crew {
+    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    border-color: #c9bfb1;
+}
+.host-tutorial {
+    background: linear-gradient(105deg, rgba(90, 166, 109, 0.35) 0%, rgba(6, 78, 59, 0.45) 100%);
+    border-color: #5aa66d;
+}
+.host-station {
+    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    border-color: #8f9acc;
+}
+@keyframes blue-pulse-glow {
+    0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
+}
+.mission-active {
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+    border-width: 3px;
+    border-color: rgba(96, 165, 250, 0.7);
+}
+.mission-active .sci-fi-frame::before, .mission-active .sci-fi-frame::after {
+    border-color: #93c5fd;
+}
+@keyframes green-pulse-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(52, 211, 153, 0.3), inset 0 0 8px rgba(52, 211, 153, 0.1); }
+    50% { box-shadow: 0 0 16px rgba(52, 211, 153, 0.7), inset 0 0 12px rgba(52, 211, 153, 0.2); }
+}
+.mission-complete {
+    opacity: 0.6;
+    background: #111827;
+}
+.mission-complete .sci-fi-frame::before, .mission-complete .sci-fi-frame::after {
+    border-color: #34d399;
+}
+#mission-modal .modal-content {
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.close-button {
+    font-size: 2rem;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close-button:hover {
+    color: #fff;
+}
+.reward-section {
+    background-color: rgba(0,0,0,0.3);
+    border-left: 3px solid #facc15;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+}
+.modal-complete .sci-fi-frame::before, .modal-complete .sci-fi-frame::after {
+    border-color: #facc15;
+}
+.modal-complete .reward-section {
+    border-left-color: #34d399;
+}
+.bottom-sticky-bar {
+    display: none;
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 1.5rem;
+    cursor: pointer;
+    z-index: 50;
+}
+.sticky-content {
+    background-color: rgba(12, 16, 29, 0.8);
+    background-image: linear-gradient(rgba(12, 16, 29, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(12, 16, 29, 0.2) 1px, transparent 1px);
+    background-size: 15px 15px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.bottom-sticky-bar:hover .sticky-content {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+@keyframes flash-green {
+    0%, 100% { color: #34d399; }
+    50% { color: #f0fdf4; }
+}
+.objective-progress-flash {
+    animation: flash-green 0.7s ease-in-out;
+}
+
+
+/* --- Mission Turn-In Shimmer/Glimmer Effect --- */
+@keyframes shimmer-effect {
+    0% { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+}
+
+.mission-turn-in {
+    overflow: hidden;
+    position: relative;
+    --glow-color: #fde047;
+    animation: glow-border 2s infinite, shimmer-effect 3s linear infinite;
+    background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
+    background-repeat: no-repeat;
+    background-size: 400px 100%;
+}
+
+/* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
+.transaction-controls { position: absolute; bottom: 0.75rem; right: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; width: var(--module-width); font-family: var(--font-family); font-size: var(--font-size); }
+.toggle-switch { width: 100%; height: var(--toggle-height); border-radius: 99px; display: flex; align-items: center; padding: 3px; position: relative; cursor: pointer; transition: all 0.3s ease-in-out; }
+.toggle-thumb { width: 50%; height: 100%; border-radius: 99px; position: absolute; left: 3px; transition: all 0.3s ease-in-out; }
+.toggle-labels { width: 100%; display: flex; justify-content: space-around; position: relative; z-index: 1; font-weight: bold; font-size: 0.8em; }
+.toggle-labels span { transition: color 0.3s ease-in-out; }
+.qty-stepper { display: flex; align-items: center; justify-content: space-between; width: 100%; height: var(--stepper-height); border-radius: var(--border-radius); padding: 0 0.5rem; transition: all 0.3s ease-in-out; }
+.qty-stepper input { width: 60%; background: none; border: none; text-align: center; color: inherit; font-size: 1.2em; font-family: 'Roboto Mono', monospace; -moz-appearance: textfield; }
+.qty-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qty-stepper button { background: none; border: none; font-size: 1em; cursor: pointer; transition: color 0.2s; line-height: 1; }
+.action-group { display: flex; width: 100%; gap: 0.5rem; }
+.action-group .btn { flex: 1; height: var(--button-height); border: none; border-radius: 99px; font-weight: bold; cursor: pointer; transition: all 0.2s ease-out; font-size: 0.8em; padding: 0 0.5rem; }
+.action-group .confirm-btn { flex-grow: 1; }
+.action-group .max-btn { flex: 1; }
+.action-group .btn:active { transform: scale(0.95); }
+
+/* Dynamic Theming */
+.transaction-controls[data-mode="buy"] { --active-primary: var(--buy-primary); --active-secondary-bg: var(--buy-secondary-bg); --active-secondary-border: var(--buy-secondary-border); --active-text-light: var(--buy-text-light); --active-text-dark: var(--buy-text-dark); }
+.transaction-controls[data-mode="sell"] { --active-primary: var(--sell-primary); --active-secondary-bg: var(--sell-secondary-bg); --active-secondary-border: var(--sell-secondary-border); --active-text-light: var(--sell-text-light); --active-text-dark: var(--sell-text-dark); }
+.toggle-switch { background: var(--active-secondary-bg); border: 1px solid var(--active-secondary-border); }
+.toggle-thumb { background: var(--active-primary); }
+.toggle-labels span { color: var(--active-text-light); }
+.transaction-controls[data-mode="buy"] .label-buy, .transaction-controls[data-mode="sell"] .label-sell { color: var(--active-text-dark); }
+.qty-stepper { background: var(--active-secondary-bg); border: 1px solid var(--active-secondary-border); color: var(--active-text-light); }
+.qty-stepper button { color: var(--active-text-light); }
+.confirm-btn { background: var(--active-primary); color: var(--active-text-dark); }
+.max-btn { background: var(--max-bg); color: var(--max-text); }
+.transaction-controls[data-mode="sell"] .toggle-thumb { left: calc(50% - 3px); }
+/* --- [[END]] SOLID STATE TRANSACTION BUTTONS --- */
+
+/* --- [[START]] DEBUG PANEL STYLES --- */
+#debug-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 450px;
+    height: 100vh;
+    background-color: #1f2937;
+    padding: 1rem;
+    overflow-y: auto;
+    color: #e5e7eb;
+    z-index: 1000;
+    box-shadow: -10px 0 20px rgba(0,0,0,0.5);
+    display: none; /* Initially hidden */
+}
+
+#debug-panel h2 {
+    font-family: 'Orbitron', sans-serif;
+    border-bottom: 2px solid #4b5563;
+    padding-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+#debug-panel .control-group {
+    margin-bottom: 1.5rem;
+}
+
+#debug-panel .control-group summary {
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0.5rem;
+    background-color: #374151;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+#debug-panel .control-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 60px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+#debug-panel .control-row.single {
+    grid-template-columns: 140px 1fr;
+}
+
+
+#debug-panel .control-row label {
+    font-weight: 500;
+}
+
+#debug-panel .control-row input[type="range"] {
+    width: 100%;
+}
+#debug-panel .control-row input[type="text"], #debug-panel .control-row select {
+    background-color: #111827;
+    border: 1px solid #4b5563;
+    color: #e5e7eb;
+    border-radius: 4px;
+    padding: 4px 6px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#debug-panel .control-row .value-display {
+    font-family: 'Roboto Mono', monospace;
+    text-align: right;
+}
+
+#debug-panel .export-import {
+    margin-top: 2rem;
+    border-top: 2px solid #4b5563;
+    padding-top: 1rem;
+}
+
+#debug-panel .export-import textarea {
+    width: 100%;
+    box-sizing: border-box;
+    height: 150px;
+    background-color: #111827;
+    color: #f3f4f6;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#debug-panel .export-import button {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #4f46e5;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    font-family: 'Orbitron', sans-serif;
+}
+
+#debug-panel .control-subheader {
+    font-weight: bold;
+    color: #9ca3af;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+#debug-panel p, #debug-panel h2 {
+    margin: 0;
+    padding: 0;
+}
+/* --- [[END]] DEBUG PANEL STYLES --- */
+--- END OF FILE: ./style.css ---
 --- START OF FILE: ./.git ---
 
 --- END OF FILE: ./.git ---

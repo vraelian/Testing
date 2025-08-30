@@ -9,6 +9,7 @@
     align-items: center;
     padding: 0 5px 0 10px;
     border-bottom: 1px solid #111;
+    border-radius: 0 0 15px 15px; /* Round the bottom corners */
 }
 
 .nav-main {
@@ -17,8 +18,8 @@
 
 .tab {
     padding: 6px 12px;
-    color: var(--theme-text);
-    opacity: 0.6;
+    color: #a0aec0; /* Default text color */
+    opacity: 0.7; /* Default opacity */
     cursor: pointer;
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
@@ -41,16 +42,13 @@
 }
 
 .ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%); }
-.starport-tab, .admin-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
+.starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
 
 .tab.active {
-    background: var(--theme-grad);
-    color: var(--theme-text-dark);
     opacity: 1;
     z-index: 2;
     transform: scale(1.05);
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
-    border-top-color: rgba(255,255,255,0.5);
     filter: drop-shadow(0 3px 4px rgba(0,0,0,0.5));
 }
 
@@ -61,13 +59,13 @@
     justify-content: center;
     border-top: 1px solid #333;
     overflow: hidden;
+    border-radius: 0 0 13px 13px; /* Match parent rounding */
 }
 
 .nav-sub a {
     flex-grow: 1;
     text-align: center;
-    color: #a0aec0; /* A slightly lighter gray for better readability */
-    opacity: 0.7;
+    opacity: 0.8;
     font-size: 0.7rem;
     text-transform: uppercase;
     padding: 7px 0;

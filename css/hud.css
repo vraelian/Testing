@@ -1,40 +1,16 @@
 /* css/hud.css */
 #top-bar-container {
-    position: sticky;
-    top: 0.75rem;
-    z-index: 999;
-
-    max-width: 1200px; /* Changed from 98% for consistency */
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 10px; /* Slightly smaller radius to match inner elements */
+    z-index: 10; /* Lowered z-index slightly */
+    width: 100%; /* Ensure it spans the full width of the parent */
+    border-radius: 15px 15px 0 0; /* Match parent container's top corners */
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    padding: 0; /* Padding is now handled by inner elements */
-
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    border: none; /* Border is now on inner elements */
+    overflow: hidden; /* Hide anything that might poke out from rounded corners */
 }
 
-/* DEPRECATED: This rule is no longer necessary with the new design. */
-/* #top-bar-container.has-sticky-bar {
-    padding: 0.5rem 1rem;
-} */
-
-/* DEPRECATED: The old sticky bar is no longer used. */
-/* #sticky-bar {
-    margin-top: 0.6rem;
-}
-#sticky-bar .ship-hud {
-    padding: 0.15rem;
-} */
-
-
-/* --- [[START]] NEW BULKHEAD STYLES (Concept 207+) --- */
 .context-bar {
-    background: var(--theme-grad);
-    color: var(--theme-text);
     padding: 6px 12px;
     display: flex;
     justify-content: space-between;
@@ -43,8 +19,7 @@
     font-family: 'Share Tech Mono', monospace;
     border-bottom: 2px solid rgba(0,0,0,0.3);
     text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    transition: background 0.5s ease-out, color 0.5s ease-out;
 }
 
 .credit-text {
@@ -92,7 +67,7 @@
 
 .status-tooltip {
     position: absolute;
-    bottom: 120%; /* Position above the bar */
+    bottom: 120%;
     left: 50%;
     transform: translateX(-50%);
     background-color: #111;
@@ -102,11 +77,11 @@
     font-size: 0.75rem;
     white-space: nowrap;
     z-index: 20;
-    border: 1px solid var(--theme-main, #555); /* Concept 207 style */
+    border: 1px solid #555;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, border-color 0.5s ease-out;
     visibility: hidden;
 }
 
@@ -115,9 +90,45 @@
     visibility: visible;
 }
 
-/* --- [[END]] NEW BULKHEAD STYLES --- */
+/* --- [[START]] LOCATION THEMES --- */
+[data-location-theme="loc_mars"] .context-bar,
+[data-location-theme="loc_mars"] .tab.active {
+    background: linear-gradient(135deg, #d32f2f, #ff6f61);
+    color: #ffffff;
+    border-top-color: #ffcdd2;
+}
+[data-location-theme="loc_mars"] .nav-sub a {
+    color: #ff8a80;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80; }
 
+[data-location-theme="loc_earth"] .context-bar,
+[data-location-theme="loc_earth"] .tab.active {
+    background: linear-gradient(135deg, #00796b, #4dd0e1);
+    color: #ffffff;
+    border-top-color: #b2dfdb;
+}
+[data-location-theme="loc_earth"] .nav-sub a {
+    color: #80cbc4;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4; }
 
+[data-location-theme="loc_luna"] .context-bar,
+[data-location-theme="loc_luna"] .tab.active {
+    background: linear-gradient(135deg, #757575, #e0e0e0);
+    color: #212121;
+    border-top-color: #ffffff;
+}
+[data-location-theme="loc_luna"] .nav-sub a {
+    color: #9e9e9e;
+    text-shadow: 0 0 3px rgba(0,0,0,0.7);
+}
+[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e; }
+/* --- [[END]] LOCATION THEMES --- */
+
+/* DEPRECATED STYLES - Kept for non-nav UI elements */
 .ship-hud {
     background-color: rgba(10, 20, 40, 0.5);
     border: 2px solid #2a3a5a;
