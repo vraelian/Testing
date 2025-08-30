@@ -27,7 +27,7 @@ export class EventManager {
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
         this.debugService = debugService;
-        
+
         this.refuelInterval = null;
         this.repairInterval = null;
         this.activeTooltipTarget = null;
@@ -54,15 +54,15 @@ export class EventManager {
         });
         document.body.addEventListener('touchstart', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) { 
-                e.preventDefault(); 
-                this._startRefueling(refuelBtn); 
+            if (refuelBtn) {
+                e.preventDefault();
+                this._startRefueling(refuelBtn);
             }
 
             const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) { 
-                e.preventDefault(); 
-                this._startRepairing(repairBtn); 
+            if (repairBtn) {
+                e.preventDefault();
+                this._startRepairing(repairBtn);
             }
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
@@ -84,7 +84,7 @@ export class EventManager {
                 this.activeTooltipTarget = null;
             }
         }, { passive: true });
-        
+
         // Make the mission sticky bar clickable to navigate to the missions screen.
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
@@ -104,11 +104,15 @@ export class EventManager {
         const state = this.gameState.getState();
 
         // Dismiss any active tooltip if clicking inside it.
-        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
+        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip') || e.target.closest('#status-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
+            this.uiManager.hideStatusTooltip();
             this.activeTooltipTarget = null;
             return;
+        }
+        if (!e.target.closest('[data-action="toggle-tooltip"]')) {
+            this.uiManager.hideStatusTooltip();
         }
 
         const actionTarget = e.target.closest('[data-action]');
@@ -123,9 +127,9 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, tooltip } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
-            
+
             switch(action) {
                 // Mission Actions
                 case 'show-mission-modal':
@@ -158,7 +162,7 @@ export class EventManager {
                     this.simulationService.travelTo(locationId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
-                case ACTION_IDS.BUY_SHIP: 
+                case ACTION_IDS.BUY_SHIP:
                     if (this.simulationService.buyShip(shipId)) {
                         const price = DB.SHIPS[shipId].price;
                         this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
@@ -187,7 +191,7 @@ export class EventManager {
                 case 'show-starport-locked-toast':
                     this.uiManager.showToast('starport-unlock-tooltip', "Pay off your initial loan to access the Starport!");
                     break;
-                
+
                 // Market Transaction Controls
                 case 'toggle-trade-mode': {
                     const controls = actionTarget.closest('.transaction-controls');
@@ -216,7 +220,7 @@ export class EventManager {
                             const text = currentMode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                             const color = currentMode === 'buy' ? '#f87171' : '#34d399';
 
-                            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);                            
+                            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
                             actionData = { type: 'ACTION', action: currentMode === 'buy' ? 'buy-item' : 'sell-item', goodId: goodId };
                         }
                     }
@@ -242,7 +246,7 @@ export class EventManager {
                     }
                     break;
                 }
-                case ACTION_IDS.INCREMENT: 
+                case ACTION_IDS.INCREMENT:
                 case ACTION_IDS.DECREMENT: {
                      const controls = actionTarget.closest('.transaction-controls');
                     if (!controls) break;
@@ -253,7 +257,16 @@ export class EventManager {
                 }
 
                 // Tooltip & Graph Actions
-                 case ACTION_IDS.SHOW_PRICE_GRAPH:
+                case 'toggle-tooltip': {
+                    if (this.uiManager.activeStatusTooltipAnchor === actionTarget) {
+                        this.uiManager.hideStatusTooltip();
+                    } else {
+                        this.uiManager.showStatusTooltip(actionTarget, tooltip);
+                    }
+                    e.stopPropagation();
+                    return;
+                }
+                case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH: {
                     if (this.uiManager.isMobile) {
                         this.uiManager.hideGenericTooltip(); // Hide other tooltip.
@@ -297,7 +310,7 @@ export class EventManager {
             this.uiManager.hideModal('ship-detail-modal');
             return;
         }
-        
+
         // Handle mobile-specific generic tooltips (tap to show, tap again to hide).
         if (this.uiManager.isMobile) {
             const tooltipTarget = e.target.closest('[data-tooltip]');
@@ -322,7 +335,7 @@ export class EventManager {
         if (visibleTooltip && !e.target.closest('.lore-tooltip, .tutorial-tooltip')) {
             visibleTooltip.classList.remove('visible');
         }
-        
+
         if (loreTrigger) {
             const tooltip = loreTrigger.querySelector('.lore-tooltip');
             if (tooltip) tooltip.classList.toggle('visible');
@@ -365,7 +378,7 @@ export class EventManager {
             this.uiManager.hideGraph();
         }
     }
-    
+
     /**
      * Handles keydown events, primarily for debug shortcuts.
      * @param {Event} e The keydown event object.
@@ -382,7 +395,7 @@ export class EventManager {
             }
             return;
         }
-    
+
         let message = '';
         switch(e.key) {
             case '!':
@@ -423,7 +436,7 @@ export class EventManager {
                 message = `Debug: Time advanced 1 year and 1 day.`;
                 break;
         }
-    
+
         if (message) {
             this.gameState.setState({});
             this.uiManager.render(this.gameState.getState());
@@ -437,7 +450,7 @@ export class EventManager {
      */
     _startRefueling(buttonElement) {
         if (this.gameState.isGameOver || this.refuelInterval) return;
-        this._refuelTick(buttonElement); 
+        this._refuelTick(buttonElement);
         // A service tick is called every 1000ms (1 second) while the button is held.
         this.refuelInterval = setInterval(() => this._refuelTick(buttonElement), 1000);
     }
