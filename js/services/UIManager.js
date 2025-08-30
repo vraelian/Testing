@@ -105,14 +105,13 @@ export class UIManager {
         const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
-        
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
         // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span>${location?.name || 'In Transit'}</span>
-                <span class="credit-text">⌬: ${formatCredits(player.credits, false)}</span>
+                <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
         // Main Nav Tabs & Status Pod

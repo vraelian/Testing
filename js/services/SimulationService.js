@@ -263,7 +263,6 @@ export class SimulationService {
             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
-        this.uiManager.render(this.gameState.getState());
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
@@ -480,8 +479,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.updateMarketScreen(this.gameState.getState());
-        this.uiManager.updateStickyBar(this.gameState.getState());
 
         return true;
     }
@@ -529,8 +526,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.updateMarketScreen(this.gameState.getState());
-        this.uiManager.updateStickyBar(this.gameState.getState());
         
         return totalSaleValue;
     }
@@ -557,7 +552,6 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
         return true;
     }
 
@@ -592,7 +586,6 @@ export class SimulationService {
 
         this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
         return salePrice;
     }
 
@@ -609,7 +602,6 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState()); // Full render on ship change
     }
 
     /**
@@ -632,8 +624,6 @@ export class SimulationService {
 
         this._checkMilestones();
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
-        this.uiManager.renderFinanceScreen(this.gameState.getState());
     }
     
     /**
@@ -664,8 +654,6 @@ export class SimulationService {
         const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
-        this.uiManager.renderFinanceScreen(this.gameState.getState());
     }
 
     /**
@@ -700,7 +688,6 @@ export class SimulationService {
             };
         }
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
     }
 
     /**
@@ -806,10 +793,6 @@ export class SimulationService {
             }
         }
         
-        if (marketUpdated && this.gameState.activeScreen === SCREEN_IDS.MARKET) {
-            this.uiManager.render(this.gameState.getState());
-        }
-
         this.gameState.setState({});
     }
     
@@ -887,7 +870,6 @@ export class SimulationService {
             }
         });
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
         return result;
     }
 

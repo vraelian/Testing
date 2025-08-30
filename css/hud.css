@@ -1,13 +1,15 @@
 /* css/hud.css */
 #top-bar-container {
-    z-index: 10; /* Lowered z-index slightly */
-    width: 100%; /* Ensure it spans the full width of the parent */
-    border-radius: 15px; /* Match parent container's top corners */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    border-radius: 15px;
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    overflow: hidden; /* Hide anything that might poke out from rounded corners */
+    overflow: hidden;
 }
 
 .context-bar {
@@ -105,7 +107,8 @@
     color: #ffffff;
     background-color: #c62828;
 }
-[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80; }
+[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80;
+}
 
 [data-location-theme="loc_earth"] .context-bar,
 [data-location-theme="loc_earth"] .tab.active {
@@ -121,7 +124,8 @@
     color: #ffffff;
     background-color: #00695c;
 }
-[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4; }
+[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4;
+}
 
 [data-location-theme="loc_luna"] .context-bar,
 [data-location-theme="loc_luna"] .tab.active {
@@ -137,7 +141,8 @@
     color: #000000;
     background-color: #d6d6d6;
 }
-[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e; }
+[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e;
+}
 
 [data-location-theme="loc_venus"] .context-bar,
 [data-location-theme="loc_venus"] .tab.active {
@@ -147,7 +152,8 @@
 }
 [data-location-theme="loc_venus"] .nav-sub a { color: #ffe082; }
 [data-location-theme="loc_venus"] .nav-sub a.active { color: #3e2723; background-color: #fbc02d; }
-[data-location-theme="loc_venus"] .status-tooltip { border-color: #ffe082; }
+[data-location-theme="loc_venus"] .status-tooltip { border-color: #ffe082;
+}
 
 [data-location-theme="loc_belt"] .context-bar,
 [data-location-theme="loc_belt"] .tab.active {
@@ -157,7 +163,8 @@
 }
 [data-location-theme="loc_belt"] .nav-sub a { color: #bcaaa4; }
 [data-location-theme="loc_belt"] .nav-sub a.active { color: #ffffff; background-color: #5d4037; }
-[data-location-theme="loc_belt"] .status-tooltip { border-color: #bcaaa4; }
+[data-location-theme="loc_belt"] .status-tooltip { border-color: #bcaaa4;
+}
 
 [data-location-theme="loc_saturn"] .context-bar,
 [data-location-theme="loc_saturn"] .tab.active {
@@ -167,7 +174,8 @@
 }
 [data-location-theme="loc_saturn"] .nav-sub a { color: #f48fb1; }
 [data-location-theme="loc_saturn"] .nav-sub a.active { color: #ffffff; background-color: #c2185b; }
-[data-location-theme="loc_saturn"] .status-tooltip { border-color: #f48fb1; }
+[data-location-theme="loc_saturn"] .status-tooltip { border-color: #f48fb1;
+}
 
 [data-location-theme="loc_jupiter"] .context-bar,
 [data-location-theme="loc_jupiter"] .tab.active {
@@ -177,7 +185,8 @@
 }
 [data-location-theme="loc_jupiter"] .nav-sub a { color: #ffcc80; }
 [data-location-theme="loc_jupiter"] .nav-sub a.active { color: #ffffff; background-color: #f57c00; }
-[data-location-theme="loc_jupiter"] .status-tooltip { border-color: #ffcc80; }
+[data-location-theme="loc_jupiter"] .status-tooltip { border-color: #ffcc80;
+}
 
 [data-location-theme="loc_uranus"] .context-bar,
 [data-location-theme="loc_uranus"] .tab.active {
@@ -187,7 +196,8 @@
 }
 [data-location-theme="loc_uranus"] .nav-sub a { color: #81d4fa; }
 [data-location-theme="loc_uranus"] .nav-sub a.active { color: #ffffff; background-color: #0277bd; }
-[data-location-theme="loc_uranus"] .status-tooltip { border-color: #81d4fa; }
+[data-location-theme="loc_uranus"] .status-tooltip { border-color: #81d4fa;
+}
 
 [data-location-theme="loc_neptune"] .context-bar,
 [data-location-theme="loc_neptune"] .tab.active {
@@ -197,7 +207,8 @@
 }
 [data-location-theme="loc_neptune"] .nav-sub a { color: #9fa8da; }
 [data-location-theme="loc_neptune"] .nav-sub a.active { color: #ffffff; background-color: #1a237e; }
-[data-location-theme="loc_neptune"] .status-tooltip { border-color: #9fa8da; }
+[data-location-theme="loc_neptune"] .status-tooltip { border-color: #9fa8da;
+}
 
 [data-location-theme="loc_pluto"] .context-bar,
 [data-location-theme="loc_pluto"] .tab.active {
@@ -207,7 +218,8 @@
 }
 [data-location-theme="loc_pluto"] .nav-sub a { color: #b0bec5; }
 [data-location-theme="loc_pluto"] .nav-sub a.active { color: #ffffff; background-color: #37474f; }
-[data-location-theme="loc_pluto"] .status-tooltip { border-color: #b0bec5; }
+[data-location-theme="loc_pluto"] .status-tooltip { border-color: #b0bec5;
+}
 
 [data-location-theme="loc_exchange"] .context-bar,
 [data-location-theme="loc_exchange"] .tab.active {
@@ -217,7 +229,8 @@
 }
 [data-location-theme="loc_exchange"] .nav-sub a { color: #ce93d8; }
 [data-location-theme="loc_exchange"] .nav-sub a.active { color: #ffffff; background-color: #4a148c; }
-[data-location-theme="loc_exchange"] .status-tooltip { border-color: #ce93d8; }
+[data-location-theme="loc_exchange"] .status-tooltip { border-color: #ce93d8;
+}
 
 [data-location-theme="loc_kepler"] .context-bar,
 [data-location-theme="loc_kepler"] .tab.active {
@@ -227,7 +240,8 @@
 }
 [data-location-theme="loc_kepler"] .nav-sub a { color: #f48fb1; }
 [data-location-theme="loc_kepler"] .nav-sub a.active { color: #ffffff; background-color: #880e4f; }
-[data-location-theme="loc_kepler"] .status-tooltip { border-color: #f48fb1; }
+[data-location-theme="loc_kepler"] .status-tooltip { border-color: #f48fb1;
+}
 /* --- [[END]] LOCATION THEMES --- */
 
 

@@ -16,7 +16,7 @@
 }
 
 .tab {
-    padding: 6px 12px;
+    padding: 7.5px 15px;
     color: #a0aec0; /* Default text color */
     opacity: 0.7; /* Default opacity */
     cursor: pointer;
@@ -40,7 +40,8 @@
     opacity: 0.3;
 }
 
-.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%); }
+.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%);
+}
 .starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
 
 .tab.active {
@@ -70,7 +71,7 @@
     opacity: 0.8;
     font-size: 0.7rem;
     text-transform: uppercase;
-    padding: 7px 0;
+    padding: 8.75px 0;
     text-decoration: none;
     position: relative;
     transition: all 0.2s;
@@ -90,7 +91,8 @@
 }
 
 
-.nav-sub a:first-child { border-left: none; }
+.nav-sub a:first-child { border-left: none;
+}
 .nav-sub a:last-child { border-right: none; }
 
 .nav-sub a:hover:not(.disabled) {
@@ -102,7 +104,8 @@
 
 
 /* --- [[START]] DEPRECATED STYLES --- */
-/* The styles below are no longer used by the navigation system but are kept for other UI elements. */
+/* The styles below are no longer used by the navigation system but are kept for other UI elements.
+*/
 .btn-header {
      padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
@@ -112,7 +115,8 @@
 }
 
 @media (max-width: 768px) {
-    /* .btn-header rules are no longer needed for navigation but might be used elsewhere. */
+    /* .btn-header rules are no longer needed for navigation but might be used elsewhere.
+*/
     .btn-header {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;

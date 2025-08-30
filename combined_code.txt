@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 23.00</title>
+    <title>Orbital Trading 23.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 23.00</p>
+            <p>Version 23.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -57,8 +57,8 @@
             <div id="sticky-bar"></div>
         </div>
         
-        <div class="px-4 md:px-8 pb-4 md:pb-8">
-            <div id="main-content" class="mt-6">
+        <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
+            <div id="main-content">
                 <div id="status-screen" class="screen"></div>
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
@@ -529,14 +529,16 @@
 --- START OF FILE: ./css/hud.css ---
 /* css/hud.css */
 #top-bar-container {
-    z-index: 10; /* Lowered z-index slightly */
-    width: 100%; /* Ensure it spans the full width of the parent */
-    border-radius: 15px; /* Match parent container's top corners */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    border-radius: 15px;
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    overflow: hidden; /* Hide anything that might poke out from rounded corners */
+    overflow: hidden;
 }
 
 .context-bar {
@@ -634,7 +636,8 @@
     color: #ffffff;
     background-color: #c62828;
 }
-[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80; }
+[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80;
+}
 
 [data-location-theme="loc_earth"] .context-bar,
 [data-location-theme="loc_earth"] .tab.active {
@@ -650,7 +653,8 @@
     color: #ffffff;
     background-color: #00695c;
 }
-[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4; }
+[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4;
+}
 
 [data-location-theme="loc_luna"] .context-bar,
 [data-location-theme="loc_luna"] .tab.active {
@@ -666,7 +670,8 @@
     color: #000000;
     background-color: #d6d6d6;
 }
-[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e; }
+[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e;
+}
 
 [data-location-theme="loc_venus"] .context-bar,
 [data-location-theme="loc_venus"] .tab.active {
@@ -676,7 +681,8 @@
 }
 [data-location-theme="loc_venus"] .nav-sub a { color: #ffe082; }
 [data-location-theme="loc_venus"] .nav-sub a.active { color: #3e2723; background-color: #fbc02d; }
-[data-location-theme="loc_venus"] .status-tooltip { border-color: #ffe082; }
+[data-location-theme="loc_venus"] .status-tooltip { border-color: #ffe082;
+}
 
 [data-location-theme="loc_belt"] .context-bar,
 [data-location-theme="loc_belt"] .tab.active {
@@ -686,7 +692,8 @@
 }
 [data-location-theme="loc_belt"] .nav-sub a { color: #bcaaa4; }
 [data-location-theme="loc_belt"] .nav-sub a.active { color: #ffffff; background-color: #5d4037; }
-[data-location-theme="loc_belt"] .status-tooltip { border-color: #bcaaa4; }
+[data-location-theme="loc_belt"] .status-tooltip { border-color: #bcaaa4;
+}
 
 [data-location-theme="loc_saturn"] .context-bar,
 [data-location-theme="loc_saturn"] .tab.active {
@@ -696,7 +703,8 @@
 }
 [data-location-theme="loc_saturn"] .nav-sub a { color: #f48fb1; }
 [data-location-theme="loc_saturn"] .nav-sub a.active { color: #ffffff; background-color: #c2185b; }
-[data-location-theme="loc_saturn"] .status-tooltip { border-color: #f48fb1; }
+[data-location-theme="loc_saturn"] .status-tooltip { border-color: #f48fb1;
+}
 
 [data-location-theme="loc_jupiter"] .context-bar,
 [data-location-theme="loc_jupiter"] .tab.active {
@@ -706,7 +714,8 @@
 }
 [data-location-theme="loc_jupiter"] .nav-sub a { color: #ffcc80; }
 [data-location-theme="loc_jupiter"] .nav-sub a.active { color: #ffffff; background-color: #f57c00; }
-[data-location-theme="loc_jupiter"] .status-tooltip { border-color: #ffcc80; }
+[data-location-theme="loc_jupiter"] .status-tooltip { border-color: #ffcc80;
+}
 
 [data-location-theme="loc_uranus"] .context-bar,
 [data-location-theme="loc_uranus"] .tab.active {
@@ -716,7 +725,8 @@
 }
 [data-location-theme="loc_uranus"] .nav-sub a { color: #81d4fa; }
 [data-location-theme="loc_uranus"] .nav-sub a.active { color: #ffffff; background-color: #0277bd; }
-[data-location-theme="loc_uranus"] .status-tooltip { border-color: #81d4fa; }
+[data-location-theme="loc_uranus"] .status-tooltip { border-color: #81d4fa;
+}
 
 [data-location-theme="loc_neptune"] .context-bar,
 [data-location-theme="loc_neptune"] .tab.active {
@@ -726,7 +736,8 @@
 }
 [data-location-theme="loc_neptune"] .nav-sub a { color: #9fa8da; }
 [data-location-theme="loc_neptune"] .nav-sub a.active { color: #ffffff; background-color: #1a237e; }
-[data-location-theme="loc_neptune"] .status-tooltip { border-color: #9fa8da; }
+[data-location-theme="loc_neptune"] .status-tooltip { border-color: #9fa8da;
+}
 
 [data-location-theme="loc_pluto"] .context-bar,
 [data-location-theme="loc_pluto"] .tab.active {
@@ -736,7 +747,8 @@
 }
 [data-location-theme="loc_pluto"] .nav-sub a { color: #b0bec5; }
 [data-location-theme="loc_pluto"] .nav-sub a.active { color: #ffffff; background-color: #37474f; }
-[data-location-theme="loc_pluto"] .status-tooltip { border-color: #b0bec5; }
+[data-location-theme="loc_pluto"] .status-tooltip { border-color: #b0bec5;
+}
 
 [data-location-theme="loc_exchange"] .context-bar,
 [data-location-theme="loc_exchange"] .tab.active {
@@ -746,7 +758,8 @@
 }
 [data-location-theme="loc_exchange"] .nav-sub a { color: #ce93d8; }
 [data-location-theme="loc_exchange"] .nav-sub a.active { color: #ffffff; background-color: #4a148c; }
-[data-location-theme="loc_exchange"] .status-tooltip { border-color: #ce93d8; }
+[data-location-theme="loc_exchange"] .status-tooltip { border-color: #ce93d8;
+}
 
 [data-location-theme="loc_kepler"] .context-bar,
 [data-location-theme="loc_kepler"] .tab.active {
@@ -756,7 +769,8 @@
 }
 [data-location-theme="loc_kepler"] .nav-sub a { color: #f48fb1; }
 [data-location-theme="loc_kepler"] .nav-sub a.active { color: #ffffff; background-color: #880e4f; }
-[data-location-theme="loc_kepler"] .status-tooltip { border-color: #f48fb1; }
+[data-location-theme="loc_kepler"] .status-tooltip { border-color: #f48fb1;
+}
 /* --- [[END]] LOCATION THEMES --- */
 
 
@@ -887,7 +901,17 @@ body {
     border-radius: 15px;
     transition: background 0.5s ease-out;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+    display: flex;
+    flex-direction: column;
 }
+
+.main-content-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 1.5rem; /* Replaces mt-6 */
+}
+
 .btn {
     transition: all 0.3s ease;
     border: 1px solid #4a6a8a;
@@ -1842,7 +1866,7 @@ body {
 }
 
 .tab {
-    padding: 6px 12px;
+    padding: 7.5px 15px;
     color: #a0aec0; /* Default text color */
     opacity: 0.7; /* Default opacity */
     cursor: pointer;
@@ -1866,7 +1890,8 @@ body {
     opacity: 0.3;
 }
 
-.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%); }
+.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%);
+}
 .starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
 
 .tab.active {
@@ -1896,7 +1921,7 @@ body {
     opacity: 0.8;
     font-size: 0.7rem;
     text-transform: uppercase;
-    padding: 7px 0;
+    padding: 8.75px 0;
     text-decoration: none;
     position: relative;
     transition: all 0.2s;
@@ -1916,7 +1941,8 @@ body {
 }
 
 
-.nav-sub a:first-child { border-left: none; }
+.nav-sub a:first-child { border-left: none;
+}
 .nav-sub a:last-child { border-right: none; }
 
 .nav-sub a:hover:not(.disabled) {
@@ -1928,7 +1954,8 @@ body {
 
 
 /* --- [[START]] DEPRECATED STYLES --- */
-/* The styles below are no longer used by the navigation system but are kept for other UI elements. */
+/* The styles below are no longer used by the navigation system but are kept for other UI elements.
+*/
 .btn-header {
      padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
@@ -1938,7 +1965,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    /* .btn-header rules are no longer needed for navigation but might be used elsewhere. */
+    /* .btn-header rules are no longer needed for navigation but might be used elsewhere.
+*/
     .btn-header {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;
@@ -2747,6 +2775,9 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService);
+        
+        // --- Link GameState to UIManager for automatic re-rendering ---
+        gameState.subscribe(() => uiManager.render(gameState.getState()));
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
@@ -4806,7 +4837,6 @@ export class SimulationService {
             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
-        this.uiManager.render(this.gameState.getState());
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
@@ -5023,8 +5053,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.updateMarketScreen(this.gameState.getState());
-        this.uiManager.updateStickyBar(this.gameState.getState());
 
         return true;
     }
@@ -5072,8 +5100,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this.gameState.setState({});
-        this.uiManager.updateMarketScreen(this.gameState.getState());
-        this.uiManager.updateStickyBar(this.gameState.getState());
         
         return totalSaleValue;
     }
@@ -5100,7 +5126,6 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
         return true;
     }
 
@@ -5135,7 +5160,6 @@ export class SimulationService {
 
         this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
         return salePrice;
     }
 
@@ -5152,7 +5176,6 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState()); // Full render on ship change
     }
 
     /**
@@ -5175,8 +5198,6 @@ export class SimulationService {
 
         this._checkMilestones();
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
-        this.uiManager.renderFinanceScreen(this.gameState.getState());
     }
     
     /**
@@ -5207,8 +5228,6 @@ export class SimulationService {
         const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
-        this.uiManager.renderFinanceScreen(this.gameState.getState());
     }
 
     /**
@@ -5243,7 +5262,6 @@ export class SimulationService {
             };
         }
         this.gameState.setState({});
-        this.uiManager.updateStickyBar(this.gameState.getState());
     }
 
     /**
@@ -5349,10 +5367,6 @@ export class SimulationService {
             }
         }
         
-        if (marketUpdated && this.gameState.activeScreen === SCREEN_IDS.MARKET) {
-            this.uiManager.render(this.gameState.getState());
-        }
-
         this.gameState.setState({});
     }
     
@@ -5430,7 +5444,6 @@ export class SimulationService {
             }
         });
         this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
         return result;
     }
 
@@ -6903,14 +6916,13 @@ export class UIManager {
         const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
-        
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
         // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span>${location?.name || 'In Transit'}</span>
-                <span class="credit-text">⌬: ${formatCredits(player.credits, false)}</span>
+                <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
         // Main Nav Tabs & Status Pod

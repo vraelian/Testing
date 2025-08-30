@@ -70,6 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService);
+        
+        // --- Link GameState to UIManager for automatic re-rendering ---
+        gameState.subscribe(() => uiManager.render(gameState.getState()));
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();

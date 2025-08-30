@@ -40,7 +40,17 @@ body {
     border-radius: 15px;
     transition: background 0.5s ease-out;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+    display: flex;
+    flex-direction: column;
 }
+
+.main-content-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 1.5rem; /* Replaces mt-6 */
+}
+
 .btn {
     transition: all 0.3s ease;
     border: 1px solid #4a6a8a;
