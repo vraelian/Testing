@@ -1204,18 +1204,18 @@ body {
 /* css/screens/market-screen.css */
 :root {
     /* Card Appearance */
-    --market-card-height: 128px;
-    --market-card-border-radius: 8px;
+    --market-card-height: 145px;
+    --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
     
     /* Positioning */
-    --market-card-info-top: 12px;
+    --market-card-info-top: 7px;
     --market-card-info-left: 16px;
     --market-card-module-top: 13px;
     --market-card-module-right: 12px;
     --market-card-pinv-top: 34px;
     --market-card-pinv-left: 74px;
-    --market-card-avail-top: 29px;
+    --market-card-avail-top: 34px;
     --market-card-avail-left: 17px;
     --market-card-price-top: 68px;
     --market-card-price-left: 16px;
@@ -1224,25 +1224,25 @@ body {
     --market-card-price-indicator-v-gap: 7px;
 
     /* Name Text */
-    --market-card-name-font-size: 0.95rem;
+    --market-card-name-font-size: 1.2rem;
     --market-card-name-color: #ffffff;
-    --market-card-name-text-shadow: -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000, 1px 1px 0 #000000, -0.5px 0px 3px #000000;
+    --market-card-name-text-shadow: -1.00px -1.00px 0 #000000, 0.00px -1.41px 0 #000000, 1.00px -1.00px 0 #000000, 1.41px 0.00px 0 #000000, 1.00px 1.00px 0 #000000, 0.00px 1.41px 0 #000000, -1.00px 1.00px 0 #000000, -1.41px 0.00px 0 #000000, -0.5px 0px 3px #000000;
 
     /* Player Inventory Text */
     --market-card-pinv-font-size: 0.65rem;
     --market-card-pinv-color: #e8e8e8;
-    --market-card-pinv-text-shadow: -0.4px -0.4px 0 #000000, 0.4px -0.4px 0 #000000, -0.4px 0.4px 0 #000000, 0.4px 0.4px 0 #000000, 0px 1.5px 2.5px #616b70;
+    --market-card-pinv-text-shadow: -0.40px -0.40px 0 #000000, 0.00px -0.57px 0 #000000, 0.40px -0.40px 0 #000000, 0.57px 0.00px 0 #000000, 0.40px 0.40px 0 #000000, 0.00px 0.57px 0 #000000, -0.40px 0.40px 0 #000000, -0.57px 0.00px 0 #000000, 0px 1.5px 2.5px #616b70;
     
     /* Avail Text */
     --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
-    --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
+    --market-card-avail-text-shadow: -0.70px -0.70px 0 #292929, 0.00px -0.99px 0 #292929, 0.70px -0.70px 0 #292929, 0.99px 0.00px 0 #292929, 0.70px 0.70px 0 #292929, 0.00px 0.99px 0 #292929, -0.70px 0.70px 0 #292929, -0.99px 0.00px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
     --market-card-price-font-size: 1.75rem;
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 20px #16a8bb, -1.1px -1.1px 0 #001fb8, 1.1px -1.1px 0 #001fb8, -1.1px 1.1px 0 #001fb8, 1.1px 1.1px 0 #001fb8, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #16a8bb, -1.10px -1.10px 0 #001fb8, 0.00px -1.56px 0 #001fb8, 1.10px -1.10px 0 #001fb8, 1.56px 0.00px 0 #001fb8, 1.10px 1.10px 0 #001fb8, 0.00px 1.56px 0 #001fb8, -1.10px 1.10px 0 #001fb8, -1.56px 0.00px 0 #001fb8, 0px 0px 20px #28d5d7;
 
     /* Module */
     --market-card-module-width: 122px;
@@ -1271,11 +1271,11 @@ body {
 
 
     /* Indicators */
-    --market-card-indicator-top: 81px;
+    --market-card-indicator-top: 109px;
     --market-card-indicator-left: 16px;
-    --market-card-indicator-h-spacing: 4px;
+    --market-card-indicator-h-spacing: 6px;
     --market-card-indicator-v-spacing: 3px;
-    --market-card-indicator-font-size: 0.55em;
+    --market-card-indicator-font-size: 0.6em;
     --market-card-indicator-padding: 0.1em 0.5em;
     --market-card-indicator-positive-bg: rgb(16, 185, 129);
     --market-card-indicator-negative-bg: rgb(220, 38, 38);
@@ -1851,24 +1851,26 @@ import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../../uti
  * @returns {string} The HTML content for the Status screen.
  */
 export function renderStatusScreen(gameState) {
-    const { player, day } = gameState;
+    const { player, day, currentLocationId } = gameState;
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
+    const location = DB.MARKETS.find(l => l.id === currentLocationId);
+    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border border-slate-700">
+            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <div class="text-left pl-4">
-                    <span class="block text-lg text-gray-400 uppercase tracking-widest">Day</span>
+                    <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
                     <span class="text-4xl font-bold font-orbitron">${day}</span>
                 </div>
                 <div class="text-right flex flex-col items-end">
-                    <p class="text-xs text-cyan-200/80 mb-2 font-roboto-mono text-right">${getDateFromDay(day)}</p>
-                    <div class="mt-2 pt-2 border-t border-slate-500/50">
+                    <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
+                    <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
                         <div class="text-right">
-                            <p class="text-gray-400 text-sm tracking-wider">Vessel</p>
+                            <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
                             <p>${shipStatic.name}</p>
                             <p>Class: ${shipStatic.class}</p>
                         </div>
@@ -2279,7 +2281,9 @@ import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Finance screen.
  */
 export function renderFinanceScreen(gameState) {
-    const { player, day } = gameState;
+    const { player, day, currentLocationId } = gameState;
+    const location = DB.MARKETS.find(l => l.id === currentLocationId);
+    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
     let loanHtml;
 
     // Display the current debt panel if the player has debt.
@@ -2333,18 +2337,18 @@ export function renderFinanceScreen(gameState) {
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="md:col-span-1 bg-black/20 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border border-slate-700 text-center">
+            <div class="md:col-span-1 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 ${loanHtml}
             </div>
             <div class="md:col-span-2">
                  <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                 <div class="bg-black/20 p-4 rounded-lg shadow-lg panel-border border border-slate-700 h-96 overflow-y-auto">
-                    <div class="grid grid-cols-4 gap-2 p-2 border-b-2 border-slate-500 font-bold text-gray-300">
+                 <div class="p-4 rounded-lg shadow-lg panel-border border h-96 overflow-y-auto" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <div class="grid grid-cols-4 gap-2 p-2 border-b-2 font-bold" style="border-color: ${theme.borderColor};">
                        <span>Day</span>
                        <span class="col-span-2">Description</span>
                        <span class="text-right">Amount</span>
                     </div>
-                    ${logEntries || '<p class="text-center text-gray-500 p-4">No transactions recorded.</p>'}
+                    ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
                  </div>
             </div>
         </div>
@@ -2372,6 +2376,8 @@ export function renderServicesScreen(gameState) {
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
     const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
+    const theme = currentMarket?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+
 
     // Calculate fuel price, applying perks if applicable.
     let fuelPrice = currentMarket.fuelPrice / 2;
@@ -2394,16 +2400,16 @@ export function renderServicesScreen(gameState) {
             <div id="services-credits-display" class="text-lg text-cyan-300 mt-2"><span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
+            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                <button id="refuel-btn" class="btn btn-green w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
+                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
+                <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
             </div>
-            <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
+            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                <button id="repair-btn" class="btn btn-blue w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
+                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
+                <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
             </div>
         </div>`;
@@ -3389,7 +3395,7 @@ export const DB = {
         { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
         { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
         { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#a16207', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
         { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
         { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
         { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
@@ -3572,6 +3578,7 @@ export class DebugService {
         this.uiManager = uiManager;
         this.gui = null;
         this.active = false;
+        this.styleOverridesActive = true;
         this.state = {};
         this.defaults = {};
         this.exportTextarea = null;
@@ -3595,7 +3602,7 @@ export class DebugService {
             // Name Text
             infoTop: 7,
             infoLeft: 16,
-            nameFontSize: 1.2,
+            nameFontSize: 0.85,
             nameColor: '#ffffff',
             nameOutlineWidth: 1,
             nameOutlineColor: '#000000',
@@ -3744,6 +3751,7 @@ export class DebugService {
     }
     
     updateAllStyles() {
+        if (!this.styleOverridesActive) return;
         for (const key in this.state) {
             const cssVar = this.getCssVarForKey(key);
             const cssVal = this.getCssValueForKey(key);
@@ -3760,11 +3768,37 @@ export class DebugService {
         this.gui.domElement.style.display = this.active ? 'block' : 'none';
     }
 
+    toggleStyleOverrides() {
+        this.styleOverridesActive = !this.styleOverridesActive;
+        if (this.styleOverridesActive) {
+            this.updateAllStyles();
+        } else {
+            this._removeStyleOverrides();
+        }
+    }
+
+    _removeStyleOverrides() {
+        for (const key in this.state) {
+            const cssVar = this.getCssVarForKey(key);
+            if (cssVar) {
+                document.documentElement.style.removeProperty(cssVar);
+            }
+        }
+        // Special case for text shadows which are combined into one variable
+        ['name', 'pinv', 'avail', 'price'].forEach(prefix => {
+            document.documentElement.style.removeProperty(`--market-card-${prefix}-text-shadow`);
+        });
+    }
+
+
     updateCssVariable(property, value) {
-        document.documentElement.style.setProperty(property, value);
+        if (this.styleOverridesActive) {
+            document.documentElement.style.setProperty(property, value);
+        }
     }
     
     updateTextStyles() {
+        if (!this.styleOverridesActive) return;
         ['name', 'pinv', 'avail', 'price'].forEach(prefix => {
             let shadows = [];
             if (prefix === 'price' && this.state.priceGlowRadius > 0) {
@@ -5814,22 +5848,22 @@ export class EventManager {
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) this._startRefueling(refuelBtn);
+            if (refuelBtn) this._startRefueling();
 
             const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) this._startRepairing(repairBtn);
+            if (repairBtn) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) { 
                 e.preventDefault(); 
-                this._startRefueling(refuelBtn); 
+                this._startRefueling(); 
             }
 
             const repairBtn = e.target.closest('#repair-btn');
             if (repairBtn) { 
                 e.preventDefault(); 
-                this._startRepairing(repairBtn); 
+                this._startRepairing(); 
             }
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
@@ -6176,9 +6210,16 @@ export class EventManager {
         if (state.isGameOver || e.ctrlKey || e.metaKey) return;
 
         // --- Debug/Dev Keys ---
-        if (e.code === 'Backquote') {
+        if (e.key === '`') {
             if (this.debugService) {
                 this.debugService.toggleVisibility();
+            }
+            return;
+        }
+        if (e.key === '~') {
+            if (this.debugService && this.debugService.active) {
+                this.debugService.toggleStyleOverrides();
+                console.log(`Debug: Style Overrides Toggled ${this.debugService.styleOverridesActive ? 'ON' : 'OFF'}.`);
             }
             return;
         }
@@ -6232,14 +6273,13 @@ export class EventManager {
 
     /**
      * Starts the refueling process when the button is held down.
-     * @param {HTMLElement} buttonElement - The refuel button element.
      * @private
      */
-    _startRefueling(buttonElement) {
+    _startRefueling() {
         if (this.gameState.isGameOver || this.refuelInterval) return;
-        this._refuelTick(buttonElement); 
+        this._refuelTick(); 
         // A service tick is called every 1000ms (1 second) while the button is held.
-        this.refuelInterval = setInterval(() => this._refuelTick(buttonElement), 1000);
+        this.refuelInterval = setInterval(() => this._refuelTick(), 1000);
     }
 
     /**
@@ -6253,12 +6293,13 @@ export class EventManager {
 
     /**
      * Executes a single "tick" of refueling.
-     * @param {HTMLElement} buttonElement - The refuel button element, used for positioning the floating text.
      * @private
      */
-    _refuelTick(buttonElement) {
+    _refuelTick() {
         const cost = this.simulationService.refuelTick();
         if (cost > 0) {
+            const buttonElement = document.getElementById('refuel-btn');
+            if (!buttonElement) return; // Stop if button is not visible
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);
@@ -6271,14 +6312,13 @@ export class EventManager {
 
     /**
      * Starts the repair process when the button is held down.
-     * @param {HTMLElement} buttonElement - The repair button element.
      * @private
      */
-    _startRepairing(buttonElement) {
+    _startRepairing() {
         if (this.gameState.isGameOver || this.repairInterval) return;
-        this._repairTick(buttonElement);
+        this._repairTick();
         // A service tick is called every 1000ms (1 second) while the button is held.
-        this.repairInterval = setInterval(() => this._repairTick(buttonElement), 1000);
+        this.repairInterval = setInterval(() => this._repairTick(), 1000);
     }
 
     /**
@@ -6292,12 +6332,13 @@ export class EventManager {
 
     /**
      * Executes a single "tick" of repairing.
-     * @param {HTMLElement} buttonElement - The repair button element, used for positioning the floating text.
      * @private
      */
-    _repairTick(buttonElement) {
+    _repairTick() {
         const cost = this.simulationService.repairTick();
         if (cost > 0) {
+            const buttonElement = document.getElementById('repair-btn');
+            if (!buttonElement) return; // Stop if button is not visible
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);

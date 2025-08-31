@@ -13,6 +13,7 @@ export class DebugService {
         this.uiManager = uiManager;
         this.gui = null;
         this.active = false;
+        this.styleOverridesActive = true;
         this.state = {};
         this.defaults = {};
         this.exportTextarea = null;
@@ -36,7 +37,7 @@ export class DebugService {
             // Name Text
             infoTop: 7,
             infoLeft: 16,
-            nameFontSize: 1.2,
+            nameFontSize: 0.85,
             nameColor: '#ffffff',
             nameOutlineWidth: 1,
             nameOutlineColor: '#000000',
@@ -185,6 +186,7 @@ export class DebugService {
     }
     
     updateAllStyles() {
+        if (!this.styleOverridesActive) return;
         for (const key in this.state) {
             const cssVar = this.getCssVarForKey(key);
             const cssVal = this.getCssValueForKey(key);
@@ -201,11 +203,37 @@ export class DebugService {
         this.gui.domElement.style.display = this.active ? 'block' : 'none';
     }
 
+    toggleStyleOverrides() {
+        this.styleOverridesActive = !this.styleOverridesActive;
+        if (this.styleOverridesActive) {
+            this.updateAllStyles();
+        } else {
+            this._removeStyleOverrides();
+        }
+    }
+
+    _removeStyleOverrides() {
+        for (const key in this.state) {
+            const cssVar = this.getCssVarForKey(key);
+            if (cssVar) {
+                document.documentElement.style.removeProperty(cssVar);
+            }
+        }
+        // Special case for text shadows which are combined into one variable
+        ['name', 'pinv', 'avail', 'price'].forEach(prefix => {
+            document.documentElement.style.removeProperty(`--market-card-${prefix}-text-shadow`);
+        });
+    }
+
+
     updateCssVariable(property, value) {
-        document.documentElement.style.setProperty(property, value);
+        if (this.styleOverridesActive) {
+            document.documentElement.style.setProperty(property, value);
+        }
     }
     
     updateTextStyles() {
+        if (!this.styleOverridesActive) return;
         ['name', 'pinv', 'avail', 'price'].forEach(prefix => {
             let shadows = [];
             if (prefix === 'price' && this.state.priceGlowRadius > 0) {

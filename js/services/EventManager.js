@@ -410,9 +410,16 @@ export class EventManager {
         if (state.isGameOver || e.ctrlKey || e.metaKey) return;
 
         // --- Debug/Dev Keys ---
-        if (e.code === 'Backquote') {
+        if (e.key === '`') {
             if (this.debugService) {
                 this.debugService.toggleVisibility();
+            }
+            return;
+        }
+        if (e.key === '~') {
+            if (this.debugService && this.debugService.active) {
+                this.debugService.toggleStyleOverrides();
+                console.log(`Debug: Style Overrides Toggled ${this.debugService.styleOverridesActive ? 'ON' : 'OFF'}.`);
             }
             return;
         }
