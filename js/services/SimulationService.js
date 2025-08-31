@@ -222,7 +222,7 @@ export class SimulationService {
      */
     _continueIntroSequence(completedBatchId) {
         if (completedBatchId === 'intro_hangar') {
-            this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.FINANCE);
+            this.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
             this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
         } else if (completedBatchId === 'intro_finance') {
             this._endIntroSequence();
@@ -240,10 +240,10 @@ export class SimulationService {
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
     
         // Temporarily re-apply a navLock for the final modal to guide the player.
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.ADMIN, screenId: SCREEN_IDS.FINANCE };
+        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+             this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
         
@@ -384,7 +384,7 @@ export class SimulationService {
         
         const finalCallback = () => {
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+                this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {
                 this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             }

@@ -18,6 +18,7 @@ export function renderStatusScreen(gameState) {
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
+    const combinedTooltip = `Ship Integrity: Damaged by travel.\\nPropulsion Fuel: Consumed during travel.\\nCargo Space: Current/Max capacity.`;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -39,10 +40,10 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="ship-hud">
+                <div class="ship-hud tooltip-container" data-tooltip="${combinedTooltip}">
                     <h4 class="font-orbitron text-xl text-center mb-3 text-cyan-300">Ship Status</h4>
                     <div class="flex flex-col gap-y-2 text-sm">
-                        <div class="tooltip-container" data-tooltip="Ship integrity. Damaged by travel.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
@@ -51,7 +52,7 @@ export function renderStatusScreen(gameState) {
                                 <span class="font-bold text-green-300">${Math.floor(shipState.health)}%</span>
                             </div>
                         </div>
-                        <div class="tooltip-container" data-tooltip="Propulsion system fuel levels.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
@@ -60,7 +61,7 @@ export function renderStatusScreen(gameState) {
                                 <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
                             </div>
                         </div>
-                        <div class="tooltip-container" data-tooltip="Active ship's current/max cargo space.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 000 2h6a1 1 0 100-2H6z" /><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H4z" clip-rule="evenodd" /></svg>

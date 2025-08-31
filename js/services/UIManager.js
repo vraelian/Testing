@@ -281,19 +281,6 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // Tutorial override for Plasteel on the Moon to guarantee a profitable trade.
-        if (
-            gameState.tutorials.activeBatchId === 'intro_missions' &&
-            gameState.tutorials.activeStepId === 'mission_2_2' &&
-            goodId === COMMODITY_IDS.PLASTEEL &&
-            gameState.currentLocationId === LOCATION_IDS.LUNA
-        ) {
-            const plasteel = DB.COMMODITIES.find(c => c.id === COMMODITY_IDS.PLASTEEL);
-            const galacticAvg = (plasteel.basePriceRange[0] + plasteel.basePriceRange[1]) / 2;
-            return Math.round(galacticAvg * 1.8);
-        }
-
-
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
         // Apply a bonus if the location has a special demand for this item.
