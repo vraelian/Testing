@@ -84,6 +84,12 @@ export class UIManager {
 
     render(gameState) {
         if (!gameState || !gameState.player) return;
+        
+        // This guard prevents the main UI from rendering during the initial modal-only part of the intro.
+        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
+            return;
+        }
+
         this.lastKnownState = gameState;
         
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);

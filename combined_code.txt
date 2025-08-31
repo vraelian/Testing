@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 23.10</title>
+    <title>Orbital Trading 23.11</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 23.10</p>
+            <p>Version 23.11</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2008,6 +2008,7 @@ export function renderStatusScreen(gameState) {
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
+    const combinedTooltip = `Ship Integrity: Damaged by travel.\\nPropulsion Fuel: Consumed during travel.\\nCargo Space: Current/Max capacity.`;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -2029,10 +2030,10 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="ship-hud">
+                <div class="ship-hud tooltip-container" data-tooltip="${combinedTooltip}">
                     <h4 class="font-orbitron text-xl text-center mb-3 text-cyan-300">Ship Status</h4>
                     <div class="flex flex-col gap-y-2 text-sm">
-                        <div class="tooltip-container" data-tooltip="Ship integrity. Damaged by travel.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
@@ -2041,7 +2042,7 @@ export function renderStatusScreen(gameState) {
                                 <span class="font-bold text-green-300">${Math.floor(shipState.health)}%</span>
                             </div>
                         </div>
-                        <div class="tooltip-container" data-tooltip="Propulsion system fuel levels.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
@@ -2050,7 +2051,7 @@ export function renderStatusScreen(gameState) {
                                 <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
                             </div>
                         </div>
-                        <div class="tooltip-container" data-tooltip="Active ship's current/max cargo space.">
+                        <div>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 000 2h6a1 1 0 100-2H6z" /><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H4z" clip-rule="evenodd" /></svg>
@@ -3699,7 +3700,7 @@ export const DB = {
                 { "stepId": "mission_2_2", "text": "This is the <b>Moon</b> Market. Observe the <b class='hl-green font-bold'>MKT</b> indicator for plasteel - the market is <b class='hl-green font-bold'>paying more than usual</b> for industrial goods.<br><br>Selling your plasteel would be highly profitable! Do so now.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
                 { "stepId": "mission_2_3", "text": "Pure profit!<br><br>Let's check the Data <b>Mission Terminal</b> again.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_2_4", "text": "This mission offers a credit reward. Accept <b>The Mars Margin</b>  .", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
-                { "stepId": "mission_3_1", "text": "Plasteel is cheaper on <b>Mars</b>.<br><br>Acquire plasteel and complete this mission on <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
+                { "stepId": "mission_3_1", "text": "Acquire plasteel from the <b>Market</b> and complete this mission on <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
                 { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }
@@ -4806,7 +4807,7 @@ export class SimulationService {
      */
     _continueIntroSequence(completedBatchId) {
         if (completedBatchId === 'intro_hangar') {
-            this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.FINANCE);
+            this.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
             this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
         } else if (completedBatchId === 'intro_finance') {
             this._endIntroSequence();
@@ -4824,10 +4825,10 @@ export class SimulationService {
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
     
         // Temporarily re-apply a navLock for the final modal to guide the player.
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.ADMIN, screenId: SCREEN_IDS.FINANCE };
+        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+             this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
              this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
         
@@ -4968,7 +4969,7 @@ export class SimulationService {
         
         const finalCallback = () => {
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                this.setScreen(NAV_IDS.ADMIN, SCREEN_IDS.MISSIONS);
+                this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {
                 this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             }
@@ -6905,6 +6906,12 @@ export class UIManager {
 
     render(gameState) {
         if (!gameState || !gameState.player) return;
+        
+        // This guard prevents the main UI from rendering during the initial modal-only part of the intro.
+        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
+            return;
+        }
+
         this.lastKnownState = gameState;
         
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
@@ -7102,19 +7109,6 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // Tutorial override for Plasteel on the Moon to guarantee a profitable trade.
-        if (
-            gameState.tutorials.activeBatchId === 'intro_missions' &&
-            gameState.tutorials.activeStepId === 'mission_2_2' &&
-            goodId === COMMODITY_IDS.PLASTEEL &&
-            gameState.currentLocationId === LOCATION_IDS.LUNA
-        ) {
-            const plasteel = DB.COMMODITIES.find(c => c.id === COMMODITY_IDS.PLASTEEL);
-            const galacticAvg = (plasteel.basePriceRange[0] + plasteel.basePriceRange[1]) / 2;
-            return Math.round(galacticAvg * 1.8);
-        }
-
-
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
         // Apply a bonus if the location has a special demand for this item.
