@@ -18,7 +18,6 @@ export function renderStatusScreen(gameState) {
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
-    const combinedTooltip = `Ship Integrity: Damaged by travel.\\nPropulsion Fuel: Consumed during travel.\\nCargo Space: Current/Max capacity.`;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -40,7 +39,7 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="ship-hud tooltip-container" data-tooltip="${combinedTooltip}">
+                <div class="ship-hud">
                     <h4 class="font-orbitron text-xl text-center mb-3 text-cyan-300">Ship Status</h4>
                     <div class="flex flex-col gap-y-2 text-sm">
                         <div>
