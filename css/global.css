@@ -269,7 +269,8 @@ body {
 .panel-border::before, .panel-border::after {
     content: '';
     position: absolute; width: 15px; height: 15px;
-    border-color: #7a9ac0; border-style: solid;
+    border-color: var(--theme-border-color, #7a9ac0);
+    border-style: solid;
 }
 .panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
     border-top-left-radius: 10px; }

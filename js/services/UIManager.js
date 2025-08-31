@@ -96,6 +96,11 @@ export class UIManager {
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
             this.cache.gameContainer.className = `game-container ${location.bg}`;
+            if (location.navTheme && location.navTheme.borderColor) {
+                document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
+            } else {
+                document.documentElement.style.removeProperty('--theme-border-color');
+            }
         }
         
         this.renderNavigation(gameState);
@@ -167,7 +172,7 @@ export class UIManager {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${isSubNavActive ? 'active' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${isSubNavActive ? 'active' : ''}" style="color: ${theme.textColor};" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
