@@ -116,7 +116,7 @@ export class UIManager {
         // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
-                <span>${location?.name || 'In Transit'}</span>
+                <span class="location-name-text">${location?.name || 'In Transit'}</span>
                 <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     

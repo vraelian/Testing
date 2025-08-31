@@ -549,12 +549,13 @@
     font-size: 0.9rem;
     font-family: 'Share Tech Mono', monospace;
     border-bottom: 2px solid rgba(0,0,0,0.3);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Increased shadow for readability */
     transition: background 0.5s ease-out, color 0.5s ease-out;
 }
 
 .credit-text {
-    text-shadow: 0 0 5px rgba(0, 191, 255, 0.7);
+    color: #29f1ff;
+    text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
 }
 
 .status-pod {
@@ -630,159 +631,6 @@
     opacity: 1;
     visibility: visible;
 }
-
-/* --- [[START]] LOCATION THEMES --- */
-[data-location-theme="loc_mars"] .context-bar,
-[data-location-theme="loc_mars"] .tab.active {
-    background: linear-gradient(135deg, #e57373, #d32f2f);
-    color: #ffffff;
-    border-top-color: #ffcdd2;
-}
-[data-location-theme="loc_mars"] .nav-sub a {
-    color: #ff8a80;
-    text-shadow: 0 0 3px rgba(0,0,0,0.7);
-}
-[data-location-theme="loc_mars"] .nav-sub a.active {
-    color: #ffffff;
-    background-color: #c62828;
-}
-[data-location-theme="loc_mars"] .status-tooltip { border-color: #ff8a80;
-}
-
-[data-location-theme="loc_earth"] .context-bar,
-[data-location-theme="loc_earth"] .tab.active {
-    background: linear-gradient(135deg, #00796b, #4dd0e1);
-    color: #ffffff;
-    border-top-color: #b2dfdb;
-}
-[data-location-theme="loc_earth"] .nav-sub a {
-    color: #80cbc4;
-    text-shadow: 0 0 3px rgba(0,0,0,0.7);
-}
-[data-location-theme="loc_earth"] .nav-sub a.active {
-    color: #ffffff;
-    background-color: #00695c;
-}
-[data-location-theme="loc_earth"] .status-tooltip { border-color: #80cbc4;
-}
-
-[data-location-theme="loc_luna"] .context-bar,
-[data-location-theme="loc_luna"] .tab.active {
-    background: linear-gradient(135deg, #757575, #e0e0e0);
-    color: #212121;
-    border-top-color: #ffffff;
-}
-[data-location-theme="loc_luna"] .nav-sub a {
-    color: #9e9e9e;
-    text-shadow: 0 0 3px rgba(0,0,0,0.7);
-}
-[data-location-theme="loc_luna"] .nav-sub a.active {
-    color: #000000;
-    background-color: #d6d6d6;
-}
-[data-location-theme="loc_luna"] .status-tooltip { border-color: #9e9e9e;
-}
-
-[data-location-theme="loc_venus"] .context-bar,
-[data-location-theme="loc_venus"] .tab.active {
-    background: linear-gradient(135deg, #fff176, #fbc02d);
-    color: #3e2723;
-    border-top-color: #fff9c4;
-}
-[data-location-theme="loc_venus"] .nav-sub a { color: #ffe082; }
-[data-location-theme="loc_venus"] .nav-sub a.active { color: #3e2723; background-color: #fbc02d; }
-[data-location-theme="loc_venus"] .status-tooltip { border-color: #ffe082;
-}
-
-[data-location-theme="loc_belt"] .context-bar,
-[data-location-theme="loc_belt"] .tab.active {
-    background: linear-gradient(135deg, #a1887f, #5d4037);
-    color: #ffffff;
-    border-top-color: #d7ccc8;
-}
-[data-location-theme="loc_belt"] .nav-sub a { color: #bcaaa4; }
-[data-location-theme="loc_belt"] .nav-sub a.active { color: #ffffff; background-color: #5d4037; }
-[data-location-theme="loc_belt"] .status-tooltip { border-color: #bcaaa4;
-}
-
-[data-location-theme="loc_saturn"] .context-bar,
-[data-location-theme="loc_saturn"] .tab.active {
-    background: linear-gradient(135deg, #fce4ec, #e91e63);
-    color: #ffffff;
-    border-top-color: #f8bbd0;
-}
-[data-location-theme="loc_saturn"] .nav-sub a { color: #f48fb1; }
-[data-location-theme="loc_saturn"] .nav-sub a.active { color: #ffffff; background-color: #c2185b; }
-[data-location-theme="loc_saturn"] .status-tooltip { border-color: #f48fb1;
-}
-
-[data-location-theme="loc_jupiter"] .context-bar,
-[data-location-theme="loc_jupiter"] .tab.active {
-    background: linear-gradient(135deg, #ffb74d, #f57c00);
-    color: #ffffff;
-    border-top-color: #ffe0b2;
-}
-[data-location-theme="loc_jupiter"] .nav-sub a { color: #ffcc80; }
-[data-location-theme="loc_jupiter"] .nav-sub a.active { color: #ffffff; background-color: #f57c00; }
-[data-location-theme="loc_jupiter"] .status-tooltip { border-color: #ffcc80;
-}
-
-[data-location-theme="loc_uranus"] .context-bar,
-[data-location-theme="loc_uranus"] .tab.active {
-    background: linear-gradient(135deg, #b3e5fc, #0277bd);
-    color: #ffffff;
-    border-top-color: #e1f5fe;
-}
-[data-location-theme="loc_uranus"] .nav-sub a { color: #81d4fa; }
-[data-location-theme="loc_uranus"] .nav-sub a.active { color: #ffffff; background-color: #0277bd; }
-[data-location-theme="loc_uranus"] .status-tooltip { border-color: #81d4fa;
-}
-
-[data-location-theme="loc_neptune"] .context-bar,
-[data-location-theme="loc_neptune"] .tab.active {
-    background: linear-gradient(135deg, #5c6bc0, #1a237e);
-    color: #ffffff;
-    border-top-color: #c5cae9;
-}
-[data-location-theme="loc_neptune"] .nav-sub a { color: #9fa8da; }
-[data-location-theme="loc_neptune"] .nav-sub a.active { color: #ffffff; background-color: #1a237e; }
-[data-location-theme="loc_neptune"] .status-tooltip { border-color: #9fa8da;
-}
-
-[data-location-theme="loc_pluto"] .context-bar,
-[data-location-theme="loc_pluto"] .tab.active {
-    background: linear-gradient(135deg, #90a4ae, #37474f);
-    color: #ffffff;
-    border-top-color: #cfd8dc;
-}
-[data-location-theme="loc_pluto"] .nav-sub a { color: #b0bec5; }
-[data-location-theme="loc_pluto"] .nav-sub a.active { color: #ffffff; background-color: #37474f; }
-[data-location-theme="loc_pluto"] .status-tooltip { border-color: #b0bec5;
-}
-
-[data-location-theme="loc_exchange"] .context-bar,
-[data-location-theme="loc_exchange"] .tab.active {
-    background: linear-gradient(135deg, #7b1fa2, #4a148c);
-    color: #ffffff;
-    border-top-color: #e1bee7;
-}
-[data-location-theme="loc_exchange"] .nav-sub a { color: #ce93d8; }
-[data-location-theme="loc_exchange"] .nav-sub a.active { color: #ffffff; background-color: #4a148c; }
-[data-location-theme="loc_exchange"] .status-tooltip { border-color: #ce93d8;
-}
-
-[data-location-theme="loc_kepler"] .context-bar,
-[data-location-theme="loc_kepler"] .tab.active {
-    background: linear-gradient(135deg, #c2185b, #880e4f);
-    color: #ffffff;
-    border-top-color: #f8bbd0;
-}
-[data-location-theme="loc_kepler"] .nav-sub a { color: #f48fb1; }
-[data-location-theme="loc_kepler"] .nav-sub a.active { color: #ffffff; background-color: #880e4f; }
-[data-location-theme="loc_kepler"] .status-tooltip { border-color: #f48fb1;
-}
-/* --- [[END]] LOCATION THEMES --- */
-
 
 /* DEPRECATED STYLES - Kept for non-nav UI elements */
 .ship-hud {
@@ -3536,18 +3384,18 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(135deg, #4dd0e1, #00796b)', textColor: '#ffffff' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cloned_organs': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(135deg, #e0e0e0, #757575)', textColor: '#212121' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(135deg, #e57373, #d32f2f)', textColor: '#ffffff' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(135deg, #fff176, #fbc02d)', textColor: '#3e2723' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(135deg, #a1887f, #5d4037)', textColor: '#ffffff' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(135deg, #fce4ec, #e91e63)', textColor: '#ffffff' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(135deg, #ffb74d, #f57c00)', textColor: '#ffffff' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(135deg, #b3e5fc, #0277bd)', textColor: '#ffffff' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(135deg, #5c6bc0, #1a237e)', textColor: '#ffffff' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'antimatter': 0.0 }, specialDemand: { [COMMODITY_IDS.ANTIMATTER]: { lore: 'All antimatter is requisitioned for classified military projects, leaving none for public sale. However, the naval authority pays handsomely for it.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(135deg, #90a4ae, #37474f)', textColor: '#ffffff' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'On this lawless frontier, functional cloned organs are too valuable to ever be sold on the open market. However, they will pay handsomely for them.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The outcasts of Pluto have a special interest in acquiring AI Cores.', bonus: 1.5 } } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(135deg, #7b1fa2, #4a148c)', textColor: '#ffffff' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.0, 'antimatter': 0.1, 'folded_drives': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'The Exchange has an insatiable, and illegal, demand for Cloned Organs.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(135deg, #c2185b, #880e4f)', textColor: '#ffffff' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: { }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
+        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#ffffff' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cloned_organs': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 2.0 } } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#ffffff' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#ffffff' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#ffffff' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ffffff' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#ffffff' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#ffffff' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
+        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#ffffff' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#ffffff' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'antimatter': 0.0 }, specialDemand: { [COMMODITY_IDS.ANTIMATTER]: { lore: 'All antimatter is requisitioned for classified military projects, leaving none for public sale. However, the naval authority pays handsomely for it.', bonus: 1.75 } } },
+        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#ffffff' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'On this lawless frontier, functional cloned organs are too valuable to ever be sold on the open market. However, they will pay handsomely for them.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The outcasts of Pluto have a special interest in acquiring AI Cores.', bonus: 1.5 } } },
+        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#ffffff' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.0, 'antimatter': 0.1, 'folded_drives': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'The Exchange has an insatiable, and illegal, demand for Cloned Organs.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 2.0 } } },
+        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#ffffff' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: { }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
     ],
 
     // --- Mission Data ---
@@ -6938,7 +6786,7 @@ export class UIManager {
         // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
-                <span>${location?.name || 'In Transit'}</span>
+                <span class="location-name-text">${location?.name || 'In Transit'}</span>
                 <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
