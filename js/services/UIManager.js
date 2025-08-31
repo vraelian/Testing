@@ -654,7 +654,7 @@ export class UIManager {
 
     _renderPriceGraph(goodId, gameState, playerItem) {
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
-        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">Check back next week!!</div>`;
+        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Data Available!</div>`;
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const staticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
         const width = 280, height = 140, padding = 35;
