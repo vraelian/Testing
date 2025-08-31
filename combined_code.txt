@@ -1233,7 +1233,7 @@ body {
     --market-card-pinv-text-shadow: -0.4px -0.4px 0 #000000, 0.4px -0.4px 0 #000000, -0.4px 0.4px 0 #000000, 0.4px 0.4px 0 #000000, 0px 1.5px 2.5px #616b70;
     
     /* Avail Text */
-    --market-card-avail-font-size: 0.65rem;
+    --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
     --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
@@ -1856,7 +1856,6 @@ export function renderStatusScreen(gameState) {
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
-    const combinedTooltip = `Ship Integrity: Damaged by travel.\\nPropulsion Fuel: Consumed during travel.\\nCargo Space: Current/Max capacity.`;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -1878,7 +1877,7 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="ship-hud tooltip-container" data-tooltip="${combinedTooltip}">
+                <div class="ship-hud">
                     <h4 class="font-orbitron text-xl text-center mb-3 text-cyan-300">Ship Status</h4>
                     <div class="flex flex-col gap-y-2 text-sm">
                         <div>
@@ -2397,13 +2396,13 @@ export function renderServicesScreen(gameState) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
                 <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">${formatCredits(fuelPrice, false)}</span> / 5 units</p>
+                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
                 <button id="refuel-btn" class="btn btn-green w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
             </div>
             <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
                 <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
+                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
                 <button id="repair-btn" class="btn btn-blue w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
             </div>
@@ -2465,10 +2464,9 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
- * @param {object} [debugState={}] - The current state from the DebugService.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice, debugState = {}) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
         return _getMarketItemHtml(good, gameState, getItemPrice);
@@ -2905,6 +2903,7 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  * @property {number} FINANCE_HISTORY_LENGTH - The maximum number of transactions to display in the finance log.
  * @property {number} DAILY_PRICE_VOLATILITY - The maximum percentage a price can fluctuate daily.
  * @property {number} MEAN_REVERSION_STRENGTH - The strength of the tendency for prices to return to their galactic average.
+ * @property {number} MARKET_PRESSURE_DECAY - The weekly decay factor for market pressure (e.g., 0.85 means 15% decay).
  * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
  * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
  * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
@@ -2924,6 +2923,7 @@ export const GAME_RULES = Object.freeze({
     FINANCE_HISTORY_LENGTH: 10,
     DAILY_PRICE_VOLATILITY: 0.035,
     MEAN_REVERSION_STRENGTH: 0.01,
+    MARKET_PRESSURE_DECAY: 0.85,
     LOAN_GARNISHMENT_DAYS: 180,
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
@@ -3617,8 +3617,8 @@ export class DebugService {
 
             // Availability Text
             availTop: 34,
-            availLeft: 17,
-            availFontSize: 0.65,
+            availLeft: 17, // availFontSize: 0.8,
+            availFontSize: 0.8 ,
             availColor: '#ffffff',
             availOutlineWidth: 0.7,
             availOutlineColor: '#292929',
@@ -4318,16 +4318,16 @@ export class MarketService {
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
-            DB.COMMODITIES.forEach(good => {
-                if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+            DB.COMMODITIES.forEach(commodity => {
+                if (commodity.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
-                const inventoryItem = this.gameState.market.inventory[location.id][good.id];
-                const price = this.gameState.market.prices[location.id][good.id];
-                const avg = this.gameState.market.galacticAverages[good.id];
+                const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
+                const price = this.gameState.market.prices[location.id][commodity.id];
+                const avg = this.gameState.market.galacticAverages[commodity.id];
                 const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
-                const volatility = (Math.random() - 0.5) * 2 * good.volatility;
+                const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
                 // A pull back towards the galactic baseline price.
                 const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
@@ -4337,14 +4337,14 @@ export class MarketService {
                 let newPrice = price + (price * volatility) + reversion + pressureEffect;
                 
                 // Apply system state modifiers.
-                if (this._currentSystemState?.modifiers?.commodity[good.id]?.price) {
-                    newPrice *= this._currentSystemState.modifiers.commodity[good.id].price;
+                if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
+                    newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
-                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(newPrice));
+                this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // Decay market pressure over time.
-                inventoryItem.marketPressure *= 0.85; // 15% decay per week
+                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
                 }
@@ -7324,7 +7324,7 @@ export class UIManager {
 
     _renderPriceGraph(goodId, gameState, playerItem) {
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
-        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">Check back next week!!</div>`;
+        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Data Available!</div>`;
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const staticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
         const width = 280, height = 140, padding = 35;
@@ -7494,7 +7494,7 @@ export class UIManager {
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
-                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button>
+                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
                 </div>`;
         }

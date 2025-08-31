@@ -1,5 +1,6 @@
 # macOS system files
 .DS_Store
+js/.DS_Store
 
 # Development scripts
 combine.sh

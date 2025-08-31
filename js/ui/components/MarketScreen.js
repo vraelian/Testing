@@ -13,10 +13,9 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
- * @param {object} [debugState={}] - The current state from the DebugService.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice, debugState = {}) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
     const marketHtml = availableCommodities.map(good => {
         return _getMarketItemHtml(good, gameState, getItemPrice);

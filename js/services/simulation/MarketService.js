@@ -42,16 +42,16 @@ export class MarketService {
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
-            DB.COMMODITIES.forEach(good => {
-                if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+            DB.COMMODITIES.forEach(commodity => {
+                if (commodity.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
-                const inventoryItem = this.gameState.market.inventory[location.id][good.id];
-                const price = this.gameState.market.prices[location.id][good.id];
-                const avg = this.gameState.market.galacticAverages[good.id];
+                const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
+                const price = this.gameState.market.prices[location.id][commodity.id];
+                const avg = this.gameState.market.galacticAverages[commodity.id];
                 const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
-                const volatility = (Math.random() - 0.5) * 2 * good.volatility;
+                const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
                 // A pull back towards the galactic baseline price.
                 const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
@@ -61,14 +61,14 @@ export class MarketService {
                 let newPrice = price + (price * volatility) + reversion + pressureEffect;
                 
                 // Apply system state modifiers.
-                if (this._currentSystemState?.modifiers?.commodity[good.id]?.price) {
-                    newPrice *= this._currentSystemState.modifiers.commodity[good.id].price;
+                if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
+                    newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
-                this.gameState.market.prices[location.id][good.id] = Math.max(1, Math.round(newPrice));
+                this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // Decay market pressure over time.
-                inventoryItem.marketPressure *= 0.85; // 15% decay per week
+                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
                 }

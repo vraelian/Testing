@@ -59,8 +59,8 @@ export class DebugService {
 
             // Availability Text
             availTop: 34,
-            availLeft: 17,
-            availFontSize: 0.65,
+            availLeft: 17, // availFontSize: 0.8,
+            availFontSize: 0.8 ,
             availColor: '#ffffff',
             availOutlineWidth: 0.7,
             availOutlineColor: '#292929',

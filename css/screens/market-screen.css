@@ -31,7 +31,7 @@
     --market-card-pinv-text-shadow: -0.4px -0.4px 0 #000000, 0.4px -0.4px 0 #000000, -0.4px 0.4px 0 #000000, 0.4px 0.4px 0 #000000, 0px 1.5px 2.5px #616b70;
     
     /* Avail Text */
-    --market-card-avail-font-size: 0.65rem;
+    --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
     --market-card-avail-text-shadow: -0.7px -0.7px 0 #292929, 0.7px -0.7px 0 #292929, -0.7px 0.7px 0 #292929, 0.7px 0.7px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 

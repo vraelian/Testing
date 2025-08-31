@@ -153,6 +153,7 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  * @property {number} FINANCE_HISTORY_LENGTH - The maximum number of transactions to display in the finance log.
  * @property {number} DAILY_PRICE_VOLATILITY - The maximum percentage a price can fluctuate daily.
  * @property {number} MEAN_REVERSION_STRENGTH - The strength of the tendency for prices to return to their galactic average.
+ * @property {number} MARKET_PRESSURE_DECAY - The weekly decay factor for market pressure (e.g., 0.85 means 15% decay).
  * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
  * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
  * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
@@ -172,6 +173,7 @@ export const GAME_RULES = Object.freeze({
     FINANCE_HISTORY_LENGTH: 10,
     DAILY_PRICE_VOLATILITY: 0.035,
     MEAN_REVERSION_STRENGTH: 0.01,
+    MARKET_PRESSURE_DECAY: 0.85,
     LOAN_GARNISHMENT_DAYS: 180,
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
