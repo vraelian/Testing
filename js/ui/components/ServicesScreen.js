@@ -18,6 +18,8 @@ export function renderServicesScreen(gameState) {
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
     const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
+    const theme = currentMarket?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+
 
     // Calculate fuel price, applying perks if applicable.
     let fuelPrice = currentMarket.fuelPrice / 2;
@@ -40,16 +42,16 @@ export function renderServicesScreen(gameState) {
             <div id="services-credits-display" class="text-lg text-cyan-300 mt-2"><span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span></div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
+            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                <button id="refuel-btn" class="btn btn-green w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
+                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
+                <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
             </div>
-            <div class="bg-black/20 p-4 rounded-lg text-center shadow-lg panel-border border border-slate-700">
+            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                <p class="mb-3">Price: <span class="font-bold text-cyan-300">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                <button id="repair-btn" class="btn btn-blue w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
+                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
+                <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
                 <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
             </div>
         </div>`;

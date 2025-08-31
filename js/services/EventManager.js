@@ -48,22 +48,22 @@ export class EventManager {
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) this._startRefueling(refuelBtn);
+            if (refuelBtn) this._startRefueling();
 
             const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) this._startRepairing(repairBtn);
+            if (repairBtn) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) { 
                 e.preventDefault(); 
-                this._startRefueling(refuelBtn); 
+                this._startRefueling(); 
             }
 
             const repairBtn = e.target.closest('#repair-btn');
             if (repairBtn) { 
                 e.preventDefault(); 
-                this._startRepairing(repairBtn); 
+                this._startRepairing(); 
             }
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
@@ -466,14 +466,13 @@ export class EventManager {
 
     /**
      * Starts the refueling process when the button is held down.
-     * @param {HTMLElement} buttonElement - The refuel button element.
      * @private
      */
-    _startRefueling(buttonElement) {
+    _startRefueling() {
         if (this.gameState.isGameOver || this.refuelInterval) return;
-        this._refuelTick(buttonElement); 
+        this._refuelTick(); 
         // A service tick is called every 1000ms (1 second) while the button is held.
-        this.refuelInterval = setInterval(() => this._refuelTick(buttonElement), 1000);
+        this.refuelInterval = setInterval(() => this._refuelTick(), 1000);
     }
 
     /**
@@ -487,12 +486,13 @@ export class EventManager {
 
     /**
      * Executes a single "tick" of refueling.
-     * @param {HTMLElement} buttonElement - The refuel button element, used for positioning the floating text.
      * @private
      */
-    _refuelTick(buttonElement) {
+    _refuelTick() {
         const cost = this.simulationService.refuelTick();
         if (cost > 0) {
+            const buttonElement = document.getElementById('refuel-btn');
+            if (!buttonElement) return; // Stop if button is not visible
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);
@@ -505,14 +505,13 @@ export class EventManager {
 
     /**
      * Starts the repair process when the button is held down.
-     * @param {HTMLElement} buttonElement - The repair button element.
      * @private
      */
-    _startRepairing(buttonElement) {
+    _startRepairing() {
         if (this.gameState.isGameOver || this.repairInterval) return;
-        this._repairTick(buttonElement);
+        this._repairTick();
         // A service tick is called every 1000ms (1 second) while the button is held.
-        this.repairInterval = setInterval(() => this._repairTick(buttonElement), 1000);
+        this.repairInterval = setInterval(() => this._repairTick(), 1000);
     }
 
     /**
@@ -526,12 +525,13 @@ export class EventManager {
 
     /**
      * Executes a single "tick" of repairing.
-     * @param {HTMLElement} buttonElement - The repair button element, used for positioning the floating text.
      * @private
      */
-    _repairTick(buttonElement) {
+    _repairTick() {
         const cost = this.simulationService.repairTick();
         if (cost > 0) {
+            const buttonElement = document.getElementById('repair-btn');
+            if (!buttonElement) return; // Stop if button is not visible
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);

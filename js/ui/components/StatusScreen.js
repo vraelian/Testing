@@ -13,24 +13,26 @@ import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../../uti
  * @returns {string} The HTML content for the Status screen.
  */
 export function renderStatusScreen(gameState) {
-    const { player, day } = gameState;
+    const { player, day, currentLocationId } = gameState;
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
     const inventory = player.inventories[player.activeShipId];
     const cargoUsed = calculateInventoryUsed(inventory);
+    const location = DB.MARKETS.find(l => l.id === currentLocationId);
+    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border border-slate-700">
+            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <div class="text-left pl-4">
-                    <span class="block text-lg text-gray-400 uppercase tracking-widest">Day</span>
+                    <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
                     <span class="text-4xl font-bold font-orbitron">${day}</span>
                 </div>
                 <div class="text-right flex flex-col items-end">
-                    <p class="text-xs text-cyan-200/80 mb-2 font-roboto-mono text-right">${getDateFromDay(day)}</p>
-                    <div class="mt-2 pt-2 border-t border-slate-500/50">
+                    <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
+                    <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
                         <div class="text-right">
-                            <p class="text-gray-400 text-sm tracking-wider">Vessel</p>
+                            <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
                             <p>${shipStatic.name}</p>
                             <p>Class: ${shipStatic.class}</p>
                         </div>

@@ -14,7 +14,9 @@ import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Finance screen.
  */
 export function renderFinanceScreen(gameState) {
-    const { player, day } = gameState;
+    const { player, day, currentLocationId } = gameState;
+    const location = DB.MARKETS.find(l => l.id === currentLocationId);
+    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
     let loanHtml;
 
     // Display the current debt panel if the player has debt.
@@ -68,18 +70,18 @@ export function renderFinanceScreen(gameState) {
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="md:col-span-1 bg-black/20 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border border-slate-700 text-center">
+            <div class="md:col-span-1 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 ${loanHtml}
             </div>
             <div class="md:col-span-2">
                  <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                 <div class="bg-black/20 p-4 rounded-lg shadow-lg panel-border border border-slate-700 h-96 overflow-y-auto">
-                    <div class="grid grid-cols-4 gap-2 p-2 border-b-2 border-slate-500 font-bold text-gray-300">
+                 <div class="p-4 rounded-lg shadow-lg panel-border border h-96 overflow-y-auto" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <div class="grid grid-cols-4 gap-2 p-2 border-b-2 font-bold" style="border-color: ${theme.borderColor};">
                        <span>Day</span>
                        <span class="col-span-2">Description</span>
                        <span class="text-right">Amount</span>
                     </div>
-                    ${logEntries || '<p class="text-center text-gray-500 p-4">No transactions recorded.</p>'}
+                    ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
                  </div>
             </div>
         </div>
