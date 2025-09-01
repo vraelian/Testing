@@ -6915,6 +6915,9 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
+                // Before re-rendering the market, save the current state of its interactive elements.
+                // This prevents the player's input (quantity, buy/sell mode) from being reset after a transaction.
+                this._saveMarketTransactionState();
                 this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
                 this._restoreMarketTransactionState();
                 break;
@@ -6971,6 +6974,13 @@ export class UIManager {
         }
     }
 
+    /**
+     * Updates the market screen by first saving the current state of all transaction modules,
+     * re-rendering the entire screen with fresh data from the gameState, and then restoring
+     * the saved state of the transaction modules. This prevents the UI from resetting player
+     * input (like quantity or trade mode) after a transaction completes.
+     * @param {object} gameState - The current state of the game.
+     */
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         this._saveMarketTransactionState();
@@ -6978,6 +6988,13 @@ export class UIManager {
         this._restoreMarketTransactionState();
     }
 
+    /**
+     * Saves the current UI state of all transaction modules on the market screen.
+     * It iterates through each commodity card, capturing the selected trade mode ('buy'/'sell')
+     * and the entered quantity. This state is stored in `this.marketTransactionState`
+     * to be restored after a re-render.
+     * @private
+     */
     _saveMarketTransactionState() {
         const controls = document.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
@@ -6991,6 +7008,13 @@ export class UIManager {
         });
     }
 
+    /**
+     * Restores the saved UI state to all transaction modules on the market screen.
+     * After the market has been re-rendered, this function iterates through the saved states
+     * in `this.marketTransactionState` and applies the saved mode and quantity to each
+     * corresponding commodity card's transaction module, ensuring a persistent UI for the user.
+     * @private
+     */
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
