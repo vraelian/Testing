@@ -15,7 +15,11 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 
 export class UIManager {
-    constructor() {
+    /**
+     * @param {import('./SimulationService.js').SimulationService} simulationService - The core simulation service.
+     */
+    constructor(simulationService) {
+        this.simulationService = simulationService; // Injected for access to MarketService
         this.isMobile = window.innerWidth <= 768;
         this.modalQueue = [];
         this.activeGraphAnchor = null;
@@ -70,6 +74,7 @@ export class UIManager {
             starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
+            marketPressuresTooltip: document.getElementById('market-pressures-tooltip'),
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -315,6 +320,60 @@ export class UIManager {
         }
     }
 
+    /**
+     * Gathers and formats all market pressure data for a specific commodity for the tooltip.
+     * @param {string} goodId - The ID of the commodity.
+     * @returns {object} A formatted object matching the structure from the design document.
+     */
+    getMarketPressures(goodId) {
+        const state = this.lastKnownState;
+        if (!state || !this.simulationService) return null;
+
+        const commodity = DB.COMMODITIES.find(c => c.id === goodId);
+        const pressures = this.simulationService.marketService.getMarketPressures(state.currentLocationId, goodId);
+        const galacticAvg = state.market.galacticAverages[goodId];
+        const currentPrice = state.market.prices[state.currentLocationId][goodId];
+
+        if (!commodity || !pressures || !galacticAvg) {
+            return {
+                commodityName: commodity?.name || 'Unknown',
+                netEffectPercentage: 0,
+                hasActivePressures: false,
+                pressures: []
+            };
+        }
+
+        const getMagnitude = (value) => {
+            const percentage = Math.abs(value / galacticAvg);
+            if (percentage > 0.15) return 'high';
+            if (percentage > 0.05) return 'moderate';
+            if (percentage > 0.001) return 'low';
+            return null;
+        };
+
+        const formattedPressures = [
+            { name: 'Mean Reversion', value: pressures.meanReversion },
+            { name: 'Local Trading', value: pressures.localTrading },
+            { name: 'Volatility', value: pressures.volatility }
+        ]
+        .map(p => ({
+            name: p.name,
+            direction: p.value > 0.01 ? 'positive' : (p.value < -0.01 ? 'negative' : 'neutral'),
+            magnitude: getMagnitude(p.value)
+        }))
+        .filter(p => p.magnitude !== null);
+
+        const netEffectPercentage = Math.round(((currentPrice - galacticAvg) / galacticAvg) * 100);
+
+        return {
+            commodityName: commodity.name,
+            netEffectPercentage: netEffectPercentage,
+            hasActivePressures: formattedPressures.length > 0,
+            pressures: formattedPressures
+        };
+    }
+
+
     getItemPrice(gameState, goodId, isSelling = false) {
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
@@ -397,6 +456,75 @@ export class UIManager {
             priceEl.classList.remove('price-text');
             priceEl.classList.add('profit-text');
         }
+    }
+    
+    _renderMarketPressuresTooltip(goodId) {
+        const data = this.getMarketPressures(goodId);
+        if (!data) return '';
+    
+        if (!data.hasActivePressures) {
+            return `<div class="p-2 text-center text-sm">This is the average price for ${data.commodityName}.</div>`;
+        }
+    
+        const pips = {
+            low: '■□□',
+            moderate: '■■□',
+            high: '■■■'
+        };
+    
+        const pressuresHtml = data.pressures.map(p => `
+            <span class="pressure-direction ${p.direction}">${p.direction === 'positive' ? '▲' : '▼'}</span>
+            <span>${p.name}</span>
+            <span class="pressure-pips">${pips[p.magnitude]}</span>
+        `).join('');
+    
+        const netSign = data.netEffectPercentage > 0 ? '+' : '';
+        const netClass = data.netEffectPercentage > 0 ? 'positive' : (data.netEffectPercentage < 0 ? 'negative' : '');
+    
+        return `
+            <div class="market-pressures-list">${pressuresHtml}</div>
+            <hr class="market-pressures-divider">
+            <div class="market-pressures-net-effect ${netClass}">${netSign}${data.netEffectPercentage}%</div>
+        `;
+    }
+    
+    showMarketPressuresTooltip(anchorEl, goodId) {
+        const tooltip = this.cache.marketPressuresTooltip;
+        tooltip.innerHTML = this._renderMarketPressuresTooltip(goodId);
+    
+        const locationId = this.lastKnownState.currentLocationId;
+        const theme = DB.TOOLTIP_STYLES[locationId];
+        if (theme) {
+            tooltip.style.backgroundImage = theme.backgroundImage;
+            tooltip.style.borderColor = theme.borderColor;
+            tooltip.style.boxShadow = theme.boxShadow;
+            tooltip.style.color = theme.color;
+        }
+    
+        tooltip.style.display = 'block';
+    
+        const rect = anchorEl.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+    
+        let top = rect.top - tooltipRect.height - 10;
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    
+        if (top < 10) {
+            top = rect.bottom + 10;
+        }
+        if (left < 10) {
+            left = 10;
+        }
+        if (left + tooltipRect.width > window.innerWidth) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+    
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+    }
+    
+    hideMarketPressuresTooltip() {
+        this.cache.marketPressuresTooltip.style.display = 'none';
     }
     
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {

@@ -49,7 +49,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
+    const indicatorHtml = _getIndicatorHtml(good.id, price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
@@ -84,6 +84,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
 /**
  * Generates the HTML for the MKT and P/L indicators.
+ * @param {string} goodId - The ID of the commodity.
  * @param {number} price - The current market price.
  * @param {number} sellPrice - The current sell price.
  * @param {number} galacticAvg - The galactic average price.
@@ -91,7 +92,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
  * @returns {string} An HTML string containing the indicators.
  * @private
  */
-function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
+function _getIndicatorHtml(goodId, price, sellPrice, galacticAvg, playerItem) {
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
@@ -99,7 +100,7 @@ function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     if (marketPct > 5) marketClass = 'positive';
     if (marketPct < -5) marketClass = 'negative';
     let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
-    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
+    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}" data-action="show-market-pressures" data-good-id="${goodId}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
     let plIndicatorHtml = '';
     if (playerItem && playerItem.avgCost > 0) {

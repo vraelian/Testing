@@ -615,5 +615,20 @@ export const DB = {
                 { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }
+    },
+    // --- Market Pressures Tooltip Styles ---
+    TOOLTIP_STYLES: {
+        [LOCATION_IDS.EARTH]: { "backgroundImage": "linear-gradient(to bottom right, #1e3a8a, #0f172a)", "borderColor": "#60a5fa", "boxShadow": "0 0 12px #60a5fa", "color": "#93c5fd" },
+        [LOCATION_IDS.LUNA]: { "backgroundImage": "linear-gradient(to bottom right, #374151, #0f172a)", "borderColor": "#9ca3af", "boxShadow": "0 0 12px #9ca3af", "color": "#e5e7eb" },
+        [LOCATION_IDS.MARS]: { "backgroundImage": "linear-gradient(to bottom right, #7c2d12, #0f172a)", "borderColor": "#f87171", "boxShadow": "0 0 12px #f87171", "color": "#fca5a5" },
+        [LOCATION_IDS.VENUS]: { "backgroundImage": "linear-gradient(to bottom right, #854d0e, #0f172a)", "borderColor": "#facc15", "boxShadow": "0 0 12px #facc15", "color": "#fde047" },
+        [LOCATION_IDS.BELT]: { "backgroundImage": "linear-gradient(to bottom right, #292524, #0f172a)", "borderColor": "#ca8a04", "boxShadow": "0 0 12px #ca8a04", "color": "#ca8a04" },
+        [LOCATION_IDS.SATURN]: { "backgroundImage": "linear-gradient(to bottom right, #713f12, #312e81, #0f172a)", "borderColor": "#fde047", "boxShadow": "0 0 12px #fde047", "color": "#fef08a" },
+        [LOCATION_IDS.JUPITER]: { "backgroundImage": "linear-gradient(to bottom right, #9a3412, #1c1917)", "borderColor": "#fb923c", "boxShadow": "0 0 12px #fb923c", "color": "#fed7aa" },
+        [LOCATION_IDS.URANUS]: { "backgroundImage": "linear-gradient(to bottom right, #155e75, #312e81)", "borderColor": "#67e8f9", "boxShadow": "0 0 12px #67e8f9", "color": "#a5f3fc" },
+        [LOCATION_IDS.NEPTUNE]: { "backgroundImage": "linear-gradient(to bottom right, #1e3a8a, #000000)", "borderColor": "#60a5fa", "boxShadow": "0 0 12px #60a5fa", "color": "#93c5fd" },
+        [LOCATION_IDS.PLUTO]: { "backgroundImage": "linear-gradient(to bottom right, #312e81, #0f172a)", "borderColor": "#a78bfa", "boxShadow": "0 0 12px #a78bfa", "color": "#c4b5fd" },
+        [LOCATION_IDS.EXCHANGE]: { "backgroundImage": "linear-gradient(to bottom right, #581c87, #000000, #0f172a)", "borderColor": "#c084fc", "boxShadow": "0 0 12px #c084fc", "color": "#e9d5ff" },
+        [LOCATION_IDS.KEPLER]: { "backgroundImage": "linear-gradient(to bottom right, #701a75, #0f172a)", "borderColor": "#ec4899", "boxShadow": "0 0 12px #ec4899", "color": "#f472b6" }
     }
 };
