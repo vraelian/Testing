@@ -342,7 +342,7 @@ export class UIManager {
                 pressures: []
             };
         }
-
+        
         const getMagnitude = (value) => {
             const percentage = Math.abs(value / galacticAvg);
             if (percentage > 0.15) return 'high';
@@ -358,7 +358,8 @@ export class UIManager {
         .map(p => ({
             name: p.name,
             direction: p.value > 0.01 ? 'positive' : (p.value < -0.01 ? 'negative' : 'neutral'),
-            magnitude: getMagnitude(p.value)
+            magnitude: getMagnitude(p.value),
+            percentage: Math.round((p.value / galacticAvg) * 100)
         }))
         .filter(p => p.magnitude !== null);
 
@@ -471,27 +472,23 @@ export class UIManager {
             high: '■■■'
         };
     
-        const pressuresHtml = data.pressures.map(p => `
-            <span class="pressure-direction ${p.direction}">${p.direction === 'positive' ? '▲' : '▼'}</span>
-            <span>${p.name}</span>
-            <span class="pressure-pips">${pips[p.magnitude]}</span>
-        `).join('');
+        const pressuresHtml = data.pressures.map(p => {
+            const sign = p.percentage > 0 ? '+' : '';
+            return `
+                <span class="pressure-percentage ${p.direction}">${sign}${p.percentage}%</span>
+                <span>${p.name}</span>
+                <span class="pressure-pips">${pips[p.magnitude]}</span>
+            `;
+        }).join('');
     
-        const netSign = data.netEffectPercentage > 0 ? '+' : '';
-        const netClass = data.netEffectPercentage > 0 ? 'positive' : (data.netEffectPercentage < 0 ? 'negative' : '');
-    
-        return `
-            <div class="market-pressures-list">${pressuresHtml}</div>
-            <hr class="market-pressures-divider">
-            <div class="market-pressures-net-effect ${netClass}">${netSign}${data.netEffectPercentage}%</div>
-        `;
+        return `<div class="market-pressures-list">${pressuresHtml}</div>`;
     }
     
     showMarketPressuresTooltip(anchorEl, goodId) {
         const tooltip = this.cache.marketPressuresTooltip;
         tooltip.innerHTML = this._renderMarketPressuresTooltip(goodId);
     
-        const locationId = this.lastKnownState.currentLocationId;
+        const locationId = this.lastKnownState.currentLocationId.replace('loc_', '');
         const theme = DB.TOOLTIP_STYLES[locationId];
         if (theme) {
             tooltip.style.backgroundImage = theme.backgroundImage;

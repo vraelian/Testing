@@ -49,8 +49,8 @@ export class MarketService {
 
     /**
      * Simulates one week of market price changes for all commodities at all locations.
-     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
-     * and player-driven market pressure. It also caches these pressure calculations for the UI.
+     * Prices fluctuate based on individual volatility and player-driven market pressure.
+     * It also caches these pressure calculations for the UI.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {

@@ -452,7 +452,7 @@
 #market-pressures-tooltip {
     position: fixed;
     z-index: 110;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     border-radius: 8px;
     font-family: 'Exo 2', sans-serif;
     width: 220px;
@@ -474,37 +474,22 @@
     font-size: 0.9rem;
 }
 
-.pressure-direction {
-    font-size: 1.2rem;
+.pressure-percentage {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-align: right;
+    width: 4ch; /* Reserve space for sign and numbers */
 }
-.pressure-direction.positive {
+.pressure-percentage.positive {
     color: #4ade80; /* bright green */
 }
-.pressure-direction.negative {
+.pressure-percentage.negative {
     color: #f87171; /* bright red */
 }
 
 .pressure-pips {
     font-family: 'Roboto Mono', monospace;
     letter-spacing: 2px;
-}
-
-.market-pressures-divider {
-    border: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    margin: 0.75rem 0;
-}
-
-.market-pressures-net-effect {
-    text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    font-family: 'Orbitron', sans-serif;
-}
-.market-pressures-net-effect.positive {
-    color: #4ade80;
-}
-.market-pressures-net-effect.negative {
-    color: #f87171;
 }
 /* --- [[END]] MARKET PRESSURES TOOLTIP --- */
