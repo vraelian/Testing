@@ -63,18 +63,14 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
-                const avg = this.gameState.market.galacticAverages[commodity.id];
-                const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
                 const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
-                // A pull back towards the galactic baseline price.
-                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                let newPrice = price + (price * volatility) + reversion + pressureEffect;
+                let newPrice = price + (price * volatility) + pressureEffect;
                 
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
@@ -84,7 +80,6 @@ export class MarketService {
                 // Cache the raw pressure values for the tooltip before applying the new price.
                 this.lastCalculatedPressures[location.id][commodity.id] = {
                     volatility: (price * volatility),
-                    meanReversion: reversion,
                     localTrading: pressureEffect
                 };
 

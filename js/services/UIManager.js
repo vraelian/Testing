@@ -352,7 +352,6 @@ export class UIManager {
         };
 
         const formattedPressures = [
-            { name: 'Mean Reversion', value: pressures.meanReversion },
             { name: 'Local Trading', value: pressures.localTrading },
             { name: 'Volatility', value: pressures.volatility }
         ]
@@ -368,7 +367,7 @@ export class UIManager {
         return {
             commodityName: commodity.name,
             netEffectPercentage: netEffectPercentage,
-            hasActivePressures: formattedPressures.length > 0,
+            hasActivePressures: formattedPressures.length > 0 && netEffectPercentage !== 0,
             pressures: formattedPressures
         };
     }
