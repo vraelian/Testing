@@ -51,7 +51,8 @@ export class DebugService {
             pinvLeft: 74,
             pinvFontSize: 0.65,
             pinvColor: '#e8e8e8',
-            pinvOwnColor: '#ffffff',
+            pinvOwnColor: '#ffea00',
+            pinvOwnFontSize: 0.85,
             pinvOutlineWidth: 0.4,
             pinvOutlineColor: '#000000',
             pinvShadowX: 0,
@@ -61,7 +62,7 @@ export class DebugService {
 
             // Availability Text
             availTop: 29,
-            availLeft: 17, // availFontSize: 0.8,
+            availLeft: 17,
             availFontSize: 0.8 ,
             availColor: '#ffffff',
             availOutlineWidth: 0.7,
@@ -74,7 +75,7 @@ export class DebugService {
             // Price Text
             priceTop: 58,
             priceLeft: 16,
-            priceFontSize: 1.75,
+            priceFontSize: 1.9,
             priceColor: '#29f1ff',
             priceFontFamily: "'Roboto Mono', monospace",
             priceOutlineWidth: 1.1,
@@ -87,7 +88,7 @@ export class DebugService {
             priceShadowColor: '#28d5d7',
 
             // Effective Price Text
-            effectivePriceTop: 95,
+            effectivePriceTop: 105,
             effectivePriceLeft: 16,
             effectivePriceFontSize: 0.75,
             effectivePriceColor: '#ffffff',
@@ -143,6 +144,7 @@ export class DebugService {
         const pinvFolder = this.gui.addFolder('Player Inventory Text');
         this.buildTextControls(pinvFolder, 'pinv', true);
         pinvFolder.addColor(this.state, 'pinvOwnColor').name('Own # Color').onChange(v => this.updateCssVariable('--market-card-pinv-own-color', v));
+        pinvFolder.add(this.state, 'pinvOwnFontSize', 0.5, 1.5, 0.05).name('Own # Font Size (rem)').onChange(v => this.updateCssVariable('--market-card-pinv-own-font-size', `${v}rem`));
 
         const availFolder = this.gui.addFolder('Availability Text');
         this.buildTextControls(availFolder, 'avail', true);
@@ -155,19 +157,8 @@ export class DebugService {
         priceGlowFolder.add(this.state, 'priceGlowRadius', 0, 20, 1).name('Radius (px)').onChange(() => this.updateTextStyles());
 
         const effectivePriceFolder = this.gui.addFolder('Effective Price Text');
-        effectivePriceFolder.add(this.state, 'effectivePriceTop', 0, 128, 1).name('Top (px)').onChange(v => this.updateCssVariable('--market-card-effective-price-top', `${v}px`));
-        effectivePriceFolder.add(this.state, 'effectivePriceLeft', 0, 128, 1).name('Left (px)').onChange(v => this.updateCssVariable('--market-card-effective-price-left', `${v}px`));
-        effectivePriceFolder.add(this.state, 'effectivePriceFontSize', 0.5, 1.5, 0.05).name('Font Size (rem)').onChange(v => this.updateCssVariable('--market-card-effective-price-font-size', `${v}rem`));
-        effectivePriceFolder.addColor(this.state, 'effectivePriceColor').name('Color').onChange(v => this.updateCssVariable('--market-card-effective-price-color', v));
-        const effectiveOutlineFolder = effectivePriceFolder.addFolder('Outline');
-        effectiveOutlineFolder.add(this.state, `effectivePriceOutlineWidth`, 0, 5, 0.1).name('Thickness (px)').onChange(() => this.updateTextStyles());
-        effectiveOutlineFolder.addColor(this.state, `effectivePriceOutlineColor`).name('Color').onChange(() => this.updateTextStyles());
-        const effectiveShadowFolder = effectivePriceFolder.addFolder('Drop Shadow');
-        effectiveShadowFolder.add(this.state, `effectivePriceShadowX`, -10, 10, 0.5).name('Offset X (px)').onChange(() => this.updateTextStyles());
-        effectiveShadowFolder.add(this.state, `effectivePriceShadowY`, -10, 10, 0.5).name('Offset Y (px)').onChange(() => this.updateTextStyles());
-        effectiveShadowFolder.add(this.state, `effectivePriceShadowBlur`, 0, 20, 0.5).name('Blur (px)').onChange(() => this.updateTextStyles());
-        effectiveShadowFolder.addColor(this.state, `effectivePriceShadowColor`).name('Color').onChange(() => this.updateTextStyles());
-
+        this.buildTextControls(effectivePriceFolder, 'effectivePrice', true);
+        
         const indFolder = this.gui.addFolder('Indicators');
         indFolder.add(this.state, 'indicatorTop', 0, 128, 1).name('Top (px)').onChange(v => this.updateCssVariable('--market-card-indicator-top', `${v}px`));
         indFolder.add(this.state, 'indicatorLeft', 0, 128, 1).name('Left (px)').onChange(v => this.updateCssVariable('--market-card-indicator-left', `${v}px`));
@@ -346,7 +337,8 @@ export class DebugService {
             moduleTop: '--market-card-module-top', moduleWidth: '--market-card-module-width', moduleVGap: '--market-card-module-v-gap', moduleFontSize: '--font-size',
             moduleToggleHeight: '--market-card-module-toggle-height', moduleStepperHeight: '--market-card-module-stepper-height', moduleButtonHeight: '--market-card-module-button-height',
             moduleStepperArrowSize: '--market-card-module-stepper-arrow-size', buyColor: '--buy-primary', sellColor: '--sell-primary',
-            pinvOwnColor: '--market-card-pinv-own-color'
+            pinvOwnColor: '--market-card-pinv-own-color',
+            pinvOwnFontSize: '--market-card-pinv-own-font-size'
         };
         return map[key] || null;
     }
