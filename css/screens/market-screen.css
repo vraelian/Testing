@@ -1,7 +1,7 @@
 /* css/screens/market-screen.css */
 :root {
     /* Card Appearance */
-    --market-card-height: 145px;
+    --market-card-height: 160px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
     
@@ -12,22 +12,23 @@
     --market-card-module-right: 12px;
     --market-card-pinv-top: 34px;
     --market-card-pinv-left: 74px;
-    --market-card-avail-top: 34px;
+    --market-card-avail-top: 29px;
     --market-card-avail-left: 17px;
-    --market-card-price-top: 68px;
+    --market-card-price-top: 58px;
     --market-card-price-left: 16px;
     
     /* Spacing */
     --market-card-price-indicator-v-gap: 7px;
 
     /* Name Text */
-    --market-card-name-font-size: 0.85rem;
+    --market-card-name-font-size: 0.95rem;
     --market-card-name-color: #ffffff;
     --market-card-name-text-shadow: 1.00px 0.00px 0 #000000, 0.71px 0.71px 0 #000000, 0.00px 1.00px 0 #000000, -0.71px 0.71px 0 #000000, -1.00px 0.00px 0 #000000, -0.71px -0.71px 0 #000000, 0.00px -1.00px 0 #000000, 0.71px -0.71px 0 #000000, -0.5px 0px 3px #000000;
 
     /* Player Inventory Text */
     --market-card-pinv-font-size: 0.65rem;
     --market-card-pinv-color: #e8e8e8;
+    --market-card-pinv-own-color: #ffffff;
     --market-card-pinv-text-shadow: 0.40px 0.00px 0 #000000, 0.28px 0.28px 0 #000000, 0.00px 0.40px 0 #000000, -0.28px 0.28px 0 #000000, -0.40px 0.00px 0 #000000, -0.28px -0.28px 0 #000000, 0.00px -0.40px 0 #000000, 0.28px -0.28px 0 #000000, 0px 1.5px 2.5px #616b70;
     
     /* Avail Text */
@@ -40,6 +41,13 @@
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
     --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #001fb8, 0.78px 0.78px 0 #001fb8, 0.00px 1.10px 0 #001fb8, -0.78px 0.78px 0 #001fb8, -1.10px 0.00px 0 #001fb8, -0.78px -0.78px 0 #001fb8, 0.00px -1.10px 0 #001fb8, 0.78px -0.78px 0 #001fb8, 0px 0px 20px #28d5d7;
+
+    /* Effective Price Text */
+    --market-card-effective-price-top: 95px;
+    --market-card-effective-price-left: 16px;
+    --market-card-effective-price-font-size: 0.75rem;
+    --market-card-effective-price-color: #ffffff;
+    --market-card-effective-price-text-shadow: 0.70px 0.00px 0 #292929, 0.49px 0.49px 0 #292929, 0.00px 0.70px 0 #292929, -0.49px 0.49px 0 #292929, -0.70px 0.00px 0 #292929, -0.49px -0.49px 0 #292929, 0.00px -0.70px 0 #292929, 0.49px -0.49px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Module */
     --market-card-module-width: 122px;
@@ -68,7 +76,7 @@
 
 
     /* Indicators */
-    --market-card-indicator-top: 109px;
+    --market-card-indicator-top: 123px;
     --market-card-indicator-left: 16px;
     --market-card-indicator-h-spacing: 6px;
     --market-card-indicator-v-spacing: 3px;
@@ -127,12 +135,12 @@
 
 .effective-price-display {
     position: absolute;
-    top: 95px;
-    left: var(--market-card-price-left);
-    font-size: 0.75rem;
-    color: #e5e7eb;
+    top: var(--market-card-effective-price-top);
+    left: var(--market-card-effective-price-left);
+    font-size: var(--market-card-effective-price-font-size);
+    color: var(--market-card-effective-price-color);
     font-family: 'Roboto Mono', monospace;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    text-shadow: var(--market-card-effective-price-text-shadow);
 }
 
 .avail-text {
@@ -143,6 +151,11 @@
     color: var(--market-card-avail-color);
     text-shadow: var(--market-card-avail-text-shadow);
 }
+
+.avail-text [id^="p-inv-"] {
+    color: var(--market-card-pinv-own-color);
+}
+
 
 /* --- [[START]] INDICATOR STYLES --- */
 .indicator-container {
