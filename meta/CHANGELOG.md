@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [23.20] - 2025-08-31
+- diminishing returns in economy
+- expected profit display
+
 ## [23.00] - 2025-08-30
 - navigation bar overhaul
 

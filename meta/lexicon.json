@@ -251,12 +251,13 @@
         "purchase-intel",
         "buy-item",
         "sell-item",
-        "set-max-buy",
-        "set-max-sell",
+        "set-max-trade",
         "increment",
         "decrement",
         "show-price-graph",
-        "show-finance-graph"
+        "show-finance-graph",
+        "toggle-trade-mode",
+        "confirm-trade"
       ],
       "ShipId": [
         "starter",
@@ -1418,7 +1419,7 @@
         },
         {
           "name": "actionData",
-           "type": "object"
+          "type": "object"
         }
       ],
       "returns": {
@@ -1454,7 +1455,7 @@
       "params": [
         {
           "name": "gameState",
-           "type": "state_schema"
+            "type": "state_schema"
         }
       ],
       "returns": {
@@ -1763,6 +1764,35 @@
       "returns": { "type": "void" },
       "mutates_state": [],
       "calls": ["DebugService.getCssVarForKey", "DebugService.getCssValueForKey"]
+    },
+    "UIManager._calculateSaleDetails": {
+        "asset_id": "F017",
+        "description": "Calculates the potential outcome of a sale for UI display, including diminishing returns. This is a UI-only function and does not mutate the game state.",
+        "params": [
+            { "name": "goodId", "type": "string" },
+            { "name": "quantity", "type": "number" }
+        ],
+        "returns": {
+            "type": "object",
+            "properties": {
+                "totalPrice": "number",
+                "effectivePricePerUnit": "number"
+            }
+        },
+        "mutates_state": [],
+        "calls": ["UIManager.getItemPrice"]
+    },
+    "UIManager.updateMarketCardDisplay": {
+        "asset_id": "F017",
+        "description": "Updates a single market card's display to show either the buy price or the calculated sell profit based on the current trade mode and quantity.",
+        "params": [
+            { "name": "goodId", "type": "string" },
+            { "name": "quantity", "type": "number" },
+            { "name": "mode", "type": "string" }
+        ],
+        "returns": { "type": "void" },
+        "mutates_state": [],
+        "calls": ["UIManager._calculateSaleDetails", "utils.formatCredits"]
     }
   }
 }
