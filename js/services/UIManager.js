@@ -329,6 +329,76 @@ export class UIManager {
         }
         return Math.max(1, Math.round(price));
     }
+    
+    /**
+     * Calculates the potential outcome of a sale for UI display, including diminishing returns.
+     * This is a UI-only function and does not mutate the game state.
+     * @param {string} goodId - The ID of the commodity.
+     * @param {number} quantity - The quantity being considered for sale.
+     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
+     * @private
+     */
+    _calculateSaleDetails(goodId, quantity) {
+        const state = this.lastKnownState;
+        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0 };
+
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        const basePrice = this.getItemPrice(state, goodId, true);
+        
+        const threshold = marketStock * 0.1;
+        if (quantity <= threshold) {
+            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
+        }
+
+        const excessRatio = quantity / marketStock;
+        let reduction = 0;
+
+        if (good.tier <= 2) { // Low-Tier
+            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
+        } else if (good.tier <= 5) { // Mid-Tier
+            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
+        } else { // High-Tier
+            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
+        }
+        
+        const effectivePrice = basePrice * (1 - reduction);
+        return {
+            totalPrice: Math.floor(effectivePrice * quantity),
+            effectivePricePerUnit: effectivePrice
+        };
+    }
+    
+    /**
+     * Updates a single market card's display to show either the buy price or the calculated sell profit.
+     * @param {string} goodId - The ID of the commodity card to update.
+     * @param {number} quantity - The current quantity from the input field.
+     * @param {string} mode - The current trade mode ('buy' or 'sell').
+     */
+    updateMarketCardDisplay(goodId, quantity, mode) {
+        const priceEl = document.getElementById(`price-display-${goodId}`);
+        const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
+        if (!priceEl || !effectivePriceEl) return;
+
+        if (mode === 'buy') {
+            priceEl.textContent = formatCredits(parseInt(priceEl.dataset.basePrice, 10));
+            priceEl.classList.remove('profit-text');
+            priceEl.classList.add('price-text');
+            effectivePriceEl.textContent = '';
+        } else { // 'sell' mode
+            if (quantity > 0) {
+                const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
+                priceEl.textContent = `+${formatCredits(totalPrice, false)}`;
+                effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
+            } else {
+                priceEl.textContent = '+0';
+                effectivePriceEl.textContent = '';
+            }
+            priceEl.classList.remove('price-text');
+            priceEl.classList.add('profit-text');
+        }
+    }
+    
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         const modal = document.getElementById('travel-animation-modal');
         const statusText = document.getElementById('travel-status-text');
