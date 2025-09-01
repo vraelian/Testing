@@ -52,9 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         // --- Service Instantiation ---
         const gameState = new GameState();
-        const uiManager = new UIManager();
+        const simulationService = new SimulationService(gameState, null); // UIManager is injected later
+        const uiManager = new UIManager(simulationService);
+        simulationService.uiManager = uiManager; // Now inject UIManager back into SimulationService
+
         const missionService = new MissionService(gameState, uiManager);
-        const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
         let debugService = null;
 
