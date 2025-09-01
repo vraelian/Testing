@@ -24,6 +24,14 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice) {
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
 }
 
+/**
+ * Generates the HTML for a single commodity card on the market screen.
+ * @param {object} good - The commodity data from the database.
+ * @param {object} gameState - The current game state.
+ * @param {function} getItemPrice - A function to calculate the item's current price.
+ * @returns {string} The HTML string for the commodity card.
+ * @private
+ */
 function _getMarketItemHtml(good, gameState, getItemPrice) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
@@ -48,11 +56,11 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
             <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-            <p id="price-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}">${formatCredits(price)}</p>
-            
-            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
             
             <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+            
+            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">

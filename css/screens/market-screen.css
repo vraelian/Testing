@@ -115,6 +115,26 @@
     font-family: var(--market-card-price-font-family);
 }
 
+.profit-text {
+    position: absolute;
+    top: var(--market-card-price-top);
+    left: var(--market-card-price-left);
+    font-size: var(--market-card-price-font-size);
+    font-family: var(--market-card-price-font-family);
+    color: #4ade80; /* bright green */
+    text-shadow: var(--market-card-price-text-shadow);
+}
+
+.effective-price-display {
+    position: absolute;
+    top: 95px;
+    left: var(--market-card-price-left);
+    font-size: 0.75rem;
+    color: #e5e7eb;
+    font-family: 'Roboto Mono', monospace;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+}
+
 .avail-text {
     position: absolute;
     top: var(--market-card-avail-top);

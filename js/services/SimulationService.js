@@ -501,7 +501,7 @@ export class SimulationService {
             return 0;
         }
 
-        const { totalPrice, effectivePricePerUnit } = this._calculateDiminishingReturns(goodId, quantity, state.currentLocationId);
+        const { totalPrice } = this._calculateDiminishingReturns(goodId, quantity, state.currentLocationId);
         let totalSaleValue = totalPrice;
         
         const profit = totalSaleValue - (item.avgCost * quantity);

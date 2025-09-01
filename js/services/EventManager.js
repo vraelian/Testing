@@ -45,6 +45,18 @@ export class EventManager {
         document.body.addEventListener('mouseout', (e) => this._handleMouseOut(e));
         document.addEventListener('keydown', (e) => this._handleKeyDown(e));
 
+        // Add a new input event listener for real-time quantity updates.
+        document.body.addEventListener('input', (e) => {
+            const qtyInput = e.target.closest('.transaction-controls input[type="number"]');
+            if (qtyInput) {
+                const controls = qtyInput.closest('.transaction-controls');
+                const goodId = controls.dataset.goodId;
+                const mode = controls.dataset.mode;
+                const quantity = parseInt(qtyInput.value, 10) || 0;
+                this.uiManager.updateMarketCardDisplay(goodId, quantity, mode);
+            }
+        });
+        
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
             const refuelBtn = e.target.closest('#refuel-btn');
@@ -229,6 +241,9 @@ export class EventManager {
                         const currentMode = controls.getAttribute('data-mode');
                         const newMode = currentMode === 'buy' ? 'sell' : 'buy';
                         controls.setAttribute('data-mode', newMode);
+                        const qtyInput = controls.querySelector('input');
+                        const quantity = parseInt(qtyInput.value, 10) || 0;
+                        this.uiManager.updateMarketCardDisplay(goodId, quantity, newMode);
                     }
                     break;
                 }
@@ -274,6 +289,8 @@ export class EventManager {
                         const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
                         qtyInput.value = Math.max(0, Math.min(space, canAfford, stock));
                     }
+                    const newQuantity = parseInt(qtyInput.value, 10) || 0;
+                    this.uiManager.updateMarketCardDisplay(goodId, newQuantity, currentMode);
                     break;
                 }
                 case ACTION_IDS.INCREMENT: 
@@ -283,6 +300,8 @@ export class EventManager {
                     const qtyInput = controls.querySelector('input');
                     let val = parseInt(qtyInput.value) || 0;
                     qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(0, val - 1);
+                    const newQuantity = parseInt(qtyInput.value, 10) || 0;
+                    this.uiManager.updateMarketCardDisplay(goodId, newQuantity, controls.dataset.mode);
                     break;
                 }
 
