@@ -211,7 +211,7 @@ export class UIManager {
                 // Before re-rendering the market, save the current state of its interactive elements.
                 // This prevents the player's input (quantity, buy/sell mode) from being reset after a transaction.
                 this._saveMarketTransactionState();
-                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
+                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
                 this._restoreMarketTransactionState();
                 break;
             case SCREEN_IDS.CARGO:
@@ -277,7 +277,7 @@ export class UIManager {
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         this._saveMarketTransactionState();
-        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice);
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
     }
 
@@ -353,8 +353,7 @@ export class UIManager {
 
         const formattedPressures = [
             { name: 'Local Trading', value: pressures.localTrading },
-            { name: 'Volatility', value: pressures.volatility },
-            { name: 'Mean Reversion', value: pressures.meanReversion }
+            { name: 'Volatility', value: pressures.volatility }
         ]
         .map(p => ({
             name: p.name,
