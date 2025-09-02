@@ -21,19 +21,7 @@ export class MarketService {
         this.gameState = gameState;
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
-        this.lastCalculatedPressures = {}; // Cache for tooltip data
     }
-
-    /**
-     * Retrieves the most recently calculated market pressure values for a specific commodity.
-     * @param {string} locationId - The ID of the market location.
-     * @param {string} commodityId - The ID of the commodity.
-     * @returns {object|null} An object containing the pressure values, or null if not found.
-     */
-    getMarketPressures(locationId, commodityId) {
-        return this.lastCalculatedPressures[locationId]?.[commodityId] || null;
-    }
-
 
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
@@ -50,14 +38,9 @@ export class MarketService {
     /**
      * Simulates one week of market price changes for all commodities at all locations.
      * Prices fluctuate based on individual volatility and player-driven market pressure.
-     * It also caches these pressure calculations for the UI.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
-            if (!this.lastCalculatedPressures[location.id]) {
-                this.lastCalculatedPressures[location.id] = {};
-            }
-
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
 
@@ -76,12 +59,6 @@ export class MarketService {
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
-                
-                // Cache the raw pressure values for the tooltip before applying the new price.
-                this.lastCalculatedPressures[location.id][commodity.id] = {
-                    volatility: (price * volatility),
-                    localTrading: pressureEffect
-                };
 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 

@@ -2541,7 +2541,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
+    const indicatorHtml = _getIndicatorHtml(good.id, price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
@@ -2576,6 +2576,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
 /**
  * Generates the HTML for the MKT and P/L indicators.
+ * @param {string} goodId - The ID of the commodity.
  * @param {number} price - The current market price.
  * @param {number} sellPrice - The current sell price.
  * @param {number} galacticAvg - The galactic average price.
@@ -2583,7 +2584,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
  * @returns {string} An HTML string containing the indicators.
  * @private
  */
-function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
+function _getIndicatorHtml(goodId, price, sellPrice, galacticAvg, playerItem) {
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
@@ -2663,9 +2664,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         // --- Service Instantiation ---
         const gameState = new GameState();
-        const uiManager = new UIManager();
+        const simulationService = new SimulationService(gameState, null); // UIManager is injected later
+        const uiManager = new UIManager(simulationService);
+        simulationService.uiManager = uiManager; // Now inject UIManager back into SimulationService
+
         const missionService = new MissionService(gameState, uiManager);
-        const simulationService = new SimulationService(gameState, uiManager);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
         let debugService = null;
 
@@ -3602,6 +3605,21 @@ export const DB = {
                 { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }
+    },
+    // --- Market Pressures Tooltip Styles ---
+    TOOLTIP_STYLES: {
+        [LOCATION_IDS.EARTH]: { "backgroundImage": "linear-gradient(to bottom right, #1e3a8a, #0f172a)", "borderColor": "#60a5fa", "boxShadow": "0 0 12px #60a5fa", "color": "#93c5fd" },
+        [LOCATION_IDS.LUNA]: { "backgroundImage": "linear-gradient(to bottom right, #374151, #0f172a)", "borderColor": "#9ca3af", "boxShadow": "0 0 12px #9ca3af", "color": "#e5e7eb" },
+        [LOCATION_IDS.MARS]: { "backgroundImage": "linear-gradient(to bottom right, #7c2d12, #0f172a)", "borderColor": "#f87171", "boxShadow": "0 0 12px #f87171", "color": "#fca5a5" },
+        [LOCATION_IDS.VENUS]: { "backgroundImage": "linear-gradient(to bottom right, #854d0e, #0f172a)", "borderColor": "#facc15", "boxShadow": "0 0 12px #facc15", "color": "#fde047" },
+        [LOCATION_IDS.BELT]: { "backgroundImage": "linear-gradient(to bottom right, #292524, #0f172a)", "borderColor": "#ca8a04", "boxShadow": "0 0 12px #ca8a04", "color": "#ca8a04" },
+        [LOCATION_IDS.SATURN]: { "backgroundImage": "linear-gradient(to bottom right, #713f12, #312e81, #0f172a)", "borderColor": "#fde047", "boxShadow": "0 0 12px #fde047", "color": "#fef08a" },
+        [LOCATION_IDS.JUPITER]: { "backgroundImage": "linear-gradient(to bottom right, #9a3412, #1c1917)", "borderColor": "#fb923c", "boxShadow": "0 0 12px #fb923c", "color": "#fed7aa" },
+        [LOCATION_IDS.URANUS]: { "backgroundImage": "linear-gradient(to bottom right, #155e75, #312e81)", "borderColor": "#67e8f9", "boxShadow": "0 0 12px #67e8f9", "color": "#a5f3fc" },
+        [LOCATION_IDS.NEPTUNE]: { "backgroundImage": "linear-gradient(to bottom right, #1e3a8a, #000000)", "borderColor": "#60a5fa", "boxShadow": "0 0 12px #60a5fa", "color": "#93c5fd" },
+        [LOCATION_IDS.PLUTO]: { "backgroundImage": "linear-gradient(to bottom right, #312e81, #0f172a)", "borderColor": "#a78bfa", "boxShadow": "0 0 12px #a78bfa", "color": "#c4b5fd" },
+        [LOCATION_IDS.EXCHANGE]: { "backgroundImage": "linear-gradient(to bottom right, #581c87, #000000, #0f172a)", "borderColor": "#c084fc", "boxShadow": "0 0 12px #c084fc", "color": "#e9d5ff" },
+        [LOCATION_IDS.KEPLER]: { "backgroundImage": "linear-gradient(to bottom right, #701a75, #0f172a)", "borderColor": "#ec4899", "boxShadow": "0 0 12px #ec4899", "color": "#f472b6" }
     }
 };
 --- END OF FILE: ./js/data/database.js ---
@@ -4412,8 +4430,7 @@ export class MarketService {
 
     /**
      * Simulates one week of market price changes for all commodities at all locations.
-     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
-     * and player-driven market pressure.
+     * Prices fluctuate based on individual volatility and player-driven market pressure.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
@@ -4422,24 +4439,20 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
-                const avg = this.gameState.market.galacticAverages[commodity.id];
-                const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
                 const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
-                // A pull back towards the galactic baseline price.
-                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                let newPrice = price + (price * volatility) + reversion + pressureEffect;
+                let newPrice = price + (price * volatility) + pressureEffect;
                 
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
-                
+
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // Decay market pressure over time.
@@ -6264,6 +6277,8 @@ export class EventManager {
      */
     _handleMouseOver(e) {
         if (this.uiManager.isMobile) return;
+
+        // Handle price/finance graphs
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.showGraph(graphTarget, this.gameState.getState());
@@ -6277,6 +6292,7 @@ export class EventManager {
      */
     _handleMouseOut(e) {
         if (this.uiManager.isMobile) return;
+
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.hideGraph();
@@ -6810,7 +6826,11 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 
 export class UIManager {
-    constructor() {
+    /**
+     * @param {import('./SimulationService.js').SimulationService} simulationService - The core simulation service.
+     */
+    constructor(simulationService) {
+        this.simulationService = simulationService; // Injected for access to MarketService
         this.isMobile = window.innerWidth <= 768;
         this.modalQueue = [];
         this.activeGraphAnchor = null;

@@ -100,7 +100,7 @@ function _getIndicatorHtml(goodId, price, sellPrice, galacticAvg, playerItem) {
     if (marketPct > 5) marketClass = 'positive';
     if (marketPct < -5) marketClass = 'negative';
     let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
-    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}" data-action="show-market-pressures" data-good-id="${goodId}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
+    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
     let plIndicatorHtml = '';
     if (playerItem && playerItem.avgCost > 0) {

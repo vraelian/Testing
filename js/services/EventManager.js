@@ -124,10 +124,9 @@ export class EventManager {
         }
 
         // Dismiss any active graph/generic tooltip if clicking inside it.
-        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip') || e.target.closest('#market-pressures-tooltip')) {
+        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
-            this.uiManager.hideMarketPressuresTooltip();
             this.activeTooltipTarget = null;
             return;
         }
@@ -136,7 +135,6 @@ export class EventManager {
         if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
-            this.uiManager.hideMarketPressuresTooltip();
             this.activeTooltipTarget = null;
         }
 
@@ -308,20 +306,6 @@ export class EventManager {
                 }
 
                 // Tooltip & Graph Actions
-                case 'show-market-pressures': {
-                    if (this.uiManager.isMobile) {
-                        this.uiManager.hideGenericTooltip(); // Hide other tooltips
-                        this.uiManager.hideGraph();
-                        if (this.activeTooltipTarget === actionTarget) {
-                            this.uiManager.hideMarketPressuresTooltip();
-                            this.activeTooltipTarget = null;
-                        } else {
-                            this.uiManager.showMarketPressuresTooltip(actionTarget, goodId);
-                            this.activeTooltipTarget = actionTarget;
-                        }
-                    }
-                    break;
-                }
                  case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH: {
                     if (this.uiManager.isMobile) {
@@ -422,13 +406,6 @@ export class EventManager {
         if (graphTarget) {
             this.uiManager.showGraph(graphTarget, this.gameState.getState());
         }
-
-        // Handle market pressures tooltip
-        const pressureTarget = e.target.closest('[data-action="show-market-pressures"]');
-        if (pressureTarget) {
-            const goodId = pressureTarget.dataset.goodId;
-            this.uiManager.showMarketPressuresTooltip(pressureTarget, goodId);
-        }
     }
 
     /**
@@ -442,11 +419,6 @@ export class EventManager {
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.hideGraph();
-        }
-
-        const pressureTarget = e.target.closest('[data-action="show-market-pressures"]');
-        if (pressureTarget) {
-            this.uiManager.hideMarketPressuresTooltip();
         }
     }
     
