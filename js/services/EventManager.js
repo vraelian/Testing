@@ -400,8 +400,6 @@ export class EventManager {
      */
     _handleMouseOver(e) {
         if (this.uiManager.isMobile) return;
-
-        // Handle price/finance graphs
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.showGraph(graphTarget, this.gameState.getState());
@@ -415,7 +413,6 @@ export class EventManager {
      */
     _handleMouseOut(e) {
         if (this.uiManager.isMobile) return;
-
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.hideGraph();

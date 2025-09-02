@@ -37,7 +37,8 @@ export class MarketService {
 
     /**
      * Simulates one week of market price changes for all commodities at all locations.
-     * Prices fluctuate based on individual volatility and player-driven market pressure.
+     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
+     * and player-driven market pressure.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
@@ -46,20 +47,24 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
+                const avg = this.gameState.market.galacticAverages[commodity.id];
+                const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
                 // A random fluctuation based on the commodity's inherent volatility.
                 const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
+                // A pull back towards the galactic baseline price.
+                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                let newPrice = price + (price * volatility) + pressureEffect;
+                let newPrice = price + (price * volatility) + reversion + pressureEffect;
                 
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
-
+                
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // Decay market pressure over time.

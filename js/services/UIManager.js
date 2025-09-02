@@ -15,11 +15,7 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 
 export class UIManager {
-    /**
-     * @param {import('./SimulationService.js').SimulationService} simulationService - The core simulation service.
-     */
-    constructor(simulationService) {
-        this.simulationService = simulationService; // Injected for access to MarketService
+    constructor() {
         this.isMobile = window.innerWidth <= 768;
         this.modalQueue = [];
         this.activeGraphAnchor = null;

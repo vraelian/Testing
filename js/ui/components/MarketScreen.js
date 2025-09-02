@@ -49,7 +49,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const indicatorHtml = _getIndicatorHtml(good.id, price, sellPrice, galacticAvg, playerItem);
+    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
 
     return `
     <div class="item-card-container" id="item-card-container-${good.id}">
@@ -84,7 +84,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
 /**
  * Generates the HTML for the MKT and P/L indicators.
- * @param {string} goodId - The ID of the commodity.
  * @param {number} price - The current market price.
  * @param {number} sellPrice - The current sell price.
  * @param {number} galacticAvg - The galactic average price.
@@ -92,7 +91,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
  * @returns {string} An HTML string containing the indicators.
  * @private
  */
-function _getIndicatorHtml(goodId, price, sellPrice, galacticAvg, playerItem) {
+function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct > 0 ? '+' : '';
