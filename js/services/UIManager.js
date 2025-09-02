@@ -353,7 +353,8 @@ export class UIManager {
 
         const formattedPressures = [
             { name: 'Local Trading', value: pressures.localTrading },
-            { name: 'Volatility', value: pressures.volatility }
+            { name: 'Volatility', value: pressures.volatility },
+            { name: 'Mean Reversion', value: pressures.meanReversion }
         ]
         .map(p => ({
             name: p.name,
