@@ -185,11 +185,11 @@ export const GAME_RULES = Object.freeze({
  */
 export const WEALTH_MILESTONES = [
     { threshold: 50000, revealsTier: 2 },
-    { threshold: 400000, revealsTier: 3 },
-    { threshold: 10000000, revealsTier: 4 },
-    { threshold: 320000000, revealsTier: 5 },
-    { threshold: 9600000000, revealsTier: 6 },
-    { threshold: 40000000000, revealsTier: 7 }
+    { threshold: 450000, revealsTier: 3 },
+    { threshold: 4000000, revealsTier: 4 },
+    { threshold: 35000000, revealsTier: 5 },
+    { threshold: 300000000, revealsTier: 6 },
+    { threshold: 2500000000, revealsTier: 7 }
 ];
 
 /**
