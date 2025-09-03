@@ -57,7 +57,7 @@ export class MarketService {
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 // Check for an active system state and get modifiers for the current commodity.
-                const commodityMods = this._currentSystemState?.modifiers?.commodity[commodity.id];
+                const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
 
                 // If modifiers exist, apply them to the baseline values for this calculation tick.
                 if (commodityMods) {
@@ -82,7 +82,7 @@ export class MarketService {
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
                 // Apply system state modifiers.
-                if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
+                if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
@@ -123,7 +123,7 @@ export class MarketService {
                 }
                 
                 // Apply system state modifiers.
-                if (this._currentSystemState?.modifiers?.commodity[c.id]?.availability) {
+                if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
                     inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
                 }
             });
