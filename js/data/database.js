@@ -18,6 +18,13 @@ export const DATE_CONFIG = {
 };
 
 export const SYSTEM_STATES = {
+    'NEUTRAL': {
+        name: 'Neutral System',
+        duration: 28,
+        description: "Standard space-faring conditions. Markets are operating under normal parameters.",
+        modifiers: {} // No economic deviations
+    },
+    /* // Example of a disruptive economic state. More can be added here.
     'CORPORATE_WAR': {
         name: 'Corporate War',
         duration: 28,
@@ -39,6 +46,7 @@ export const SYSTEM_STATES = {
             }
         }
     }
+    */
 };
 
 export const DB = {
