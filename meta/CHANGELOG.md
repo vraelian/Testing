@@ -4,6 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [24.00] - 2025-09-3
 - economy v3 update
+- progression update
 - ship cargo balancing
 - wealth milestone update
 

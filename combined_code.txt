@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 23.20</title>
+    <title>Orbital Trading 24.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 23.20</p>
+            <p>Version 24.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1307,6 +1307,16 @@ body {
     padding: 0;
 }
 
+.item-card-container.locked > div {
+    filter: grayscale(80%) brightness(0.6);
+    pointer-events: none; /* Disable pointer events on the card itself */
+}
+
+.item-card-container.locked .transaction-controls {
+    pointer-events: all; /* Re-enable pointer events for the button container */
+}
+
+
 .commodity-name {
     position: absolute;
     top: var(--market-card-info-top);
@@ -2562,8 +2572,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             </div>`;
     } else {
         transactionControlsHtml = `
-            <div class="transaction-controls">
-                <button class="btn w-full" data-action="acquire-license" data-license-id="${good.licenseId}">Acquire License</button>
+            <div class="transaction-controls absolute inset-0 flex items-center justify-center p-4">
+                <button class="btn w-full h-full text-center" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">Acquire License</button>
             </div>`;
     }
 
@@ -2983,7 +2993,7 @@ export const GAME_RULES = Object.freeze({
     PRICE_HISTORY_LENGTH: 50,
     FINANCE_HISTORY_LENGTH: 10,
     DAILY_PRICE_VOLATILITY: 0.035,
-    MEAN_REVERSION_STRENGTH: 0.01,
+    MEAN_REVERSION_STRENGTH: 0.05,
     MARKET_PRESSURE_DECAY: 0.85,
     LOAN_GARNISHMENT_DAYS: 180,
     LOAN_GARNISHMENT_PERCENT: 0.14,
@@ -3042,28 +3052,22 @@ export const SYSTEM_STATES = {
     'CORPORATE_WAR': {
         name: 'Corporate War',
         duration: 28,
+        description: "Rival corporations have escalated to open conflict, creating high demand for military-grade materials. The Plasteel and Cybernetics markets are in turmoil.",
         modifiers: {
             commodity: {
-                'cybernetics': { availability: 0.6, price: 1.4 },
-                'plasteel': { availability: 0.7, price: 1.3 }
+                'cybernetics': {
+                    availability: 0.6,
+                    price: 1.4,
+                    volatility_mult: 2.5,
+                    mean_reversion_mult: 0.3
+                },
+                'plasteel': {
+                    availability: 0.7,
+                    price: 1.3,
+                    volatility_mult: 2.0,
+                    mean_reversion_mult: 0.5
+                }
             }
-        }
-    },
-    'COLONIAL_BOOM': {
-        name: 'Colonial Boom',
-        duration: 21,
-        modifiers: {
-            commodity: {
-                'cryo_pods': { availability: 0.5, price: 1.5 },
-                'atmo_processors': { availability: 0.6, price: 1.4 }
-            }
-        }
-    },
-    'SOLAR_FLARE': {
-        name: 'Solar Flare Activity',
-        duration: 14,
-        modifiers: {
-            commodity: { 'neural_processors': { availability: 0.5, price: 1.8 } }
         }
     }
 };
@@ -4151,7 +4155,7 @@ export class GameState {
                 loanStartDate: null, seenGarnishmentWarning: false,
                 revealedTier: 1,
                 unlockedLicenseIds: [],
-                unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
+                unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
@@ -4469,15 +4473,36 @@ export class MarketService {
                 const avg = this.gameState.market.galacticAverages[commodity.id];
                 const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
+                /** @description The base volatility for price fluctuations from game rules. */
+                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
+
+                /** @description The base strength of the pull towards the galactic average from game rules. */
+                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+
+                // Check for an active system state and get modifiers for the current commodity.
+                const commodityMods = this._currentSystemState?.modifiers?.commodity[commodity.id];
+
+                // If modifiers exist, apply them to the baseline values for this calculation tick.
+                if (commodityMods) {
+                    if (commodityMods.volatility_mult) {
+                        volatility *= commodityMods.volatility_mult;
+                    }
+                    if (commodityMods.mean_reversion_mult) {
+                        meanReversion *= commodityMods.mean_reversion_mult;
+                    }
+                }
+
                 // A random fluctuation based on the commodity's inherent volatility.
-                const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
+                const randomFluctuation = (Math.random() - 0.5) * 2 * commodity.volatility * volatility;
+
                 // A pull back towards the galactic baseline price.
-                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
+                const reversionEffect = (baseline - price) * meanReversion;
+
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                let newPrice = price + (price * volatility) + reversion + pressureEffect;
+                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
@@ -7207,17 +7232,20 @@ export class UIManager {
      * @private
      */
     _saveMarketTransactionState() {
-        if (this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
-
+        if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
         const controls = document.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
-            this.marketTransactionState[goodId] = {
-                quantity: qtyInput.value,
-                mode: mode
-            };
+            
+            // Only save state if there's an input field (i.e., it's not a locked license button)
+            if (qtyInput) {
+                this.marketTransactionState[goodId] = {
+                    quantity: qtyInput.value,
+                    mode: mode
+                };
+            }
         });
     }
 
@@ -7234,8 +7262,10 @@ export class UIManager {
             const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
-                qtyInput.value = state.quantity;
-                control.setAttribute('data-mode', state.mode);
+                if (qtyInput) { // Check if the input exists before setting its value
+                    qtyInput.value = state.quantity;
+                    control.setAttribute('data-mode', state.mode);
+                }
             }
         }
     }
@@ -7990,6 +8020,12 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [24.00] - 2025-09-3
+- economy v3 update
+- progression update
+- ship cargo balancing
+- wealth milestone update
 
 ## [23.20] - 2025-08-31
 - diminishing returns in economy
