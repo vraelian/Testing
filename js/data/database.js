@@ -21,28 +21,22 @@ export const SYSTEM_STATES = {
     'CORPORATE_WAR': {
         name: 'Corporate War',
         duration: 28,
+        description: "Rival corporations have escalated to open conflict, creating high demand for military-grade materials. The Plasteel and Cybernetics markets are in turmoil.",
         modifiers: {
             commodity: {
-                'cybernetics': { availability: 0.6, price: 1.4 },
-                'plasteel': { availability: 0.7, price: 1.3 }
+                'cybernetics': {
+                    availability: 0.6,
+                    price: 1.4,
+                    volatility_mult: 2.5,
+                    mean_reversion_mult: 0.3
+                },
+                'plasteel': {
+                    availability: 0.7,
+                    price: 1.3,
+                    volatility_mult: 2.0,
+                    mean_reversion_mult: 0.5
+                }
             }
-        }
-    },
-    'COLONIAL_BOOM': {
-        name: 'Colonial Boom',
-        duration: 21,
-        modifiers: {
-            commodity: {
-                'cryo_pods': { availability: 0.5, price: 1.5 },
-                'atmo_processors': { availability: 0.6, price: 1.4 }
-            }
-        }
-    },
-    'SOLAR_FLARE': {
-        name: 'Solar Flare Activity',
-        duration: 14,
-        modifiers: {
-            commodity: { 'neural_processors': { availability: 0.5, price: 1.8 } }
         }
     }
 };
@@ -402,20 +396,20 @@ export const DB = {
 
     // --- Ship Data ---
     SHIPS: {
-        [SHIP_IDS.WANDERER]: { name: 'Wanderer', class: 'C', price: 25000, maxHealth: 100, cargoCapacity: 8, maxFuel: 100, saleLocationId: null, lore: 'The All-Rounder. A reliable, if unspectacular, light freighter. Its balanced stats make it a good choice for new captains finding their niche.' },
-        [SHIP_IDS.STALWART]: { name: 'Stalwart', class: 'C', price: 25000, maxHealth: 150, cargoCapacity: 15, maxFuel: 80, saleLocationId: LOCATION_IDS.MARS, lore: 'The Hauler. A workhorse of the inner worlds. Slow and cumbersome, but boasts an impressive cargo capacity for its price point.' },
-        [SHIP_IDS.MULE]: { name: 'Mule', class: 'C', price: 25000, maxHealth: 75, cargoCapacity: 12, maxFuel: 150, saleLocationId: LOCATION_IDS.BELT, lore: 'The Explorer. What it lacks in cargo space, it makes up for with surprising efficiency and robust systems, allowing it to travel further and cheaper than other ships in its class.' },
-        [SHIP_IDS.PATHFINDER]: { name: 'Pathfinder', class: 'B', price: 180000, maxHealth: 120, cargoCapacity: 40, maxFuel: 150, saleLocationId: LOCATION_IDS.LUNA, lore: 'Built for the long haul. Its extended fuel tanks and robust sensor suite make it ideal for reaching the outer edges of the system.' },
-        [SHIP_IDS.NOMAD]: { name: 'Nomad', class: 'B', price: 280000, maxHealth: 100, cargoCapacity: 35, maxFuel: 140, saleLocationId: LOCATION_IDS.URANUS, lore: 'A vessel designed for self-sufficiency, featuring advanced life support and a small onboard workshop for emergency repairs.' },
-        [SHIP_IDS.VINDICATOR]: { name: 'Vindicator', class: 'A', price: 750000, maxHealth: 250, cargoCapacity: 80, maxFuel: 120, saleLocationId: LOCATION_IDS.NEPTUNE, lore: 'A decommissioned military frigate. Fast, tough, and intimidating, with cargo space retrofitted where missile launchers used to be.' },
-        [SHIP_IDS.AEGIS]: { name: 'Aegis', class: 'A', price: 1200000, maxHealth: 120, cargoCapacity: 70, maxFuel: 140, saleLocationId: LOCATION_IDS.EARTH, lore: 'Built as a high-threat escort vessel, its hull is exceptionally dense. A flying fortress that can also haul a respectable amount of cargo.' },
-        [SHIP_IDS.ODYSSEY]: { name: 'Odyssey', class: 'S', price: 3800000, maxHealth: 100, cargoCapacity: 120, maxFuel: 250, saleLocationId: LOCATION_IDS.SATURN, lore: 'The pinnacle of personal transport. Gleaming chrome, whisper-quiet engines, and a cabin that smells of rich Corinthian leather.' },
-        [SHIP_IDS.MAJESTIC]: { name: 'Majestic', class: 'S', price: 7200000, maxHealth: 200, cargoCapacity: 160, maxFuel: 250, saleLocationId: LOCATION_IDS.KEPLER, lore: 'A flying palace favored by corporate magnates. Its speed, range, and capacity make it one of the most versatile ships money can buy.' },
-        [SHIP_IDS.TITAN_HAULER]: { name: 'Titan Hauler', class: 'S', price: 1800000, maxHealth: 175, cargoCapacity: 300, maxFuel: 75, saleLocationId: LOCATION_IDS.URANUS, isRare: true, lore: 'A relic of a failed colonization effort, this ship is almost entirely a cargo container with an engine strapped to it.' },
+        [SHIP_IDS.WANDERER]: { name: 'Wanderer', class: 'C', price: 25000, maxHealth: 100, cargoCapacity: 50, maxFuel: 100, saleLocationId: null, lore: 'The All-Rounder. A reliable, if unspectacular, light freighter. Its balanced stats make it a good choice for new captains finding their niche.' },
+        [SHIP_IDS.STALWART]: { name: 'Stalwart', class: 'C', price: 25000, maxHealth: 150, cargoCapacity: 75, maxFuel: 80, saleLocationId: LOCATION_IDS.MARS, lore: 'The Hauler. A workhorse of the inner worlds. Slow and cumbersome, but boasts an impressive cargo capacity for its price point.' },
+        [SHIP_IDS.MULE]: { name: 'Mule', class: 'C', price: 25000, maxHealth: 75, cargoCapacity: 40, maxFuel: 150, saleLocationId: LOCATION_IDS.BELT, lore: 'The Explorer. What it lacks in cargo space, it makes up for with surprising efficiency and robust systems, allowing it to travel further and cheaper than other ships in its class.' },
+        [SHIP_IDS.PATHFINDER]: { name: 'Pathfinder', class: 'B', price: 180000, maxHealth: 120, cargoCapacity: 250, maxFuel: 150, saleLocationId: LOCATION_IDS.LUNA, lore: 'Built for the long haul. Its extended fuel tanks and robust sensor suite make it ideal for reaching the outer edges of the system.' },
+        [SHIP_IDS.NOMAD]: { name: 'Nomad', class: 'B', price: 280000, maxHealth: 100, cargoCapacity: 100, maxFuel: 140, saleLocationId: LOCATION_IDS.URANUS, lore: 'A vessel designed for self-sufficiency, featuring advanced life support and a small onboard workshop for emergency repairs.' },
+        [SHIP_IDS.VINDICATOR]: { name: 'Vindicator', class: 'A', price: 750000, maxHealth: 250, cargoCapacity: 125, maxFuel: 120, saleLocationId: LOCATION_IDS.NEPTUNE, lore: 'A decommissioned military frigate. Fast, tough, and intimidating, with cargo space retrofitted where missile launchers used to be.' },
+        [SHIP_IDS.AEGIS]: { name: 'Aegis', class: 'A', price: 1200000, maxHealth: 120, cargoCapacity: 150, maxFuel: 140, saleLocationId: LOCATION_IDS.EARTH, lore: 'Built as a high-threat escort vessel, its hull is exceptionally dense. A flying fortress that can also haul a respectable amount of cargo.' },
+        [SHIP_IDS.ODYSSEY]: { name: 'Odyssey', class: 'S', price: 3800000, maxHealth: 100, cargoCapacity: 125, maxFuel: 250, saleLocationId: LOCATION_IDS.SATURN, lore: 'The pinnacle of personal transport. Gleaming chrome, whisper-quiet engines, and a cabin that smells of rich Corinthian leather.' },
+        [SHIP_IDS.MAJESTIC]: { name: 'Majestic', class: 'S', price: 7200000, maxHealth: 200, cargoCapacity: 400, maxFuel: 250, saleLocationId: LOCATION_IDS.KEPLER, lore: 'A flying palace favored by corporate magnates. Its speed, range, and capacity make it one of the most versatile ships money can buy.' },
+        [SHIP_IDS.TITAN_HAULER]: { name: 'Titan Hauler', class: 'S', price: 1800000, maxHealth: 175, cargoCapacity: 500, maxFuel: 75, saleLocationId: LOCATION_IDS.URANUS, isRare: true, lore: 'A relic of a failed colonization effort, this ship is almost entirely a cargo container with an engine strapped to it.' },
         [SHIP_IDS.VOID_CHASER]: { name: 'Void Chaser', class: 'S', price: 3100000, maxHealth: 50, cargoCapacity: 75, maxFuel: 400, saleLocationId: LOCATION_IDS.BELT, isRare: true, lore: 'A heavily modified smuggling vessel. Its paper-thin hull is a small price to pay for its legendary engine and long-range fuel cells.' },
         [SHIP_IDS.GUARDIAN]: { name: 'Guardian', class: 'S', price: 1500000, maxHealth: 400, cargoCapacity: 100, maxFuel: 150, saleLocationId: LOCATION_IDS.EARTH, isRare: true, lore: 'An experimental military prototype with redundant hull plating, designed to withstand extreme punishment.' },
         [SHIP_IDS.STARGAZER]: { name: 'Stargazer', class: 'S', price: 950000, maxHealth: 100, cargoCapacity: 50, maxFuel: 350, saleLocationId: LOCATION_IDS.JUPITER, isRare: true, lore: 'A deep-space exploration vessel with colossal fuel reserves, intended for journeys far beyond the known systems.' },
-        [SHIP_IDS.BEHEMOTH]: { name: 'Behemoth', class: 'O', price: 32000000, maxHealth: 600, cargoCapacity: 1000, maxFuel: 600, saleLocationId: LOCATION_IDS.EXCHANGE, isRare: true, lore: 'An orbital-class freighter that dwarfs even the largest stations. It is a legend among traders, rumored to be a mobile black market in its own right.' }
+        [SHIP_IDS.BEHEMOTH]: { name: 'Behemoth', class: 'O', price: 32000000, maxHealth: 600, cargoCapacity: 6000, maxFuel: 600, saleLocationId: LOCATION_IDS.EXCHANGE, isRare: true, lore: 'An orbital-class freighter that dwarfs even the largest stations. It is a legend among traders, rumored to be a mobile black market in its own right.' }
     },
 
     // --- Tradable Commodities Data ---
@@ -535,13 +529,13 @@ export const DB = {
             ]
         },
         'mission_license_t3': {
-             id: "mission_license_t3", name: "Guild Certification", type: "TBD", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 3 License.", objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
+             id: "mission_license_t3", name: "Guild Certification", type: "TBD", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 3 License.", objectives: [], completion: {}, rewards: []
         },
         'mission_license_t5': {
-             id: "mission_license_t5", name: "Governor's Contract", type: "TBD", host: "STATION", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 5 License.", objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
+             id: "mission_license_t5", name: "Governor's Contract", type: "TBD", host: "STATION", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 5 License.", objectives: [], completion: {}, rewards: []
         },
         'mission_license_t7': {
-             id: "mission_license_t7", name: "Legendary Run", type: "TBD", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 7 License.", objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
+             id: "mission_license_t7", name: "Legendary Run", type: "TBD", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 7 License.", objectives: [], completion: {}, rewards: []
         }
     },
 
@@ -612,7 +606,7 @@ export const DB = {
                 { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
                 { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship. The dockworker even threw in extra!", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
                 { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
-                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear</b> on your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and wear on the <b>hull</b> of your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
                 { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
                 { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },

@@ -50,15 +50,36 @@ export class MarketService {
                 const avg = this.gameState.market.galacticAverages[commodity.id];
                 const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
 
+                /** @description The base volatility for price fluctuations from game rules. */
+                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
+
+                /** @description The base strength of the pull towards the galactic average from game rules. */
+                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+
+                // Check for an active system state and get modifiers for the current commodity.
+                const commodityMods = this._currentSystemState?.modifiers?.commodity[commodity.id];
+
+                // If modifiers exist, apply them to the baseline values for this calculation tick.
+                if (commodityMods) {
+                    if (commodityMods.volatility_mult) {
+                        volatility *= commodityMods.volatility_mult;
+                    }
+                    if (commodityMods.mean_reversion_mult) {
+                        meanReversion *= commodityMods.mean_reversion_mult;
+                    }
+                }
+
                 // A random fluctuation based on the commodity's inherent volatility.
-                const volatility = (Math.random() - 0.5) * 2 * commodity.volatility;
+                const randomFluctuation = (Math.random() - 0.5) * 2 * commodity.volatility * volatility;
+
                 // A pull back towards the galactic baseline price.
-                const reversion = (baseline - price) * GAME_RULES.MEAN_REVERSION_STRENGTH;
+                const reversionEffect = (baseline - price) * meanReversion;
+
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = price * inventoryItem.marketPressure * -1;
                 
-                let newPrice = price + (price * volatility) + reversion + pressureEffect;
+                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[commodity.id]?.price) {
