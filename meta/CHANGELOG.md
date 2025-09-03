@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [24.00] - 2025-09-3
+- economy v3 update
+- ship cargo balancing
+- wealth milestone update
+
 ## [23.20] - 2025-08-31
 - diminishing returns in economy
 - expected profit display
