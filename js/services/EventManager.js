@@ -141,7 +141,7 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
@@ -232,6 +232,9 @@ export class EventManager {
                     break;
                 case 'show-starport-locked-toast':
                     this.uiManager.showToast('starport-unlock-tooltip', "Pay off your initial loan to access the Starport!");
+                    break;
+                case ACTION_IDS.ACQUIRE_LICENSE:
+                    this._handleAcquireLicense(licenseId);
                     break;
                 
                 // Market Transaction Controls
@@ -390,6 +393,43 @@ export class EventManager {
                 }
             });
             return;
+        }
+    }
+
+    /**
+     * Handles the UI flow for acquiring a trade license.
+     * @param {string} licenseId The ID of the license to acquire.
+     * @private
+     */
+    _handleAcquireLicense(licenseId) {
+        const license = DB.LICENSES[licenseId];
+        if (!license) return;
+    
+        if (license.type === 'purchase') {
+            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
+            this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                customSetup: (modal, closeHandler) => {
+                    const btnContainer = modal.querySelector('#event-button-container');
+                    btnContainer.innerHTML = `
+                        <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-license-purchase" class="btn">Cancel</button>
+                    `;
+                    modal.querySelector('#confirm-license-purchase').onclick = () => {
+                        const result = this.simulationService.purchaseLicense(licenseId);
+                        if (!result.success) {
+                            let errorMsg = 'An unknown error occurred.';
+                            if (result.error === 'INSUFFICIENT_FUNDS') {
+                                errorMsg = `You cannot afford the ${formatCredits(license.cost)} fee for this license.`;
+                            }
+                            this.uiManager.queueModal('event-modal', 'Purchase Failed', errorMsg);
+                        }
+                        closeHandler();
+                    };
+                    modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
+                }
+            });
+        } else if (license.type === 'mission') {
+            this.uiManager.queueModal('event-modal', license.name, license.guidanceText);
         }
     }
 

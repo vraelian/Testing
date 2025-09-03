@@ -16,7 +16,7 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @returns {string} The HTML content for the Market screen.
  */
 export function renderMarketScreen(gameState, isMobile, getItemPrice) {
-    const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
+    const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
     const marketHtml = availableCommodities.map(good => {
         return _getMarketItemHtml(good, gameState, getItemPrice);
     }).join('');
@@ -39,29 +39,20 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-    const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
+    
+    const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
     const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
     const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
     const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
-    const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-
-    const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
+    const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
-
-    return `
-    <div class="item-card-container" id="item-card-container-${good.id}">
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
-            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
-            
-            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-            
-            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
-
+    
+    let transactionControlsHtml;
+    if (hasLicense) {
+        transactionControlsHtml = `
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
@@ -76,7 +67,27 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
                     <button class="btn confirm-btn" data-action="confirm-trade" data-good-id="${good.id}">Confirm</button>
                     <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
                 </div>
-            </div>
+            </div>`;
+    } else {
+        transactionControlsHtml = `
+            <div class="transaction-controls">
+                <button class="btn w-full" data-action="acquire-license" data-license-id="${good.licenseId}">Acquire License</button>
+            </div>`;
+    }
+
+
+    return `
+    <div class="item-card-container ${!hasLicense ? 'locked' : ''}" id="item-card-container-${good.id}">
+        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+            
+            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+            
+            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+
+            ${transactionControlsHtml}
         </div>
     </div>`;
 }

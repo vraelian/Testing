@@ -117,6 +117,7 @@ export const ACTION_IDS = Object.freeze({
     PAY_DEBT: 'pay-debt',
     TAKE_LOAN: 'take-loan',
     PURCHASE_INTEL: 'purchase-intel',
+    ACQUIRE_LICENSE: 'acquire-license',
     BUY_ITEM: 'buy-item',
     SELL_ITEM: 'sell-item',
     SET_MAX_BUY: 'set-max-buy',
@@ -178,6 +179,28 @@ export const GAME_RULES = Object.freeze({
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
 });
+
+/**
+ * Defines the wealth milestones that trigger the reveal of new commodity tiers.
+ */
+export const WEALTH_MILESTONES = [
+    { threshold: 50000, revealsTier: 2 },
+    { threshold: 450000, revealsTier: 3 },
+    { threshold: 4000000, revealsTier: 4 },
+    { threshold: 35000000, revealsTier: 5 },
+    { threshold: 300000000, revealsTier: 6 },
+    { threshold: 2500000000, revealsTier: 7 }
+];
+
+/**
+ * Defines rules for how player transactions impact local market prices.
+ */
+export const MARKET_IMPACT_RULES = {
+    SENSITIVITY: 0.1, // Base multiplier for how much a transaction affects price
+    MAX_IMPACT: 0.25, // Maximum percentage a single transaction can shift the price
+    TIER_THRESHOLD: 4 // Only goods of this tier and above cause an impact
+};
+
 
 /**
  * The key used to store and retrieve the game state from the browser's localStorage.

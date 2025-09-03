@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_IMPACT_RULES } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 import { MarketService } from './simulation/MarketService.js';
 
@@ -449,6 +449,11 @@ export class SimulationService {
         if (state.isGameOver || quantity <= 0) return false;
         
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
+        if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
+            this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
+            return false;
+        }
+
         const price = this.uiManager.getItemPrice(state, goodId);
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -466,8 +471,6 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
-        inventoryItem.marketPressure -= (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
@@ -478,6 +481,7 @@ export class SimulationService {
         this._checkMilestones();
         this.missionService.checkTriggers();
         
+        this._applyMarketImpact(goodId, quantity, 'buy');
         this.gameState.setState({});
 
         return true;
@@ -494,6 +498,11 @@ export class SimulationService {
         if (state.isGameOver || quantity <= 0) return 0;
         
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
+        if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
+            this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
+            return 0;
+        }
+
         const activeInventory = this._getActiveInventory();
         const item = activeInventory[goodId];
         if (!item || item.quantity < quantity) {
@@ -517,18 +526,41 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        inventoryItem.marketPressure += (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
         this._checkMilestones();
         this.missionService.checkTriggers();
         
+        this._applyMarketImpact(goodId, quantity, 'sell');
         this.gameState.setState({});
         
         return totalSaleValue;
     }
+
+    /**
+     * Applies a dynamic price adjustment to a commodity based on the volume of a player's transaction.
+     * @param {string} goodId - The ID of the commodity traded.
+     * @param {number} quantity - The amount traded.
+     * @param {string} transactionType - 'buy' or 'sell'.
+     * @private
+     */
+    _applyMarketImpact(goodId, quantity, transactionType) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        if (good.tier < MARKET_IMPACT_RULES.TIER_THRESHOLD) return;
+
+        const marketDepth = good.canonicalAvailability[1];
+        if (marketDepth === 0) return;
+
+        const significance = quantity / marketDepth;
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT);
+
+        const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
+        const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
+
+        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = Math.max(1, Math.round(price + priceChange));
+    }
+
 
     /**
      * Purchases a new ship and adds it to the player's hangar.
@@ -654,6 +686,28 @@ export class SimulationService {
         const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.gameState.setState({});
+    }
+
+    /**
+     * Purchases a trade license for a specific commodity tier.
+     * @param {string} licenseId - The ID of the license to purchase.
+     * @returns {object} A structured object indicating success or failure with a specific error code.
+     */
+    purchaseLicense(licenseId) {
+        const license = DB.LICENSES[licenseId];
+        const { player } = this.gameState;
+
+        if (!license) return { success: false, error: 'INVALID_LICENSE' };
+        if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
+        if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
+        if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        
+        player.credits -= license.cost;
+        player.unlockedLicenseIds.push(licenseId);
+        this._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        this.gameState.setState({});
+        
+        return { success: true };
     }
 
     /**
@@ -999,34 +1053,18 @@ export class SimulationService {
     }
 
     /**
-     * Checks if the player's credit total has reached a new progression milestone.
-     * @returns {boolean} - True if a milestone was reached and state was changed.
+     * Checks if the player's wealth has reached a new milestone, revealing the next tier of commodities.
      * @private
      */
     _checkMilestones() {
-        let changed = false;
-        DB.CONFIG.COMMODITY_MILESTONES.forEach(milestone => {
-            if (this.gameState.player.credits >= milestone.threshold && !this.gameState.player.seenCommodityMilestones.includes(milestone.threshold)) {
-                this.gameState.player.seenCommodityMilestones.push(milestone.threshold);
-                let message = milestone.message;
-                
-                if (milestone.unlockLevel && milestone.unlockLevel > this.gameState.player.unlockedCommodityLevel) {
-                    this.gameState.player.unlockedCommodityLevel = milestone.unlockLevel;
-                    changed = true;
-                }
-                if (milestone.unlocksLocation && !this.gameState.player.unlockedLocationIds.includes(milestone.unlocksLocation)) {
-                    this.gameState.player.unlockedLocationIds.push(milestone.unlocksLocation);
-                    
-                    const newLocation = DB.MARKETS.find(m => m.id === milestone.unlocksLocation);
-                    message += `<br><br><span class="hl-blue">New Destination:</span> Access to <span class="hl">${newLocation.name}</span> has been granted.`;
-                    changed = true;
-                }
-                if (changed) {
-                    this.uiManager.queueModal('event-modal', 'Reputation Growth', message);
-                }
-            }
-        });
-        return changed;
+        const { credits, revealedTier } = this.gameState.player;
+        const nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === revealedTier + 1);
+    
+        if (nextMilestone && credits >= nextMilestone.threshold) {
+            this.gameState.player.revealedTier = nextMilestone.revealsTier;
+            this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            this.gameState.setState({});
+        }
     }
 
     /**
@@ -1152,7 +1190,14 @@ export class SimulationService {
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
-            // NOTE: Future reward types like 'item' or 'ship' can be handled here.
+            // Grant license rewards
+            if (reward.type === 'license') {
+                if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
+                    this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                    const license = DB.LICENSES[reward.licenseId];
+                    this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
+                }
+            }
         });
     }
 
