@@ -471,6 +471,8 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
+        inventoryItem.marketPressure -= (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
@@ -526,6 +528,8 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
+        inventoryItem.marketPressure += (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
@@ -729,7 +733,7 @@ export class SimulationService {
         if (otherMarkets.length === 0) return;
 
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];
-        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= player.revealedTier);
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
         
         if (commodity) {

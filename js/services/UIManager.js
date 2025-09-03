@@ -284,6 +284,8 @@ export class UIManager {
      * @private
      */
     _saveMarketTransactionState() {
+        if (this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
+
         const controls = document.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;

@@ -2508,7 +2508,7 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @returns {string} The HTML content for the Market screen.
  */
 export function renderMarketScreen(gameState, isMobile, getItemPrice) {
-    const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= gameState.player.unlockedCommodityLevel);
+    const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
     const marketHtml = availableCommodities.map(good => {
         return _getMarketItemHtml(good, gameState, getItemPrice);
     }).join('');
@@ -2531,29 +2531,20 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-    const currentLocation = DB.MARKETS.find(m => m.id === currentLocationId);
+    
+    const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
     const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
     const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
     const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
-    const isSpecialDemand = currentLocation.specialDemand && currentLocation.specialDemand[good.id];
-
-    const nameTooltip = isSpecialDemand ? `data-tooltip="${currentLocation.specialDemand[good.id].lore}"` : `data-tooltip="${good.lore}"`;
+    const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
-
-    return `
-    <div class="item-card-container" id="item-card-container-${good.id}">
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
-            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
-            
-            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-            
-            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
-
+    
+    let transactionControlsHtml;
+    if (hasLicense) {
+        transactionControlsHtml = `
              <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
@@ -2568,7 +2559,27 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
                     <button class="btn confirm-btn" data-action="confirm-trade" data-good-id="${good.id}">Confirm</button>
                     <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
                 </div>
-            </div>
+            </div>`;
+    } else {
+        transactionControlsHtml = `
+            <div class="transaction-controls">
+                <button class="btn w-full" data-action="acquire-license" data-license-id="${good.licenseId}">Acquire License</button>
+            </div>`;
+    }
+
+
+    return `
+    <div class="item-card-container ${!hasLicense ? 'locked' : ''}" id="item-card-container-${good.id}">
+        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+            
+            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+            
+            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+
+            ${transactionControlsHtml}
         </div>
     </div>`;
 }
@@ -2916,6 +2927,7 @@ export const ACTION_IDS = Object.freeze({
     PAY_DEBT: 'pay-debt',
     TAKE_LOAN: 'take-loan',
     PURCHASE_INTEL: 'purchase-intel',
+    ACQUIRE_LICENSE: 'acquire-license',
     BUY_ITEM: 'buy-item',
     SELL_ITEM: 'sell-item',
     SET_MAX_BUY: 'set-max-buy',
@@ -2977,6 +2989,28 @@ export const GAME_RULES = Object.freeze({
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
 });
+
+/**
+ * Defines the wealth milestones that trigger the reveal of new commodity tiers.
+ */
+export const WEALTH_MILESTONES = [
+    { threshold: 50000, revealsTier: 2 },
+    { threshold: 450000, revealsTier: 3 },
+    { threshold: 4000000, revealsTier: 4 },
+    { threshold: 35000000, revealsTier: 5 },
+    { threshold: 300000000, revealsTier: 6 },
+    { threshold: 2500000000, revealsTier: 7 }
+];
+
+/**
+ * Defines rules for how player transactions impact local market prices.
+ */
+export const MARKET_IMPACT_RULES = {
+    SENSITIVITY: 0.1, // Base multiplier for how much a transaction affects price
+    MAX_IMPACT: 0.25, // Maximum percentage a single transaction can shift the price
+    TIER_THRESHOLD: 4 // Only goods of this tier and above cause an impact
+};
+
 
 /**
  * The key used to store and retrieve the game state from the browser's localStorage.
@@ -3042,15 +3076,6 @@ export const DB = {
         INTEL_CHANCE: 0.3,
         INTEL_DEMAND_MOD: 1.8,
         INTEL_DEPRESSION_MOD: 0.5,
-        // Defines credit thresholds for unlocking new commodities, locations, and narrative events.
-        COMMODITY_MILESTONES: [
-            { threshold: 30000, unlockLevel: 2, message: "Your growing reputation has unlocked access to more advanced industrial hardware.<br>New opportunities await." },
-            { threshold: 300000, unlockLevel: 3, message: "Word of your success is spreading. High-tech biological and medical markets are now open to you.", unlocksLocation: LOCATION_IDS.URANUS },
-            { threshold: 5000000, unlockLevel: 4, message: "Your influence is undeniable. Contracts for planetary-scale infrastructure are now within your reach.", unlocksLocation: LOCATION_IDS.NEPTUNE },
-            { threshold: 75000000, unlockLevel: 5, message: "You now operate on a level few can comprehend. The most exotic and reality-bending goods are available to you.", unlocksLocation: LOCATION_IDS.PLUTO},
-            { threshold: 100000000, message: "Your name is legend. You've been granted clearance to 'Kepler's Eye', a deep space observatory with unique scientific demands.", unlocksLocation: LOCATION_IDS.KEPLER},
-            { threshold: 500000000, unlockLevel: 6, message: "You now operate on a level few can comprehend. The most exotic and reality-bending goods are available to you.", unlocksLocation: LOCATION_IDS.EXCHANGE }
-        ]
     },
 
     SYSTEM_STATES: SYSTEM_STATES,
@@ -3416,41 +3441,50 @@ export const DB = {
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
-        { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', basePriceRange: [45, 55], tier: 1, unlockLevel: 1, styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', canonicalAvailability: [0, 80], volatility: 0.01 },
-        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', basePriceRange: [300, 375], tier: 1, unlockLevel: 1, styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', canonicalAvailability: [0, 60], volatility: 0.015 },
-        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', basePriceRange: [1900, 2400], tier: 2, unlockLevel: 1, styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', canonicalAvailability: [0, 50], volatility: 0.025 },
-        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', basePriceRange: [4800, 6000], tier: 2, unlockLevel: 1, styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', canonicalAvailability: [0, 40], volatility: 0.03 },
-        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', basePriceRange: [13500, 17000], tier: 3, unlockLevel: 2, styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', canonicalAvailability: [0, 50], volatility: 0.02 },
-        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', basePriceRange: [32000, 40000], tier: 3, unlockLevel: 2, styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', canonicalAvailability: [0, 30], volatility: 0.04 },
-        { id: COMMODITY_IDS.GMO_SEEDS, name: 'GMO Seed Cultures', basePriceRange: [75000, 95000], tier: 4, unlockLevel: 3, styleClass: 'item-style-7', lore: 'Patented seeds holding the key to unlocking agricultural wealth on new worlds.', canonicalAvailability: [0, 25], volatility: 0.06 },
-        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', basePriceRange: [250000, 310000], tier: 4, unlockLevel: 3, styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', canonicalAvailability: [0, 20], volatility: 0.035 },
-        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', basePriceRange: [900000, 1100000], tier: 5, unlockLevel: 4, styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', canonicalAvailability: [0, 15], volatility: 0.025 },
-        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', basePriceRange: [5000000, 6200000], tier: 5, unlockLevel: 4, styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', canonicalAvailability: [0, 10], volatility: 0.09 },
-        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', basePriceRange: [25000000, 31000000], tier: 6, unlockLevel: 5, styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', canonicalAvailability: [0, 8], volatility: 0.075 },
-        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', basePriceRange: [120000000, 150000000], tier: 6, unlockLevel: 5, styleClass: 'item-style-12', lore: 'The &quot;brains&quot; of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', canonicalAvailability: [0, 5], volatility: 0.10 },
-        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', basePriceRange: [900000000, 1100000000], tier: 7, unlockLevel: 6, styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', canonicalAvailability: [0, 4], volatility: 0.125 },
-        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', basePriceRange: [13000000000, 16000000000], tier: 7, unlockLevel: 6, styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', canonicalAvailability: [0, 2], volatility: 0.15 }
+        { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [50, 200], volatility: 0.01, canonicalAvailability: [80, 150], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.' },
+        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [50, 200], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.' },
+        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [900, 3500], volatility: 0.025, canonicalAvailability: [40, 70], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.' },
+        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [900, 3500], volatility: 0.03, canonicalAvailability: [40, 70], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.' },
+        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [15000, 40000], volatility: 0.035, canonicalAvailability: [25, 50], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.' },
+        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [15000, 40000], volatility: 0.045, canonicalAvailability: [25, 50], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.' },
+        { id: COMMODITY_IDS.GMO_SEEDS, name: 'GMO Seed Cultures', tier: 4, licenseId: 't4_license', basePriceRange: [200000, 600000], volatility: 0.06, canonicalAvailability: [15, 30], styleClass: 'item-style-7', lore: 'Patented seeds holding the key to unlocking agricultural wealth on new worlds.' },
+        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [200000, 600000], volatility: 0.075, canonicalAvailability: [15, 30], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.' },
+        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [3000000, 9000000], volatility: 0.08, canonicalAvailability: [10, 20], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.' },
+        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [3000000, 9000000], volatility: 0.09, canonicalAvailability: [10, 20], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.' },
+        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [25000000, 35000000], volatility: 0.1, canonicalAvailability: [2, 10], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.' },
+        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [25000000, 35000000], volatility: 0.125, canonicalAvailability: [2, 10], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.' },
+        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [100000000, 900000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.' },
+        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [100000000, 900000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.' }
     ],
+    
+    // --- Trading Licenses ---
+    LICENSES: {
+        't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 25000 },
+        't3_license': { type: 'mission', name: 'Tier 3 Trade License', description: 'Grants access to trade Tier 3 commodities.', missionId: 'mission_license_t3', guidanceText: 'Access to this tier is granted by the Merchant\'s Guild upon completion of a key contract.' },
+        't4_license': { type: 'purchase', name: 'Tier 4 Trade License', description: 'Grants access to trade Tier 4 commodities.', cost: 4000000 },
+        't5_license': { type: 'mission', name: 'Tier 5 Trade License', description: 'Grants access to trade Tier 5 commodities.', missionId: 'mission_license_t5', guidanceText: 'Prove your industrial might by completing a grand contract for a planetary governor.' },
+        't6_license': { type: 'purchase', name: 'Tier 6 Trade License', description: 'Grants access to trade the rarest and most exotic technologies.', cost: 300000000 },
+        't7_license': { type: 'mission', name: 'Tier 7 Trade License', description: 'The ultimate license, granting the right to trade reality-bending technologies.', missionId: 'mission_license_t7', guidanceText: 'Only a true legend of the trade routes can earn this privilege.' },
+    },
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cloned_organs': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'Cloning is outlawed on Earth, so the station has none. However, the black market pays handsomely for them.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0, 'water_ice': 0.5, 'gmo_seeds': 0.1 }, specialDemand: { [COMMODITY_IDS.GMO_SEEDS]: { lore: "Luna's sterile environment is perfect for agricultural data vaults, leaving no room for production. However, they will pay handsomely for GMO Seed Cultures.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'hydroponics': 0.5, 'atmo_processors': 0.5, 'cryo_pods': 0.5 }, specialDemand: { [COMMODITY_IDS.CRYO_PODS]: { lore: 'The constant influx of colonists means Cryo-Sleep Pods are immediately used, so the station has none to sell. However, they will pay handsomely for more.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'neural_processors': 0.2, 'xeno_geologicals': 0.3 }, specialDemand: { [COMMODITY_IDS.PROCESSORS]: { lore: 'The complex simulations on Venus consume all available Neural Processors, leaving none to spare. However, they will pay handsomely for any you can bring.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 3.0, 'cybernetics': 0.2, 'hydroponics': 0.3 }, specialDemand: { [COMMODITY_IDS.CYBERNETICS]: { lore: 'The harsh conditions mean no cybernetics are ever in stock here. However, belters will pay handsomely for replacements.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'cloned_organs': 0.1, 'xeno_geologicals': 0.1 }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: 'Wealthy tourists buy any available Xeno-Geologicals, leaving none to sell. However, they will pay handsomely for more exotic specimens.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'propellant': 10.0, 'plasteel': 0.2, 'cybernetics': 0.2, 'processors': 0.2 }, specialDemand: { [COMMODITY_IDS.ATMO_PROCESSORS]: { lore: "Expanding Jupiter's refineries consumes Atmo Processors faster than they can be stocked. However, they will pay handsomely for more.", bonus: 1.75 } } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'folded_drives': 0.0 }, specialDemand: { [COMMODITY_IDS.FOLDED_DRIVES]: { lore: 'Research vessels are immediately equipped with any Folded-Space Drives, leaving none in stock. However, they will pay handsomely for them.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'antimatter': 0.0 }, specialDemand: { [COMMODITY_IDS.ANTIMATTER]: { lore: 'All antimatter is requisitioned for classified military projects, leaving none for public sale. However, the naval authority pays handsomely for it.', bonus: 1.75 } } },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'On this lawless frontier, functional cloned organs are too valuable to ever be sold on the open market. However, they will pay handsomely for them.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The outcasts of Pluto have a special interest in acquiring AI Cores.', bonus: 1.5 } } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: { 'cloned_organs': 0.0, 'sentient_ai': 0.0, 'antimatter': 0.1, 'folded_drives': 0.1 }, specialDemand: { [COMMODITY_IDS.CLONED_ORGANS]: { lore: 'The Exchange has an insatiable, and illegal, demand for Cloned Organs.', bonus: 2.5 }, [COMMODITY_IDS.SENTIENT_AI]: { lore: 'The operators of The Exchange install any available Sentient AI Cores into their own network, leaving none for sale. However, they pay handsomely for these minds.', bonus: 2.0 } } },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: { }, specialDemand: { [COMMODITY_IDS.XENO_GEOLOGICALS]: { lore: "All Xeno-Geologicals are immediately pulverized for analysis, so none are ever sold. However, the research council pays handsomely for new samples.", bonus: 1.75 } } }
+        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cybernetics': 2.0, 'gmo_seeds': 2.0, 'cloned_organs': 0.1, 'sentient_ai': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0 } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'plasteel': 2.0, 'hydroponics': 2.0, 'gmo_seeds': 0.5, 'cryo_pods': 0.5 } },
+        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'processors': 0.5, 'atmo_processors': 0.5, 'cloned_organs': 2.0 } },
+        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5 } },
+        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'hydroponics': 0.5, 'cryo_pods': 2.0 } },
+        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'water_ice': 2.0, 'propellant': 2.0, 'atmo_processors': 2.0 } },
+        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'water_ice': 2.0, 'processors': 0.5, 'xeno_geologicals': 0.5, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'water_ice': 2.0, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } },
+        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: {} },
+        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: {} }
     ],
 
     // --- Mission Data ---
     MISSIONS: {
-        // The initial tutorial mission chain.
         'mission_tutorial_01': {
             id: "mission_tutorial_01",
             name: "The Dockworker's Favor",
@@ -3520,6 +3554,15 @@ export const DB = {
             rewards: [
                 { "type": "credits", "amount": 15000 }
             ]
+        },
+        'mission_license_t3': {
+             id: "mission_license_t3", name: "Guild Certification", type: "TBD", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 3 License.", objectives: [], completion: {}, rewards: []
+        },
+        'mission_license_t5': {
+             id: "mission_license_t5", name: "Governor's Contract", type: "TBD", host: "STATION", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 5 License.", objectives: [], completion: {}, rewards: []
+        },
+        'mission_license_t7': {
+             id: "mission_license_t7", name: "Legendary Run", type: "TBD", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Placeholder mission for Tier 7 License.", objectives: [], completion: {}, rewards: []
         }
     },
 
@@ -3590,7 +3633,7 @@ export const DB = {
                 { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
                 { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship. The dockworker even threw in extra!", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
                 { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
-                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and <b>wear</b> on your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and wear on the <b>hull</b> of your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
                 { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
                 { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
@@ -4106,7 +4149,9 @@ export class GameState {
                 introStep: 0,
                 credits: 3000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
-                unlockedCommodityLevel: 1, unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
+                revealedTier: 1,
+                unlockedLicenseIds: [],
+                unlockedLocationIds: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.VENUS, LOCATION_IDS.BELT, LOCATION_IDS.SATURN],
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
@@ -4188,7 +4233,6 @@ export class GameState {
         });
     }
 }
-
 --- END OF FILE: ./js/services/GameState.js ---
 --- START OF FILE: ./js/services/MissionService.js ---
 // js/services/MissionService.js
@@ -4418,7 +4462,7 @@ export class MarketService {
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
             DB.COMMODITIES.forEach(commodity => {
-                if (commodity.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                if (commodity.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
@@ -4458,7 +4502,7 @@ export class MarketService {
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
             DB.COMMODITIES.forEach(c => {
-                 if (c.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                 if (c.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
                 
@@ -4479,11 +4523,6 @@ export class MarketService {
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[c.id]?.availability) {
                     inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
-                }
-
-                // Ensure locations with special demand for an item never have it in stock to sell.
-                if (market.specialDemand && market.specialDemand[c.id]) {
-                    inventoryItem.quantity = 0;
                 }
             });
         });
@@ -4512,7 +4551,7 @@ export class MarketService {
         DB.MARKETS.forEach(market => {
             if (!this.gameState.market.priceHistory[market.id]) this.gameState.market.priceHistory[market.id] = {};
             DB.COMMODITIES.forEach(good => {
-                if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                if (good.tier > this.gameState.player.revealedTier) return;
                 if (!this.gameState.market.priceHistory[market.id][good.id]) this.gameState.market.priceHistory[market.id][good.id] = [];
                 
                 const history = this.gameState.market.priceHistory[market.id][good.id];
@@ -4538,7 +4577,7 @@ export class MarketService {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_IMPACT_RULES } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 import { MarketService } from './simulation/MarketService.js';
 
@@ -4981,6 +5020,11 @@ export class SimulationService {
         if (state.isGameOver || quantity <= 0) return false;
         
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
+        if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
+            this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
+            return false;
+        }
+
         const price = this.uiManager.getItemPrice(state, goodId);
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -5010,6 +5054,7 @@ export class SimulationService {
         this._checkMilestones();
         this.missionService.checkTriggers();
         
+        this._applyMarketImpact(goodId, quantity, 'buy');
         this.gameState.setState({});
 
         return true;
@@ -5026,6 +5071,11 @@ export class SimulationService {
         if (state.isGameOver || quantity <= 0) return 0;
         
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
+        if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
+            this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
+            return 0;
+        }
+
         const activeInventory = this._getActiveInventory();
         const item = activeInventory[goodId];
         if (!item || item.quantity < quantity) {
@@ -5057,10 +5107,35 @@ export class SimulationService {
         this._checkMilestones();
         this.missionService.checkTriggers();
         
+        this._applyMarketImpact(goodId, quantity, 'sell');
         this.gameState.setState({});
         
         return totalSaleValue;
     }
+
+    /**
+     * Applies a dynamic price adjustment to a commodity based on the volume of a player's transaction.
+     * @param {string} goodId - The ID of the commodity traded.
+     * @param {number} quantity - The amount traded.
+     * @param {string} transactionType - 'buy' or 'sell'.
+     * @private
+     */
+    _applyMarketImpact(goodId, quantity, transactionType) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        if (good.tier < MARKET_IMPACT_RULES.TIER_THRESHOLD) return;
+
+        const marketDepth = good.canonicalAvailability[1];
+        if (marketDepth === 0) return;
+
+        const significance = quantity / marketDepth;
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT);
+
+        const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
+        const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
+
+        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = Math.max(1, Math.round(price + priceChange));
+    }
+
 
     /**
      * Purchases a new ship and adds it to the player's hangar.
@@ -5189,6 +5264,28 @@ export class SimulationService {
     }
 
     /**
+     * Purchases a trade license for a specific commodity tier.
+     * @param {string} licenseId - The ID of the license to purchase.
+     * @returns {object} A structured object indicating success or failure with a specific error code.
+     */
+    purchaseLicense(licenseId) {
+        const license = DB.LICENSES[licenseId];
+        const { player } = this.gameState;
+
+        if (!license) return { success: false, error: 'INVALID_LICENSE' };
+        if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
+        if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
+        if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        
+        player.credits -= license.cost;
+        player.unlockedLicenseIds.push(licenseId);
+        this._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        this.gameState.setState({});
+        
+        return { success: true };
+    }
+
+    /**
      * Purchases market intel, providing a temporary trade advantage.
      * @param {number} cost - The credit cost of the intel.
      */
@@ -5207,7 +5304,7 @@ export class SimulationService {
         if (otherMarkets.length === 0) return;
 
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];
-        const availableCommodities = DB.COMMODITIES.filter(c => c.unlockLevel <= player.unlockedCommodityLevel);
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= player.revealedTier);
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
         
         if (commodity) {
@@ -5531,34 +5628,18 @@ export class SimulationService {
     }
 
     /**
-     * Checks if the player's credit total has reached a new progression milestone.
-     * @returns {boolean} - True if a milestone was reached and state was changed.
+     * Checks if the player's wealth has reached a new milestone, revealing the next tier of commodities.
      * @private
      */
     _checkMilestones() {
-        let changed = false;
-        DB.CONFIG.COMMODITY_MILESTONES.forEach(milestone => {
-            if (this.gameState.player.credits >= milestone.threshold && !this.gameState.player.seenCommodityMilestones.includes(milestone.threshold)) {
-                this.gameState.player.seenCommodityMilestones.push(milestone.threshold);
-                let message = milestone.message;
-                
-                if (milestone.unlockLevel && milestone.unlockLevel > this.gameState.player.unlockedCommodityLevel) {
-                    this.gameState.player.unlockedCommodityLevel = milestone.unlockLevel;
-                    changed = true;
-                }
-                if (milestone.unlocksLocation && !this.gameState.player.unlockedLocationIds.includes(milestone.unlocksLocation)) {
-                    this.gameState.player.unlockedLocationIds.push(milestone.unlocksLocation);
-                    
-                    const newLocation = DB.MARKETS.find(m => m.id === milestone.unlocksLocation);
-                    message += `<br><br><span class="hl-blue">New Destination:</span> Access to <span class="hl">${newLocation.name}</span> has been granted.`;
-                    changed = true;
-                }
-                if (changed) {
-                    this.uiManager.queueModal('event-modal', 'Reputation Growth', message);
-                }
-            }
-        });
-        return changed;
+        const { credits, revealedTier } = this.gameState.player;
+        const nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === revealedTier + 1);
+    
+        if (nextMilestone && credits >= nextMilestone.threshold) {
+            this.gameState.player.revealedTier = nextMilestone.revealsTier;
+            this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            this.gameState.setState({});
+        }
     }
 
     /**
@@ -5684,7 +5765,14 @@ export class SimulationService {
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
-            // NOTE: Future reward types like 'item' or 'ship' can be handled here.
+            // Grant license rewards
+            if (reward.type === 'license') {
+                if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
+                    this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                    const license = DB.LICENSES[reward.licenseId];
+                    this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
+                }
+            }
         });
     }
 
@@ -6005,7 +6093,7 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
@@ -6096,6 +6184,9 @@ export class EventManager {
                     break;
                 case 'show-starport-locked-toast':
                     this.uiManager.showToast('starport-unlock-tooltip', "Pay off your initial loan to access the Starport!");
+                    break;
+                case ACTION_IDS.ACQUIRE_LICENSE:
+                    this._handleAcquireLicense(licenseId);
                     break;
                 
                 // Market Transaction Controls
@@ -6254,6 +6345,43 @@ export class EventManager {
                 }
             });
             return;
+        }
+    }
+
+    /**
+     * Handles the UI flow for acquiring a trade license.
+     * @param {string} licenseId The ID of the license to acquire.
+     * @private
+     */
+    _handleAcquireLicense(licenseId) {
+        const license = DB.LICENSES[licenseId];
+        if (!license) return;
+    
+        if (license.type === 'purchase') {
+            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
+            this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                customSetup: (modal, closeHandler) => {
+                    const btnContainer = modal.querySelector('#event-button-container');
+                    btnContainer.innerHTML = `
+                        <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-license-purchase" class="btn">Cancel</button>
+                    `;
+                    modal.querySelector('#confirm-license-purchase').onclick = () => {
+                        const result = this.simulationService.purchaseLicense(licenseId);
+                        if (!result.success) {
+                            let errorMsg = 'An unknown error occurred.';
+                            if (result.error === 'INSUFFICIENT_FUNDS') {
+                                errorMsg = `You cannot afford the ${formatCredits(license.cost)} fee for this license.`;
+                            }
+                            this.uiManager.queueModal('event-modal', 'Purchase Failed', errorMsg);
+                        }
+                        closeHandler();
+                    };
+                    modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
+                }
+            });
+        } else if (license.type === 'mission') {
+            this.uiManager.queueModal('event-modal', license.name, license.guidanceText);
         }
     }
 
@@ -7079,6 +7207,8 @@ export class UIManager {
      * @private
      */
     _saveMarketTransactionState() {
+        if (this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
+
         const controls = document.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;

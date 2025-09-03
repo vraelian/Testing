@@ -43,7 +43,7 @@ export class MarketService {
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
             DB.COMMODITIES.forEach(commodity => {
-                if (commodity.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                if (commodity.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
@@ -83,7 +83,7 @@ export class MarketService {
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
             DB.COMMODITIES.forEach(c => {
-                 if (c.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                 if (c.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
                 
@@ -104,11 +104,6 @@ export class MarketService {
                 // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity[c.id]?.availability) {
                     inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
-                }
-
-                // Ensure locations with special demand for an item never have it in stock to sell.
-                if (market.specialDemand && market.specialDemand[c.id]) {
-                    inventoryItem.quantity = 0;
                 }
             });
         });
@@ -137,7 +132,7 @@ export class MarketService {
         DB.MARKETS.forEach(market => {
             if (!this.gameState.market.priceHistory[market.id]) this.gameState.market.priceHistory[market.id] = {};
             DB.COMMODITIES.forEach(good => {
-                if (good.unlockLevel > this.gameState.player.unlockedCommodityLevel) return;
+                if (good.tier > this.gameState.player.revealedTier) return;
                 if (!this.gameState.market.priceHistory[market.id][good.id]) this.gameState.market.priceHistory[market.id][good.id] = [];
                 
                 const history = this.gameState.market.priceHistory[market.id][good.id];
