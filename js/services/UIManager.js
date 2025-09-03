@@ -284,17 +284,20 @@ export class UIManager {
      * @private
      */
     _saveMarketTransactionState() {
-        if (this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
-
+        if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
         const controls = document.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
-            this.marketTransactionState[goodId] = {
-                quantity: qtyInput.value,
-                mode: mode
-            };
+            
+            // Only save state if there's an input field (i.e., it's not a locked license button)
+            if (qtyInput) {
+                this.marketTransactionState[goodId] = {
+                    quantity: qtyInput.value,
+                    mode: mode
+                };
+            }
         });
     }
 
@@ -311,8 +314,10 @@ export class UIManager {
             const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
-                qtyInput.value = state.quantity;
-                control.setAttribute('data-mode', state.mode);
+                if (qtyInput) { // Check if the input exists before setting its value
+                    qtyInput.value = state.quantity;
+                    control.setAttribute('data-mode', state.mode);
+                }
             }
         }
     }

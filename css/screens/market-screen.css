@@ -104,6 +104,16 @@
     padding: 0;
 }
 
+.item-card-container.locked > div {
+    filter: grayscale(80%) brightness(0.6);
+    pointer-events: none; /* Disable pointer events on the card itself */
+}
+
+.item-card-container.locked .transaction-controls {
+    pointer-events: all; /* Re-enable pointer events for the button container */
+}
+
+
 .commodity-name {
     position: absolute;
     top: var(--market-card-info-top);
