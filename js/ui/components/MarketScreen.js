@@ -70,8 +70,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             </div>`;
     } else {
         transactionControlsHtml = `
-            <div class="transaction-controls">
-                <button class="btn w-full" data-action="acquire-license" data-license-id="${good.licenseId}">Acquire License</button>
+            <div class="transaction-controls absolute inset-0 flex items-center justify-center p-4">
+                <button class="btn w-full h-full text-center" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">Acquire License</button>
             </div>`;
     }
 
