@@ -1062,11 +1062,19 @@ export class SimulationService {
      */
     _checkMilestones() {
         const { credits, revealedTier } = this.gameState.player;
-        const nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === revealedTier + 1);
-    
-        if (nextMilestone && credits >= nextMilestone.threshold) {
+        let currentTier = revealedTier;
+        let nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
+
+        while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            
+            currentTier = nextMilestone.revealsTier;
+            nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
+        }
+
+        // If any tier was revealed, trigger a single state update at the end.
+        if (this.gameState.player.revealedTier !== revealedTier) {
             this.gameState.setState({});
         }
     }

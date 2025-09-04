@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let debugService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(uiManager);
+            debugService = new DebugService(gameState, simulationService, uiManager);
             debugService.init();
         }
         

@@ -475,58 +475,8 @@ export class EventManager {
             }
             return;
         }
-        if (e.key === '~') {
-            if (this.debugService && this.debugService.active) {
-                this.debugService.toggleStyleOverrides();
-                console.log(`Debug: Style Overrides Toggled ${this.debugService.styleOverridesActive ? 'ON' : 'OFF'}.`);
-            }
-            return;
-        }
-    
-        let message = '';
-        switch(e.key) {
-            case '!':
-                this.simulationService.debugMarketSkip();
-                message = 'Debug: Market Skip';
-                break;
-            case '@':
-                this.simulationService.debugTriggerRandomEvent();
-                message = `Debug: Forcing Event ${this.gameState.player.debugEventIndex}`;
-                break;
-            case '#':
-                this.gameState.player.credits += 100000;
-                message = 'Debug: +100k Credits.';
-                break;
-            case '$':
-                Object.keys(DB.SHIPS).forEach(shipId => {
-                    if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
-                    }
-                });
-                message = 'Debug: All ships added.';
-                break;
-            case '%':
-                this.gameState.player.credits += 1000000000000;
-                const activeShip = this.simulationService._getActiveShip();
-                const inventory = this.simulationService._getActiveInventory();
-                if (activeShip && inventory) {
-                    DB.COMMODITIES.forEach(c => {
-                        if (calculateInventoryUsed(inventory) < activeShip.cargoCapacity) {
-                            inventory[c.id].quantity = (inventory[c.id].quantity || 0) + 1;
-                        }
-                    });
-                }
-                message = 'Debug: +1T Credits & 1 of each item.';
-                break;
-            case '^':
-                this.simulationService._advanceDays(366);
-                message = `Debug: Time advanced 1 year and 1 day.`;
-                break;
-        }
-    
-        if (message) {
-            this.gameState.setState({});
-            this.uiManager.render(this.gameState.getState());
+        if (this.debugService) {
+            this.debugService.handleKeyPress(e.key);
         }
     }
 
