@@ -1276,6 +1276,7 @@ export class SimulationService {
 
         document.getElementById('game-container').classList.remove('hidden');
         this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+        this.gameState.setState({});
     }
     
     /**

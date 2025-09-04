@@ -200,7 +200,7 @@ export class DebugService {
             skipIntro: {
                 name: 'Skip Intro & Setup',
                 type: 'button',
-                handler: () => this.simulationService.skipIntroAndSetup()
+                handler: () => this.simulationService.debugMarketSkip()
             },
             // --- Player Actions ---
             addCredits: {
