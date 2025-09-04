@@ -4,7 +4,6 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
-import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.

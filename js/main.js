@@ -65,8 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Dependency Injection ---
         // Services are created first, then dependencies are injected to avoid circular reference issues during instantiation.
-        simulationService.setTutorialService(tutorialService);
- uiManager.setMissionService(missionService);
+        uiManager.setMissionService(missionService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
