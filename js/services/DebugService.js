@@ -4,6 +4,7 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
+import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.
@@ -195,6 +196,12 @@ export class DebugService {
      */
     _registerDebugActions() {
         this.actions = {
+            // --- Game Flow Actions ---
+            skipIntro: {
+                name: 'Skip Intro & Setup',
+                type: 'button',
+                handler: () => this.simulationService.skipIntroAndSetup()
+            },
             // --- Player Actions ---
             addCredits: {
                 name: 'Add Credits',
@@ -322,6 +329,10 @@ export class DebugService {
      * @private
      */
     buildGui() {
+        // --- Game Flow Folder ---
+        const flowFolder = this.gui.addFolder('Game Flow');
+        flowFolder.add(this.actions.skipIntro, 'handler').name(this.actions.skipIntro.name);
+
         // --- Player Folder ---
         const playerFolder = this.gui.addFolder('Player');
         this.debugState.creditsToAdd = 100000;
