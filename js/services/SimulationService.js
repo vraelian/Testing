@@ -559,14 +559,12 @@ export class SimulationService {
      */
     _applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        if (good.tier < MARKET_IMPACT_RULES.TIER_THRESHOLD) return;
-
         const marketDepth = good.canonicalAvailability[1];
         if (marketDepth === 0) return;
 
         const significance = quantity / marketDepth;
-        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT);
-
+        // The impact is now scaled by tier, making low-tier trades less impactful.
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (8 - good.tier);
         const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
         const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
 

@@ -94,8 +94,9 @@ export class MarketService {
                     inventoryItem.marketPressure = 0;
                 }
             });
+            // Record history for this specific location after its prices have evolved for the day.
+            this._recordPriceHistory(location.id);
         });
-        this._recordPriceHistory();
     }
     
     /**
@@ -145,38 +146,38 @@ export class MarketService {
 
     /**
      * Records the current day's price for each commodity to its historical data log for graphing.
-     * Trims old entries to maintain a fixed history length.
+     * Can be targeted to a specific market, or will default to the player's current location.
+     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
      * @private
      */
-    _recordPriceHistory() {
+    _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
 
-        const marketId = this.gameState.currentLocationId;
-        if (!this.gameState.market.priceHistory[marketId]) {
-            this.gameState.market.priceHistory[marketId] = {};
+        const targetMarketId = marketId || this.gameState.currentLocationId;
+
+        if (!this.gameState.market.priceHistory[targetMarketId]) {
+            this.gameState.market.priceHistory[targetMarketId] = {};
         }
 
         DB.COMMODITIES.forEach(good => {
             if (good.tier > this.gameState.player.revealedTier) return;
 
-            if (!this.gameState.market.priceHistory[marketId][good.id]) {
-                this.gameState.market.priceHistory[marketId][good.id] = [];
+            if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
+                this.gameState.market.priceHistory[targetMarketId][good.id] = [];
             }
 
-            const history = this.gameState.market.priceHistory[marketId][good.id];
-            const currentPrice = this.gameState.market.prices[marketId][good.id];
+            const history = this.gameState.market.priceHistory[targetMarketId][good.id];
+            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
 
-            // Avoid adding a duplicate entry for the same day unless the price has changed.
             const lastEntry = history[history.length - 1];
             if (lastEntry && lastEntry.day === this.gameState.day) {
                 if (lastEntry.price !== currentPrice) {
-                    lastEntry.price = currentPrice; // Update the price for the current day.
+                    lastEntry.price = currentPrice;
                 }
             } else {
                 history.push({ day: this.gameState.day, price: currentPrice });
             }
 
-            // Ensure the history log does not exceed the maximum length defined in game rules.
             while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
                 history.shift();
             }
