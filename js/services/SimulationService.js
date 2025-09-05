@@ -471,7 +471,7 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
-        inventoryItem.marketPressure -= (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.marketPressure -= ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         const playerInvItem = activeInventory[goodId];
@@ -532,7 +532,7 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        inventoryItem.marketPressure += (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.marketPressure += ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);

@@ -77,7 +77,7 @@ export class MarketService {
 
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
-                const pressureEffect = price * inventoryItem.marketPressure * -1;
+                const pressureEffect = baseline * inventoryItem.marketPressure * -1;
                 
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
