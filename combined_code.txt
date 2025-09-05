@@ -5137,8 +5137,6 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
-        inventoryItem.marketPressure -= ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
@@ -5150,10 +5148,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'buy');
-
-        // Record the new price immediately for graph reactivity.
-        this.marketService._recordPriceHistory(state.currentLocationId);
-        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
 
@@ -5199,8 +5193,6 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        inventoryItem.marketPressure += ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
@@ -5208,10 +5200,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'sell');
-
-        // Record the new price immediately for graph reactivity.
-        this.marketService._recordPriceHistory(state.currentLocationId);
-        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
         
@@ -5227,32 +5215,17 @@ export class SimulationService {
      */
     _applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketDepth = good.canonicalAvailability[1];
-        if (marketDepth === 0) return;
-
-        const significance = quantity / marketDepth;
-        // The impact is now scaled by tier, making low-tier trades less impactful.
-        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (7.5 - good.tier);
-        const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
-        const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
-        const newPrice = Math.max(1, Math.round(price + priceChange));
-        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = newPrice;
-
-        const priceShockPercentage = Math.abs(priceChange / price);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+        
+        const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
 
-        // If the price shock is significant, trigger the 'hover' state.
-        if (priceShockPercentage > 0.15) {
-            const hoverDuration = Math.floor(Math.random() * 12) + 7; // 7-18 days
-            inventoryItem.hoverUntilDay = this.gameState.day + hoverDuration;
+        if (transactionType === 'buy') {
+            inventoryItem.marketPressure -= pressureChange;
+        } else { // 'sell'
+            inventoryItem.marketPressure += pressureChange;
         }
 
-        // If the price shock is extreme, trigger 'Rival Arbitrage'.
-        if (priceShockPercentage > 0.35) {
-            inventoryItem.rivalArbitrage.isActive = true;
-            const arbitrageDuration = Math.floor(Math.random() * 5) + 3; // 3-7 days
-            inventoryItem.rivalArbitrage.endDay = this.gameState.day + arbitrageDuration;
-        }
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
 
