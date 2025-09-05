@@ -70,10 +70,19 @@ export class MarketService {
                 }
 
                 // A random fluctuation based on the commodity's inherent volatility.
-                const randomFluctuation = (Math.random() - 0.5) * 2 * commodity.volatility * volatility;
+                const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
+                const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
+                
+                let reversionEffect = (baseline - price) * meanReversion;
 
-                // A pull back towards the galactic baseline price.
-                const reversionEffect = (baseline - price) * meanReversion;
+                // Check for a 'hover' state, which suppresses strong mean reversion for a few days.
+                if (inventoryItem.hoverUntilDay > this.gameState.day) {
+                    // While hovering, apply a much weaker reversion effect, allowing the price to fluctuate near its peak/trough.
+                    reversionEffect *= 0.1;
+                } else if (inventoryItem.hoverUntilDay > 0) {
+                    // Reset the hover state once the timer expires.
+                    inventoryItem.hoverUntilDay = 0;
+                }
 
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
@@ -117,7 +126,7 @@ export class MarketService {
                 } else {
                     // Standard, slow replenishment.
                     const maxStock = c.canonicalAvailability[1] * (market.availabilityModifier?.[c.id] ?? 1.0);
-                    const replenishRate = 0.1; // Replenish 10% of max stock per weekly cycle.
+                    const replenishRate = 0.06; // Replenish 6% of max stock per weekly cycle.
                     if (inventoryItem.quantity < maxStock) {
                         inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
                     }

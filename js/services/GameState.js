@@ -186,7 +186,8 @@ export class GameState {
                 initialState.market.inventory[m.id][c.id] = { 
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
-                    lastPlayerInteractionTimestamp: 0
+                    lastPlayerInteractionTimestamp: 0,
+                    hoverUntilDay: 0
                 };
             });
         });

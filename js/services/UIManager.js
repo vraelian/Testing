@@ -376,12 +376,18 @@ export class UIManager {
         };
     }
     
-    /**
-     * Updates a single market card's display to show either the buy price or the calculated sell profit.
-     * @param {string} goodId - The ID of the commodity card to update.
-     * @param {number} quantity - The current quantity from the input field.
-     * @param {string} mode - The current trade mode ('buy' or 'sell').
-     */
+    updateMarketCardPrice(goodId, newPrice) {
+        const priceEl = document.getElementById(`price-display-${goodId}`);
+        if (priceEl) {
+            priceEl.dataset.basePrice = newPrice;
+            // We only need to update the text if it's in 'buy' mode, as 'sell' mode shows profit.
+            const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
+            if (controls && controls.dataset.mode === 'buy') {
+                priceEl.textContent = formatCredits(newPrice);
+            }
+        }
+    }
+
     updateMarketCardDisplay(goodId, quantity, mode) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
@@ -774,14 +780,33 @@ export class UIManager {
 
         const getX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
         const getY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
-        const pricePoints = prices.map((p, i) => `${getX(i)},${getY(p)}`).join(' ');
-        const buyPriceY = playerBuyPrice ? getY(playerBuyPrice) : null;
-        const staticAvgY = getY(staticAvg);
+
         let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
-        svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="4 2" /><text x="${width - padding + 2}" y="${staticAvgY + 4}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg</text>`;
-        if (buyPriceY) svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" /><text x="${width - padding + 2}" y="${buyPriceY + 4}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid</text>`;
-        svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" /><text x="${getX(prices.length - 1)}" y="${getY(prices[prices.length - 1]) - 5}" fill="#60a5fa" font-size="10" font-family="Roboto Mono" text-anchor="middle">Price</text>`;
-        svg += `<text x="${padding - 5}" y="${getY(minVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text><text x="${padding - 5}" y="${getY(maxVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text></svg>`;
+        svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
+        svg += `<line x1="${padding}" y1="${getY(maxVal)}" x2="${padding}" y2="${height - padding}" /><line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
+        svg += `</g>`;
+
+        const staticAvgY = getY(staticAvg);
+        svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
+        svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
+
+        if (playerBuyPrice) {
+            const buyPriceY = getY(playerBuyPrice);
+            svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
+            svg += `<text x="${width - padding + 4}" y="${buyPriceY + 3}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid: ${formatCredits(playerBuyPrice, false)}</text>`;
+        }
+
+        const pricePoints = history.map((p, i) => `${getX(i)},${getY(p.price)}`).join(' ');
+        svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" />`;
+
+        const firstDay = history[0].day;
+        const lastDay = history[history.length - 1].day;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+
+        svg += `<text x="${padding - 8}" y="${getY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${getY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `</svg>`;
         return svg;
     }
     showTutorialToast({ step, onSkip, onNext, gameState }) {

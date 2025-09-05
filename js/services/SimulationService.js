@@ -487,6 +487,7 @@ export class SimulationService {
 
         // Record the new price immediately for graph reactivity.
         this.marketService._recordPriceHistory();
+        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
 
@@ -544,6 +545,7 @@ export class SimulationService {
 
         // Record the new price immediately for graph reactivity.
         this.marketService._recordPriceHistory();
+        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
         
@@ -564,11 +566,19 @@ export class SimulationService {
 
         const significance = quantity / marketDepth;
         // The impact is now scaled by tier, making low-tier trades less impactful.
-        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (8 - good.tier);
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (7.7 - good.tier);
         const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
         const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
+        const newPrice = Math.max(1, Math.round(price + priceChange));
+        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = newPrice;
 
-        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = Math.max(1, Math.round(price + priceChange));
+        // If the price shock is significant, trigger the 'hover' state.
+        const priceShockPercentage = Math.abs(priceChange / price);
+        if (priceShockPercentage > 0.15) { // 15% price change triggers hover
+            const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+            const hoverDuration = Math.floor(Math.random() * 7) + 3; // 3-9 days
+            inventoryItem.hoverUntilDay = this.gameState.day + hoverDuration;
+        }
     }
 
 
