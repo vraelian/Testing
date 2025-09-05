@@ -486,7 +486,7 @@ export class SimulationService {
         this._applyMarketImpact(goodId, quantity, 'buy');
 
         // Record the new price immediately for graph reactivity.
-        this.marketService._recordPriceHistory();
+        this.marketService._recordPriceHistory(state.currentLocationId);
         this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
@@ -544,7 +544,7 @@ export class SimulationService {
         this._applyMarketImpact(goodId, quantity, 'sell');
 
         // Record the new price immediately for graph reactivity.
-        this.marketService._recordPriceHistory();
+        this.marketService._recordPriceHistory(state.currentLocationId);
         this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
 
         this.gameState.setState({});
@@ -566,18 +566,26 @@ export class SimulationService {
 
         const significance = quantity / marketDepth;
         // The impact is now scaled by tier, making low-tier trades less impactful.
-        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (7.7 - good.tier);
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (7.5 - good.tier);
         const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
         const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
         const newPrice = Math.max(1, Math.round(price + priceChange));
         this.gameState.market.prices[this.gameState.currentLocationId][goodId] = newPrice;
 
-        // If the price shock is significant, trigger the 'hover' state.
         const priceShockPercentage = Math.abs(priceChange / price);
-        if (priceShockPercentage > 0.15) { // 15% price change triggers hover
-            const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
-            const hoverDuration = Math.floor(Math.random() * 7) + 3; // 3-9 days
+        const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+
+        // If the price shock is significant, trigger the 'hover' state.
+        if (priceShockPercentage > 0.15) {
+            const hoverDuration = Math.floor(Math.random() * 12) + 7; // 7-18 days
             inventoryItem.hoverUntilDay = this.gameState.day + hoverDuration;
+        }
+
+        // If the price shock is extreme, trigger 'Rival Arbitrage'.
+        if (priceShockPercentage > 0.35) {
+            inventoryItem.rivalArbitrage.isActive = true;
+            const arbitrageDuration = Math.floor(Math.random() * 5) + 3; // 3-7 days
+            inventoryItem.rivalArbitrage.endDay = this.gameState.day + arbitrageDuration;
         }
     }
 

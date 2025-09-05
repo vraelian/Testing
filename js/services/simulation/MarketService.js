@@ -75,6 +75,13 @@ export class MarketService {
                 
                 let reversionEffect = (baseline - price) * meanReversion;
 
+                // Check for 'Rival Arbitrage' state, which drastically accelerates mean reversion.
+                if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
+                    reversionEffect = (baseline - price) * 0.20; // Boosted to 20%
+                } else if (inventoryItem.rivalArbitrage.isActive) {
+                    inventoryItem.rivalArbitrage.isActive = false; // Reset the state.
+                }
+
                 // Check for a 'hover' state, which suppresses strong mean reversion for a few days.
                 if (inventoryItem.hoverUntilDay > this.gameState.day) {
                     // While hovering, apply a much weaker reversion effect, allowing the price to fluctuate near its peak/trough.

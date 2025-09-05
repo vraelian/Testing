@@ -2992,9 +2992,9 @@ export const GAME_RULES = Object.freeze({
     RARE_SHIP_CHANCE: 0.3,
     PRICE_HISTORY_LENGTH: 50,
     FINANCE_HISTORY_LENGTH: 10,
-    DAILY_PRICE_VOLATILITY: 0.035,
-    MEAN_REVERSION_STRENGTH: 0.05,
-    MARKET_PRESSURE_DECAY: 0.85,
+    DAILY_PRICE_VOLATILITY: 0.15,
+    MEAN_REVERSION_STRENGTH: 0.07,
+    MARKET_PRESSURE_DECAY: 0.70,
     LOAN_GARNISHMENT_DAYS: 180,
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
@@ -4236,7 +4236,9 @@ export class GameState {
                 initialState.market.inventory[m.id][c.id] = { 
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
-                    lastPlayerInteractionTimestamp: 0
+                    lastPlayerInteractionTimestamp: 0,
+                    hoverUntilDay: 0,
+                    rivalArbitrage: { isActive: false, endDay: 0 }
                 };
             });
         });
@@ -4530,14 +4532,30 @@ export class MarketService {
                 }
 
                 // A random fluctuation based on the commodity's inherent volatility.
-                const randomFluctuation = (Math.random() - 0.5) * 2 * commodity.volatility * volatility;
+                const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
+                const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
+                
+                let reversionEffect = (baseline - price) * meanReversion;
 
-                // A pull back towards the galactic baseline price.
-                const reversionEffect = (baseline - price) * meanReversion;
+                // Check for 'Rival Arbitrage' state, which drastically accelerates mean reversion.
+                if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
+                    reversionEffect = (baseline - price) * 0.20; // Boosted to 20%
+                } else if (inventoryItem.rivalArbitrage.isActive) {
+                    inventoryItem.rivalArbitrage.isActive = false; // Reset the state.
+                }
+
+                // Check for a 'hover' state, which suppresses strong mean reversion for a few days.
+                if (inventoryItem.hoverUntilDay > this.gameState.day) {
+                    // While hovering, apply a much weaker reversion effect, allowing the price to fluctuate near its peak/trough.
+                    reversionEffect *= 0.1;
+                } else if (inventoryItem.hoverUntilDay > 0) {
+                    // Reset the hover state once the timer expires.
+                    inventoryItem.hoverUntilDay = 0;
+                }
 
 
                 // Apply player-driven market pressure (positive pressure = surplus = lower price).
-                const pressureEffect = price * inventoryItem.marketPressure * -1;
+                const pressureEffect = baseline * inventoryItem.marketPressure * -1;
                 
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
@@ -4554,8 +4572,9 @@ export class MarketService {
                     inventoryItem.marketPressure = 0;
                 }
             });
+            // Record history for this specific location after its prices have evolved for the day.
+            this._recordPriceHistory(location.id);
         });
-        this._recordPriceHistory();
     }
     
     /**
@@ -4576,7 +4595,7 @@ export class MarketService {
                 } else {
                     // Standard, slow replenishment.
                     const maxStock = c.canonicalAvailability[1] * (market.availabilityModifier?.[c.id] ?? 1.0);
-                    const replenishRate = 0.1; // Replenish 10% of max stock per weekly cycle.
+                    const replenishRate = 0.06; // Replenish 6% of max stock per weekly cycle.
                     if (inventoryItem.quantity < maxStock) {
                         inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
                     }
@@ -4605,27 +4624,41 @@ export class MarketService {
 
     /**
      * Records the current day's price for each commodity to its historical data log for graphing.
-     * Trims old entries to maintain a fixed history length.
+     * Can be targeted to a specific market, or will default to the player's current location.
+     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
      * @private
      */
-    _recordPriceHistory() {
+    _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
-        DB.MARKETS.forEach(market => {
-            if (!this.gameState.market.priceHistory[market.id]) this.gameState.market.priceHistory[market.id] = {};
-            DB.COMMODITIES.forEach(good => {
-                if (good.tier > this.gameState.player.revealedTier) return;
-                if (!this.gameState.market.priceHistory[market.id][good.id]) this.gameState.market.priceHistory[market.id][good.id] = [];
-                
-                const history = this.gameState.market.priceHistory[market.id][good.id];
-                const currentPrice = this.gameState.market.prices[market.id][good.id];
-                
-                history.push({ day: this.gameState.day, price: currentPrice });
-                
-                // Ensure the history log does not exceed the maximum length defined in game rules.
-                while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
-                    history.shift();
+
+        const targetMarketId = marketId || this.gameState.currentLocationId;
+
+        if (!this.gameState.market.priceHistory[targetMarketId]) {
+            this.gameState.market.priceHistory[targetMarketId] = {};
+        }
+
+        DB.COMMODITIES.forEach(good => {
+            if (good.tier > this.gameState.player.revealedTier) return;
+
+            if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
+                this.gameState.market.priceHistory[targetMarketId][good.id] = [];
+            }
+
+            const history = this.gameState.market.priceHistory[targetMarketId][good.id];
+            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
+
+            const lastEntry = history[history.length - 1];
+            if (lastEntry && lastEntry.day === this.gameState.day) {
+                if (lastEntry.price !== currentPrice) {
+                    lastEntry.price = currentPrice;
                 }
-            });
+            } else {
+                history.push({ day: this.gameState.day, price: currentPrice });
+            }
+
+            while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
+                history.shift();
+            }
         });
     }
 }
@@ -5104,7 +5137,7 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
-        inventoryItem.marketPressure -= (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.marketPressure -= ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         const playerInvItem = activeInventory[goodId];
@@ -5117,6 +5150,11 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'buy');
+
+        // Record the new price immediately for graph reactivity.
+        this.marketService._recordPriceHistory(state.currentLocationId);
+        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
+
         this.gameState.setState({});
 
         return true;
@@ -5161,7 +5199,7 @@ export class SimulationService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        inventoryItem.marketPressure += (quantity / (good.canonicalAvailability[1] || 100)) * good.tier;
+        inventoryItem.marketPressure += ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
@@ -5170,6 +5208,11 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'sell');
+
+        // Record the new price immediately for graph reactivity.
+        this.marketService._recordPriceHistory(state.currentLocationId);
+        this.uiManager.updateMarketCardPrice(goodId, this.gameState.market.prices[state.currentLocationId][goodId]);
+
         this.gameState.setState({});
         
         return totalSaleValue;
@@ -5184,18 +5227,32 @@ export class SimulationService {
      */
     _applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        if (good.tier < MARKET_IMPACT_RULES.TIER_THRESHOLD) return;
-
         const marketDepth = good.canonicalAvailability[1];
         if (marketDepth === 0) return;
 
         const significance = quantity / marketDepth;
-        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT);
-
+        // The impact is now scaled by tier, making low-tier trades less impactful.
+        const impact = Math.min(significance * MARKET_IMPACT_RULES.SENSITIVITY, MARKET_IMPACT_RULES.MAX_IMPACT) / (7.5 - good.tier);
         const price = this.gameState.market.prices[this.gameState.currentLocationId][goodId];
         const priceChange = price * impact * (transactionType === 'buy' ? 1 : -1);
+        const newPrice = Math.max(1, Math.round(price + priceChange));
+        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = newPrice;
 
-        this.gameState.market.prices[this.gameState.currentLocationId][goodId] = Math.max(1, Math.round(price + priceChange));
+        const priceShockPercentage = Math.abs(priceChange / price);
+        const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+
+        // If the price shock is significant, trigger the 'hover' state.
+        if (priceShockPercentage > 0.15) {
+            const hoverDuration = Math.floor(Math.random() * 12) + 7; // 7-18 days
+            inventoryItem.hoverUntilDay = this.gameState.day + hoverDuration;
+        }
+
+        // If the price shock is extreme, trigger 'Rival Arbitrage'.
+        if (priceShockPercentage > 0.35) {
+            inventoryItem.rivalArbitrage.isActive = true;
+            const arbitrageDuration = Math.floor(Math.random() * 5) + 3; // 3-7 days
+            inventoryItem.rivalArbitrage.endDay = this.gameState.day + arbitrageDuration;
+        }
     }
 
 
@@ -5451,10 +5508,12 @@ export class SimulationService {
 
             this._checkAgeEvents();
 
+            // --- Daily Market Evolution ---
+            this.marketService.evolveMarketPrices(); // This now runs every day.
+
             // The main weekly "tick" for updating market prices and stock.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
-                this.marketService.evolveMarketPrices();
                 this.marketService.replenishMarketInventory();
                 this._updateShipyardStock();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
@@ -7320,12 +7379,18 @@ export class UIManager {
         };
     }
     
-    /**
-     * Updates a single market card's display to show either the buy price or the calculated sell profit.
-     * @param {string} goodId - The ID of the commodity card to update.
-     * @param {number} quantity - The current quantity from the input field.
-     * @param {string} mode - The current trade mode ('buy' or 'sell').
-     */
+    updateMarketCardPrice(goodId, newPrice) {
+        const priceEl = document.getElementById(`price-display-${goodId}`);
+        if (priceEl) {
+            priceEl.dataset.basePrice = newPrice;
+            // We only need to update the text if it's in 'buy' mode, as 'sell' mode shows profit.
+            const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
+            if (controls && controls.dataset.mode === 'buy') {
+                priceEl.textContent = formatCredits(newPrice);
+            }
+        }
+    }
+
     updateMarketCardDisplay(goodId, quantity, mode) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
@@ -7718,14 +7783,33 @@ export class UIManager {
 
         const getX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
         const getY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
-        const pricePoints = prices.map((p, i) => `${getX(i)},${getY(p)}`).join(' ');
-        const buyPriceY = playerBuyPrice ? getY(playerBuyPrice) : null;
-        const staticAvgY = getY(staticAvg);
+
         let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
-        svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1.5" stroke-dasharray="4 2" /><text x="${width - padding + 2}" y="${staticAvgY + 4}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg</text>`;
-        if (buyPriceY) svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" /><text x="${width - padding + 2}" y="${buyPriceY + 4}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid</text>`;
-        svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" /><text x="${getX(prices.length - 1)}" y="${getY(prices[prices.length - 1]) - 5}" fill="#60a5fa" font-size="10" font-family="Roboto Mono" text-anchor="middle">Price</text>`;
-        svg += `<text x="${padding - 5}" y="${getY(minVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text><text x="${padding - 5}" y="${getY(maxVal) + 4}" fill="#d0d8e8" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text></svg>`;
+        svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
+        svg += `<line x1="${padding}" y1="${getY(maxVal)}" x2="${padding}" y2="${height - padding}" /><line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
+        svg += `</g>`;
+
+        const staticAvgY = getY(staticAvg);
+        svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
+        svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
+
+        if (playerBuyPrice) {
+            const buyPriceY = getY(playerBuyPrice);
+            svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
+            svg += `<text x="${width - padding + 4}" y="${buyPriceY + 3}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid: ${formatCredits(playerBuyPrice, false)}</text>`;
+        }
+
+        const pricePoints = history.map((p, i) => `${getX(i)},${getY(p.price)}`).join(' ');
+        svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" />`;
+
+        const firstDay = history[0].day;
+        const lastDay = history[history.length - 1].day;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+
+        svg += `<text x="${padding - 8}" y="${getY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${getY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `</svg>`;
         return svg;
     }
     showTutorialToast({ step, onSkip, onNext, gameState }) {
