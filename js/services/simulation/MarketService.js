@@ -150,22 +150,36 @@ export class MarketService {
      */
     _recordPriceHistory() {
         if (!this.gameState || !this.gameState.market) return;
-        DB.MARKETS.forEach(market => {
-            if (!this.gameState.market.priceHistory[market.id]) this.gameState.market.priceHistory[market.id] = {};
-            DB.COMMODITIES.forEach(good => {
-                if (good.tier > this.gameState.player.revealedTier) return;
-                if (!this.gameState.market.priceHistory[market.id][good.id]) this.gameState.market.priceHistory[market.id][good.id] = [];
-                
-                const history = this.gameState.market.priceHistory[market.id][good.id];
-                const currentPrice = this.gameState.market.prices[market.id][good.id];
-                
-                history.push({ day: this.gameState.day, price: currentPrice });
-                
-                // Ensure the history log does not exceed the maximum length defined in game rules.
-                while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
-                    history.shift();
+
+        const marketId = this.gameState.currentLocationId;
+        if (!this.gameState.market.priceHistory[marketId]) {
+            this.gameState.market.priceHistory[marketId] = {};
+        }
+
+        DB.COMMODITIES.forEach(good => {
+            if (good.tier > this.gameState.player.revealedTier) return;
+
+            if (!this.gameState.market.priceHistory[marketId][good.id]) {
+                this.gameState.market.priceHistory[marketId][good.id] = [];
+            }
+
+            const history = this.gameState.market.priceHistory[marketId][good.id];
+            const currentPrice = this.gameState.market.prices[marketId][good.id];
+
+            // Avoid adding a duplicate entry for the same day unless the price has changed.
+            const lastEntry = history[history.length - 1];
+            if (lastEntry && lastEntry.day === this.gameState.day) {
+                if (lastEntry.price !== currentPrice) {
+                    lastEntry.price = currentPrice; // Update the price for the current day.
                 }
-            });
+            } else {
+                history.push({ day: this.gameState.day, price: currentPrice });
+            }
+
+            // Ensure the history log does not exceed the maximum length defined in game rules.
+            while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
+                history.shift();
+            }
         });
     }
 }

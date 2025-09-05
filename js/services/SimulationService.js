@@ -484,6 +484,10 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'buy');
+
+        // Record the new price immediately for graph reactivity.
+        this.marketService._recordPriceHistory();
+
         this.gameState.setState({});
 
         return true;
@@ -537,6 +541,10 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'sell');
+
+        // Record the new price immediately for graph reactivity.
+        this.marketService._recordPriceHistory();
+
         this.gameState.setState({});
         
         return totalSaleValue;
@@ -818,10 +826,12 @@ export class SimulationService {
 
             this._checkAgeEvents();
 
+            // --- Daily Market Evolution ---
+            this.marketService.evolveMarketPrices(); // This now runs every day.
+
             // The main weekly "tick" for updating market prices and stock.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
-                this.marketService.evolveMarketPrices();
                 this.marketService.replenishMarketInventory();
                 this._updateShipyardStock();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;

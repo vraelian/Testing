@@ -2691,7 +2691,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let debugService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(uiManager);
+            debugService = new DebugService(gameState, simulationService, uiManager);
             debugService.init();
         }
         
@@ -3664,22 +3664,161 @@ export const DB = {
 // js/services/DebugService.js
 /**
  * @fileoverview This file contains the DebugService class, which is responsible for creating and managing
- * the lil-gui visual editor panel for real-time tuning of game variables and CSS properties.
- * This service should only be initialized in a development environment.
+ * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
+import { DB } from '../data/database.js';
+
+/**
+ * A simple bot that plays the game to stress-test the economy and find bugs.
+ * @class AutomatedPlayer
+ */
+class AutomatedPlayer {
+    /**
+     * @param {import('./GameState.js').GameState} gameState The central game state object.
+     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
+     */
+    constructor(gameState, simulationService) {
+        this.gameState = gameState;
+        this.simulationService = simulationService;
+        this.isRunning = false;
+        this.stopRequested = false;
+    }
+
+    /**
+     * Starts the automated play simulation.
+     * @param {object} config - Configuration for the simulation run.
+     * @param {number} config.daysToRun - The number of in-game days to simulate.
+     * @param {function} updateCallback - A function to call with progress updates.
+     */
+    async runSimulation({ daysToRun }, updateCallback) {
+        if (this.isRunning) {
+            console.log("AUTOTRADER-01 is already running.");
+            return;
+        }
+
+        this.isRunning = true;
+        this.stopRequested = false;
+        const startDay = this.gameState.day;
+        const endDay = startDay + daysToRun;
+
+        console.log(`%cAUTOTRADER-01: Starting simulation for ${daysToRun} days.`, 'color: cyan; font-weight: bold;');
+
+        while (this.gameState.day < endDay && !this.stopRequested) {
+            const bestTrade = this._findBestTradeRoute();
+
+            if (bestTrade) {
+                // Travel to buy location
+                if (this.gameState.currentLocationId !== bestTrade.buyLocationId) {
+                    this.simulationService.initiateTravel(bestTrade.buyLocationId);
+                }
+                // Buy
+                const buyQty = this._calculateMaxBuy(bestTrade.goodId, bestTrade.buyPrice);
+                if(buyQty > 0) this.simulationService.buyItem(bestTrade.goodId, buyQty);
+
+                // Travel to sell location
+                if (this.gameState.currentLocationId !== bestTrade.sellLocationId) {
+                    this.simulationService.initiateTravel(bestTrade.sellLocationId);
+                }
+
+                // Sell
+                const sellQty = this.simulationService._getActiveInventory()[bestTrade.goodId]?.quantity || 0;
+                if(sellQty > 0) this.simulationService.sellItem(bestTrade.goodId, sellQty);
+
+            } else {
+                // No profitable trades, advance time to wait for market changes.
+                this.simulationService._advanceDays(1);
+            }
+            updateCallback(this.gameState.day, endDay);
+            await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to prevent browser freeze
+        }
+
+        console.log(`%cAUTOTRADER-01: Simulation finished.`, 'color: cyan; font-weight: bold;');
+        this.isRunning = false;
+    }
+
+    /**
+     * Stops the currently running simulation.
+     */
+    stop() {
+        this.stopRequested = true;
+    }
+
+    /**
+     * Calculates the maximum quantity of an item the bot can buy.
+     * @private
+     */
+    _calculateMaxBuy(goodId, price) {
+        const state = this.gameState.getState();
+        const ship = this.simulationService._getActiveShip();
+        const inventory = this.simulationService._getActiveInventory();
+        const space = ship.cargoCapacity - Object.values(inventory).reduce((acc, item) => acc + item.quantity, 0);
+        const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
+        const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        return Math.max(0, Math.min(space, canAfford, stock));
+    }
+
+    /**
+     * Scans all markets to find the most profitable trade route.
+     * @private
+     */
+    _findBestTradeRoute() {
+        const state = this.gameState.getState();
+        let bestTrade = null;
+        let maxProfitPerDay = 0;
+
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
+
+        for (const good of availableCommodities) {
+            for (const buyLocation of DB.MARKETS) {
+                if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
+
+                for (const sellLocation of DB.MARKETS) {
+                    if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
+
+                    const buyPrice = state.market.prices[buyLocation.id][good.id];
+                    const sellPrice = state.market.prices[sellLocation.id][good.id];
+                    const profitPerUnit = sellPrice - buyPrice;
+
+                    if (profitPerUnit > 0) {
+                        const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
+                        const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
+                        const totalTime = travelTimeToBuy + travelTimeToSell + 1; // +1 for transaction time
+                        const profitPerDay = profitPerUnit / totalTime;
+
+                        if (profitPerDay > maxProfitPerDay) {
+                            maxProfitPerDay = profitPerDay;
+                            bestTrade = {
+                                goodId: good.id,
+                                buyLocationId: buyLocation.id,
+                                sellLocationId: sellLocation.id,
+                                buyPrice,
+                                sellPrice,
+                                profitPerUnit
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        return bestTrade;
+    }
+}
 
 export class DebugService {
     /**
+     * @param {import('./GameState.js').GameState} gameState The central game state object.
+     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
      */
-    constructor(uiManager) {
+    constructor(gameState, simulationService, uiManager) {
+        this.gameState = gameState;
+        this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.gui = null;
         this.active = false;
-        this.styleOverridesActive = true;
-        this.state = {};
-        this.defaults = {};
-        this.exportTextarea = null;
+        this.actions = {};
+        this.debugState = {}; // Holds state for GUI controllers
+        this.bot = new AutomatedPlayer(gameState, simulationService);
     }
 
     /**
@@ -3687,334 +3826,224 @@ export class DebugService {
      */
     init() {
         if (this.gui) return;
-
         this.gui = new lil.GUI();
-        this.gui.domElement.style.display = 'none'; // Initially hidden
-
-        // --- State object updated with values from screenshots ---
-        this.state = {
-            // Card Appearance
-            cardHeight: 160,
-            cardBorderRadius: 21,
-
-            // Name Text
-            infoTop: 7,
-            infoLeft: 16,
-            nameFontSize: 0.95,
-            nameColor: '#ffffff',
-            nameOutlineWidth: 1,
-            nameOutlineColor: '#000000',
-            nameShadowX: -0.5,
-            nameShadowY: 0,
-            nameShadowBlur: 3,
-            nameShadowColor: '#000000',
-
-            // Player Inventory Text
-            pinvTop: 34,
-            pinvLeft: 74,
-            pinvFontSize: 0.65,
-            pinvColor: '#e8e8e8',
-            pinvOwnColor: '#ffea00',
-            pinvOwnFontSize: 0.85,
-            pinvOutlineWidth: 0.4,
-            pinvOutlineColor: '#000000',
-            pinvShadowX: 0,
-            pinvShadowY: 1.5,
-            pinvShadowBlur: 2.5,
-            pinvShadowColor: '#616b70',
-
-            // Availability Text
-            availTop: 29,
-            availLeft: 17,
-            availFontSize: 0.8 ,
-            availColor: '#ffffff',
-            availOutlineWidth: 0.7,
-            availOutlineColor: '#292929',
-            availShadowX: -0.5,
-            availShadowY: 1.5,
-            availShadowBlur: 3.5,
-            availShadowColor: '#554a4a',
-
-            // Price Text
-            priceTop: 58,
-            priceLeft: 16,
-            priceFontSize: 1.9,
-            priceColor: '#29f1ff',
-            priceFontFamily: "'Roboto Mono', monospace",
-            priceOutlineWidth: 1.1,
-            priceOutlineColor: '#001fb8',
-            priceGlowColor: '#16a8bb',
-            priceGlowRadius: 20,
-            priceShadowX: 0,
-            priceShadowY: 0,
-            priceShadowBlur: 20,
-            priceShadowColor: '#28d5d7',
-
-            // Effective Price Text
-            effectivePriceTop: 105,
-            effectivePriceLeft: 16,
-            effectivePriceFontSize: 0.75,
-            effectivePriceColor: '#ffffff',
-            effectivePriceOutlineWidth: 0.7,
-            effectivePriceOutlineColor: '#292929',
-            effectivePriceShadowX: -0.5,
-            effectivePriceShadowY: 1.5,
-            effectivePriceShadowBlur: 3.5,
-            effectivePriceShadowColor: '#554a4a',
-            
-            // Indicators
-            indicatorTop: 123,
-            indicatorLeft: 16,
-            indicatorHSpacing: 6,
-            indicatorVSpacing: 3,
-            indicatorFontSize: 0.6,
-            indicatorPositiveColor: '#ffffff',
-            indicatorNegativeColor: '#fee2e2',
-            indicatorNeutralColor: '#e5e5e5',
-
-            // Spacing
-            priceIndicatorVGap: 7,
-
-            // Transaction Module
-            moduleTop: 13,
-            moduleWidth: 122,
-            moduleVGap: 7.1,
-            moduleToggleHeight: 25,
-            moduleStepperHeight: 50,
-            moduleStepperArrowSize: 1.4,
-            moduleButtonHeight: 29,
-            moduleFontSize: 0.85,
-            buyColor: '#146171',
-            sellColor: '#a73535',
-        };
-        this.defaults = { ...this.state };
-
+        this.gui.domElement.style.display = 'none';
+        this._registerDebugActions();
         this.buildGui();
-        this.updateAllStyles();
-    }
-    
-    buildGui() {
-        this.gui.add({ export: () => this.exportCssDeltas() }, 'export').name('Export CSS Deltas');
-        this.createExportTextarea();
-
-        const cardFolder = this.gui.addFolder('Commodity Card');
-        cardFolder.add(this.state, 'cardHeight', 60, 200, 1).name('Height (px)').onChange(v => this.updateCssVariable('--market-card-height', `${v}px`));
-        cardFolder.add(this.state, 'cardBorderRadius', 0, 50, 1).name('Roundness (px)').onChange(v => this.updateCssVariable('--market-card-border-radius', `${v}px`));
-
-        const nameFolder = this.gui.addFolder('Name Text');
-        this.buildTextControls(nameFolder, 'name', true, 'info');
-
-        const pinvFolder = this.gui.addFolder('Player Inventory Text');
-        this.buildTextControls(pinvFolder, 'pinv', true);
-        pinvFolder.addColor(this.state, 'pinvOwnColor').name('Own # Color').onChange(v => this.updateCssVariable('--market-card-pinv-own-color', v));
-        pinvFolder.add(this.state, 'pinvOwnFontSize', 0.5, 1.5, 0.05).name('Own # Font Size (rem)').onChange(v => this.updateCssVariable('--market-card-pinv-own-font-size', `${v}rem`));
-
-        const availFolder = this.gui.addFolder('Availability Text');
-        this.buildTextControls(availFolder, 'avail', true);
-
-        const priceFolder = this.gui.addFolder('Price Text');
-        this.buildTextControls(priceFolder, 'price', true);
-        priceFolder.add(this.state, 'priceFontFamily', ["'Roboto Mono', monospace", "'Orbitron', sans-serif", "'Exo 2', sans-serif"]).name('Font Family').onChange(v => this.updateCssVariable('--market-card-price-font-family', v));
-        const priceGlowFolder = priceFolder.addFolder('Glow');
-        priceGlowFolder.addColor(this.state, 'priceGlowColor').name('Color').onChange(() => this.updateTextStyles());
-        priceGlowFolder.add(this.state, 'priceGlowRadius', 0, 20, 1).name('Radius (px)').onChange(() => this.updateTextStyles());
-
-        const effectivePriceFolder = this.gui.addFolder('Effective Price Text');
-        this.buildTextControls(effectivePriceFolder, 'effectivePrice', true);
-        
-        const indFolder = this.gui.addFolder('Indicators');
-        indFolder.add(this.state, 'indicatorTop', 0, 128, 1).name('Top (px)').onChange(v => this.updateCssVariable('--market-card-indicator-top', `${v}px`));
-        indFolder.add(this.state, 'indicatorLeft', 0, 128, 1).name('Left (px)').onChange(v => this.updateCssVariable('--market-card-indicator-left', `${v}px`));
-        indFolder.add(this.state, 'indicatorHSpacing', 0, 20, 1).name('H-Spacing (px)').onChange(v => this.updateCssVariable('--market-card-indicator-h-spacing', `${v}px`));
-        indFolder.add(this.state, 'indicatorVSpacing', 0, 20, 1).name('V-Spacing (px)').onChange(v => this.updateCssVariable('--market-card-indicator-v-spacing', `${v}px`));
-        indFolder.add(this.state, 'indicatorFontSize', 0.5, 1.5, 0.05).name('Font Size (em)').onChange(v => this.updateCssVariable('--market-card-indicator-font-size', `${v}em`));
-        indFolder.addColor(this.state, 'indicatorPositiveColor').name('Positive Color').onChange(v => this.updateCssVariable('--market-card-indicator-positive-color', v));
-        indFolder.addColor(this.state, 'indicatorNegativeColor').name('Negative Color').onChange(v => this.updateCssVariable('--market-card-indicator-negative-color', v));
-        indFolder.addColor(this.state, 'indicatorNeutralColor').name('Neutral Color').onChange(v => this.updateCssVariable('--market-card-indicator-neutral-color', v));
-
-        const moduleFolder = this.gui.addFolder('Transaction Module');
-        moduleFolder.add(this.state, 'moduleTop', 0, 100, 1).name('Module Y (px)').onChange(v => this.updateCssVariable('--market-card-module-top', `${v}px`));
-        moduleFolder.add(this.state, 'moduleWidth', 80, 150, 1).name('Width (px)').onChange(v => this.updateCssVariable('--market-card-module-width', `${v}px`));
-        moduleFolder.add(this.state, 'moduleVGap', 0, 15, 0.1).name('V-Gap (px)').onChange(v => this.updateCssVariable('--market-card-module-v-gap', `${v}px`));
-        moduleFolder.add(this.state, 'moduleFontSize', 0.5, 1.5, 0.05).name('Font Size (rem)').onChange(v => this.updateCssVariable('--font-size', `${v}rem`));
-        moduleFolder.add(this.state, 'moduleToggleHeight', 20, 50, 1).name('Toggle Height (px)').onChange(v => this.updateCssVariable('--market-card-module-toggle-height', `${v}px`));
-        moduleFolder.add(this.state, 'moduleStepperHeight', 20, 50, 1).name('Stepper Height (px)').onChange(v => this.updateCssVariable('--market-card-module-stepper-height', `${v}px`));
-        moduleFolder.add(this.state, 'moduleStepperArrowSize', 0.5, 2, 0.1).name('Arrow Size (em)').onChange(v => this.updateCssVariable('--market-card-module-stepper-arrow-size', `${v}em`));
-        moduleFolder.add(this.state, 'moduleButtonHeight', 20, 50, 1).name('Button Height (px)').onChange(v => this.updateCssVariable('--market-card-module-button-height', `${v}px`));
-        moduleFolder.addColor(this.state, 'buyColor').name('Buy Color').onChange(v => this.updateCssVariable('--buy-primary', v));
-        moduleFolder.addColor(this.state, 'sellColor').name('Sell Color').onChange(v => this.updateCssVariable('--sell-primary', v));
-        
-        const spacingFolder = this.gui.addFolder('Spacing');
-        spacingFolder.add(this.state, 'priceIndicatorVGap', 0, 40, 1).name('Price/Indicator V-Gap').onChange(v => this.updateCssVariable('--market-card-price-indicator-v-gap', `${v}px`));
     }
 
-    buildTextControls(folder, prefix, includePositioning = false, posPrefix) {
-        posPrefix = posPrefix || prefix;
-        if (includePositioning) {
-            const posFolder = folder.addFolder('Positioning');
-            posFolder.add(this.state, `${posPrefix}Top`, 0, 128, 1).name('Top (px)').onChange(v => this.updateCssVariable(`--market-card-${posPrefix}-top`, `${v}px`));
-            posFolder.add(this.state, `${posPrefix}Left`, 0, 200, 1).name('Left (px)').onChange(v => this.updateCssVariable(`--market-card-${posPrefix}-left`, `${v}px`));
+    /**
+     * Handles key presses forwarded from the EventManager.
+     * @param {string} key - The key that was pressed.
+     */
+    handleKeyPress(key) {
+        const action = Object.values(this.actions).find(a => a.key === key);
+        if (action && action.handler) {
+            action.handler();
         }
-        folder.add(this.state, `${prefix}FontSize`, 0.5, 3, 0.05).name('Font Size (rem)').onChange(v => this.updateCssVariable(`--market-card-${prefix}-font-size`, `${v}rem`));
-        folder.addColor(this.state, `${prefix}Color`).name('Color').onChange(v => this.updateCssVariable(`--market-card-${prefix}-color`, v));
-        const outlineFolder = folder.addFolder('Outline');
-        outlineFolder.add(this.state, `${prefix}OutlineWidth`, 0, 5, 0.1).name('Thickness (px)').onChange(() => this.updateTextStyles());
-        outlineFolder.addColor(this.state, `${prefix}OutlineColor`).name('Color').onChange(() => this.updateTextStyles());
-        const shadowFolder = folder.addFolder('Drop Shadow');
-        shadowFolder.add(this.state, `${prefix}ShadowX`, -10, 10, 0.5).name('Offset X (px)').onChange(() => this.updateTextStyles());
-        shadowFolder.add(this.state, `${prefix}ShadowY`, -10, 10, 0.5).name('Offset Y (px)').onChange(() => this.updateTextStyles());
-        shadowFolder.add(this.state, `${prefix}ShadowBlur`, 0, 20, 0.5).name('Blur (px)').onChange(() => this.updateTextStyles());
-        shadowFolder.addColor(this.state, `${prefix}ShadowColor`).name('Color').onChange(() => this.updateTextStyles());
-    }
-    
-    updateAllStyles() {
-        if (!this.styleOverridesActive) return;
-        for (const key in this.state) {
-            const cssVar = this.getCssVarForKey(key);
-            const cssVal = this.getCssValueForKey(key);
-            if (cssVar) {
-                this.updateCssVariable(cssVar, cssVal);
-            }
-        }
-        this.updateTextStyles();
     }
 
+    /**
+     * Toggles the visibility of the debug panel UI.
+     */
     toggleVisibility() {
         if (!this.gui) return;
         this.active = !this.active;
         this.gui.domElement.style.display = this.active ? 'block' : 'none';
     }
 
-    toggleStyleOverrides() {
-        this.styleOverridesActive = !this.styleOverridesActive;
-        if (this.styleOverridesActive) {
-            this.updateAllStyles();
-        } else {
-            this._removeStyleOverrides();
-        }
-    }
-
-    _removeStyleOverrides() {
-        for (const key in this.state) {
-            const cssVar = this.getCssVarForKey(key);
-            if (cssVar) {
-                document.documentElement.style.removeProperty(cssVar);
-            }
-        }
-        // Special case for text shadows which are combined into one variable
-        ['name', 'pinv', 'avail', 'price', 'effectivePrice'].forEach(prefix => {
-            document.documentElement.style.removeProperty(`--market-card-${prefix}-text-shadow`);
-        });
-    }
-
-
-    updateCssVariable(property, value) {
-        if (this.styleOverridesActive) {
-            document.documentElement.style.setProperty(property, value);
-        }
-    }
-    
-    updateTextStyles() {
-        if (!this.styleOverridesActive) return;
-        ['name', 'pinv', 'avail', 'price', 'effectivePrice'].forEach(prefix => {
-            let shadows = [];
-            if (prefix === 'price' && this.state.priceGlowRadius > 0) {
-                shadows.push(`0 0 ${this.state.priceGlowRadius}px ${this.state.priceGlowColor}`);
-            }
-            if (this.state[`${prefix}OutlineWidth`] > 0) {
-                shadows.push(this.createOutline(this.state[`${prefix}OutlineWidth`], this.state[`${prefix}OutlineColor`]));
-            }
-            if (this.state[`${prefix}ShadowBlur`] > 0 || this.state[`${prefix}ShadowX`] !== 0 || this.state[`${prefix}ShadowY`] !== 0) {
-                shadows.push(`${this.state[`${prefix}ShadowX`]}px ${this.state[`${prefix}ShadowY`]}px ${this.state[`${prefix}ShadowBlur`]}px ${this.state[`${prefix}ShadowColor`]}`);
-            }
-            this.updateCssVariable(`--market-card-${prefix}-text-shadow`, shadows.length > 0 ? shadows.join(', ') : 'none');
-        });
-    }
-
-    createOutline(width, color) {
-        const angles = [0, 45, 90, 135, 180, 225, 270, 315];
-        return angles.map(angle => {
-            const rad = angle * (Math.PI / 180);
-            const x = width * Math.cos(rad);
-            const y = width * Math.sin(rad);
-            return `${x.toFixed(2)}px ${y.toFixed(2)}px 0 ${color}`;
-        }).join(', ');
-    }
-
-    createExportTextarea() {
-        this.exportTextarea = document.createElement('textarea');
-        this.exportTextarea.style.width = '100%';
-        this.exportTextarea.style.minHeight = '200px';
-        this.exportTextarea.style.fontFamily = 'monospace';
-        this.exportTextarea.style.backgroundColor = '#1a1a1a';
-        this.exportTextarea.style.color = '#f0f0f0';
-        this.exportTextarea.style.border = '1px solid #444';
-        this.exportTextarea.readOnly = true;
-
-        const li = document.createElement('li');
-        li.appendChild(this.exportTextarea);
-        li.classList.add('lil-gui');
-        
-        this.gui.children[0].domElement.parentElement.appendChild(li);
-    }
-    
-    exportCssDeltas() {
-        let output = ':root {\n';
-        let changed = false;
-        for (const key in this.state) {
-            if (JSON.stringify(this.state[key]) !== JSON.stringify(this.defaults[key])) {
-                changed = true;
-                const cssVar = this.getCssVarForKey(key);
-                const cssVal = this.getCssValueForKey(key);
-                if(cssVar) {
-                    output += `    ${cssVar}: ${cssVal};\n`;
+    /**
+     * Creates the data-driven registry of all available debug actions.
+     * @private
+     */
+    _registerDebugActions() {
+        this.actions = {
+            // --- Game Flow Actions ---
+            skipIntro: {
+                name: 'Skip Intro & Setup',
+                type: 'button',
+                handler: () => this.simulationService.debugMarketSkip()
+            },
+            // --- Player Actions ---
+            addCredits: {
+                name: 'Add Credits',
+                type: 'button',
+                handler: () => {
+                    this.gameState.player.credits += this.debugState.creditsToAdd;
+                    this.simulationService._checkMilestones();
+                    this.uiManager.render(this.gameState.getState());
                 }
-            }
-        }
-        output += '}';
+            },
+            payDebt: {
+                name: 'Pay Off Debt',
+                type: 'button',
+                handler: () => this.simulationService.payOffDebt()
+            },
+            teleport: {
+                name: 'Teleport',
+                type: 'button',
+                handler: () => {
+                    if (this.debugState.selectedLocation) {
+                        this.gameState.currentLocationId = this.debugState.selectedLocation;
+                        this.gameState.setState({});
+                    }
+                }
+            },
+            unlockAll: {
+                name: 'Unlock All',
+                type: 'button',
+                handler: () => {
+                    this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
+                    Object.values(DB.LICENSES).forEach(l => {
+                        if (!this.gameState.player.unlockedLicenseIds.includes(l.id)) {
+                            this.gameState.player.unlockedLicenseIds.push(l.id);
+                        }
+                    });
+                    this.gameState.setState({});
+                }
+            },
+            grantAllShips: {
+                name: 'Grant All Ships',
+                type: 'button',
+                handler: () => {
+                    Object.keys(DB.SHIPS).forEach(shipId => {
+                        if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+                            this.simulationService.addShipToHangar(shipId);
+                        }
+                    });
+                    this.gameState.setState({});
+                }
+            },
 
-        if (changed) {
-            this.exportTextarea.value = output;
-        } else {
-            this.exportTextarea.value = "No changes detected from defaults.";
-        }
-    }
-    
-    getCssVarForKey(key) {
-        const prefixMap = {
-            name: '--market-card-name', pinv: '--market-card-pinv', avail: '--market-card-avail', price: '--market-card-price', effectivePrice: '--market-card-effective-price'
-        };
-        for (const p in prefixMap) {
-            if (key.startsWith(p)) {
-                const suffix = key.substring(p.length).replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-                return `${prefixMap[p]}${suffix}`;
+            // --- World Actions ---
+            advanceTime: {
+                name: 'Advance Days',
+                type: 'button',
+                handler: () => this.simulationService._advanceDays(this.debugState.daysToAdvance)
+            },
+
+            // --- Economy Actions ---
+            evolvePrices: {
+                name: 'Evolve Prices (7d)',
+                type: 'button',
+                handler: () => this.simulationService.marketService.evolveMarketPrices()
+            },
+            replenishStock: {
+                name: 'Replenish All Stock',
+                type: 'button',
+                handler: () => {
+                    this.simulationService.marketService.replenishMarketInventory();
+                    this.gameState.setState({});
+                }
+            },
+
+            // --- Trigger Actions ---
+            triggerRandomEvent: {
+                name: 'Trigger Random Event',
+                type: 'button',
+                handler: () => {
+                    const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
+                    if (dest) {
+                        this.simulationService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                    }
+                }
+            },
+            triggerAgeEvent: {
+                name: 'Trigger Age Event',
+                type: 'button',
+                handler: () => {
+                    const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
+                    if (event) {
+                        this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
+                    }
+                }
+            },
+            triggerMission: {
+                name: 'Trigger Mission',
+                type: 'button',
+                handler: () => {
+                    if (this.debugState.selectedMission) {
+                        this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
+                    }
+                }
+            },
+            // --- Bot Actions ---
+            startBot: {
+                name: 'Start AUTOTRADER-01',
+                type: 'button',
+                handler: () => {
+                    const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
+                    this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
+                        if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
+                    });
+                }
+            },
+            stopBot: {
+                name: 'Stop AUTOTRADER-01',
+                type: 'button',
+                handler: () => this.bot.stop()
             }
-        }
-        
-        const map = {
-            cardHeight: '--market-card-height', cardBorderRadius: '--market-card-border-radius',
-            infoTop: '--market-card-info-top', infoLeft: '--market-card-info-left',
-            indicatorTop: '--market-card-indicator-top', indicatorLeft: '--market-card-indicator-left', indicatorHSpacing: '--market-card-indicator-h-spacing', indicatorVSpacing: '--market-card-indicator-v-spacing', indicatorFontSize: '--market-card-indicator-font-size',
-            indicatorPositiveColor: '--market-card-indicator-positive-color', indicatorNegativeColor: '--market-card-indicator-negative-color', indicatorNeutralColor: '--market-card-indicator-neutral-color',
-            priceIndicatorVGap: '--market-card-price-indicator-v-gap',
-            moduleTop: '--market-card-module-top', moduleWidth: '--market-card-module-width', moduleVGap: '--market-card-module-v-gap', moduleFontSize: '--font-size',
-            moduleToggleHeight: '--market-card-module-toggle-height', moduleStepperHeight: '--market-card-module-stepper-height', moduleButtonHeight: '--market-card-module-button-height',
-            moduleStepperArrowSize: '--market-card-module-stepper-arrow-size', buyColor: '--buy-primary', sellColor: '--sell-primary',
-            pinvOwnColor: '--market-card-pinv-own-color',
-            pinvOwnFontSize: '--market-card-pinv-own-font-size'
         };
-        return map[key] || null;
     }
 
-    getCssValueForKey(key) {
-        const value = this.state[key];
-        const unitMap = {
-            FontSize: 'rem', Top: 'px', Left: 'px', Width: 'px', Height: 'px', Radius: 'px', VGap: 'px', HSpacing: 'px', VSpacing: 'px', Blur: 'px', ArrowSize: 'em'
-        };
-        for(const suffix in unitMap) {
-            if(key.endsWith(suffix)) return `${value}${unitMap[suffix]}`;
-        }
-        return value;
+    /**
+     * Constructs the lil-gui panel from the action registry.
+     * @private
+     */
+    buildGui() {
+        // --- Game Flow Folder ---
+        const flowFolder = this.gui.addFolder('Game Flow');
+        flowFolder.add(this.actions.skipIntro, 'handler').name(this.actions.skipIntro.name);
+
+        // --- Player Folder ---
+        const playerFolder = this.gui.addFolder('Player');
+        this.debugState.creditsToAdd = 100000;
+        playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
+        playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
+        playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
+        const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
+        this.debugState.selectedLocation = this.gameState.currentLocationId;
+        playerFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
+        playerFolder.add(this.actions.teleport, 'handler').name('Teleport');
+
+        // --- World Folder ---
+        const worldFolder = this.gui.addFolder('World & Time');
+        this.debugState.daysToAdvance = 7;
+        worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
+        worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
+
+        // --- Economy Folder ---
+        const economyFolder = this.gui.addFolder('Economy');
+        economyFolder.add(this.actions.evolvePrices, 'handler').name(this.actions.evolvePrices.name);
+        economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
+        economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
+        economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+
+        // --- Triggers Folder ---
+        const triggerFolder = this.gui.addFolder('Triggers');
+        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
+        this.debugState.selectedRandomEvent = 0;
+        triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
+        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
+        const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
+        this.debugState.selectedAgeEvent = DB.AGE_EVENTS[0].id;
+        triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
+        triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
+        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        this.debugState.selectedMission = Object.keys(missionOptions)[0];
+        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+
+        // --- Automation Folder ---
+        const botFolder = this.gui.addFolder('Automation');
+        this.debugState.botDaysToRun = 365;
+        this.debugState.botProgress = 'Idle';
+        botFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
+        botFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
+        botFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
+        botFolder.add(this.debugState, 'botProgress').name('Progress').listen();
+
+        this.gui.folders.forEach(folder => folder.close());
     }
 }
 --- END OF FILE: ./js/services/DebugService.js ---
@@ -5666,11 +5695,19 @@ export class SimulationService {
      */
     _checkMilestones() {
         const { credits, revealedTier } = this.gameState.player;
-        const nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === revealedTier + 1);
-    
-        if (nextMilestone && credits >= nextMilestone.threshold) {
+        let currentTier = revealedTier;
+        let nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
+
+        while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            
+            currentTier = nextMilestone.revealsTier;
+            nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
+        }
+
+        // If any tier was revealed, trigger a single state update at the end.
+        if (this.gameState.player.revealedTier !== revealedTier) {
             this.gameState.setState({});
         }
     }
@@ -5872,6 +5909,7 @@ export class SimulationService {
 
         document.getElementById('game-container').classList.remove('hidden');
         this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+        this.gameState.setState({});
     }
     
     /**
@@ -6460,58 +6498,8 @@ export class EventManager {
             }
             return;
         }
-        if (e.key === '~') {
-            if (this.debugService && this.debugService.active) {
-                this.debugService.toggleStyleOverrides();
-                console.log(`Debug: Style Overrides Toggled ${this.debugService.styleOverridesActive ? 'ON' : 'OFF'}.`);
-            }
-            return;
-        }
-    
-        let message = '';
-        switch(e.key) {
-            case '!':
-                this.simulationService.debugMarketSkip();
-                message = 'Debug: Market Skip';
-                break;
-            case '@':
-                this.simulationService.debugTriggerRandomEvent();
-                message = `Debug: Forcing Event ${this.gameState.player.debugEventIndex}`;
-                break;
-            case '#':
-                this.gameState.player.credits += 100000;
-                message = 'Debug: +100k Credits.';
-                break;
-            case '$':
-                Object.keys(DB.SHIPS).forEach(shipId => {
-                    if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
-                    }
-                });
-                message = 'Debug: All ships added.';
-                break;
-            case '%':
-                this.gameState.player.credits += 1000000000000;
-                const activeShip = this.simulationService._getActiveShip();
-                const inventory = this.simulationService._getActiveInventory();
-                if (activeShip && inventory) {
-                    DB.COMMODITIES.forEach(c => {
-                        if (calculateInventoryUsed(inventory) < activeShip.cargoCapacity) {
-                            inventory[c.id].quantity = (inventory[c.id].quantity || 0) + 1;
-                        }
-                    });
-                }
-                message = 'Debug: +1T Credits & 1 of each item.';
-                break;
-            case '^':
-                this.simulationService._advanceDays(366);
-                message = `Debug: Time advanced 1 year and 1 day.`;
-                break;
-        }
-    
-        if (message) {
-            this.gameState.setState({});
-            this.uiManager.render(this.gameState.getState());
+        if (this.debugService) {
+            this.debugService.handleKeyPress(e.key);
         }
     }
 
