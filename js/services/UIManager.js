@@ -1,6 +1,6 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 
 // Import all screen rendering components
@@ -85,7 +85,6 @@ export class UIManager {
     render(gameState) {
         if (!gameState || !gameState.player) return;
         
-        // This guard prevents the main UI from rendering during the initial modal-only part of the intro.
         if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
             return;
         }
@@ -118,14 +117,12 @@ export class UIManager {
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
-        // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
                 <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
-        // Main Nav Tabs & Status Pod
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
@@ -164,7 +161,6 @@ export class UIManager {
     
         const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
     
-        // Sub Nav Bars
         const subNavsHtml = Object.keys(this.navStructure).map(navId => {
             const screens = this.navStructure[navId].screens;
             const isActive = navId === activeNav;
@@ -203,8 +199,6 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                // Before re-rendering the market, save the current state of its interactive elements.
-                // This prevents the player's input (quantity, buy/sell mode) from being reset after a transaction.
                 this._saveMarketTransactionState();
                 this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
                 this._restoreMarketTransactionState();
@@ -228,8 +222,6 @@ export class UIManager {
     }
 
     updateStickyBar(gameState) {
-        // This function is now deprecated as its content is part of the new renderNavigation.
-        // It's kept to avoid breaking the main render loop but does nothing.
         this.cache.stickyBar.innerHTML = ''; 
         this.cache.topBarContainer.classList.remove('has-sticky-bar');
     }
@@ -262,13 +254,6 @@ export class UIManager {
         }
     }
 
-    /**
-     * Updates the market screen by first saving the current state of all transaction modules,
-     * re-rendering the entire screen with fresh data from the gameState, and then restoring
-     * the saved state of the transaction modules. This prevents the UI from resetting player
-     * input (like quantity or trade mode) after a transaction completes.
-     * @param {object} gameState - The current state of the game.
-     */
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         this._saveMarketTransactionState();
@@ -276,13 +261,6 @@ export class UIManager {
         this._restoreMarketTransactionState();
     }
 
-    /**
-     * Saves the current UI state of all transaction modules on the market screen.
-     * It iterates through each commodity card, capturing the selected trade mode ('buy'/'sell')
-     * and the entered quantity. This state is stored in `this.marketTransactionState`
-     * to be restored after a re-render.
-     * @private
-     */
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
         const controls = document.querySelectorAll('.transaction-controls');
@@ -291,7 +269,6 @@ export class UIManager {
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
             
-            // Only save state if there's an input field (i.e., it's not a locked license button)
             if (qtyInput) {
                 this.marketTransactionState[goodId] = {
                     quantity: qtyInput.value,
@@ -301,20 +278,13 @@ export class UIManager {
         });
     }
 
-    /**
-     * Restores the saved UI state to all transaction modules on the market screen.
-     * After the market has been re-rendered, this function iterates through the saved states
-     * in `this.marketTransactionState` and applies the saved mode and quantity to each
-     * corresponding commodity card's transaction module, ensuring a persistent UI for the user.
-     * @private
-     */
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
             const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
-                if (qtyInput) { // Check if the input exists before setting its value
+                if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
                 }
@@ -325,11 +295,9 @@ export class UIManager {
     getItemPrice(gameState, goodId, isSelling = false) {
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
-        // Apply a bonus if the location has a special demand for this item.
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
             price *= market.specialDemand[goodId].bonus;
         }
-        // Apply intel modifiers if active.
         const intel = gameState.intel.active;
         if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
             price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
@@ -337,14 +305,6 @@ export class UIManager {
         return Math.max(1, Math.round(price));
     }
     
-    /**
-     * Calculates the potential outcome of a sale for UI display, including diminishing returns.
-     * This is a UI-only function and does not mutate the game state.
-     * @param {string} goodId - The ID of the commodity.
-     * @param {number} quantity - The quantity being considered for sale.
-     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
-     * @private
-     */
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0 };
@@ -354,18 +314,18 @@ export class UIManager {
         const basePrice = this.getItemPrice(state, goodId, true);
         
         const threshold = marketStock * 0.1;
-        if (quantity <= threshold) {
+        if (quantity <= threshold || marketStock <= 0) {
             return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
         }
 
         const excessRatio = quantity / marketStock;
         let reduction = 0;
 
-        if (good.tier <= 2) { // Low-Tier
+        if (good.tier <= 2) {
             reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) { // Mid-Tier
+        } else if (good.tier <= 5) {
             reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else { // High-Tier
+        } else {
             reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
         }
         
@@ -380,7 +340,6 @@ export class UIManager {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         if (priceEl) {
             priceEl.dataset.basePrice = newPrice;
-            // We only need to update the text if it's in 'buy' mode, as 'sell' mode shows profit.
             const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
             if (controls && controls.dataset.mode === 'buy') {
                 priceEl.textContent = formatCredits(newPrice);
@@ -391,24 +350,62 @@ export class UIManager {
     updateMarketCardDisplay(goodId, quantity, mode) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
-        if (!priceEl || !effectivePriceEl) return;
+        const indicatorEl = document.getElementById(`indicators-${goodId}`);
+
+        if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
+
+        const state = this.lastKnownState;
+        const basePrice = parseInt(priceEl.dataset.basePrice, 10);
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
 
         if (mode === 'buy') {
-            priceEl.textContent = formatCredits(parseInt(priceEl.dataset.basePrice, 10));
-            priceEl.classList.remove('profit-text');
-            priceEl.classList.add('price-text');
+            priceEl.textContent = formatCredits(basePrice);
+            priceEl.className = 'font-roboto-mono font-bold price-text';
             effectivePriceEl.textContent = '';
+            
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: this.getItemPrice(state, goodId, true), // Base sell price for comparison
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
+
         } else { // 'sell' mode
+            const avgCost = playerItem?.avgCost || 0;
+            const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
+            
             if (quantity > 0) {
-                const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
-                priceEl.textContent = `+${formatCredits(totalPrice, false)}`;
+                const totalCost = avgCost * quantity;
+                let netProfit = totalPrice - totalCost;
+
+                if (netProfit > 0) {
+                    let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                    netProfit += netProfit * totalBonus;
+                }
+                
+                let profitText;
+                if (netProfit >= 0) {
+                    profitText = `+${formatCredits(netProfit, false)}`;
+                } else {
+                    profitText = `-${formatCredits(Math.abs(netProfit), false)}`;
+                }
+
+                priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'hl-red'}`;
+
             } else {
                 priceEl.textContent = '+0';
+                priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
-            priceEl.classList.remove('price-text');
-            priceEl.classList.add('profit-text');
+            
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true), // Use effective price, fallback to base
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
         }
     }
     
@@ -714,10 +711,9 @@ export class UIManager {
         const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
     
-        let topPos = rect.top - tooltipHeight - 10; // Position above the anchor
-        let leftPos = rect.left; // Align with the left edge of the anchor
+        let topPos = rect.top - tooltipHeight - 10;
+        let leftPos = rect.left;
     
-        // Ensure it doesn't go off-screen
         if (topPos < 10) {
             topPos = rect.bottom + 10;
         }
@@ -747,8 +743,8 @@ export class UIManager {
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = rect.right + 10; // Position to the right of the anchor
-        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
+        let leftPos = rect.right + 10;
+        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
 
         if (topPos < 10) {
             topPos = rect.bottom + 10;
@@ -846,7 +842,6 @@ export class UIManager {
             this.cache.tutorialToastNextBtn.style.display = 'none';
         }
 
-        // Per design, the tutorial skip button is permanently disabled for the player.
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
@@ -859,7 +854,6 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        // This function is intentionally left empty to disable the highlighting feature.
     }
 
     showSkipTutorialModal(onConfirm) {
@@ -1041,7 +1035,7 @@ export class UIManager {
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) { 
-                    const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
+                    const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else { 
                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;

@@ -5,7 +5,7 @@
  * It is responsible for displaying all available commodities for trade.
  */
 import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, renderIndicatorPills } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
@@ -48,7 +48,9 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
+
+    // Use the new centralized utility function to render indicators for the initial view.
+    const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
     
     let transactionControlsHtml;
     if (hasLicense) {
@@ -90,39 +92,4 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             ${transactionControlsHtml}
         </div>
     </div>`;
-}
-
-
-/**
- * Generates the HTML for the MKT and P/L indicators.
- * @param {number} price - The current market price.
- * @param {number} sellPrice - The current sell price.
- * @param {number} galacticAvg - The galactic average price.
- * @param {object} playerItem - The player's inventory item.
- * @returns {string} An HTML string containing the indicators.
- * @private
- */
-function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
-    const marketDiff = price - galacticAvg;
-    const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
-    const marketSign = marketPct > 0 ? '+' : '';
-    let marketClass = 'neutral';
-    if (marketPct > 5) marketClass = 'positive';
-    if (marketPct < -5) marketClass = 'negative';
-    let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
-    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
-
-    let plIndicatorHtml = '';
-    if (playerItem && playerItem.avgCost > 0) {
-        const spreadPerUnit = sellPrice - playerItem.avgCost;
-        if (Math.abs(spreadPerUnit) > 0.01) {
-            const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-            const plSign = plPct > 0 ? '+' : '';
-            let plClass = spreadPerUnit >= 0 ? 'positive' : 'negative';
-            let plIcon = spreadPerUnit >= 0 ? '▲' : '▼';
-            plIndicatorHtml = `<div class="indicator-pill ${plClass}">${plIcon} P/L: ${plSign}${plPct}%</div>`;
-        }
-    }
-
-    return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }

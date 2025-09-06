@@ -84,3 +84,42 @@ export function skewedRandom(min, max) {
     let rand = (Math.random() + Math.random() + Math.random()) / 3; // Average of 3 rolls biases towards the mean (0.5).
     return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); // Squaring the root further biases towards the lower end.
 }
+
+/**
+ * Generates the HTML for the MKT and P/L indicators on a market card.
+ * This centralized function ensures consistent and accurate indicator rendering.
+ * @param {object} data - An object containing all necessary data for rendering.
+ * @param {number} data.price - The current market buy price.
+ * @param {number} data.sellPrice - The effective sell price (after diminishing returns).
+ * @param {number} data.galacticAvg - The galactic average price for the commodity.
+ * @param {object} data.playerItem - The player's inventory data for this commodity (can be null).
+ * @returns {string} The HTML string for the indicator pills.
+ */
+export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem }) {
+    // Market vs Galactic Average Indicator (MKT)
+    const marketDiff = price - galacticAvg;
+    const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
+    const marketSign = marketPct >= 0 ? '+' : '';
+    let marketClass = 'neutral';
+    if (marketPct > 5) marketClass = 'positive';
+    if (marketPct < -5) marketClass = 'negative';
+    const marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
+    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
+
+    let plIndicatorHtml = '';
+    
+    // Profit/Loss Indicator (P/L)
+    if (playerItem && playerItem.avgCost > 0) {
+        const spreadPerUnit = sellPrice - playerItem.avgCost;
+        
+        if (Math.abs(spreadPerUnit) > 0.01) {
+            const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
+            const plSign = plPct >= 0 ? '+' : '';
+            const plClass = spreadPerUnit >= 0 ? 'positive' : 'negative';
+            const plIcon = spreadPerUnit >= 0 ? '▲' : '▼';
+            plIndicatorHtml = `<div class="indicator-pill ${plClass}"> P/L: ${plSign}${plPct}%</div>`;
+        }
+    }
+
+    return `${marketIndicatorHtml}${plIndicatorHtml}`;
+}

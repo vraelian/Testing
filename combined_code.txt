@@ -2507,7 +2507,7 @@ export function renderCargoScreen(gameState) {
  * It is responsible for displaying all available commodities for trade.
  */
 import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, renderIndicatorPills } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
@@ -2550,7 +2550,9 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const indicatorHtml = _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem);
+
+    // Use the new centralized utility function to render indicators for the initial view.
+    const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
     
     let transactionControlsHtml;
     if (hasLicense) {
@@ -2592,41 +2594,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             ${transactionControlsHtml}
         </div>
     </div>`;
-}
-
-
-/**
- * Generates the HTML for the MKT and P/L indicators.
- * @param {number} price - The current market price.
- * @param {number} sellPrice - The current sell price.
- * @param {number} galacticAvg - The galactic average price.
- * @param {object} playerItem - The player's inventory item.
- * @returns {string} An HTML string containing the indicators.
- * @private
- */
-function _getIndicatorHtml(price, sellPrice, galacticAvg, playerItem) {
-    const marketDiff = price - galacticAvg;
-    const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
-    const marketSign = marketPct > 0 ? '+' : '';
-    let marketClass = 'neutral';
-    if (marketPct > 5) marketClass = 'positive';
-    if (marketPct < -5) marketClass = 'negative';
-    let marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
-    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
-
-    let plIndicatorHtml = '';
-    if (playerItem && playerItem.avgCost > 0) {
-        const spreadPerUnit = sellPrice - playerItem.avgCost;
-        if (Math.abs(spreadPerUnit) > 0.01) {
-            const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
-            const plSign = plPct > 0 ? '+' : '';
-            let plClass = spreadPerUnit >= 0 ? 'positive' : 'negative';
-            let plIcon = spreadPerUnit >= 0 ? '▲' : '▼';
-            plIndicatorHtml = `<div class="indicator-pill ${plClass}">${plIcon} P/L: ${plSign}${plPct}%</div>`;
-        }
-    }
-
-    return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
 --- END OF FILE: ./js/ui/components/MarketScreen.js ---
 --- START OF FILE: ./js/main.js ---
@@ -2815,6 +2782,45 @@ export function getDateFromDay(dayNumber) {
 export function skewedRandom(min, max) {
     let rand = (Math.random() + Math.random() + Math.random()) / 3; // Average of 3 rolls biases towards the mean (0.5).
     return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); // Squaring the root further biases towards the lower end.
+}
+
+/**
+ * Generates the HTML for the MKT and P/L indicators on a market card.
+ * This centralized function ensures consistent and accurate indicator rendering.
+ * @param {object} data - An object containing all necessary data for rendering.
+ * @param {number} data.price - The current market buy price.
+ * @param {number} data.sellPrice - The effective sell price (after diminishing returns).
+ * @param {number} data.galacticAvg - The galactic average price for the commodity.
+ * @param {object} data.playerItem - The player's inventory data for this commodity (can be null).
+ * @returns {string} The HTML string for the indicator pills.
+ */
+export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem }) {
+    // Market vs Galactic Average Indicator (MKT)
+    const marketDiff = price - galacticAvg;
+    const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
+    const marketSign = marketPct >= 0 ? '+' : '';
+    let marketClass = 'neutral';
+    if (marketPct > 5) marketClass = 'positive';
+    if (marketPct < -5) marketClass = 'negative';
+    const marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
+    const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
+
+    let plIndicatorHtml = '';
+    
+    // Profit/Loss Indicator (P/L)
+    if (playerItem && playerItem.avgCost > 0) {
+        const spreadPerUnit = sellPrice - playerItem.avgCost;
+        
+        if (Math.abs(spreadPerUnit) > 0.01) {
+            const plPct = playerItem.avgCost > 0 ? Math.round((spreadPerUnit / playerItem.avgCost) * 100) : 0;
+            const plSign = plPct >= 0 ? '+' : '';
+            const plClass = spreadPerUnit >= 0 ? 'positive' : 'negative';
+            const plIcon = spreadPerUnit >= 0 ? '▲' : '▼';
+            plIndicatorHtml = `<div class="indicator-pill ${plClass}"> P/L: ${plSign}${plPct}%</div>`;
+        }
+    }
+
+    return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
 --- END OF FILE: ./js/utils.js ---
 --- START OF FILE: ./js/data/constants.js ---
@@ -4510,101 +4516,95 @@ export class MarketService {
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
-                const baseline = avg; // Re-centered on galactic average, ignoring static location modifiers for price.
+                const baseline = avg;
 
-                /** @description The base volatility for price fluctuations from game rules. */
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
-
-                /** @description The base strength of the pull towards the galactic average from game rules. */
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
 
-                // Check for an active system state and get modifiers for the current commodity.
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
-
-                // If modifiers exist, apply them to the baseline values for this calculation tick.
                 if (commodityMods) {
-                    if (commodityMods.volatility_mult) {
-                        volatility *= commodityMods.volatility_mult;
-                    }
-                    if (commodityMods.mean_reversion_mult) {
-                        meanReversion *= commodityMods.mean_reversion_mult;
-                    }
+                    if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
+                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
                 }
 
-                // A random fluctuation based on the commodity's inherent volatility.
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
                 const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
                 
                 let reversionEffect = (baseline - price) * meanReversion;
 
-                // Check for 'Rival Arbitrage' state, which drastically accelerates mean reversion.
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
-                    reversionEffect = (baseline - price) * 0.20; // Boosted to 20%
+                    reversionEffect = (baseline - price) * 0.20;
                 } else if (inventoryItem.rivalArbitrage.isActive) {
-                    inventoryItem.rivalArbitrage.isActive = false; // Reset the state.
+                    inventoryItem.rivalArbitrage.isActive = false;
                 }
 
-                // Check for a 'hover' state, which suppresses strong mean reversion for a few days.
                 if (inventoryItem.hoverUntilDay > this.gameState.day) {
-                    // While hovering, apply a much weaker reversion effect, allowing the price to fluctuate near its peak/trough.
                     reversionEffect *= 0.1;
                 } else if (inventoryItem.hoverUntilDay > 0) {
-                    // Reset the hover state once the timer expires.
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-
-                // Apply player-driven market pressure (positive pressure = surplus = lower price).
                 const pressureEffect = baseline * inventoryItem.marketPressure * -1;
-                
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
-                // Apply system state modifiers.
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
-                // Decay market pressure over time.
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
                 }
             });
-            // Record history for this specific location after its prices have evolved for the day.
             this._recordPriceHistory(location.id);
         });
     }
     
     /**
-     * Simulates the weekly replenishment of commodity stock at all markets, respecting market memory.
+     * Simulates the weekly replenishment of commodity stock using a hybrid model.
+     * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
      */
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
             DB.COMMODITIES.forEach(c => {
-                 if (c.tier > this.gameState.player.revealedTier) return;
+                if (c.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
-                
-                // Market Memory Check: If player hasn't touched this market in 60 days, reset it.
+
+                // Market Memory: Reset if untouched for 60 days.
                 if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 60) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
-                    inventoryItem.lastPlayerInteractionTimestamp = 0; // Reset timestamp
-                    inventoryItem.marketPressure = 0; // Reset pressure
+                    inventoryItem.lastPlayerInteractionTimestamp = 0;
+                    inventoryItem.marketPressure = 0;
                 } else {
-                    // Standard, slow replenishment.
-                    const maxStock = c.canonicalAvailability[1] * (market.availabilityModifier?.[c.id] ?? 1.0);
-                    const replenishRate = 0.06; // Replenish 6% of max stock per weekly cycle.
-                    if (inventoryItem.quantity < maxStock) {
-                        inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
-                    }
+                    // Phase 1: Establish Dynamic Target Stock
+                    const [minAvail, maxAvail] = c.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
+                    
+                    // Market adaptation: high player selling pressure reduces the target stock.
+                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Pressure reduces target, capped at 50%
+                    const targetStock = baseMeanStock * marketAdaptationFactor;
+
+                    // Phase 2: Gradual Replenishment Towards Target
+                    const difference = targetStock - inventoryItem.quantity;
+                    const replenishAmount = difference * 0.15; // Move 15% towards the target each week
+                    inventoryItem.quantity += replenishAmount;
+                }
+
+                // Phase 3: Apply Final Visual Fluctuation
+                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
+                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
+                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
+                inventoryItem.quantity *= finalFluctuation;
+                
+                // Apply system state modifiers if any exist.
+                if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
+                    inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
                 
-                // Apply system state modifiers.
-                if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
-                    inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
-                }
+                inventoryItem.quantity = Math.max(0, Math.round(inventoryItem.quantity));
             });
         });
     }
@@ -4624,13 +4624,11 @@ export class MarketService {
 
     /**
      * Records the current day's price for each commodity to its historical data log for graphing.
-     * Can be targeted to a specific market, or will default to the player's current location.
      * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
      * @private
      */
     _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
-
         const targetMarketId = marketId || this.gameState.currentLocationId;
 
         if (!this.gameState.market.priceHistory[targetMarketId]) {
@@ -4639,7 +4637,6 @@ export class MarketService {
 
         DB.COMMODITIES.forEach(good => {
             if (good.tier > this.gameState.player.revealedTier) return;
-
             if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
                 this.gameState.market.priceHistory[targetMarketId][good.id] = [];
             }
@@ -6976,7 +6973,7 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 --- START OF FILE: ./js/services/UIManager.js ---
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 
 // Import all screen rendering components
@@ -7061,7 +7058,6 @@ export class UIManager {
     render(gameState) {
         if (!gameState || !gameState.player) return;
         
-        // This guard prevents the main UI from rendering during the initial modal-only part of the intro.
         if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
             return;
         }
@@ -7094,14 +7090,12 @@ export class UIManager {
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
     
-        // Context Bar
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
                 <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
-        // Main Nav Tabs & Status Pod
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
@@ -7140,7 +7134,6 @@ export class UIManager {
     
         const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
     
-        // Sub Nav Bars
         const subNavsHtml = Object.keys(this.navStructure).map(navId => {
             const screens = this.navStructure[navId].screens;
             const isActive = navId === activeNav;
@@ -7179,8 +7172,6 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                // Before re-rendering the market, save the current state of its interactive elements.
-                // This prevents the player's input (quantity, buy/sell mode) from being reset after a transaction.
                 this._saveMarketTransactionState();
                 this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
                 this._restoreMarketTransactionState();
@@ -7204,8 +7195,6 @@ export class UIManager {
     }
 
     updateStickyBar(gameState) {
-        // This function is now deprecated as its content is part of the new renderNavigation.
-        // It's kept to avoid breaking the main render loop but does nothing.
         this.cache.stickyBar.innerHTML = ''; 
         this.cache.topBarContainer.classList.remove('has-sticky-bar');
     }
@@ -7238,13 +7227,6 @@ export class UIManager {
         }
     }
 
-    /**
-     * Updates the market screen by first saving the current state of all transaction modules,
-     * re-rendering the entire screen with fresh data from the gameState, and then restoring
-     * the saved state of the transaction modules. This prevents the UI from resetting player
-     * input (like quantity or trade mode) after a transaction completes.
-     * @param {object} gameState - The current state of the game.
-     */
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         this._saveMarketTransactionState();
@@ -7252,13 +7234,6 @@ export class UIManager {
         this._restoreMarketTransactionState();
     }
 
-    /**
-     * Saves the current UI state of all transaction modules on the market screen.
-     * It iterates through each commodity card, capturing the selected trade mode ('buy'/'sell')
-     * and the entered quantity. This state is stored in `this.marketTransactionState`
-     * to be restored after a re-render.
-     * @private
-     */
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
         const controls = document.querySelectorAll('.transaction-controls');
@@ -7267,7 +7242,6 @@ export class UIManager {
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
             
-            // Only save state if there's an input field (i.e., it's not a locked license button)
             if (qtyInput) {
                 this.marketTransactionState[goodId] = {
                     quantity: qtyInput.value,
@@ -7277,20 +7251,13 @@ export class UIManager {
         });
     }
 
-    /**
-     * Restores the saved UI state to all transaction modules on the market screen.
-     * After the market has been re-rendered, this function iterates through the saved states
-     * in `this.marketTransactionState` and applies the saved mode and quantity to each
-     * corresponding commodity card's transaction module, ensuring a persistent UI for the user.
-     * @private
-     */
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
             const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
-                if (qtyInput) { // Check if the input exists before setting its value
+                if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
                 }
@@ -7301,11 +7268,9 @@ export class UIManager {
     getItemPrice(gameState, goodId, isSelling = false) {
         let price = gameState.market.prices[gameState.currentLocationId][goodId];
         const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
-        // Apply a bonus if the location has a special demand for this item.
         if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
             price *= market.specialDemand[goodId].bonus;
         }
-        // Apply intel modifiers if active.
         const intel = gameState.intel.active;
         if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
             price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
@@ -7313,14 +7278,6 @@ export class UIManager {
         return Math.max(1, Math.round(price));
     }
     
-    /**
-     * Calculates the potential outcome of a sale for UI display, including diminishing returns.
-     * This is a UI-only function and does not mutate the game state.
-     * @param {string} goodId - The ID of the commodity.
-     * @param {number} quantity - The quantity being considered for sale.
-     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
-     * @private
-     */
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0 };
@@ -7330,18 +7287,18 @@ export class UIManager {
         const basePrice = this.getItemPrice(state, goodId, true);
         
         const threshold = marketStock * 0.1;
-        if (quantity <= threshold) {
+        if (quantity <= threshold || marketStock <= 0) {
             return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
         }
 
         const excessRatio = quantity / marketStock;
         let reduction = 0;
 
-        if (good.tier <= 2) { // Low-Tier
+        if (good.tier <= 2) {
             reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) { // Mid-Tier
+        } else if (good.tier <= 5) {
             reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else { // High-Tier
+        } else {
             reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
         }
         
@@ -7356,7 +7313,6 @@ export class UIManager {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         if (priceEl) {
             priceEl.dataset.basePrice = newPrice;
-            // We only need to update the text if it's in 'buy' mode, as 'sell' mode shows profit.
             const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
             if (controls && controls.dataset.mode === 'buy') {
                 priceEl.textContent = formatCredits(newPrice);
@@ -7367,24 +7323,62 @@ export class UIManager {
     updateMarketCardDisplay(goodId, quantity, mode) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
-        if (!priceEl || !effectivePriceEl) return;
+        const indicatorEl = document.getElementById(`indicators-${goodId}`);
+
+        if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
+
+        const state = this.lastKnownState;
+        const basePrice = parseInt(priceEl.dataset.basePrice, 10);
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
 
         if (mode === 'buy') {
-            priceEl.textContent = formatCredits(parseInt(priceEl.dataset.basePrice, 10));
-            priceEl.classList.remove('profit-text');
-            priceEl.classList.add('price-text');
+            priceEl.textContent = formatCredits(basePrice);
+            priceEl.className = 'font-roboto-mono font-bold price-text';
             effectivePriceEl.textContent = '';
+            
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: this.getItemPrice(state, goodId, true), // Base sell price for comparison
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
+
         } else { // 'sell' mode
+            const avgCost = playerItem?.avgCost || 0;
+            const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
+            
             if (quantity > 0) {
-                const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
-                priceEl.textContent = `+${formatCredits(totalPrice, false)}`;
+                const totalCost = avgCost * quantity;
+                let netProfit = totalPrice - totalCost;
+
+                if (netProfit > 0) {
+                    let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                    netProfit += netProfit * totalBonus;
+                }
+                
+                let profitText;
+                if (netProfit >= 0) {
+                    profitText = `+${formatCredits(netProfit, false)}`;
+                } else {
+                    profitText = `-${formatCredits(Math.abs(netProfit), false)}`;
+                }
+
+                priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'hl-red'}`;
+
             } else {
                 priceEl.textContent = '+0';
+                priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
-            priceEl.classList.remove('price-text');
-            priceEl.classList.add('profit-text');
+            
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true), // Use effective price, fallback to base
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
         }
     }
     
@@ -7690,10 +7684,9 @@ export class UIManager {
         const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
     
-        let topPos = rect.top - tooltipHeight - 10; // Position above the anchor
-        let leftPos = rect.left; // Align with the left edge of the anchor
+        let topPos = rect.top - tooltipHeight - 10;
+        let leftPos = rect.left;
     
-        // Ensure it doesn't go off-screen
         if (topPos < 10) {
             topPos = rect.bottom + 10;
         }
@@ -7723,8 +7716,8 @@ export class UIManager {
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = rect.right + 10; // Position to the right of the anchor
-        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2); // Center vertically
+        let leftPos = rect.right + 10;
+        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
 
         if (topPos < 10) {
             topPos = rect.bottom + 10;
@@ -7822,7 +7815,6 @@ export class UIManager {
             this.cache.tutorialToastNextBtn.style.display = 'none';
         }
 
-        // Per design, the tutorial skip button is permanently disabled for the player.
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
@@ -7835,7 +7827,6 @@ export class UIManager {
     }
     
     applyTutorialHighlight(step) {
-        // This function is intentionally left empty to disable the highlighting feature.
     }
 
     showSkipTutorialModal(onConfirm) {
@@ -8017,7 +8008,7 @@ export class UIManager {
                 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) { 
-                    const isAbandonable = mission.isAbandonable !== false; // Default to true if undefined
+                    const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else { 
                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
