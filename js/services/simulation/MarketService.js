@@ -95,84 +95,70 @@ export class MarketService {
     }
     
     /**
-     * Simulates the weekly replenishment of commodity stock using the Inter-Market Logistics Flow model.
+     * Simulates the weekly replenishment of commodity stock using a hybrid model.
+     * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
      */
     replenishMarketInventory() {
-        DB.COMMODITIES.forEach(c => {
-            if (c.tier > this.gameState.player.revealedTier) return;
+        DB.MARKETS.forEach(market => {
+            DB.COMMODITIES.forEach(c => {
+                if (c.tier > this.gameState.player.revealedTier) return;
 
-            const producers = [];
-            const consumers = [];
-            const neutrals = [];
-
-            DB.MARKETS.forEach(m => {
-                const modifier = m.availabilityModifier?.[c.id] ?? 1.0;
-                if (modifier >= 1.5) producers.push(m);
-                else if (modifier <= 0.5) consumers.push(m);
-                else neutrals.push(m);
-            });
-
-            let totalExport = 0;
-            producers.forEach(p => {
-                const inventoryItem = this.gameState.market.inventory[p.id][c.id];
-                const maxStock = c.canonicalAvailability[1] * (p.availabilityModifier?.[c.id] ?? 1.0);
-                const productionRate = 0.25; // Producers generate 25% of max stock per week
-                const exportRate = 0.30; // Producers ship out 30% of their current stock
-                
-                inventoryItem.quantity += Math.ceil(maxStock * productionRate);
-                const amountToExport = Math.floor(inventoryItem.quantity * exportRate);
-                inventoryItem.quantity -= amountToExport;
-                totalExport += amountToExport;
-                inventoryItem.quantity = Math.min(maxStock * 1.2, inventoryItem.quantity); // Cap at 120%
-            });
-
-            if (consumers.length > 0) {
-                const importShare = Math.floor(totalExport / consumers.length);
-                consumers.forEach(con => {
-                    const inventoryItem = this.gameState.market.inventory[con.id][c.id];
-                    const maxStock = c.canonicalAvailability[1] * (con.availabilityModifier?.[c.id] ?? 1.0);
-                    
-                    const consumptionRate = 0.15; // Consumers use 15% of their stock per week
-                    inventoryItem.quantity -= Math.floor(inventoryItem.quantity * consumptionRate);
-
-                    inventoryItem.quantity += importShare;
-                    inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity); // Consumers cap at 100%
-                });
-            }
-
-            neutrals.forEach(n => {
-                const inventoryItem = this.gameState.market.inventory[n.id][c.id];
-                const maxStock = c.canonicalAvailability[1] * (n.availabilityModifier?.[c.id] ?? 1.0);
-                const replenishRate = 0.06;
-                if (inventoryItem.quantity < maxStock) {
-                    inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity + Math.ceil(maxStock * replenishRate));
-                }
-            });
-
-            // Apply Market Adaptation and System State modifiers globally after logistics
-            DB.MARKETS.forEach(market => {
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
-                
-                // Market Adaptation due to player pressure
-                if (inventoryItem.marketPressure > 0.5 && inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                     const maxStock = c.canonicalAvailability[1] * (market.availabilityModifier?.[c.id] ?? 1.0);
-                     inventoryItem.quantity = Math.min(inventoryItem.quantity, maxStock * 0.5); // Reduce effective max stock
+
+                // Market Memory: Reset if untouched for 60 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 60) {
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                    inventoryItem.lastPlayerInteractionTimestamp = 0;
+                    inventoryItem.marketPressure = 0;
+                } else {
+                    // Phase 1: Establish Dynamic Target Stock
+                    const [minAvail, maxAvail] = c.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
+                    
+                    // Market adaptation: high player selling pressure reduces the target stock.
+                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Pressure reduces target, capped at 50%
+                    const targetStock = baseMeanStock * marketAdaptationFactor;
+
+                    // Phase 2: Gradual Replenishment Towards Target
+                    const difference = targetStock - inventoryItem.quantity;
+                    const replenishAmount = difference * 0.15; // Move 15% towards the target each week
+                    inventoryItem.quantity += replenishAmount;
                 }
+
+                // Phase 3: Apply Final Visual Fluctuation
+                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
+                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
+                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
+                inventoryItem.quantity *= finalFluctuation;
                 
-                // System State modifiers
+                // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
-                    inventoryItem.quantity = Math.floor(inventoryItem.quantity * this._currentSystemState.modifiers.commodity[c.id].availability);
+                    inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
+                
+                inventoryItem.quantity = Math.max(0, Math.round(inventoryItem.quantity));
             });
         });
     }
 
+    /**
+     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
+     * @param {object} market - The market object from the database.
+     * @param {object} commodity - The commodity object from the database.
+     * @returns {number} The calculated baseline stock quantity.
+     * @private
+     */
     _calculateBaselineStock(market, commodity) {
         const [min, max] = commodity.canonicalAvailability;
         const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
         return Math.floor(skewedRandom(min, max) * modifier);
     }
 
+    /**
+     * Records the current day's price for each commodity to its historical data log for graphing.
+     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
+     * @private
+     */
     _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
         const targetMarketId = marketId || this.gameState.currentLocationId;
