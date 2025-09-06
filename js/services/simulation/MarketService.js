@@ -131,6 +131,11 @@ export class MarketService {
                 consumers.forEach(con => {
                     const inventoryItem = this.gameState.market.inventory[con.id][c.id];
                     const maxStock = c.canonicalAvailability[1] * (con.availabilityModifier?.[c.id] ?? 1.0);
+                    
+                    // ADDED: Consumption logic for consumer markets
+                    const consumptionRate = 0.15; // Consumers use 15% of their stock per week
+                    inventoryItem.quantity -= Math.floor(inventoryItem.quantity * consumptionRate);
+
                     inventoryItem.quantity += importShare;
                     inventoryItem.quantity = Math.min(maxStock, inventoryItem.quantity); // Consumers cap at 100%
                 });
