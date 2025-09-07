@@ -15,14 +15,41 @@ import { formatCredits } from '../../utils.js';
 export function renderCargoScreen(gameState) {
     const inventory = gameState.player.inventories[gameState.player.activeShipId];
     const ownedGoods = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
+
+    // Maps the commodity's style class to its color scheme and background gradient.
+    const styleMap = {
+        'item-style-1':  { hex: '#60a5fa', rgb: '96, 165, 250', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
+        'item-style-2':  { hex: '#a3a3a3', rgb: '163, 163, 163', gradient: 'linear-gradient(45deg, #737373, #262626)' },
+        'item-style-3':  { hex: '#22c55e', rgb: '34, 197, 94', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
+        'item-style-4':  { hex: '#e5e5e5', rgb: '229, 229, 229', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+        'item-style-5':  { hex: '#c084fc', rgb: '192, 132, 252', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
+        'item-style-6':  { hex: '#93c5fd', rgb: '147, 197, 253', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
+        'item-style-7':  { hex: '#84cc16', rgb: '132, 204, 22', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+        'item-style-8':  { hex: '#67e8f9', rgb: '103, 232, 249', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
+        'item-style-9':  { hex: '#fcd34d', rgb: '252, 211, 77', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+        'item-style-10': { hex: '#fb7185', rgb: '251, 113, 133', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
+        'item-style-11': { hex: '#a78bfa', rgb: '167, 139, 250', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
+        'item-style-12': { hex: '#f87171', rgb: '248, 113, 113', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
+        'item-style-13': { hex: '#d8b4fe', rgb: '216, 180, 254', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
+        'item-style-14': { hex: '#f472b6', rgb: '244, 114, 182', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
+    };
     
     let content;
     if (ownedGoods.length > 0) {
         content = `<div class="flex justify-center flex-wrap gap-4">
             ${ownedGoods.map(([goodId, item]) => {
                 const good = DB.COMMODITIES.find(c => c.id === goodId);
+                const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
                 const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
-                return `<div class="p-2 rounded-lg border-2 ${good.styleClass} cargo-item-tooltip" style="filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.4));" data-tooltip="${tooltipText}"><div class="font-semibold text-sm commodity-name text-outline">${good.name}</div><div class="text-lg text-center text-cyan-300 text-outline">(${item.quantity})</div></div>`;
+                
+                return `
+                    <div 
+                        class="cargo-item-card cargo-item-tooltip" 
+                        style="--commodity-color: ${styles.hex}; --commodity-color-rgb: ${styles.rgb}; background: ${styles.gradient};" 
+                        data-tooltip="${tooltipText}">
+                        <div class="commodity-name">${good.name}</div>
+                        <div class="quantity">(${item.quantity})</div>
+                    </div>`;
             }).join('')}
         </div>`;
     } else {
@@ -30,8 +57,7 @@ export function renderCargoScreen(gameState) {
     }
 
     return `
-        <div class="mt-8 pt-6">
-            <h3 class="text-2xl font-orbitron text-center mb-4">Active Ship Cargo Manifest</h3>
+        <div class="mt-4">
             ${content}
         </div>`;
 }
