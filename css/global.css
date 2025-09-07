@@ -287,43 +287,67 @@ body {
     animation: float-up 2.5s forwards ease-out;
 }
 
-/* --- [[START]] NEW CARGO ITEM STYLES --- */
+/* --- [[START]] CARGO ITEM STYLES --- */
 .cargo-item-card {
-    --commodity-color: #a8a29e; /* Default to a neutral gray */
-    width: 148px;
-    height: 88px;
-    border: 1px solid var(--commodity-color);
-    box-shadow: 0 0 8px rgba(var(--commodity-color-rgb, 168, 162, 158), 0.5);
+    width: 118px;
+    height: 118px;
     border-radius: 8px;
-    color: #f1f5f9;
+    display: flex;
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.base-concept {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    color: #fff;
+    padding: 0;
+}
+.pt-header { 
+    display: flex; 
+    justify-content: space-between; 
+    width: 100%; 
+    padding: 4px 6px; 
+    background: rgba(0,0,0,0.3);
     align-items: center;
-    justify-content: flex-start;
-    text-align: center;
-    padding: 0.5rem;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
-.cargo-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 12px rgba(var(--commodity-color-rgb, 168, 162, 158), 0.7);
+.pt-number, .pt-category { 
+    font-family: 'Share Tech Mono', monospace; 
+    font-size: 0.65rem;
+    white-space: nowrap;
 }
-.cargo-item-card .commodity-name {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    line-height: 1.1;
-    color: var(--text-color);
+.pt-symbol { 
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    text-align: center; 
+    line-height: 1; 
+    flex-grow: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 2.8rem;
+    color: rgb(20, 20, 20);
+    text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+    text-transform: uppercase;
 }
-.cargo-item-card .quantity {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--commodity-color);
-    text-shadow: 0 0 4px rgba(var(--commodity-color-rgb, 168, 162, 158), 0.6);
-    margin-top: auto;
+.pt-name { 
+    font-family: 'Share Tech Mono', monospace; 
+    font-size: 0.7rem; 
+    text-align: center; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    padding: 4px 6px;
+    flex-shrink: 0;
 }
-/* --- [[END]] NEW CARGO ITEM STYLES --- */
+/* --- [[END]] CARGO ITEM STYLES --- */
 
 
 @media (max-width: 768px) {

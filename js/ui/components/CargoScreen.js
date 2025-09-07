@@ -33,34 +33,35 @@ export function renderCargoScreen(gameState) {
         'item-style-13': { hex: '#d8b4fe', rgb: '216, 180, 254', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
         'item-style-14': { hex: '#f472b6', rgb: '244, 114, 182', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
     };
-    
+
+    const renderColumn = (items) => items.map(([goodId, item]) => {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+        const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
+
+        // Determine the category from the commodity data, defaulting to 'N/A'
+        const category = good.cat || 'N/A';
+
+        return `
+            <div 
+                class="cargo-item-card cargo-item-tooltip" 
+                style="background: ${styles.gradient}; border-color: ${styles.hex};" 
+                data-tooltip="${tooltipText}">
+                <div class="base-concept">
+                    <div class="pt-header">
+                        <div class="pt-number">TIER ${good.tier}</div>
+                        <div class="pt-category">${category}</div>
+                    </div>
+                    <div class="pt-symbol">${good.symbol.toUpperCase()}</div>
+                    <div class="pt-name">${good.name}</div>
+                </div>
+            </div>`;
+    }).join('');
+
     let content;
     if (ownedGoods.length > 0) {
-        const leftColItems = [];
-        const rightColItems = [];
-
-        ownedGoods.forEach(([goodId, item], index) => {
-            if (index % 2 === 0) {
-                leftColItems.push([goodId, item]);
-            } else {
-                rightColItems.push([goodId, item]);
-            }
-        });
-
-        const renderColumn = (items) => items.map(([goodId, item]) => {
-            const good = DB.COMMODITIES.find(c => c.id === goodId);
-            const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
-            const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
-            
-            return `
-                <div 
-                    class="cargo-item-card cargo-item-tooltip" 
-                    style="--commodity-color: ${styles.hex}; --commodity-color-rgb: ${styles.rgb}; background: ${styles.gradient};" 
-                    data-tooltip="${tooltipText}">
-                    <div class="commodity-name">${good.name}</div>
-                    <div class="quantity">(${item.quantity})</div>
-                </div>`;
-        }).join('');
+        const leftColItems = ownedGoods.filter((_, index) => index % 2 === 0);
+        const rightColItems = ownedGoods.filter((_, index) => index % 2 !== 0);
 
         content = `
         <div class="flex flex-row justify-center gap-8">
