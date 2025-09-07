@@ -4,6 +4,7 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
+import { LOCATION_IDS } from '../data/constants.js';
 
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.
@@ -41,6 +42,21 @@ class AutomatedPlayer {
         console.log(`%cAUTOTRADER-01: Starting simulation for ${daysToRun} days.`, 'color: cyan; font-weight: bold;');
 
         while (this.gameState.day < endDay && !this.stopRequested) {
+            const activeShip = this.simulationService._getActiveShip();
+            if (activeShip) {
+                const fuelPct = (activeShip.fuel / activeShip.maxFuel) * 100;
+                const healthPct = (activeShip.health / activeShip.maxHealth) * 100;
+
+                if (fuelPct < 30) {
+                    console.log(`%cAUTOTRADER-01: Low fuel (${fuelPct.toFixed(1)}%). Refueling at ${this.gameState.currentLocationId}.`, 'color: yellow;');
+                    this.simulationService.botRefuel();
+                }
+                if (healthPct < 30) {
+                    console.log(`%cAUTOTRADER-01: Low hull integrity (${healthPct.toFixed(1)}%). Repairing at ${this.gameState.currentLocationId}.`, 'color: orange;');
+                    this.simulationService.botRepair();
+                }
+            }
+
             const bestTrade = this._findBestTradeRoute();
 
             if (bestTrade) {
@@ -196,10 +212,10 @@ export class DebugService {
     _registerDebugActions() {
         this.actions = {
             // --- Game Flow Actions ---
-            skipIntro: {
-                name: 'Skip Intro & Setup',
+            godMode: {
+                name: 'God Mode',
                 type: 'button',
-                handler: () => this.simulationService.debugMarketSkip()
+                handler: () => this.simulationService.debugGodMode()
             },
             // --- Player Actions ---
             addCredits: {
@@ -231,11 +247,8 @@ export class DebugService {
                 type: 'button',
                 handler: () => {
                     this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
-                    Object.values(DB.LICENSES).forEach(l => {
-                        if (!this.gameState.player.unlockedLicenseIds.includes(l.id)) {
-                            this.gameState.player.unlockedLicenseIds.push(l.id);
-                        }
-                    });
+                    this.gameState.player.revealedTier = 7;
+                    this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
                     this.gameState.setState({});
                 }
             },
@@ -330,7 +343,7 @@ export class DebugService {
     buildGui() {
         // --- Game Flow Folder ---
         const flowFolder = this.gui.addFolder('Game Flow');
-        flowFolder.add(this.actions.skipIntro, 'handler').name(this.actions.skipIntro.name);
+        flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
 
         // --- Player Folder ---
         const playerFolder = this.gui.addFolder('Player');

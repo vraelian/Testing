@@ -1240,6 +1240,45 @@ export class SimulationService {
         }
     }
 
+    // --- Bot-specific Helper Methods ---
+
+    /**
+     * Instantly refuels the active ship and deducts the cost. For bot use only.
+     */
+    botRefuel() {
+        const ship = this._getActiveShip();
+        if (!ship) return;
+        const fuelNeeded = ship.maxFuel - ship.fuel;
+        if (fuelNeeded <= 0) return;
+
+        const currentMarket = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        let fuelPrice = currentMarket.fuelPrice / 2;
+        const totalCost = (fuelNeeded / 5) * fuelPrice;
+
+        if (this.gameState.player.credits >= totalCost) {
+            this.gameState.player.credits -= totalCost;
+            this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
+        }
+    }
+    
+    /**
+     * Instantly repairs the active ship's hull and deducts the cost. For bot use only.
+     */
+    botRepair() {
+        const ship = this._getActiveShip();
+        if (!ship) return;
+        const healthNeeded = ship.maxHealth - ship.health;
+        if (healthNeeded <= 0) return;
+
+        const totalCost = healthNeeded * GAME_RULES.REPAIR_COST_PER_HP;
+
+        if (this.gameState.player.credits >= totalCost) {
+            this.gameState.player.credits -= totalCost;
+            this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
+        }
+    }
+
+
     // --- Debugging and Development Tools ---
 
     /**
@@ -1257,9 +1296,9 @@ export class SimulationService {
     }
 
     /**
-     * Debug function to skip the intro and set up a standard play state.
+     * Debug function to achieve a "God Mode" state for testing.
      */
-    debugMarketSkip() {
+    debugGodMode() {
         this.gameState.introSequenceActive = false;
         this.tutorialService.activeBatchId = null;
         this.tutorialService.activeStepId = null;
@@ -1267,14 +1306,18 @@ export class SimulationService {
         this.gameState.tutorials.activeStepId = null; 
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
         
-        this.gameState.player.credits = 45000;
+        this.gameState.player.credits = 1000000000000;
         this.gameState.player.ownedShipIds = [];
-        this.addShipToHangar(SHIP_IDS.WANDERER);
-        this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        this.addShipToHangar(SHIP_IDS.BEHEMOTH);
+        this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
+        
+        this.gameState.player.revealedTier = 7;
+        this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
 
         document.getElementById('game-container').classList.remove('hidden');
         this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+        this._advanceDays(7);
         this.gameState.setState({});
     }
     
