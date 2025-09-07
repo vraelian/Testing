@@ -560,7 +560,7 @@
         }
       ],
       "returns": {
-         "type": "object"
+        "type": "object"
       },
       "mutates_state": [],
       "calls": []
@@ -1444,7 +1444,7 @@
       },
       "mutates_state": [],
       "calls": [
-         "UIManager.renderNavigation",
+        "UIManager.renderNavigation",
         "UIManager.renderActiveScreen",
         "UIManager.updateStickyBar"
       ]
@@ -1735,6 +1735,8 @@
       "asset_id": "F029",
       "description": "Initializes the DebugService.",
       "params": [
+        { "name": "gameState", "type": "object" },
+        { "name": "simulationService", "type": "object" },
         { "name": "uiManager", "type": "object" }
       ],
       "returns": { "type": "void" },
@@ -1743,11 +1745,11 @@
     },
     "DebugService.init": {
       "asset_id": "F029",
-      "description": "Initializes the lil-gui debug panel, creating all folders, controllers, and listeners to manipulate CSS variables in real-time.",
+      "description": "Initializes the lil-gui debug panel, creating all folders and controllers.",
       "params": [],
       "returns": { "type": "void" },
       "mutates_state": [],
-      "calls": ["DebugService.updateCssVariable", "DebugService.updateTextShadows", "DebugService.exportCssDeltas"]
+      "calls": ["DebugService._registerDebugActions", "DebugService.buildGui"]
     },
     "DebugService.toggleVisibility": {
       "asset_id": "F029",
@@ -1756,14 +1758,6 @@
       "returns": { "type": "void" },
       "mutates_state": [],
       "calls": []
-    },
-    "DebugService.exportCssDeltas": {
-      "asset_id": "F029",
-      "description": "Compares the current visual state against the defaults and logs a CSS :root block of only the changed variables to the console.",
-      "params": [],
-      "returns": { "type": "void" },
-      "mutates_state": [],
-      "calls": ["DebugService.getCssVarForKey", "DebugService.getCssValueForKey"]
     },
     "UIManager._calculateSaleDetails": {
         "asset_id": "F017",
@@ -1776,7 +1770,8 @@
             "type": "object",
             "properties": {
                 "totalPrice": "number",
-                "effectivePricePerUnit": "number"
+                "effectivePricePerUnit": "number",
+                "netProfit": "number"
             }
         },
         "mutates_state": [],
@@ -1792,7 +1787,35 @@
         ],
         "returns": { "type": "void" },
         "mutates_state": [],
-        "calls": ["UIManager._calculateSaleDetails", "utils.formatCredits"]
+        "calls": ["UIManager._calculateSaleDetails", "utils.formatCredits", "utils.renderIndicatorPills"]
+    },
+    "UIManager.renderStickyBar": {
+        "asset_id": "F017",
+        "description": "Renders the sticky bar at the bottom of the screen, which displays the current mission objective.",
+        "params": [
+            { "name": "gameState", "type": "state_schema" }
+        ],
+        "returns": { "type": "void" },
+        "mutates_state": [],
+        "calls": []
+    },
+    "UIManager.showMissionModal": {
+        "asset_id": "F017",
+        "description": "Displays a modal with the details of a mission, or the completion screen if the mission is ready to be turned in.",
+        "params": [
+            { "name": "missionId", "type": "string" }
+        ],
+        "returns": { "type": "void" },
+        "mutates_state": [],
+        "calls": ["UIManager._showMissionDetailsModal", "UIManager._showMissionCompletionModal"]
+    },
+    "UIManager.flashObjectiveProgress": {
+        "asset_id": "F017",
+        "description": "Flashes the mission objective progress text in the sticky bar to indicate an update.",
+        "params": [],
+        "returns": { "type": "void" },
+        "mutates_state": [],
+        "calls": []
     }
   }
 }
