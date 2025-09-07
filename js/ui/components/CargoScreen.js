@@ -36,7 +36,7 @@ export function renderCargoScreen(gameState) {
     
     let content;
     if (ownedGoods.length > 0) {
-        content = `<div class="flex justify-center flex-wrap gap-4">
+        content = `<div class="grid grid-cols-2 gap-4 max-w-xs mx-auto">
             ${ownedGoods.map(([goodId, item]) => {
                 const good = DB.COMMODITIES.find(c => c.id === goodId);
                 const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
