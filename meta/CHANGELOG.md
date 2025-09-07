@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [24.30] - 2025-09-7
+- cargo visual overhaul
+
 ## [24.20] - 2025-09-6
 - economy v4 update
 - commodity card update

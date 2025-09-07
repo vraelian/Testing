@@ -39,9 +39,6 @@ export function renderCargoScreen(gameState) {
         const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
         const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
 
-        // Determine the category from the commodity data, defaulting to 'N/A'
-        const category = good.cat || 'N/A';
-
         return `
             <div 
                 class="cargo-item-card cargo-item-tooltip" 
@@ -50,9 +47,12 @@ export function renderCargoScreen(gameState) {
                 <div class="base-concept">
                     <div class="pt-header">
                         <div class="pt-number">TIER ${good.tier}</div>
-                        <div class="pt-category">${category}</div>
+                        <div class="pt-category">${good.cat}</div>
                     </div>
-                    <div class="pt-symbol">${good.symbol.toUpperCase()}</div>
+                    <div class="pt-symbol-wrapper">
+                        <div class="pt-symbol">${good.symbol.toUpperCase()}</div>
+                        <div class="pt-quantity" style="color: ${styles.hex};">(${item.quantity})</div>
+                    </div>
                     <div class="pt-name">${good.name}</div>
                 </div>
             </div>`;
