@@ -290,8 +290,8 @@ body {
 /* --- [[START]] NEW CARGO ITEM STYLES --- */
 .cargo-item-card {
     --commodity-color: #a8a29e; /* Default to a neutral gray */
-    width: 91px;
-    height: 91px;
+    width: 148px;
+    height: 88px;
     border: 1px solid var(--commodity-color);
     box-shadow: 0 0 8px rgba(var(--commodity-color-rgb, 168, 162, 158), 0.5);
     border-radius: 8px;

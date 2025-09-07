@@ -36,22 +36,38 @@ export function renderCargoScreen(gameState) {
     
     let content;
     if (ownedGoods.length > 0) {
-        content = `<div class="grid grid-cols-2 gap-4 max-w-xs mx-auto">
-            ${ownedGoods.map(([goodId, item]) => {
-                const good = DB.COMMODITIES.find(c => c.id === goodId);
-                const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
-                const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
-                
-                return `
-                    <div 
-                        class="cargo-item-card cargo-item-tooltip" 
-                        style="--commodity-color: ${styles.hex}; --commodity-color-rgb: ${styles.rgb}; background: ${styles.gradient};" 
-                        data-tooltip="${tooltipText}">
-                        <div class="commodity-name">${good.name}</div>
-                        <div class="quantity">(${item.quantity})</div>
-                    </div>`;
-            }).join('')}
+        const leftColItems = [];
+        const rightColItems = [];
+
+        ownedGoods.forEach(([goodId, item], index) => {
+            if (index % 2 === 0) {
+                leftColItems.push([goodId, item]);
+            } else {
+                rightColItems.push([goodId, item]);
+            }
+        });
+
+        const renderColumn = (items) => items.map(([goodId, item]) => {
+            const good = DB.COMMODITIES.find(c => c.id === goodId);
+            const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+            const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
+            
+            return `
+                <div 
+                    class="cargo-item-card cargo-item-tooltip" 
+                    style="--commodity-color: ${styles.hex}; --commodity-color-rgb: ${styles.rgb}; background: ${styles.gradient};" 
+                    data-tooltip="${tooltipText}">
+                    <div class="commodity-name">${good.name}</div>
+                    <div class="quantity">(${item.quantity})</div>
+                </div>`;
+        }).join('');
+
+        content = `
+        <div class="flex flex-row justify-center gap-8">
+            <div class="flex flex-col gap-4">${renderColumn(leftColItems)}</div>
+            <div class="flex flex-col gap-4">${renderColumn(rightColItems)}</div>
         </div>`;
+
     } else {
         content = '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
     }
