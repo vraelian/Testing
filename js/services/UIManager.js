@@ -313,8 +313,13 @@ export class UIManager {
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         const basePrice = this.getItemPrice(state, goodId, true);
         
+        // Guard against division by zero if market stock is depleted.
+        if (marketStock <= 0) {
+            return { totalPrice: 0, effectivePricePerUnit: 0 };
+        }
+
         const threshold = marketStock * 0.1;
-        if (quantity <= threshold || marketStock <= 0) {
+        if (quantity <= threshold) {
             return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
         }
 
@@ -365,13 +370,28 @@ export class UIManager {
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: this.getItemPrice(state, goodId, true), // Base sell price for comparison
+                sellPrice: this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
 
         } else { // 'sell' mode
             const avgCost = playerItem?.avgCost || 0;
+            const hasItem = playerItem && playerItem.quantity > 0;
+
+            if (!hasItem) {
+                priceEl.textContent = '+0';
+                priceEl.className = 'font-roboto-mono font-bold profit-text';
+                effectivePriceEl.textContent = '';
+                indicatorEl.innerHTML = renderIndicatorPills({
+                    price: basePrice,
+                    sellPrice: 0,
+                    galacticAvg: state.market.galacticAverages[goodId],
+                    playerItem: null
+                });
+                return;
+            }
+
             const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
             
             if (quantity > 0) {
@@ -392,7 +412,15 @@ export class UIManager {
 
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
-                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'hl-red'}`;
+                
+                priceEl.classList.add('font-roboto-mono', 'font-bold', 'price-text');
+                if (netProfit >= 0) {
+                    priceEl.classList.add('profit-text');
+                    priceEl.classList.remove('hl-red');
+                } else {
+                    priceEl.classList.add('hl-red');
+                    priceEl.classList.remove('profit-text');
+                }
 
             } else {
                 priceEl.textContent = '+0';
@@ -402,7 +430,7 @@ export class UIManager {
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true), // Use effective price, fallback to base
+                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
