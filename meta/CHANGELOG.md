@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [24.20] - 2025-09-6
+- economy v4 update
+- commodity card update
+
 ## [24.00] - 2025-09-3
 - economy v3 update
 - progression update

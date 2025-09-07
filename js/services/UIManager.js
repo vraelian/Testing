@@ -377,12 +377,17 @@ export class UIManager {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
         const indicatorEl = document.getElementById(`indicators-${goodId}`);
+        const avgCostEl = document.getElementById(`avg-cost-${goodId}`);
     
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
     
         const state = this.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+    
+        if (avgCostEl) {
+            avgCostEl.classList.toggle('visible', mode === 'sell');
+        }
     
         if (mode === 'buy') {
             priceEl.textContent = formatCredits(basePrice);

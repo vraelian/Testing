@@ -53,7 +53,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
     // Use the new centralized utility function to render indicators for the initial view.
     const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
 
     let transactionControlsHtml;
     if (hasLicense) {

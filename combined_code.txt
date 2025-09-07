@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 24.00</title>
+    <title>Orbital Trading 24.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 24.00</p>
+            <p>Version 24.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1244,7 +1244,7 @@ body {
     --market-card-price-font-size: 1.9rem;
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #001fb8, 0.78px 0.78px 0 #001fb8, 0.00px 1.10px 0 #001fb8, -0.78px 0.78px 0 #001fb8, -1.10px 0.00px 0 #001fb8, -0.78px -0.78px 0 #001fb8, 0.00px -1.10px 0 #001fb8, 0.78px -0.78px 0 #001fb8, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000, 0px 0px 20px #28d5d7;
 
     /* Effective Price Text */
     --market-card-effective-price-top: 105px;
@@ -1344,13 +1344,23 @@ body {
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
     color: #4ade80; /* bright green */
-    text-shadow: var(--market-card-price-text-shadow);
+    text-shadow: 0 0 20px #16a34a, 0 0 10px #22c55e, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
+}
+
+.loss-text {
+    position: absolute;
+    top: var(--market-card-price-top);
+    left: var(--market-card-price-left);
+    font-size: var(--market-card-price-font-size);
+    font-family: var(--market-card-price-font-family);
+    color: #f87171; /* bright red */
+    text-shadow: 0 0 20px #b91c1c, 0 0 10px #ef4444, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
 .effective-price-display {
     position: absolute;
     top: var(--market-card-effective-price-top);
-    left: var(--market-card-effective-price-left);
+    left: var(--market-card-price-left);
     font-size: var(--market-card-effective-price-font-size);
     color: var(--market-card-effective-price-color);
     font-family: 'Roboto Mono', monospace;
@@ -1369,6 +1379,22 @@ body {
 .avail-text [id^="p-inv-"] {
     color: var(--market-card-pinv-own-color);
     font-size: var(--market-card-pinv-own-font-size);
+}
+
+.avg-cost-display {
+    position: absolute;
+    bottom: 8px;
+    right: 16px; /* Positioned to the bottom right */
+    font-size: 0.7rem;
+    color: #e8e8e8;
+    font-family: 'Roboto Mono', monospace;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    display: none; /* Hidden by default */
+    text-align: right;
+}
+
+.avg-cost-display.visible {
+    display: block; /* Show when in sell mode */
 }
 
 
@@ -2515,12 +2541,13 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
     const marketHtml = availableCommodities.map(good => {
-        return _getMarketItemHtml(good, gameState, getItemPrice);
+        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
@@ -2531,10 +2558,11 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice) {
  * @param {object} good - The commodity data from the database.
  * @param {object} gameState - The current game state.
  * @param {function} getItemPrice - A function to calculate the item's current price.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
  * @returns {string} The HTML string for the commodity card.
  * @private
  */
-function _getMarketItemHtml(good, gameState, getItemPrice) {
+function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
@@ -2553,11 +2581,15 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     // Use the new centralized utility function to render indicators for the initial view.
     const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-    
+    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+
     let transactionControlsHtml;
     if (hasLicense) {
+        // Correctly set initial mode based on saved state, otherwise default to 'buy'
+        const initialMode = marketTransactionState[good.id]?.mode || 'buy';
+
         transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
@@ -2590,6 +2622,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
             
             <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+
+            ${avgCostHtml}
 
             ${transactionControlsHtml}
         </div>
@@ -7260,6 +7294,8 @@ export class UIManager {
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
+                    // After restoring state, immediately update the display to reflect it.
+                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
                 }
             }
         }
@@ -7280,20 +7316,34 @@ export class UIManager {
     
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
-        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0 };
-
+        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+    
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         const basePrice = this.getItemPrice(state, goodId, true);
-        
-        const threshold = marketStock * 0.1;
-        if (quantity <= threshold || marketStock <= 0) {
-            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+        const avgCost = playerItem?.avgCost || 0;
+    
+        // Guard against division by zero if market stock is depleted.
+        if (marketStock <= 0) {
+            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
         }
-
+    
+        const threshold = marketStock * 0.1;
+        if (quantity <= threshold) {
+            const totalPrice = basePrice * quantity;
+            const totalCost = avgCost * quantity;
+            let netProfit = totalPrice - totalCost;
+            if (netProfit > 0) {
+                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                netProfit += netProfit * totalBonus;
+            }
+            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
+        }
+    
         const excessRatio = quantity / marketStock;
         let reduction = 0;
-
+    
         if (good.tier <= 2) {
             reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
         } else if (good.tier <= 5) {
@@ -7301,13 +7351,23 @@ export class UIManager {
         } else {
             reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
         }
-        
+    
         const effectivePrice = basePrice * (1 - reduction);
+        const totalPrice = Math.floor(effectivePrice * quantity);
+        const totalCost = avgCost * quantity;
+        let netProfit = totalPrice - totalCost;
+        if (netProfit > 0) {
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            netProfit += netProfit * totalBonus;
+        }
+    
         return {
-            totalPrice: Math.floor(effectivePrice * quantity),
-            effectivePricePerUnit: effectivePrice
+            totalPrice,
+            effectivePricePerUnit: effectivePrice,
+            netProfit
         };
     }
+    
     
     updateMarketCardPrice(goodId, newPrice) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
@@ -7324,13 +7384,18 @@ export class UIManager {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
         const indicatorEl = document.getElementById(`indicators-${goodId}`);
-
+        const avgCostEl = document.getElementById(`avg-cost-${goodId}`);
+    
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
-
+    
         const state = this.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-
+    
+        if (avgCostEl) {
+            avgCostEl.classList.toggle('visible', mode === 'sell');
+        }
+    
         if (mode === 'buy') {
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
@@ -7338,44 +7403,28 @@ export class UIManager {
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: this.getItemPrice(state, goodId, true), // Base sell price for comparison
+                sellPrice: this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
-
+    
         } else { // 'sell' mode
-            const avgCost = playerItem?.avgCost || 0;
-            const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
+            const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
             
             if (quantity > 0) {
-                const totalCost = avgCost * quantity;
-                let netProfit = totalPrice - totalCost;
-
-                if (netProfit > 0) {
-                    let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-                    netProfit += netProfit * totalBonus;
-                }
-                
-                let profitText;
-                if (netProfit >= 0) {
-                    profitText = `+${formatCredits(netProfit, false)}`;
-                } else {
-                    profitText = `-${formatCredits(Math.abs(netProfit), false)}`;
-                }
-
+                let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
-                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'hl-red'}`;
-
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
-                priceEl.textContent = '+0';
+                priceEl.textContent = '⌬ +0';
                 priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true), // Use effective price, fallback to base
+                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -8064,6 +8113,10 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [24.20] - 2025-09-6
+- economy v4 update
+- commodity card update
 
 ## [24.00] - 2025-09-3
 - economy v3 update

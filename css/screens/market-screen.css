@@ -181,11 +181,17 @@
 .avg-cost-display {
     position: absolute;
     bottom: 8px;
-    right: 145px; /* Positioned to the left of the transaction module */
+    right: 16px; /* Positioned to the bottom right */
     font-size: 0.7rem;
     color: #e8e8e8;
     font-family: 'Roboto Mono', monospace;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    display: none; /* Hidden by default */
+    text-align: right;
+}
+
+.avg-cost-display.visible {
+    display: block; /* Show when in sell mode */
 }
 
 
