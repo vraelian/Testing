@@ -41,7 +41,7 @@
     --market-card-price-font-size: 1.9rem;
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
-    --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #001fb8, 0.78px 0.78px 0 #001fb8, 0.00px 1.10px 0 #001fb8, -0.78px 0.78px 0 #001fb8, -1.10px 0.00px 0 #001fb8, -0.78px -0.78px 0 #001fb8, 0.00px -1.10px 0 #001fb8, 0.78px -0.78px 0 #001fb8, 0px 0px 20px #28d5d7;
+    --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000, 0px 0px 20px #28d5d7;
 
     /* Effective Price Text */
     --market-card-effective-price-top: 105px;
@@ -141,13 +141,23 @@
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
     color: #4ade80; /* bright green */
-    text-shadow: var(--market-card-price-text-shadow);
+    text-shadow: 0 0 20px #16a34a, 0 0 10px #22c55e, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
+}
+
+.loss-text {
+    position: absolute;
+    top: var(--market-card-price-top);
+    left: var(--market-card-price-left);
+    font-size: var(--market-card-price-font-size);
+    font-family: var(--market-card-price-font-family);
+    color: #f87171; /* bright red */
+    text-shadow: 0 0 20px #b91c1c, 0 0 10px #ef4444, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
 .effective-price-display {
     position: absolute;
     top: var(--market-card-effective-price-top);
-    left: var(--market-card-effective-price-left);
+    left: var(--market-card-price-left);
     font-size: var(--market-card-effective-price-font-size);
     color: var(--market-card-effective-price-color);
     font-family: 'Roboto Mono', monospace;
@@ -166,6 +176,16 @@
 .avail-text [id^="p-inv-"] {
     color: var(--market-card-pinv-own-color);
     font-size: var(--market-card-pinv-own-font-size);
+}
+
+.avg-cost-display {
+    position: absolute;
+    bottom: 8px;
+    right: 145px; /* Positioned to the left of the transaction module */
+    font-size: 0.7rem;
+    color: #e8e8e8;
+    font-family: 'Roboto Mono', monospace;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 

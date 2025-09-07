@@ -13,12 +13,13 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {object} gameState - The current state of the game.
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
     const marketHtml = availableCommodities.map(good => {
-        return _getMarketItemHtml(good, gameState, getItemPrice);
+        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
     return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
@@ -29,10 +30,11 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice) {
  * @param {object} good - The commodity data from the database.
  * @param {object} gameState - The current game state.
  * @param {function} getItemPrice - A function to calculate the item's current price.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
  * @returns {string} The HTML string for the commodity card.
  * @private
  */
-function _getMarketItemHtml(good, gameState, getItemPrice) {
+function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
     const { player, market, currentLocationId, tutorials } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
@@ -51,11 +53,15 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
 
     // Use the new centralized utility function to render indicators for the initial view.
     const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-    
+    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+
     let transactionControlsHtml;
     if (hasLicense) {
+        // Correctly set initial mode based on saved state, otherwise default to 'buy'
+        const initialMode = marketTransactionState[good.id]?.mode || 'buy';
+
         transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="buy" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
@@ -88,6 +94,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice) {
             <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
             
             <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+
+            ${avgCostHtml}
 
             ${transactionControlsHtml}
         </div>

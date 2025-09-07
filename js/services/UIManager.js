@@ -287,6 +287,8 @@ export class UIManager {
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
+                    // After restoring state, immediately update the display to reflect it.
+                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
                 }
             }
         }
@@ -307,25 +309,34 @@ export class UIManager {
     
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
-        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0 };
-
+        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+    
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         const basePrice = this.getItemPrice(state, goodId, true);
-        
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+        const avgCost = playerItem?.avgCost || 0;
+    
         // Guard against division by zero if market stock is depleted.
         if (marketStock <= 0) {
-            return { totalPrice: 0, effectivePricePerUnit: 0 };
+            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
         }
-
+    
         const threshold = marketStock * 0.1;
         if (quantity <= threshold) {
-            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
+            const totalPrice = basePrice * quantity;
+            const totalCost = avgCost * quantity;
+            let netProfit = totalPrice - totalCost;
+            if (netProfit > 0) {
+                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                netProfit += netProfit * totalBonus;
+            }
+            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
         }
-
+    
         const excessRatio = quantity / marketStock;
         let reduction = 0;
-
+    
         if (good.tier <= 2) {
             reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
         } else if (good.tier <= 5) {
@@ -333,13 +344,23 @@ export class UIManager {
         } else {
             reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
         }
-        
+    
         const effectivePrice = basePrice * (1 - reduction);
+        const totalPrice = Math.floor(effectivePrice * quantity);
+        const totalCost = avgCost * quantity;
+        let netProfit = totalPrice - totalCost;
+        if (netProfit > 0) {
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            netProfit += netProfit * totalBonus;
+        }
+    
         return {
-            totalPrice: Math.floor(effectivePrice * quantity),
-            effectivePricePerUnit: effectivePrice
+            totalPrice,
+            effectivePricePerUnit: effectivePrice,
+            netProfit
         };
     }
+    
     
     updateMarketCardPrice(goodId, newPrice) {
         const priceEl = document.getElementById(`price-display-${goodId}`);
@@ -356,13 +377,13 @@ export class UIManager {
         const priceEl = document.getElementById(`price-display-${goodId}`);
         const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
         const indicatorEl = document.getElementById(`indicators-${goodId}`);
-
+    
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
-
+    
         const state = this.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-
+    
         if (mode === 'buy') {
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
@@ -374,56 +395,17 @@ export class UIManager {
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
-
+    
         } else { // 'sell' mode
-            const avgCost = playerItem?.avgCost || 0;
-            const hasItem = playerItem && playerItem.quantity > 0;
-
-            if (!hasItem) {
-                priceEl.textContent = '+0';
-                priceEl.className = 'font-roboto-mono font-bold profit-text';
-                effectivePriceEl.textContent = '';
-                indicatorEl.innerHTML = renderIndicatorPills({
-                    price: basePrice,
-                    sellPrice: 0,
-                    galacticAvg: state.market.galacticAverages[goodId],
-                    playerItem: null
-                });
-                return;
-            }
-
-            const { totalPrice, effectivePricePerUnit } = this._calculateSaleDetails(goodId, quantity);
+            const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
             
             if (quantity > 0) {
-                const totalCost = avgCost * quantity;
-                let netProfit = totalPrice - totalCost;
-
-                if (netProfit > 0) {
-                    let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-                    netProfit += netProfit * totalBonus;
-                }
-                
-                let profitText;
-                if (netProfit >= 0) {
-                    profitText = `+${formatCredits(netProfit, false)}`;
-                } else {
-                    profitText = `-${formatCredits(Math.abs(netProfit), false)}`;
-                }
-
+                let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
-                
-                priceEl.classList.add('font-roboto-mono', 'font-bold', 'price-text');
-                if (netProfit >= 0) {
-                    priceEl.classList.add('profit-text');
-                    priceEl.classList.remove('hl-red');
-                } else {
-                    priceEl.classList.add('hl-red');
-                    priceEl.classList.remove('profit-text');
-                }
-
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
-                priceEl.textContent = '+0';
+                priceEl.textContent = '⌬ +0';
                 priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
