@@ -156,7 +156,7 @@ export class SimulationService {
                 this.gameState.player.name = playerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
-                this.gameState.player.monthlyInterestAmount = 1300;
+                this.gameState.player.monthlyInterestAmount = 390;
 
                 // Remove the default starter ship to prepare for the tutorial purchase.
                 this.gameState.player.ownedShipIds = [];
