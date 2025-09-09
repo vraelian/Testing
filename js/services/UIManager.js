@@ -50,6 +50,13 @@ export class UIManager {
         this.missionService = missionService;
     }
 
+    /**
+    * Resets the state of the market transaction modules.
+    */
+    resetMarketTransactionState() {
+        this.marketTransactionState = {};
+    }
+
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),

@@ -29,14 +29,16 @@ export function renderFinanceScreen(gameState) {
             }
         }
         loanHtml = `
-           <div id="finance-debt-panel">
-             <h4 class="font-orbitron text-xl mb-2">Debt</h4>
-             <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
-             <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
-                 Pay Off Full Amount
-             </button>
-             ${garnishmentTimerHtml}
-           </div>`;
+            <div>
+                <h3 class="text-2xl font-orbitron text-center mb-4">Debt</h3>
+                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
+                        Pay Off Full Amount
+                    </button>
+                    ${garnishmentTimerHtml}
+                </div>
+            </div>`;
     } else {
         // Otherwise, display available loan options.
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
@@ -47,12 +49,17 @@ export function renderFinanceScreen(gameState) {
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            const tooltipText = `Fee: ${formatCredits(loan.fee, false)}\\nInterest: ${formatCredits(loan.interest, false)} / 30d`;
-            return `<button class="btn btn-loan w-full p-2 mt-2 loan-btn-tooltip" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''} data-tooltip="${tooltipText}">
+            return `<button class="btn btn-loan w-full p-2 mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
                         <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
                     </button>`;
         }).join('');
-        loanHtml = `<h4 class="font-orbitron text-xl mb-2">Financing</h4><div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>`;
+        loanHtml = `
+            <div>
+                <h3 class="text-2xl font-orbitron text-center mb-4">Financing</h3>
+                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>
+                </div>
+            </div>`;
     }
 
     // Render the transaction log.
@@ -70,7 +77,7 @@ export function renderFinanceScreen(gameState) {
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="md:col-span-1 p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+            <div class="md:col-span-1">
                 ${loanHtml}
             </div>
             <div class="md:col-span-2">

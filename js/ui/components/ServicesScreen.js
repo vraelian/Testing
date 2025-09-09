@@ -37,11 +37,7 @@ export function renderServicesScreen(gameState) {
     const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
     
     return `
-         <div class="text-center mb-4">
-            <h3 class="text-2xl font-orbitron">Station Services at ${currentMarket.name}</h3>
-            <div id="services-credits-display" class="text-lg text-cyan-300 mt-2"><span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
             <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                 <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
                 <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>

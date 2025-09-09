@@ -273,6 +273,7 @@ export class SimulationService {
      * @param {string} locationId - The ID of the destination market.
      */
     travelTo(locationId) {
+        this.uiManager.resetMarketTransactionState();
         const { tutorials } = this.gameState;
         const { navLock } = tutorials;
 
