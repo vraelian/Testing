@@ -75,8 +75,8 @@ export const DB = {
         },
         {
           id: 'lore_2',
-          title: "A Calculated Risk",
-          description: "While a dead-end job in the Belt paid the bills, your dreams reached for the stars.<br><br> The <span class=\"hl\">Merchant's Guild</span> presents an opportunity: the credit you need to build something of your own...",
+          title: "The Price of Freedom",
+          description: "A dead-end job in the Belt paid the bills... yet you dream of <b class='hl-green font-bold'>wealth</b>.<br><br>The <span class='hl'>Merchant's Guild</span> is willing to finance your ambition at a steep price. It's not just a loan; it's a wager on your very future.",
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'
@@ -87,11 +87,11 @@ export const DB = {
           description: `
             <div class="font-roboto-mono text-left text-sm space-y-2">
                 <p><span class="text-gray-400">CHARTER ID:</span> G7-K491-38B</p>
-                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing">⌬25,000</span></p>
+                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing">⌬ 25,000</span></p>
                 <p><span class="text-gray-400">INTEREST RATE:</span> 1.56% (Monthly)</p>
             </div>
             <div class="border-t border-slate-600 my-4"></div>
-            <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment, subject to interest accrual as stipulated by the Merchant's Guild Interstellar Commerce Mandates. All financial agreements are recognized across all systems.</p>
+            <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment, subject to interest accrual as stipulated by the Merchant's Guild Interstellar Commerce Mandates. All financial agreements are recognized across the system.</p>
           `,
           buttonText: 'Accept Terms',
           buttonClass: 'btn-pulse-gold'
@@ -468,24 +468,24 @@ export const DB = {
     MISSIONS: {
         'mission_tutorial_01': {
             id: "mission_tutorial_01",
-            name: "The Dockworker's Favor",
+            name: "Milk Run to Luna",
             type: "DELIVERY",
             host: "STATION",
             isRepeatable: false,
             isAbandonable: false,
-            description: "Nice ship! Hey, uh, maybe you can help me out? I've got to get some <b>plasteel</b> to Luna, but my ship is still in the shop... I can't pay you, but you can keep whatever the refinery doesn't need. I hear the <b>Moon market is hurtin' for plasteel</b>.",
+            description: "My hauler's reactor is fried and I'm on the hook for a delivery to Luna.<br><br>Could you take this load of <b>plasteel</b> to the Moon for me? I don't have credits to spare, but I've padded the manifest.<br><br>Deliver what I owe, keep the rest. You won't have trouble selling it there, trust me.",
             objectives: [
                 { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
             ],
             completion: {
                 "locationId": "loc_luna",
                 "title": "Favor Complete",
-                "text": "The Dock Foreman sends his thanks. The Plasteel has been delivered.",
+                "text": "The freelancer sends his thanks.",
                 "buttonText": "Deliver Plasteel"
             },
             rewards: [],
             providedCargo: [ // Cargo given to the player on mission acceptance.
-                { "goodId": "plasteel", "quantity": 7 }
+                { "goodId": "plasteel", "quantity": 6 }
             ]
         },
         'mission_tutorial_02': {
@@ -495,7 +495,7 @@ export const DB = {
             host: "STATION",
             isRepeatable: false,
             isAbandonable: false,
-            description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat. They are paying a premium for prompt delivery.",
+            description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat.",
             prerequisites: [ // This mission only becomes available after 'mission_tutorial_01' is complete.
                 { "type": "mission_completed", "missionId": "mission_tutorial_01" }
             ],
@@ -505,11 +505,11 @@ export const DB = {
             completion: {
                 "locationId": "loc_mars",
                 "title": "Delivery Complete",
-                "text": "The construction foreman thanks you for the Plasteel. Your payment has been transferred.",
+                "text": "The construction foreman thanks you for the Plasteel.",
                 "buttonText": "Deliver Plasteel"
             },
             rewards: [
-                { "type": "credits", "amount": 5500 }
+                { "type": "credits", "amount": 7500 }
             ]
         },
         'mission_tutorial_03': {
@@ -564,7 +564,7 @@ export const DB = {
                 },
                 {
                     stepId: 'hangar_2',
-                    text: "Now that you've borrowed <b class='hl-yellow font-bold'>extra credits</b>, you can buy your first ship! Select one of the options in the <b>Shipyard</b>. Choose carefully...",
+                    text: "Now that you've borrowed <b class='hl-yellow font-bold'>extra credits</b>, you can buy your first ship!<br><br>Select one of the options in the <b>Shipyard</b>. Choose carefully...",
                     position: { desktop: 'bottom-right', mobile: 'top' },
                     completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
                     nextStepId: 'hangar_3',
@@ -595,7 +595,7 @@ export const DB = {
                 },
                 {
                     stepId: 'finance_2',
-                    text: "Dont forget, your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>180 days</b>. You will need to earn <b class='hl-yellow font-bold'>credits</b> to pay off your debt!",
+                    text: "Dont forget, your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>3 years</b>. You will need to earn <b class='hl-yellow font-bold'>credits</b> to pay off your debt!",
                     position: { desktop: 'bottom-right', mobile: 'top' },
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: null,
@@ -610,20 +610,20 @@ export const DB = {
             navLock: true,
             steps: [
                 { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>. Check here for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.<br><br>It appears that the <b>Mars</b> station has put in a <b>Delivery</b> request.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
-                { "stepId": "mission_1_2", "text": "Select the mission '<b>The Dockworker's Favor</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
-                { "stepId": "mission_1_3", "text": "The dockworker can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
-                { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship. The dockworker even threw in extra!", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
+                { "stepId": "mission_1_2", "text": "Select the mission '<b>Milk Run to Luna</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
+                { "stepId": "mission_1_3", "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
+                { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
                 { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
                 { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and wear on the <b>hull</b> of your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
                 { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
                 { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the Starport to visit the <b>Moon</b> station's <b>Market</b>", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } },
-                { "stepId": "mission_2_2", "text": "This is the <b>Moon</b> Market. Observe the <b class='hl-green font-bold'>MKT</b> indicator for plasteel - the market is <b class='hl-green font-bold'>paying more than usual</b> for industrial goods.<br><br>Selling your plasteel would be highly profitable! Do so now.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
+                { "stepId": "mission_2_2", "text": "This is the <b>Moon</b> Market. On each commodity you will find a wealth of information to inform your trading. The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>You were given extra plasteel for free, therefore selling it will yield a pure profit! Do so now.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
                 { "stepId": "mission_2_3", "text": "Pure profit!<br><br>Let's check the Data <b>Mission Terminal</b> again.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_2_4", "text": "This mission offers a credit reward. Accept <b>The Mars Margin</b>  .", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
-                { "stepId": "mission_3_1", "text": "Acquire plasteel from the <b>Market</b> and complete this mission on <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
-                { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed multiple trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities. <b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
+                { "stepId": "mission_3_1", "text": "Acquire plasteel from any <b>Market</b>, then travel to <b>Mars</b> to complete this mission.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
+                { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }
     }

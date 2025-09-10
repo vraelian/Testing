@@ -176,7 +176,7 @@ export class SimulationService {
     _startProcessingSequence() {
         const showApprovalModal = () => {
             const title = 'Loan Approved';
-            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been approved.<br><br><span class="credits-text-pulsing">⌬25,000</span> is ready to transfer to your account.`;
+            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
