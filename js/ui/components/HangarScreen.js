@@ -80,13 +80,16 @@ function _renderHangarScreenDesktop(gameState) {
     const hangarHtml = player.ownedShipIds.length > 0
         ? player.ownedShipIds.map(id => {
             const shipStatic = DB.SHIPS[id];
-            const shipDynamic = player.shipStates[id];
-            const shipInventory = player.inventories[id];
-            const cargoUsed = calculateInventoryUsed(shipInventory);
             const isActive = id === player.activeShipId;
-            const canSell = player.ownedShipIds.length > 1 && !isActive;
-            const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-            return `<div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}"><h3 class="text-xl font-orbitron ${isActive ? 'text-yellow-300' : 'text-cyan-300'} hanger-ship-name" data-tooltip="${shipStatic.lore}">${shipStatic.name}</h3><p class="text-sm text-gray-400 flex-grow">Class ${shipStatic.class}</p><div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2"><div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</span></div><div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</span></div><div><span class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</span></div></div><div class="grid grid-cols-2 gap-2 mt-2">${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${id}">Board</button>`}<button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${id}" ${!canSell ? 'disabled' : ''}>Sell (${formatCredits(salePrice, false)})</button></div></div>`;
+            return `<div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}" data-action="show-ship-detail" data-ship-id="${id}" data-context="hangar">
+                        <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'} hanger-ship-name" data-tooltip="${shipStatic.lore}">${shipStatic.name}</h3>
+                        <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
+                        <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
+                            <div><span class="text-gray-500">Hull</span><div class="text-green-400">${shipStatic.maxHealth}</div></div>
+                            <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${shipStatic.maxFuel}</div></div>
+                            <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${shipStatic.cargoCapacity}</div></div>
+                        </div>
+                    </div>`;
         }).join('')
         : '<p class="text-center text-gray-500">Your hangar is empty.</p>';
 
@@ -116,15 +119,27 @@ function _renderHangarScreenDesktop(gameState) {
 function _getHangarItemHtmlMobile(gameState, shipId, context) {
     const { player, tutorials } = gameState;
     const shipStatic = DB.SHIPS[shipId];
-    let statusText, statusColor;
+    let statusContent, statusColor, statusText;
 
     if (context === 'shipyard') {
         statusText = formatCredits(shipStatic.price);
         statusColor = player.credits >= shipStatic.price ? 'text-cyan-300' : 'text-red-400';
+        statusContent = `<div class="font-roboto-mono text-right text-sm ${statusColor}">${statusText}</div>`;
     } else { // context === 'hangar'
+        const shipInventory = player.inventories[shipId];
+        const cargoUsed = calculateInventoryUsed(shipInventory);
+        const cargoPct = (cargoUsed / shipStatic.cargoCapacity) * 100;
         const isActive = shipId === player.activeShipId;
         statusText = isActive ? 'ACTIVE' : 'STORED';
         statusColor = isActive ? 'text-yellow-300' : 'text-gray-400';
+        statusContent = `
+            <div class="hangar-ship-status">
+                <div class="status-bar-group">
+                    <span class="status-bar-label">C</span>
+                    <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
+                </div>
+                <div class="font-roboto-mono text-right text-sm ${statusColor}">${statusText}</div>
+            </div>`;
     }
 
     const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
@@ -136,9 +151,7 @@ function _getHangarItemHtmlMobile(gameState, shipId, context) {
                 <p class="font-orbitron ${statusColor}">${shipStatic.name}</p>
                 <p class="text-xs text-gray-500">Class ${shipStatic.class}</p>
             </div>
-            <div class="font-roboto-mono text-right text-sm ${statusColor}">
-                ${statusText}
-            </div>
+            ${statusContent}
         </div>`;
 }
 
