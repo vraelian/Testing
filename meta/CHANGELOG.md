@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [24.70] - 2025-09-10
+- shipyard/hangar visual overhaul
+- balance update
+- writing update
+
 ## [24.30] - 2025-09-7
 - cargo visual overhaul
 
