@@ -1041,7 +1041,17 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.modal-content');
+                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                modalContent.classList.add(hostClass);
+
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
+
+                const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>Deliver ${obj.quantity}x ${DB.COMMODITIES.find(c => c.id === obj.goodId).name}</li>`).join('') + '</ul>';
+                objectivesEl.innerHTML = objectivesHtml;
+                objectivesEl.style.display = 'block';
                 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
@@ -1075,10 +1085,17 @@ export class UIManager {
         const options = {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
+                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                modalContent.classList.add(hostClass);
+
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
                 
+                const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                objectivesEl.style.display = 'none';
+
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     const rewardsHtml = mission.rewards.map(r => {

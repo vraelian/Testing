@@ -154,7 +154,7 @@
 }
 #mission-modal .modal-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: flex-start;
 }
 #mission-modal .close-button {
@@ -172,4 +172,15 @@
     border-left: 3px solid #facc15;
     padding: 0.75rem 1rem;
     border-radius: 4px;
+    text-align: center;
+    width: 80%;
+    margin: 0 auto;
+}
+#mission-modal-objectives {
+    width: 80%;
+    margin: 1rem auto;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: left;
 }

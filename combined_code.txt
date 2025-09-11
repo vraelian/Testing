@@ -74,7 +74,7 @@
         </div>
 
         <div id="mission-modal" class="modal-backdrop hidden">
-            <div class="modal-content sci-fi-frame">
+            <div class="modal-content sci-fi-frame flex flex-col items-center text-center">
                 <div class="modal-header">
                     <div>
                         <h3 id="mission-modal-title" class="text-xl font-orbitron mb-1"></h3>
@@ -234,31 +234,87 @@
     color: #facc15;
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
 }
+
+/* Host Themes */
 .host-guild {
     background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
     border-color: #FFD700;
 }
-.host-syndicate {
-    background: linear-gradient(105deg, rgba(179, 134, 71, 0.35) 0%, rgba(168, 85, 247, 0.25) 100%);
-    border-color: #b38647;
+#mission-modal .modal-content.host-guild {
+    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border-color: #FFD700;
 }
+#mission-modal .modal-content.host-guild #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #FFD700;
+}
+
+.host-syndicate {
+    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    border-color: #a855f7;
+}
+#mission-modal .modal-content.host-syndicate {
+    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    border-color: #a855f7;
+}
+#mission-modal .modal-content.host-syndicate #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #a855f7;
+}
+
 .host-unknown {
     background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
     border-color: #5f616b;
 }
+#mission-modal .modal-content.host-unknown {
+    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    border-color: #5f616b;
+}
+#mission-modal .modal-content.host-unknown #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #5f616b;
+}
+
 .host-crew {
     background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
     border-color: #c9bfb1;
 }
+#mission-modal .modal-content.host-crew {
+    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    border-color: #c9bfb1;
+}
+#mission-modal .modal-content.host-crew #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #c9bfb1;
+}
+
 .host-tutorial {
-    background: linear-gradient(105deg, rgba(90, 166, 109, 0.35) 0%, rgba(6, 78, 59, 0.45) 100%);
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
     border-color: #5aa66d;
 }
+#mission-modal .modal-content.host-tutorial {
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    border-color: #5aa66d;
+}
+#mission-modal .modal-content.host-tutorial #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #5aa66d;
+}
+
 .host-station {
     background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
     border-color: #8f9acc;
 }
+#mission-modal .modal-content.host-station {
+    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    border-color: #8f9acc;
+}
+#mission-modal .modal-content.host-station #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #8f9acc;
+}
 
+/* Mission Status Styles */
 .mission-active {
     box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     border-width: 3px;
@@ -1252,7 +1308,7 @@ body {
 }
 #mission-modal .modal-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: flex-start;
 }
 #mission-modal .close-button {
@@ -1270,6 +1326,17 @@ body {
     border-left: 3px solid #facc15;
     padding: 0.75rem 1rem;
     border-radius: 4px;
+    text-align: center;
+    width: 80%;
+    margin: 0 auto;
+}
+#mission-modal-objectives {
+    width: 80%;
+    margin: 1rem auto;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: left;
 }
 --- END OF FILE: ./css/modals.css ---
 --- START OF FILE: ./css/screens/market-screen.css ---
@@ -8321,7 +8388,17 @@ export class UIManager {
 
         const options = {
             customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.modal-content');
+                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                modalContent.classList.add(hostClass);
+
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
+
+                const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>Deliver ${obj.quantity}x ${DB.COMMODITIES.find(c => c.id === obj.goodId).name}</li>`).join('') + '</ul>';
+                objectivesEl.innerHTML = objectivesHtml;
+                objectivesEl.style.display = 'block';
                 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
@@ -8355,10 +8432,17 @@ export class UIManager {
         const options = {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
+                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                modalContent.classList.add(hostClass);
+
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
                 
+                const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                objectivesEl.style.display = 'none';
+
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     const rewardsHtml = mission.rewards.map(r => {
