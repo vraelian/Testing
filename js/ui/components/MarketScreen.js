@@ -35,7 +35,7 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials } = gameState;
+    const { player, market, currentLocationId, tutorials, uiState } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
@@ -50,6 +50,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
+    const isMinimized = uiState.marketCardMinimized[good.id];
 
     // Use the new centralized utility function to render indicators for the initial view.
     const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
@@ -83,21 +84,31 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
             </div>`;
     }
 
+    const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
     return `
-    <div class="item-card-container ${!hasLicense ? 'locked' : ''}" id="item-card-container-${good.id}">
+    <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
-            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+            <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
             
-            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-            
-            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+            <div class="max-view-content">
+                <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+                <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+                <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+                
+                <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+                
+                <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
-            ${avgCostHtml}
+                ${avgCostHtml}
 
-            ${transactionControlsHtml}
+                ${transactionControlsHtml}
+            </div>
+
+            <div class="min-view-content">
+                <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
+                <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
+            </div>
         </div>
     </div>`;
 }

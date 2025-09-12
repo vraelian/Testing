@@ -242,6 +242,13 @@ export class EventManager {
                     break;
                 
                 // Market Transaction Controls
+                case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW: {
+                    if (goodId) {
+                        this.gameState.uiState.marketCardMinimized[goodId] = !this.gameState.uiState.marketCardMinimized[goodId];
+                        this.gameState.setState({});
+                    }
+                    break;
+                }
                 case 'toggle-trade-mode': {
                     const controls = actionTarget.closest('.transaction-controls');
                     if (controls) {

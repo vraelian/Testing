@@ -163,6 +163,9 @@ export class GameState {
                 completedMissionIds: [],
                 missionProgress: {},
                 activeMissionObjectivesMet: false
+            },
+            uiState: {
+                marketCardMinimized: {}
             }
         };
 

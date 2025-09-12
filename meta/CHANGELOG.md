@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.10] - 2025-09-12
+- minimizable commodities
+
 ## [25.00] - 2025-09-12
 - launch confirmation modal
 

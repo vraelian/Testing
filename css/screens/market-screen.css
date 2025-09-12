@@ -2,6 +2,7 @@
 :root {
     /* Card Appearance */
     --market-card-height: 160px;
+    --market-card-min-height: 40px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
     
@@ -38,7 +39,7 @@
     --market-card-avail-text-shadow: 0.70px 0.00px 0 #292929, 0.49px 0.49px 0 #292929, 0.00px 0.70px 0 #292929, -0.49px 0.49px 0 #292929, -0.70px 0.00px 0 #292929, -0.49px -0.49px 0 #292929, 0.00px -0.70px 0 #292929, 0.49px -0.49px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
-    --market-card-price-font-size: 1.9rem;
+    --market-card-price-font-size: 1.85rem;
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
     --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000, 0px 0px 20px #28d5d7;
@@ -102,7 +103,14 @@
     height: var(--market-card-height);
     border-radius: var(--market-card-border-radius);
     padding: 0;
+    transition: height 0.3s ease-in-out;
+    overflow: visible; /* Changed from hidden to allow button to sit outside */
 }
+
+.item-card-container.minimized > div {
+    height: var(--market-card-min-height);
+}
+
 
 .item-card-container.locked > div {
     filter: grayscale(80%) brightness(0.6);
@@ -193,7 +201,6 @@
 .avg-cost-display.visible {
     display: block; /* Show when in sell mode */
 }
-
 
 /* --- [[START]] INDICATOR STYLES --- */
 .indicator-container {
@@ -331,6 +338,58 @@
     color: #fff;
 }
 /* --- [[END]] COMMODITY CARD STYLES --- */
+
+/* --- [[START]] MIN/MAX VIEW STYLES --- */
+.card-toggle-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 99px;
+    background-color: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    z-index: 10;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 2px;
+}
+.card-toggle-btn:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+}
+.min-view-content {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 100%;
+}
+.commodity-name-min {
+    font-family: 'Roboto Mono', monospace;
+    font-size: var(--market-card-name-font-size);
+    color: var(--market-card-name-color);
+    text-shadow: var(--market-card-name-text-shadow);
+}
+.tier-text-min {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--market-card-name-color);
+    text-shadow: var(--market-card-name-text-shadow);
+    opacity: 0.8;
+}
+
+.item-card-container .max-view-content { display: block; }
+.item-card-container .min-view-content { display: none; }
+.item-card-container.minimized .max-view-content { display: none; }
+.item-card-container.minimized .min-view-content { display: flex; }
+/* --- [[END]] MIN/MAX VIEW STYLES --- */
 
 /* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
 .transaction-controls {

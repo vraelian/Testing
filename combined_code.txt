@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 25.00</title>
+    <title>Orbital Trading 25.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 25.00</p>
+            <p>Version 25.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1357,9 +1357,9 @@ body {
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    display: flex; /* Keep flex display */
+    flex-direction: column; /* Keep flex-direction column */
+    justify-content: space-between; /* Change from flex-start to space-between */
     gap: 1rem;
 }
 .launch-modal-wrapper h3 {
@@ -1389,6 +1389,7 @@ body {
 :root {
     /* Card Appearance */
     --market-card-height: 160px;
+    --market-card-min-height: 40px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
     
@@ -1425,7 +1426,7 @@ body {
     --market-card-avail-text-shadow: 0.70px 0.00px 0 #292929, 0.49px 0.49px 0 #292929, 0.00px 0.70px 0 #292929, -0.49px 0.49px 0 #292929, -0.70px 0.00px 0 #292929, -0.49px -0.49px 0 #292929, 0.00px -0.70px 0 #292929, 0.49px -0.49px 0 #292929, -0.5px 1.5px 3.5px #554a4a;
 
     /* Price Text */
-    --market-card-price-font-size: 1.9rem;
+    --market-card-price-font-size: 1.85rem;
     --market-card-price-color: #29f1ff;
     --market-card-price-font-family: 'Roboto Mono', monospace;
     --market-card-price-text-shadow: 0 0 20px #16a8bb, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000, 0px 0px 20px #28d5d7;
@@ -1489,7 +1490,14 @@ body {
     height: var(--market-card-height);
     border-radius: var(--market-card-border-radius);
     padding: 0;
+    transition: height 0.3s ease-in-out;
+    overflow: visible; /* Changed from hidden to allow button to sit outside */
 }
+
+.item-card-container.minimized > div {
+    height: var(--market-card-min-height);
+}
+
 
 .item-card-container.locked > div {
     filter: grayscale(80%) brightness(0.6);
@@ -1580,7 +1588,6 @@ body {
 .avg-cost-display.visible {
     display: block; /* Show when in sell mode */
 }
-
 
 /* --- [[START]] INDICATOR STYLES --- */
 .indicator-container {
@@ -1718,6 +1725,58 @@ body {
     color: #fff;
 }
 /* --- [[END]] COMMODITY CARD STYLES --- */
+
+/* --- [[START]] MIN/MAX VIEW STYLES --- */
+.card-toggle-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 99px;
+    background-color: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    z-index: 10;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 2px;
+}
+.card-toggle-btn:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+}
+.min-view-content {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 100%;
+}
+.commodity-name-min {
+    font-family: 'Roboto Mono', monospace;
+    font-size: var(--market-card-name-font-size);
+    color: var(--market-card-name-color);
+    text-shadow: var(--market-card-name-text-shadow);
+}
+.tier-text-min {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--market-card-name-color);
+    text-shadow: var(--market-card-name-text-shadow);
+    opacity: 0.8;
+}
+
+.item-card-container .max-view-content { display: block; }
+.item-card-container .min-view-content { display: none; }
+.item-card-container.minimized .max-view-content { display: none; }
+.item-card-container.minimized .min-view-content { display: flex; }
+/* --- [[END]] MIN/MAX VIEW STYLES --- */
 
 /* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
 .transaction-controls {
@@ -2891,7 +2950,7 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials } = gameState;
+    const { player, market, currentLocationId, tutorials, uiState } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
@@ -2906,6 +2965,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
+    const isMinimized = uiState.marketCardMinimized[good.id];
 
     // Use the new centralized utility function to render indicators for the initial view.
     const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
@@ -2939,21 +2999,31 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
             </div>`;
     }
 
+    const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
     return `
-    <div class="item-card-container ${!hasLicense ? 'locked' : ''}" id="item-card-container-${good.id}">
+    <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
-            <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-            <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-            <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+            <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
             
-            <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-            
-            <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
+            <div class="max-view-content">
+                <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+                <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+                <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
+                
+                <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+                
+                <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
-            ${avgCostHtml}
+                ${avgCostHtml}
 
-            ${transactionControlsHtml}
+                ${transactionControlsHtml}
+            </div>
+
+            <div class="min-view-content">
+                <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
+                <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
+            </div>
         </div>
     </div>`;
 }
@@ -3314,6 +3384,7 @@ export const ACTION_IDS = Object.freeze({
     DECREMENT: 'decrement',
     SHOW_PRICE_GRAPH: 'show-price-graph',
     SHOW_FINANCE_GRAPH: 'show-finance-graph',
+    TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
 });
 
 /**
@@ -4594,6 +4665,9 @@ export class GameState {
                 completedMissionIds: [],
                 missionProgress: {},
                 activeMissionObjectivesMet: false
+            },
+            uiState: {
+                marketCardMinimized: {}
             }
         };
 
@@ -6713,6 +6787,13 @@ export class EventManager {
                     break;
                 
                 // Market Transaction Controls
+                case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW: {
+                    if (goodId) {
+                        this.gameState.uiState.marketCardMinimized[goodId] = !this.gameState.uiState.marketCardMinimized[goodId];
+                        this.gameState.setState({});
+                    }
+                    break;
+                }
                 case 'toggle-trade-mode': {
                     const controls = actionTarget.closest('.transaction-controls');
                     if (controls) {
@@ -8599,6 +8680,9 @@ export class UIManager {
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.10] - 2025-09-12
+- minimizable commodities
+
 ## [25.00] - 2025-09-12
 - launch confirmation modal
 
@@ -8924,6 +9008,28 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "fuelCost": {
           "type": "integer"
         }
+      },
+      "Mission": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "host": { "type": "string" },
+        "isRepeatable": { "type": "boolean" },
+        "isAbandonable": { "type": "boolean" },
+        "description": { "type": "string" },
+        "prerequisites": { "type": "array", "optional": true },
+        "objectives": { "type": "array" },
+        "completion": {
+            "type": "object",
+            "properties": {
+                "locationId": "LocationId",
+                "title": "string",
+                "text": "string",
+                "buttonText": "string"
+            }
+        },
+        "rewards": { "type": "array" },
+        "providedCargo": { "type": "array", "optional": true }
       }
     },
     "enums": {
@@ -8960,7 +9066,16 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "show-price-graph",
         "show-finance-graph",
         "toggle-trade-mode",
-        "confirm-trade"
+        "confirm-trade",
+        "show-launch-modal",
+        "show-ship-detail",
+        "toggle-tooltip",
+        "show-mission-modal",
+        "accept-mission",
+        "abandon-mission",
+        "complete-mission",
+        "show-starport-locked-toast",
+        "acquire-license"
       ],
       "ShipId": [
         "starter",
@@ -10154,7 +10269,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
     },
     "UIManager.renderHangarScreen": {
       "asset_id": "F017",
-      "description": "Renders the Hangar screen, including both the player's owned ships and the ships for sale at the current location's shipyard.",
+      "description": "Renders the Hangar screen, including both the player's owned ships and the ships for sale at the current location's shipyard. It uses a responsive, component-based approach and shows a limited set of ships during the intro.",
       "params": [
         {
           "name": "gameState",
@@ -10254,7 +10369,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "SimulationService.purchaseIntel",
         "SimulationService.buyItem",
         "SimulationService.sellItem",
-        "TutorialService.checkState"
+        "TutorialService.checkState",
+        "UIManager.showLaunchModal",
+        "UIManager.showShipDetailModal",
+        "UIManager.showMissionModal"
       ]
     },
     "eventEffectResolver.applyEffect": {
@@ -10380,7 +10498,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
         ],
         "calls": [
             "MissionService.checkTriggers",
-            "UIManager.render"
+            "UIManager.render",
+            "SimulationService.grantMissionCargo"
         ]
     },
     "MissionService.abandonMission": {
@@ -10519,6 +10638,49 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "returns": { "type": "void" },
         "mutates_state": [],
         "calls": []
+    },
+    "UIManager.showLaunchModal": {
+      "asset_id": "F017",
+      "description": "Displays a pre-travel confirmation modal showing destination market intel and travel costs.",
+      "params": [
+        { "name": "locationId", "type": "LocationId" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": ["UIManager.hideModal"]
+    },
+    "UIManager.showShipDetailModal": {
+      "asset_id": "F017",
+      "description": "Displays a modal with detailed stats and actions for a specific ship, either from the shipyard or the player's hangar.",
+      "params": [
+        { "name": "gameState", "type": "state_schema" },
+        { "name": "shipId", "type": "ShipId" },
+        { "name": "context", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": []
+    },
+    "SimulationService.grantMissionCargo": {
+      "asset_id": "F011",
+      "description": "Grants specific cargo items to the player's active ship inventory as part of a mission.",
+      "params": [
+        { "name": "missionId", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": ["player.inventories"],
+      "calls": ["MissionService.checkTriggers"]
+    },
+    "SimulationService._grantRewards": {
+      "asset_id": "F011",
+      "description": "Applies a list of reward objects from a mission or other source to the player's state.",
+      "params": [
+        { "name": "rewards", "type": "array" },
+        { "name": "sourceName", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": ["player.credits", "player.unlockedLicenseIds", "player.financeLog"],
+      "calls": ["SimulationService._logTransaction", "UIManager.createFloatingText", "UIManager.queueModal"]
     }
   }
 }
