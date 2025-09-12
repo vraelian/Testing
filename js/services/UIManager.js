@@ -987,10 +987,17 @@ export class UIManager {
     
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
+        if (!state) return;
+
         const location = DB.MARKETS.find(l => l.id === locationId);
+        if (!location) return;
+
         const theme = location.navTheme;
-        const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
+        const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
+
+        // If travel isn't possible from the current location, do nothing.
+        if (!travelInfo) return;
 
         const COMMODITY_CATEGORIES = {
             'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
@@ -1028,12 +1035,12 @@ export class UIManager {
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 my-auto text-center space-y-1" style="border-color: ${theme.borderColor}50;">
+                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
                 <div class="font-roboto-mono text-xs mt-auto"> 
                     <p>Travel Time: ${travelInfo.time} Days</p>
-                    <p>Fuel Required: ${travelInfo.fuelCost} / ${Math.floor(shipState.fuel)}</p>
+                    <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
                 <div class="pt-2"> 
                    <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
@@ -1041,8 +1048,7 @@ export class UIManager {
             </div>`;
 
         const modal = this.cache.launchModal;
-        const modalContent = modal.querySelector('#launch-modal-content');
-        modalContent.innerHTML = modalContentHtml;
+        modal.innerHTML = modalContentHtml; // Directly set the innerHTML of the modal backdrop
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
 
@@ -1055,7 +1061,7 @@ export class UIManager {
         };
         modal.addEventListener('click', closeHandler);
     }
-
+    
     renderStickyBar(gameState) {
         const stickyBarEl = document.getElementById('mission-sticky-bar');
         const contentEl = stickyBarEl.querySelector('.sticky-content');

@@ -204,6 +204,7 @@ export class EventManager {
                     actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: navId, screenId: screenId };
                     break;
                 case ACTION_IDS.TRAVEL:
+                    this.uiManager.hideModal('launch-modal');
                     this.simulationService.travelTo(locationId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
@@ -343,17 +344,10 @@ export class EventManager {
 
         if (state.isGameOver) return;
 
-        // Dismiss mission modal by clicking the backdrop.
-        const missionModal = e.target.closest('#mission-modal');
-        if (missionModal && e.target.id === 'mission-modal') {
-            this.uiManager.hideModal('mission-modal');
-            return;
-        }
-
-        // Dismiss ship detail modal by clicking the backdrop.
-        const shipDetailModal = e.target.closest('#ship-detail-modal');
-        if (shipDetailModal && !e.target.closest('#ship-detail-content')) {
-            this.uiManager.hideModal('ship-detail-modal');
+        // Dismiss any modal by clicking its backdrop
+        const modalBackdrop = e.target.closest('.modal-backdrop');
+        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+            this.uiManager.hideModal(modalBackdrop.id);
             return;
         }
         
