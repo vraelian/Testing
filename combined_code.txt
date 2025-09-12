@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 24.70</title>
+    <title>Orbital Trading 25.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -36,7 +36,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 24.70</p>
+            <p>Version 25.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -196,6 +196,11 @@
 
     <div id="ship-detail-modal" class="modal-backdrop hidden">
         <div id="ship-detail-content" class="modal-content">
+            </div>
+    </div>
+
+    <div id="launch-modal" class="modal-backdrop hidden">
+        <div id="launch-modal-content">
             </div>
     </div>
 
@@ -1338,6 +1343,46 @@ body {
     border-radius: 8px;
     text-align: left;
 }
+
+/* --- [[START]] LAUNCH MODAL STYLES --- */
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 100%;
+    max-width: 350px;
+    height: 305px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
+}
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+
+@keyframes launch-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+    }
+}
+.btn-launch-glow {
+    animation: launch-glow-animation 2.5s infinite;
+    border-color: var(--launch-glow-color);
+}
+/* --- [[END]] LAUNCH MODAL STYLES --- */
 --- END OF FILE: ./css/modals.css ---
 --- START OF FILE: ./css/screens/market-screen.css ---
 /* css/screens/market-screen.css */
@@ -2468,7 +2513,7 @@ export function renderNavigationScreen(gameState) {
                 const disabledClass = isDisabled ? 'disabled-location' : '';
 
                 return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                             data-action="${ACTION_IDS.TRAVEL}" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
+                             data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
                     <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                     <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                     ${isCurrent 
@@ -3777,14 +3822,14 @@ export const DB = {
     // --- Tradable Commodities Data ---
     COMMODITIES: [
         { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [15, 80], volatility: 0.01, canonicalAvailability: [80, 150], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', cat: 'RAW', symbol: 'H2O' },
-        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [100, 280], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'INDUSTRY', symbol: 'PLST' },
+        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [100, 280], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
         { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [850, 2400], volatility: 0.025, canonicalAvailability: [40, 70], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
         { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [1200, 3800], volatility: 0.03, canonicalAvailability: [40, 70], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
-        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [14000, 38000], volatility: 0.035, canonicalAvailability: [25, 50], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'INDUSTRY', symbol: 'PROP' },
+        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [14000, 38000], volatility: 0.035, canonicalAvailability: [25, 50], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
         { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [18000, 52000], volatility: 0.045, canonicalAvailability: [25, 50], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
         { id: COMMODITY_IDS.GMO_SEEDS, name: 'GMO Seed Cultures', tier: 4, licenseId: 't4_license', basePriceRange: [190000, 550000], volatility: 0.06, canonicalAvailability: [15, 30], styleClass: 'item-style-7', lore: 'Patented seeds holding the key to unlocking agricultural wealth on new worlds.', cat: 'AGRI', symbol: 'GMO' },
         { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [250000, 750000], volatility: 0.075, canonicalAvailability: [15, 30], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
-        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [2800000, 8500000], volatility: 0.08, canonicalAvailability: [10, 20], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'INDUSTRY', symbol: 'ATMO' },
+        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [2800000, 8500000], volatility: 0.08, canonicalAvailability: [10, 20], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
         { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [3500000, 11000000], volatility: 0.09, canonicalAvailability: [10, 20], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
         { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [24000000, 70000000], volatility: 0.1, canonicalAvailability: [2, 10], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', cat: 'RAW', symbol: 'XENO' },
         { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [32000000, 95000000], volatility: 0.125, canonicalAvailability: [2, 10], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', cat: 'TECH', symbol: 'AI' },
@@ -3804,18 +3849,18 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cybernetics': 2.0, 'gmo_seeds': 2.0, 'cloned_organs': 0.1, 'sentient_ai': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0 } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'plasteel': 2.0, 'hydroponics': 2.0, 'gmo_seeds': 0.5, 'cryo_pods': 0.5 } },
-        { id: LOCATION_IDS.VENUS, name: 'Venus', navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'processors': 0.5, 'atmo_processors': 0.5, 'cloned_organs': 2.0 } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5 } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'hydroponics': 0.5, 'cryo_pods': 2.0 } },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'water_ice': 2.0, 'propellant': 2.0, 'atmo_processors': 2.0 } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'water_ice': 2.0, 'processors': 0.5, 'xeno_geologicals': 0.5, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'water_ice': 2.0, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: {} },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: {} }
+        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cybernetics': 2.0, 'gmo_seeds': 2.0, 'cloned_organs': 0.1, 'sentient_ai': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0 } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'plasteel': 2.0, 'hydroponics': 2.0, 'gmo_seeds': 0.5, 'cryo_pods': 0.5 } },
+        { id: LOCATION_IDS.VENUS, name: 'Venus', launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'processors': 0.5, 'atmo_processors': 0.5, 'cloned_organs': 2.0 } },
+        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5 } },
+        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', launchFlavor: "Opulent stations drift among majestic rings.", navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'hydroponics': 0.5, 'cryo_pods': 2.0 } },
+        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'water_ice': 2.0, 'propellant': 2.0, 'atmo_processors': 2.0 } },
+        { id: LOCATION_IDS.URANUS, name: 'Uranus', launchFlavor: "A silent, ice-cold world of strange science.", navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'water_ice': 2.0, 'processors': 0.5, 'xeno_geologicals': 0.5, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', launchFlavor: "The stormy edge of military-controlled space.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'water_ice': 2.0, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
+        { id: LOCATION_IDS.PLUTO, name: 'Pluto', launchFlavor: "A haven for outcasts at the system's fringe.", navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } },
+        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: {} },
+        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", launchFlavor: "A colossal lens staring into the infinite void.", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: {} }
     ],
 
     // --- Mission Data ---
@@ -6611,6 +6656,9 @@ export class EventManager {
                     break;
 
                 // Ship & Navigation Actions
+                case 'show-launch-modal':
+                    this.uiManager.showLaunchModal(locationId);
+                    break;
                 case 'show-ship-detail':
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
@@ -6627,6 +6675,7 @@ export class EventManager {
                     actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: navId, screenId: screenId };
                     break;
                 case ACTION_IDS.TRAVEL:
+                    this.uiManager.hideModal('launch-modal');
                     this.simulationService.travelTo(locationId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
@@ -6766,17 +6815,10 @@ export class EventManager {
 
         if (state.isGameOver) return;
 
-        // Dismiss mission modal by clicking the backdrop.
-        const missionModal = e.target.closest('#mission-modal');
-        if (missionModal && e.target.id === 'mission-modal') {
-            this.uiManager.hideModal('mission-modal');
-            return;
-        }
-
-        // Dismiss ship detail modal by clicking the backdrop.
-        const shipDetailModal = e.target.closest('#ship-detail-modal');
-        if (shipDetailModal && !e.target.closest('#ship-detail-content')) {
-            this.uiManager.hideModal('ship-detail-modal');
+        // Dismiss any modal by clicking its backdrop
+        const modalBackdrop = e.target.closest('.modal-backdrop');
+        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+            this.uiManager.hideModal(modalBackdrop.id);
             return;
         }
         
@@ -7426,6 +7468,7 @@ export class UIManager {
             genericTooltip: document.getElementById('generic-tooltip'),
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
+            launchModal: document.getElementById('launch-modal'),
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -8331,6 +8374,83 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
     
+    showLaunchModal(locationId) {
+        const state = this.lastKnownState;
+        if (!state) return;
+
+        const location = DB.MARKETS.find(l => l.id === locationId);
+        if (!location) return;
+
+        const theme = location.navTheme;
+        const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
+        const shipState = state.player.shipStates[state.player.activeShipId];
+
+        // If travel isn't possible from the current location, do nothing.
+        if (!travelInfo) return;
+
+        const COMMODITY_CATEGORIES = {
+            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
+            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
+            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
+            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
+        };
+
+        let imports = [];
+        let exports = [];
+        for (const goodId in location.availabilityModifier) {
+            const modifier = location.availabilityModifier[goodId];
+            const category = COMMODITY_CATEGORIES[goodId];
+            if (modifier < 1.0 && !imports.includes(category)) {
+                imports.push(category);
+            } else if (modifier > 1.0 && !exports.includes(category)) {
+                exports.push(category);
+            }
+        }
+        
+        let intelHtml = '';
+        if (imports.length > 0) {
+            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
+        }
+        if (exports.length > 0) {
+            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
+        }
+        if (intelHtml === '') {
+            intelHtml = '<p>Market data is unreliable.</p>';
+        }
+        
+        const modalContentHtml = `
+            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+                <div class="flex-shrink-0">
+                    <h3 class="font-orbitron">${location.name}</h3>
+                    <p class="flavor-text italic">${location.launchFlavor}</p>
+                </div>
+                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
+                    ${intelHtml}
+                </div>
+                <div class="font-roboto-mono text-xs"> 
+                    <p>Travel Time: ${travelInfo.time} Days</p>
+                    <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                </div>
+                <div class="pt-2"> 
+                   <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                </div>
+            </div>`;
+
+        const modal = this.cache.launchModal;
+        modal.innerHTML = modalContentHtml; // Directly set the innerHTML of the modal backdrop
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+
+        // Add a one-time click listener to the backdrop to close the modal.
+        const closeHandler = (e) => {
+            if (e.target.id === 'launch-modal') {
+                this.hideModal('launch-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
+    }
+    
     renderStickyBar(gameState) {
         const stickyBarEl = document.getElementById('mission-sticky-bar');
         const contentEl = stickyBarEl.querySelector('.sticky-content');
@@ -8478,6 +8598,9 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [25.00] - 2025-09-12
+- launch confirmation modal
 
 ## [24.70] - 2025-09-10
 - shipyard/hangar visual overhaul
