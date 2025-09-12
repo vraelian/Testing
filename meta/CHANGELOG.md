@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.00] - 2025-09-12
+- launch confirmation modal
+
 ## [24.70] - 2025-09-10
 - shipyard/hangar visual overhaul
 - balance update

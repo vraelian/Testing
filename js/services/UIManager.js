@@ -1028,7 +1028,7 @@ export class UIManager {
         if (intelHtml === '') {
             intelHtml = '<p>Market data is unreliable.</p>';
         }
-
+        
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
@@ -1038,7 +1038,7 @@ export class UIManager {
                 <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
-                <div class="font-roboto-mono text-xs mt-auto"> 
+                <div class="font-roboto-mono text-xs"> 
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
