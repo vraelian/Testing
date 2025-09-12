@@ -221,6 +221,28 @@
         "fuelCost": {
           "type": "integer"
         }
+      },
+      "Mission": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "host": { "type": "string" },
+        "isRepeatable": { "type": "boolean" },
+        "isAbandonable": { "type": "boolean" },
+        "description": { "type": "string" },
+        "prerequisites": { "type": "array", "optional": true },
+        "objectives": { "type": "array" },
+        "completion": {
+            "type": "object",
+            "properties": {
+                "locationId": "LocationId",
+                "title": "string",
+                "text": "string",
+                "buttonText": "string"
+            }
+        },
+        "rewards": { "type": "array" },
+        "providedCargo": { "type": "array", "optional": true }
       }
     },
     "enums": {
@@ -257,7 +279,16 @@
         "show-price-graph",
         "show-finance-graph",
         "toggle-trade-mode",
-        "confirm-trade"
+        "confirm-trade",
+        "show-launch-modal",
+        "show-ship-detail",
+        "toggle-tooltip",
+        "show-mission-modal",
+        "accept-mission",
+        "abandon-mission",
+        "complete-mission",
+        "show-starport-locked-toast",
+        "acquire-license"
       ],
       "ShipId": [
         "starter",
@@ -1451,7 +1482,7 @@
     },
     "UIManager.renderHangarScreen": {
       "asset_id": "F017",
-      "description": "Renders the Hangar screen, including both the player's owned ships and the ships for sale at the current location's shipyard.",
+      "description": "Renders the Hangar screen, including both the player's owned ships and the ships for sale at the current location's shipyard. It uses a responsive, component-based approach and shows a limited set of ships during the intro.",
       "params": [
         {
           "name": "gameState",
@@ -1551,7 +1582,10 @@
         "SimulationService.purchaseIntel",
         "SimulationService.buyItem",
         "SimulationService.sellItem",
-        "TutorialService.checkState"
+        "TutorialService.checkState",
+        "UIManager.showLaunchModal",
+        "UIManager.showShipDetailModal",
+        "UIManager.showMissionModal"
       ]
     },
     "eventEffectResolver.applyEffect": {
@@ -1677,7 +1711,8 @@
         ],
         "calls": [
             "MissionService.checkTriggers",
-            "UIManager.render"
+            "UIManager.render",
+            "SimulationService.grantMissionCargo"
         ]
     },
     "MissionService.abandonMission": {
@@ -1816,6 +1851,49 @@
         "returns": { "type": "void" },
         "mutates_state": [],
         "calls": []
+    },
+    "UIManager.showLaunchModal": {
+      "asset_id": "F017",
+      "description": "Displays a pre-travel confirmation modal showing destination market intel and travel costs.",
+      "params": [
+        { "name": "locationId", "type": "LocationId" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": ["UIManager.hideModal"]
+    },
+    "UIManager.showShipDetailModal": {
+      "asset_id": "F017",
+      "description": "Displays a modal with detailed stats and actions for a specific ship, either from the shipyard or the player's hangar.",
+      "params": [
+        { "name": "gameState", "type": "state_schema" },
+        { "name": "shipId", "type": "ShipId" },
+        { "name": "context", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": []
+    },
+    "SimulationService.grantMissionCargo": {
+      "asset_id": "F011",
+      "description": "Grants specific cargo items to the player's active ship inventory as part of a mission.",
+      "params": [
+        { "name": "missionId", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": ["player.inventories"],
+      "calls": ["MissionService.checkTriggers"]
+    },
+    "SimulationService._grantRewards": {
+      "asset_id": "F011",
+      "description": "Applies a list of reward objects from a mission or other source to the player's state.",
+      "params": [
+        { "name": "rewards", "type": "array" },
+        { "name": "sourceName", "type": "string" }
+      ],
+      "returns": { "type": "void" },
+      "mutates_state": ["player.credits", "player.unlockedLicenseIds", "player.financeLog"],
+      "calls": ["SimulationService._logTransaction", "UIManager.createFloatingText", "UIManager.queueModal"]
     }
   }
 }
