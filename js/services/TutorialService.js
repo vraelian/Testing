@@ -17,11 +17,13 @@ export class TutorialService {
      * @param {import('./UIManager.js').UIManager} uiManager The UI manager for rendering updates.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic simulator.
      * @param {object} navStructure The navigation structure from UIManager, used to map screens to nav tabs.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, uiManager, simulationService, navStructure) {
+    constructor(gameState, uiManager, simulationService, navStructure, logger) {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.simulationService = simulationService;
+        this.logger = logger;
         this.activeBatchId = null;
         this.activeStepId = null;
 
@@ -94,12 +96,12 @@ export class TutorialService {
             this.gameState.tutorials.seenBatchIds.push(batchId);
         }
 
+        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_START', `Starting tutorial batch: ${batchId}`);
         this.gameState.setState(this.gameState);
         this.uiManager.render(this.gameState.getState());
         
         const firstStepId = startStepId || batch.steps[0].stepId;
         this._displayStep(firstStepId);
-
     }
 
     /**
@@ -110,6 +112,7 @@ export class TutorialService {
         if (!this.gameState.tutorials.skippedTutorialBatches.includes(this.activeBatchId)) {
             this.gameState.tutorials.skippedTutorialBatches.push(this.activeBatchId);
         }
+        this.logger.info.player(this.gameState.day, 'TUTORIAL_SKIP', `Skipped tutorial: ${this.activeBatchId}`);
         this._endBatch();
         this.gameState.setState(this.gameState);
     }
@@ -119,17 +122,15 @@ export class TutorialService {
      */
     advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
-
         const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
         
         this.uiManager.hideTutorialToast();
-
         if (currentStep && currentStep.nextStepId) {
             this._displayStep(currentStep.nextStepId);
         } else {
             const completedBatchId = this.activeBatchId;
-            this._endBatch(); 
+            this._endBatch();
             // If the completed tutorial was part of the intro sequence, continue the sequence.
             if (this.gameState.introSequenceActive && completedBatchId?.startsWith('intro_')) {
                 this.simulationService._continueIntroSequence(completedBatchId);
@@ -170,6 +171,7 @@ export class TutorialService {
 
         this.activeStepId = stepId;
         this.gameState.tutorials.activeStepId = stepId;
+        this.logger.info.system('Tutorial', this.gameState.day, 'STEP_DISPLAY', `Displaying step: ${stepId}`);
         
         this.uiManager.showTutorialToast({
             step: step,
@@ -187,6 +189,7 @@ export class TutorialService {
      * @private
      */
     _endBatch() {
+        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_END', `Ending tutorial batch: ${this.activeBatchId}`);
         this.uiManager.hideTutorialToast();
         this.activeBatchId = null;
         this.activeStepId = null;

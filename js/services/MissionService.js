@@ -9,10 +9,12 @@ export class MissionService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state.
      * @param {import('./UIManager.js').UIManager} uiManager The UI manager instance.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, uiManager) {
+    constructor(gameState, uiManager, logger) {
         this.gameState = gameState;
         this.uiManager = uiManager;
+        this.logger = logger;
         this.simulationService = null; // Will be injected post-instantiation
     }
 
@@ -74,6 +76,7 @@ export class MissionService {
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
+        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId}`);
         this.simulationService.grantMissionCargo(missionId);
         this.checkTriggers(); // Run an initial check in case objectives are already met.
         this.uiManager.render(this.gameState.getState());
@@ -83,8 +86,12 @@ export class MissionService {
      * Abandons the currently active mission.
      */
     abandonMission() {
+        const abandonedMissionId = this.gameState.missions.activeMissionId;
+        if (!abandonedMissionId) return;
+
         this.gameState.missions.activeMissionId = null;
         this.gameState.missions.activeMissionObjectivesMet = false;
+        this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${abandonedMissionId}`);
         // Note: We keep missionProgress so the player doesn't lose partial progress if they re-accept.
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
@@ -136,6 +143,9 @@ export class MissionService {
     
         // Only update state and re-render if there's a change.
         if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet || progressChanged) {
+            if (allObjectivesMet && !this.gameState.missions.activeMissionObjectivesMet) {
+                this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${activeMissionId} are met.`);
+            }
             this.gameState.missions.activeMissionObjectivesMet = allObjectivesMet;
             this.gameState.setState({}); // Set the new state
             this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
@@ -166,7 +176,7 @@ export class MissionService {
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
-
+        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
