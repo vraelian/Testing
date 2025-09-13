@@ -15,7 +15,11 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 
 export class UIManager {
-    constructor() {
+    /**
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
+     */
+    constructor(logger) {
+        this.logger = logger;
         this.isMobile = window.innerWidth <= 768;
         this.modalQueue = [];
         this.activeGraphAnchor = null;
@@ -563,7 +567,7 @@ export class UIManager {
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         if (!modal) {
-            console.error(`UIManager Error: Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
+            this.logger.error('UIManager', `Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
             return this.processModalQueue();
         }
 
@@ -901,7 +905,7 @@ export class UIManager {
         const list = document.getElementById('tutorial-log-list');
 
         if (!logModal || !list) {
-            console.error('Tutorial log modal elements not found in DOM.');
+            this.logger.error('UIManager', 'Tutorial log modal elements not found in DOM.');
             return;
         }
 

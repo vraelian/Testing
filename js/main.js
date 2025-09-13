@@ -12,6 +12,7 @@
  * 5.  **EventManager.js**: Listens for all user inputs (clicks, keys, etc.). It translates these inputs into calls to the SimulationService, acting as the bridge between the UI and the game logic.
  * 6.  **TutorialService.js**: A specialized service that hooks into the game loop to trigger and manage interactive tutorials.
  * 7.  **MissionService.js**: Manages the state and progression of player missions.
+ * 8.  **LoggingService.js**: A centralized utility for all console output, supporting levels and categories.
  *
  * DATA FLOW:
  * ------------
@@ -26,6 +27,7 @@ import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
+import { Logger } from './services/LoggingService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -52,14 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         // --- Service Instantiation ---
         const gameState = new GameState();
-        const uiManager = new UIManager();
-        const missionService = new MissionService(gameState, uiManager);
-        const simulationService = new SimulationService(gameState, uiManager);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure);
+        const uiManager = new UIManager(Logger);
+        const missionService = new MissionService(gameState, uiManager, Logger);
+        const simulationService = new SimulationService(gameState, uiManager, Logger);
+        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(gameState, simulationService, uiManager);
+            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
         }
         
@@ -69,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));

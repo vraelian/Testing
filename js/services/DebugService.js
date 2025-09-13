@@ -5,6 +5,7 @@
  */
 import { DB } from '../data/database.js';
 import { LOCATION_IDS } from '../data/constants.js';
+import { Logger } from './LoggingService.js';
 
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.
@@ -14,10 +15,12 @@ class AutomatedPlayer {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService) {
+    constructor(gameState, simulationService, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
+        this.logger = logger;
         this.isRunning = false;
         this.stopRequested = false;
     }
@@ -30,7 +33,7 @@ class AutomatedPlayer {
      */
     async runSimulation({ daysToRun }, updateCallback) {
         if (this.isRunning) {
-            console.log("AUTOTRADER-01 is already running.");
+            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
             return;
         }
 
@@ -39,7 +42,7 @@ class AutomatedPlayer {
         const startDay = this.gameState.day;
         const endDay = startDay + daysToRun;
 
-        console.log(`%cAUTOTRADER-01: Starting simulation for ${daysToRun} days.`, 'color: cyan; font-weight: bold;');
+        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting simulation for ${daysToRun} days.`);
 
         while (this.gameState.day < endDay && !this.stopRequested) {
             const activeShip = this.simulationService._getActiveShip();
@@ -48,11 +51,11 @@ class AutomatedPlayer {
                 const healthPct = (activeShip.health / activeShip.maxHealth) * 100;
 
                 if (fuelPct < 30) {
-                    console.log(`%cAUTOTRADER-01: Low fuel (${fuelPct.toFixed(1)}%). Refueling at ${this.gameState.currentLocationId}.`, 'color: yellow;');
+                    this.logger.info.system('Bot', this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
                     this.simulationService.botRefuel();
                 }
                 if (healthPct < 30) {
-                    console.log(`%cAUTOTRADER-01: Low hull integrity (${healthPct.toFixed(1)}%). Repairing at ${this.gameState.currentLocationId}.`, 'color: orange;');
+                    this.logger.info.system('Bot', this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
                     this.simulationService.botRepair();
                 }
             }
@@ -60,6 +63,7 @@ class AutomatedPlayer {
             const bestTrade = this._findBestTradeRoute();
 
             if (bestTrade) {
+                this.logger.group(`[Bot] [Day ${this.gameState.day}] Executing Trade Route: ${bestTrade.goodId}`);
                 // Travel to buy location
                 if (this.gameState.currentLocationId !== bestTrade.buyLocationId) {
                     this.simulationService.initiateTravel(bestTrade.buyLocationId);
@@ -76,7 +80,7 @@ class AutomatedPlayer {
                 // Sell
                 const sellQty = this.simulationService._getActiveInventory()[bestTrade.goodId]?.quantity || 0;
                 if(sellQty > 0) this.simulationService.sellItem(bestTrade.goodId, sellQty);
-
+                this.logger.groupEnd();
             } else {
                 // No profitable trades, advance time to wait for market changes.
                 this.simulationService._advanceDays(1);
@@ -85,7 +89,7 @@ class AutomatedPlayer {
             await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to prevent browser freeze
         }
 
-        console.log(`%cAUTOTRADER-01: Simulation finished.`, 'color: cyan; font-weight: bold;');
+        this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
         this.isRunning = false;
     }
 
@@ -162,16 +166,18 @@ export class DebugService {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager) {
+    constructor(gameState, simulationService, uiManager, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
+        this.logger = logger;
         this.gui = null;
         this.active = false;
         this.actions = {};
         this.debugState = {}; // Holds state for GUI controllers
-        this.bot = new AutomatedPlayer(gameState, simulationService);
+        this.bot = new AutomatedPlayer(gameState, simulationService, logger);
     }
 
     /**
@@ -204,6 +210,39 @@ export class DebugService {
         this.active = !this.active;
         this.gui.domElement.style.display = this.active ? 'block' : 'none';
     }
+
+    /**
+     * Gathers log history and current game state, formats it, and copies it to the clipboard.
+     */
+    generateBugReport() {
+        const logHistory = this.logger.getLogHistory();
+        const gameState = this.gameState.getState();
+        
+        // Exclude bulky data from the state snapshot for a cleaner report
+        delete gameState.TRAVEL_DATA;
+        delete gameState.market.priceHistory;
+
+        const report = `
+ORBITAL TRADING - BUG REPORT
+==============================
+Date: ${new Date().toISOString()}
+
+--- GAME STATE SNAPSHOT ---
+${JSON.stringify(gameState, null, 2)}
+
+--- RECENT LOG HISTORY ---
+${logHistory}
+        `;
+        
+        navigator.clipboard.writeText(report.trim())
+            .then(() => {
+                this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
+            })
+            .catch(err => {
+                this.logger.error('DebugService', 'Failed to copy bug report.', err);
+            });
+    }
+
 
     /**
      * Creates the data-driven registry of all available debug actions.
@@ -384,15 +423,18 @@ export class DebugService {
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
 
-        // --- Automation Folder ---
-        const botFolder = this.gui.addFolder('Automation');
+        // --- Automation & Logging Folder ---
+        const automationFolder = this.gui.addFolder('Automation & Logging');
+        this.debugState.logLevel = 'INFO';
+        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
+        automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         this.debugState.botDaysToRun = 365;
         this.debugState.botProgress = 'Idle';
-        botFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
-        botFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
-        botFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
-        botFolder.add(this.debugState, 'botProgress').name('Progress').listen();
-
+        automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
+        automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
+        automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
+        automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
+        
         this.gui.folders.forEach(folder => folder.close());
     }
 }

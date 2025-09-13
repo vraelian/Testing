@@ -18,10 +18,12 @@ export class SimulationService {
     /**
      * @param {import('./GameState.js').GameState} gameState - The central state object.
      * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
+     * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      */
-    constructor(gameState, uiManager) {
+    constructor(gameState, uiManager, logger) {
         this.gameState = gameState;
         this.uiManager = uiManager;
+        this.logger = logger;
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
         this.marketService = new MarketService(gameState);
@@ -48,6 +50,7 @@ export class SimulationService {
      */
     startIntroSequence() {
         if (!this.gameState.introSequenceActive) return;
+        this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         this.gameState.player.introStep = 0;
         this._showNextIntroModal();
     }
@@ -164,6 +167,10 @@ export class SimulationService {
                 delete this.gameState.player.inventories[SHIP_IDS.WANDERER];
                 this.gameState.player.activeShipId = null;
 
+                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${playerName} accepted Guild loan.`, {
+                    debt: 25000,
+                    name: playerName
+                });
                 this._startProcessingSequence();
             }
         }
@@ -184,6 +191,7 @@ export class SimulationService {
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
                 this.gameState.player.credits += 25000;
+                this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
                     document.getElementById('game-container').classList.remove('hidden');
@@ -235,6 +243,7 @@ export class SimulationService {
      */
     _endIntroSequence() {
         this.gameState.introSequenceActive = false;
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
         const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
@@ -331,6 +340,7 @@ export class SimulationService {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
+        this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
 
         // Apply perk-based travel modifiers.
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
@@ -349,6 +359,7 @@ export class SimulationService {
         
         if (activeShip.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShip.fuel)}.`);
+            this.logger.warn('SimulationService', `Travel to ${locationId} aborted due to insufficient fuel after event mods.`);
             return;
         }
 
@@ -383,6 +394,11 @@ export class SimulationService {
         const destination = DB.MARKETS.find(m => m.id === locationId);
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
         
+        this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
+            fuelUsed: travelInfo.fuelCost,
+            hullDamage: totalHullDamagePercentForDisplay.toFixed(2) + '%'
+        });
+
         const finalCallback = () => {
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
                 this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
@@ -399,6 +415,7 @@ export class SimulationService {
      */
     resumeTravel() {
         if (!this.gameState.pendingTravel) return;
+        this.logger.info.system('Game', this.gameState.day, 'TRAVEL_RESUME', 'Resuming travel after event.');
         const { destinationId, ...eventMods } = this.gameState.pendingTravel;
         this.initiateTravel(destinationId, eventMods);
     }
@@ -478,6 +495,7 @@ export class SimulationService {
         playerInvItem.quantity += quantity;
         
         this.gameState.player.credits -= totalCost;
+        this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this._logConsolidatedTrade(good.name, quantity, -totalCost);
         this._checkMilestones();
         this.missionService.checkTriggers();
@@ -529,6 +547,7 @@ export class SimulationService {
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
         
+        this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
         this._checkMilestones();
@@ -577,6 +596,7 @@ export class SimulationService {
         }
         
         this.gameState.player.credits -= ship.price;
+        this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
         this._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.addShipToHangar(shipId);
         this.uiManager.queueModal('event-modal', "Acquisition Complete", `The ${ship.name} has been transferred to your hangar.`);
@@ -612,6 +632,7 @@ export class SimulationService {
         const ship = DB.SHIPS[shipId];
         const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
         this.gameState.player.credits += salePrice;
+        this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
         this._logTransaction('ship', salePrice, `Sold ${ship.name}`);
         
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
@@ -630,6 +651,7 @@ export class SimulationService {
     setActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
+        this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
 
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
@@ -651,6 +673,7 @@ export class SimulationService {
 
         const debtAmount = player.debt;
         player.credits -= debtAmount;
+        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
         player.debt = 0;
         player.monthlyInterestAmount = 0;
@@ -687,6 +710,7 @@ export class SimulationService {
 
         const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
+        this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});
     }
 
@@ -697,7 +721,7 @@ export class SimulationService {
      */
     purchaseLicense(licenseId) {
         const license = DB.LICENSES[licenseId];
-        const { player } = this.gameState;
+        const { player, day } = this.gameState;
 
         if (!license) return { success: false, error: 'INVALID_LICENSE' };
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
@@ -706,6 +730,7 @@ export class SimulationService {
         
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
+        this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this._logTransaction('license', -license.cost, `Purchased ${license.name}`);
         this.gameState.setState({});
         
@@ -724,6 +749,7 @@ export class SimulationService {
         }
         
         player.credits -= cost;
+        this.logger.info.player(day, 'INTEL_PURCHASE', `Purchased intel for ${formatCredits(cost)}.`);
         this._logTransaction('intel', -cost, 'Purchased market intel');
         this.gameState.intel.available[currentLocationId] = false;
 
@@ -797,43 +823,41 @@ export class SimulationService {
      * @private
      */
     _advanceDays(days) {
-        let marketUpdated = false;
-
+        this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
         for (let i = 0; i < days; i++) {
-            if (this.gameState.isGameOver) return;
+            if (this.gameState.isGameOver) {
+                this.logger.warn('SimulationService', 'Advance days aborted: Game is over.');
+                this.logger.groupEnd();
+                return;
+            }
             this.gameState.day++;
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
 
-            // Check for player's birthday to grant an experience bonus.
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
                 this.uiManager.queueModal('event-modal', `Captain ${this.gameState.player.name}`, `You are now ${this.gameState.player.playerAge}. You feel older and wiser.<br><br>Your experience now grants you an additional 1% profit on all trades.`);
+                this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 
             this._checkAgeEvents();
+            this.marketService.evolveMarketPrices();
 
-            // --- Daily Market Evolution ---
-            this.marketService.evolveMarketPrices(); // This now runs every day.
-
-            // The main weekly "tick" for updating market prices and stock.
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
                 this._updateShipyardStock();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
-                marketUpdated = true;
             }
 
-            // Expire old intel.
             if (this.gameState.intel.active && this.gameState.day > this.gameState.intel.active.endDay) {
+                this.logger.info.system('Intel', this.gameState.day, 'EXPIRED', 'Active intel has expired.');
                 this.gameState.intel.active = null;
             }
             
-            // Passively repair any ships the player owns but is not currently flying.
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
                     const ship = DB.SHIPS[shipId];
@@ -842,15 +866,16 @@ export class SimulationService {
                 }
             });
 
-            // Apply monthly interest to any outstanding debt.
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
                 const interest = this.gameState.player.monthlyInterestAmount;
                 this.gameState.player.debt += interest;
                 this._logTransaction('loan', interest, 'Monthly interest charge');
+                this.logger.info.system('Finance', this.gameState.day, 'INTEREST', `Charged ${formatCredits(interest)} interest on debt.`);
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
         }
         
+        this.logger.groupEnd();
         this.gameState.setState({});
     }
     
@@ -878,11 +903,12 @@ export class SimulationService {
         }
         
         if (!event) {
-            console.warn(`Debug event trigger failed for index: ${force}`);
+            this.logger.warn('SimulationService', `Debug event trigger failed for index: ${force}`);
             this.gameState.player.debugEventIndex = 0; // Reset index if out of bounds.
             return false;
         }
-
+        
+        this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         this.gameState.setState({ pendingTravel: { destinationId } });
         this.uiManager.showRandomEventModal(event, (eventId, choiceIndex) => this._resolveEventChoice(eventId, choiceIndex));
         return true;
@@ -911,6 +937,7 @@ export class SimulationService {
             }
         }
     
+        this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose '${choice.title}' for event '${event.title}'.`);
         this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
     }
 
@@ -940,6 +967,7 @@ export class SimulationService {
             if (this.gameState.player.seenEvents.includes(event.id)) return;
             if ((event.trigger.day && this.gameState.day >= event.trigger.day) || (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
                 this.gameState.player.seenEvents.push(event.id);
+                this.logger.info.state(this.gameState.day, 'AGE_EVENT', `Triggered age event: ${event.title}`);
                 this.uiManager.showAgeEventModal(event, (choice) => this._applyPerk(choice));
             }
         });
@@ -951,6 +979,7 @@ export class SimulationService {
      * @private
      */
     _applyPerk(choice) {
+        this.logger.info.player(this.gameState.day, 'PERK_APPLIED', `Gained perk: ${choice.title}`);
         if (choice.perkId) this.gameState.player.activePerks[choice.perkId] = true;
         if (choice.playerTitle) this.gameState.player.playerTitle = choice.playerTitle;
         if (choice.perkId === PERK_IDS.MERCHANT_GUILD_SHIP) {
@@ -1067,6 +1096,7 @@ export class SimulationService {
 
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
+            this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
             this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
             
             currentTier = nextMilestone.revealsTier;
@@ -1106,6 +1136,7 @@ export class SimulationService {
      */
     _handleShipDestruction(shipId) {
         const shipName = DB.SHIPS[shipId].name;
+        this.logger.error('SimulationService', `Ship ${shipName} was destroyed.`);
         this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
         delete this.gameState.player.shipStates[shipId];
         delete this.gameState.player.inventories[shipId];
@@ -1127,6 +1158,7 @@ export class SimulationService {
      * @private
      */
     _gameOver(message) {
+        this.logger.info.state(this.gameState.day, 'GAME_OVER', message);
         this.gameState.setState({ isGameOver: true });
         this.uiManager.queueModal('event-modal', "Game Over", message, () => {
             localStorage.removeItem(SAVE_KEY);
@@ -1151,6 +1183,7 @@ export class SimulationService {
                 const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits monthly until the debt is paid.";
                 this.uiManager.queueModal('event-modal', "Credit Garnishment Notice", msg, null, { buttonClass: 'bg-red-800/80' });
                 player.seenGarnishmentWarning = true;
+                this.logger.warn('Finance', `Loan delinquent. Garnishment of ${GAME_RULES.LOAN_GARNISHMENT_PERCENT * 100}% initiated.`);
             }
         }
     }
@@ -1208,6 +1241,7 @@ export class SimulationService {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
+                    this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }
         });
@@ -1225,7 +1259,7 @@ export class SimulationService {
 
         const inventory = this._getActiveInventory();
         if (!inventory) {
-            console.error("Cannot grant mission cargo: No active inventory found.");
+            this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory found.');
             return;
         }
 
@@ -1234,6 +1268,7 @@ export class SimulationService {
                 inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
             }
             inventory[cargo.goodId].quantity += cargo.quantity;
+            this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
         });
 
         if (this.missionService) {
@@ -1300,6 +1335,7 @@ export class SimulationService {
      * Debug function to achieve a "God Mode" state for testing.
      */
     debugGodMode() {
+        this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
         this.tutorialService.activeBatchId = null;
         this.tutorialService.activeStepId = null;

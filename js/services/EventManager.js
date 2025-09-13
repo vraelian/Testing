@@ -20,13 +20,15 @@ export class EventManager {
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
      * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
         this.debugService = debugService;
+        this.logger = logger;
         
         this.refuelInterval = null;
         this.repairInterval = null;
