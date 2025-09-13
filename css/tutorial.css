@@ -21,10 +21,20 @@
     background-size: 200px 100%;
     z-index: 100;
     max-width: 350px;
+    max-height: 250px; /* Set a max-height for the container */
+}
+
+/* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
+#tutorial-toast-container:not(.hidden) {
+    display: flex;
+    flex-direction: column;
 }
 
 #tutorial-toast-text {
     text-align: left;
+    overflow-y: auto; /* Allow vertical scrolling */
+    flex-grow: 1; /* Allow the text container to fill available space */
+    padding-right: 1rem; /* Add padding for the scrollbar */
 }
 
 .tutorial-highlight {
