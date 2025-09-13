@@ -25,7 +25,6 @@ export class SimulationService {
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
         this.marketService = new MarketService(gameState);
-        this.isProcessingIntro = false; // Guard for the intro submission race condition.
     }
 
     /**
@@ -142,22 +141,16 @@ export class SimulationService {
         const targetId = button.id;
         
         if (targetId === 'intro-next-btn') {
-            if (this.isProcessingIntro) return;
             button.disabled = true;
             this.gameState.player.introStep++;
             this._showNextIntroModal();
         } else if (targetId === 'intro-submit-btn') {
-            if (this.isProcessingIntro) return; // Guard against double execution
-            this.isProcessingIntro = true;
-
             button.disabled = true;
             const input = document.getElementById('signature-input');
             let playerName = input.value.trim().replace(/[^a-zA-Z0-9 ]/g, '');
-
             if (!playerName) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a name on the contract. Please provide your legal mark.");
                 button.disabled = false;
-                this.isProcessingIntro = false; // Reset guard on failure
                 this._showNextIntroModal(); // Re-show signature modal.
             } else {
                 this.gameState.player.name = playerName;
@@ -242,7 +235,6 @@ export class SimulationService {
      */
     _endIntroSequence() {
         this.gameState.introSequenceActive = false;
-        this.isProcessingIntro = false; // Reset guard at the end of the full sequence.
         const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
         const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
@@ -1308,10 +1300,6 @@ export class SimulationService {
      * Debug function to achieve a "God Mode" state for testing.
      */
     debugGodMode() {
-        console.log('%c[DEBUG] 🚀 GOD MODE ACTIVATED 🚀', 'color: red; font-size: 20px; font-weight: bold;');
-        const e = new Error();
-        console.log(e.stack); // Log the call stack
-        
         this.gameState.introSequenceActive = false;
         this.tutorialService.activeBatchId = null;
         this.tutorialService.activeStepId = null;
