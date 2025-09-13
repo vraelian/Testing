@@ -39,6 +39,7 @@ export class EventManager {
      * This includes click delegation, tooltip handling, and hold-to-act button logic.
      */
     bindEvents() {
+        console.log('%cEventManager: Binding events...', 'color: #f0f; font-weight: bold;');
         document.body.addEventListener('click', (e) => this._handleClick(e));
         document.body.addEventListener('dblclick', (e) => e.preventDefault()); // Prevents double-tap zoom on mobile.
         document.body.addEventListener('mouseover', (e) => this._handleMouseOver(e));
@@ -114,6 +115,7 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
+        console.log(`%c[EVENT] Click detected. Target:`, 'color: #0f0;', e.target);
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         
