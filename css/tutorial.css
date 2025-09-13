@@ -22,7 +22,22 @@
     z-index: 100;
     max-width: 350px;
     max-height: 250px; /* Set a max-height for the container */
+    position: relative; /* Needed for the ::after pseudo-element */
+    padding-bottom: 2rem; /* Add padding to the bottom for the next button */
 }
+
+/* Fader effect */
+#tutorial-toast-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem; /* Height of the fade */
+    background: linear-gradient(to bottom, transparent, rgba(13, 42, 42, 0.95));
+    pointer-events: none; /* Allows clicking through the fade */
+}
+
 
 /* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
 #tutorial-toast-container:not(.hidden) {
@@ -36,6 +51,24 @@
     flex-grow: 1; /* Allow the text container to fill available space */
     padding-right: 1rem; /* Add padding for the scrollbar */
 }
+
+/* Custom Scrollbar Styling */
+#tutorial-toast-text::-webkit-scrollbar {
+    width: 8px;
+}
+
+#tutorial-toast-text::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#tutorial-toast-text::-webkit-scrollbar-thumb {
+    background-color: #fde047;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
 
 .tutorial-highlight {
     position: relative;

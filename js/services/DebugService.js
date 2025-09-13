@@ -179,7 +179,7 @@ export class DebugService {
      */
     init() {
         if (this.gui) return;
-        this.gui = new lil.GUI();
+        this.gui = new lil.GUI({ save: false });
         this.gui.domElement.style.display = 'none';
         this._registerDebugActions();
         this.buildGui();
