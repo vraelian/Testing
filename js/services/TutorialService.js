@@ -122,15 +122,17 @@ export class TutorialService {
      */
     advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
+
         const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
         
         this.uiManager.hideTutorialToast();
+
         if (currentStep && currentStep.nextStepId) {
             this._displayStep(currentStep.nextStepId);
         } else {
             const completedBatchId = this.activeBatchId;
-            this._endBatch();
+            this._endBatch(); 
             // If the completed tutorial was part of the intro sequence, continue the sequence.
             if (this.gameState.introSequenceActive && completedBatchId?.startsWith('intro_')) {
                 this.simulationService._continueIntroSequence(completedBatchId);
