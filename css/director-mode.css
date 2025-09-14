@@ -5,10 +5,77 @@
     "Director Mode" visual tutorial editor.
 */
 
-/* Styles for the main overlay canvas will go here. */
+#director-mode-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 500; /* High z-index to be on top of game UI */
+    pointer-events: none; /* Allows clicks to pass through to the game UI below */
+    background-color: rgba(12, 16, 29, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+#director-mode-overlay.interactive {
+    pointer-events: all; /* When active, it should capture mouse events */
+}
+
+#director-toolkit {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 501;
+    background-color: #1f2937;
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    padding: 1rem;
+    color: #e5e7eb;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+/* --- Cue Styles --- */
+.director-cue {
+    position: absolute;
+    cursor: move;
+    transition: all 0.1s;
+    transform-origin: center;
+}
+
+.director-cue .cue-frame {
+    width: 100%;
+    height: 100%;
+    border: 3px dashed rgba(250, 204, 21, 0.7);
+    box-sizing: border-box;
+}
+
+.director-cue.selected .cue-frame {
+    border-style: solid;
+    border-color: #fde047;
+    box-shadow: 0 0 15px #fde047;
+}
+
+.director-cue svg {
+    overflow: visible;
+}
+
+.director-cue.selected svg line {
+    filter: drop-shadow(0 0 5px #fde047);
+}
 
 
-/* Styles for the Director's Toolkit GUI panel will go here. */
+.resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fde047;
+    border: 1px solid #1f2937;
+    border-radius: 50%;
+}
 
-
-/* Styles for the individual SVG cues (arrows, frames, etc.) will go here. */
+.resize-handle.br {
+    bottom: -5px;
+    right: -5px;
+    cursor: se-resize;
+}

@@ -48,6 +48,11 @@ export class EventManager {
         document.body.addEventListener('mouseover', (e) => this._handleMouseOver(e));
         document.body.addEventListener('mouseout', (e) => this._handleMouseOut(e));
         document.addEventListener('keydown', (e) => this._handleKeyDown(e));
+        document.body.addEventListener('mousemove', (e) => {
+            if (this.directorModeService?.isActive) {
+                this.directorModeService.handleInput(e);
+            }
+        });
 
         // Add a new input event listener for real-time quantity updates.
         document.body.addEventListener('input', (e) => {
