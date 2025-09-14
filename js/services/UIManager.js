@@ -93,6 +93,7 @@ export class UIManager {
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
             directorModeOverlay: document.getElementById('director-mode-overlay'),
             directorToolkit: document.getElementById('director-toolkit'),
+            tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
         };
     }
 
@@ -887,7 +888,54 @@ export class UIManager {
         this.applyTutorialHighlight(null);
     }
     
-    applyTutorialHighlight(step) {
+    applyTutorialHighlight(highlightConfig) {
+        const overlay = this.cache.tutorialHighlightOverlay;
+        if (!overlay) return;
+
+        overlay.innerHTML = ''; // Clear previous highlights
+        if (!highlightConfig) {
+            overlay.classList.add('hidden');
+            return;
+        }
+
+        overlay.classList.remove('hidden');
+
+        highlightConfig.forEach(cue => {
+            const el = document.createElement('div');
+            el.className = 'tutorial-cue';
+            el.style.left = `${cue.x}px`;
+            el.style.top = `${cue.y}px`;
+            el.style.width = `${cue.width}px`;
+            el.style.height = `${cue.height}px`;
+            el.style.transform = `rotate(${cue.rotation}deg)`;
+            el.style.opacity = cue.style.opacity;
+
+            if (cue.style.animation !== 'None') {
+                el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+            }
+
+            let content = '';
+            if (cue.type === 'Frame') {
+                content = `<div class="cue-frame" style="border-color: ${cue.style.stroke}; border-width: ${cue.style.strokeWidth}px; background-color: ${cue.style.fill};"></div>`;
+            } else if (cue.type === 'Arrow') {
+                 content = `
+                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
+                        <defs>
+                            <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
+                            </marker>
+                        </defs>
+                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
+                    </svg>
+                `;
+            } else if (cue.type === 'Spotlight') {
+                el.style.borderRadius = '50%';
+                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px 10px ${cue.style.stroke}`;
+            }
+
+            el.innerHTML = content;
+            overlay.appendChild(el);
+        });
     }
 
     showSkipTutorialModal(onConfirm) {

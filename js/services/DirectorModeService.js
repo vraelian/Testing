@@ -67,6 +67,7 @@ export class DirectorModeService {
         const actions = {
             addFrame: () => this.addCue({ type: 'Frame' }),
             addArrow: () => this.addCue({ type: 'Arrow' }),
+            addSpotlight: () => this.addCue({ type: 'Spotlight' }),
             deleteCue: () => this.deleteSelectedCue(),
             copyConfig: () => this.copyConfigToClipboard(),
         };
@@ -74,10 +75,12 @@ export class DirectorModeService {
         const creationFolder = this.toolkit.addFolder('Creation');
         creationFolder.add(actions, 'addFrame').name('Add Frame');
         creationFolder.add(actions, 'addArrow').name('Add Arrow');
+        creationFolder.add(actions, 'addSpotlight').name('Add Spotlight');
         
-        const mainFolder = this.toolkit.addFolder('Cue Properties');
-        mainFolder.add(actions, 'deleteCue').name('Delete Selected');
+        this.toolkit.addFolder('Cue Properties');
+        this.toolkit.addFolder('Style');
         
+        this.toolkit.add(actions, 'deleteCue').name('Delete Selected');
         this.toolkit.add(actions, 'copyConfig').name('Copy Config to Clipboard');
     }
 
@@ -93,10 +96,16 @@ export class DirectorModeService {
             tutorialStepId: '',
             x: 100,
             y: 100,
-            width: type === 'Arrow' ? 100 : 200,
-            height: type === 'Arrow' ? 50 : 100,
+            width: type === 'Arrow' ? 100 : 150,
+            height: type === 'Arrow' ? 50 : 150,
             rotation: 0,
-            color: '#fde047',
+            style: {
+                fill: 'rgba(253, 224, 71, 0.2)',
+                stroke: '#fde047',
+                strokeWidth: 3,
+                opacity: 1,
+                animation: 'None'
+            }
         };
         this.cues.push(newCue);
         this.selectCue(newCue);
@@ -125,24 +134,33 @@ export class DirectorModeService {
      * Updates the toolkit controllers to reflect the currently selected cue.
      */
     updateToolkit() {
-        // Clear previous controllers
         this.cueControllers.forEach(controller => controller.destroy());
         this.cueControllers = [];
+        const cueFolder = this.toolkit.folders.find(f => f._title === 'Cue Properties');
+        const styleFolder = this.toolkit.folders.find(f => f._title === 'Style');
+        cueFolder.children.forEach(c => c.destroy());
+        styleFolder.children.forEach(c => c.destroy());
 
         if (this.selectedCue) {
-            const cueFolder = this.toolkit.folders.find(f => f._title === 'Cue Properties') || this.toolkit;
-
-            this.cueControllers.push(cueFolder.add(this.selectedCue, 'tutorialStepId').name('Step ID'));
-            this.cueControllers.push(cueFolder.add(this.selectedCue, 'x', 0, window.innerWidth).name('X').listen());
-            this.cueControllers.push(cueFolder.add(this.selectedCue, 'y', 0, window.innerHeight).name('Y').listen());
+            const cue = this.selectedCue;
+            this.cueControllers.push(cueFolder.add(cue, 'tutorialStepId').name('Step ID'));
+            this.cueControllers.push(cueFolder.add(cue, 'x', 0, window.innerWidth).name('X').listen());
+            this.cueControllers.push(cueFolder.add(cue, 'y', 0, window.innerHeight).name('Y').listen());
+            this.cueControllers.push(cueFolder.add(cue, 'width', 10, 500).name('Width').listen());
+            this.cueControllers.push(cueFolder.add(cue, 'height', 10, 500).name('Height').listen());
             
-            if (this.selectedCue.type === 'Arrow') {
-                 this.cueControllers.push(cueFolder.add(this.selectedCue, 'rotation', 0, 360, 1).name('Rotation').listen());
+            if (cue.type === 'Arrow') {
+                 this.cueControllers.push(cueFolder.add(cue, 'rotation', 0, 360, 1).name('Rotation').listen());
             }
 
-            this.cueControllers.push(cueFolder.add(this.selectedCue, 'width', 10, 500).name('Width').listen());
-            this.cueControllers.push(cueFolder.add(this.selectedCue, 'height', 10, 500).name('Height').listen());
-            this.cueControllers.push(cueFolder.addColor(this.selectedCue, 'color').name('Color'));
+            this.cueControllers.push(styleFolder.addColor(cue.style, 'fill').name('Fill Color'));
+            this.cueControllers.push(styleFolder.addColor(cue.style, 'stroke').name('Stroke Color'));
+            this.cueControllers.push(styleFolder.add(cue.style, 'strokeWidth', 0, 10, 1).name('Stroke Width'));
+            this.cueControllers.push(styleFolder.add(cue.style, 'opacity', 0, 1, 0.1).name('Opacity'));
+            this.cueControllers.push(styleFolder.add(cue.style, 'animation', ['None', 'Pulse', 'Glow']).name('Animation'));
+
+            // Re-render whenever a property is changed in the GUI
+            this.cueControllers.forEach(c => c.onChange(() => this.render()));
         }
     }
 
@@ -190,7 +208,6 @@ export class DirectorModeService {
                     this.selectedCue.width = Math.max(10, this.actionState.originalWidth + dx);
                     this.selectedCue.height = Math.max(10, this.actionState.originalHeight + dy);
                 }
-                // No need to call render() here as lil-gui's listen() will do it.
                 break;
             case 'mouseup':
             case 'mouseleave':
@@ -217,21 +234,28 @@ export class DirectorModeService {
             el.style.width = `${cue.width}px`;
             el.style.height = `${cue.height}px`;
             el.style.transform = `rotate(${cue.rotation}deg)`;
+            el.style.opacity = cue.style.opacity;
+
+            if (cue.style.animation !== 'None') {
+                el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+            }
 
             let content = '';
             if (cue.type === 'Frame') {
-                content = `<div class="cue-frame" style="border-color: ${cue.color};"></div>`;
+                content = `<div class="cue-frame" style="border-color: ${cue.style.stroke}; border-width: ${cue.style.strokeWidth}px; background-color: ${cue.style.fill};"></div>`;
             } else if (cue.type === 'Arrow') {
                 content = `
-                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
                         <defs>
                             <marker id="arrowhead-${cue.id}" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.color}" />
+                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
                             </marker>
                         </defs>
-                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.color}" stroke-width="5" marker-end="url(#arrowhead-${cue.id})" />
+                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-${cue.id})" />
                     </svg>
                 `;
+            } else if (cue.type === 'Spotlight') {
+                content = `<div class="cue-spotlight" style="box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px 10px ${cue.style.stroke}; border-radius: 50%;"></div>`
             }
 
             if (this.selectedCue && this.selectedCue.id === cue.id) {

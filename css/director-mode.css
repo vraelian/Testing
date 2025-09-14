@@ -5,6 +5,16 @@
     "Director Mode" visual tutorial editor.
 */
 
+@keyframes director-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes director-glow {
+    0%, 100% { filter: drop-shadow(0 0 3px var(--glow-color)); }
+    50% { filter: drop-shadow(0 0 10px var(--glow-color)); }
+}
+
 #director-mode-overlay {
     position: fixed;
     top: 0;
@@ -43,6 +53,15 @@
     transform-origin: center;
 }
 
+.director-cue.anim-pulse {
+    animation: director-pulse 2s infinite ease-in-out;
+}
+.director-cue.anim-glow {
+    --glow-color: #fde047; /* Default, will be overridden by JS */
+    animation: director-glow 2s infinite ease-in-out;
+}
+
+
 .director-cue .cue-frame {
     width: 100%;
     height: 100%;
@@ -56,11 +75,20 @@
     box-shadow: 0 0 15px #fde047;
 }
 
-.director-cue svg {
-    overflow: visible;
+.director-cue .cue-spotlight {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
 }
 
-.director-cue.selected svg line {
+.director-cue svg {
+    overflow: visible;
+    width: 100%;
+    height: 100%;
+}
+
+.director-cue.selected svg line,
+.director-cue.selected svg polygon {
     filter: drop-shadow(0 0 5px #fde047);
 }
 
@@ -72,6 +100,7 @@
     background: #fde047;
     border: 1px solid #1f2937;
     border-radius: 50%;
+    z-index: 10;
 }
 
 .resize-handle.br {
