@@ -832,6 +832,11 @@ export class UIManager {
         svg += `</svg>`;
         return svg;
     }
+
+    _updateScrollIndicator(container) {
+        // This function is no longer needed with the CSS-only scrollbar solution.
+    }
+    
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         
