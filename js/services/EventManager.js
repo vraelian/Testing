@@ -20,14 +20,16 @@ export class EventManager {
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
      * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
+     * @param {import('./DirectorModeService.js').DirectorModeService} [directorModeService=null] The visual tutorial editor service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, directorModeService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
         this.debugService = debugService;
+        this.directorModeService = directorModeService;
         this.logger = logger;
         
         this.refuelInterval = null;
@@ -49,6 +51,7 @@ export class EventManager {
 
         // Add a new input event listener for real-time quantity updates.
         document.body.addEventListener('input', (e) => {
+            if (this.directorModeService?.isActive) return;
             const qtyInput = e.target.closest('.transaction-controls input[type="number"]');
             if (qtyInput) {
                 const controls = qtyInput.closest('.transaction-controls');
@@ -61,6 +64,10 @@ export class EventManager {
         
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
+            if (this.directorModeService?.isActive) {
+                this.directorModeService.handleInput(e);
+                return;
+            }
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) this._startRefueling();
 
@@ -68,6 +75,10 @@ export class EventManager {
             if (repairBtn) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
+            if (this.directorModeService?.isActive) {
+                this.directorModeService.handleInput(e);
+                return;
+            }
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) { 
                 e.preventDefault(); 
@@ -82,7 +93,11 @@ export class EventManager {
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            document.addEventListener(evt, () => {
+            document.addEventListener(evt, (e) => {
+                if (this.directorModeService?.isActive) {
+                    this.directorModeService.handleInput(e);
+                    return;
+                }
                 this._stopRefueling();
                 this._stopRepairing();
             });
@@ -104,6 +119,7 @@ export class EventManager {
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
+                if (this.directorModeService?.isActive) return;
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
@@ -116,6 +132,12 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
+        // If Director Mode is active, it intercepts all clicks and handles them.
+        if (this.directorModeService?.isActive) {
+            this.directorModeService.handleInput(e);
+            return;
+        }
+
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         

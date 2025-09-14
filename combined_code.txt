@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 25.20</title>
+    <title>Orbital Trading 25.25</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
     <link rel="stylesheet" href="./css/debug.css">
+    <link rel="stylesheet" href="./css/director-mode.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
@@ -36,7 +37,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 25.20</p>
+            <p>Version 25.25</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -206,6 +207,9 @@
 
     <div id="graph-tooltip"></div>
     <div id="generic-tooltip" class="generic-tooltip"></div>
+    
+    <div id="director-mode-overlay" class="hidden"></div>
+    <div id="director-toolkit" class="hidden"></div>
 
 
     <script type="module" src="./js/main.js"></script>
@@ -584,6 +588,25 @@
 .lore-tooltip::-webkit-scrollbar, .tutorial-tooltip::-webkit-scrollbar {
     display: none;
 }
+
+/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
+#tutorial-toast-text::-webkit-scrollbar {
+  width: 8px;
+}
+#tutorial-toast-text::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb {
+  background-color: #d4af37;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb:hover {
+  background-color: #fde047;
+}
+/* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
 
 @media (max-width: 768px) {
     #tutorial-toast-container {
@@ -1166,6 +1189,22 @@ body {
     }
 }
 --- END OF FILE: ./css/global.css ---
+--- START OF FILE: ./css/director-mode.css ---
+/* css/director-mode.css */
+
+/*
+    This file will contain all the CSS rules for the development-only
+    "Director Mode" visual tutorial editor.
+*/
+
+/* Styles for the main overlay canvas will go here. */
+
+
+/* Styles for the Director's Toolkit GUI panel will go here. */
+
+
+/* Styles for the individual SVG cues (arrows, frames, etc.) will go here. */
+--- END OF FILE: ./css/director-mode.css ---
 --- START OF FILE: ./css/modals.css ---
 /* css/modals.css */
 .modal-visible {
@@ -3068,6 +3107,7 @@ import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
+import { DirectorModeService } from './services/DirectorModeService.js';
 import { Logger } from './services/LoggingService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -3100,9 +3140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const simulationService = new SimulationService(gameState, uiManager, Logger);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
+        let directorModeService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
+            directorModeService = new DirectorModeService(uiManager, Logger);
+            debugService = new DebugService(gameState, simulationService, uiManager, directorModeService, Logger);
             debugService.init();
         }
         
@@ -3112,7 +3154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, directorModeService, Logger);
         
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
@@ -4111,6 +4153,67 @@ export const DB = {
     }
 };
 --- END OF FILE: ./js/data/database.js ---
+--- START OF FILE: ./js/services/DirectorModeService.js ---
+// js/services/DirectorModeService.js
+/**
+ * @fileoverview This file contains the DirectorModeService class, a development-only tool
+ * for visually creating and configuring tutorial highlights and cues directly on the game screen.
+ */
+
+/**
+ * @class DirectorModeService
+ * @description Manages the UI and logic for the visual tutorial editor.
+ */
+export class DirectorModeService {
+    /**
+     * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
+     */
+    constructor(uiManager, logger) {
+        this.uiManager = uiManager;
+        this.logger = logger;
+        this.isActive = false;
+    }
+
+    /**
+     * Toggles the visibility of the Director Mode overlay and toolkit.
+     */
+    toggleVisibility() {
+        this.isActive = !this.isActive;
+        if (this.isActive) {
+            this.uiManager.showDirectorMode();
+            this.logger.info.system('DirectorMode', 'SYSTEM', 'ACTIVATED', 'Visual tutorial editor is now active.');
+        } else {
+            this.uiManager.hideDirectorMode();
+            this.logger.info.system('DirectorMode', 'SYSTEM', 'DEACTIVATED', 'Visual tutorial editor is now inactive.');
+        }
+    }
+
+    /**
+     * Handles all user input events when Director Mode is active.
+     * @param {Event} e The input event object (e.g., click, mousedown, mousemove).
+     */
+    handleInput(e) {
+        if (!this.isActive) return;
+
+        // Logic for creating, dragging, resizing, and selecting cues will be added here in future phases.
+        // For now, we can log the event to confirm it's being correctly routed.
+        if (e.type === 'click') {
+            const target = e.target.closest('[data-tth-target]') || e.target;
+            this.logger.info.system('DirectorMode', 'INPUT', `Click event captured on:`, target);
+        }
+    }
+
+    /**
+     * Renders all visual cues on the SVG overlay.
+     * This will be called by the UIManager during its render loop.
+     */
+    render() {
+        if (!this.isActive) return;
+        // Logic to draw arrows, frames, and other cues on the SVG canvas will be added here.
+    }
+}
+--- END OF FILE: ./js/services/DirectorModeService.js ---
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
 /**
@@ -4280,12 +4383,14 @@ export class DebugService {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('./DirectorModeService.js').DirectorModeService} directorModeService The visual tutorial editor service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, logger) {
+    constructor(gameState, simulationService, uiManager, directorModeService, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
+        this.directorModeService = directorModeService;
         this.logger = logger;
         this.gui = null;
         this.active = false;
@@ -4369,6 +4474,11 @@ ${logHistory}
                 name: 'God Mode',
                 type: 'button',
                 handler: () => this.simulationService.debugGodMode()
+            },
+            directorMode: {
+                name: 'Director Mode',
+                type: 'button',
+                handler: () => this.directorModeService.toggleVisibility()
             },
             // --- Player Actions ---
             addCredits: {
@@ -4497,6 +4607,7 @@ ${logHistory}
         // --- Game Flow Folder ---
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
+        flowFolder.add(this.actions.directorMode, 'handler').name(this.actions.directorMode.name);
 
         // --- Player Folder ---
         const playerFolder = this.gui.addFolder('Player');
@@ -6665,14 +6776,16 @@ export class EventManager {
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
      * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
+     * @param {import('./DirectorModeService.js').DirectorModeService} [directorModeService=null] The visual tutorial editor service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, directorModeService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
         this.tutorialService = tutorialService;
         this.debugService = debugService;
+        this.directorModeService = directorModeService;
         this.logger = logger;
         
         this.refuelInterval = null;
@@ -6694,6 +6807,7 @@ export class EventManager {
 
         // Add a new input event listener for real-time quantity updates.
         document.body.addEventListener('input', (e) => {
+            if (this.directorModeService?.isActive) return;
             const qtyInput = e.target.closest('.transaction-controls input[type="number"]');
             if (qtyInput) {
                 const controls = qtyInput.closest('.transaction-controls');
@@ -6706,6 +6820,10 @@ export class EventManager {
         
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
+            if (this.directorModeService?.isActive) {
+                this.directorModeService.handleInput(e);
+                return;
+            }
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) this._startRefueling();
 
@@ -6713,6 +6831,10 @@ export class EventManager {
             if (repairBtn) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
+            if (this.directorModeService?.isActive) {
+                this.directorModeService.handleInput(e);
+                return;
+            }
             const refuelBtn = e.target.closest('#refuel-btn');
             if (refuelBtn) { 
                 e.preventDefault(); 
@@ -6727,7 +6849,11 @@ export class EventManager {
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            document.addEventListener(evt, () => {
+            document.addEventListener(evt, (e) => {
+                if (this.directorModeService?.isActive) {
+                    this.directorModeService.handleInput(e);
+                    return;
+                }
                 this._stopRefueling();
                 this._stopRepairing();
             });
@@ -6749,6 +6875,7 @@ export class EventManager {
         const missionStickyBar = document.getElementById('mission-sticky-bar');
         if (missionStickyBar) {
             missionStickyBar.addEventListener('click', () => {
+                if (this.directorModeService?.isActive) return;
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
@@ -6761,6 +6888,12 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
+        // If Director Mode is active, it intercepts all clicks and handles them.
+        if (this.directorModeService?.isActive) {
+            this.directorModeService.handleInput(e);
+            return;
+        }
+
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         
@@ -7813,6 +7946,8 @@ export class UIManager {
             skipTutorialModal: document.getElementById('skip-tutorial-modal'),
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
+            directorModeOverlay: document.getElementById('director-mode-overlay'),
+            directorToolkit: document.getElementById('director-toolkit'),
         };
     }
 
@@ -8554,6 +8689,11 @@ export class UIManager {
         svg += `</svg>`;
         return svg;
     }
+
+    _updateScrollIndicator(container) {
+        // This function is no longer needed with the CSS-only scrollbar solution.
+    }
+    
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         
@@ -8929,12 +9069,25 @@ export class UIManager {
             }, 700);
         }
     }
+
+    showDirectorMode() {
+        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.remove('hidden');
+        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.remove('hidden');
+    }
+
+    hideDirectorMode() {
+        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.add('hidden');
+        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.add('hidden');
+    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [25.20] - 2025-09-13
+- scrollbar indicator
 
 ## [25.20] - 2025-09-13
 - console debug diagnostic tools

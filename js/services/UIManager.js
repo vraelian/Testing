@@ -91,6 +91,8 @@ export class UIManager {
             skipTutorialModal: document.getElementById('skip-tutorial-modal'),
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
+            directorModeOverlay: document.getElementById('director-mode-overlay'),
+            directorToolkit: document.getElementById('director-toolkit'),
         };
     }
 
@@ -1211,5 +1213,15 @@ export class UIManager {
                 progressEl.classList.remove('objective-progress-flash');
             }, 700);
         }
+    }
+
+    showDirectorMode() {
+        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.remove('hidden');
+        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.remove('hidden');
+    }
+
+    hideDirectorMode() {
+        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.add('hidden');
+        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.add('hidden');
     }
 }
