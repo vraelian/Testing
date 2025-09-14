@@ -30,6 +30,13 @@ export class DirectorModeService {
             originalWidth: 0,
             originalHeight: 0,
         };
+        this.toolkitActionState = {
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            originalX: 0,
+            originalY: 0,
+        };
         this.toolkit = null;
         this.cueControllers = [];
     }
@@ -62,8 +69,12 @@ export class DirectorModeService {
         this.toolkit = new lil.GUI({
             container: this.uiManager.cache.directorToolkit,
             title: 'Director\'s Toolkit',
-            draggable: true
+            draggable: false // Disable internal dragging
         });
+
+        const handle = document.createElement('div');
+        handle.className = 'drag-handle';
+        this.uiManager.cache.directorToolkit.appendChild(handle);
 
         this.actions = {
             addFrame: () => this.addCue({ type: 'Frame' }),
@@ -187,14 +198,24 @@ export class DirectorModeService {
      * @param {Event} e The input event object (e.g., click, mousedown, mousemove).
      */
     handleInput(e) {
-        if (!this.isActive) return;
+        if (!this.isActive || !e.target || typeof e.target.closest !== 'function') return;
 
         const target = e.target;
+        const isDragHandle = target.classList.contains('drag-handle');
         const cueElement = target.closest('.director-cue');
+        const toolkitEl = this.uiManager.cache.directorToolkit;
 
         switch (e.type) {
             case 'mousedown':
-                if (cueElement) {
+                if (isDragHandle) {
+                    this.toolkitActionState.isDragging = true;
+                    this.toolkitActionState.startX = e.clientX;
+                    this.toolkitActionState.startY = e.clientY;
+                    const rect = toolkitEl.getBoundingClientRect();
+                    this.toolkitActionState.originalX = rect.left;
+                    this.toolkitActionState.originalY = rect.top;
+                    e.preventDefault();
+                } else if (cueElement) {
                     const cue = this.cues.find(c => c.id === cueElement.dataset.id);
                     this.selectCue(cue);
 
@@ -215,22 +236,32 @@ export class DirectorModeService {
                 }
                 break;
             case 'mousemove':
-                if (!this.selectedCue) return;
-                const dx = e.clientX - this.actionState.startX;
-                const dy = e.clientY - this.actionState.startY;
+                if (this.toolkitActionState.isDragging) {
+                    const dx = e.clientX - this.toolkitActionState.startX;
+                    const dy = e.clientY - this.toolkitActionState.startY;
+                    toolkitEl.style.left = `${this.toolkitActionState.originalX + dx}px`;
+                    toolkitEl.style.top = `${this.toolkitActionState.originalY + dy}px`;
+                    toolkitEl.style.right = 'auto';
+                    toolkitEl.style.bottom = 'auto';
+                } else if (this.actionState.isDragging || this.actionState.isResizing) {
+                     if (!this.selectedCue) return;
+                    const dx = e.clientX - this.actionState.startX;
+                    const dy = e.clientY - this.actionState.startY;
 
-                if (this.actionState.isDragging) {
-                    this.selectedCue.x = this.actionState.originalX + dx;
-                    this.selectedCue.y = this.actionState.originalY + dy;
-                } else if (this.actionState.isResizing) {
-                    this.selectedCue.width = Math.max(10, this.actionState.originalWidth + dx);
-                    this.selectedCue.height = Math.max(10, this.actionState.originalHeight + dy);
+                    if (this.actionState.isDragging) {
+                        this.selectedCue.x = this.actionState.originalX + dx;
+                        this.selectedCue.y = this.actionState.originalY + dy;
+                    } else if (this.actionState.isResizing) {
+                        this.selectedCue.width = Math.max(10, this.actionState.originalWidth + dx);
+                        this.selectedCue.height = Math.max(10, this.actionState.originalHeight + dy);
+                    }
                 }
                 break;
             case 'mouseup':
             case 'mouseleave':
                 this.actionState.isDragging = false;
                 this.actionState.isResizing = false;
+                this.toolkitActionState.isDragging = false;
                 break;
         }
     }

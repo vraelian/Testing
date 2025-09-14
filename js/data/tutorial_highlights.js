@@ -6,25 +6,25 @@
  */
 
 export const TUTORIAL_HIGHLIGHTS = {
-  // Example of what the data will look like once you export it:
-  /*
-    "mission_1_2": [
-      {
-        "type": "Arrow",
-        "tutorialStepId": "mission_1_2",
-        "x": 450,
-        "y": 200,
-        "width": 100,
-        "height": 50,
-        "rotation": 0,
-        "style": {
-          "fill": "rgba(253, 224, 71, 0.2)",
-          "stroke": "#fde047",
-          "strokeWidth": 3,
-          "opacity": 1,
-          "animation": "Glow"
-        }
+  "hangar_1": [
+    {
+      "type": "Frame",
+      "tutorialStepId": "hangar_1",
+      "x": 21.2,
+      "y": 135.468,
+      "width": 361.62,
+      "height": 403.76,
+      "rotation": 0,
+      "style": {
+        "fill": "rgba(253, 224, 71, 0.0)",
+        "stroke": "#ffdf0f",
+        "strokeWidth": 1,
+        "opacity": 0.5,
+        "animation": "Glow",
+        "animationSpeed": 3,
+        "glowColor": "#ffdf0f",
+        "glowIntensity": 21
       }
-    ]
-  */
+    }
+  ]
 };

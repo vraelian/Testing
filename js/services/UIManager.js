@@ -913,6 +913,8 @@ export class UIManager {
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
                 el.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
+                el.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
+                el.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
             }
 
             let content = '';

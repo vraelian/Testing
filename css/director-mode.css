@@ -12,7 +12,7 @@
 
 @keyframes director-glow {
     0%, 100% { filter: drop-shadow(0 0 3px var(--glow-color)); }
-    50% { filter: drop-shadow(0 0 10px var(--glow-color)); }
+    50% { filter: drop-shadow(0 0 var(--glow-intensity, 10px) var(--glow-color)); }
 }
 
 #director-mode-overlay {
@@ -45,6 +45,23 @@
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
+.drag-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    cursor: move;
+    background-color: #4b5563;
+    border-right: 1px solid #1f2937;
+    border-bottom: 1px solid #1f2937;
+    border-top-left-radius: 7px;
+}
+.drag-handle:hover {
+    background-color: #6b7280;
+}
+
+
 /* --- Cue Styles --- */
 .director-cue {
     position: absolute;
@@ -54,11 +71,10 @@
 }
 
 .director-cue.anim-pulse {
-    animation: director-pulse 2s infinite ease-in-out;
+    animation: director-pulse var(--anim-speed, 2s) infinite ease-in-out;
 }
 .director-cue.anim-glow {
-    --glow-color: #fde047; /* Default, will be overridden by JS */
-    animation: director-glow 2s infinite ease-in-out;
+    animation: director-glow var(--anim-speed, 2s) infinite ease-in-out;
 }
 
 
