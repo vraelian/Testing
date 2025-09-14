@@ -912,6 +912,7 @@ export class UIManager {
 
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+                el.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
             }
 
             let content = '';
@@ -930,7 +931,7 @@ export class UIManager {
                 `;
             } else if (cue.type === 'Spotlight') {
                 el.style.borderRadius = '50%';
-                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px 10px ${cue.style.stroke}`;
+                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
             }
 
             el.innerHTML = content;

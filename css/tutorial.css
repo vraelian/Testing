@@ -135,6 +135,45 @@
 }
 /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
 
+/* --- [[START]] PLAYER-FACING HIGHLIGHT STYLES --- */
+#tutorial-highlight-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 90; /* Below toasts but above most UI */
+    pointer-events: none; /* Player can click through the overlay */
+}
+
+.tutorial-cue {
+    position: absolute;
+    pointer-events: none;
+    transform-origin: center;
+}
+
+.tutorial-cue.anim-pulse {
+    animation: director-pulse 2s infinite ease-in-out;
+}
+.tutorial-cue.anim-glow {
+    --glow-color: #fde047;
+    animation: director-glow 2s infinite ease-in-out;
+}
+
+.tutorial-cue .cue-frame {
+    width: 100%;
+    height: 100%;
+    border-style: solid;
+    box-sizing: border-box;
+}
+
+.tutorial-cue svg {
+    overflow: visible;
+    width: 100%;
+    height: 100%;
+}
+/* --- [[END]] PLAYER-FACING HIGHLIGHT STYLES --- */
+
 @media (max-width: 768px) {
     #tutorial-toast-container {
         top: 80% !important;
