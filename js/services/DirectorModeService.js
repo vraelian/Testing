@@ -61,10 +61,11 @@ export class DirectorModeService {
     buildToolkit() {
         this.toolkit = new lil.GUI({
             container: this.uiManager.cache.directorToolkit,
-            title: 'Director\'s Toolkit'
+            title: 'Director\'s Toolkit',
+            draggable: true
         });
 
-        const actions = {
+        this.actions = {
             addFrame: () => this.addCue({ type: 'Frame' }),
             addArrow: () => this.addCue({ type: 'Arrow' }),
             addSpotlight: () => this.addCue({ type: 'Spotlight' }),
@@ -73,15 +74,16 @@ export class DirectorModeService {
         };
 
         const creationFolder = this.toolkit.addFolder('Creation');
-        creationFolder.add(actions, 'addFrame').name('Add Frame');
-        creationFolder.add(actions, 'addArrow').name('Add Arrow');
-        creationFolder.add(actions, 'addSpotlight').name('Add Spotlight');
+        creationFolder.add(this.actions, 'addFrame').name('Add Frame');
+        creationFolder.add(this.actions, 'addArrow').name('Add Arrow');
+        creationFolder.add(this.actions, 'addSpotlight').name('Add Spotlight');
         
         this.toolkit.addFolder('Cue Properties');
         this.toolkit.addFolder('Style');
         
-        this.toolkit.add(actions, 'deleteCue').name('Delete Selected');
-        this.toolkit.add(actions, 'copyConfig').name('Copy Config to Clipboard');
+        this.toolkit.add(this.actions, 'deleteCue').name('Delete Selected');
+        this.copyButton = this.toolkit.add(this.actions, 'copyConfig').name('Copy Config to Clipboard');
+        this.copyButton.disable(); // Disabled by default
     }
 
     /**
@@ -100,11 +102,14 @@ export class DirectorModeService {
             height: type === 'Arrow' ? 50 : 150,
             rotation: 0,
             style: {
-                fill: 'rgba(253, 224, 71, 0.2)',
+                fill: 'rgba(253, 224, 71, 0.0)',
                 stroke: '#fde047',
                 strokeWidth: 3,
                 opacity: 1,
-                animation: 'None'
+                animation: 'None',
+                animationSpeed: 2, // seconds
+                glowColor: '#fde047',
+                glowIntensity: 10 // pixels
             }
         };
         this.cues.push(newCue);
@@ -138,12 +143,14 @@ export class DirectorModeService {
         this.cueControllers = [];
         const cueFolder = this.toolkit.folders.find(f => f._title === 'Cue Properties');
         const styleFolder = this.toolkit.folders.find(f => f._title === 'Style');
-        cueFolder.children.forEach(c => c.destroy());
-        styleFolder.children.forEach(c => c.destroy());
+        [...cueFolder.children, ...styleFolder.children].forEach(c => c.destroy());
 
         if (this.selectedCue) {
             const cue = this.selectedCue;
-            this.cueControllers.push(cueFolder.add(cue, 'tutorialStepId').name('Step ID'));
+            const stepIdController = cueFolder.add(cue, 'tutorialStepId').name('Step ID');
+            stepIdController.onChange(() => this.validateExport());
+            
+            this.cueControllers.push(stepIdController);
             this.cueControllers.push(cueFolder.add(cue, 'x', 0, window.innerWidth).name('X').listen());
             this.cueControllers.push(cueFolder.add(cue, 'y', 0, window.innerHeight).name('Y').listen());
             this.cueControllers.push(cueFolder.add(cue, 'width', 10, 500).name('Width').listen());
@@ -157,11 +164,22 @@ export class DirectorModeService {
             this.cueControllers.push(styleFolder.addColor(cue.style, 'stroke').name('Stroke Color'));
             this.cueControllers.push(styleFolder.add(cue.style, 'strokeWidth', 0, 10, 1).name('Stroke Width'));
             this.cueControllers.push(styleFolder.add(cue.style, 'opacity', 0, 1, 0.1).name('Opacity'));
-            this.cueControllers.push(styleFolder.add(cue.style, 'animation', ['None', 'Pulse', 'Glow']).name('Animation'));
+            const animController = styleFolder.add(cue.style, 'animation', ['None', 'Pulse', 'Glow']).name('Animation');
 
-            // Re-render whenever a property is changed in the GUI
+            animController.onChange(() => this.updateToolkit()); // Re-build to show/hide relevant controls
+            this.cueControllers.push(animController);
+
+            if (cue.style.animation !== 'None') {
+                this.cueControllers.push(styleFolder.add(cue.style, 'animationSpeed', 0.5, 5, 0.1).name('Speed (s)'));
+            }
+            if (cue.style.animation === 'Glow') {
+                this.cueControllers.push(styleFolder.addColor(cue.style, 'glowColor').name('Glow Color'));
+                this.cueControllers.push(styleFolder.add(cue.style, 'glowIntensity', 1, 30, 1).name('Glow Intensity'));
+            }
+
             this.cueControllers.forEach(c => c.onChange(() => this.render()));
         }
+        this.validateExport();
     }
 
     /**
@@ -238,6 +256,9 @@ export class DirectorModeService {
 
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+                el.style.setProperty('--glow-color', cue.style.glowColor);
+                el.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
+                el.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
             }
 
             let content = '';
@@ -270,16 +291,29 @@ export class DirectorModeService {
     }
 
     /**
+     * Checks if any cue has a Step ID and enables/disables the export button accordingly.
+     */
+    validateExport() {
+        const canExport = this.cues.some(c => c.tutorialStepId && c.tutorialStepId.trim() !== '');
+        if (canExport) {
+            this.copyButton.enable();
+        } else {
+            this.copyButton.disable();
+        }
+    }
+
+    /**
      * Gathers the configuration of all cues and copies it to the clipboard as a JSON string.
      */
     copyConfigToClipboard() {
         const config = this.cues.reduce((acc, cue) => {
-            if (cue.tutorialStepId) {
-                if (!acc[cue.tutorialStepId]) {
-                    acc[cue.tutorialStepId] = [];
+            if (cue.tutorialStepId && cue.tutorialStepId.trim() !== '') {
+                const stepId = cue.tutorialStepId.trim();
+                if (!acc[stepId]) {
+                    acc[stepId] = [];
                 }
                 const { id, ...cueConfig } = cue; 
-                acc[cue.tutorialStepId].push(cueConfig);
+                acc[stepId].push(cueConfig);
             }
             return acc;
         }, {});
