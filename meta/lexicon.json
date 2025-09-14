@@ -11,6 +11,24 @@
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
+  "ai_collaboration_guidelines": {
+    "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
+    "bug_reporting_protocol": {
+      "title": "Standard Bug Reporting and Diagnostic Workflow",
+      "steps": [
+        "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
+        "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
+        "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
+        "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
+        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide critical context that a simple description cannot.",
+        "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
+      ]
+    },
+    "logging_utility_overview": {
+      "title": "About the Centralized Logging System",
+      "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
+    }
+  },
   "type_system": {
     "schemas": {
       "Player": {
@@ -547,6 +565,10 @@
     "F029": {
         "path": "./js/services/DebugService.js",
         "role": "DEBUG_TOOL"
+    },
+    "F030": {
+      "path": "./js/services/LoggingService.js",
+      "role": "DEBUG_TOOL"
     }
   },
   "function_index": {
@@ -1793,6 +1815,35 @@
       "returns": { "type": "void" },
       "mutates_state": [],
       "calls": []
+    },
+    "DebugService.generateBugReport": {
+      "asset_id": "F029",
+      "description": "Gathers the log history and a snapshot of the current game state, formats them into a report, and copies it to the clipboard.",
+      "params": [],
+      "returns": { "type": "void" },
+      "mutates_state": [],
+      "calls": ["Logger.getLogHistory", "GameState.getState", "UIManager.createFloatingText"]
+    },
+    "LoggingService.Logger": {
+      "asset_id": "F030",
+      "description": "A centralized logging utility with support for levels, categories, colors, grouping, and performance timing.",
+      "methods": {
+        "setLevel": {
+          "description": "Sets the global log verbosity. Accepts 'DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE'."
+        },
+        "getLogHistory": {
+          "description": "Returns the contents of the in-memory log buffer for bug reporting."
+        },
+        "info.player": { "description": "Logs a player-initiated action with blue styling." },
+        "info.system": { "description": "Logs an automated system process with green styling." },
+        "info.state": { "description": "Logs a significant game state change with yellow styling." },
+        "warn": { "description": "Logs a non-critical warning to the console." },
+        "error": { "description": "Logs a critical error to the console." },
+        "group": { "description": "Starts a collapsed, styled console group." },
+        "groupEnd": { "description": "Ends the current console group." },
+        "time": { "description": "Starts a performance timer." },
+        "timeEnd": { "description": "Ends a performance timer and logs the duration." }
+      }
     },
     "UIManager._calculateSaleDetails": {
         "asset_id": "F017",
