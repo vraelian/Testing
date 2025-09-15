@@ -53,6 +53,10 @@ export class DirectorModeService {
         this.toolkit = null;
         this.cueControllers = [];
         this.pickerButton = null;
+
+        // --- Store direct references to GUI folders ---
+        this.cuePropertiesFolder = null;
+        this.styleFolder = null;
     }
 
     /**
@@ -107,8 +111,9 @@ export class DirectorModeService {
         const advancedFolder = this.toolkit.addFolder('Advanced');
         this.pickerButton = advancedFolder.add(this.actions, 'togglePicker').name('Start Picking Element');
         
-        this.toolkit.addFolder('Cue Properties');
-        this.toolkit.addFolder('Style');
+        // Store references to the folders for reliable access later
+        this.cuePropertiesFolder = this.toolkit.addFolder('Cue Properties');
+        this.styleFolder = this.toolkit.addFolder('Style');
         
         this.toolkit.add(this.actions, 'deleteCue').name('Delete Selected');
         this.copyButton = this.toolkit.add(this.actions, 'copyConfig').name('Copy Config to Clipboard');
@@ -141,7 +146,6 @@ export class DirectorModeService {
             return;
         }
 
-        // Generate a stable selector
         let selector = '';
         if (target.id) {
             selector = `#${target.id}`;
@@ -150,8 +154,9 @@ export class DirectorModeService {
              if (target.dataset.goodId) selector += `[data-good-id="${target.dataset.goodId}"]`;
              if (target.dataset.shipId) selector += `[data-ship-id="${target.dataset.shipId}"]`;
         } else {
-            // Fallback to less stable class/tag selector (not ideal)
-            selector = target.tagName.toLowerCase() + (target.className ? '.' + target.className.split(' ').join('.') : '');
+            // Fallback for elements without stable identifiers, including SVG elements
+            const className = typeof target.className === 'string' ? target.className : (target.className?.baseVal || '');
+            selector = target.tagName.toLowerCase() + (className ? '.' + className.split(' ').join('.') : '');
         }
 
         this.logger.info.system('DirectorMode', 'ANCHOR', `Anchored cue ${this.selectedCue.id} to element: ${selector}`);
@@ -173,10 +178,19 @@ export class DirectorModeService {
             id: `cue-${Date.now()}`,
             type: type,
             tutorialStepId: '',
-            x: 100,
+            // Deprecating static position in favor of anchoring
+            x: 100, 
             y: 100,
             width: 150,
             height: 150,
+            // New anchoring properties
+            positionMode: 'absolute', // 'absolute' or 'anchored'
+            anchorTarget: null,       // CSS selector for the target element
+            // Optional fine-tuning controls
+            offsetX: 0,
+            offsetY: 0,
+            scaleWidth: 1.0,
+            scaleHeight: 1.0,
             rotation: 0,
             style: {
                 fill: 'rgba(253, 224, 71, 0.2)',
@@ -230,22 +244,41 @@ export class DirectorModeService {
     updateToolkit() {
         this.cueControllers.forEach(controller => controller.destroy());
         this.cueControllers = [];
-        const cueFolder = this.toolkit.folders.find(f => f._title === 'Cue Properties');
-        const styleFolder = this.toolkit.folders.find(f => f._title === 'Style');
+
+        // Use direct folder references
+        const cueFolder = this.cuePropertiesFolder;
+        const styleFolder = this.styleFolder;
+
+        if (!cueFolder || !styleFolder) return;
+
         [...cueFolder.children, ...styleFolder.children].forEach(c => c.destroy());
 
         if (this.selectedCue) {
             const cue = this.selectedCue;
+
             const stepIdController = cueFolder.add(cue, 'tutorialStepId').name('Step ID');
             stepIdController.onChange(() => this.validateExport());
-            
             this.cueControllers.push(stepIdController);
-            this.cueControllers.push(cueFolder.add(cue, 'x', 0, window.innerWidth).name('X').listen());
-            this.cueControllers.push(cueFolder.add(cue, 'y', 0, window.innerHeight).name('Y').listen());
-            this.cueControllers.push(cueFolder.add(cue, 'width', 10, 500).name('Width').listen());
-            this.cueControllers.push(cueFolder.add(cue, 'height', 10, 500).name('Height').listen());
-            this.cueControllers.push(cueFolder.add(cue, 'rotation', 0, 360, 1).name('Rotation').listen());
 
+            const posModeController = cueFolder.add(cue, 'positionMode', ['absolute', 'anchored']).name('Positioning');
+            posModeController.onChange(() => this.updateToolkit());
+            this.cueControllers.push(posModeController);
+
+            if (cue.positionMode === 'anchored') {
+                this.cueControllers.push(cueFolder.add(cue, 'anchorTarget').name('Anchor Selector').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'offsetX', -200, 200, 1).name('Offset X').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'offsetY', -200, 200, 1).name('Offset Y').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'scaleWidth', 0.1, 5, 0.1).name('Scale Width').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'scaleHeight', 0.1, 5, 0.1).name('Scale Height').listen());
+            } else {
+                this.cueControllers.push(cueFolder.add(cue, 'x', 0, window.innerWidth).name('X').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'y', 0, window.innerHeight).name('Y').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'width', 10, 500).name('Width').listen());
+                this.cueControllers.push(cueFolder.add(cue, 'height', 10, 500).name('Height').listen());
+            }
+
+            this.cueControllers.push(cueFolder.add(cue, 'rotation', 0, 360, 1).name('Rotation').listen());
+            
             if (cue.type === 'Shape') {
                 this.cueControllers.push(cueFolder.add(cue, 'shapeType', ['Rectangle', 'Ellipse']).name('Shape'));
                 this.cueControllers.push(styleFolder.add(cue.style, 'borderRadius', 0, 100, 1).name('Border Radius'));
@@ -258,11 +291,11 @@ export class DirectorModeService {
             this.cueControllers.push(styleFolder.add(cue.style, 'strokeWidth', 0, 10, 1).name('Stroke Width'));
             this.cueControllers.push(styleFolder.add(cue.style, 'opacity', 0, 1, 0.1).name('Opacity'));
             this.cueControllers.push(styleFolder.add(cue.style, 'boxShadow').name('Box Shadow'));
-
+            
             const animController = styleFolder.add(cue.style, 'animation', ['None', 'Pulse', 'Glow']).name('Animation');
-            animController.onChange(() => this.updateToolkit()); // Re-build to show/hide relevant controls
+            animController.onChange(() => this.updateToolkit());
             this.cueControllers.push(animController);
-
+            
             if (cue.style.animation !== 'None') {
                 this.cueControllers.push(styleFolder.add(cue.style, 'animationSpeed', 0.5, 5, 0.1).name('Speed (s)'));
             }
@@ -315,7 +348,7 @@ export class DirectorModeService {
                         this.actionState.isResizing = true;
                         this.actionState.handle = target.dataset.handle;
                     }
-                } else if (!target.closest('.lil-gui')) {
+                } else if (!target.closest('.lil-gui') && !this.isPickerActive) {
                     this.selectCue(null);
                 }
                 break;
