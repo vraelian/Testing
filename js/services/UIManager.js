@@ -61,10 +61,6 @@ export class UIManager {
         this.marketTransactionState = {};
     }
 
-    /**
-     * Caches frequently accessed DOM elements to improve performance by avoiding repeated queries.
-     * @private
-     */
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
@@ -919,8 +915,14 @@ export class UIManager {
             }
 
             let content = '';
-            if (cue.type === 'Frame') {
-                content = `<div class="cue-frame" style="border-color: ${cue.style.stroke}; border-width: ${cue.style.strokeWidth}px; background-color: ${cue.style.fill};"></div>`;
+            if (cue.type === 'Shape') {
+                content = `
+                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
+                        ${cue.shapeType === 'Rectangle' ? 
+                            `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
+                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
+                        }
+                    </svg>`;
             } else if (cue.type === 'Arrow') {
                  content = `
                     <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
@@ -939,8 +941,9 @@ export class UIManager {
 
             el.innerHTML = content;
             // Apply dynamic styles to the animated child, not the parent container
-            const animatedChild = el.querySelector('.cue-frame, svg');
+            const animatedChild = el.querySelector('svg');
             if (animatedChild && cue.style.animation !== 'None') {
+                 animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
                  animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
                  animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
                  animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);

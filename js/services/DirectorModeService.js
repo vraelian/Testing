@@ -392,15 +392,12 @@ export class DirectorModeService {
 
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-                el.style.setProperty('--glow-color', cue.style.glowColor);
-                el.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
-                el.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
             }
-
+            
             let content = '';
             if (cue.type === 'Shape') {
                 content = `
-                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
                         ${cue.shapeType === 'Rectangle' ? 
                             `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
@@ -423,6 +420,16 @@ export class DirectorModeService {
             }
 
             el.innerHTML = content;
+
+            // Apply animation styles directly to the child element (SVG or icon) for better performance
+            const animatedChild = el.querySelector('svg') || el;
+            if (cue.style.animation !== 'None') {
+                animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+                animatedChild.style.setProperty('--glow-color', cue.style.glowColor);
+                animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
+                animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
+            }
+
 
             if (this.selectedCue && this.selectedCue.id === cue.id) {
                 el.classList.add('selected');
