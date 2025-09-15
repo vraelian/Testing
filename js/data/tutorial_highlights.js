@@ -8,22 +8,22 @@
 export const TUTORIAL_HIGHLIGHTS = {
   "hangar_1": [
     {
-      "type": "Frame",
+      "type": "Arrow",
       "tutorialStepId": "hangar_1",
-      "x": 21.2,
-      "y": 135.468,
-      "width": 361.62,
-      "height": 403.76,
-      "rotation": 0,
+      "x": 59,
+      "y": 133.56,
+      "width": 52.400000000000006,
+      "height": 73.66,
+      "rotation": 360,
       "style": {
         "fill": "rgba(253, 224, 71, 0.0)",
-        "stroke": "#ffdf0f",
+        "stroke": "#fde047",
         "strokeWidth": 1,
-        "opacity": 0.5,
-        "animation": "Glow",
-        "animationSpeed": 3,
-        "glowColor": "#ffdf0f",
-        "glowIntensity": 21
+        "opacity": 1,
+        "animation": "None",
+        "animationSpeed": 2,
+        "glowColor": "#fde047",
+        "glowIntensity": 10
       }
     }
   ]

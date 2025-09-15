@@ -912,9 +912,6 @@ export class UIManager {
 
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-                el.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
-                el.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
-                el.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
             }
 
             let content = '';
@@ -937,6 +934,14 @@ export class UIManager {
             }
 
             el.innerHTML = content;
+            // Apply dynamic styles to the animated child, not the parent container
+            const animatedChild = el.querySelector('.cue-frame, svg');
+            if (animatedChild && cue.style.animation !== 'None') {
+                 animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
+                 animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
+                 animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
+            }
+
             overlay.appendChild(el);
         });
     }
