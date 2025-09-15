@@ -6,25 +6,5 @@
  */
 
 export const TUTORIAL_HIGHLIGHTS = {
-  "hangar_1": [
-    {
-      "type": "Arrow",
-      "tutorialStepId": "hangar_1",
-      "x": 59,
-      "y": 133.56,
-      "width": 52.400000000000006,
-      "height": 73.66,
-      "rotation": 360,
-      "style": {
-        "fill": "rgba(253, 224, 71, 0.0)",
-        "stroke": "#fde047",
-        "strokeWidth": 1,
-        "opacity": 1,
-        "animation": "Pulse",
-        "animationSpeed": 1,
-        "glowColor": "#fde047",
-        "glowIntensity": 10
-      }
-    }
-  ],
+  
 };

@@ -126,11 +126,15 @@ export class DirectorModeService {
     togglePickerMode() {
         this.isPickerActive = !this.isPickerActive;
         this.pickerButton.name(this.isPickerActive ? 'Stop Picking (ESC)' : 'Start Picking Element');
+        
         const overlay = this.uiManager.cache.directorModeOverlay;
-        overlay.classList.toggle('picker-active', this.isPickerActive);
-        if(this.isPickerActive) {
+        if (this.isPickerActive) {
+            overlay.style.pointerEvents = 'none'; // Make overlay click-through
+            overlay.classList.add('picker-active'); // For visual feedback (blur)
             this.logger.info.system('DirectorMode', 'SYSTEM', 'PICKER_ON', 'Element picker is active. Click an element to anchor a cue.');
         } else {
+            overlay.style.pointerEvents = 'all'; // Make overlay interactive again
+            overlay.classList.remove('picker-active');
             this.logger.info.system('DirectorMode', 'SYSTEM', 'PICKER_OFF', 'Element picker is inactive.');
         }
     }
