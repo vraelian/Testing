@@ -4115,7 +4115,7 @@ export const DB = {
                 { "stepId": "mission_1_2", "text": "Select the mission '<b>Milk Run to Luna</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
                 { "stepId": "mission_1_3", "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
                 { "stepId": "mission_1_4", "text": "Mission accepted! The contract is now <b>active</b> and the cargo as been loaded into your ship. The freelancer also loaded extra Plasteel which you can sell for <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-                { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>Proceed to your <b>Ship Navigation</b> terminal and fly to the <b>Moon</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
+                { "stepId": "mission_1_5", "text": "It's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>At the top of the screen is the nav bar. Select the <b>Ship</b> tab, followed by the <b>Navigation</b> tab.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
                 { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b>fuel</b>, and wear on the <b>hull</b> of your ship. Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
                 { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station! It's time to deliver the plasteel. Select the active mission and <b>deliver the plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
                 { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
@@ -9036,6 +9036,93 @@ export class UIManager {
 --- START OF FILE: ./node_modules ---
 
 --- END OF FILE: ./node_modules ---
+--- START OF FILE: ./build.js ---
+// build.js
+import esbuild from 'esbuild';
+import fs from 'fs-extra';
+import { glob } from 'glob';
+import postcss from 'postcss';
+import autoprefixer from 'autoprefixer';
+
+console.log("\n\u{1F680} Starting professional build process with esbuild...");
+
+try {
+    // 1. Clean the 'dist' directory
+    await fs.emptyDir('dist');
+
+    // 2. Define the exact order for CSS files to ensure correct cascading
+    const cssFiles = [
+        'css/global.css',
+        'css/navigation.css',
+        'css/modals.css',
+        'css/hud.css',
+        'css/missions.css',
+        'css/tutorial.css',
+        'css/debug.css',
+        // 'css/director-mode.css', // Removed this line
+        'css/screens/market-screen.css',
+        'css/screens/hangar-screen.css',
+        'css/screens/navigation-screen.css',
+        'css/screens/finance-screen.css'
+    ];
+
+    let combinedCss = '';
+    for (const file of cssFiles) {
+        combinedCss += await fs.readFile(file, 'utf-8');
+    }
+
+    // 2a. Apply vendor prefixes using PostCSS and Autoprefixer
+    const prefixedResult = await postcss([autoprefixer]).process(combinedCss, { from: undefined });
+    
+    // 2b. Minify the prefixed CSS with esbuild
+    const resultCss = await esbuild.transform(prefixedResult.css, {
+        loader: 'css',
+        minify: true,
+    });
+    
+    // Create a unique hash for cache busting
+    const cssCacheBuster = `?v=${Date.now()}`;
+    await fs.writeFile('dist/style.css', resultCss.code);
+    console.log('\u2705 CSS bundled and minified successfully.');
+
+    // 3. Process JavaScript files
+    await esbuild.build({
+        entryPoints: ['js/main.js'],
+        bundle: true,
+        minify: true,
+        sourcemap: false,
+        outfile: 'dist/bundle.min.js',
+        format: 'iife',
+    });
+    console.log('\u2705 JavaScript bundled and obfuscated successfully.');
+    const jsCacheBuster = `?v=${Date.now()}`;
+
+    // 4. Process index.html to link to the new bundled files and remove old links
+    let htmlContent = await fs.readFile('index.html', 'utf-8');
+    
+    // Remove all individual CSS links
+    const cssLinkRegex = /<link rel="stylesheet" href=".\/css\/[^"]+">/g;
+    htmlContent = htmlContent.replace(cssLinkRegex, '');
+
+    // Add the single bundled stylesheet with cache buster
+    htmlContent = htmlContent.replace(/<link rel="stylesheet" href="style.css.*">/, `<link rel="stylesheet" href="style.css${cssCacheBuster}">`);
+    if (!htmlContent.includes('style.css')) {
+         htmlContent = htmlContent.replace('</head>', `    <link rel="stylesheet" href="style.css${cssCacheBuster}">\n</head>`);
+    }
+
+    // Replace the module script with the bundled script
+    htmlContent = htmlContent.replace('<script type="module" src="./js/main.js"></script>', `<script src="bundle.min.js${jsCacheBuster}"></script>`);
+    
+    await fs.writeFile('dist/index.html', htmlContent);
+    console.log('\u2705 index.html processed for deployment.');
+
+    console.log(`\n\u{1F389} Build complete! Your game is ready in the "dist" folder.\n`);
+
+} catch (error) {
+    console.error("\n\u{1F6AB} Build failed:", error);
+    process.exit(1);
+}
+--- END OF FILE: ./build.js ---
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 
