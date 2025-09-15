@@ -6,13 +6,23 @@
 */
 
 @keyframes director-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    0%, 100% {
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+    50% {
+        -webkit-transform: scale(1.05);
+        transform: scale(1.05);
+    }
 }
 
 @keyframes director-glow {
-    0%, 100% { filter: drop-shadow(0 0 3px var(--glow-color)); }
-    50% { filter: drop-shadow(0 0 var(--glow-intensity, 10px) var(--glow-color)); }
+    0%, 100% {
+        filter: drop-shadow(0 0 3px var(--glow-color));
+    }
+    50% {
+        filter: drop-shadow(0 0 var(--glow-intensity, 10px) var(--glow-color));
+    }
 }
 
 #director-mode-overlay {
@@ -76,6 +86,7 @@
 }
 
 .director-cue.anim-pulse {
+    -webkit-animation: director-pulse var(--anim-speed, 2s) infinite ease-in-out;
     animation: director-pulse var(--anim-speed, 2s) infinite ease-in-out;
 }
 .director-cue.anim-glow > *:first-child {
