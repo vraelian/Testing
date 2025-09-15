@@ -137,6 +137,18 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
+        // If Director Mode's element picker is active, capture the element and stop processing.
+        if (this.directorModeService?.isActive && this.directorModeService.isPickerActive) {
+            // Ignore clicks inside the toolkit itself.
+            if (e.target.closest('#director-toolkit')) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            this.directorModeService.captureElement(e.target);
+            return;
+        }
+        
         // If Director Mode is active, it intercepts all clicks and handles them.
         if (this.directorModeService?.isActive) {
             this.directorModeService.handleInput(e);

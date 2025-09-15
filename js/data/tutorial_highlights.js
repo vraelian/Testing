@@ -26,5 +26,53 @@ export const TUTORIAL_HIGHLIGHTS = {
         "glowIntensity": 10
       }
     }
+  ],
+  "hangar_2": [
+    {
+      "type": "Shape",
+      "tutorialStepId": "hangar_2",
+      "x": 39,
+      "y": 203,
+      "width": 318,
+      "height": 306,
+      "rotation": 0,
+      "style": {
+        "fill": "rgba(253, 224, 71, 0.2)",
+        "stroke": "#fde047",
+        "strokeWidth": 2,
+        "opacity": 0.5,
+        "animation": "Pulse",
+        "animationSpeed": 2,
+        "glowColor": "#fde047",
+        "glowIntensity": 10,
+        "borderRadius": 25,
+        "boxShadow": "none"
+      },
+      "shapeType": "Rectangle"
+    }
+  ],
+  "hangar_3": [
+    {
+      "type": "Shape",
+      "tutorialStepId": "hangar_3",
+      "x": 44,
+      "y": 401,
+      "width": 308,
+      "height": 120,
+      "rotation": 0,
+      "style": {
+        "fill": "rgba(253, 224, 71, 0.2)",
+        "stroke": "#fde047",
+        "strokeWidth": 1,
+        "opacity": 0.5,
+        "animation": "Pulse",
+        "animationSpeed": 2,
+        "glowColor": "#fde047",
+        "glowIntensity": 10,
+        "borderRadius": 25,
+        "boxShadow": "none"
+      },
+      "shapeType": "Rectangle"
+    }
   ]
 };
