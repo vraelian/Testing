@@ -61,6 +61,10 @@ export class UIManager {
         this.marketTransactionState = {};
     }
 
+    /**
+     * Caches frequently accessed DOM elements to improve performance by avoiding repeated queries.
+     * @private
+     */
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),

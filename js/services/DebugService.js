@@ -101,7 +101,10 @@ class AutomatedPlayer {
     }
 
     /**
-     * Calculates the maximum quantity of an item the bot can buy.
+     * Calculates the maximum quantity of an item the bot can buy based on cargo space, credits, and market stock.
+     * @param {string} goodId - The ID of the commodity to buy.
+     * @param {number} price - The current price of the commodity.
+     * @returns {number} The maximum quantity the bot can purchase.
      * @private
      */
     _calculateMaxBuy(goodId, price) {
@@ -115,7 +118,8 @@ class AutomatedPlayer {
     }
 
     /**
-     * Scans all markets to find the most profitable trade route.
+     * Scans all markets to find the most profitable single trade route available at the current time.
+     * @returns {object|null} The best trade route object, or null if no profitable route is found.
      * @private
      */
     _findBestTradeRoute() {
