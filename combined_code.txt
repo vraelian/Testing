@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 25.25</title>
+    <title>Orbital Trading 25.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -37,7 +37,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 25.25</p>
+            <p>Version 25.30</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -479,7 +479,7 @@
     100% { background-position: 400px 0; }
 }
 @keyframes green-pulse {
-    0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+    0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
     50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
     100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
 }
@@ -494,7 +494,7 @@
     background-image: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
     background-repeat: no-repeat;
     background-size: 200px 100%;
-    z-index: 100;
+    z-index: 95;
     max-width: 350px;
     max-height: 250px; /* Set a max-height for the container */
 }
@@ -617,7 +617,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 90; /* Below toasts but above most UI */
+    z-index: 100;
     pointer-events: none; /* Player can click through the overlay */
 }
 
@@ -627,12 +627,11 @@
     transform-origin: center;
 }
 
-.tutorial-cue.anim-pulse {
-    animation: director-pulse 2s infinite ease-in-out;
+.tutorial-cue.anim-pulse .cue-frame, .tutorial-cue.anim-pulse svg {
+    animation: director-pulse var(--anim-speed, 2s) infinite ease-in-out;
 }
-.tutorial-cue.anim-glow {
-    --glow-color: #fde047;
-    animation: director-glow 2s infinite ease-in-out;
+.tutorial-cue.anim-glow .cue-frame, .tutorial-cue.anim-glow svg {
+    animation: director-glow var(--anim-speed, 2s) infinite ease-in-out;
 }
 
 .tutorial-cue .cue-frame {
@@ -1245,7 +1244,7 @@ body {
 
 @keyframes director-glow {
     0%, 100% { filter: drop-shadow(0 0 3px var(--glow-color)); }
-    50% { filter: drop-shadow(0 0 10px var(--glow-color)); }
+    50% { filter: drop-shadow(0 0 var(--glow-intensity, 10px) var(--glow-color)); }
 }
 
 #director-mode-overlay {
@@ -1278,6 +1277,23 @@ body {
     box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
+.drag-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    cursor: move;
+    background-color: #4b5563;
+    border-right: 1px solid #1f2937;
+    border-bottom: 1px solid #1f2937;
+    border-top-left-radius: 7px;
+}
+.drag-handle:hover {
+    background-color: #6b7280;
+}
+
+
 /* --- Cue Styles --- */
 .director-cue {
     position: absolute;
@@ -1287,11 +1303,10 @@ body {
 }
 
 .director-cue.anim-pulse {
-    animation: director-pulse 2s infinite ease-in-out;
+    animation: director-pulse var(--anim-speed, 2s) infinite ease-in-out;
 }
 .director-cue.anim-glow {
-    --glow-color: #fde047; /* Default, will be overridden by JS */
-    animation: director-glow 2s infinite ease-in-out;
+    animation: director-glow var(--anim-speed, 2s) infinite ease-in-out;
 }
 
 
@@ -4299,27 +4314,27 @@ export const DB = {
  */
 
 export const TUTORIAL_HIGHLIGHTS = {
-  // Example of what the data will look like once you export it:
-  /*
-    "mission_1_2": [
-      {
-        "type": "Arrow",
-        "tutorialStepId": "mission_1_2",
-        "x": 450,
-        "y": 200,
-        "width": 100,
-        "height": 50,
-        "rotation": 0,
-        "style": {
-          "fill": "rgba(253, 224, 71, 0.2)",
-          "stroke": "#fde047",
-          "strokeWidth": 3,
-          "opacity": 1,
-          "animation": "Glow"
-        }
+  "hangar_1": [
+    {
+      "type": "Arrow",
+      "tutorialStepId": "hangar_1",
+      "x": 59,
+      "y": 133.56,
+      "width": 52.400000000000006,
+      "height": 73.66,
+      "rotation": 360,
+      "style": {
+        "fill": "rgba(253, 224, 71, 0.0)",
+        "stroke": "#fde047",
+        "strokeWidth": 1,
+        "opacity": 1,
+        "animation": "None",
+        "animationSpeed": 2,
+        "glowColor": "#fde047",
+        "glowIntensity": 10
       }
-    ]
-  */
+    }
+  ]
 };
 --- END OF FILE: ./js/data/tutorial_highlights.js ---
 --- START OF FILE: ./js/services/DirectorModeService.js ---
@@ -4355,6 +4370,13 @@ export class DirectorModeService {
             originalWidth: 0,
             originalHeight: 0,
         };
+        this.toolkitActionState = {
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            originalX: 0,
+            originalY: 0,
+        };
         this.toolkit = null;
         this.cueControllers = [];
     }
@@ -4387,8 +4409,12 @@ export class DirectorModeService {
         this.toolkit = new lil.GUI({
             container: this.uiManager.cache.directorToolkit,
             title: 'Director\'s Toolkit',
-            draggable: true
+            draggable: false // Disable internal dragging
         });
+
+        const handle = document.createElement('div');
+        handle.className = 'drag-handle';
+        this.uiManager.cache.directorToolkit.appendChild(handle);
 
         this.actions = {
             addFrame: () => this.addCue({ type: 'Frame' }),
@@ -4512,14 +4538,24 @@ export class DirectorModeService {
      * @param {Event} e The input event object (e.g., click, mousedown, mousemove).
      */
     handleInput(e) {
-        if (!this.isActive) return;
+        if (!this.isActive || !e.target || typeof e.target.closest !== 'function') return;
 
         const target = e.target;
+        const isDragHandle = target.classList.contains('drag-handle');
         const cueElement = target.closest('.director-cue');
+        const toolkitEl = this.uiManager.cache.directorToolkit;
 
         switch (e.type) {
             case 'mousedown':
-                if (cueElement) {
+                if (isDragHandle) {
+                    this.toolkitActionState.isDragging = true;
+                    this.toolkitActionState.startX = e.clientX;
+                    this.toolkitActionState.startY = e.clientY;
+                    const rect = toolkitEl.getBoundingClientRect();
+                    this.toolkitActionState.originalX = rect.left;
+                    this.toolkitActionState.originalY = rect.top;
+                    e.preventDefault();
+                } else if (cueElement) {
                     const cue = this.cues.find(c => c.id === cueElement.dataset.id);
                     this.selectCue(cue);
 
@@ -4540,22 +4576,32 @@ export class DirectorModeService {
                 }
                 break;
             case 'mousemove':
-                if (!this.selectedCue) return;
-                const dx = e.clientX - this.actionState.startX;
-                const dy = e.clientY - this.actionState.startY;
+                if (this.toolkitActionState.isDragging) {
+                    const dx = e.clientX - this.toolkitActionState.startX;
+                    const dy = e.clientY - this.toolkitActionState.startY;
+                    toolkitEl.style.left = `${this.toolkitActionState.originalX + dx}px`;
+                    toolkitEl.style.top = `${this.toolkitActionState.originalY + dy}px`;
+                    toolkitEl.style.right = 'auto';
+                    toolkitEl.style.bottom = 'auto';
+                } else if (this.actionState.isDragging || this.actionState.isResizing) {
+                     if (!this.selectedCue) return;
+                    const dx = e.clientX - this.actionState.startX;
+                    const dy = e.clientY - this.actionState.startY;
 
-                if (this.actionState.isDragging) {
-                    this.selectedCue.x = this.actionState.originalX + dx;
-                    this.selectedCue.y = this.actionState.originalY + dy;
-                } else if (this.actionState.isResizing) {
-                    this.selectedCue.width = Math.max(10, this.actionState.originalWidth + dx);
-                    this.selectedCue.height = Math.max(10, this.actionState.originalHeight + dy);
+                    if (this.actionState.isDragging) {
+                        this.selectedCue.x = this.actionState.originalX + dx;
+                        this.selectedCue.y = this.actionState.originalY + dy;
+                    } else if (this.actionState.isResizing) {
+                        this.selectedCue.width = Math.max(10, this.actionState.originalWidth + dx);
+                        this.selectedCue.height = Math.max(10, this.actionState.originalHeight + dy);
+                    }
                 }
                 break;
             case 'mouseup':
             case 'mouseleave':
                 this.actionState.isDragging = false;
                 this.actionState.isResizing = false;
+                this.toolkitActionState.isDragging = false;
                 break;
         }
     }
@@ -9216,7 +9262,6 @@ export class UIManager {
 
             if (cue.style.animation !== 'None') {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-                el.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
             }
 
             let content = '';
@@ -9239,6 +9284,14 @@ export class UIManager {
             }
 
             el.innerHTML = content;
+            // Apply dynamic styles to the animated child, not the parent container
+            const animatedChild = el.querySelector('.cue-frame, svg');
+            if (animatedChild && cue.style.animation !== 'None') {
+                 animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
+                 animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
+                 animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
+            }
+
             overlay.appendChild(el);
         });
     }
@@ -9583,6 +9636,9 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [25.30] - 2025-09-14
+- tutorial editor tools
 
 ## [25.20] - 2025-09-13
 - scrollbar indicator

@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.30] - 2025-09-14
+- tutorial editor tools
+
 ## [25.20] - 2025-09-13
 - scrollbar indicator
 
