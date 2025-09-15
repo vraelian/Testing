@@ -5,7 +5,6 @@
  * displays tutorial steps, and locks UI navigation to guide the player.
  */
 import { DB } from '../data/database.js';
-import { TUTORIAL_HIGHLIGHTS } from '../data/tutorial_highlights.js';
 import { TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from '../data/constants.js';
 
 /**
@@ -183,10 +182,6 @@ export class TutorialService {
             gameState: this.gameState.getState()
         });
         
-        // Check for and apply a visual highlight for this step.
-        const highlightConfig = TUTORIAL_HIGHLIGHTS[stepId];
-        this.uiManager.applyTutorialHighlight(highlightConfig);
-
         // Re-render to apply navLock changes immediately.
         this.uiManager.render(this.gameState.getState());
     }

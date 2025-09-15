@@ -170,14 +170,12 @@ export class DebugService {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./DirectorModeService.js').DirectorModeService} directorModeService The visual tutorial editor service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, directorModeService, logger) {
+    constructor(gameState, simulationService, uiManager, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.directorModeService = directorModeService;
         this.logger = logger;
         this.gui = null;
         this.active = false;
@@ -261,11 +259,6 @@ ${logHistory}
                 name: 'God Mode',
                 type: 'button',
                 handler: () => this.simulationService.debugGodMode()
-            },
-            directorMode: {
-                name: 'Director Mode',
-                type: 'button',
-                handler: () => this.directorModeService.toggleVisibility()
             },
             // --- Player Actions ---
             addCredits: {
@@ -394,7 +387,6 @@ ${logHistory}
         // --- Game Flow Folder ---
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
-        flowFolder.add(this.actions.directorMode, 'handler').name(this.actions.directorMode.name);
 
         // --- Player Folder ---
         const playerFolder = this.gui.addFolder('Player');

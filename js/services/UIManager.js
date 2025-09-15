@@ -92,8 +92,6 @@ export class UIManager {
             skipTutorialModal: document.getElementById('skip-tutorial-modal'),
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
-            directorModeOverlay: document.getElementById('director-mode-overlay'),
-            directorToolkit: document.getElementById('director-toolkit'),
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
         };
     }
@@ -892,34 +890,12 @@ export class UIManager {
         this.cache.tutorialToastContainer.classList.add('hidden');
         this.applyTutorialHighlight(null);
     }
-
-    /**
-     * Re-calculates and re-draws the currently active tutorial highlights.
-     * This is useful for `scroll` and `resize` events to keep highlights anchored.
-     */
-    updateActiveHighlights() {
-        if (!this.activeHighlightConfig) {
-            const overlay = this.cache.tutorialHighlightOverlay;
-            if (overlay) overlay.innerHTML = '';
-            return;
-        }
-        this._renderHighlightsFromConfig(this.activeHighlightConfig);
-    }
     
-    /**
-     * Stores the current highlight configuration and triggers the initial render.
-     * @param {object[]|null} highlightConfig - The array of cue configurations for the current step, or null to hide.
-     */
     applyTutorialHighlight(highlightConfig) {
         this.activeHighlightConfig = highlightConfig;
         this._renderHighlightsFromConfig(this.activeHighlightConfig);
     }
 
-    /**
-     * The core rendering logic for all tutorial highlights.
-     * @param {object[]|null} highlightConfig - The array of cue configurations to render.
-     * @private
-     */
     _renderHighlightsFromConfig(highlightConfig) {
         const overlay = this.cache.tutorialHighlightOverlay;
         if (!overlay) return;
@@ -933,32 +909,12 @@ export class UIManager {
         overlay.classList.remove('hidden');
 
         highlightConfig.forEach(cue => {
-            let rect = {};
-            let elementFound = false;
-
-            if (cue.positionMode === 'anchored' && cue.anchorTarget) {
-                const anchorEl = document.querySelector(cue.anchorTarget);
-                if (anchorEl) {
-                    const anchorRect = anchorEl.getBoundingClientRect();
-                    rect.width = anchorRect.width * (cue.scaleWidth || 1.0);
-                    rect.height = anchorRect.height * (cue.scaleHeight || 1.0);
-                    rect.left = anchorRect.left + (anchorRect.width - rect.width) / 2 + (cue.offsetX || 0);
-                    rect.top = anchorRect.top + (anchorRect.height - rect.height) / 2 + (cue.offsetY || 0);
-                    elementFound = true;
-                }
-            } else { // Fallback to absolute positioning if specified or if anchor fails
-                rect = { left: cue.x, top: cue.y, width: cue.width, height: cue.height };
-                elementFound = true;
-            }
-
-            if (!elementFound) return; // Don't render if anchor not found
-
             const el = document.createElement('div');
             el.className = 'tutorial-cue';
-            el.style.left = `${rect.left}px`;
-            el.style.top = `${rect.top}px`;
-            el.style.width = `${rect.width}px`;
-            el.style.height = `${rect.height}px`;
+            el.style.left = `${cue.x}px`;
+            el.style.top = `${cue.y}px`;
+            el.style.width = `${cue.width}px`;
+            el.style.height = `${cue.height}px`;
             el.style.transform = `rotate(${cue.rotation}deg)`;
             el.style.opacity = cue.style.opacity;
 
@@ -969,7 +925,7 @@ export class UIManager {
             let content = '';
             if (cue.type === 'Shape') {
                 content = `
-                    <svg width="100%" height="100%" viewBox="0 0 ${rect.width} ${rect.height}" preserveAspectRatio="none" style="overflow: visible;">
+                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
                         ${cue.shapeType === 'Rectangle' ? 
                             `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
@@ -992,6 +948,7 @@ export class UIManager {
             }
 
             el.innerHTML = content;
+            // Apply dynamic styles to the animated child, not the parent container
             const animatedChild = el.querySelector('svg');
             if (animatedChild && cue.style.animation !== 'None') {
                  animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
@@ -1327,15 +1284,5 @@ export class UIManager {
                 progressEl.classList.remove('objective-progress-flash');
             }, 700);
         }
-    }
-
-    showDirectorMode() {
-        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.remove('hidden');
-        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.remove('hidden');
-    }
-
-    hideDirectorMode() {
-        if (this.cache.directorModeOverlay) this.cache.directorModeOverlay.classList.add('hidden');
-        if (this.cache.directorToolkit) this.cache.directorToolkit.classList.add('hidden');
     }
 }

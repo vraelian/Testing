@@ -27,7 +27,6 @@ import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
-import { DirectorModeService } from './services/DirectorModeService.js';
 import { Logger } from './services/LoggingService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,11 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const simulationService = new SimulationService(gameState, uiManager, Logger);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
-        let directorModeService = null;
 
         if (DEV_MODE) {
-            directorModeService = new DirectorModeService(uiManager, Logger);
-            debugService = new DebugService(gameState, simulationService, uiManager, directorModeService, Logger);
+            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
         }
         
@@ -74,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, directorModeService, Logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
