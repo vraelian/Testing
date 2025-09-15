@@ -20,48 +20,8 @@ export const TUTORIAL_HIGHLIGHTS = {
         "stroke": "#fde047",
         "strokeWidth": 1,
         "opacity": 1,
-        "animation": "None",
-        "animationSpeed": 2,
-        "glowColor": "#fde047",
-        "glowIntensity": 10
-      }
-    }
-  ],
-  "hangar_2": [
-    {
-      "type": "Arrow",
-      "tutorialStepId": "hangar_2",
-      "x": 80.4,
-      "y": 514.345,
-      "width": 54.39,
-      "height": 54.39,
-      "rotation": 270,
-      "style": {
-        "fill": "rgba(253, 224, 71, 0.0)",
-        "stroke": "#fde047",
-        "strokeWidth": 3,
-        "opacity": 1,
-        "animation": "None",
-        "animationSpeed": 2,
-        "glowColor": "#fde047",
-        "glowIntensity": 10
-      }
-    },
-    {
-      "type": "Frame",
-      "tutorialStepId": "hangar_2",
-      "x": 50.8,
-      "y": 218.09,
-      "width": 298,
-      "height": 285,
-      "rotation": 0,
-      "style": {
-        "fill": "rgba(253, 224, 71, 0.0)",
-        "stroke": "#fde047",
-        "strokeWidth": 1,
-        "opacity": 0.3,
-        "animation": "None",
-        "animationSpeed": 2,
+        "animation": "Pulse",
+        "animationSpeed": 1,
         "glowColor": "#fde047",
         "glowIntensity": 10
       }
