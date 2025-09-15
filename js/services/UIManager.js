@@ -183,7 +183,11 @@ export class UIManager {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${isSubNavActive ? 'active' : ''}" style="color: ${theme.textColor};" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 let subStyle = `style="color: ${theme.textColor};"`;
+                 if (isSubNavActive) {
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                 }
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
