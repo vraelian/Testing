@@ -1145,6 +1145,11 @@ export class UIManager {
     
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
+            // Fix: Add a guard clause to handle missions with no objectives.
+            if (!mission.objectives || mission.objectives.length === 0) {
+                stickyBarEl.style.display = 'none';
+                return;
+            }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
     
             const objective = mission.objectives[0];

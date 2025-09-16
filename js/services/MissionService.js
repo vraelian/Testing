@@ -71,7 +71,8 @@ export class MissionService {
      * @param {string} missionId The ID of the mission to accept.
      */
     acceptMission(missionId) {
-        if (this.gameState.missions.activeMissionId || !DB.MISSIONS[missionId] || !this.arePrerequisitesMet(missionId)) {
+        const mission = DB.MISSIONS[missionId];
+        if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
             return;
         }
         this.gameState.missions.activeMissionId = missionId;
@@ -81,7 +82,13 @@ export class MissionService {
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId}`);
         this.simulationService.grantMissionCargo(missionId);
         this.checkTriggers(); // Run an initial check in case objectives are already met.
-        this.uiManager.render(this.gameState.getState());
+
+        // If the mission has no objectives, complete it immediately.
+        if (!mission.objectives || mission.objectives.length === 0) {
+            this.completeActiveMission();
+        } else {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
@@ -162,9 +169,21 @@ export class MissionService {
      */
     completeActiveMission() {
         const { activeMissionId } = this.gameState.missions;
-        if (!activeMissionId || !this.gameState.missions.activeMissionObjectivesMet) return;
-
+        if (!activeMissionId) return;
+        
+        // Temporarily set objectivesMet to true for objective-less missions
+        const originalObjectivesMet = this.gameState.missions.activeMissionObjectivesMet;
         const mission = DB.MISSIONS[activeMissionId];
+        if (!mission.objectives || mission.objectives.length === 0) {
+            this.gameState.missions.activeMissionObjectivesMet = true;
+        }
+
+        if (!this.gameState.missions.activeMissionObjectivesMet) {
+            // Restore original state if completion is not actually met.
+            this.gameState.missions.activeMissionObjectivesMet = originalObjectivesMet;
+            return;
+        }
+
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
         // 1. Deduct objective items
