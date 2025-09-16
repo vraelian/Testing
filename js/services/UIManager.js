@@ -91,6 +91,9 @@ export class UIManager {
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
+            missionStickyBar: document.getElementById('mission-sticky-bar'),
+            stickyObjectiveText: document.getElementById('sticky-objective-text'),
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
     }
 
@@ -194,7 +197,8 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState) {
-        const activeScreenEl = document.getElementById(`${gameState.activeScreen}-screen`);
+        const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
+
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.style.display = 'none';
         }
@@ -205,6 +209,9 @@ export class UIManager {
         }
 
         switch (gameState.activeScreen) {
+            case SCREEN_IDS.STATUS:
+                this.cache.statusScreen.innerHTML = renderStatusScreen(gameState);
+                break;
             case SCREEN_IDS.NAVIGATION:
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
@@ -245,21 +252,16 @@ export class UIManager {
         const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
-        const creditsEl = document.getElementById('services-credits-display');
-        if (creditsEl) {
-            creditsEl.innerHTML = `<span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span>`;
-        }
-
-        const fuelBar = document.getElementById('fuel-bar');
-        const refuelBtn = document.getElementById('refuel-btn');
+        const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
+        const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
         if (fuelBar && refuelBtn) {
             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
         }
 
-        const repairBar = document.getElementById('repair-bar');
-        const repairBtn = document.getElementById('repair-btn');
+        const repairBar = this.cache.servicesScreen.querySelector('#repair-bar');
+        const repairBtn = this.cache.servicesScreen.querySelector('#repair-btn');
         if (repairBar && repairBtn) {
             const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
             repairBar.style.width = `${healthPct}%`;
@@ -276,7 +278,7 @@ export class UIManager {
 
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const controls = document.querySelectorAll('.transaction-controls');
+        const controls = this.cache.marketScreen.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
@@ -294,7 +296,7 @@ export class UIManager {
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
-            const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
+            const control = this.cache.marketScreen.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
                 if (qtyInput) {
@@ -376,7 +378,7 @@ export class UIManager {
     
     
     updateMarketCardPrice(goodId, newPrice) {
-        const priceEl = document.getElementById(`price-display-${goodId}`);
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
         if (priceEl) {
             priceEl.dataset.basePrice = newPrice;
             const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
@@ -387,10 +389,10 @@ export class UIManager {
     }
 
     updateMarketCardDisplay(goodId, quantity, mode) {
-        const priceEl = document.getElementById(`price-display-${goodId}`);
-        const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
-        const indicatorEl = document.getElementById(`indicators-${goodId}`);
-        const avgCostEl = document.getElementById(`avg-cost-${goodId}`);
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
+        const effectivePriceEl = this.cache.marketScreen.querySelector(`#effective-price-display-${goodId}`);
+        const indicatorEl = this.cache.marketScreen.querySelector(`#indicators-${goodId}`);
+        const avgCostEl = this.cache.marketScreen.querySelector(`#avg-cost-${goodId}`);
     
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
     
@@ -833,10 +835,6 @@ export class UIManager {
         svg += `</svg>`;
         return svg;
     }
-
-    _updateScrollIndicator(container) {
-        // This function is no longer needed with the CSS-only scrollbar solution.
-    }
     
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
@@ -1140,10 +1138,10 @@ export class UIManager {
     }
     
     renderStickyBar(gameState) {
-        const stickyBarEl = document.getElementById('mission-sticky-bar');
+        const stickyBarEl = this.cache.missionStickyBar;
         const contentEl = stickyBarEl.querySelector('.sticky-content');
-        const objectiveTextEl = document.getElementById('sticky-objective-text');
-        const objectiveProgressEl = document.getElementById('sticky-objective-progress');
+        const objectiveTextEl = this.cache.stickyObjectiveText;
+        const objectiveProgressEl = this.cache.stickyObjectiveProgress;
     
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
@@ -1272,12 +1270,37 @@ export class UIManager {
     }
 
     flashObjectiveProgress() {
-        const progressEl = document.getElementById('sticky-objective-progress');
+        const progressEl = this.cache.stickyObjectiveProgress;
         if (progressEl) {
             progressEl.classList.add('objective-progress-flash');
             setTimeout(() => {
                 progressEl.classList.remove('objective-progress-flash');
             }, 700);
         }
+    }
+    
+    // --- New DOM Abstraction Methods ---
+    getModalIdFromEvent(e) {
+        const modalBackdrop = e.target.closest('.modal-backdrop');
+        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+            return modalBackdrop.id;
+        }
+        return null;
+    }
+
+    isClickInside(e, selector) {
+        return e.target.closest(selector) !== null;
+    }
+
+    getTooltipContent(e) {
+        const tooltipTarget = e.target.closest('[data-tooltip]');
+        if (tooltipTarget) {
+            return tooltipTarget.dataset.tooltip;
+        }
+        return null;
+    }
+
+    showGameContainer() {
+        this.cache.gameContainer.classList.remove('hidden');
     }
 }

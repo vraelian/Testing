@@ -61,28 +61,22 @@ export class EventManager {
         
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
-            const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) this._startRefueling();
-
-            const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) this._startRepairing();
+            if (e.target.closest('#refuel-btn')) this._startRefueling();
+            if (e.target.closest('#repair-btn')) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
-            const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) { 
+            if (e.target.closest('#refuel-btn')) { 
                 e.preventDefault(); 
                 this._startRefueling(); 
             }
-
-            const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) { 
+            if (e.target.closest('#repair-btn')) { 
                 e.preventDefault(); 
                 this._startRepairing(); 
             }
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            document.addEventListener(evt, (e) => {
+            document.addEventListener(evt, () => {
                 this._stopRefueling();
                 this._stopRepairing();
             });
@@ -101,9 +95,8 @@ export class EventManager {
         }, { passive: true });
         
         // Make the mission sticky bar clickable to navigate to the missions screen.
-        const missionStickyBar = document.getElementById('mission-sticky-bar');
-        if (missionStickyBar) {
-            missionStickyBar.addEventListener('click', () => {
+        if (this.uiManager.cache.missionStickyBar) {
+            this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
@@ -120,13 +113,13 @@ export class EventManager {
         const actionTarget = e.target.closest('[data-action]');
         
         // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
-        if (this.activeStatusTooltip && !e.target.closest('[data-action="toggle-tooltip"]')) {
+        if (this.activeStatusTooltip && !this.uiManager.isClickInside(e, '[data-action="toggle-tooltip"]')) {
             this.activeStatusTooltip.classList.remove('visible');
             this.activeStatusTooltip = null;
         }
 
         // Dismiss any active graph/generic tooltip if clicking inside it.
-        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
+        if (this.uiManager.isClickInside(e, '#graph-tooltip') || this.uiManager.isClickInside(e, '#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
@@ -151,19 +144,17 @@ export class EventManager {
                 case 'toggle-tooltip': {
                     const tooltip = actionTarget.querySelector('.status-tooltip');
                     if (!tooltip) return;
-                    // If we clicked the trigger for the currently active tooltip, hide it.
                     if (this.activeStatusTooltip === tooltip) {
                         tooltip.classList.remove('visible');
                         this.activeStatusTooltip = null;
                     } else {
-                        // Otherwise, hide any old tooltip and show the new one.
                         if (this.activeStatusTooltip) {
                             this.activeStatusTooltip.classList.remove('visible');
                         }
                         tooltip.classList.add('visible');
                         this.activeStatusTooltip = tooltip;
                     }
-                    return; // This action doesn't affect game state, so stop here.
+                    return;
                 }
 
                 // Mission Actions
@@ -194,12 +185,10 @@ export class EventManager {
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
                 case ACTION_IDS.SET_SCREEN:
-                    // Only toggle if a main nav tab (DIV) was clicked.
                     if (navId === state.activeNav && actionTarget.tagName === 'DIV') {
                         this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                         this.uiManager.render(this.gameState.getState());
                     } else {
-                        // For new tabs or sub-nav clicks, ensure sub-nav is visible and set the screen.
                         this.gameState.subNavCollapsed = false;
                         this.simulationService.setScreen(navId, screenId);
                     }
@@ -354,9 +343,9 @@ export class EventManager {
         if (state.isGameOver) return;
 
         // Dismiss any modal by clicking its backdrop
-        const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
-            this.uiManager.hideModal(modalBackdrop.id);
+        const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
+        if (modalIdToClose) {
+            this.uiManager.hideModal(modalIdToClose);
             return;
         }
         
@@ -493,7 +482,6 @@ export class EventManager {
     _startRefueling() {
         if (this.gameState.isGameOver || this.refuelInterval) return;
         this._refuelTick(); 
-        // A service tick is called every 1000ms (1 second) while the button is held.
         this.refuelInterval = setInterval(() => this._refuelTick(), 1000);
     }
 
@@ -513,8 +501,8 @@ export class EventManager {
     _refuelTick() {
         const cost = this.simulationService.refuelTick();
         if (cost > 0) {
-            const buttonElement = document.getElementById('refuel-btn');
-            if (!buttonElement) return; // Stop if button is not visible
+            const buttonElement = this.uiManager.cache.servicesScreen.querySelector('#refuel-btn');
+            if (!buttonElement) return;
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);
@@ -532,7 +520,6 @@ export class EventManager {
     _startRepairing() {
         if (this.gameState.isGameOver || this.repairInterval) return;
         this._repairTick();
-        // A service tick is called every 1000ms (1 second) while the button is held.
         this.repairInterval = setInterval(() => this._repairTick(), 1000);
     }
 
@@ -552,8 +539,8 @@ export class EventManager {
     _repairTick() {
         const cost = this.simulationService.repairTick();
         if (cost > 0) {
-            const buttonElement = document.getElementById('repair-btn');
-            if (!buttonElement) return; // Stop if button is not visible
+            const buttonElement = this.uiManager.cache.servicesScreen.querySelector('#repair-btn');
+            if (!buttonElement) return;
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);

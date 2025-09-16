@@ -194,7 +194,7 @@ export class SimulationService {
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
-                    document.getElementById('game-container').classList.remove('hidden');
+                    this.uiManager.showGameContainer();
                     this.uiManager.render(this.gameState.getState()); // Initial render of main UI.
                     this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                     this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
@@ -1352,7 +1352,7 @@ export class SimulationService {
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
 
-        document.getElementById('game-container').classList.remove('hidden');
+        this.uiManager.showGameContainer();
         this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
         this._advanceDays(7);
         this.gameState.setState({});
