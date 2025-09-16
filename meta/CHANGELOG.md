@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.50] - 2025-09-15
+- refactoring
+- bug fixes
+
 ## [25.40] - 2025-09-15
 - removed tutorial editor tooling
 - improved sub nav bar visibility

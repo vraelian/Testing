@@ -9036,6 +9036,10 @@ export class UIManager {
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.50] - 2025-09-15
+- refactoring
+- bug fixes
+
 ## [25.40] - 2025-09-15
 - removed tutorial editor tooling
 - improved sub nav bar visibility
@@ -9210,7 +9214,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "buyItem": "Manages the purchase of commodities from the market.",
         "sellItem": "Manages the sale of commodities, including diminishing returns.",
         "_advanceDays": "Advances game time and triggers daily/weekly economic and game events.",
-        "acceptMission": "Sets a mission to active and grants any initial cargo."
+        "_handleShipDestruction": "Handles the destruction of a player ship and the potential game over condition."
       },
       "mutates_state": ["day", "currentLocationId", "player.credits", "player.debt", "player.inventories", "player.shipStates", "market.inventory"]
     },
@@ -9220,7 +9224,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "showTravelAnimation": "Displays the animated travel sequence between locations.",
-        "updateMarketCardDisplay": "Updates the real-time profit/loss and cost display on a market card."
+        "updateMarketCardDisplay": "Updates the real-time profit/loss and cost display on a market card.",
+        "showLaunchModal": "Displays the launch confirmation modal for a given destination."
       },
       "mutates_state": []
     },
@@ -9229,8 +9234,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "key_functions": {
         "bindEvents": "Sets up all global event listeners for the application.",
         "_handleClick": "The central delegated click handler that interprets `data-action` attributes.",
-        "_startRefueling": "Initiates the 'hold-to-act' interval for refueling.",
-        "_handleKeyDown": "Listens for key presses, primarily for debug shortcuts."
+        "_startRefueling": "Initiates the 'hold-to-act' interval for refueling."
       },
       "mutates_state": []
     },
@@ -9247,6 +9251,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
   },
   "type_system": {
     "enums": {
+        "ActionId": [
+            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade", "set-max-trade"
+        ],
       "ScreenId": ["status", "navigation", "services", "market", "cargo", "hangar", "missions", "finance", "intel"],
       "NavId": ["ship", "starport", "data"],
       "ShipId": ["starter", "hauler_c1", "hauler_c2", "explorer_b1", "explorer_b2", "frigate_a1", "frigate_a2", "luxury_s1", "luxury_s2", "rare_s1", "rare_s2", "rare_s3", "rare_s4", "rare_o1"],
@@ -9273,10 +9280,22 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F009": {"path": "./js/services/GameState.js", "role": "STATE_MANAGER"},
     "F010": {"path": "./js/services/simulation/MarketService.js", "role": "LOGIC_SERVICE"},
     "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_SERVICE"},
-    "F014": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
-    "F015": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
+    "F012": {"path": "./js/services/event-effects/effectAdriftPassenger.js", "role": "LOGIC_MODULE"},
+    "F013": {"path": "./js/services/event-effects/effectSpaceRace.js", "role": "LOGIC_MODULE"},
+    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE"},
+    "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
+    "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
     "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
     "F018": {"path": "./js/services/MissionService.js", "role": "LOGIC_SERVICE"},
+    "F019": {"path": "./js/ui/components/CargoScreen.js", "role": "UI_COMPONENT"},
+    "F020": {"path": "./js/ui/components/FinanceScreen.js", "role": "UI_COMPONENT"},
+    "F021": {"path": "./js/ui/components/HangarScreen.js", "role": "UI_COMPONENT"},
+    "F022": {"path": "./js/ui/components/IntelScreen.js", "role": "UI_COMPONENT"},
+    "F023": {"path": "./js/ui/components/MarketScreen.js", "role": "UI_COMPONENT"},
+    "F024": {"path": "./js/ui/components/MissionsScreen.js", "role": "UI_COMPONENT"},
+    "F025": {"path": "./js/ui/components/NavigationScreen.js", "role": "UI_COMPONENT"},
+    "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
+    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT"},
     "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
     "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"}
   }
