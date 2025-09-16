@@ -672,7 +672,7 @@
 }
 
 .status-bar {
-    width: 32px;
+    width: 27px;
     height: 8px;
     background-color: #222;
     border: 1px solid #111;
@@ -710,11 +710,11 @@
 }
 
 .fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 52px));
+    transform: translateX(calc(-50% - 44px));
 }
 
 .cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 104px));
+    transform: translateX(calc(-50% - 88px));
 }
 
 
@@ -801,6 +801,9 @@
     align-items: center;
     font-size: 0.9rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.bottom-sticky-bar p {
+    text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
 .bottom-sticky-bar:hover .sticky-content {
     transform: translateY(-3px);
@@ -2324,6 +2327,37 @@ export function renderStatusScreen(gameState) {
     const cargoUsed = calculateInventoryUsed(inventory);
     const location = DB.MARKETS.find(l => l.id === currentLocationId);
     const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+    const shipClassLower = shipStatic.class.toLowerCase();
+
+    // Active Ship Bar component logic from Hangar screen
+    const hullPercent = Math.floor((shipState.health / shipStatic.maxHealth) * 100);
+    const fuelPercent = Math.floor((shipState.fuel / shipStatic.maxFuel) * 100);
+    const cargoSegments = Array.from({ length: Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))) }, (_, i) => {
+        const filledSegments = Math.round((cargoUsed / shipStatic.cargoCapacity) * Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))));
+        return `<div class="segment ${i < filledSegments ? 'filled' : ''}"></div>`;
+    }).join('');
+
+    const activeShipBarHtml = `
+        <div class="ship-bar-wrapper bg-class-${shipClassLower} class-${shipClassLower}" style="cursor: default;">
+            <div class="status-sidelabel sidelabel-active">ACTIVE</div>
+            <div class="main-content">
+                <div class="ship-info-top">
+                    <div class="ship-info">
+                        <span class="ship-name class-${shipClassLower}">${shipStatic.name}</span>
+                        <span class="ship-class">Class ${shipStatic.class}</span>
+                    </div>
+                    <div class="ship-stats-text">
+                        <span class="stat-hull">HULL: <span class="value">${hullPercent}%</span></span>
+                        <span class="stat-fuel">FUEL: <span class="value">${fuelPercent}%</span></span>
+                    </div>
+                </div>
+                <div class="bottom-line">
+                    <div class="cargo-bar">${cargoSegments}</div>
+                    <div class="cargo-text">CARGO: <span class="value">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
+                </div>
+            </div>
+        </div>
+    `;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -2345,38 +2379,7 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="p-2 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl text-center mb-3">${shipStatic.name} Status</h4>
-                    <div class="flex flex-col gap-y-2 text-sm">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                                    <span>Hull:</span>
-                                </div>
-                                <span class="font-bold text-green-300">${Math.floor(shipState.health)}%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                                    <span>Fuel:</span>
-                                </div>
-                                <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 000 2h6a1 1 0 100-2H6z" /><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H4z" clip-rule="evenodd" /></svg>
-                                    <span>Cargo:</span>
-                                </div>
-                                <span class="font-bold text-amber-300">${cargoUsed}/${shipStatic.cargoCapacity}</span>
-                            </div>
-                        </div>
-                     </div>
-                </div>
+                ${activeShipBarHtml}
                 <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
                     <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
                 </div>
@@ -3171,20 +3174,34 @@ import { DATE_CONFIG } from './data/database.js';
 
 /**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
- * Example: 12345 becomes '⌬ 12.3k'.
+ * This function now correctly handles negative values.
+ * Example: -12345 becomes '⌬ -12.3k'.
  * @param {number} amount The numeric value to format.
  * @param {boolean} [withSymbol=true] - Whether to prepend the '⌬ ' symbol.
  * @returns {string} The formatted credit string.
  */
 export function formatCredits(amount, withSymbol = true) {
-    const num = Math.floor(amount);
+    const isNegative = amount < 0;
+    const num = Math.abs(Math.floor(amount));
     const prefix = withSymbol ? '⌬ ' : '';
-    if (num >= 1e12) return `${prefix}${(num / 1e12).toFixed(2)}T`;
-    if (num >= 1e9) return `${prefix}${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${prefix}${(num / 1e6).toFixed(2)}M`;
-    if (num >= 1e3) return `${prefix}${(num / 1e3).toFixed(1)}k`;
-    return `${prefix}${num.toLocaleString()}`;
+    const sign = isNegative ? '-' : '';
+
+    let formattedNumber;
+    if (num >= 1e12) {
+        formattedNumber = `${(num / 1e12).toFixed(2)}T`;
+    } else if (num >= 1e9) {
+        formattedNumber = `${(num / 1e9).toFixed(2)}B`;
+    } else if (num >= 1e6) {
+        formattedNumber = `${(num / 1e6).toFixed(2)}M`;
+    } else if (num >= 1e3) {
+        formattedNumber = `${(num / 1e3).toFixed(1)}k`;
+    } else {
+        formattedNumber = num.toLocaleString();
+    }
+
+    return `${prefix}${sign}${formattedNumber}`;
 }
+
 
 /**
  * Calculates the total number of cargo units currently used in a given inventory object.
@@ -4012,30 +4029,6 @@ export const DB = {
             },
             rewards: [
                 { "type": "credits", "amount": 7500 }
-            ]
-        },
-        'mission_tutorial_03': {
-            id: "mission_tutorial_03",
-            name: "The Terran Contract",
-            type: "DELIVERY",
-            host: "GUILD",
-            isRepeatable: false,
-            isAbandonable: false,
-            description: "Urgent acquisition required: 10 units of Martian-grown Hydroponics for agricultural analysis. Premium offered for prompt delivery to the orbital stations of Earth.",
-            prerequisites: [
-                { "type": "mission_completed", "missionId": "mission_tutorial_02" }
-            ],
-            objectives: [
-                { "type": "have_item", "goodId": "hydroponics", "quantity": 10 }
-            ],
-            completion: {
-                "locationId": "loc_earth",
-                "title": "Contract Fulfilled",
-                "text": "The Terran Alliance R&D Division confirms receipt of the samples. Your payment has been authorized.",
-                "buttonText": "Deliver Samples"
-            },
-            rewards: [
-                { "type": "credits", "amount": 15000 }
             ]
         },
         'mission_license_t3': {
@@ -5394,7 +5387,7 @@ export class SimulationService {
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
-                    document.getElementById('game-container').classList.remove('hidden');
+                    this.uiManager.showGameContainer();
                     this.uiManager.render(this.gameState.getState()); // Initial render of main UI.
                     this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                     this.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
@@ -6552,7 +6545,7 @@ export class SimulationService {
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
 
-        document.getElementById('game-container').classList.remove('hidden');
+        this.uiManager.showGameContainer();
         this.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
         this._advanceDays(7);
         this.gameState.setState({});
@@ -6730,28 +6723,22 @@ export class EventManager {
         
         // Event delegation for "hold-to-act" buttons (Refuel and Repair).
         document.body.addEventListener('mousedown', (e) => {
-            const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) this._startRefueling();
-
-            const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) this._startRepairing();
+            if (e.target.closest('#refuel-btn')) this._startRefueling();
+            if (e.target.closest('#repair-btn')) this._startRepairing();
         });
         document.body.addEventListener('touchstart', (e) => {
-            const refuelBtn = e.target.closest('#refuel-btn');
-            if (refuelBtn) { 
+            if (e.target.closest('#refuel-btn')) { 
                 e.preventDefault(); 
                 this._startRefueling(); 
             }
-
-            const repairBtn = e.target.closest('#repair-btn');
-            if (repairBtn) { 
+            if (e.target.closest('#repair-btn')) { 
                 e.preventDefault(); 
                 this._startRepairing(); 
             }
         });
         // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            document.addEventListener(evt, (e) => {
+            document.addEventListener(evt, () => {
                 this._stopRefueling();
                 this._stopRepairing();
             });
@@ -6770,9 +6757,8 @@ export class EventManager {
         }, { passive: true });
         
         // Make the mission sticky bar clickable to navigate to the missions screen.
-        const missionStickyBar = document.getElementById('mission-sticky-bar');
-        if (missionStickyBar) {
-            missionStickyBar.addEventListener('click', () => {
+        if (this.uiManager.cache.missionStickyBar) {
+            this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
@@ -6789,13 +6775,13 @@ export class EventManager {
         const actionTarget = e.target.closest('[data-action]');
         
         // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
-        if (this.activeStatusTooltip && !e.target.closest('[data-action="toggle-tooltip"]')) {
+        if (this.activeStatusTooltip && !this.uiManager.isClickInside(e, '[data-action="toggle-tooltip"]')) {
             this.activeStatusTooltip.classList.remove('visible');
             this.activeStatusTooltip = null;
         }
 
         // Dismiss any active graph/generic tooltip if clicking inside it.
-        if (e.target.closest('#graph-tooltip') || e.target.closest('#generic-tooltip')) {
+        if (this.uiManager.isClickInside(e, '#graph-tooltip') || this.uiManager.isClickInside(e, '#generic-tooltip')) {
             this.uiManager.hideGraph();
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
@@ -6820,19 +6806,17 @@ export class EventManager {
                 case 'toggle-tooltip': {
                     const tooltip = actionTarget.querySelector('.status-tooltip');
                     if (!tooltip) return;
-                    // If we clicked the trigger for the currently active tooltip, hide it.
                     if (this.activeStatusTooltip === tooltip) {
                         tooltip.classList.remove('visible');
                         this.activeStatusTooltip = null;
                     } else {
-                        // Otherwise, hide any old tooltip and show the new one.
                         if (this.activeStatusTooltip) {
                             this.activeStatusTooltip.classList.remove('visible');
                         }
                         tooltip.classList.add('visible');
                         this.activeStatusTooltip = tooltip;
                     }
-                    return; // This action doesn't affect game state, so stop here.
+                    return;
                 }
 
                 // Mission Actions
@@ -6863,12 +6847,10 @@ export class EventManager {
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
                 case ACTION_IDS.SET_SCREEN:
-                    // Only toggle if a main nav tab (DIV) was clicked.
                     if (navId === state.activeNav && actionTarget.tagName === 'DIV') {
                         this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                         this.uiManager.render(this.gameState.getState());
                     } else {
-                        // For new tabs or sub-nav clicks, ensure sub-nav is visible and set the screen.
                         this.gameState.subNavCollapsed = false;
                         this.simulationService.setScreen(navId, screenId);
                     }
@@ -7023,9 +7005,9 @@ export class EventManager {
         if (state.isGameOver) return;
 
         // Dismiss any modal by clicking its backdrop
-        const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
-            this.uiManager.hideModal(modalBackdrop.id);
+        const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
+        if (modalIdToClose) {
+            this.uiManager.hideModal(modalIdToClose);
             return;
         }
         
@@ -7162,7 +7144,6 @@ export class EventManager {
     _startRefueling() {
         if (this.gameState.isGameOver || this.refuelInterval) return;
         this._refuelTick(); 
-        // A service tick is called every 1000ms (1 second) while the button is held.
         this.refuelInterval = setInterval(() => this._refuelTick(), 1000);
     }
 
@@ -7182,8 +7163,8 @@ export class EventManager {
     _refuelTick() {
         const cost = this.simulationService.refuelTick();
         if (cost > 0) {
-            const buttonElement = document.getElementById('refuel-btn');
-            if (!buttonElement) return; // Stop if button is not visible
+            const buttonElement = this.uiManager.cache.servicesScreen.querySelector('#refuel-btn');
+            if (!buttonElement) return;
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);
@@ -7201,7 +7182,6 @@ export class EventManager {
     _startRepairing() {
         if (this.gameState.isGameOver || this.repairInterval) return;
         this._repairTick();
-        // A service tick is called every 1000ms (1 second) while the button is held.
         this.repairInterval = setInterval(() => this._repairTick(), 1000);
     }
 
@@ -7221,8 +7201,8 @@ export class EventManager {
     _repairTick() {
         const cost = this.simulationService.repairTick();
         if (cost > 0) {
-            const buttonElement = document.getElementById('repair-btn');
-            if (!buttonElement) return; // Stop if button is not visible
+            const buttonElement = this.uiManager.cache.servicesScreen.querySelector('#repair-btn');
+            if (!buttonElement) return;
             const rect = buttonElement.getBoundingClientRect();
             const x = rect.left + (rect.width / 2) + (Math.random() * 40 - 20);
             const y = rect.top + (Math.random() * 20 - 10);
@@ -7824,8 +7804,6 @@ export class UIManager {
             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
-            saveToast: document.getElementById('save-toast'),
-            starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
             processingModal: document.getElementById('processing-modal'),
@@ -7839,6 +7817,9 @@ export class UIManager {
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
+            missionStickyBar: document.getElementById('mission-sticky-bar'),
+            stickyObjectiveText: document.getElementById('sticky-objective-text'),
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
     }
 
@@ -7942,7 +7923,8 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState) {
-        const activeScreenEl = document.getElementById(`${gameState.activeScreen}-screen`);
+        const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
+
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.style.display = 'none';
         }
@@ -7996,21 +7978,16 @@ export class UIManager {
         const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
-        const creditsEl = document.getElementById('services-credits-display');
-        if (creditsEl) {
-            creditsEl.innerHTML = `<span class="text-cyan-400">⌬ </span><span class="font-bold text-cyan-300 ml-auto">${formatCredits(player.credits, false)}</span>`;
-        }
-
-        const fuelBar = document.getElementById('fuel-bar');
-        const refuelBtn = document.getElementById('refuel-btn');
+        const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
+        const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
         if (fuelBar && refuelBtn) {
             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
         }
 
-        const repairBar = document.getElementById('repair-bar');
-        const repairBtn = document.getElementById('repair-btn');
+        const repairBar = this.cache.servicesScreen.querySelector('#repair-bar');
+        const repairBtn = this.cache.servicesScreen.querySelector('#repair-btn');
         if (repairBar && repairBtn) {
             const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
             repairBar.style.width = `${healthPct}%`;
@@ -8027,7 +8004,7 @@ export class UIManager {
 
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const controls = document.querySelectorAll('.transaction-controls');
+        const controls = this.cache.marketScreen.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
@@ -8045,7 +8022,7 @@ export class UIManager {
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
-            const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
+            const control = this.cache.marketScreen.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
                 if (qtyInput) {
@@ -8127,7 +8104,7 @@ export class UIManager {
     
     
     updateMarketCardPrice(goodId, newPrice) {
-        const priceEl = document.getElementById(`price-display-${goodId}`);
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
         if (priceEl) {
             priceEl.dataset.basePrice = newPrice;
             const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
@@ -8138,10 +8115,10 @@ export class UIManager {
     }
 
     updateMarketCardDisplay(goodId, quantity, mode) {
-        const priceEl = document.getElementById(`price-display-${goodId}`);
-        const effectivePriceEl = document.getElementById(`effective-price-display-${goodId}`);
-        const indicatorEl = document.getElementById(`indicators-${goodId}`);
-        const avgCostEl = document.getElementById(`avg-cost-${goodId}`);
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
+        const effectivePriceEl = this.cache.marketScreen.querySelector(`#effective-price-display-${goodId}`);
+        const indicatorEl = this.cache.marketScreen.querySelector(`#indicators-${goodId}`);
+        const avgCostEl = this.cache.marketScreen.querySelector(`#avg-cost-${goodId}`);
     
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
     
@@ -8584,10 +8561,6 @@ export class UIManager {
         svg += `</svg>`;
         return svg;
     }
-
-    _updateScrollIndicator(container) {
-        // This function is no longer needed with the CSS-only scrollbar solution.
-    }
     
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
@@ -8891,10 +8864,10 @@ export class UIManager {
     }
     
     renderStickyBar(gameState) {
-        const stickyBarEl = document.getElementById('mission-sticky-bar');
+        const stickyBarEl = this.cache.missionStickyBar;
         const contentEl = stickyBarEl.querySelector('.sticky-content');
-        const objectiveTextEl = document.getElementById('sticky-objective-text');
-        const objectiveProgressEl = document.getElementById('sticky-objective-progress');
+        const objectiveTextEl = this.cache.stickyObjectiveText;
+        const objectiveProgressEl = this.cache.stickyObjectiveProgress;
     
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
@@ -9023,7 +8996,7 @@ export class UIManager {
     }
 
     flashObjectiveProgress() {
-        const progressEl = document.getElementById('sticky-objective-progress');
+        const progressEl = this.cache.stickyObjectiveProgress;
         if (progressEl) {
             progressEl.classList.add('objective-progress-flash');
             setTimeout(() => {
@@ -9031,98 +9004,33 @@ export class UIManager {
             }, 700);
         }
     }
+    
+    // --- New DOM Abstraction Methods ---
+    getModalIdFromEvent(e) {
+        const modalBackdrop = e.target.closest('.modal-backdrop');
+        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+            return modalBackdrop.id;
+        }
+        return null;
+    }
+
+    isClickInside(e, selector) {
+        return e.target.closest(selector) !== null;
+    }
+
+    getTooltipContent(e) {
+        const tooltipTarget = e.target.closest('[data-tooltip]');
+        if (tooltipTarget) {
+            return tooltipTarget.dataset.tooltip;
+        }
+        return null;
+    }
+
+    showGameContainer() {
+        this.cache.gameContainer.classList.remove('hidden');
+    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
---- START OF FILE: ./node_modules ---
-
---- END OF FILE: ./node_modules ---
---- START OF FILE: ./build.js ---
-// build.js
-import esbuild from 'esbuild';
-import fs from 'fs-extra';
-import { glob } from 'glob';
-import postcss from 'postcss';
-import autoprefixer from 'autoprefixer';
-
-console.log("\n\u{1F680} Starting professional build process with esbuild...");
-
-try {
-    // 1. Clean the 'dist' directory
-    await fs.emptyDir('dist');
-
-    // 2. Define the exact order for CSS files to ensure correct cascading
-    const cssFiles = [
-        'css/global.css',
-        'css/navigation.css',
-        'css/modals.css',
-        'css/hud.css',
-        'css/missions.css',
-        'css/tutorial.css',
-        'css/debug.css',
-        // 'css/director-mode.css', // Removed this line
-        'css/screens/market-screen.css',
-        'css/screens/hangar-screen.css',
-        'css/screens/navigation-screen.css',
-        'css/screens/finance-screen.css'
-    ];
-
-    let combinedCss = '';
-    for (const file of cssFiles) {
-        combinedCss += await fs.readFile(file, 'utf-8');
-    }
-
-    // 2a. Apply vendor prefixes using PostCSS and Autoprefixer
-    const prefixedResult = await postcss([autoprefixer]).process(combinedCss, { from: undefined });
-    
-    // 2b. Minify the prefixed CSS with esbuild
-    const resultCss = await esbuild.transform(prefixedResult.css, {
-        loader: 'css',
-        minify: true,
-    });
-    
-    // Create a unique hash for cache busting
-    const cssCacheBuster = `?v=${Date.now()}`;
-    await fs.writeFile('dist/style.css', resultCss.code);
-    console.log('\u2705 CSS bundled and minified successfully.');
-
-    // 3. Process JavaScript files
-    await esbuild.build({
-        entryPoints: ['js/main.js'],
-        bundle: true,
-        minify: true,
-        sourcemap: false,
-        outfile: 'dist/bundle.min.js',
-        format: 'iife',
-    });
-    console.log('\u2705 JavaScript bundled and obfuscated successfully.');
-    const jsCacheBuster = `?v=${Date.now()}`;
-
-    // 4. Process index.html to link to the new bundled files and remove old links
-    let htmlContent = await fs.readFile('index.html', 'utf-8');
-    
-    // Remove all individual CSS links
-    const cssLinkRegex = /<link rel="stylesheet" href=".\/css\/[^"]+">/g;
-    htmlContent = htmlContent.replace(cssLinkRegex, '');
-
-    // Add the single bundled stylesheet with cache buster
-    htmlContent = htmlContent.replace(/<link rel="stylesheet" href="style.css.*">/, `<link rel="stylesheet" href="style.css${cssCacheBuster}">`);
-    if (!htmlContent.includes('style.css')) {
-         htmlContent = htmlContent.replace('</head>', `    <link rel="stylesheet" href="style.css${cssCacheBuster}">\n</head>`);
-    }
-
-    // Replace the module script with the bundled script
-    htmlContent = htmlContent.replace('<script type="module" src="./js/main.js"></script>', `<script src="bundle.min.js${jsCacheBuster}"></script>`);
-    
-    await fs.writeFile('dist/index.html', htmlContent);
-    console.log('\u2705 index.html processed for deployment.');
-
-    console.log(`\n\u{1F389} Build complete! Your game is ready in the "dist" folder.\n`);
-
-} catch (error) {
-    console.error("\n\u{1F6AB} Build failed:", error);
-    process.exit(1);
-}
---- END OF FILE: ./build.js ---
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 

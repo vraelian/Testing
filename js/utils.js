@@ -8,20 +8,34 @@ import { DATE_CONFIG } from './data/database.js';
 
 /**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
- * Example: 12345 becomes '⌬ 12.3k'.
+ * This function now correctly handles negative values.
+ * Example: -12345 becomes '⌬ -12.3k'.
  * @param {number} amount The numeric value to format.
  * @param {boolean} [withSymbol=true] - Whether to prepend the '⌬ ' symbol.
  * @returns {string} The formatted credit string.
  */
 export function formatCredits(amount, withSymbol = true) {
-    const num = Math.floor(amount);
+    const isNegative = amount < 0;
+    const num = Math.abs(Math.floor(amount));
     const prefix = withSymbol ? '⌬ ' : '';
-    if (num >= 1e12) return `${prefix}${(num / 1e12).toFixed(2)}T`;
-    if (num >= 1e9) return `${prefix}${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${prefix}${(num / 1e6).toFixed(2)}M`;
-    if (num >= 1e3) return `${prefix}${(num / 1e3).toFixed(1)}k`;
-    return `${prefix}${num.toLocaleString()}`;
+    const sign = isNegative ? '-' : '';
+
+    let formattedNumber;
+    if (num >= 1e12) {
+        formattedNumber = `${(num / 1e12).toFixed(2)}T`;
+    } else if (num >= 1e9) {
+        formattedNumber = `${(num / 1e9).toFixed(2)}B`;
+    } else if (num >= 1e6) {
+        formattedNumber = `${(num / 1e6).toFixed(2)}M`;
+    } else if (num >= 1e3) {
+        formattedNumber = `${(num / 1e3).toFixed(1)}k`;
+    } else {
+        formattedNumber = num.toLocaleString();
+    }
+
+    return `${prefix}${sign}${formattedNumber}`;
 }
+
 
 /**
  * Calculates the total number of cargo units currently used in a given inventory object.
