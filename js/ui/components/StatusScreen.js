@@ -20,6 +20,37 @@ export function renderStatusScreen(gameState) {
     const cargoUsed = calculateInventoryUsed(inventory);
     const location = DB.MARKETS.find(l => l.id === currentLocationId);
     const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+    const shipClassLower = shipStatic.class.toLowerCase();
+
+    // Active Ship Bar component logic from Hangar screen
+    const hullPercent = Math.floor((shipState.health / shipStatic.maxHealth) * 100);
+    const fuelPercent = Math.floor((shipState.fuel / shipStatic.maxFuel) * 100);
+    const cargoSegments = Array.from({ length: Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))) }, (_, i) => {
+        const filledSegments = Math.round((cargoUsed / shipStatic.cargoCapacity) * Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))));
+        return `<div class="segment ${i < filledSegments ? 'filled' : ''}"></div>`;
+    }).join('');
+
+    const activeShipBarHtml = `
+        <div class="ship-bar-wrapper bg-class-${shipClassLower} class-${shipClassLower}" style="cursor: default;">
+            <div class="status-sidelabel sidelabel-active">ACTIVE</div>
+            <div class="main-content">
+                <div class="ship-info-top">
+                    <div class="ship-info">
+                        <span class="ship-name class-${shipClassLower}">${shipStatic.name}</span>
+                        <span class="ship-class">Class ${shipStatic.class}</span>
+                    </div>
+                    <div class="ship-stats-text">
+                        <span class="stat-hull">HULL: <span class="value">${hullPercent}%</span></span>
+                        <span class="stat-fuel">FUEL: <span class="value">${fuelPercent}%</span></span>
+                    </div>
+                </div>
+                <div class="bottom-line">
+                    <div class="cargo-bar">${cargoSegments}</div>
+                    <div class="cargo-text">CARGO: <span class="value">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
+                </div>
+            </div>
+        </div>
+    `;
 
     return `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
@@ -41,38 +72,7 @@ export function renderStatusScreen(gameState) {
             </div>
 
             <div class="md:col-span-1 flex flex-col gap-4">
-                <div class="p-2 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl text-center mb-3">${shipStatic.name} Status</h4>
-                    <div class="flex flex-col gap-y-2 text-sm">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                                    <span>Hull:</span>
-                                </div>
-                                <span class="font-bold text-green-300">${Math.floor(shipState.health)}%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                                    <span>Fuel:</span>
-                                </div>
-                                <span class="font-bold text-sky-300">${Math.floor(shipState.fuel)}/${shipStatic.maxFuel}</span>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M5 8a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 000 2h6a1 1 0 100-2H6z" /><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1H4z" clip-rule="evenodd" /></svg>
-                                    <span>Cargo:</span>
-                                </div>
-                                <span class="font-bold text-amber-300">${cargoUsed}/${shipStatic.cargoCapacity}</span>
-                            </div>
-                        </div>
-                     </div>
-                </div>
+                ${activeShipBarHtml}
                 <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
                     <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
                 </div>

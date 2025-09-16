@@ -52,7 +52,7 @@
 }
 
 .status-bar {
-    width: 32px;
+    width: 27px;
     height: 8px;
     background-color: #222;
     border: 1px solid #111;
@@ -90,11 +90,11 @@
 }
 
 .fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 52px));
+    transform: translateX(calc(-50% - 44px));
 }
 
 .cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 104px));
+    transform: translateX(calc(-50% - 88px));
 }
 
 
@@ -181,6 +181,9 @@
     align-items: center;
     font-size: 0.9rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.bottom-sticky-bar p {
+    text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
 .bottom-sticky-bar:hover .sticky-content {
     transform: translateY(-3px);
