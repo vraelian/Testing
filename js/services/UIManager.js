@@ -78,8 +78,6 @@ export class UIManager {
             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
-            saveToast: document.getElementById('save-toast'),
-            starportUnlockTooltip: document.getElementById('starport-unlock-tooltip'),
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
             processingModal: document.getElementById('processing-modal'),
@@ -207,9 +205,6 @@ export class UIManager {
         }
 
         switch (gameState.activeScreen) {
-            case SCREEN_IDS.STATUS:
-                this.cache.statusScreen.innerHTML = renderStatusScreen(gameState);
-                break;
             case SCREEN_IDS.NAVIGATION:
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
