@@ -41,6 +41,8 @@ export class MissionService {
             switch (prereq.type) {
                 case 'mission_completed':
                     return this.gameState.missions.completedMissionIds.includes(prereq.missionId);
+                case 'revealed_tier':
+                    return this.gameState.player.revealedTier >= prereq.tier;
                 // Future prerequisite types like 'player_level' or 'item_owned' can be added here.
                 default:
                     return false; // Unknown prerequisite type fails validation.
