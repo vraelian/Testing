@@ -260,6 +260,11 @@ ${logHistory}
                 type: 'button',
                 handler: () => this.simulationService.debugGodMode()
             },
+            simpleStart: {
+                name: 'Simple Start',
+                type: 'button',
+                handler: () => this.simulationService.debugSimpleStart()
+            },
             // --- Player Actions ---
             addCredits: {
                 name: 'Add Credits',
@@ -316,11 +321,6 @@ ${logHistory}
             },
 
             // --- Economy Actions ---
-            evolvePrices: {
-                name: 'Evolve Prices (7d)',
-                type: 'button',
-                handler: () => this.simulationService.marketService.evolveMarketPrices()
-            },
             replenishStock: {
                 name: 'Replenish All Stock',
                 type: 'button',
@@ -356,6 +356,9 @@ ${logHistory}
                 type: 'button',
                 handler: () => {
                     if (this.debugState.selectedMission) {
+                        if(this.gameState.missions.activeMissionId) {
+                            this.simulationService.missionService.abandonMission();
+                        }
                         this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
                     }
                 }
@@ -387,6 +390,7 @@ ${logHistory}
         // --- Game Flow Folder ---
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
+        flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
 
         // --- Player Folder ---
         const playerFolder = this.gui.addFolder('Player');
@@ -407,7 +411,6 @@ ${logHistory}
 
         // --- Economy Folder ---
         const economyFolder = this.gui.addFolder('Economy');
-        economyFolder.add(this.actions.evolvePrices, 'handler').name(this.actions.evolvePrices.name);
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
         economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');

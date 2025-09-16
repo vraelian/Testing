@@ -1357,6 +1357,31 @@ export class SimulationService {
         this._advanceDays(7);
         this.gameState.setState({});
     }
+
+    /**
+     * @summary Skips the tutorial and equips the Wanderer as the active ship.
+     * @description This debug function provides a "Simple Start" option, which is a modified version of "God Mode." 
+     * It bypasses the tutorial and introduction, equipping the player with the Wanderer ship, but does not grant any credits. 
+     * This allows for a streamlined start to the game, placing the player directly on the mission screen where the first mission, 
+     * "Milk Run to Luna," is available.
+     * @param {string} shipId - The ID of the ship to add.
+     */
+    debugSimpleStart() {
+        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+        this.gameState.introSequenceActive = false;
+        this.tutorialService.activeBatchId = null;
+        this.tutorialService.activeStepId = null;
+        this.gameState.tutorials.activeBatchId = null;
+        this.gameState.tutorials.activeStepId = null;
+        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
+        this.gameState.player.ownedShipIds = [];
+        this.addShipToHangar(SHIP_IDS.WANDERER);
+        this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        this.uiManager.showGameContainer();
+        this.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+        this._advanceDays(7);
+        this.gameState.setState({});
+    }
     
     /**
      * Debug function to cycle through and trigger all random events in order.
