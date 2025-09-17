@@ -876,6 +876,7 @@ export class UIManager {
         const showSkipButton = false;
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
+        this.cache.tutorialToastText.scrollTop = 0;
     }
 
 

@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [25.60] - 2025-09-16
+- tutorial update
+- writing update
+- license bug fixes
+
 ## [25.50] - 2025-09-15
 - refactoring
 - bug fixes
