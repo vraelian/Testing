@@ -2,6 +2,7 @@
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { CelebrationEffects } from './CelebrationEffects.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -27,6 +28,7 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
+        this.effects = null; // To be lazy-initialized
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
 
@@ -93,7 +95,10 @@ export class UIManager {
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
-            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
+            celebrationOverlay: document.getElementById('celebration-overlay'),
+            surgeText: document.getElementById('surge-text'),
+            creditDisplay: null // Will be cached after first render
         };
     }
 
@@ -121,6 +126,7 @@ export class UIManager {
         this.renderActiveScreen(gameState);
         this.updateStickyBar(gameState);
         this.renderStickyBar(gameState);
+        this._initializeEffectsService();
     }
 
     renderNavigation(gameState) {
@@ -135,7 +141,7 @@ export class UIManager {
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
-                <span class="credit-text">${formatCredits(player.credits)}</span>
+                <span id="credit-display" class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
@@ -193,7 +199,6 @@ export class UIManager {
         }).join('');
     
         this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
-        this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
     renderActiveScreen(gameState) {
@@ -1284,6 +1289,22 @@ export class UIManager {
             }, 700);
         }
     }
+
+    _initializeEffectsService() {
+        if (this.effects) return; // Initialize only once
+        const creditDisplay = document.getElementById('credit-display');
+        if (creditDisplay) {
+            this.cache.creditDisplay = creditDisplay;
+            const effectElements = {
+                body: document.body,
+                gameContainer: this.cache.gameContainer,
+                creditDisplay: this.cache.creditDisplay,
+                overlay: this.cache.celebrationOverlay,
+                surgeText: this.cache.surgeText
+            };
+            this.effects = new CelebrationEffects(effectElements);
+        }
+    }
     
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
@@ -1308,5 +1329,14 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
+    }
+
+    // --- Public Methods to Trigger Effects ---
+    triggerCreditGlow(startCredits, endCredits) {
+        this.effects?.triggerCreditGlow(startCredits, endCredits);
+    }
+    
+    triggerSystemSurge(theme, text) {
+        this.effects?.triggerSystemSurge(theme, text);
     }
 }
