@@ -2,6 +2,8 @@
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { EffectsManager } from '../effects/EffectsManager.js';
+import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -30,6 +32,9 @@ export class UIManager {
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
 
+        this.effectsManager = new EffectsManager();
+        this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
+
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
@@ -45,6 +50,17 @@ export class UIManager {
                 this.render(this.lastKnownState);
             }
         });
+    }
+
+    /**
+     * @JSDoc
+     * @method triggerEffect
+     * @description Public method to trigger a registered visual effect.
+     * @param {string} name - The name the effect was registered under.
+     * @param {object} options - The configuration options for the effect.
+     */
+    triggerEffect(name, options) {
+        this.effectsManager.trigger(name, options);
     }
 
     /**
