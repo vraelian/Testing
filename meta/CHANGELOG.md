@@ -2,9 +2,14 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [26.00] - 2025-09-18
+- celebratory effects layer
+- updated lexicon.json
+- updated data_flow.md
+
 ## [25.60] - 2025-09-16
 - tutorial update
-- writing update
+- writing
 - license bug fixes
 
 ## [25.50] - 2025-09-15

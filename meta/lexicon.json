@@ -137,6 +137,9 @@
     "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
     "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT"},
     "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
-    "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"}
+    "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
+    "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
+    "F032": {"path": "./js/effects/EffectsManager.js", "role": "LOGIC_SERVICE"},
+    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE"}
   }
 }
