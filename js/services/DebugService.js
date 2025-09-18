@@ -363,6 +363,16 @@ ${logHistory}
                     }
                 }
             },
+            triggerSystemSurge: {
+                name: 'Trigger System Surge',
+                type: 'button',
+                handler: () => {
+                    this.uiManager.triggerEffect('systemSurge', {
+                        text: 'SYSTEM TEST',
+                        theme: this.debugState.selectedSurgeTheme
+                    });
+                }
+            },
             // --- Bot Actions ---
             startBot: {
                 name: 'Start AUTOTRADER-01',
@@ -429,6 +439,10 @@ ${logHistory}
         this.debugState.selectedMission = Object.keys(missionOptions)[0];
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        this.debugState.selectedSurgeTheme = 'gold';
+        triggerFolder.add(this.debugState, 'selectedSurgeTheme', ['gold', 'green', 'red', 'blue']).name('Surge Theme');
+        triggerFolder.add(this.actions.triggerSystemSurge, 'handler').name('Trigger System Surge');
+
 
         // --- Automation & Logging Folder ---
         const automationFolder = this.gui.addFolder('Automation & Logging');

@@ -88,7 +88,7 @@ export class SystemSurgeEffect extends BaseEffect {
 
         overlay.appendChild(surgeLight);
         overlay.appendChild(surgeText);
-        this._createParticles(30);
+        this._createParticles(50); // Increased particle count for more density
 
         document.body.appendChild(overlay);
     }
@@ -108,8 +108,9 @@ export class SystemSurgeEffect extends BaseEffect {
             particle.style.width = `${size}px`;
             particle.style.height = `${size}px`;
             particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 1.5}s`;
-            particle.style.animationDuration = `${Math.random() * 3 + 4}s`;
+            // Randomized duration and opacity for depth
+            particle.style.opacity = `${Math.random() * 0.7 + 0.3}`; 
+            particle.style.animationDuration = `${Math.random() * 4 + 5}s`;
             this.domElements.overlay.appendChild(particle);
         }
     }
@@ -164,6 +165,7 @@ export class SystemSurgeEffect extends BaseEffect {
             justify-content: center;
             overflow: hidden;
             opacity: 0;
+            background: radial-gradient(ellipse at center, rgba(12, 16, 29, 0) 0%, rgba(12, 16, 29, 0.85) 80%);
         }
 
         .system-surge-active #celebration-overlay {
@@ -199,12 +201,10 @@ export class SystemSurgeEffect extends BaseEffect {
             text-shadow: 0 0 10px #fff, 0 0 20px var(--surge-glow), 0 0 40px var(--surge-glow);
             transform: scale(0.5);
             opacity: 0;
-            transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
         .system-surge-active .surge-text {
-            transform: scale(1);
-            opacity: 1;
-            transition-delay: 0.4s;
+            animation: system-surge-scale-in 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28) 0.4s forwards,
+                         system-surge-glow-pulse 2.5s ease-in-out 1.55s infinite;
         }
 
         .particle {
@@ -212,13 +212,23 @@ export class SystemSurgeEffect extends BaseEffect {
             bottom: -20px;
             background-color: var(--surge-color);
             border-radius: 50%;
-            opacity: 0;
-            animation: system-surge-rise 8s ease-in forwards;
+            animation: system-surge-rise ease-in forwards;
         }
 
         @keyframes system-surge-rise {
-            0% { transform: translateY(0); opacity: 0.7; }
-            100% { transform: translateY(-105vh); opacity: 0; }
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-105vh); }
+        }
+        
+        @keyframes system-surge-scale-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes system-surge-glow-pulse {
+            0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px var(--surge-glow), 0 0 40px var(--surge-glow); }
+            50% { text-shadow: 0 0 12px #fff, 0 0 28px var(--surge-glow), 0 0 55px var(--surge-glow); }
         }
     `;
 }
