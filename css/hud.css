@@ -27,8 +27,6 @@
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
-    display: inline-block;
-    transform-origin: right center;
 }
 
 .status-pod {

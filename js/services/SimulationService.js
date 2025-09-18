@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_impact_RULES } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_IMPACT_RULES } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 import { MarketService } from './simulation/MarketService.js';
 
@@ -188,11 +188,9 @@ export class SimulationService {
                 const button = event.target;
                 if(button) button.disabled = true;
                 
-                const startCredits = this.gameState.player.credits;
-                this.gameState.player.credits += 25000;
-                const endCredits = this.gameState.player.credits;
-                this.uiManager.triggerCreditGlow(startCredits, endCredits);
+                this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
+                this.gameState.player.credits += 25000;
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
@@ -542,10 +540,7 @@ export class SimulationService {
         }
         
         totalSaleValue = Math.floor(totalSaleValue);
-        const startCredits = this.gameState.player.credits;
         this.gameState.player.credits += totalSaleValue;
-        const endCredits = this.gameState.player.credits;
-
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
 
@@ -559,10 +554,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'sell');
-        
-        if (totalSaleValue > 100000) {
-            this.uiManager.triggerCreditGlow(startCredits, endCredits);
-        }
 
         this.gameState.setState({});
         
@@ -707,13 +698,9 @@ export class SimulationService {
             return;
         }
 
-        const startCredits = player.credits;
         player.credits -= loanData.fee;
         this._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         player.credits += loanData.amount;
-        const endCredits = player.credits;
-        this.uiManager.triggerCreditGlow(startCredits, endCredits);
-        
         this._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
         player.debt += loanData.amount;
@@ -1244,11 +1231,9 @@ export class SimulationService {
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
-                const startCredits = this.gameState.player.credits;
                 this.gameState.player.credits += reward.amount;
-                const endCredits = this.gameState.player.credits;
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                this.uiManager.triggerCreditGlow(startCredits, endCredits);
+                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
             // Grant license rewards
             if (reward.type === 'license') {
@@ -1257,7 +1242,6 @@ export class SimulationService {
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
-                    this.uiManager.triggerSystemSurge('gold', 'License Granted!');
                 }
             }
         });

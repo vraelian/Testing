@@ -209,11 +209,6 @@
     
     <div id="tutorial-highlight-overlay" class="hidden"></div>
 
-    <div id="celebration-overlay">
-        <div class="surge-light"></div>
-        <div class="surge-text" id="surge-text"></div>
-    </div>
-
     <script type="module" src="./js/main.js"></script>
 </body>
 </html>
@@ -652,8 +647,6 @@
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
-    display: inline-block;
-    transform-origin: right center;
 }
 
 .status-pod {
@@ -1177,106 +1170,6 @@ body {
     flex-shrink: 0;
 }
 /* --- [[END]] CARGO ITEM STYLES --- */
-
-/* --- [START] CELEBRATION EFFECTS --- */
-@keyframes credit-glow-effect {
-    0% {
-        transform: scale(1);
-        color: #29f1ff;
-        text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7;
-    }
-    40% {
-        transform: scale(1.5);
-        color: #ffffff;
-        text-shadow: 0 0 15px #fff, 0 0 30px #29f1ff, 0 0 50px #29f1ff;
-    }
-    60% {
-        transform: scale(1.5);
-        color: #ffffff;
-        text-shadow: 0 0 15px #fff, 0 0 30px #29f1ff, 0 0 50px #29f1ff;
-    }
-    100% {
-        transform: scale(1);
-        color: #29f1ff;
-        text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7;
-    }
-}
-
-.credit-glow-active .credit-text {
-    animation: credit-glow-effect 2.5s ease-in-out;
-}
-
-#celebration-overlay {
-    --surge-color: #00ffff; /* Default color, will be overridden by JS */
-    --surge-glow: #00ffff;  /* Default glow, will be overridden by JS */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    opacity: 0;
-}
-
-.system-surge-active #celebration-overlay, .system-surge-fading #celebration-overlay {
-    opacity: 1;
-    transition: opacity 0.2s ease-in;
-}
-.system-surge-fading #celebration-overlay {
-    opacity: 0;
-    transition: opacity 3s ease-out;
-}
-
-.surge-light {
-    position: absolute;
-    bottom: -100%;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, var(--surge-color), transparent 60%);
-    opacity: 0.4;
-    transition: all 2.9s ease-out;
-}
-.system-surge-active .surge-light {
-    bottom: 0;
-    opacity: 0.4;
-    transition-delay: 0.2s;
-}
-
-.surge-text {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 5vw;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 0 10px #fff, 0 0 20px var(--surge-glow), 0 0 40px var(--surge-glow);
-    transform: scale(0.5);
-    opacity: 0;
-    transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-.system-surge-active .surge-text {
-    transform: scale(1);
-    opacity: 1;
-    transition-delay: 0.4s;
-}
-
-.particle {
-    position: absolute;
-    bottom: -20px;
-    background-color: var(--surge-color);
-    border-radius: 50%;
-    opacity: 0;
-    animation: rise 8s ease-in forwards;
-}
-@keyframes rise {
-    0% { transform: translateY(0); opacity: 0.7; }
-    100% { transform: translateY(-105vh); opacity: 0; }
-}
-/* --- [END] CELEBRATION EFFECTS --- */
 
 
 @media (max-width: 768px) {
@@ -4231,138 +4124,6 @@ export const DB = {
     }
 };
 --- END OF FILE: ./js/data/database.js ---
---- START OF FILE: ./js/services/CelebrationEffects.js ---
-// js/services/CelebrationEffects.js
-/**
- * @fileoverview This file contains the JavaScript logic for triggering the celebration effects.
- * @JSDoc
- * @description To implement, create an instance of this CelebrationEffects class within your UIManager.
- * Pass the required DOM element references to its constructor. Then, call the public methods
- * (e.g., `uiManager.effects.triggerSystemSurge('gold', 'Mission Complete')`) from your
- * SimulationService or EventManager where appropriate.
- */
-export class CelebrationEffects {
-    /**
-     * @JSDoc
-     * @constructor
-     * @param {object} elements - A map of required DOM elements.
-     * @param {HTMLElement} elements.body - The document.body element.
-     * @param {HTMLElement} elements.gameContainer - The main game container element to which the glow class is applied.
-     * @param {HTMLElement} elements.creditDisplay - The specific <span> element for the credit text.
-     * @param {HTMLElement} elements.overlay - The main #celebration-overlay element.
-     * @param {HTMLElement} elements.surgeText - The #surge-text element inside the overlay.
-     */
-    constructor(elements) {
-        this.elements = elements;
-        this.isSurgeActive = false;
-
-        // A map of theme names to their color values for the System Surge effect.
-        this.themes = {
-            gold: { color: 'rgba(253, 224, 71, 0.7)', glow: '#fde047' },
-            green: { color: 'rgba(74, 222, 128, 0.7)', glow: '#4ade80' },
-            red: { color: 'rgba(248, 113, 113, 0.7)', glow: '#ef4444' },
-            blue: { color: 'rgba(96, 165, 250, 0.7)', glow: '#60a5fa' }
-        };
-    }
-
-    /**
-     * @JSDoc
-     * @method triggerCreditGlow
-     * @description Triggers the credit glow and enlargement animation on the credit display.
-     * Also animates the number changing for a more dynamic feel.
-     * @param {number} startCredits - The credit value before the gain.
-     * @param {number} endCredits - The final credit value to display.
-     */
-    triggerCreditGlow(startCredits, endCredits) {
-        if (this.elements.gameContainer.classList.contains('credit-glow-active')) return;
-
-        this.elements.gameContainer.classList.add('credit-glow-active');
-
-        let currentCredits = startCredits;
-        const duration = 1000; // Animate number change over 1 second
-        const stepTime = 20;
-        const steps = duration / stepTime;
-        const increment = (endCredits - startCredits) / steps;
-
-        const counter = setInterval(() => {
-            currentCredits += increment;
-            if (currentCredits >= endCredits) {
-                currentCredits = endCredits;
-                clearInterval(counter);
-            }
-            this.elements.creditDisplay.textContent = `⌬ ${Math.floor(currentCredits).toLocaleString()}`;
-        }, stepTime);
-
-        setTimeout(() => {
-            this.elements.gameContainer.classList.remove('credit-glow-active');
-            this.elements.creditDisplay.textContent = `⌬ ${Math.floor(endCredits).toLocaleString()}`;
-        }, 2500); // Total animation duration is 2.5s
-    }
-
-    /**
-     * @JSDoc
-     * @method triggerSystemSurge
-     * @description Triggers the full-screen celebration effect with a specific theme and text.
-     * @param {string} themeName - The name of the theme to use ('gold', 'green', 'red', 'blue').
-     * @param {string} text - The text to display in the center of the screen.
-     */
-    triggerSystemSurge(themeName, text) {
-        if (this.isSurgeActive) return;
-        this.isSurgeActive = true;
-
-        const themeColors = this.themes[themeName];
-        if (!themeColors) {
-            console.warn(`Invalid surge theme: ${themeName}`);
-            this.isSurgeActive = false;
-            return;
-        }
-
-        this.elements.surgeText.textContent = text;
-        this.elements.overlay.style.setProperty('--surge-color', themeColors.color);
-        this.elements.overlay.style.setProperty('--surge-glow', themeColors.glow);
-
-        this.elements.body.classList.add('system-surge-active');
-        this._createParticles(30);
-
-        const onsetAndHoldDuration = 1550 + 2000; // 1.55s onset + 2s hold
-
-        setTimeout(() => {
-            this.elements.body.classList.remove('system-surge-active');
-            this.elements.body.classList.add('system-surge-fading');
-
-            setTimeout(() => {
-                this.elements.body.classList.remove('system-surge-fading');
-                this.isSurgeActive = false;
-            }, 3000); // Fade-out duration
-
-        }, onsetAndHoldDuration);
-    }
-
-    /**
-     * @JSDoc
-     * @method _createParticles
-     * @private
-     * @description Creates and animates a specified number of particle elements for the System Surge effect.
-     * @param {number} count - The number of particles to create.
-     */
-    _createParticles(count) {
-        const totalDuration = 1550 + 2000 + 3000;
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            const size = Math.random() * 5 + 2;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 1.5}s`;
-            particle.style.animationDuration = `${Math.random() * 3 + 4}s`;
-            this.elements.overlay.appendChild(particle);
-
-            setTimeout(() => particle.remove(), totalDuration);
-        }
-    }
-}
---- END OF FILE: ./js/services/CelebrationEffects.js ---
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
 /**
@@ -5462,7 +5223,7 @@ export class MarketService {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_impact_RULES } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, PERK_IDS, COMMODITY_IDS, ACTION_IDS, WEALTH_MILESTONES, MARKET_IMPACT_RULES } from '../data/constants.js';
 import { applyEffect } from './eventEffectResolver.js';
 import { MarketService } from './simulation/MarketService.js';
 
@@ -5644,11 +5405,9 @@ export class SimulationService {
                 const button = event.target;
                 if(button) button.disabled = true;
                 
-                const startCredits = this.gameState.player.credits;
-                this.gameState.player.credits += 25000;
-                const endCredits = this.gameState.player.credits;
-                this.uiManager.triggerCreditGlow(startCredits, endCredits);
+                this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
+                this.gameState.player.credits += 25000;
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
@@ -5998,10 +5757,7 @@ export class SimulationService {
         }
         
         totalSaleValue = Math.floor(totalSaleValue);
-        const startCredits = this.gameState.player.credits;
         this.gameState.player.credits += totalSaleValue;
-        const endCredits = this.gameState.player.credits;
-
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
 
@@ -6015,10 +5771,6 @@ export class SimulationService {
         this.missionService.checkTriggers();
         
         this._applyMarketImpact(goodId, quantity, 'sell');
-        
-        if (totalSaleValue > 100000) {
-            this.uiManager.triggerCreditGlow(startCredits, endCredits);
-        }
 
         this.gameState.setState({});
         
@@ -6163,13 +5915,9 @@ export class SimulationService {
             return;
         }
 
-        const startCredits = player.credits;
         player.credits -= loanData.fee;
         this._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         player.credits += loanData.amount;
-        const endCredits = player.credits;
-        this.uiManager.triggerCreditGlow(startCredits, endCredits);
-        
         this._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
         player.debt += loanData.amount;
@@ -6700,11 +6448,9 @@ export class SimulationService {
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
-                const startCredits = this.gameState.player.credits;
                 this.gameState.player.credits += reward.amount;
-                const endCredits = this.gameState.player.credits;
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                this.uiManager.triggerCreditGlow(startCredits, endCredits);
+                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
             // Grant license rewards
             if (reward.type === 'license') {
@@ -6713,7 +6459,6 @@ export class SimulationService {
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
-                    this.uiManager.triggerSystemSurge('gold', 'License Granted!');
                 }
             }
         });
@@ -8032,7 +7777,6 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
-import { CelebrationEffects } from './CelebrationEffects.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -8058,7 +7802,6 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.missionService = null; // To be injected
-        this.effects = null; // To be lazy-initialized
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
 
@@ -8125,10 +7868,7 @@ export class UIManager {
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
-            stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
-            celebrationOverlay: document.getElementById('celebration-overlay'),
-            surgeText: document.getElementById('surge-text'),
-            creditDisplay: null // Will be cached after first render
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
     }
 
@@ -8156,7 +7896,6 @@ export class UIManager {
         this.renderActiveScreen(gameState);
         this.updateStickyBar(gameState);
         this.renderStickyBar(gameState);
-        this._initializeEffectsService();
     }
 
     renderNavigation(gameState) {
@@ -8171,7 +7910,7 @@ export class UIManager {
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
-                <span id="credit-display" class="credit-text">${formatCredits(player.credits)}</span>
+                <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
     
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
@@ -8229,6 +7968,7 @@ export class UIManager {
         }).join('');
     
         this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
     renderActiveScreen(gameState) {
@@ -9319,22 +9059,6 @@ export class UIManager {
             }, 700);
         }
     }
-
-    _initializeEffectsService() {
-        if (this.effects) return; // Initialize only once
-        const creditDisplay = document.getElementById('credit-display');
-        if (creditDisplay) {
-            this.cache.creditDisplay = creditDisplay;
-            const effectElements = {
-                body: document.body,
-                gameContainer: this.cache.gameContainer,
-                creditDisplay: this.cache.creditDisplay,
-                overlay: this.cache.celebrationOverlay,
-                surgeText: this.cache.surgeText
-            };
-            this.effects = new CelebrationEffects(effectElements);
-        }
-    }
     
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
@@ -9359,15 +9083,6 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
-    }
-
-    // --- Public Methods to Trigger Effects ---
-    triggerCreditGlow(startCredits, endCredits) {
-        this.effects?.triggerCreditGlow(startCredits, endCredits);
-    }
-    
-    triggerSystemSurge(theme, text) {
-        this.effects?.triggerSystemSurge(theme, text);
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
