@@ -3304,6 +3304,374 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
 --- END OF FILE: ./js/utils.js ---
+--- START OF FILE: ./js/effects/SystemSurgeEffect.js ---
+import { BaseEffect } from './BaseEffect.js';
+
+/**
+ * @fileoverview Defines the SystemSurgeEffect class, a full-screen celebration effect.
+ */
+
+export class SystemSurgeEffect extends BaseEffect {
+
+    /**
+     * @JSDoc
+     * @constructor
+     * @param {object} options - Configuration for the effect.
+     * @param {string} options.text - The text to display.
+     * @param {string} options.theme - The color theme ('gold', 'green', 'red', 'blue').
+     */
+    constructor(options) {
+        super(options);
+        this.domElements = {};
+        this.themes = {
+            gold: { color: 'rgba(253, 224, 71, 0.7)', glow: '#fde047' },
+            green: { color: 'rgba(74, 222, 128, 0.7)', glow: '#4ade80' },
+            red: { color: 'rgba(248, 113, 113, 0.7)', glow: '#ef4444' },
+            blue: { color: 'rgba(96, 165, 250, 0.7)', glow: '#60a5fa' }
+        };
+    }
+
+    /**
+     * @JSDoc
+     * @method play
+     * @override
+     * @description Runs the entire System Surge effect from creation to cleanup.
+     * @returns {Promise<void>} A promise that resolves when the effect is finished.
+     */
+    async play() {
+        return new Promise(resolve => {
+            this._injectCSS();
+            this._createDOM();
+
+            const onsetDuration = 1550; // Longest intro animation
+            const holdDuration = 2000;
+            const fadeDuration = 3000;
+
+            // Start the effect
+            // A short delay to ensure DOM is painted before adding animation class
+            setTimeout(() => {
+                document.body.classList.add('system-surge-active');
+            }, 50);
+
+            // Schedule the transition to fade-out
+            setTimeout(() => {
+                document.body.classList.remove('system-surge-active');
+                document.body.classList.add('system-surge-fading');
+            }, onsetDuration + holdDuration);
+
+            // Schedule the final cleanup and resolve the promise
+            setTimeout(() => {
+                this._cleanup();
+                resolve();
+            }, onsetDuration + holdDuration + fadeDuration);
+        });
+    }
+
+    /**
+     * @JSDoc
+     * @method _createDOM
+     * @protected
+     * @override
+     * @description Creates the DOM elements for the System Surge effect.
+     */
+    _createDOM() {
+        const themeColors = this.themes[this.options.theme] || this.themes.blue;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'celebration-overlay';
+        overlay.style.setProperty('--surge-color', themeColors.color);
+        overlay.style.setProperty('--surge-glow', themeColors.glow);
+        this.domElements.overlay = overlay;
+
+        const surgeLight = document.createElement('div');
+        surgeLight.className = 'surge-light';
+        this.domElements.surgeLight = surgeLight;
+
+        const surgeText = document.createElement('div');
+        surgeText.className = 'surge-text';
+        surgeText.id = 'surge-text';
+        surgeText.textContent = this.options.text || '';
+        this.domElements.surgeText = surgeText;
+
+        overlay.appendChild(surgeLight);
+        overlay.appendChild(surgeText);
+        this._createParticles(30);
+
+        document.body.appendChild(overlay);
+    }
+    
+    /**
+     * @JSDoc
+     * @method _createParticles
+     * @private
+     * @description Creates and animates a specified number of particle elements.
+     * @param {number} count - The number of particles to create.
+     */
+    _createParticles(count) {
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 5 + 2;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDelay = `${Math.random() * 1.5}s`;
+            particle.style.animationDuration = `${Math.random() * 3 + 4}s`;
+            this.domElements.overlay.appendChild(particle);
+        }
+    }
+
+
+    /**
+     * @JSDoc
+     * @method _injectCSS
+     * @protected
+     * @override
+     * @description Injects the CSS required for the System Surge effect into the document head.
+     */
+    _injectCSS() {
+        const style = document.createElement('style');
+        style.id = 'system-surge-styles';
+        style.textContent = SystemSurgeEffect.css;
+        document.head.appendChild(style);
+        this.domElements.style = style;
+    }
+
+    /**
+     * @JSDoc
+     * @method _cleanup
+     * @protected
+     * @override
+     * @description Removes all DOM elements, styles, and body classes added by the effect.
+     */
+    _cleanup() {
+        document.body.classList.remove('system-surge-active', 'system-surge-fading');
+        Object.values(this.domElements).forEach(element => element && element.remove());
+    }
+
+    /**
+     * @JSDoc
+     * @property {string} css
+     * @static
+     * @description Static property containing all CSS for this effect.
+     */
+    static css = `
+        #celebration-overlay {
+            --surge-color: #00ffff;
+            --surge-glow: #00ffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        .system-surge-active #celebration-overlay {
+            opacity: 1;
+            transition: opacity 0.2s ease-in;
+        }
+        .system-surge-fading #celebration-overlay {
+            opacity: 0;
+            transition: opacity 3s ease-out;
+        }
+
+        .surge-light {
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, var(--surge-color), transparent 60%);
+            opacity: 0.4;
+            transition: all 2.9s ease-out;
+        }
+        .system-surge-active .surge-light {
+            bottom: 0;
+            opacity: 0.4;
+            transition-delay: 0.2s;
+        }
+
+        .surge-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5vw;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 20px var(--surge-glow), 0 0 40px var(--surge-glow);
+            transform: scale(0.5);
+            opacity: 0;
+            transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .system-surge-active .surge-text {
+            transform: scale(1);
+            opacity: 1;
+            transition-delay: 0.4s;
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -20px;
+            background-color: var(--surge-color);
+            border-radius: 50%;
+            opacity: 0;
+            animation: system-surge-rise 8s ease-in forwards;
+        }
+
+        @keyframes system-surge-rise {
+            0% { transform: translateY(0); opacity: 0.7; }
+            100% { transform: translateY(-105vh); opacity: 0; }
+        }
+    `;
+}
+--- END OF FILE: ./js/effects/SystemSurgeEffect.js ---
+--- START OF FILE: ./js/effects/BaseEffect.js ---
+/**
+ * @fileoverview Defines the BaseEffect class, an abstract blueprint for all visual effects.
+ * This class should not be instantiated directly. Instead, specific effect classes
+ * should extend it and implement its methods.
+ */
+
+export class BaseEffect {
+    /**
+     * @JSDoc
+     * @constructor
+     * @param {object} options - Configuration for the effect, passed from the trigger.
+     */
+    constructor(options) {
+        this.options = options;
+    }
+
+    /**
+     * @JSDoc
+     * @method play
+     * @description The main entry point for the effect. The EffectsManager calls this method.
+     * It is responsible for the entire lifecycle of the effect (setup, animation, cleanup).
+     * Subclasses MUST implement this method.
+     * @returns {Promise<void>} A promise that resolves when the effect is completely finished.
+     */
+    async play() {
+        throw new Error("Effects must implement the 'play' method.");
+    }
+
+    /**
+     * @JSDoc
+     * @method _createDOM
+     * @protected
+     * @description Creates the necessary DOM elements for the effect and appends them to the document.
+     * Subclasses should implement this to build their specific HTML structure.
+     */
+    _createDOM() {
+        // To be implemented by subclasses
+    }
+
+    /**
+     * @JSDoc
+     * @method _injectCSS
+     * @protected
+     * @description Injects the effect-specific CSS into the document's head.
+     * Subclasses should implement this to provide their styling.
+     */
+    _injectCSS() {
+        // To be implemented by subclasses
+    }
+
+    /**
+     * @JSDoc
+     * @method _cleanup
+     * @protected
+     * @description Removes all DOM elements and CSS created by the effect.
+     * This method is crucial for leaving the DOM in a clean state.
+     */
+    _cleanup() {
+        // To be implemented by subclasses
+    }
+}
+--- END OF FILE: ./js/effects/BaseEffect.js ---
+--- START OF FILE: ./js/effects/EffectsManager.js ---
+/**
+ * @fileoverview Defines the EffectsManager, a controller for queueing and playing visual effects.
+ */
+
+export class EffectsManager {
+    /**
+     * @JSDoc
+     * @constructor
+     */
+    constructor() {
+        /** @private @type {Array<object>} */
+        this.effectQueue = [];
+        /** @private @type {boolean} */
+        this.isEffectActive = false;
+        /** @private @type {Object<string, typeof BaseEffect>} */
+        this.effectsRegistry = {};
+    }
+
+    /**
+     * @JSDoc
+     * @method registerEffect
+     * @description Adds an effect class to the registry, making it available to be triggered.
+     * @param {string} name - The unique name to identify the effect (e.g., 'systemSurge').
+     * @param {typeof BaseEffect} effectClass - The class definition for the effect, which must extend BaseEffect.
+     */
+    registerEffect(name, effectClass) {
+        this.effectsRegistry[name] = effectClass;
+    }
+
+    /**
+     * @JSDoc
+     * @method trigger
+     * @description Adds an effect request to the queue and starts processing.
+     * @param {string} effectName - The name of the effect to trigger, must match a registered effect.
+     * @param {object} options - The configuration object to pass to the effect's constructor.
+     */
+    trigger(effectName, options) {
+        this.effectQueue.push({ effectName, options });
+        this._processQueue();
+    }
+
+    /**
+     * @JSDoc
+     * @method _processQueue
+     * @private
+     * @async
+     * @description Processes the effect queue sequentially. It takes the next effect from the queue,
+     * plays it, and waits for it to complete before starting the next one.
+     */
+    async _processQueue() {
+        if (this.isEffectActive || this.effectQueue.length === 0) {
+            return;
+        }
+
+        this.isEffectActive = true;
+        const request = this.effectQueue.shift();
+        const EffectClass = this.effectsRegistry[request.effectName];
+
+        if (!EffectClass) {
+            console.warn(`EffectManager: Attempted to trigger unregistered effect '${request.effectName}'.`);
+            this.isEffectActive = false;
+            this._processQueue(); // Process next item
+            return;
+        }
+
+        try {
+            const effect = new EffectClass(request.options);
+            await effect.play();
+        } catch (error) {
+            console.error(`Error playing effect '${request.effectName}':`, error);
+        } finally {
+            this.isEffectActive = false;
+            // Check for more effects that may have been added during playback
+            this._processQueue();
+        }
+    }
+}
+--- END OF FILE: ./js/effects/EffectsManager.js ---
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /**
@@ -5007,6 +5375,12 @@ export class MissionService {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
+
+        // Trigger the celebration effect
+        this.uiManager.triggerEffect('systemSurge', {
+            text: 'Mission Complete',
+            theme: 'gold'
+        });
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
@@ -7777,6 +8151,8 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { EffectsManager } from '../effects/EffectsManager.js';
+import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -7805,6 +8181,9 @@ export class UIManager {
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
 
+        this.effectsManager = new EffectsManager();
+        this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
+
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
@@ -7820,6 +8199,17 @@ export class UIManager {
                 this.render(this.lastKnownState);
             }
         });
+    }
+
+    /**
+     * @JSDoc
+     * @method triggerEffect
+     * @description Public method to trigger a registered visual effect.
+     * @param {string} name - The name the effect was registered under.
+     * @param {object} options - The configuration options for the effect.
+     */
+    triggerEffect(name, options) {
+        this.effectsManager.trigger(name, options);
     }
 
     /**

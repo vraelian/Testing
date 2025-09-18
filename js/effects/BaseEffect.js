@@ -4,7 +4,7 @@
  * should extend it and implement its methods.
  */
 
-class BaseEffect {
+export class BaseEffect {
     /**
      * @JSDoc
      * @constructor

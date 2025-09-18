@@ -1,8 +1,10 @@
+import { BaseEffect } from './BaseEffect.js';
+
 /**
  * @fileoverview Defines the SystemSurgeEffect class, a full-screen celebration effect.
  */
 
-class SystemSurgeEffect extends BaseEffect {
+export class SystemSurgeEffect extends BaseEffect {
 
     /**
      * @JSDoc

@@ -2,7 +2,7 @@
  * @fileoverview Defines the EffectsManager, a controller for queueing and playing visual effects.
  */
 
-class EffectsManager {
+export class EffectsManager {
     /**
      * @JSDoc
      * @constructor
