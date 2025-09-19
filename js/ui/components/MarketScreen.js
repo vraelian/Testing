@@ -22,7 +22,9 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
         return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
-    return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
+    return `<div class="market-scroll-panel">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
+            </div>`;
 }
 
 /**

@@ -134,3 +134,14 @@
 .objective-progress-flash {
     animation: flash-green 0.7s ease-in-out;
 }
+
+.missions-scroll-panel {
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.missions-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
