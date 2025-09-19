@@ -49,6 +49,9 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 1.5rem; /* Replaces mt-6 */
+    min-height: 0; /* Required for flex children to scroll */
+    display: flex;
+    flex-direction: column;
 }
 
 .btn {
@@ -91,9 +94,12 @@ body {
 
 .screen {
     display: none;
+    flex-grow: 1; /* Allow screen to fill vertical space */
+    min-height: 0; /* Prevent flex overflow */
 }
 .active-screen {
-    display: block;
+    display: flex; /* Changed to flex to allow child scrolling panels to work */
+    flex-direction: column;
 }
 
 @keyframes fadeIn {
@@ -358,6 +364,17 @@ body {
 }
 /* --- [[END]] CARGO ITEM STYLES --- */
 
+/* --- [[START]] SCROLL PANEL --- */
+.scroll-panel {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+}
+.scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+/* --- [[END]] SCROLL PANEL --- */
 
 @media (max-width: 768px) {
     body {

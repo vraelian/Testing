@@ -1406,4 +1406,28 @@ export class SimulationService {
             this.gameState.player.debugEventIndex = (this.gameState.player.debugEventIndex + 1) % DB.RANDOM_EVENTS.length;
         }
     }
+
+    /**
+     * @summary Grants the player one of every commodity for testing purposes.
+     * @description A debug function that adds one unit of every commodity listed in the database
+     * to the player's active ship inventory.
+     */
+    debugGrantAllItems() {
+        const inventory = this._getActiveInventory();
+        if (!inventory) {
+            this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
+            return;
+        }
+
+        DB.COMMODITIES.forEach(commodity => {
+            if (inventory[commodity.id]) {
+                inventory[commodity.id].quantity += 1;
+            } else {
+                inventory[commodity.id] = { quantity: 1, avgCost: 0 };
+            }
+        });
+
+        this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
+        this.gameState.setState({});
+    }
 }
