@@ -203,7 +203,7 @@ export class SystemSurgeEffect extends BaseEffect {
             text: 'MISSION COMPLETE',
             textSize: '8vw', particleCount: 62, particleShape: 'circle',
             particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
-            travelDistance: 90, fadeInTime: 1750, lingerTime: 3600, fadeOutTime: 5000
+            travelDistance: 115, fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
         }
     };
 
