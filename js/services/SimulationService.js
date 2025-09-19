@@ -599,7 +599,13 @@ export class SimulationService {
         this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
         this._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.addShipToHangar(shipId);
-        this.uiManager.queueModal('event-modal', "Acquisition Complete", `The ${ship.name} has been transferred to your hangar.`);
+
+        // Trigger celebratory effect based on ship class
+        if (['S', 'O'].includes(ship.class)) {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
+        } else {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'silver', text: 'VESSEL ACQUIRED' });
+        }
 
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
@@ -679,6 +685,7 @@ export class SimulationService {
         player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
 
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan', text: 'DEBT CLEARED' });
         this._checkMilestones();
         this.gameState.setState({});
     }
@@ -732,6 +739,8 @@ export class SimulationService {
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
         this.gameState.setState({});
         
         return { success: true };
@@ -839,7 +848,7 @@ export class SimulationService {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.queueModal('event-modal', `Captain ${this.gameState.player.name}`, `You are now ${this.gameState.player.playerAge}. You feel older and wiser.<br><br>Your experience now grants you an additional 1% profit on all trades.`);
+                this.uiManager.triggerEffect('systemSurge', { theme: 'blue', text: `AGE ${this.gameState.player.playerAge}` });
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 
@@ -1097,7 +1106,9 @@ export class SimulationService {
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
-            this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            
+            // Trigger the purple theme for wealth milestones
+            this.uiManager.triggerEffect('systemSurge', { theme: 'purple', text: `TIER ${nextMilestone.revealsTier} UNLOCKED` });
             
             currentTier = nextMilestone.revealsTier;
             nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
@@ -1240,7 +1251,7 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
-                    this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
+                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }

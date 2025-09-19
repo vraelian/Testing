@@ -199,11 +199,8 @@ export class MissionService {
         }
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
 
-        // Trigger the celebration effect
-        this.uiManager.triggerEffect('systemSurge', {
-            text: 'Mission Complete',
-            theme: 'gold'
-        });
+        // Trigger the celebration effect using the 'gold' profile
+        this.uiManager.triggerEffect('systemSurge', { theme: 'gold' });
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
