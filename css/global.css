@@ -60,6 +60,44 @@ body {
     flex-direction: column;
 }
 
+.btn {
+    transition: all 0.3s ease;
+    border: 1px solid #4a6a8a;
+    border-radius: 8px;
+    background-color: #22304a;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    padding: 0.5rem 0.75rem;
+    color: #c0d0f0;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+#restart-game-container .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.875rem;
+}
+.btn:hover:not(:disabled) {
+    background-color: #32405a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    color: #e0f0ff;
+}
+.btn:disabled, [disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
+.btn-intro-locked {
+    filter: grayscale(1);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
 .screen {
     display: none;
     flex-grow: 1; /* Allow screen to fill vertical space */

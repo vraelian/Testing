@@ -71,10 +71,12 @@ export function renderMissionsScreen(gameState, missionService) {
     }
 
     return `
-        <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300 flex-shrink-0">Mission Terminal</h1>
-        <div class="missions-scroll-panel flex-grow min-h-0">
-            <div class="space-y-3 max-w-2xl mx-auto">
-                ${missionsHtml}
+        <div class="flex flex-col h-full">
+            <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300 flex-shrink-0">Mission Terminal</h1>
+            <div class="missions-scroll-panel flex-grow min-h-0">
+                <div class="space-y-3 max-w-2xl mx-auto">
+                    ${missionsHtml}
+                </div>
             </div>
         </div>
     `;
