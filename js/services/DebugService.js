@@ -258,17 +258,20 @@ ${logHistory}
             godMode: {
                 name: 'God Mode',
                 type: 'button',
+                key: 't',
                 handler: () => this.simulationService.debugGodMode()
             },
             simpleStart: {
                 name: 'Simple Start',
                 type: 'button',
+                key: 'y',
                 handler: () => this.simulationService.debugSimpleStart()
             },
             // --- Player Actions ---
             addCredits: {
                 name: 'Add Credits',
                 type: 'button',
+                key: 'c',
                 handler: () => {
                     this.gameState.player.credits += this.debugState.creditsToAdd;
                     this.simulationService._checkMilestones();
@@ -312,11 +315,18 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
+            grantAllItems: {
+                name: 'Grant 1x All Items',
+                type: 'button',
+                key: 'g',
+                handler: () => this.simulationService.debugGrantAllItems()
+            },
 
             // --- World Actions ---
             advanceTime: {
                 name: 'Advance Days',
                 type: 'button',
+                key: 'a',
                 handler: () => this.simulationService._advanceDays(this.debugState.daysToAdvance)
             },
 
@@ -334,6 +344,7 @@ ${logHistory}
             triggerRandomEvent: {
                 name: 'Trigger Random Event',
                 type: 'button',
+                key: 'e',
                 handler: () => {
                     const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                     if (dest) {
@@ -354,6 +365,7 @@ ${logHistory}
             triggerMission: {
                 name: 'Trigger Mission',
                 type: 'button',
+                key: 'm',
                 handler: () => {
                     if (this.debugState.selectedMission) {
                         if(this.gameState.missions.activeMissionId) {
@@ -433,6 +445,7 @@ ${logHistory}
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
         economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+        economyFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
 
         // --- Triggers Folder ---
         const triggerFolder = this.gui.addFolder('Triggers');
