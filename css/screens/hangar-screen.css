@@ -13,7 +13,7 @@
 #starport-shipyard-panel, #starport-hangar-panel {
     display: flex;
     flex-direction: column;
-    max-height: 53vh; /* Constrains the height of the entire panel column */
+    max-height: 50vh; /* Constrains the height of the entire panel column */
 }
 
 .starport-panel {
