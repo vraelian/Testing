@@ -10,15 +10,22 @@
     --credits-color: #29f1ff;
 }
 
+#starport-shipyard-panel, #starport-hangar-panel {
+    display: flex;
+    flex-direction: column;
+    max-height: 53vh; /* Constrains the height of the entire panel column */
+}
+
 .starport-panel {
     background-color: rgba(10, 20, 40, 0.5);
     border: 1px solid #2a3a5a;
     border-radius: 10px;
     padding: 1.5rem;
-    max-height: 60vh;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    flex-grow: 1; /* Allow panel to fill available space within its parent */
+    min-height: 0; /* Prevent flex overflow with tall content */
 }
 .starport-panel::-webkit-scrollbar {
     display: none;
