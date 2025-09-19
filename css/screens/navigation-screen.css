@@ -1,4 +1,14 @@
 /* css/screens/navigation-screen.css */
+.navigation-scroll-panel {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+}
+.navigation-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
 .location-card {
     display: flex;
     flex-direction: column;
