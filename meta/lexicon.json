@@ -45,7 +45,7 @@
         "startNewGame": "Initializes the entire game state for a new session.",
         "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
       },
-      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "tutorials", "introSequenceActive"]
+      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "tutorials", "introSequenceActive", "uiState"]
     },
     "SimulationService": {
       "description": "The core game engine. Handles all primary game logic for player actions, time progression, and event triggers. The only service that should directly modify GameState.",
@@ -54,16 +54,16 @@
         "buyItem": "Manages the purchase of commodities from the market.",
         "sellItem": "Manages the sale of commodities, including diminishing returns.",
         "_advanceDays": "Advances game time and triggers daily/weekly economic and game events.",
-        "_handleShipDestruction": "Handles the destruction of a player ship and the potential game over condition."
+        "_grantRewards": "Applies mission or event rewards to the player's state."
       },
       "mutates_state": ["day", "currentLocationId", "player.credits", "player.debt", "player.inventories", "player.shipStates", "market.inventory"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it.",
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager.",
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
-        "showTravelAnimation": "Displays the animated travel sequence between locations.",
+        "triggerEffect": "Initiates a visual effect, like a celebration, through the EffectsManager.",
         "updateMarketCardDisplay": "Updates the real-time profit/loss and cost display on a market card.",
         "showLaunchModal": "Displays the launch confirmation modal for a given destination."
       },
@@ -87,12 +87,20 @@
             "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
         },
         "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    },
+    "EffectsManager": {
+        "description": "A controller for queueing and playing visual effects independently of the main render loop.",
+        "key_functions": {
+            "registerEffect": "Adds an effect class to the registry, making it available to be triggered.",
+            "trigger": "Adds an effect request to the queue and starts processing."
+        },
+        "mutates_state": []
     }
   },
   "type_system": {
     "enums": {
         "ActionId": [
-            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade", "set-max-trade"
+            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade"
         ],
       "ScreenId": ["status", "navigation", "services", "market", "cargo", "hangar", "missions", "finance", "intel"],
       "NavId": ["ship", "starport", "data"],
@@ -109,7 +117,8 @@
     "activeScreen": { "_type": "ScreenId" },
     "player": { "_type": "Player" },
     "market": { "_type": "MarketState" },
-    "missions": { "_type": "MissionState" }
+    "missions": { "_type": "MissionState" },
+    "uiState": { "_type": "UIState" }
   },
   "asset_index": {
     "F001": {"path": "./index.html", "role": "DOCUMENT_ROOT"},

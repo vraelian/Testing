@@ -1,42 +1,60 @@
 # Orbital Trading - Core Data Flow
 
-This document outlines the primary data flow and application architecture for Orbital Trading, providing a high-level overview of how user actions translate into game state changes and UI updates.
+## System Architecture
+
+-   **Model**: Unidirectional Data Flow
+-   **Description**: Ensures predictable and traceable state mutations.
+-   **Primary Services**:
+    1.  **EventManager**: Universal input layer.
+    2.  **SimulationService**: Central game logic and state mutation engine.
+    3.  **GameState**: The single source of truth for all dynamic data.
+    4.  **UIManager**: The output layer, responsible for rendering the game state.
+    5.  **EffectsManager**: A dedicated service within the UIManager for handling visual effects.
 
 ---
 
-## Architectural Overview
+## Core Data Flows
 
-The game operates on a unidirectional data flow model, ensuring that state mutations are predictable and easy to trace. The core of this model involves four key services:
+### Flow: Core Logic Loop
 
-1.  **EventManager**: The universal input layer.
-2.  **SimulationService**: The central game logic and state mutation engine.
-3.  **GameState**: The single source of truth for all dynamic data.
-4.  **UIManager**: The output layer, responsible for rendering the game state and managing visual effects.
+1.  **Actor**: `User`
+    -   **Action**: Interacts with a UI element.
+    -   **Target**: `DOM`
+    -   **Details**: Typically a click on an element with a `data-action` attribute.
 
----
+2.  **Actor**: `EventManager`
+    -   **Action**: Captures the DOM event.
+    -   **Target**: `SimulationService`
+    -   **Details**: Reads `data-action` and related attributes, then calls the corresponding method in the SimulationService.
 
-## Core Data Flow Loop
+3.  **Actor**: `SimulationService`
+    -   **Action**: Executes game logic.
+    -   **Target**: `GameState`
+    -   **Details**: Validates the action, calculates the outcome, and calls `GameState.setState()` to mutate the state. This is the sole point of state mutation.
 
-All player interactions that modify the game's state follow this fundamental sequence:
+4.  **Actor**: `GameState`
+    -   **Action**: Notifies subscribers of a state change.
+    -   **Target**: `UIManager`
+    -   **Details**: The `setState` method triggers the `_notify` method, which calls the render function subscribed by the UIManager.
 
-1.  **User Input**: The process begins when a player interacts with a UI element, typically by clicking a button that has a `data-action` attribute (e.g., `<button data-action="buy-item">`).
+5.  **Actor**: `UIManager`
+    -   **Action**: Re-renders the UI.
+    -   **Target**: `DOM`
+    -   **Details**: Reads the entire updated state from GameState and redraws the necessary UI components to reflect the new state.
 
-2.  **EventManager Captures Input**: The central click handler in `EventManager.js` (`_handleClick`) captures this event. It reads the `data-action` attribute and any associated data (like `data-good-id` or `data-ship-id`).
+### Flow: Visual Effects Side-Flow
 
-3.  **Action is Delegated to SimulationService**: The `EventManager` translates the user's input into a specific, high-level command and calls the corresponding method in the `SimulationService`. For example, a "buy-item" action calls `simulationService.buyItem()`.
+1.  **Actor**: `SimulationService` (or other logic service)
+    -   **Action**: Determines a visual effect is required.
+    -   **Target**: `UIManager`
+    -   **Details**: Calls `uiManager.triggerEffect()` with the effect name and configuration options.
 
-4.  **SimulationService Mutates State**: The `SimulationService` contains all the core game logic. It validates the action (e.g., "Can the player afford this?"), calculates the outcome, and then directly modifies the game's state by calling `GameState.setState()`. This is the **only** place where the game's state should be changed.
+2.  **Actor**: `UIManager`
+    -   **Action**: Delegates the effect request.
+    -   **Target**: `EffectsManager`
+    -   **Details**: Forwards the effect name and options to its internal EffectsManager instance.
 
-5.  **GameState Notifies UIManager**: The `GameState` service holds a list of subscribers. When `setState()` is called, it notifies all subscribers that a change has occurred. The `UIManager` is the primary subscriber.
-
-6.  **UIManager Re-Renders UI**: Upon notification from the `GameState`, the `UIManager.render()` function is triggered. It re-reads the entire updated game state and re-draws the necessary components on the screen, ensuring the player always sees the most current information.
-
----
-
-## Visual Effects Side-Flow
-
-For purely visual flair that does not depend on a full UI re-render (like the "Mission Complete" celebration), a secondary flow exists:
-
-1.  **Service Triggers Effect**: A service, typically the **`SimulationService`**, determines that a visual effect should be played as a result of a game event (e.g., completing a mission).
-2.  **UIManager is Called**: The service calls the `uiManager.triggerEffect()` method, passing the name of the desired effect and any configuration options.
-3.  **EffectsManager Plays Effect**: The `UIManager` delegates the request to its internal **`EffectsManager`** instance. The `EffectsManager` queues and plays the visual effect (e.g., `SystemSurgeEffect`) independently of the main render loop, creating a visual overlay that does not disrupt the underlying UI.
+3.  **Actor**: `EffectsManager`
+    -   **Action**: Instantiates and plays the requested effect.
+    -   **Target**: `DOM`
+    -   **Details**: The manager queues the request, creates an instance of the corresponding effect class (e.g., `SystemSurgeEffect`), and executes its `play()` method. The effect runs independently of the main UI render loop.
