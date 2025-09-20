@@ -31,13 +31,13 @@
 }
 
 .shipyard-panel {
-    min-height: calc(var(--ship-bar-height) * 2.1 + 2rem); /* 2.1 ships + spacing */
-    max-height: 45vh;
+    min-height: calc(var(--ship-bar-height) * 1.2 + 2rem); /* 2.1 ships + spacing */
+    max-height: 18.5vh;
 }
 
 .hangar-panel {
-    min-height: calc(var(--ship-bar-height) * 3.1 + 2rem); /* 3.1 ships + spacing */
-    max-height: 45vh;
+    min-height: calc(var(--ship-bar-height) * 3.70 + 2rem); /* 3.1 ships + spacing */
+    max-height: 38vh;
 }
 
 

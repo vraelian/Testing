@@ -339,6 +339,11 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
+            fillShipyard: {
+                name: 'Fill Shipyard w/ All Ships',
+                type: 'button',
+                handler: () => this.simulationService.debugFillShipyard()
+            },
 
             // --- Trigger Actions ---
             triggerRandomEvent: {
@@ -446,6 +451,7 @@ ${logHistory}
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
         economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
         economyFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
+        economyFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
 
         // --- Triggers Folder ---
         const triggerFolder = this.gui.addFolder('Triggers');

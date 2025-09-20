@@ -1430,4 +1430,24 @@ export class SimulationService {
         this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
         this.gameState.setState({});
     }
+
+    /**
+     * @summary Fills the current station's shipyard with all ships.
+     * @description A debug function that bypasses the normal weekly stock rotation and populates
+     * the shipyard at the player's current location with every ship defined in the database.
+     */
+    debugFillShipyard() {
+        const { currentLocationId, day } = this.gameState;
+        if (this.gameState.market.shipyardStock[currentLocationId]) {
+            const allShipIds = Object.keys(DB.SHIPS);
+            this.gameState.market.shipyardStock[currentLocationId] = {
+                day: day,
+                shipsForSale: allShipIds
+            };
+            this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
+            this.gameState.setState({});
+        } else {
+            this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
+        }
+    }
 }
