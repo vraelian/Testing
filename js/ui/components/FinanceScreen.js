@@ -32,9 +32,8 @@ export function renderFinanceScreen(gameState) {
             <div>
                 <h3 class="text-2xl font-orbitron text-center mb-4">Debt</h3>
                 <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
-                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
-                        Pay Off Full Amount
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-2 bg-red-800/80 hover:bg-red-700/80 border-red-500 font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
+                        Pay Off ${formatCredits(player.debt)}
                     </button>
                     ${garnishmentTimerHtml}
                 </div>

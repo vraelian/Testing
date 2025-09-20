@@ -1,7 +1,6 @@
 /* css/screens/finance-screen.css */
 .finance-log-panel {
-    height: 50vh;
-    overflow-y: auto;
+    height: 50vh; /* Enforce a fixed height based on the viewport */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
 }
