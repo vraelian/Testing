@@ -19,7 +19,8 @@
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
     <link rel="stylesheet" href="./css/screens/finance-screen.css">
-    <link rel="stylesheet" href="./css/screens/cargo-screen.css">
+    <link rel="stylesheet" href="./css/screens/intel-screen.css">
+    <link rel="stylesheet" href="./css/screens/status-screen.css">
 </head>
 <body class="p-4 md:p-8">
 
@@ -27,12 +28,14 @@
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
-            
+          
+    
             <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
                 <button class="btn btn-header w-full" disabled>Load Game</button>
                 <button class="btn btn-header w-full" disabled>Options</button>
             </div>
+    
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
@@ -62,7 +65,7 @@
                 <div id="status-screen" class="screen"></div>
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
-                
+               
                 <div id="market-screen" class="screen"></div>
                 <div id="cargo-screen" class="screen"></div>
                 <div id="hangar-screen" class="screen"></div>

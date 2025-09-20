@@ -53,28 +53,30 @@ export function renderStatusScreen(gameState) {
     `;
 
     return `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                <div class="text-left pl-4">
-                    <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
-                    <span class="text-4xl font-bold font-orbitron">${day}</span>
-                </div>
-                <div class="text-right flex flex-col items-end">
-                    <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
-                    <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
-                        <div class="text-right">
-                            <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
-                            <p>${shipStatic.name}</p>
-                            <p>Class: ${shipStatic.class}</p>
+        <div class="status-scroll-panel">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
+                <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <div class="text-left pl-4">
+                        <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
+                        <span class="text-4xl font-bold font-orbitron">${day}</span>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
+                        <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
+                            <div class="text-right">
+                                <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
+                                <p>${shipStatic.name}</p>
+                                <p>Class: ${shipStatic.class}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="md:col-span-1 flex flex-col gap-4">
-                ${activeShipBarHtml}
-                <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
-                    <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
+                <div class="md:col-span-1 flex flex-col gap-4">
+                    ${activeShipBarHtml}
+                    <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
+                        <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
+                    </div>
                 </div>
             </div>
         </div>`;
