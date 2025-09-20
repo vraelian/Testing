@@ -74,9 +74,7 @@ export function renderCargoScreen(gameState) {
     }
 
     return `
-        <div class="flex flex-col h-full flex-grow min-h-0">
-             <div class="cargo-scroll-panel">
-                ${content}
-            </div>
+        <div class="cargo-scroll-panel">
+            ${content}
         </div>`;
 }
