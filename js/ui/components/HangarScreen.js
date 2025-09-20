@@ -31,13 +31,13 @@ export function renderHangarScreen(gameState) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 relative">
             <div id="starport-shipyard-panel">
                 <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Shipyard</h2>
-                <div class="starport-panel space-y-4">${shipyardHtml}</div>
+                <div class="starport-panel shipyard-panel space-y-4">${shipyardHtml}</div>
             </div>
             <div class="w-full my-4 border-t-2 border-slate-600 lg:hidden"></div>
             <div class="absolute left-1/2 top-0 h-full w-px bg-slate-600 hidden lg:block"></div>
             <div id="starport-hangar-panel">
                 <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Hangar</h2>
-                <div class="starport-panel space-y-4">${hangarHtml}</div>
+                <div class="starport-panel hangar-panel space-y-4">${hangarHtml}</div>
             </div>
         </div>`;
 }
