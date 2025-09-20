@@ -20,6 +20,9 @@
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
     <link rel="stylesheet" href="./css/screens/finance-screen.css">
+    <link rel="stylesheet" href="./css/screens/intel-screen.css">
+    <link rel="stylesheet" href="./css/screens/status-screen.css">
+    <link rel="stylesheet" href="./css/screens/services-screen.css">
 </head>
 <body class="p-4 md:p-8">
 
@@ -27,12 +30,14 @@
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
-            
+          
+    
             <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
                 <button class="btn btn-header w-full" disabled>Load Game</button>
                 <button class="btn btn-header w-full" disabled>Options</button>
             </div>
+    
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
@@ -62,7 +67,7 @@
                 <div id="status-screen" class="screen"></div>
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
-                
+               
                 <div id="market-screen" class="screen"></div>
                 <div id="cargo-screen" class="screen"></div>
                 <div id="hangar-screen" class="screen"></div>
@@ -349,6 +354,17 @@
 
 .objective-progress-flash {
     animation: flash-green 0.7s ease-in-out;
+}
+
+.missions-scroll-panel {
+    height: 68vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.missions-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
 }
 --- END OF FILE: ./css/missions.css ---
 --- START OF FILE: ./css/debug.css ---
@@ -862,6 +878,9 @@ body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 1.5rem; /* Replaces mt-6 */
+    min-height: 0; /* Required for flex children to scroll */
+    display: flex;
+    flex-direction: column;
 }
 
 .btn {
@@ -904,9 +923,12 @@ body {
 
 .screen {
     display: none;
+    flex-grow: 1; /* Allow screen to fill vertical space */
+    min-height: 0; /* Prevent flex overflow */
 }
 .active-screen {
-    display: block;
+    display: flex; /* Changed to flex to allow child scrolling panels to work */
+    flex-direction: column;
 }
 
 @keyframes fadeIn {
@@ -1171,7 +1193,6 @@ body {
 }
 /* --- [[END]] CARGO ITEM STYLES --- */
 
-
 @media (max-width: 768px) {
     body {
         padding-bottom: 15vh;
@@ -1417,6 +1438,19 @@ body {
 }
 /* --- [[END]] LAUNCH MODAL STYLES --- */
 --- END OF FILE: ./css/modals.css ---
+--- START OF FILE: ./css/screens/services-screen.css ---
+/* css/screens/services-screen.css */
+.services-scroll-panel {
+    height: 75vh; /* Enforce a fixed height based on the viewport */
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.services-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+--- END OF FILE: ./css/screens/services-screen.css ---
 --- START OF FILE: ./css/screens/market-screen.css ---
 /* css/screens/market-screen.css */
 :root {
@@ -1961,9 +1995,56 @@ body {
     left: calc(50% - 3px);
 }
 /* --- [[END]] SOLID STATE TRANSACTION BUTTONS --- */
+
+.market-scroll-panel {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.market-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
 --- END OF FILE: ./css/screens/market-screen.css ---
+--- START OF FILE: ./css/screens/intel-screen.css ---
+/* css/screens/intel-screen.css */
+.intel-scroll-panel {
+    height: 75vh; /* Enforce a fixed height based on the viewport */
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.intel-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+--- END OF FILE: ./css/screens/intel-screen.css ---
+--- START OF FILE: ./css/screens/cargo-screen.css ---
+/* css/screens/cargo-screen.css */
+.cargo-scroll-panel {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.cargo-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+--- END OF FILE: ./css/screens/cargo-screen.css ---
 --- START OF FILE: ./css/screens/finance-screen.css ---
 /* css/screens/finance-screen.css */
+.finance-log-panel {
+    height: 50vh; /* Enforce a fixed height based on the viewport */
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+}
+.finance-log-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+
 @media (max-width: 768px) {
     #finance-screen .grid-cols-4 {
         grid-template-columns: 0.5fr 2fr 1fr;
@@ -1974,6 +2055,19 @@ body {
     }
 }
 --- END OF FILE: ./css/screens/finance-screen.css ---
+--- START OF FILE: ./css/screens/status-screen.css ---
+/* css/screens/status-screen.css */
+.status-scroll-panel {
+    height: 75vh; /* Enforce a fixed height based on the viewport */
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+}
+.status-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+--- END OF FILE: ./css/screens/status-screen.css ---
 --- START OF FILE: ./css/screens/hangar-screen.css ---
 /* css/screens/hangar-screen.css */
 
@@ -1987,15 +2081,22 @@ body {
     --credits-color: #29f1ff;
 }
 
+#starport-shipyard-panel, #starport-hangar-panel {
+    display: flex;
+    flex-direction: column;
+}
+
 .starport-panel {
     background-color: rgba(10, 20, 40, 0.5);
     border: 1px solid #2a3a5a;
     border-radius: 10px;
     padding: 1.5rem;
-    max-height: 60vh;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    flex-grow: 1; /* Allow panel to fill available space within its parent */
+    min-height: 0; /* Prevent flex overflow with tall content */
+    max-height: 45vh; /* Constrains the height of the panel */
 }
 .starport-panel::-webkit-scrollbar {
     display: none;
@@ -2148,6 +2249,16 @@ body {
 --- END OF FILE: ./css/screens/hangar-screen.css ---
 --- START OF FILE: ./css/screens/navigation-screen.css ---
 /* css/screens/navigation-screen.css */
+.navigation-scroll-panel {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+}
+.navigation-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
 .location-card {
     display: flex;
     flex-direction: column;
@@ -2360,28 +2471,30 @@ export function renderStatusScreen(gameState) {
     `;
 
     return `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-            <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                <div class="text-left pl-4">
-                    <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
-                    <span class="text-4xl font-bold font-orbitron">${day}</span>
-                </div>
-                <div class="text-right flex flex-col items-end">
-                    <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
-                    <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
-                        <div class="text-right">
-                            <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
-                            <p>${shipStatic.name}</p>
-                            <p>Class: ${shipStatic.class}</p>
+        <div class="status-scroll-panel">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
+                <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <div class="text-left pl-4">
+                        <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
+                        <span class="text-4xl font-bold font-orbitron">${day}</span>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
+                        <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
+                            <div class="text-right">
+                                <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
+                                <p>${shipStatic.name}</p>
+                                <p>Class: ${shipStatic.class}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="md:col-span-1 flex flex-col gap-4">
-                ${activeShipBarHtml}
-                <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
-                    <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
+                <div class="md:col-span-1 flex flex-col gap-4">
+                    ${activeShipBarHtml}
+                    <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
+                        <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -2546,18 +2659,20 @@ function _getShipyardInventory(gameState) {
  */
 export function renderIntelScreen() {
     return `
-        <div class="text-center p-8 flex flex-col items-center gap-4">
-             <div id="tutorial-button-container" class="tutorial-container relative">
-                <button class="btn btn-header">Tutorial Log</button>
-                <div id="tutorial-log-modal" class="tutorial-tooltip">
-                    <h3 id="tutorial-log-title" class="text-2xl font-orbitron mb-4 text-center">Tutorial Log</h3>
-                    <ul id="tutorial-log-list" class="space-y-2"></ul>
+        <div class="intel-scroll-panel">
+            <div class="text-center p-8 flex flex-col items-center gap-4">
+                 <div id="tutorial-button-container" class="tutorial-container relative">
+                    <button class="btn btn-header">Tutorial Log</button>
+                    <div id="tutorial-log-modal" class="tutorial-tooltip">
+                        <h3 id="tutorial-log-title" class="text-2xl font-orbitron mb-4 text-center">Tutorial Log</h3>
+                        <ul id="tutorial-log-list" class="space-y-2"></ul>
+                    </div>
                 </div>
-            </div>
-            <div id="lore-button-container" class="lore-container relative">
-                <button class="btn btn-header">Story So Far...</button>
-                <div class="lore-tooltip">
-                    <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p><br><p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p><br><p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p><br><p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
+                <div id="lore-button-container" class="lore-container relative">
+                    <button class="btn btn-header">Story So Far...</button>
+                    <div class="lore-tooltip">
+                        <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p><br><p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p><br><p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p><br><p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -2587,44 +2702,46 @@ export function renderNavigationScreen(gameState) {
     const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
     
     return `
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        ${DB.MARKETS
-            .filter(loc => player.unlockedLocationIds.includes(loc.id))
-            .map(location => {
-                const isCurrent = location.id === currentLocationId;
-                const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
+        <div class="navigation-scroll-panel p-1">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            ${DB.MARKETS
+                .filter(loc => player.unlockedLocationIds.includes(loc.id))
+                .map(location => {
+                    const isCurrent = location.id === currentLocationId;
+                    const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
 
-                // Determine if this card should be disabled due to a tutorial lock.
-                let isDisabled = false;
-                if (isNavLocked && enabledElementQuery) {
-                    // A workaround to check if this location card matches the tutorial's enabled element query.
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
-                    isDisabled = !tempDiv.querySelector(enabledElementQuery);
-                }
-                const disabledClass = isDisabled ? 'disabled-location' : '';
-
-                return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                             data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
-                    <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
-                    <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
-                    ${isCurrent 
-                        ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
-                        : `<div class="flex justify-around items-center text-center">
-                               <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
-                                   <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.time}</span><span class="block text-xs text-gray-400">Days</span></div>
-                               </div>
-                               <div class="flex items-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                   <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.fuelCost}</span><span class="block text-xs text-gray-400">Fuel</span></div>
-                               </div>
-                           </div>`
+                    // Determine if this card should be disabled due to a tutorial lock.
+                    let isDisabled = false;
+                    if (isNavLocked && enabledElementQuery) {
+                        // A workaround to check if this location card matches the tutorial's enabled element query.
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
+                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
                     }
-                  </div>
-                  </div>`;
-            }).join('')
-        }
+                    const disabledClass = isDisabled ? 'disabled-location' : '';
+
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
+                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
+                        <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
+                        <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
+                        ${isCurrent 
+                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
+                            : `<div class="flex justify-around items-center text-center">
+                                   <div class="flex items-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
+                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.time}</span><span class="block text-xs text-gray-400">Days</span></div>
+                                   </div>
+                                   <div class="flex items-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
+                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.fuelCost}</span><span class="block text-xs text-gray-400">Fuel</span></div>
+                                   </div>
+                               </div>`
+                        }
+                      </div>
+                      </div>`;
+                }).join('')
+            }
+            </div>
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/NavigationScreen.js ---
@@ -2702,9 +2819,13 @@ export function renderMissionsScreen(gameState, missionService) {
     }
 
     return `
-        <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300">Mission Terminal</h1>
-        <div class="space-y-3 max-w-2xl mx-auto">
-            ${missionsHtml}
+        <div class="flex flex-col h-full">
+            <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300 flex-shrink-0">Mission Terminal</h1>
+            <div class="missions-scroll-panel flex-grow min-h-0">
+                <div class="space-y-3 max-w-2xl mx-auto">
+                    ${missionsHtml}
+                </div>
+            </div>
         </div>
     `;
 }
@@ -2744,9 +2865,8 @@ export function renderFinanceScreen(gameState) {
             <div>
                 <h3 class="text-2xl font-orbitron text-center mb-4">Debt</h3>
                 <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <p class="text-2xl font-bold font-roboto-mono text-red-400 mb-2">⌬ ${formatCredits(player.debt, false)}</p>
-                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-3 bg-red-800/80 hover:bg-red-700/80 border-red-500" ${player.credits >= player.debt ? '' : 'disabled'}>
-                        Pay Off Full Amount
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-2 bg-red-800/80 hover:bg-red-700/80 border-red-500 font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
+                        Pay Off ${formatCredits(player.debt)}
                     </button>
                     ${garnishmentTimerHtml}
                 </div>
@@ -2794,7 +2914,7 @@ export function renderFinanceScreen(gameState) {
             </div>
             <div class="md:col-span-2">
                  <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                 <div class="p-4 rounded-lg shadow-lg panel-border border h-96 overflow-y-auto" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                     <div class="grid grid-cols-4 gap-2 p-2 border-b-2 font-bold" style="border-color: ${theme.borderColor};">
                        <span>Day</span>
                        <span class="col-span-2">Description</span>
@@ -2847,18 +2967,20 @@ export function renderServicesScreen(gameState) {
     const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
     
     return `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
-            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
-                <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-            </div>
-            <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
-                <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
+        <div class="services-scroll-panel">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
+                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
+                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
+                    <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
+                    <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
+                </div>
+                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                    <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
+                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
+                    <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
+                    <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
+                </div>
             </div>
         </div>`;
 }
@@ -2903,7 +3025,7 @@ export function renderCargoScreen(gameState) {
     const renderColumn = (items) => items.map(([goodId, item]) => {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
-        const tooltipText = `${good.lore}\n\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
+        const tooltipText = `${good.lore}\\n\\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
 
         return `
             <div 
@@ -2940,7 +3062,7 @@ export function renderCargoScreen(gameState) {
     }
 
     return `
-        <div class="mt-4">
+        <div class="cargo-scroll-panel">
             ${content}
         </div>`;
 }
@@ -2970,7 +3092,9 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
         return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
-    return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>`;
+    return `<div class="market-scroll-panel">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
+            </div>`;
 }
 
 /**
@@ -3305,6 +3429,7 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 }
 --- END OF FILE: ./js/utils.js ---
 --- START OF FILE: ./js/effects/SystemSurgeEffect.js ---
+// js/effects/SystemSurgeEffect.js
 import { BaseEffect } from './BaseEffect.js';
 
 /**
@@ -3314,25 +3439,38 @@ import { BaseEffect } from './BaseEffect.js';
 export class SystemSurgeEffect extends BaseEffect {
 
     /**
-     * @JSDoc
      * @constructor
      * @param {object} options - Configuration for the effect.
-     * @param {string} options.text - The text to display.
-     * @param {string} options.theme - The color theme ('gold', 'green', 'red', 'blue').
+     * @param {string} [options.text='SYSTEM SURGE'] - The text to display, overrides profile default.
+     * @param {string} [options.theme='blue'] - The color theme, determines the profile to use.
      */
-    constructor(options) {
+    constructor(options = {}) {
         super(options);
+
+        const theme = options.theme || 'blue';
+        const profile = SystemSurgeEffect.PROFILES[theme] || SystemSurgeEffect.PROFILES.blue;
+
+        // Combine the profile defaults with any specific overrides from the options.
+        this.options = {
+            ...profile,
+            ...options, // Any options passed in will override the profile defaults.
+            theme: theme // Ensure the theme is correctly set.
+        };
+
         this.domElements = {};
         this.themes = {
-            gold: { color: 'rgba(253, 224, 71, 0.7)', glow: '#fde047' },
-            green: { color: 'rgba(74, 222, 128, 0.7)', glow: '#4ade80' },
-            red: { color: 'rgba(248, 113, 113, 0.7)', glow: '#ef4444' },
-            blue: { color: 'rgba(96, 165, 250, 0.7)', glow: '#60a5fa' }
+            gold: { color: 'rgba(255, 223, 0, 0.8)', glow: '#ffd700' },
+            green: { color: 'rgba(50, 255, 150, 0.8)', glow: '#32ff96' },
+            red: { color: 'rgba(255, 50, 50, 0.8)', glow: '#ff3232' },
+            blue: { color: 'rgba(50, 150, 255, 0.8)', glow: '#3296ff' },
+            orange: { color: 'rgba(255, 165, 0, 0.8)', glow: '#ffa500' },
+            purple: { color: 'rgba(220, 50, 255, 0.8)', glow: '#dc32ff' },
+            silver: { color: 'rgba(192, 192, 192, 0.9)', glow: '#c0c0c0' },
+            tan: { color: 'rgba(210, 180, 140, 0.9)', glow: '#d2b48c' }
         };
     }
 
     /**
-     * @JSDoc
      * @method play
      * @override
      * @description Runs the entire System Surge effect from creation to cleanup.
@@ -3343,23 +3481,19 @@ export class SystemSurgeEffect extends BaseEffect {
             this._injectCSS();
             this._createDOM();
 
-            const onsetDuration = 1550; // Longest intro animation
-            const holdDuration = 2000;
-            const fadeDuration = 3000;
+            const onsetDuration = this.options.fadeInTime;
+            const holdDuration = this.options.lingerTime;
+            const fadeDuration = this.options.fadeOutTime;
 
-            // Start the effect
-            // A short delay to ensure DOM is painted before adding animation class
             setTimeout(() => {
                 document.body.classList.add('system-surge-active');
             }, 50);
 
-            // Schedule the transition to fade-out
             setTimeout(() => {
                 document.body.classList.remove('system-surge-active');
                 document.body.classList.add('system-surge-fading');
             }, onsetDuration + holdDuration);
 
-            // Schedule the final cleanup and resolve the promise
             setTimeout(() => {
                 this._cleanup();
                 resolve();
@@ -3368,7 +3502,6 @@ export class SystemSurgeEffect extends BaseEffect {
     }
 
     /**
-     * @JSDoc
      * @method _createDOM
      * @protected
      * @override
@@ -3381,6 +3514,7 @@ export class SystemSurgeEffect extends BaseEffect {
         overlay.id = 'celebration-overlay';
         overlay.style.setProperty('--surge-color', themeColors.color);
         overlay.style.setProperty('--surge-glow', themeColors.glow);
+        overlay.style.setProperty('--particle-travel-distance', `${this.options.travelDistance}vh`);
         this.domElements.overlay = overlay;
 
         const surgeLight = document.createElement('div');
@@ -3389,19 +3523,18 @@ export class SystemSurgeEffect extends BaseEffect {
 
         const surgeText = document.createElement('div');
         surgeText.className = 'surge-text';
-        surgeText.id = 'surge-text';
-        surgeText.textContent = this.options.text || '';
+        surgeText.textContent = this.options.text;
+        surgeText.style.fontSize = this.options.textSize;
         this.domElements.surgeText = surgeText;
 
         overlay.appendChild(surgeLight);
         overlay.appendChild(surgeText);
-        this._createParticles(30);
+        this._createParticles(this.options.particleCount);
 
         document.body.appendChild(overlay);
     }
     
     /**
-     * @JSDoc
      * @method _createParticles
      * @private
      * @description Creates and animates a specified number of particle elements.
@@ -3410,20 +3543,21 @@ export class SystemSurgeEffect extends BaseEffect {
     _createParticles(count) {
         for (let i = 0; i < count; i++) {
             const particle = document.createElement('div');
-            particle.className = 'particle';
-            const size = Math.random() * 5 + 2;
+            particle.className = `particle particle-shape-${this.options.particleShape}`;
+            
+            const size = Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min;
+            const speed = Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min;
+            
             particle.style.width = `${size}px`;
             particle.style.height = `${size}px`;
             particle.style.left = `${Math.random() * 100}%`;
             particle.style.animationDelay = `${Math.random() * 1.5}s`;
-            particle.style.animationDuration = `${Math.random() * 3 + 4}s`;
+            particle.style.animationDuration = `${speed}s`;
             this.domElements.overlay.appendChild(particle);
         }
     }
 
-
     /**
-     * @JSDoc
      * @method _injectCSS
      * @protected
      * @override
@@ -3438,7 +3572,6 @@ export class SystemSurgeEffect extends BaseEffect {
     }
 
     /**
-     * @JSDoc
      * @method _cleanup
      * @protected
      * @override
@@ -3450,7 +3583,62 @@ export class SystemSurgeEffect extends BaseEffect {
     }
 
     /**
-     * @JSDoc
+     * @property {Object} PROFILES
+     * @static
+     * @description Static property containing the default parameter profiles for each theme.
+     */
+    static PROFILES = {
+        tan: {
+            text: 'LICENSE ACQUIRED',
+            textSize: '8vw', particleCount: 74, particleShape: 'sliver',
+            particleSize: { min: 1, max: 11 }, particleSpeed: { min: 1, max: 7.5 },
+            travelDistance: 110, fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
+        },
+        silver: {
+            text: 'SHIP PURCHASED',
+            textSize: '8vw', particleCount: 90, particleShape: 'sliver',
+            particleSize: { min: 1, max: 3 }, particleSpeed: { min: 1, max: 4 },
+            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+        },
+        purple: {
+            text: 'WEALTH MILSETIONE',
+            textSize: '8vw', particleCount: 18, particleShape: 'rectangle',
+            particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
+            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+        },
+        orange: {
+            text: 'ORANGE',
+            textSize: '8vw', particleCount: 96, particleShape: 'sliver',
+            particleSize: { min: 1, max: 6 }, particleSpeed: { min: 2.5, max: 8.5 },
+            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+        },
+        blue: {
+            text: 'HAPPY BIRTHDAY',
+            textSize: '8vw', particleCount: 50, particleShape: 'circle',
+            particleSize: { min: 7, max: 20 }, particleSpeed: { min: 5, max: 8.5 },
+            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+        },
+        red: {
+            text: 'TOP CLASS',
+            textSize: '8vw', particleCount: 115, particleShape: 'rectangle',
+            particleSize: { min: 5, max: 6 }, particleSpeed: { min: 1, max: 5.5 },
+            travelDistance: 120, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+        },
+        green: {
+            text: 'WEALTH MILESTONE',
+            textSize: '8vw', particleCount: 200, particleShape: 'sliver',
+            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 4 },
+            travelDistance: 50, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+        },
+        gold: {
+            text: 'MISSION COMPLETE',
+            textSize: '8vw', particleCount: 62, particleShape: 'circle',
+            particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
+            travelDistance: 115, fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
+        }
+    };
+
+    /**
      * @property {string} css
      * @static
      * @description Static property containing all CSS for this effect.
@@ -3459,6 +3647,7 @@ export class SystemSurgeEffect extends BaseEffect {
         #celebration-overlay {
             --surge-color: #00ffff;
             --surge-glow: #00ffff;
+            --particle-travel-distance: 105vh;
             position: fixed;
             top: 0;
             left: 0;
@@ -3489,21 +3678,20 @@ export class SystemSurgeEffect extends BaseEffect {
             width: 100%;
             height: 100%;
             background: linear-gradient(to top, var(--surge-color), transparent 60%);
-            opacity: 0.4;
+            opacity: 0.6;
             transition: all 2.9s ease-out;
         }
         .system-surge-active .surge-light {
             bottom: 0;
-            opacity: 0.4;
+            opacity: 0.6;
             transition-delay: 0.2s;
         }
 
         .surge-text {
             font-family: 'Orbitron', sans-serif;
-            font-size: 5vw;
             font-weight: 700;
             color: #fff;
-            text-shadow: 0 0 10px #fff, 0 0 20px var(--surge-glow), 0 0 40px var(--surge-glow);
+            text-shadow: 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
             transform: scale(0.5);
             opacity: 0;
             transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
@@ -3518,14 +3706,32 @@ export class SystemSurgeEffect extends BaseEffect {
             position: absolute;
             bottom: -20px;
             background-color: var(--surge-color);
-            border-radius: 50%;
             opacity: 0;
             animation: system-surge-rise 8s ease-in forwards;
+            box-shadow: 0 0 8px var(--surge-color);
+        }
+
+        .particle-shape-circle {
+            border-radius: 50%;
+        }
+        .particle-shape-star {
+            background-color: transparent;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            border: 1px solid var(--surge-color);
+        }
+        .particle-shape-sliver {
+            width: 2px !important;
+            height: 20px !important;
+            border-radius: 2px;
+        }
+        .particle-shape-rectangle {
+            height: 12px !important;
+            width: 4px !important;
         }
 
         @keyframes system-surge-rise {
-            0% { transform: translateY(0); opacity: 0.7; }
-            100% { transform: translateY(-105vh); opacity: 0; }
+            0% { transform: translateY(0); opacity: 0.9; }
+            100% { transform: translateY(calc(-1 * var(--particle-travel-distance))); opacity: 0; }
         }
     `;
 }
@@ -4753,17 +4959,20 @@ ${logHistory}
             godMode: {
                 name: 'God Mode',
                 type: 'button',
+                key: 't',
                 handler: () => this.simulationService.debugGodMode()
             },
             simpleStart: {
                 name: 'Simple Start',
                 type: 'button',
+                key: 'y',
                 handler: () => this.simulationService.debugSimpleStart()
             },
             // --- Player Actions ---
             addCredits: {
                 name: 'Add Credits',
                 type: 'button',
+                key: 'c',
                 handler: () => {
                     this.gameState.player.credits += this.debugState.creditsToAdd;
                     this.simulationService._checkMilestones();
@@ -4807,11 +5016,18 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
+            grantAllItems: {
+                name: 'Grant 1x All Items',
+                type: 'button',
+                key: 'g',
+                handler: () => this.simulationService.debugGrantAllItems()
+            },
 
             // --- World Actions ---
             advanceTime: {
                 name: 'Advance Days',
                 type: 'button',
+                key: 'a',
                 handler: () => this.simulationService._advanceDays(this.debugState.daysToAdvance)
             },
 
@@ -4829,6 +5045,7 @@ ${logHistory}
             triggerRandomEvent: {
                 name: 'Trigger Random Event',
                 type: 'button',
+                key: 'e',
                 handler: () => {
                     const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                     if (dest) {
@@ -4849,6 +5066,7 @@ ${logHistory}
             triggerMission: {
                 name: 'Trigger Mission',
                 type: 'button',
+                key: 'm',
                 handler: () => {
                     if (this.debugState.selectedMission) {
                         if(this.gameState.missions.activeMissionId) {
@@ -4856,6 +5074,25 @@ ${logHistory}
                         }
                         this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
                     }
+                }
+            },
+            triggerSystemSurge: {
+                name: 'Trigger System Surge',
+                type: 'button',
+                handler: () => {
+                    this.uiManager.triggerEffect('systemSurge', {
+                        text: this.debugState.surgeText,
+                        theme: this.debugState.surgeTheme,
+                        particleCount: this.debugState.surgeParticleCount,
+                        particleShape: this.debugState.surgeParticleShape,
+                        particleSize: { min: this.debugState.surgeParticleSizeMin, max: this.debugState.surgeParticleSizeMax },
+                        particleSpeed: { min: this.debugState.surgeParticleSpeedMin, max: this.debugState.surgeParticleSpeedMax },
+                        fadeInTime: this.debugState.surgeFadeIn,
+                        lingerTime: this.debugState.surgeLinger,
+                        fadeOutTime: this.debugState.surgeFadeOut,
+                        textSize: this.debugState.surgeTextSize,
+                        travelDistance: this.debugState.surgeTravelDistance,
+                    });
                 }
             },
             // --- Bot Actions ---
@@ -4909,6 +5146,7 @@ ${logHistory}
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
         economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+        economyFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
 
         // --- Triggers Folder ---
         const triggerFolder = this.gui.addFolder('Triggers');
@@ -4924,6 +5162,38 @@ ${logHistory}
         this.debugState.selectedMission = Object.keys(missionOptions)[0];
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+
+        // --- System Surge Effect Tuning ---
+        const surgeFolder = this.gui.addFolder('System Surge Effect');
+        this.debugState.surgeTheme = 'gold';
+        this.debugState.surgeText = 'SYSTEM SURGE';
+        this.debugState.surgeParticleCount = 62;
+        this.debugState.surgeParticleShape = 'circle';
+        this.debugState.surgeParticleSizeMin = 3;
+        this.debugState.surgeParticleSizeMax = 18;
+        this.debugState.surgeParticleSpeedMin = 2.5;
+        this.debugState.surgeParticleSpeedMax = 12;
+        this.debugState.surgeFadeIn = 1750;
+        this.debugState.surgeLinger = 3600;
+        this.debugState.surgeFadeOut = 5000;
+        this.debugState.surgeTextSize = '8vw';
+        this.debugState.surgeTravelDistance = 90;
+
+        surgeFolder.add(this.debugState, 'surgeTheme', ['gold', 'green', 'red', 'blue', 'orange', 'purple', 'silver', 'tan']).name('Theme');
+        surgeFolder.add(this.debugState, 'surgeText').name('Text');
+        surgeFolder.add(this.debugState, 'surgeTextSize').name('Text Size');
+        surgeFolder.add(this.debugState, 'surgeParticleCount', 0, 200, 1).name('Particle Count');
+        surgeFolder.add(this.debugState, 'surgeParticleShape', ['circle', 'star', 'sliver', 'rectangle']).name('Particle Shape');
+        surgeFolder.add(this.debugState, 'surgeParticleSizeMin', 1, 20, 1).name('Min Size');
+        surgeFolder.add(this.debugState, 'surgeParticleSizeMax', 1, 20, 1).name('Max Size');
+        surgeFolder.add(this.debugState, 'surgeParticleSpeedMin', 1, 20, 0.5).name('Min Speed (s)');
+        surgeFolder.add(this.debugState, 'surgeParticleSpeedMax', 1, 20, 0.5).name('Max Speed (s)');
+        surgeFolder.add(this.debugState, 'surgeTravelDistance', 50, 200, 5).name('Travel Dist (vh)');
+        surgeFolder.add(this.debugState, 'surgeFadeIn', 500, 5000, 50).name('Fade In (ms)');
+        surgeFolder.add(this.debugState, 'surgeLinger', 500, 5000, 50).name('Linger (ms)');
+        surgeFolder.add(this.debugState, 'surgeFadeOut', 500, 5000, 50).name('Fade Out (ms)');
+        surgeFolder.add(this.actions.triggerSystemSurge, 'handler').name('Trigger Effect');
+
 
         // --- Automation & Logging Folder ---
         const automationFolder = this.gui.addFolder('Automation & Logging');
@@ -5376,11 +5646,8 @@ export class MissionService {
         }
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
 
-        // Trigger the celebration effect
-        this.uiManager.triggerEffect('systemSurge', {
-            text: 'Mission Complete',
-            theme: 'gold'
-        });
+        // Trigger the celebration effect using the 'gold' profile
+        this.uiManager.triggerEffect('systemSurge', { theme: 'gold' });
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
@@ -6190,7 +6457,13 @@ export class SimulationService {
         this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
         this._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.addShipToHangar(shipId);
-        this.uiManager.queueModal('event-modal', "Acquisition Complete", `The ${ship.name} has been transferred to your hangar.`);
+
+        // Trigger celebratory effect based on ship class
+        if (['S', 'O'].includes(ship.class)) {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
+        } else {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'silver', text: 'VESSEL ACQUIRED' });
+        }
 
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
@@ -6270,6 +6543,7 @@ export class SimulationService {
         player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
 
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan', text: 'DEBT CLEARED' });
         this._checkMilestones();
         this.gameState.setState({});
     }
@@ -6323,6 +6597,8 @@ export class SimulationService {
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
         this.gameState.setState({});
         
         return { success: true };
@@ -6430,7 +6706,7 @@ export class SimulationService {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.queueModal('event-modal', `Captain ${this.gameState.player.name}`, `You are now ${this.gameState.player.playerAge}. You feel older and wiser.<br><br>Your experience now grants you an additional 1% profit on all trades.`);
+                this.uiManager.triggerEffect('systemSurge', { theme: 'blue', text: `AGE ${this.gameState.player.playerAge}` });
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 
@@ -6688,7 +6964,9 @@ export class SimulationService {
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
-            this.uiManager.queueModal('event-modal', 'New Opportunities', `Your financial success has drawn attention! New Tier ${nextMilestone.revealsTier} trading opportunities are now available.`);
+            
+            // Trigger the purple theme for wealth milestones
+            this.uiManager.triggerEffect('systemSurge', { theme: 'purple', text: `TIER ${nextMilestone.revealsTier} UNLOCKED` });
             
             currentTier = nextMilestone.revealsTier;
             nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
@@ -6831,7 +7109,7 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
-                    this.uiManager.queueModal('event-modal', 'License Granted', `You have been granted the ${license.name}.`);
+                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }
@@ -6985,6 +7263,30 @@ export class SimulationService {
             this._checkForRandomEvent(destinationId, this.gameState.player.debugEventIndex);
             this.gameState.player.debugEventIndex = (this.gameState.player.debugEventIndex + 1) % DB.RANDOM_EVENTS.length;
         }
+    }
+
+    /**
+     * @summary Grants the player one of every commodity for testing purposes.
+     * @description A debug function that adds one unit of every commodity listed in the database
+     * to the player's active ship inventory.
+     */
+    debugGrantAllItems() {
+        const inventory = this._getActiveInventory();
+        if (!inventory) {
+            this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
+            return;
+        }
+
+        DB.COMMODITIES.forEach(commodity => {
+            if (inventory[commodity.id]) {
+                inventory[commodity.id].quantity += 1;
+            } else {
+                inventory[commodity.id] = { quantity: 1, avgCost: 0 };
+            }
+        });
+
+        this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
+        this.gameState.setState({});
     }
 }
 --- END OF FILE: ./js/services/SimulationService.js ---
