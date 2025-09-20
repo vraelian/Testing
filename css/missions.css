@@ -136,7 +136,7 @@
 }
 
 .missions-scroll-panel {
-    min-height: 32.5rem; /* Approx. height of 7 mission cards + spacing */
+    height: 68vh;
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
