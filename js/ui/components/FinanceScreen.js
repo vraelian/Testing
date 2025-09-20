@@ -82,7 +82,7 @@ export function renderFinanceScreen(gameState) {
             </div>
             <div class="md:col-span-2">
                  <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                 <div class="p-4 rounded-lg shadow-lg panel-border border h-96 overflow-y-auto" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                     <div class="grid grid-cols-4 gap-2 p-2 border-b-2 font-bold" style="border-color: ${theme.borderColor};">
                        <span>Day</span>
                        <span class="col-span-2">Description</span>
