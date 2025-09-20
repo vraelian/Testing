@@ -879,8 +879,6 @@ body {
     -webkit-overflow-scrolling: touch;
     padding-top: 1.5rem; /* Replaces mt-6 */
     min-height: 0; /* Required for flex children to scroll */
-    display: flex;
-    flex-direction: column;
 }
 
 .btn {
@@ -923,12 +921,12 @@ body {
 
 .screen {
     display: none;
-    flex-grow: 1; /* Allow screen to fill vertical space */
-    min-height: 0; /* Prevent flex overflow */
 }
 .active-screen {
-    display: flex; /* Changed to flex to allow child scrolling panels to work */
+    display: flex;
     flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
 }
 
 @keyframes fadeIn {
@@ -1009,7 +1007,7 @@ body {
 .hl { color: #fde047; font-weight: 700; }
 .hl-blue { color: #60a5fa; font-weight: 700; }
 .hl-red { color: #f87171; font-weight: 700;
- }
+}
 .hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
 .text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
@@ -2023,7 +2021,8 @@ body {
 --- START OF FILE: ./css/screens/cargo-screen.css ---
 /* css/screens/cargo-screen.css */
 .cargo-scroll-panel {
-    max-height: 75vh;
+    flex-grow: 1;
+    min-height: 0;
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
@@ -2102,13 +2101,13 @@ body {
 }
 
 .shipyard-panel {
-    min-height: calc(var(--ship-bar-height) * 2.1 + 2rem); /* 2.1 ships + spacing */
-    max-height: 45vh;
+    min-height: calc(var(--ship-bar-height) * 1.2 + 2rem); /* 2.1 ships + spacing */
+    max-height: 18.5vh;
 }
 
 .hangar-panel {
-    min-height: calc(var(--ship-bar-height) * 3.1 + 2rem); /* 3.1 ships + spacing */
-    max-height: 45vh;
+    min-height: calc(var(--ship-bar-height) * 3.70 + 2rem); /* 3.1 ships + spacing */
+    max-height: 38vh;
 }
 
 
@@ -3073,8 +3072,10 @@ export function renderCargoScreen(gameState) {
     }
 
     return `
-        <div class="cargo-scroll-panel">
-            ${content}
+        <div class="flex flex-col h-full flex-grow min-h-0">
+             <div class="cargo-scroll-panel">
+                ${content}
+            </div>
         </div>`;
 }
 --- END OF FILE: ./js/ui/components/CargoScreen.js ---
@@ -5051,6 +5052,11 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
+            fillShipyard: {
+                name: 'Fill Shipyard w/ All Ships',
+                type: 'button',
+                handler: () => this.simulationService.debugFillShipyard()
+            },
 
             // --- Trigger Actions ---
             triggerRandomEvent: {
@@ -5158,6 +5164,7 @@ ${logHistory}
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
         economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
         economyFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
+        economyFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
 
         // --- Triggers Folder ---
         const triggerFolder = this.gui.addFolder('Triggers');
@@ -7298,6 +7305,26 @@ export class SimulationService {
 
         this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
         this.gameState.setState({});
+    }
+
+    /**
+     * @summary Fills the current station's shipyard with all ships.
+     * @description A debug function that bypasses the normal weekly stock rotation and populates
+     * the shipyard at the player's current location with every ship defined in the database.
+     */
+    debugFillShipyard() {
+        const { currentLocationId, day } = this.gameState;
+        if (this.gameState.market.shipyardStock[currentLocationId]) {
+            const allShipIds = Object.keys(DB.SHIPS);
+            this.gameState.market.shipyardStock[currentLocationId] = {
+                day: day,
+                shipsForSale: allShipIds
+            };
+            this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
+            this.gameState.setState({});
+        } else {
+            this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
+        }
     }
 }
 --- END OF FILE: ./js/services/SimulationService.js ---
