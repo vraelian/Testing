@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Orbital Trading 26.00</title>
+    <title>Orbital Trading 26.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -23,8 +23,9 @@
     <link rel="stylesheet" href="./css/screens/intel-screen.css">
     <link rel="stylesheet" href="./css/screens/status-screen.css">
     <link rel="stylesheet" href="./css/screens/services-screen.css">
+    <link rel="stylesheet" href="./css/screens/cargo-screen.css">
 </head>
-<body class="p-4 md:p-8">
+<body>
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
@@ -41,7 +42,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 26.00</p>
+            <p>Version 26.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -206,6 +207,11 @@
 
     <div id="launch-modal" class="modal-backdrop hidden">
         <div id="launch-modal-content">
+            </div>
+    </div>
+
+    <div id="cargo-detail-modal" class="modal-backdrop hidden">
+        <div id="cargo-detail-content" class="modal-content">
             </div>
     </div>
 
@@ -645,7 +651,6 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
 }
 
 .context-bar {
@@ -850,6 +855,11 @@
     --max-text: #a5aab1;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
 body {
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
@@ -858,6 +868,9 @@ body {
     -ms-user-select: none; /* IE 10 and IE 11 */
     user-select: none; /* Standard syntax */
     touch-action: manipulation; /* Helps prevent double-tap zoom */
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
 }
 .font-orbitron { font-family: 'Orbitron', sans-serif; }
 .font-roboto-mono { font-family: 'Roboto Mono', monospace; }
@@ -871,6 +884,9 @@ body {
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
+    height: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .main-content-wrapper {
@@ -1010,7 +1026,8 @@ body {
 }
 .hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
-.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
 
 #save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
     z-index: 101;
@@ -1191,11 +1208,13 @@ body {
 }
 /* --- [[END]] CARGO ITEM STYLES --- */
 
-@media (max-width: 768px) {
-    body {
-        padding-bottom: 15vh;
+@media (min-width: 768px) {
+    .game-container {
+        padding: 2rem;
     }
+}
 
+@media (max-width: 768px) {
     .cargo-item-tooltip[data-tooltip]:hover::after,
     .commodity-name-tooltip[data-tooltip]:hover::after,
     .hanger-ship-name[data-tooltip]:hover::after {
@@ -2020,16 +2039,92 @@ body {
 --- END OF FILE: ./css/screens/intel-screen.css ---
 --- START OF FILE: ./css/screens/cargo-screen.css ---
 /* css/screens/cargo-screen.css */
-.cargo-scroll-panel {
-    flex-grow: 1;
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+
+/* Grid container for the min-cargo items */
+.cargo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1rem;
 }
-.cargo-scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+
+/* Individual min-cargo item styling */
+.min-cargo-item {
+    aspect-ratio: 1 / 0.8; /* Ensures the item is shorter */
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.min-cargo-item .pt-quantity {
+    opacity: 0.85; /* Make the quantity text slightly transparent */
+    color: #a0aec0; /* Change the quantity text color to grey */
+}
+
+.min-cargo-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Styles for the max-cargo modal */
+#cargo-detail-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    max-width: 350px; /* Or adjust as needed */
+}
+
+.max-cargo-card {
+    width: 100%;
+    border-radius: 15px;
+    color: #fff;
+    padding: 1.5rem;
+    text-align: left;
+    border: 2px solid;
+}
+
+.max-cargo-card h3, .max-cargo-card p, .max-cargo-card div {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7); /* Add text outline for clarity */
+}
+
+.max-cargo-card .tier-type-line {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9); /* Darker outline for more contrast */
+}
+
+.max-cargo-card .flavor-text {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.max-cargo-card .avg-cost {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cargo-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .cargo-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 --- END OF FILE: ./css/screens/cargo-screen.css ---
 --- START OF FILE: ./css/screens/finance-screen.css ---
@@ -2106,7 +2201,7 @@ body {
 }
 
 .hangar-panel {
-    min-height: calc(var(--ship-bar-height) * 3.70 + 2rem); /* 3.1 ships + spacing */
+    min-height: calc(var(--ship-bar-height) * 3.80 + 2rem); /* 3.1 ships + spacing */
     max-height: 38vh;
 }
 
@@ -2999,84 +3094,127 @@ export function renderServicesScreen(gameState) {
 // js/ui/components/CargoScreen.js
 /**
  * @fileoverview This file contains the rendering logic for the Cargo screen.
- * It is responsible for displaying the contents of the player's active ship's cargo hold,
- * including item quantities and tooltips with lore and average cost.
+ * It is responsible for displaying the contents of the player's active ship's cargo hold.
+ * The new design features a grid of small cargo items ('min-cargo') that expand into
+ * a detailed modal view ('max-cargo').
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
+import { ACTION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Cargo screen UI.
+ * Renders the entire Cargo screen UI, displaying a grid of items.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Cargo screen.
  */
 export function renderCargoScreen(gameState) {
     const inventory = gameState.player.inventories[gameState.player.activeShipId];
+    if (!inventory) return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
+
     const ownedGoods = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
 
-    // Maps the commodity's style class to its color scheme and background gradient.
-    const styleMap = {
-        'item-style-1':  { hex: '#60a5fa', rgb: '96, 165, 250', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
-        'item-style-2':  { hex: '#a3a3a3', rgb: '163, 163, 163', gradient: 'linear-gradient(45deg, #737373, #262626)' },
-        'item-style-3':  { hex: '#22c55e', rgb: '34, 197, 94', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-        'item-style-4':  { hex: '#e5e5e5', rgb: '229, 229, 229', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
-        'item-style-5':  { hex: '#c084fc', rgb: '192, 132, 252', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-        'item-style-6':  { hex: '#93c5fd', rgb: '147, 197, 253', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
-        'item-style-7':  { hex: '#84cc16', rgb: '132, 204, 22', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
-        'item-style-8':  { hex: '#67e8f9', rgb: '103, 232, 249', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
-        'item-style-9':  { hex: '#fcd34d', rgb: '252, 211, 77', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
-        'item-style-10': { hex: '#fb7185', rgb: '251, 113, 133', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
-        'item-style-11': { hex: '#a78bfa', rgb: '167, 139, 250', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
-        'item-style-12': { hex: '#f87171', rgb: '248, 113, 113', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
-        'item-style-13': { hex: '#d8b4fe', rgb: '216, 180, 254', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
-        'item-style-14': { hex: '#f472b6', rgb: '244, 114, 182', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
-    };
-
-    const renderColumn = (items) => items.map(([goodId, item]) => {
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
-        const tooltipText = `${good.lore}\\n\\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
-
-        return `
-            <div 
-                class="cargo-item-card cargo-item-tooltip" 
-                style="background: ${styles.gradient}; border-color: ${styles.hex};" 
-                data-tooltip="${tooltipText}">
-                <div class="base-concept">
-                    <div class="pt-header">
-                        <div class="pt-number">TIER ${good.tier}</div>
-                        <div class="pt-category">${good.cat}</div>
-                    </div>
-                    <div class="pt-symbol-wrapper">
-                        <div class="pt-symbol">${good.symbol.toUpperCase()}</div>
-                        <div class="pt-quantity" style="color: ${styles.hex};">(${item.quantity})</div>
-                    </div>
-                    <div class="pt-name">${good.name}</div>
-                </div>
-            </div>`;
-    }).join('');
-
-    let content;
-    if (ownedGoods.length > 0) {
-        const leftColItems = ownedGoods.filter((_, index) => index % 2 === 0);
-        const rightColItems = ownedGoods.filter((_, index) => index % 2 !== 0);
-
-        content = `
-        <div class="flex flex-row justify-center gap-8">
-            <div class="flex flex-col gap-4">${renderColumn(leftColItems)}</div>
-            <div class="flex flex-col gap-4">${renderColumn(rightColItems)}</div>
-        </div>`;
-
-    } else {
-        content = '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
+    if (ownedGoods.length === 0) {
+        return '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
     }
 
+    const cargoItemsHtml = ownedGoods.map(([goodId, item]) => {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        return _renderMinCargoItem(good, item);
+    }).join('');
+
+    return `<div class="cargo-scroll-panel"><div class="cargo-grid">${cargoItemsHtml}</div></div>`;
+}
+
+/**
+ * Renders a single small, clickable cargo item for the grid view.
+ * @param {object} good - The static data for the commodity from the database.
+ * @param {object} item - The player's inventory data for the item (quantity, avgCost).
+ * @returns {string} The HTML for a single min-cargo item.
+ * @private
+ */
+function _renderMinCargoItem(good, item) {
+    // Reusing the style map from the previous implementation for visual consistency.
+    const styleMap = {
+        'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
+        'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
+        'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
+        'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+        'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
+        'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
+        'item-style-7':  { hex: '#84cc16', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+        'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
+        'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+        'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
+        'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
+        'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
+        'item-style-13': { hex: '#d8b4fe', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
+        'item-style-14': { hex: '#f472b6', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
+    };
+    const styles = styleMap[good.styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+
     return `
-        <div class="flex flex-col h-full flex-grow min-h-0">
-             <div class="cargo-scroll-panel">
-                ${content}
+        <div class="min-cargo-item" 
+             style="background: ${styles.gradient}; border: 2px solid ${styles.hex};"
+             data-action="show_cargo_detail" 
+             data-good-id="${good.id}">
+            
+            <div class="pt-symbol" style="font-size: 2rem; color: ${styles.hex}; text-shadow: 0 0 5px rgba(0,0,0,0.7);">${good.symbol.toUpperCase()}</div>
+            <div class="pt-quantity text-gray-400" style="text-shadow: 1px 1px 3px #000;">(${item.quantity})</div>
+        </div>
+    `;
+}
+
+/**
+ * Renders the detailed modal view for a selected cargo item.
+ * @param {object} good - The static data for the commodity.
+ * @param {object} item - The player's inventory data for the item.
+ * @returns {string} The HTML for the max-cargo modal content.
+ */
+export function _renderMaxCargoModal(good, item) {
+    const styleMap = {
+        'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
+        'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
+        'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
+        'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+        'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
+        'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
+        'item-style-7':  { hex: '#84cc16', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+        'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
+        'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+        'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
+        'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
+        'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
+        'item-style-13': { hex: '#d8b4fe', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
+        'item-style-14': { hex: '#f472b6', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
+    };
+    const styles = styleMap[good.styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+
+    const categoryMap = {
+        RAW: 'Raw Material',
+        IND: 'Industrial Product',
+        AGRI: 'Agricultural Good',
+        TECH: 'Technology',
+        CIV: 'Civilian Commodity',
+        BIO: 'Bioware',
+        RARE: 'Exotic Material'
+    };
+    const fullCategory = categoryMap[good.cat] || 'Unknown';
+
+    const galacticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
+    const avgValue = galacticAvg * item.quantity;
+
+    return `
+        <div class="max-cargo-card" style="background: ${styles.gradient}; border-color: ${styles.hex};">
+            <h3 class="text-2xl font-orbitron text-center">${good.name}</h3>
+            <p class="text-sm text-center tier-type-line mb-4" style="color: ${styles.hex};">Tier ${good.tier} ${fullCategory}</p>
+            <p class="flavor-text">${good.lore}</p>
+            <div class="avg-cost">
+                <div>Avg. Cost: <span class="font-bold credits-text-pulsing">${formatCredits(item.avgCost, true)}</span></div>
+                <div>Qty Aboard: <span class="font-bold">${item.quantity}</span></div>
+                <div>Avg. Value: <span class="font-bold credits-text-pulsing">${formatCredits(avgValue, true)}</span></div>
             </div>
-        </div>`;
+        </div>
+    `;
 }
 --- END OF FILE: ./js/ui/components/CargoScreen.js ---
 --- START OF FILE: ./js/ui/components/MarketScreen.js ---
@@ -7603,6 +7741,9 @@ export class EventManager {
                     break;
 
                 // Ship & Navigation Actions
+                case 'show_cargo_detail':
+                    this.uiManager.showCargoDetailModal(state, goodId);
+                    break;
                 case 'show-launch-modal':
                     this.uiManager.showLaunchModal(locationId);
                     break;
@@ -8500,7 +8641,7 @@ import { renderMarketScreen } from '../ui/components/MarketScreen.js';
 import { renderStatusScreen } from '../ui/components/StatusScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
-import { renderCargoScreen } from '../ui/components/CargoScreen.js';
+import { renderCargoScreen, _renderMaxCargoModal } from '../ui/components/CargoScreen.js';
 import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
@@ -8588,6 +8729,8 @@ export class UIManager {
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
+            cargoDetailModal: document.getElementById('cargo-detail-modal'),
+            cargoDetailContent: document.getElementById('cargo-detail-content'),
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -9643,6 +9786,20 @@ export class UIManager {
         modal.addEventListener('click', closeHandler);
     }
     
+    showCargoDetailModal(gameState, goodId) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
+
+        if (!good || !item) return;
+
+        const modal = this.cache.cargoDetailModal;
+        const modalContent = this.cache.cargoDetailContent;
+
+        modalContent.innerHTML = _renderMaxCargoModal(good, item);
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+    }
+
     renderStickyBar(gameState) {
         const stickyBarEl = this.cache.missionStickyBar;
         const contentEl = stickyBarEl.querySelector('.sticky-content');
@@ -9823,6 +9980,10 @@ export class UIManager {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [26.10] - 2025-09-20
+- UI update
+- cargo overhaul
 
 ## [26.00] - 2025-09-18
 - celebratory effects layer
@@ -10058,7 +10219,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
   "type_system": {
     "enums": {
         "ActionId": [
-            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade"
+            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade", "show_cargo_detail"
         ],
       "ScreenId": ["status", "navigation", "services", "market", "cargo", "hangar", "missions", "finance", "intel"],
       "NavId": ["ship", "starport", "data"],
