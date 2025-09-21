@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [26.15] - 2025-09-20
+- portrait mode enforcement
+- PWA optimization
+
 ## [26.10] - 2025-09-20
 - UI update
 - cargo overhaul
