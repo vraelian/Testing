@@ -10424,3 +10424,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
 --- START OF FILE: ./.git ---
 
 --- END OF FILE: ./.git ---
+--- START OF FILE: ./sw.js ---
+// Minimal service worker to enable PWA installability.
+self.addEventListener('fetch', (event) => {
+  // This basic fetch handler is sufficient to make the app installable.
+});
+--- END OF FILE: ./sw.js ---
