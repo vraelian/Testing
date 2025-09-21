@@ -34,14 +34,14 @@ export function renderCargoScreen(gameState) {
         'item-style-14': { hex: '#f472b6', rgb: '244, 114, 182', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
     };
 
-    const renderColumn = (items) => items.map(([goodId, item]) => {
+    const renderCargoItem = ([goodId, item]) => {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const styles = styleMap[good.styleClass] || { hex: '#a8a29e', rgb: '168, 162, 158', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
         const tooltipText = `${good.lore}\\n\\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
 
         return `
             <div 
-                class="cargo-item-card cargo-item-tooltip" 
+                class="cargo-item-card-large cargo-item-tooltip" 
                 style="background: ${styles.gradient}; border-color: ${styles.hex};" 
                 data-tooltip="${tooltipText}">
                 <div class="base-concept">
@@ -56,25 +56,22 @@ export function renderCargoScreen(gameState) {
                     <div class="pt-name">${good.name}</div>
                 </div>
             </div>`;
-    }).join('');
+    };
 
     let content;
     if (ownedGoods.length > 0) {
-        const leftColItems = ownedGoods.filter((_, index) => index % 2 === 0);
-        const rightColItems = ownedGoods.filter((_, index) => index % 2 !== 0);
-
         content = `
-        <div class="flex flex-row justify-center gap-8">
-            <div class="flex flex-col gap-4">${renderColumn(leftColItems)}</div>
-            <div class="flex flex-col gap-4">${renderColumn(rightColItems)}</div>
+        <div class="grid grid-cols-1 gap-4 max-w-lg mx-auto">
+            ${ownedGoods.map(renderCargoItem).join('')}
         </div>`;
-
     } else {
         content = '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
     }
 
     return `
-        <div class="cargo-scroll-panel">
-            ${content}
+        <div class="cargo-container-relative">
+            <div class="cargo-scroll-panel">
+                ${content}
+            </div>
         </div>`;
 }
