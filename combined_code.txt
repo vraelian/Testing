@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Orbital Trading 26.10</title>
@@ -221,6 +222,17 @@
     <div id="tutorial-highlight-overlay" class="hidden"></div>
 
     <script type="module" src="./js/main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>
 --- END OF FILE: ./index.html ---
@@ -855,8 +867,9 @@
     --max-text: #a5aab1;
 }
 
-html {
-    height: 100%;
+html,
+body {
+    height: 100dvh;
     overflow: hidden;
 }
 
@@ -868,8 +881,6 @@ body {
     -ms-user-select: none; /* IE 10 and IE 11 */
     user-select: none; /* Standard syntax */
     touch-action: manipulation; /* Helps prevent double-tap zoom */
-    height: 100vh;
-    overflow: hidden;
     margin: 0;
 }
 .font-orbitron { font-family: 'Orbitron', sans-serif; }
@@ -1022,12 +1033,10 @@ body {
 }
 .hl { color: #fde047; font-weight: 700; }
 .hl-blue { color: #60a5fa; font-weight: 700; }
-.hl-red { color: #f87171; font-weight: 700;
-}
+.hl-red { color: #f87171; font-weight: 700; }
 .hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
-.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-}
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
 #save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
     z-index: 101;
@@ -10334,6 +10343,22 @@ All notable changes to the Orbital Trading project will be documented in this fi
     -   **Target**: `DOM`
     -   **Details**: The manager queues the request, creates an instance of the corresponding effect class (e.g., `SystemSurgeEffect`), and executes its `play()` method. The effect runs independently of the main UI render loop.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
+--- START OF FILE: ./manifest.json ---
+{
+  "short_name": "Orbital Trading",
+  "name": "Orbital Trading",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c101d",
+  "theme_color": "#0c101d"
+}
+--- END OF FILE: ./manifest.json ---
 --- START OF FILE: ./.git ---
 
 --- END OF FILE: ./.git ---
+--- START OF FILE: ./sw.js ---
+// Minimal service worker to enable PWA installability.
+self.addEventListener('fetch', (event) => {
+  // This basic fetch handler is sufficient to make the app installable.
+});
+--- END OF FILE: ./sw.js ---
