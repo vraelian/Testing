@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [26.10] - 2025-09-20
+- UI update
+- cargo overhaul
+
 ## [26.00] - 2025-09-18
 - celebratory effects layer
 - updated lexicon.json

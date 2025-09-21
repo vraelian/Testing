@@ -29,7 +29,7 @@ export function renderCargoScreen(gameState) {
         return _renderMinCargoItem(good, item);
     }).join('');
 
-    return `<div class="cargo-grid">${cargoItemsHtml}</div>`;
+    return `<div class="cargo-scroll-panel"><div class="cargo-grid">${cargoItemsHtml}</div></div>`;
 }
 
 /**
@@ -66,7 +66,60 @@ function _renderMinCargoItem(good, item) {
              data-good-id="${good.id}">
             
             <div class="pt-symbol" style="font-size: 2rem; color: ${styles.hex}; text-shadow: 0 0 5px rgba(0,0,0,0.7);">${good.symbol.toUpperCase()}</div>
-            <div class="pt-quantity" style="color: #fff; text-shadow: 1px 1px 3px #000;">(${item.quantity})</div>
+            <div class="pt-quantity text-gray-400" style="text-shadow: 1px 1px 3px #000;">(${item.quantity})</div>
+        </div>
+    `;
+}
+
+/**
+ * Renders the detailed modal view for a selected cargo item.
+ * @param {object} good - The static data for the commodity.
+ * @param {object} item - The player's inventory data for the item.
+ * @returns {string} The HTML for the max-cargo modal content.
+ */
+export function _renderMaxCargoModal(good, item) {
+    const styleMap = {
+        'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
+        'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
+        'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
+        'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+        'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
+        'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
+        'item-style-7':  { hex: '#84cc16', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+        'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
+        'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+        'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
+        'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
+        'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
+        'item-style-13': { hex: '#d8b4fe', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
+        'item-style-14': { hex: '#f472b6', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
+    };
+    const styles = styleMap[good.styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+
+    const categoryMap = {
+        RAW: 'Raw Material',
+        IND: 'Industrial Product',
+        AGRI: 'Agricultural Good',
+        TECH: 'Technology',
+        CIV: 'Civilian Commodity',
+        BIO: 'Bioware',
+        RARE: 'Exotic Material'
+    };
+    const fullCategory = categoryMap[good.cat] || 'Unknown';
+
+    const galacticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
+    const avgValue = galacticAvg * item.quantity;
+
+    return `
+        <div class="max-cargo-card" style="background: ${styles.gradient}; border-color: ${styles.hex};">
+            <h3 class="text-2xl font-orbitron text-center">${good.name}</h3>
+            <p class="text-sm text-center tier-type-line mb-4" style="color: ${styles.hex};">Tier ${good.tier} ${fullCategory}</p>
+            <p class="flavor-text">${good.lore}</p>
+            <div class="avg-cost">
+                <div>Avg. Cost: <span class="font-bold credits-text-pulsing">${formatCredits(item.avgCost, true)}</span></div>
+                <div>Qty Aboard: <span class="font-bold">${item.quantity}</span></div>
+                <div>Avg. Value: <span class="font-bold credits-text-pulsing">${formatCredits(avgValue, true)}</span></div>
+            </div>
         </div>
     `;
 }

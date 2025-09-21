@@ -10,7 +10,7 @@
 
 /* Individual min-cargo item styling */
 .min-cargo-item {
-    aspect-ratio: 1 / 1; /* Ensures the item is a perfect square */
+    aspect-ratio: 1 / 0.8; /* Ensures the item is shorter */
     border-radius: 12px;
     cursor: pointer;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -20,6 +20,11 @@
     align-items: center;
     overflow: hidden;
     position: relative;
+}
+
+.min-cargo-item .pt-quantity {
+    opacity: 0.85; /* Make the quantity text slightly transparent */
+    color: #a0aec0; /* Change the quantity text color to grey */
 }
 
 .min-cargo-item:hover {
@@ -42,6 +47,14 @@
     padding: 1.5rem;
     text-align: left;
     border: 2px solid;
+}
+
+.max-cargo-card h3, .max-cargo-card p, .max-cargo-card div {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7); /* Add text outline for clarity */
+}
+
+.max-cargo-card .tier-type-line {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9); /* Darker outline for more contrast */
 }
 
 .max-cargo-card .flavor-text {

@@ -11,7 +11,7 @@ import { renderMarketScreen } from '../ui/components/MarketScreen.js';
 import { renderStatusScreen } from '../ui/components/StatusScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
-import { renderCargoScreen } from '../ui/components/CargoScreen.js';
+import { renderCargoScreen, _renderMaxCargoModal } from '../ui/components/CargoScreen.js';
 import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
@@ -1156,6 +1156,20 @@ export class UIManager {
         modal.addEventListener('click', closeHandler);
     }
     
+    showCargoDetailModal(gameState, goodId) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
+
+        if (!good || !item) return;
+
+        const modal = this.cache.cargoDetailModal;
+        const modalContent = this.cache.cargoDetailContent;
+
+        modalContent.innerHTML = _renderMaxCargoModal(good, item);
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+    }
+
     renderStickyBar(gameState) {
         const stickyBarEl = this.cache.missionStickyBar;
         const contentEl = stickyBarEl.querySelector('.sticky-content');
