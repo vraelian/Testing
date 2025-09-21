@@ -4,7 +4,7 @@
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Orbital Trading 26.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -896,7 +896,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 1rem;
+    padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
 }
 
@@ -1033,10 +1033,12 @@ body {
 }
 .hl { color: #fde047; font-weight: 700; }
 .hl-blue { color: #60a5fa; font-weight: 700; }
-.hl-red { color: #f87171; font-weight: 700; }
+.hl-red { color: #f87171; font-weight: 700;
+}
 .hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
-.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
 
 #save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
     z-index: 101;
@@ -1219,7 +1221,7 @@ body {
 
 @media (min-width: 768px) {
     .game-container {
-        padding: 2rem;
+        padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
     }
 }
 
@@ -9982,9 +9984,6 @@ export class UIManager {
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
---- START OF FILE: ./node_modules ---
-
---- END OF FILE: ./node_modules ---
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 
@@ -10343,22 +10342,6 @@ All notable changes to the Orbital Trading project will be documented in this fi
     -   **Target**: `DOM`
     -   **Details**: The manager queues the request, creates an instance of the corresponding effect class (e.g., `SystemSurgeEffect`), and executes its `play()` method. The effect runs independently of the main UI render loop.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
---- START OF FILE: ./manifest.json ---
-{
-  "short_name": "Orbital Trading",
-  "name": "Orbital Trading",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0c101d",
-  "theme_color": "#0c101d"
-}
---- END OF FILE: ./manifest.json ---
 --- START OF FILE: ./.git ---
 
 --- END OF FILE: ./.git ---
---- START OF FILE: ./sw.js ---
-// Minimal service worker to enable PWA installability.
-self.addEventListener('fetch', (event) => {
-  // This basic fetch handler is sufficient to make the app installable.
-});
---- END OF FILE: ./sw.js ---
