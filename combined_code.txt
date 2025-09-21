@@ -5,6 +5,8 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Orbital Trading 26.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -25,6 +27,7 @@
     <link rel="stylesheet" href="./css/screens/status-screen.css">
     <link rel="stylesheet" href="./css/screens/services-screen.css">
     <link rel="stylesheet" href="./css/screens/cargo-screen.css">
+    <link rel="stylesheet" href="./css/orientation.css">
 </head>
 <body>
 
@@ -233,6 +236,9 @@
             });
         }
     </script>
+    <div id="orientation-overlay">
+        <p>Please rotate your device to portrait mode.</p>
+    </div>
 </body>
 </html>
 --- END OF FILE: ./index.html ---
@@ -2531,6 +2537,34 @@ body {
 }
 /* --- [[END]] DEPRECATED STYLES --- */
 --- END OF FILE: ./css/navigation.css ---
+--- START OF FILE: ./css/orientation.css ---
+/* css/orientation.css */
+#orientation-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0c101d;
+    color: #d0d8e8;
+    z-index: 2000; 
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+}
+
+@media (orientation: landscape) {
+    #orientation-overlay {
+        display: flex;
+    }
+    /* Optional: Hide the main game container to be safe */
+    #game-container {
+        display: none;
+    }
+}
+--- END OF FILE: ./css/orientation.css ---
 --- START OF FILE: ./js/ui/components/StatusScreen.js ---
 // js/ui/components/StatusScreen.js
 /**
