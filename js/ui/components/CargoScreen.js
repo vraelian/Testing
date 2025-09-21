@@ -40,9 +40,9 @@ export function renderCargoScreen(gameState) {
         const tooltipText = `${good.lore}\\n\\nAvg. Cost: ${formatCredits(item.avgCost, false)}`;
 
         return `
-            <div 
-                class="cargo-item-card-large cargo-item-tooltip" 
-                style="background: ${styles.gradient}; border-color: ${styles.hex};" 
+            <div
+                class="cargo-item-card-large cargo-item-tooltip"
+                style="background: ${styles.gradient}; border-color: ${styles.hex};"
                 data-tooltip="${tooltipText}">
                 <div class="base-concept">
                     <div class="pt-header">
@@ -61,7 +61,7 @@ export function renderCargoScreen(gameState) {
     let content;
     if (ownedGoods.length > 0) {
         content = `
-        <div class="grid grid-cols-1 gap-4 max-w-lg mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             ${ownedGoods.map(renderCargoItem).join('')}
         </div>`;
     } else {
@@ -69,9 +69,7 @@ export function renderCargoScreen(gameState) {
     }
 
     return `
-        <div class="cargo-container-relative">
-            <div class="cargo-scroll-panel">
-                ${content}
-            </div>
+        <div class="cargo-scroll-panel">
+            ${content}
         </div>`;
 }

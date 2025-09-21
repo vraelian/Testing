@@ -1,15 +1,6 @@
 /* css/screens/cargo-screen.css */
-.cargo-container-relative {
-    position: relative;
-    flex-grow: 1;
-}
-
 .cargo-scroll-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    max-height: 75vh; /* Enforce a fixed height based on the viewport */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
@@ -41,19 +32,19 @@
     color: #fff;
     padding: 0;
 }
-.cargo-item-card-large .pt-header { 
-    display: flex; 
-    justify-content: space-between; 
-    width: 100%; 
+.cargo-item-card-large .pt-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
     padding: 6px 10px;
     background: rgba(0,0,0,0.3);
     align-items: center;
     box-sizing: border-box;
     flex-shrink: 0;
 }
-.cargo-item-card-large .pt-number, 
-.cargo-item-card-large .pt-category { 
-    font-family: 'Share Tech Mono', monospace; 
+.cargo-item-card-large .pt-number,
+.cargo-item-card-large .pt-category {
+    font-family: 'Share Tech Mono', monospace;
     font-size: 0.75rem;
     white-space: nowrap;
 }
@@ -80,11 +71,11 @@
     margin-top: 6px;
     text-shadow: 0 0 8px rgba(0,0,0,0.8);
 }
-.cargo-item-card-large .pt-name { 
-    font-family: 'Share Tech Mono', monospace; 
+.cargo-item-card-large .pt-name {
+    font-family: 'Share Tech Mono', monospace;
     font-size: 0.75rem;
-    text-align: center; 
-    text-transform: uppercase; 
+    text-align: center;
+    text-transform: uppercase;
     letter-spacing: 0.8px;
     padding: 6px 10px;
     flex-shrink: 0;
