@@ -99,6 +99,8 @@ export class UIManager {
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
+            cargoDetailModal: document.getElementById('cargo-detail-modal'),
+            cargoDetailContent: document.getElementById('cargo-detail-content'),
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),

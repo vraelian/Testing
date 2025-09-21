@@ -178,6 +178,9 @@ export class EventManager {
                     break;
 
                 // Ship & Navigation Actions
+                case 'show_cargo_detail':
+                    this.uiManager.showCargoDetailModal(state, goodId);
+                    break;
                 case 'show-launch-modal':
                     this.uiManager.showLaunchModal(locationId);
                     break;
