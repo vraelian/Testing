@@ -31,17 +31,13 @@ export class UIManager {
         this.missionService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
-        
-        // Hangar/Shipyard screen local state
-        this.hangarMode = 'hangar'; // 'hangar' or 'shipyard'
-        this.hangarCarouselIndex = 0;
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
-            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Hangar' } },
+            [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
             [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
 
@@ -249,7 +245,7 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this);
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
@@ -260,27 +256,6 @@ export class UIManager {
             case SCREEN_IDS.INTEL:
                 this.cache.intelScreen.innerHTML = renderIntelScreen();
                 break;
-        }
-    }
-    
-    toggleHangarMode() {
-        this.hangarMode = this.hangarMode === 'hangar' ? 'shipyard' : 'hangar';
-        this.hangarCarouselIndex = 0;
-        this.render(this.lastKnownState);
-    }
-    
-    setHangarCarouselIndex(index) {
-        this.hangarCarouselIndex = index;
-        this.updateHangarPagination();
-    }
-    
-    updateHangarPagination() {
-        const paginationContainer = document.getElementById('pagination-container');
-        if (paginationContainer) {
-            const dots = paginationContainer.querySelectorAll('.pagination-dot');
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === this.hangarCarouselIndex);
-            });
         }
     }
 
