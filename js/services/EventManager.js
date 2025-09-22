@@ -100,6 +100,29 @@ export class EventManager {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
+        
+        // Add scroll listener for the hangar carousel
+        document.body.addEventListener('scroll', (e) => {
+            if (e.target.matches('#hangar-screen .carousel-container')) {
+                this._handleHangarScroll(e);
+            }
+        }, true); // Use capture phase to ensure it fires.
+    }
+
+    /**
+     * Handles the scroll event for the hangar carousel to update the pagination.
+     * @param {Event} e The scroll event object.
+     * @private
+     */
+    _handleHangarScroll(e) {
+        const carousel = e.target;
+        const scrollPos = carousel.scrollLeft;
+        const itemWidth = carousel.offsetWidth;
+        const newIndex = Math.round(scrollPos / itemWidth);
+
+        if (newIndex !== this.uiManager.hangarCarouselIndex) {
+            this.uiManager.setHangarCarouselIndex(newIndex);
+        }
     }
 
     /**
@@ -136,10 +159,23 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId, index } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
+                // Hangar Actions
+                case ACTION_IDS.TOGGLE_HANGAR_MODE:
+                    this.uiManager.toggleHangarMode();
+                    break;
+                case ACTION_IDS.SET_HANGAR_CAROUSEL_INDEX:
+                    const carousel = document.querySelector('#hangar-screen .carousel-container');
+                    if(carousel) {
+                        carousel.scrollTo({
+                            left: carousel.offsetWidth * parseInt(index, 10),
+                            behavior: 'smooth'
+                        });
+                    }
+                    break;
                 // Bulkhead UI Actions
                 case 'toggle-tooltip': {
                     const tooltip = actionTarget.querySelector('.status-tooltip');

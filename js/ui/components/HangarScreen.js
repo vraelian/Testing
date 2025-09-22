@@ -10,135 +10,215 @@ import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 
 /**
- * Renders the entire Hangar screen. The component is now responsive and uses the same bar component for both layouts.
+ * Renders the entire Hangar screen, now featuring a carousel UI.
  * @param {object} gameState - The current state of the game.
+ * @param {object} uiManager - The UIManager instance, to access hangar-specific state.
  * @returns {string} The HTML content for the Hangar screen.
  */
-export function renderHangarScreen(gameState) {
-    const { player } = gameState;
-    const shipsForSale = _getShipyardInventory(gameState);
+export function renderHangarScreen(gameState, uiManager) {
+    const { player, market } = gameState;
+    const { hangarMode, hangarCarouselIndex } = uiManager;
 
-    const shipyardHtml = shipsForSale.length > 0
-        ? shipsForSale.map(([id]) => _getShipBarHtml(gameState, id, 'shipyard')).join('')
-        : '<p class="text-center text-gray-500 text-sm p-4">No new ships available at this location.</p>';
+    const shipList = hangarMode === 'hangar'
+        ? player.ownedShipIds
+        : market.shipyardStock[gameState.currentLocationId]?.shipsForSale || [];
 
-    const hangarHtml = player.ownedShipIds.length > 0
-        ? player.ownedShipIds.map(id => _getShipBarHtml(gameState, id, 'hangar')).join('')
-        : '<p class="text-center text-gray-500 text-sm p-4">Your hangar is empty.</p>';
+    const carouselPagesHtml = shipList.length > 0
+        ? shipList.map(id => _renderShipPage(gameState, id, hangarMode)).join('')
+        : `<div class="carousel-page flex items-center justify-center"><p class="text-center text-gray-500 text-lg p-4">${hangarMode === 'hangar' ? 'Your hangar is empty.' : 'No new ships available at this location.'}</p></div>`;
 
-    // The desktop view uses a two-column grid, while mobile will stack them naturally.
-    return `
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 relative">
-            <div id="starport-shipyard-panel">
-                <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Shipyard</h2>
-                <div class="starport-panel shipyard-panel space-y-4">${shipyardHtml}</div>
-            </div>
-            <div class="w-full my-4 border-t-2 border-slate-600 lg:hidden"></div>
-            <div class="absolute left-1/2 top-0 h-full w-px bg-slate-600 hidden lg:block"></div>
-            <div id="starport-hangar-panel">
-                <h2 class="text-3xl font-orbitron text-cyan-300 mb-4 text-center">Hangar</h2>
-                <div class="starport-panel hangar-panel space-y-4">${hangarHtml}</div>
-            </div>
-        </div>`;
-}
-
-/**
- * Generates the HTML for a single ship bar, for either the shipyard or hangar.
- * @param {object} gameState - The current state of the game.
- * @param {string} shipId - The ID of the ship to render.
- * @param {string} context - The context: 'shipyard' or 'hangar'.
- * @returns {string} The HTML for the ship bar.
- * @private
- */
-function _getShipBarHtml(gameState, shipId, context) {
-    const { player, tutorials } = gameState;
-    const shipStatic = DB.SHIPS[shipId];
-    const shipClassLower = shipStatic.class.toLowerCase();
-
-    // Common elements
-    const nameAndClassHtml = `
-        <div class="ship-info">
-            <span class="ship-name class-${shipClassLower}">${shipStatic.name}</span>
-            <span class="ship-class">Class ${shipStatic.class}</span>
-        </div>`;
-
-    let rightSideContent = '';
-    let bottomContent = '';
-    let sideLabel = '';
-    let wrapperClasses = `ship-bar-wrapper bg-class-${shipClassLower} class-${shipClassLower}`;
-
-    if (context === 'shipyard') {
-        const canAfford = player.credits >= shipStatic.price;
-        const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-        if (!canAfford || isHangarTutStep1Active) {
-            wrapperClasses += ' opacity-60 pointer-events-none';
-        }
-        
-        rightSideContent = `<div class="ship-price">${formatCredits(shipStatic.price)}</div>`;
-    } else { // context === 'hangar'
-        const shipDynamic = player.shipStates[shipId];
-        const shipInventory = player.inventories[shipId];
-        const cargoUsed = calculateInventoryUsed(shipInventory);
-        const cargoPct = (cargoUsed / shipStatic.cargoCapacity) * 100;
-        const hullPercent = Math.floor((shipDynamic.health / shipStatic.maxHealth) * 100);
-        const fuelPercent = Math.floor((shipDynamic.fuel / shipStatic.maxFuel) * 100);
-        const isActive = shipId === player.activeShipId;
-
-        sideLabel = `<div class="status-sidelabel ${isActive ? 'sidelabel-active' : 'sidelabel-stored'}">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
-        
-        rightSideContent = `
-            <div class="ship-stats-text">
-                <span class="stat-hull">HULL: <span class="value">${hullPercent}%</span></span>
-                <span class="stat-fuel">FUEL: <span class="value">${fuelPercent}%</span></span>
-            </div>`;
-        
-        const cargoSegments = Array.from({ length: Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))) }, (_, i) => {
-            const filledSegments = Math.round((cargoUsed / shipStatic.cargoCapacity) * Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))));
-            return `<div class="segment ${i < filledSegments ? 'filled' : ''}"></div>`;
-        }).join('');
-
-        bottomContent = `
-            <div class="bottom-line">
-                <div class="cargo-bar">${cargoSegments}</div>
-                <div class="cargo-text">CARGO: <span class="value">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
-            </div>`;
-    }
+    const paginationDotsHtml = shipList.map((_, i) => `<div class="pagination-dot w-2.5 h-2.5 bg-gray-600 rounded-full cursor-pointer transition-all ${i === hangarCarouselIndex ? 'active' : ''}" data-action="set-hangar-carousel-index" data-index="${i}"></div>`).join('');
 
     return `
-        <div class="${wrapperClasses}" data-action="show-ship-detail" data-ship-id="${shipId}" data-context="${context}">
-            ${sideLabel}
-            <div class="main-content">
-                <div class="ship-info-top">
-                    ${nameAndClassHtml}
-                    ${rightSideContent}
+        <div id="ship-terminal" class="w-full max-w-[420px] h-[70vh] mx-auto rounded-xl flex flex-col overflow-hidden relative shadow-2xl shadow-black/50 mode-${hangarMode}">
+            <header class="text-center p-4 pt-5 flex-shrink-0 flex flex-col items-center gap-2 z-10">
+                <div class="toggle-container">
+                    <div id="mode-toggle" class="toggle-switch w-[150px] h-8 cursor-pointer relative" data-action="toggle-hangar-mode">
+                        <span id="label-hangar" class="toggle-label hangar font-orbitron text-xs tracking-widest font-bold">Hangar</span>
+                        <span id="label-shipyard" class="toggle-label shipyard font-orbitron text-xs tracking-widest font-bold">Shipyard</span>
+                    </div>
                 </div>
-                ${bottomContent}
-            </div>
+            </header>
+
+            <main id="carousel-main" class="flex-grow flex flex-col min-h-0 z-10">
+                <div class="carousel-container flex-grow">
+                    ${carouselPagesHtml}
+                </div>
+                <footer id="pagination-container" class="pagination-indicator flex items-center justify-center gap-3 p-3 mt-auto flex-shrink-0">
+                    <div id="pagination-dots" class="flex gap-3 items-center">
+                        ${paginationDotsHtml}
+                    </div>
+                </footer>
+            </main>
         </div>`;
 }
 
 
 /**
- * Retrieves the list of ships currently available for sale at the docked location.
+ * Renders a single page within the hangar/shipyard carousel.
  * @param {object} gameState The current game state.
- * @returns {Array<Array<string, object>>} A list of ship entries, where each entry is an array of `[id, shipObject]`.
+ * @param {string} shipId The ID of the ship to render for this page.
+ * @param {string} mode The current mode ('hangar' or 'shipyard').
+ * @returns {string} The HTML for a single carousel page.
  * @private
  */
-function _getShipyardInventory(gameState) {
-    const { player, currentLocationId, market, introSequenceActive } = gameState;
-    // During the intro, show a fixed, limited set of ships for the tutorial purchase.
-    if (introSequenceActive) {
-        if (player.ownedShipIds.length > 0) {
-            return [];
-        } else {
-            const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-            return introShipIds.map(id => ([id, DB.SHIPS[id]]));
-        }
-    } else {
-        // In normal gameplay, show the dynamically stocked ships for the current location.
-        const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-        return shipsForSaleIds
-            .map(id => ([id, DB.SHIPS[id]]))
-            .filter(([id, ship]) => !player.ownedShipIds.includes(id));
-    }
+function _renderShipPage(gameState, shipId, mode) {
+    const ship = DB.SHIPS[shipId];
+    const hangarHtml = _renderHangarView(gameState, ship);
+    const shipyardHtml = _renderShipyardView(ship);
+
+    return `
+        <div class="carousel-page flex flex-col p-4 pt-0 box-border h-full">
+            <div class="ship-display-area w-full h-[28vh] flex-shrink-0">
+                <div class="ship-image-placeholder w-full h-full rounded-md flex items-center justify-center p-2 text-center font-roboto-mono text-sm">
+                    Ship Image Placeholder<br>(${ship.name})
+                </div>
+                ${mode === 'hangar' ? (ship.id === gameState.player.activeShipId ? `<div class="status-badge border-yellow-400 text-yellow-300">ACTIVE</div>` : `<div class="status-badge border-gray-400 text-gray-300">STORED</div>`) : ''}
+            </div>
+            <div class="ship-info-panel flex-grow overflow-hidden mt-8 w-full flex flex-col">
+                ${shipyardHtml}
+                ${hangarHtml}
+            </div>
+            <div class="action-buttons-container mt-auto pt-2 flex-shrink-0">
+                ${mode === 'hangar' ? _renderHangarActions(gameState, ship) : _renderShipyardActions(gameState, ship)}
+            </div>
+        </div>`;
+}
+
+/**
+ * Renders the detailed view for a ship when in Shipyard mode.
+ * @param {object} ship - The static ship data from the database.
+ * @returns {string} HTML content for the shipyard view.
+ * @private
+ */
+function _renderShipyardView(ship) {
+    const shipClassColor = `var(--class-${ship.class.toLowerCase()}-color)`;
+    return `
+        <div class="info-panel-content info-panel-shipyard flex-col h-full">
+            <div class="scrollable-content flex-grow flex flex-col">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-orbitron text-[2.1rem] inset-text-shadow" style="color: ${shipClassColor};">${ship.name}</h3>
+                        <p class="text-[1rem] text-gray-400 -mt-1 inset-text-shadow">${ship.role || 'Vessel'}</p>
+                    </div>
+                    <div class="px-3 py-1 rounded-full text-base font-bold font-roboto-mono border-2" style="transform: scale(0.9); border-color: ${shipClassColor}; color: ${shipClassColor};">CLASS ${ship.class}</div>
+                </div>
+                <div class="my-4 grid grid-cols-3 gap-2">
+                    <div class="spec-card">
+                        <div class="text-base text-gray-400">MAX HULL</div>
+                        <div class="text-2xl font-bold text-green-400">${ship.maxHealth}</div>
+                    </div>
+                     <div class="spec-card">
+                        <div class="text-base text-gray-400">MAX FUEL</div>
+                        <div class="text-2xl font-bold text-blue-400">${ship.maxFuel}</div>
+                    </div>
+                     <div class="spec-card">
+                        <div class="text-base text-gray-400">CAPACITY</div>
+                        <div class="text-2xl font-bold text-orange-400">${ship.cargoCapacity}</div>
+                    </div>
+                </div>
+                <div class="flex-grow flex items-end pb-4">
+                     <p class="flavor-text-box text-[0.85rem] text-gray-400 italic" style="border-color: ${shipClassColor}80">${ship.lore}</p>
+                </div>
+            </div>
+        </div>`;
+}
+
+/**
+ * Renders the detailed view for a ship when in Hangar mode.
+ * @param {object} gameState The current game state.
+ * @param {object} ship - The static ship data from the database.
+ * @returns {string} HTML content for the hangar view.
+ * @private
+ */
+function _renderHangarView(gameState, ship) {
+    const shipState = gameState.player.shipStates[ship.id];
+    const inventory = gameState.player.inventories[ship.id] || {};
+    const cargoUsed = Object.values(inventory).reduce((sum, item) => sum + item.quantity, 0);
+    const hullPct = (shipState.health / ship.maxHealth) * 100;
+    const fuelPct = (shipState.fuel / ship.maxFuel) * 100;
+    const cargoPct = (cargoUsed / ship.cargoCapacity) * 100;
+    const statusColor = hullPct > 90 ? 'var(--ot-green-accent)' : hullPct > 60 ? 'var(--class-s-color)' : 'var(--ot-red-accent)';
+    let status = "Optimal";
+    if (hullPct <= 90) status = "Minor Wear";
+    if (hullPct <= 60) status = "Damaged";
+    const shipClassColor = `var(--class-${ship.class.toLowerCase()}-color)`;
+
+    return `
+        <div class="info-panel-content info-panel-hangar flex-col h-full">
+            <div class="scrollable-content flex-grow flex flex-col">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-orbitron text-[1.35rem] inset-text-shadow" style="color: ${shipClassColor};">${ship.name}</h3>
+                        <p class="text-[0.82rem] text-gray-400 -mt-1 inset-text-shadow">${ship.role || 'Vessel'}</p>
+                    </div>
+                    <div class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-bold font-roboto-mono border" style="border-color: ${shipClassColor}; color: ${shipClassColor};">CLASS ${ship.class}</div>
+                </div>
+                <div class="font-roboto-mono text-sm my-4">
+                    <div class="flex justify-center items-center mb-3 text-sm">
+                        <span class="text-gray-400 mr-2">STATUS:</span>
+                        <span class="px-2 py-0.5 rounded-md border text-xs" style="color:${statusColor}; border-color:${statusColor}80;">${status}</span>
+                    </div>
+                    <div class="spec-readout hangar-specs">
+                        <span class="text-green-400">HULL</span>
+                        <div class="w-4/5 mx-auto"><div class="spec-bar"><div class="spec-bar-fill bg-green-400" style="width: ${hullPct}%; --bar-color: #4ade80;"></div></div></div>
+                        <span class="text-xs">${Math.floor(shipState.health)}/${ship.maxHealth}</span>
+                    </div>
+                    <div class="spec-readout hangar-specs">
+                        <span class="text-blue-400">FUEL</span>
+                        <div class="w-4/5 mx-auto"><div class="spec-bar"><div class="spec-bar-fill bg-blue-400" style="width: ${fuelPct}%; --bar-color: #60a5fa;"></div></div></div>
+                        <span class="text-xs">${Math.floor(shipState.fuel)}/${ship.maxFuel}</span>
+                    </div>
+                    <div class="spec-readout hangar-specs">
+                        <span class="text-orange-400">CARGO</span>
+                        <div class="w-4/5 mx-auto"><div class="spec-bar"><div class="spec-bar-fill bg-orange-400" style="width: ${cargoPct}%; --bar-color: #f97316;"></div></div></div>
+                        <span class="text-xs">${cargoUsed}/${ship.cargoCapacity}</span>
+                    </div>
+                </div>
+                <div class="flex-grow flex items-center">
+                    <p class="flavor-text-box text-xs text-gray-400 italic" style="border-color: ${shipClassColor}80">${ship.lore}</p>
+                </div>
+            </div>
+        </div>`;
+}
+
+/**
+ * Renders the action buttons for a ship in the Shipyard view.
+ * @param {object} gameState The current game state.
+ * @param {object} ship - The static ship data from the database.
+ * @returns {string} HTML content for the shipyard action buttons.
+ * @private
+ */
+function _renderShipyardActions(gameState, ship) {
+    const canAfford = gameState.player.credits >= ship.price;
+    return `
+        <div class="flex justify-center">
+            <button class="action-button w-3/4 bg-green-800/50 border border-green-600 text-green-300" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${ship.id}" ${!canAfford ? 'disabled' : ''}>
+                <span class="text-sm font-bold">PURCHASE</span>
+                <span class="price-text font-roboto-mono">⌬ ${ship.price.toLocaleString()}</span>
+            </button>
+        </div>`;
+}
+
+/**
+ * Renders the action buttons for a ship in the Hangar view.
+ * @param {object} gameState The current game state.
+ * @param {object} ship - The static ship data from the database.
+ * @returns {string} HTML content for the hangar action buttons.
+ * @private
+ */
+function _renderHangarActions(gameState, ship) {
+    const isActive = ship.id === gameState.player.activeShipId;
+    const canSell = gameState.player.ownedShipIds.length > 1 && !isActive;
+    const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+    return `
+        <div class="grid grid-cols-2 gap-3">
+            <button class="action-button bg-cyan-800/50 border border-cyan-600 text-cyan-300 justify-center" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${ship.id}" ${isActive ? 'disabled' : ''}>
+                <span class="text-xs font-bold">${isActive ? 'CURRENTLY ACTIVE' : 'SET ACTIVE'}</span>
+            </button>
+            <button class="action-button bg-red-800/50 border border-red-600 text-red-300" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${ship.id}" ${!canSell ? 'disabled' : ''}>
+                 <span class="text-xs font-bold">SELL SHIP</span>
+                 <span class="price-text font-roboto-mono">⌬ ${salePrice.toLocaleString()}</span>
+            </button>
+        </div>`;
 }
