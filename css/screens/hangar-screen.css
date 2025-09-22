@@ -1,188 +1,207 @@
-/* css/screens/hangar-screen.css */
+/*
+ * Styles for the Hangar/Shipyard screen.
+ * Extracted from ShipyardConcepts.html as part of the visual overhaul.
+*/
 
+/* ================================================================================
+CORE THEME & VARIABLE SETUP
+- Defines the color palette, fonts, and dynamic variables used throughout the component.
+- Theming is driven by CSS variables to allow for easy changes based on game state (e.g., location).
+================================================================================
+*/
 :root {
-    --base-bg-start: #0f172a;
-    --class-o-color: #ef4444;
+    /* Base Colors */
+    --ot-bg-dark: #0c101d;
+    --ot-border-light: #4a6a8a;
+    --ot-text-primary: #d0d8e8;
+    --ot-text-secondary: #9ca3af;
+    --ot-green-accent: #4ade80;
+    --ot-red-accent: #f87171;
+    --ot-cyan-base: #22d3ee;
+    --ot-cyan-glow: #67e8f9;
+
+    /* Toggle & Mode-Specific Colors */
+    --ot-hangar-red-base: #ef4444;
+    --ot-hangar-red-glow: #f87171;
+    --ot-shipyard-blue-base: #60a5fa;
+    --ot-shipyard-blue-glow: #93c5fd;
+
+    /* Ship Class Colors */
     --class-s-color: #facc15;
     --class-a-color: #60a5fa;
     --class-b-color: #4ade80;
     --class-c-color: #e5e7eb;
-    --credits-color: #29f1ff;
-    --ship-bar-height: 5.5rem; /* Approximate height of one ship bar */
+    
+    /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set. */
+    --theme-color-primary: #fde047;
+    --theme-color-glow: #fef08a;
+    --theme-bg-gradient: linear-gradient(145deg, rgba(113, 63, 18, 0.5), rgba(49, 46, 129, 0.8));
+
+    /* Dynamic Frame Border Color - Changes based on Hangar/Shipyard mode */
+    --frame-border-color: var(--ot-shipyard-blue-base);
 }
 
-#starport-shipyard-panel, #starport-hangar-panel {
-    display: flex;
-    flex-direction: column;
+/* Set Hangar-specific frame color when the .mode-hangar class is active */
+.mode-hangar {
+    --frame-border-color: var(--ot-hangar-red-base);
 }
 
-.starport-panel {
-    background-color: rgba(10, 20, 40, 0.5);
-    border: 1px solid #2a3a5a;
-    border-radius: 10px;
-    padding: 1.5rem;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    flex-grow: 1; /* Allow panel to fill available space within its parent */
+/* Base body and typography setup */
+html, body { overscroll-behavior-x: contain; }
+body { background-color: var(--ot-bg-dark); color: var(--ot-text-primary); font-family: 'Exo 2', sans-serif; overflow: hidden; }
+.font-orbitron { font-family: 'Orbitron', sans-serif; }
+.font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+
+/* ================================================================================
+COMPONENT-SPECIFIC STYLING
+================================================================================
+*/
+
+/* Carousel: Main container for ship cards */
+.carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.carousel-container::-webkit-scrollbar { display: none; }
+.carousel-page { flex: 0 0 100%; width: 100%; scroll-snap-align: center; }
+
+/* Backgrounds & Theming */
+#ship-terminal {
+    background-image: var(--theme-bg-gradient); /* Base theme from location */
 }
-.starport-panel::-webkit-scrollbar {
-    display: none;
+.mode-hangar #ship-terminal {
+    background-blend-mode: overlay;
+    background-color: #1a193d; /* Darkening overlay for Hangar mode */
+}
+.mode-hangar #ship-terminal::after { /* Adds a subtle grid texture in Hangar mode */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+        radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
 }
 
-.shipyard-panel {
-    min-height: calc(var(--ship-bar-height) * 1.2 + 2rem); /* 2.1 ships + spacing */
-    max-height: 18.5vh;
+
+/* Hologram */
+.ship-display-area { perspective: 1500px; position: relative; }
+.ship-image-placeholder { background: transparent; border: 1px solid var(--ot-border-light); color: var(--theme-color-primary); box-shadow: inset 0 0 15px rgba(0,0,0,0.3);}
+.status-badge {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50%);
+    background-color: #1a2030;
+    border: 1px solid;
+    padding: 3px 11px;
+    border-radius: 99px;
+    font-size: 0.77rem;
+    font-weight: 700;
 }
 
-.hangar-panel {
-    min-height: calc(var(--ship-bar-height) * 3.80 + 2rem); /* 3.1 ships + spacing */
-    max-height: 38vh;
-}
-
-
-/* --- New Ship Bar Styles --- */
-
-.ship-bar-wrapper {
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    display: flex;
-    align-items: stretch;
-    gap: 0.75rem;
-    position: relative;
-    overflow: hidden;
-    background: #111827; /* Fallback */
+/* Hangar/Shipyard Toggle Switch */
+.toggle-container {
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; /* More rounded corners */
+    padding: 3px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
-    cursor: pointer;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    height: var(--ship-bar-height);
+    transform: scale(0.85); /* Reduced scale */
 }
-.ship-bar-wrapper:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 3px rgba(0,0,0,0.4);
+.toggle-switch {
+    background-color: transparent;
+    display: flex;
 }
-
-
-/* Gradient Backgrounds */
-.ship-bar-wrapper.bg-class-o { background: linear-gradient(110deg, var(--base-bg-start) 45%, #442c38 70%, var(--class-o-color) 100%); }
-.ship-bar-wrapper.bg-class-s { background: linear-gradient(110deg, var(--base-bg-start) 45%, #4f4430 70%, var(--class-s-color) 100%); }
-.ship-bar-wrapper.bg-class-a { background: linear-gradient(110deg, var(--base-bg-start) 45%, #2a3f6c 70%, var(--class-a-color) 100%); }
-.ship-bar-wrapper.bg-class-b { background: linear-gradient(110deg, var(--base-bg-start) 45%, #254441 70%, var(--class-b-color) 100%); }
-.ship-bar-wrapper.bg-class-c { background: linear-gradient(110deg, var(--base-bg-start) 45%, #4a4e5a 70%, var(--class-c-color) 100%); }
-
-/* Thick Border Accent */
-.ship-bar-wrapper.class-o { border-left: 4px solid var(--class-o-color); }
-.ship-bar-wrapper.class-s { border-left: 4px solid var(--class-s-color); }
-.ship-bar-wrapper.class-a { border-left: 4px solid var(--class-a-color); }
-.ship-bar-wrapper.class-b { border-left: 4px solid var(--class-b-color); }
-.ship-bar-wrapper.class-c { border-left: 4px solid var(--class-c-color); }
-
-
-/* Side Label */
-.status-sidelabel {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    text-align: center;
-    padding: 0 2px;
+.toggle-label {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-.sidelabel-active {
-    color: #fde047;
-    text-shadow: 0 0 5px #fde047, 0 0 10px #fde047;
-}
-.sidelabel-stored {
-    color: #9ca3af;
-}
-
-/* Main Content Area */
-.main-content {
+    height: 100%;
     flex-grow: 1;
+    transition: all 0.3s ease;
+    color: var(--ot-text-secondary);
+    /* Angled shape for the toggle tabs */
+    clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%);
+}
+.toggle-label.shipyard {
+     clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 85%);
+}
+
+.mode-hangar .toggle-label.hangar,
+.mode-shipyard .toggle-label.shipyard {
+    color: var(--ot-bg-dark);
+    font-weight: 900;
+}
+.mode-hangar .toggle-label.hangar { /* Hangar active color: Red */
+    background-color: var(--ot-hangar-red-base);
+    box-shadow: 0 0 10px var(--ot-hangar-red-glow);
+}
+.mode-shipyard .toggle-label.shipyard { /* Shipyard active color: Blue */
+    background-color: var(--ot-shipyard-blue-base);
+    box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
+}
+
+/* Main Info Panels */
+.info-panel-content { display: none; }
+.mode-hangar .info-panel-hangar, .mode-shipyard .info-panel-shipyard { display: flex; }
+.scrollable-content { 
+    overflow-y: auto; 
+    scrollbar-width: none; 
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4); /* Inset shadow for depth */
+    padding: 1rem; 
+    border-radius: 0.5rem; 
+    background: rgba(0,0,0,0.1);
+}
+.scrollable-content::-webkit-scrollbar { display: none; }
+
+/* Stat Readouts */
+.spec-readout { display: grid; align-items: center; margin-bottom: 0.75rem; font-family: 'Roboto Mono', sans-serif;}
+.hangar-specs { grid-template-columns: 60px 1fr 60px;}
+.hangar-specs .w-4\/5 { width: 80%; } /* Reduced width for stat bars */
+.hangar-specs .text-xs { font-size: 0.7rem; } /* Reduced size for quantitative numbers */
+
+.spec-bar { height: 13px; background-color: rgba(0,0,0,0.3); flex-grow: 1; border-radius: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);}
+.spec-bar-fill { height: 100%; border-radius: 4px; box-shadow: 0 0 8px var(--bar-color); }
+
+/* Action Buttons */
+.action-button { 
+    transition: transform 0.2s ease; 
+    border-radius: 0.5rem; 
     display: flex;
-    flex-direction: column;
     justify-content: space-between;
-}
-
-.ship-info-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-}
-
-.ship-info { display: flex; flex-direction: column; }
-.ship-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
-.ship-class { font-size: 0.75rem; color: #d1d5db; text-shadow: 1px 1px 2px rgba(0,0,0,0.4);}
-
-/* Shipyard Price */
-.ship-price {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--credits-color);
-    text-shadow: 
-        -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
-        0 0 5px var(--credits-color), 0 0 10px var(--credits-color), 0 0 15px rgba(41, 241, 255, 0.5);
-}
-
-/* Hangar Stats */
-.ship-stats-text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    font-size: 0.8rem;
-    text-shadow: -1px -1px 0 #0c101d, 1px -1px 0 #0c101d, -1px 1px 0 #0c101d, 1px 1px 0 #0c101d, 0 0 3px #0c101d;
-}
-.stat-hull .value { color: #4ade80; }
-.stat-fuel .value { color: #60a5fa; }
-
-/* Cargo Area */
-.bottom-line {
-    display: flex;
     align-items: center;
-    gap: 0.75rem;
+    padding: 0.3rem 0.8rem;
+}
+.action-button:not(:disabled) { /* Drop shadow for active buttons */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
+.action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
+
+.price-text {
+    font-size: 1.1rem;
+    color: var(--ot-cyan-base);
+    text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
 }
 
-.cargo-bar { 
-    flex: 1 1 60%;
-    display: flex; 
-    gap: 2px; 
-    height: 6px;
-}
-.cargo-bar .segment { 
-    flex-grow: 1; 
-    background-color: rgba(0,0,0,0.4); 
-    border-radius: 1px;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
-}
-.cargo-bar .segment.filled { background-color: #f59e0b; }
-
-.cargo-text {
-    flex-shrink: 0;
-    font-size: 0.75rem;
-    color: #d1d5db;
-    text-shadow: -1px -1px 0 #0c101d, 1px -1px 0 #0c101d, -1px 1px 0 #0c101d, 1px 1px 0 #0c101d, 0 0 3px #0c101d;
-}
-.cargo-text .value {
-    color: #f59e0b;
+/* Flavor Text Styling */
+.flavor-text-box {
+    padding-left: 0.75rem;
+    border-left: 2px solid;
+    box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.5); /* Inset effect */
 }
 
-/* Class Name Colors */
-.ship-name.class-o { color: var(--class-o-color); }
-.ship-name.class-s { color: var(--class-s-color); }
-.ship-name.class-a { color: var(--class-a-color); }
-.ship-name.class-b { color: var(--class-b-color); }
-.ship-name.class-c { color: var(--class-c-color); }
-
-/* Mobile Adjustments (replaces old styles) */
-.starport-panel-mobile {
-    background-color: transparent;
-    border: none;
-    padding: 0;
+/* Inset Text Shadow for ship names/roles */
+.inset-text-shadow {
+    text-shadow: 0 2px 3px rgba(0,0,0,0.6);
 }
-.ship-list-item-mobile { /* This class is no longer used, but kept to avoid breaking old references if any */
-    display: none;
+
+/* Pagination Dots */
+.pagination-dot.active { background-color: var(--theme-color-primary); box-shadow: 0 0 8px var(--theme-color-glow); }
+
+/* Spec Cards (Shipyard) */
+.spec-card {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    text-align: center;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.6); /* Inset shadow */
 }
