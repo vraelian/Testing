@@ -1204,7 +1204,19 @@ export class SimulationService {
      * @private
      */
     _updateShipyardStock() {
-        const { player } = this.gameState;
+        const { player, tutorials, day } = this.gameState;
+    
+        // Special override for the hangar tutorial to ensure the correct ships are available.
+        if (tutorials.activeBatchId === 'intro_hangar') {
+            const marsStock = this.gameState.market.shipyardStock[LOCATION_IDS.MARS];
+            if (!marsStock || marsStock.shipsForSale.length < 3) {
+                this.gameState.market.shipyardStock[LOCATION_IDS.MARS] = {
+                    day: day,
+                    shipsForSale: [SHIP_IDS.WANDERER, SHIP_IDS.PATHFINDER, SHIP_IDS.MULE]
+                };
+            }
+            return;
+        }
 
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];

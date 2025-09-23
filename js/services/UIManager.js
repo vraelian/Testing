@@ -144,6 +144,11 @@ export class UIManager {
 
         this.lastKnownState = gameState;
         
+        // Tutorial override for hangar mode
+        if (gameState.tutorials.activeBatchId === 'intro_hangar' && gameState.activeScreen === SCREEN_IDS.HANGAR) {
+            this.hangarMode = 'shipyard';
+        }
+
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);

@@ -64,8 +64,15 @@ export function renderHangarScreen(gameState, uiManager) {
  */
 function _renderShipPage(gameState, shipId, mode) {
     const ship = DB.SHIPS[shipId];
-    const hangarHtml = _renderHangarView(gameState, ship);
-    const shipyardHtml = _renderShipyardView(ship);
+    
+    // Conditionally render the correct view based on the mode.
+    const infoPanelHtml = mode === 'hangar' 
+        ? _renderHangarView(gameState, ship) 
+        : _renderShipyardView(ship);
+        
+    const actionsHtml = mode === 'hangar' 
+        ? _renderHangarActions(gameState, ship) 
+        : _renderShipyardActions(gameState, ship);
 
     return `
         <div class="carousel-page flex flex-col p-4 pt-0 box-border h-full">
@@ -76,14 +83,14 @@ function _renderShipPage(gameState, shipId, mode) {
                 ${mode === 'hangar' ? (ship.id === gameState.player.activeShipId ? `<div class="status-badge border-yellow-400 text-yellow-300">ACTIVE</div>` : `<div class="status-badge border-gray-400 text-gray-300">STORED</div>`) : ''}
             </div>
             <div class="ship-info-panel flex-grow overflow-hidden mt-8 w-full flex flex-col">
-                ${shipyardHtml}
-                ${hangarHtml}
+                ${infoPanelHtml}
             </div>
             <div class="action-buttons-container mt-auto pt-2 flex-shrink-0">
-                ${mode === 'hangar' ? _renderHangarActions(gameState, ship) : _renderShipyardActions(gameState, ship)}
+                ${actionsHtml}
             </div>
         </div>`;
 }
+
 
 /**
  * Renders the detailed view for a ship when in Shipyard mode.
