@@ -31,8 +31,6 @@ export class UIManager {
         this.missionService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
-        this.hangarMode = 'hangar';
-        this.hangarCarouselIndex = 0;
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
@@ -78,24 +76,6 @@ export class UIManager {
     */
     resetMarketTransactionState() {
         this.marketTransactionState = {};
-    }
-
-    /**
-     * Toggles the Hangar screen between 'hangar' and 'shipyard' modes.
-     */
-    toggleHangarMode() {
-        this.hangarMode = this.hangarMode === 'hangar' ? 'shipyard' : 'hangar';
-        this.hangarCarouselIndex = 0; // Reset index when switching modes
-        this.render(this.lastKnownState);
-    }
-
-    /**
-     * Sets the current index for the hangar carousel.
-     * @param {number} index - The new carousel index.
-     */
-    setHangarCarouselIndex(index) {
-        this.hangarCarouselIndex = index;
-        this.render(this.lastKnownState);
     }
 
     _cacheDOM() {
@@ -144,11 +124,6 @@ export class UIManager {
 
         this.lastKnownState = gameState;
         
-        // Tutorial override for hangar mode
-        if (gameState.tutorials.activeBatchId === 'intro_hangar' && gameState.activeScreen === SCREEN_IDS.HANGAR) {
-            this.hangarMode = 'shipyard';
-        }
-
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
@@ -270,7 +245,7 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this);
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);

@@ -1204,19 +1204,7 @@ export class SimulationService {
      * @private
      */
     _updateShipyardStock() {
-        const { player, tutorials, day } = this.gameState;
-    
-        // Special override for the hangar tutorial to ensure the correct ships are available.
-        if (tutorials.activeBatchId === 'intro_hangar') {
-            const marsStock = this.gameState.market.shipyardStock[LOCATION_IDS.MARS];
-            if (!marsStock || marsStock.shipsForSale.length < 3) {
-                this.gameState.market.shipyardStock[LOCATION_IDS.MARS] = {
-                    day: day,
-                    shipsForSale: [SHIP_IDS.WANDERER, SHIP_IDS.PATHFINDER, SHIP_IDS.MULE]
-                };
-            }
-            return;
-        }
+        const { player } = this.gameState;
 
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];
@@ -1383,8 +1371,8 @@ export class SimulationService {
 
     /**
      * @summary Skips the tutorial and equips the Wanderer as the active ship.
-     * @description This debug function provides a "Simple Start" option, which is a modified version of "God Mode."
-     * It bypasses the tutorial and introduction, equipping the player with the Wanderer ship, but does not grant any credits.
+     * @description This debug function provides a "Simple Start" option, which is a modified version of "God Mode." 
+     * It bypasses the tutorial and introduction, equipping the player with the Wanderer ship, but does not grant any credits. 
      * This allows for a streamlined start to the game, placing the player directly on the mission screen where the first mission, 
      * "Milk Run to Luna," is available.
      * @param {string} shipId - The ID of the ship to add.
