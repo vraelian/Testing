@@ -30,6 +30,7 @@ export class UIManager {
         this.lastKnownState = null;
         this.missionService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
+        this.hangarMode = 'shipyard'; // Default to shipyard view
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
 
         this.effectsManager = new EffectsManager();
@@ -245,7 +246,11 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
+                // Force shipyard mode if hangar tutorial is active
+                if (gameState.tutorials.activeBatchId === 'intro_hangar') {
+                    this.hangarMode = 'shipyard';
+                }
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this);
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
