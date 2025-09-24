@@ -165,7 +165,8 @@ export class GameState {
                 activeMissionObjectivesMet: false
             },
             uiState: {
-                marketCardMinimized: {}
+                marketCardMinimized: {},
+                hangarShipyardToggleState: 'shipyard'
             }
         };
 

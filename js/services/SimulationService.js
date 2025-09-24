@@ -657,6 +657,13 @@ export class SimulationService {
     setActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
+        
+        // Update the hangar's active index to match the newly selected ship
+        const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
+        if (newIndex !== -1) {
+            this.gameState.uiState.hangarActiveIndex = newIndex;
+        }
+
         this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
 
         if (this.gameState.introSequenceActive) {

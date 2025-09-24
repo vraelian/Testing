@@ -136,10 +136,29 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId, mode, index } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
+                // Hangar Screen Actions
+                case 'toggle-hangar-mode': {
+                    if (mode && this.gameState.uiState.hangarShipyardToggleState !== mode) {
+                        this.gameState.uiState.hangarShipyardToggleState = mode;
+                        this.gameState.setState({});
+                    }
+                    break;
+                }
+                case 'set-hangar-page': {
+                    const newIndex = parseInt(index, 10);
+                    const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
+                    if (isHangarMode) {
+                        this.gameState.uiState.hangarActiveIndex = newIndex;
+                    } else {
+                        this.gameState.uiState.shipyardActiveIndex = newIndex;
+                    }
+                    this.gameState.setState({});
+                    break;
+                }
                 // Bulkhead UI Actions
                 case 'toggle-tooltip': {
                     const tooltip = actionTarget.querySelector('.status-tooltip');
