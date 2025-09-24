@@ -170,7 +170,7 @@ export class SystemSurgeEffect extends BaseEffect {
             travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
         },
         purple: {
-            text: 'WEALTH MILSETIONE',
+            text: 'WEALTH MILESTONE',
             textSize: '8vw', particleCount: 18, particleShape: 'rectangle',
             particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
             travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
