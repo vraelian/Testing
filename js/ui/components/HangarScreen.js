@@ -106,7 +106,7 @@ export function renderHangarScreen(gameState, uiManager) {
     
     // Determine the list of ships and the currently selected one.
     const shipList = context === 'shipyard' ? _getShipyardInventory(gameState).map(s => s[0]) : player.ownedShipIds;
-    const selectedShipId = gameState.uiState.selectedShipId[context] || shipList[0];
+    const selectedShipId = gameState.uiState.selectedShipId?.[context] || shipList[0];
 
     // Get the static data for the selected ship.
     const selectedShipStatic = selectedShipId ? DB.SHIPS[selectedShipId] : null;
