@@ -92,8 +92,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
-                <div class="grid grid-cols-5 gap-4 p-4 h-full">
-                    <div class="ship-card-content-wrapper">
+                <div id="ship-card-main-content">
+                    <div class="ship-card-content-wrapper grid grid-cols-5 gap-4 p-4">
                         <div class="col-span-2 flex flex-col justify-between">
                             ${_renderInfoPanel(gameState, shipStatic, shipDynamic, player, isHangarMode)}
                         </div>
