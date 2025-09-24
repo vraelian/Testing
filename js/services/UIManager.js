@@ -122,11 +122,6 @@ export class UIManager {
             return;
         }
 
-        // Tutorial Safeguard: Force Hangar screen to 'shipyard' mode during the intro.
-        if (gameState.tutorials.activeBatchId === 'intro_hangar' && gameState.activeScreen === SCREEN_IDS.HANGAR) {
-            gameState.uiState.hangarScreen.mode = 'shipyard';
-        }
-
         this.lastKnownState = gameState;
         
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
@@ -250,7 +245,7 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, gameState.uiState);
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this);
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
