@@ -246,6 +246,13 @@ export class UIManager {
                 break;
             case SCREEN_IDS.HANGAR:
                 this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
+                // Post-render step to ensure carousel is positioned correctly after state updates
+                const carousel = this.cache.hangarScreen.querySelector('#hangar-carousel');
+                if (carousel) {
+                    const isHangarMode = gameState.uiState.hangarShipyardToggleState === 'hangar';
+                    const activeIndex = isHangarMode ? (gameState.uiState.hangarActiveIndex || 0) : (gameState.uiState.shipyardActiveIndex || 0);
+                    carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
+                }
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);

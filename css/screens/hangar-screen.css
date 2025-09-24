@@ -56,7 +56,28 @@ COMPONENT-SPECIFIC STYLING
 /* Backgrounds & Theming */
 #ship-terminal {
     background-image: var(--theme-bg-gradient); /* Base theme from location */
+    display: flex; /* Ensure it's a flex container for child sizing */
+    flex-direction: column; /* Stack children vertically */
 }
+#ship-terminal .grid {
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Prevents flexbox overflow bugs */
+}
+
+/* New wrapper for making content scrollable */
+.ship-card-content-wrapper {
+    flex: 1 1 auto; /* Allows this element to grow and shrink */
+    overflow-y: auto; /* Enables vertical scrolling when content overflows */
+    scrollbar-width: none; /* Hides scrollbar for Firefox */
+    display: grid; /* Maintain the grid layout inside */
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+.ship-card-content-wrapper::-webkit-scrollbar {
+    display: none; /* Hides scrollbar for Chrome/Safari */
+}
+
 #ship-terminal-container.mode-hangar #ship-terminal {
     background-blend-mode: overlay;
     background-color: #1a193d; /* Darkening overlay for Hangar mode */
@@ -95,6 +116,7 @@ COMPONENT-SPECIFIC STYLING
     padding: 3px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
     transform: scale(0.85); /* Reduced scale */
+    flex-shrink: 0; /* Prevent toggle from being squashed */
 }
 .toggle-switch {
     background-color: transparent;
@@ -135,15 +157,6 @@ COMPONENT-SPECIFIC STYLING
 #ship-terminal-container.mode-shipyard .info-panel-shipyard { 
     display: flex; 
 }
-.scrollable-content { 
-    overflow-y: auto; 
-    scrollbar-width: none; 
-    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4); /* Inset shadow for depth */
-    padding: 1rem; 
-    border-radius: 0.5rem; 
-    background: rgba(0,0,0,0.1);
-}
-.scrollable-content::-webkit-scrollbar { display: none; }
 
 /* Stat Readouts */
 .spec-readout { display: grid; align-items: center; margin-bottom: 0.75rem; font-family: 'Roboto Mono', sans-serif;}
@@ -188,6 +201,10 @@ COMPONENT-SPECIFIC STYLING
 }
 
 /* Pagination Dots */
+#hangar-pagination {
+    flex-shrink: 0; /* Prevent pagination from being squashed */
+    padding-bottom: 8px; /* Extra padding for some mobile devices */
+}
 .pagination-dot.active { background-color: var(--theme-color-primary); box-shadow: 0 0 8px var(--theme-color-glow); }
 
 /* Spec Cards (Shipyard) */
@@ -198,4 +215,18 @@ COMPONENT-SPECIFIC STYLING
     padding: 0.5rem;
     text-align: center;
     box-shadow: inset 0 1px 4px rgba(0,0,0,0.6); /* Inset shadow */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .ship-card-content-wrapper {
+        grid-template-columns: 1fr; /* Stack columns vertically */
+    }
+    .ship-card-content-wrapper > .col-span-2,
+    .ship-card-content-wrapper > .col-span-3 {
+        grid-column: span 1 / span 1; /* Make each column take full width */
+    }
+    .ship-display-area {
+        min-height: 200px; /* Ensure hologram area has enough height */
+    }
 }

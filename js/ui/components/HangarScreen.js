@@ -42,7 +42,7 @@ export function renderHangarScreen(gameState) {
                 </div>
             </div>
 
-            <div id="hangar-pagination" class="flex justify-center items-center p-2 space-x-2">
+            <div id="hangar-pagination" class="flex justify-center items-center p-2 space-x-2 flex-nowrap overflow-x-auto">
                 ${shipList.map((_, index) => `<div class="pagination-dot w-2 h-2 rounded-full bg-gray-600 transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="set-hangar-page" data-index="${index}"></div>`).join('')}
             </div>
         </div>
@@ -93,19 +93,21 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div class="grid grid-cols-5 gap-4 p-4 h-full">
-                    <div class="col-span-2 flex flex-col justify-between">
-                        ${_renderInfoPanel(gameState, shipStatic, shipDynamic, player, isHangarMode)}
-                    </div>
-
-                    <div class="col-span-3 flex flex-col justify-between">
-                        <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                            <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
-                                <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
-                            </div>
-                            ${statusBadgeHtml}
+                    <div class="ship-card-content-wrapper">
+                        <div class="col-span-2 flex flex-col justify-between">
+                            ${_renderInfoPanel(gameState, shipStatic, shipDynamic, player, isHangarMode)}
                         </div>
-                        <div class="action-buttons-container pt-2">
-                            ${_renderActionButtons(shipStatic, player, isHangarMode)}
+
+                        <div class="col-span-3 flex flex-col justify-between">
+                            <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                                </div>
+                                ${statusBadgeHtml}
+                            </div>
+                            <div class="action-buttons-container pt-2">
+                                ${_renderActionButtons(shipStatic, player, isHangarMode)}
+                            </div>
                         </div>
                     </div>
                 </div>
