@@ -1204,7 +1204,16 @@ export class SimulationService {
      * @private
      */
     _updateShipyardStock() {
-        const { player } = this.gameState;
+        const { player, tutorials, introSequenceActive } = this.gameState;
+
+        // Tutorial Safeguard: Force specific ships for the hangar tutorial.
+        if (introSequenceActive && player.ownedShipIds.length === 0) {
+            this.gameState.market.shipyardStock[LOCATION_IDS.MARS] = {
+                day: this.gameState.day,
+                shipsForSale: [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE]
+            };
+            return; // Exit early to prevent normal logic from running during the tutorial.
+        }
 
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];
