@@ -245,7 +245,7 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this);
+                this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.isMobile);
                 break;
             case SCREEN_IDS.MISSIONS:
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);

@@ -1,4 +1,9 @@
 // js/services/EventManager.js
+/**
+ * @fileoverview This file contains the EventManager class, which is responsible for handling all user input
+ * for the application. It binds event listeners to the DOM and translates user interactions (clicks, key presses, etc.)
+ * into calls to the SimulationService, acting as the primary bridge between the UI and the game's logic.
+ */
 import { formatCredits } from '../utils.js';
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed } from '../utils.js';
@@ -107,13 +112,6 @@ export class EventManager {
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         
-        // Handle the temporary hangar toggle
-        if (e.target.id === 'temp-hangar-toggle') {
-            this.uiManager.hangarMode = this.uiManager.hangarMode === 'shipyard' ? 'hangar' : 'shipyard';
-            this.uiManager.render(this.gameState.getState());
-            return; // Action handled
-        }
-
         // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
         if (this.activeStatusTooltip && !this.uiManager.isClickInside(e, '[data-action="toggle-tooltip"]')) {
             this.activeStatusTooltip.classList.remove('visible');

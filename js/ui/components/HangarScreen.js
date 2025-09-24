@@ -79,6 +79,7 @@ function _getShipBarHtml(gameState, shipId, context) {
         const shipDynamic = player.shipStates[shipId];
         const shipInventory = player.inventories[shipId];
         const cargoUsed = calculateInventoryUsed(shipInventory);
+        const cargoPct = (cargoUsed / shipStatic.cargoCapacity) * 100;
         const hullPercent = Math.floor((shipDynamic.health / shipStatic.maxHealth) * 100);
         const fuelPercent = Math.floor((shipDynamic.fuel / shipStatic.maxFuel) * 100);
         const isActive = shipId === player.activeShipId;
@@ -125,11 +126,14 @@ function _getShipBarHtml(gameState, shipId, context) {
  */
 function _getShipyardInventory(gameState) {
     const { player, currentLocationId, market, introSequenceActive } = gameState;
-
     // During the intro, show a fixed, limited set of ships for the tutorial purchase.
-    if (introSequenceActive && player.ownedShipIds.length === 0) {
-        const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
-        return introShipIds.map(id => ([id, DB.SHIPS[id]]));
+    if (introSequenceActive) {
+        if (player.ownedShipIds.length > 0) {
+            return [];
+        } else {
+            const introShipIds = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
+            return introShipIds.map(id => ([id, DB.SHIPS[id]]));
+        }
     } else {
         // In normal gameplay, show the dynamically stocked ships for the current location.
         const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
