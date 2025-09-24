@@ -107,6 +107,13 @@ export class EventManager {
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         
+        // Handle the temporary hangar toggle
+        if (e.target.id === 'temp-hangar-toggle') {
+            this.uiManager.hangarMode = this.uiManager.hangarMode === 'shipyard' ? 'hangar' : 'shipyard';
+            this.uiManager.render(this.gameState.getState());
+            return; // Action handled
+        }
+
         // Hide active status tooltip if clicking anywhere that isn't a status tooltip trigger.
         if (this.activeStatusTooltip && !this.uiManager.isClickInside(e, '[data-action="toggle-tooltip"]')) {
             this.activeStatusTooltip.classList.remove('visible');
@@ -131,7 +138,7 @@ export class EventManager {
         // --- Priority Action Handling (data-action attributes) ---
         if (actionTarget) {
             if (actionTarget.hasAttribute('disabled')) return;
-            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId, mode } = actionTarget.dataset;
+            const { action, goodId, locationId, shipId, loanDetails, cost, navId, screenId, context, missionId, licenseId } = actionTarget.dataset;
             let actionData = null; // To be passed to the TutorialService if an action occurs.
             
             switch(action) {
@@ -151,21 +158,6 @@ export class EventManager {
                     }
                     return;
                 }
-
-                // Hangar Screen Actions
-                case 'set-hangar-mode':
-                    if (this.uiManager.hangarMode !== mode) {
-                        this.uiManager.hangarMode = mode;
-                        this.uiManager.render(state);
-                    }
-                    break;
-                case 'select-carousel-ship':
-                    const currentContext = this.uiManager.hangarMode;
-                    if (state.uiState.selectedShipId[currentContext] !== shipId) {
-                        this.gameState.uiState.selectedShipId[currentContext] = shipId;
-                        this.uiManager.render(state);
-                    }
-                    break;
 
                 // Mission Actions
                 case 'show-mission-modal':
@@ -194,7 +186,7 @@ export class EventManager {
                 case 'show-launch-modal':
                     this.uiManager.showLaunchModal(locationId);
                     break;
-                case 'show-ship-detail': // This is now deprecated by the new UI but kept for safety.
+                case 'show-ship-detail':
                     this.uiManager.showShipDetailModal(state, shipId, context);
                     break;
                 case ACTION_IDS.SET_SCREEN:
@@ -217,17 +209,20 @@ export class EventManager {
                         const price = DB.SHIPS[shipId].price;
                         this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
                         actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
                 case ACTION_IDS.SELL_SHIP:
                     const salePrice = this.simulationService.sellShip(shipId);
                     if (salePrice) {
                         this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, e.clientX, e.clientY, '#34d399');
+                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
                 case ACTION_IDS.SELECT_SHIP:
                     this.simulationService.setActiveShip(shipId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                    this.uiManager.hideModal('ship-detail-modal');
                     break;
 
                 // Finance & Intel Actions

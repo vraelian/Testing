@@ -1,93 +1,100 @@
+/**
+ * @file main.js
+ * @description This is the main entry point for the Orbital Trading game. It handles the initial setup
+ * and instantiation of all core services required to run the application.
+ *
+ * APPLICATION ARCHITECTURE:
+ * -------------------------
+ * 1.  **main.js**: (This file) Initializes the application. On game start, it instantiates all core services.
+ * 2.  **GameState.js**: A centralized class that holds the entire mutable game state. It acts as the "single source of truth."
+ * 3.  **SimulationService.js**: The core game engine. It contains all primary game logic for player actions (e.g., travel, trade), time progression, and event triggers. It is the only service that should directly modify the GameState.
+ * 4.  **UIManager.js**: Responsible for rendering the entire UI based on the current GameState. It reads from the GameState but does not modify it.
+ * 5.  **EventManager.js**: Listens for all user inputs (clicks, keys, etc.). It translates these inputs into calls to the SimulationService, acting as the bridge between the UI and the game logic.
+ * 6.  **TutorialService.js**: A specialized service that hooks into the game loop to trigger and manage interactive tutorials.
+ * 7.  **MissionService.js**: Manages the state and progression of player missions.
+ * 8.  **LoggingService.js**: A centralized utility for all console output, supporting levels and categories.
+ *
+ * DATA FLOW:
+ * ------------
+ * User Input -> EventManager -> SimulationService -> GameState (is mutated) -> UIManager (re-renders UI)
+ */
+
 // js/main.js
 import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
 import { TutorialService } from './services/TutorialService.js';
+import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const logger = new Logger();
-    const startScreen = document.getElementById('start-screen');
-    const startButton = document.getElementById('start-button');
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const gameContainer = document.getElementById('game-container');
-    const orientationLock = document.getElementById('orientation-lock');
+    // --- App Initialization ---
+    const splashScreen = document.getElementById('splash-screen');
+    const startButton = document.getElementById('start-game-btn');
+    const DEV_MODE = true; // Guard for development features.
 
-    function checkOrientation() {
-        if (window.innerHeight > window.innerWidth && window.innerWidth < 768) {
-            orientationLock.style.display = 'flex';
-            gameContainer.style.display = 'none';
-        } else {
-            orientationLock.style.display = 'none';
-            if (gameContainer.classList.contains('initialized')) {
-                gameContainer.style.display = 'block';
-            }
-        }
-    }
-
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
-
-    // Prevent default touch behavior for buttons to avoid double-tap zoom
-    document.querySelectorAll('button, .btn, [data-action]').forEach(el => {
-        el.addEventListener('touchstart', e => e.preventDefault());
-    });
-    
+    // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
-        startScreen.classList.add('fade-out');
-        loadingIndicator.classList.remove('hidden');
+        // Fade out the splash screen and then start the game logic.
+        splashScreen.classList.add('modal-hiding');
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+        }, { once: true });
 
-        // Allow the fade-out animation to play
-        setTimeout(() => {
-            startScreen.classList.add('hidden');
-            startGame();
-        }, 1000);
+        startGame();
+
     }, { once: true });
 
-    let gameState, simulationService, uiManager, eventManager, tutorialService, debugService;
-    let gameLoopInterval = null;
-
+    /**
+     * Instantiates all core game services, establishes their dependencies,
+     * loads saved data or starts a new game, and binds all necessary event listeners.
+     */
     function startGame() {
-        gameState = new GameState();
-        uiManager = new UIManager(logger);
-        simulationService = new SimulationService(gameState, uiManager, logger);
-        tutorialService = new TutorialService(gameState, uiManager, simulationService, logger);
-        debugService = new DebugService(simulationService);
-        eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
+        // --- Service Instantiation ---
+        const gameState = new GameState();
+        const uiManager = new UIManager(Logger);
+        const missionService = new MissionService(gameState, uiManager, Logger);
+        const simulationService = new SimulationService(gameState, uiManager, Logger);
+        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
+        let debugService = null;
+
+        if (DEV_MODE) {
+            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
+            debugService.init();
+        }
         
-        // Inject missionService into UIManager after it's created in SimulationService
-        uiManager.setMissionService(simulationService.missionService);
+        // --- Dependency Injection ---
+        // Services are created first, then dependencies are injected to avoid circular reference issues during instantiation.
+        uiManager.setMissionService(missionService);
+        simulationService.setTutorialService(tutorialService);
+        simulationService.setMissionService(missionService);
+        missionService.setSimulationService(simulationService);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         
-        eventManager.bindEvents();
-        
-        // Attempt to load a saved game. If none exists, initialize a new one.
-        const loaded = gameState.load();
-        if (!loaded) {
-            simulationService.initializeNewGame();
-        } else {
-            // If loaded, ensure simulation service is aware of the state
-            simulationService.syncWithGameState();
+        // --- Link GameState to UIManager for automatic re-rendering ---
+        gameState.subscribe(() => uiManager.render(gameState.getState()));
+
+        // --- Game Initialization ---
+        const hasSave = gameState.loadGame();
+        if (!hasSave) {
+            // If no save file is found, begin the new game intro sequence.
+            gameState.startNewGame('');
+            simulationService._advanceDays(7); // Seed market with 1 week of price history.
+            simulationService.startIntroSequence();
         }
 
-        // Initial render
-        uiManager.render(gameState.getState());
-
-        // Subscribe to state changes for re-rendering
-        gameState.subscribe((newState) => {
-            uiManager.render(newState);
-        });
+        // --- Bindings ---
+        eventManager.bindEvents();
         
-        // Hide loading and show game
-        loadingIndicator.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
-        gameContainer.classList.add('initialized'); // Mark as initialized
-        checkOrientation(); // Re-check orientation after game starts
-
-        // Start the game loop
-        gameLoopInterval = setInterval(() => {
-            simulationService.tick();
-        }, 1000);
+        // If a save file was loaded, the intro is skipped, and the game container is shown immediately.
+        if (hasSave) {
+            document.getElementById('game-container').classList.remove('hidden');
+            uiManager.render(gameState.getState());
+        }
+        
+        // Perform an initial check for any tutorials that should trigger on game load.
+        tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
 });
