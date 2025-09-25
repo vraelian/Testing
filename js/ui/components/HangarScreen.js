@@ -13,8 +13,12 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState) {
-    const { uiState, player } = gameState;
-    const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+    const { uiState, player, tutorials } = gameState;
+
+    // Tutorial Override: Force Shipyard view if the hangar tutorial is active.
+    const isHangarTutorialActive = tutorials.activeBatchId === 'intro_hangar';
+    const isHangarMode = isHangarTutorialActive ? false : uiState.hangarShipyardToggleState === 'hangar';
+    
     const modeClass = isHangarMode ? 'mode-hangar' : 'mode-shipyard';
 
     const shipList = isHangarMode ? player.ownedShipIds : _getShipyardInventory(gameState).map(([id]) => id);
@@ -30,14 +34,14 @@ export function renderHangarScreen(gameState) {
     return `
         <div id="ship-terminal-container" class="flex flex-col h-full ${modeClass}">
             <div class="toggle-container mx-auto my-2">
-                <div class="toggle-switch p-1 rounded-md flex">
+                <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                     <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="toggle-hangar-mode" data-mode="hangar">HANGAR</div>
                     <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="toggle-hangar-mode" data-mode="shipyard">SHIPYARD</div>
                 </div>
             </div>
 
             <div class="carousel-container flex-grow overflow-hidden relative">
-                <div id="hangar-carousel" class="flex transition-transform duration-300 ease-in-out" style="transform: translateX(-${displayIndex * 100}%)">
+                <div id="hangar-carousel" class="flex transition-transform duration-300 ease-in-out h-full" style="transform: translateX(-${displayIndex * 100}%)">
                     ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                 </div>
             </div>
@@ -92,8 +96,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
-                <div id="ship-card-main-content">
-                    <div class="ship-card-content-wrapper grid grid-cols-5 gap-4 p-4">
+                <div id="ship-card-main-content" class="h-full">
+                    <div class="ship-card-content-wrapper h-full">
                         <div class="col-span-2 flex flex-col justify-between">
                             ${_renderInfoPanel(gameState, shipStatic, shipDynamic, player, isHangarMode)}
                         </div>

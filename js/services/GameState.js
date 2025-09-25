@@ -166,7 +166,9 @@ export class GameState {
             },
             uiState: {
                 marketCardMinimized: {},
-                hangarShipyardToggleState: 'shipyard'
+                hangarShipyardToggleState: 'shipyard',
+                hangarActiveIndex: 0,
+                shipyardActiveIndex: 0
             }
         };
 
