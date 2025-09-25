@@ -239,25 +239,30 @@ export class EventManager {
                     this.simulationService.travelTo(locationId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
-                case ACTION_IDS.BUY_SHIP: 
+                case ACTION_IDS.BUY_SHIP: {
                     e.stopPropagation();
-                    if (this.simulationService.buyShip(shipId)) {
-                        const price = DB.SHIPS[shipId].price;
-                        this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
+                    const purchasedShip = this.simulationService.buyShip(shipId);
+                    if (purchasedShip) {
+                        this.uiManager.createFloatingText(`-${formatCredits(purchasedShip.price, false)}`, e.clientX, e.clientY, '#f87171');
                         actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
-                case ACTION_IDS.SELL_SHIP:
+                }
+                case ACTION_IDS.SELL_SHIP: {
                     e.stopPropagation();
                     const salePrice = this.simulationService.sellShip(shipId);
                     if (salePrice) {
                         this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, e.clientX, e.clientY, '#34d399');
+                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
+                }
                 case ACTION_IDS.SELECT_SHIP:
                     e.stopPropagation();
                     this.simulationService.setActiveShip(shipId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                    this.uiManager.hideModal('ship-detail-modal');
                     break;
 
                 // Finance & Intel Actions
@@ -594,6 +599,10 @@ export class EventManager {
     // --- Carousel Drag Logic ---
 
     _handleCarouselDragStart(e, carousel) {
+        if (e.target.closest('.action-button')) {
+            this.carouselState.isDragging = false;
+            return;
+        }
         if (!carousel) return;
         // Prevent default behavior like text selection or page scrolling
         e.preventDefault();
@@ -636,11 +645,11 @@ export class EventManager {
 
     _handleCarouselDragEnd(e) {
         if (!this.carouselState.isDragging) return;
+        this.carouselState.isDragging = false;
         
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.carouselState;
 
         // Restore styles and state
-        this.carouselState.isDragging = false;
         document.body.style.cursor = 'default';
         if (activeCarousel) {
             activeCarousel.classList.add('transition-transform', 'duration-300', 'ease-in-out');

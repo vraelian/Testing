@@ -600,13 +600,17 @@ export class SimulationService {
     /**
      * Purchases a new ship and adds it to the player's hangar.
      * @param {string} shipId - The ID of the ship to buy.
-     * @returns {boolean} - True if the purchase was successful.
+     * @returns {object|null} - The purchased ship object on success, otherwise null.
      */
     buyShip(shipId) {
         const ship = DB.SHIPS[shipId];
+        if (!ship) {
+            this.logger.error('SimulationService', `buyShip called with invalid shipId: ${shipId}`);
+            return null;
+        }
         if (this.gameState.player.credits < ship.price) {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
-            return false;
+            return null;
         }
         
         this.gameState.player.credits -= ship.price;
@@ -626,7 +630,7 @@ export class SimulationService {
         }
 
         this.gameState.setState({});
-        return true;
+        return ship;
     }
 
     /**
@@ -650,6 +654,10 @@ export class SimulationService {
         }
 
         const ship = DB.SHIPS[shipId];
+        if (!ship) {
+            this.logger.error('SimulationService', `sellShip called with invalid shipId: ${shipId}`);
+            return false;
+        }
         const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
         this.gameState.player.credits += salePrice;
         this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
