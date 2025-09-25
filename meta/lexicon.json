@@ -100,7 +100,7 @@
   "type_system": {
     "enums": {
         "ActionId": [
-            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade", "show_cargo_detail"
+            "set-screen", "travel", "buy-ship", "sell-ship", "select-ship", "pay-debt", "take-loan", "purchase-intel", "acquire-license", "buy-item", "sell-item", "set-max-buy", "set-max-sell", "increment", "decrement", "show-price-graph", "show-finance-graph", "toggle-market-card-view", "toggle-tooltip", "show-mission-modal", "accept-mission", "abandon-mission", "complete-mission", "show-launch-modal", "show-ship-detail", "toggle-trade-mode", "confirm-trade", "show_cargo_detail", "toggle-hangar-mode", "set-hangar-page"
         ],
       "ScreenId": ["status", "navigation", "services", "market", "cargo", "hangar", "missions", "finance", "intel"],
       "NavId": ["ship", "starport", "data"],
