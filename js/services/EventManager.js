@@ -198,7 +198,6 @@ export class EventManager {
             case ACTION_IDS.BUY_SHIP:
             case ACTION_IDS.SELL_SHIP:
             case ACTION_IDS.SELECT_SHIP: {
-                // These actions absolutely require a shipId.
                 const { shipId } = dataset;
                 if (!shipId) {
                     this.logger.error('EventManager', `Ship action '${action}' triggered but target had no shipId.`, { target: actionTarget });
@@ -266,9 +265,6 @@ export class EventManager {
                 break;
             case 'show-launch-modal':
                 this.uiManager.showLaunchModal(dataset.locationId);
-                break;
-            case 'show-ship-detail':
-                if (dataset.shipId) this.uiManager.showShipDetailModal(state, dataset.shipId, dataset.context);
                 break;
 
             // --- Mission Actions ---
