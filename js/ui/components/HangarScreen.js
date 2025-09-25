@@ -35,8 +35,8 @@ export function renderHangarScreen(gameState) {
         <div id="ship-terminal-container" class="flex flex-col h-full ${modeClass}">
             <div class="toggle-container mx-auto my-2">
                 <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
-                    <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="toggle-hangar-mode" data-mode="hangar">HANGAR</div>
-                    <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="toggle-hangar-mode" data-mode="shipyard">SHIPYARD</div>
+                    <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
+                    <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
                 </div>
             </div>
 
@@ -47,7 +47,7 @@ export function renderHangarScreen(gameState) {
             </div>
 
             <div id="hangar-pagination" class="flex justify-center items-center p-2 space-x-2 flex-nowrap overflow-x-auto">
-                ${shipList.map((_, index) => `<div class="pagination-dot w-2 h-2 rounded-full bg-gray-600 transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="set-hangar-page" data-index="${index}"></div>`).join('')}
+                ${shipList.map((_, index) => `<div class="pagination-dot w-2 h-2 rounded-full bg-gray-600 transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
             </div>
         </div>
     `;
@@ -122,52 +122,62 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
+ * @param {object} gameState - The current game state.
+ * @param {object} shipStatic - The static data for the ship.
+ * @param {object} shipDynamic - The dynamic state for the ship (hangar only).
+ * @param {object} player - The player object.
+ * @param {boolean} isHangarMode - True if rendering the hangar view.
+ * @returns {string} The HTML for the info panel.
  * @private
  */
 function _renderInfoPanel(gameState, shipStatic, shipDynamic, player, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // Hangar Info Panel
-    const hangarInfoHtml = `
-        <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
-            <div>
-                <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+    if (isHangarMode) {
+        return `
+            <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
+                <div>
+                    <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                    <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+                </div>
+                <div class="hangar-specs my-4">
+                    ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
+                    ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
+                    ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipStatic.id]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
+                </div>
+                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                </div>
             </div>
-            <div class="hangar-specs my-4">
-                ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
-                ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
-                ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipStatic.id]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
+        `;
+    } else {
+        return `
+             <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
+                <div>
+                    <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                    <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+                    <p class="ship-price-display font-roboto-mono text-2xl">${formatCredits(shipStatic.price)}</p>
+                </div>
+                 <div class="grid grid-cols-3 gap-2 my-4">
+                    ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
+                    ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
+                    ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
+                </div>
+                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                </div>
             </div>
-            <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                <p class="text-sm text-gray-300">${shipStatic.lore}</p>
-            </div>
-        </div>
-    `;
-
-    // Shipyard Info Panel
-    const shipyardInfoHtml = `
-         <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
-            <div>
-                <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-            </div>
-             <div class="grid grid-cols-3 gap-2 my-4">
-                ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
-                ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
-                ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
-            </div>
-            <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                <p class="text-sm text-gray-300">${shipStatic.lore}</p>
-            </div>
-        </div>
-    `;
-
-    return isHangarMode ? hangarInfoHtml : shipyardInfoHtml;
+        `;
+    }
 }
+
 
 /**
  * Renders the appropriate action buttons (Hangar or Shipyard).
+ * @param {object} shipStatic - The static data for the ship.
+ * @param {object} player - The player object.
+ * @param {boolean} isHangarMode - True if rendering the hangar view.
+ * @returns {string} The HTML for the action buttons.
  * @private
  */
 function _renderActionButtons(shipStatic, player, isHangarMode) {
@@ -182,16 +192,15 @@ function _renderActionButtons(shipStatic, player, isHangarMode) {
                 </button>
                 <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipStatic.id}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
                     <span class="font-bold">SELL</span>
-                    <span class="price-text font-roboto-mono">${formatCredits(salePrice, true)}</span>
+                    <span class="action-button-price font-roboto-mono">${formatCredits(salePrice, true)}</span>
                 </button>
             </div>
         `;
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         return `
-            <button class="action-button w-full" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipStatic.id}" ${!canAfford ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
+            <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipStatic.id}" ${!canAfford ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold">PURCHASE</span>
-                <span class="price-text font-roboto-mono">${formatCredits(shipStatic.price, true)}</span>
             </button>
         `;
     }

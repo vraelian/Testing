@@ -127,6 +127,8 @@ export const ACTION_IDS = Object.freeze({
     SHOW_PRICE_GRAPH: 'show-price-graph',
     SHOW_FINANCE_GRAPH: 'show-finance-graph',
     TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
+    TOGGLE_HANGAR_MODE: 'toggle-hangar-mode',
+    SET_HANGAR_PAGE: 'set-hangar-page',
 });
 
 /**

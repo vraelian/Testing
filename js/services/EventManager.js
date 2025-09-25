@@ -43,7 +43,8 @@ export class EventManager {
             activeCarousel: null,
             containerWidth: 0,
             pageCount: 0,
-            currentIndex: 0
+            currentIndex: 0,
+            moved: false // Add moved flag here
         };
     }
 
@@ -163,14 +164,14 @@ export class EventManager {
             
             switch(action) {
                 // Hangar Screen Actions
-                case 'toggle-hangar-mode': {
+                case ACTION_IDS.TOGGLE_HANGAR_MODE: {
                     if (mode && this.gameState.uiState.hangarShipyardToggleState !== mode) {
                         this.gameState.uiState.hangarShipyardToggleState = mode;
                         this.gameState.setState({});
                     }
                     break;
                 }
-                case 'set-hangar-page': {
+                case ACTION_IDS.SET_HANGAR_PAGE: {
                     const newIndex = parseInt(index, 10);
                     const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
                     this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
@@ -243,20 +244,17 @@ export class EventManager {
                         const price = DB.SHIPS[shipId].price;
                         this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
                         actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
-                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
                 case ACTION_IDS.SELL_SHIP:
                     const salePrice = this.simulationService.sellShip(shipId);
                     if (salePrice) {
                         this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, e.clientX, e.clientY, '#34d399');
-                        this.uiManager.hideModal('ship-detail-modal');
                     }
                     break;
                 case ACTION_IDS.SELECT_SHIP:
                     this.simulationService.setActiveShip(shipId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
-                    this.uiManager.hideModal('ship-detail-modal');
                     break;
 
                 // Finance & Intel Actions

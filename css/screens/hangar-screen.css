@@ -181,6 +181,14 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
 }
 
+/* NEW: Ship Price Display for Shipyard */
+.ship-price-display {
+    margin-top: 0.5rem;
+    color: var(--ot-cyan-base);
+    text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
+}
+
+
 /* Stat Readouts */
 .spec-readout { display: grid; align-items: center; margin-bottom: 0.75rem; font-family: 'Roboto Mono', sans-serif;}
 .hangar-specs { grid-template-columns: 60px 1fr 60px;}
@@ -205,7 +213,8 @@ COMPONENT-SPECIFIC STYLING
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-.price-text {
+/* NEW: Price text specifically for action buttons (like Sell) */
+.action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
