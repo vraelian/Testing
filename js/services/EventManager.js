@@ -597,6 +597,7 @@ export class EventManager {
         
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.carouselState;
         this.carouselState.isDragging = false;
+        this.carouselState.moved = false; // <-- FIX: Reset moved state here
         document.body.style.cursor = 'default';
         
         if (!activeCarousel) return;
