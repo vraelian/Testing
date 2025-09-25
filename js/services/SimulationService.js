@@ -278,6 +278,20 @@ export class SimulationService {
     }
 
     /**
+     * Updates the active index for the hangar or shipyard carousel.
+     * @param {number} index - The new active index.
+     * @param {string} mode - 'hangar' or 'shipyard'.
+     */
+    setHangarCarouselIndex(index, mode) {
+        if (mode === 'hangar') {
+            this.gameState.uiState.hangarActiveIndex = index;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = index;
+        }
+        this.gameState.setState({});
+    }
+
+    /**
      * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
      */

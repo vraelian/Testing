@@ -34,6 +34,17 @@ export class EventManager {
         this.repairInterval = null;
         this.activeTooltipTarget = null;
         this.activeStatusTooltip = null;
+
+        this.carouselState = {
+            isDragging: false,
+            startX: 0,
+            startTranslate: 0,
+            currentTranslate: 0,
+            activeCarousel: null,
+            containerWidth: 0,
+            pageCount: 0,
+            currentIndex: 0
+        };
     }
 
     /**
@@ -59,22 +70,28 @@ export class EventManager {
             }
         });
         
-        // Event delegation for "hold-to-act" buttons (Refuel and Repair).
+        // --- Hold-to-act and Drag-and-drop Listeners ---
         document.body.addEventListener('mousedown', (e) => {
             if (e.target.closest('#refuel-btn')) this._startRefueling();
             if (e.target.closest('#repair-btn')) this._startRepairing();
+            const carousel = e.target.closest('#hangar-carousel');
+            if (carousel) this._handleCarouselDragStart(e, carousel);
         });
         document.body.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#refuel-btn')) { 
-                e.preventDefault(); 
-                this._startRefueling(); 
-            }
-            if (e.target.closest('#repair-btn')) { 
-                e.preventDefault(); 
-                this._startRepairing(); 
-            }
-        });
-        // Listen for mouse up/leave or touch end events anywhere to stop the intervals.
+            if (e.target.closest('#refuel-btn')) { e.preventDefault(); this._startRefueling(); }
+            if (e.target.closest('#repair-btn')) { e.preventDefault(); this._startRepairing(); }
+            const carousel = e.target.closest('#hangar-carousel');
+            if (carousel) this._handleCarouselDragStart(e, carousel);
+        }, { passive: false });
+
+        document.body.addEventListener('mousemove', (e) => this._handleCarouselDragMove(e));
+        document.body.addEventListener('touchmove', (e) => this._handleCarouselDragMove(e), { passive: false });
+        
+        document.body.addEventListener('mouseup', (e) => this._handleCarouselDragEnd(e));
+        document.body.addEventListener('mouseleave', (e) => this._handleCarouselDragEnd(e));
+        document.body.addEventListener('touchend', (e) => this._handleCarouselDragEnd(e));
+
+        // Stop intervals if mouse leaves the window
         ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
             document.addEventListener(evt, () => {
                 this._stopRefueling();
@@ -109,6 +126,11 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
+        if (this.carouselState.moved) {
+            e.preventDefault();
+            return;
+        }
+
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
         
@@ -151,12 +173,7 @@ export class EventManager {
                 case 'set-hangar-page': {
                     const newIndex = parseInt(index, 10);
                     const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
-                    if (isHangarMode) {
-                        this.gameState.uiState.hangarActiveIndex = newIndex;
-                    } else {
-                        this.gameState.uiState.shipyardActiveIndex = newIndex;
-                    }
-                    this.gameState.setState({});
+                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
                     break;
                 }
                 // Bulkhead UI Actions
@@ -571,5 +588,75 @@ export class EventManager {
         } else {
             this._stopRepairing();
         }
+    }
+
+    // --- Carousel Drag Logic ---
+
+    _handleCarouselDragStart(e, carousel) {
+        // Prevent default behavior like text selection or page scrolling
+        e.preventDefault();
+
+        const state = this.gameState.getState();
+        const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
+        const pageCount = carousel.children.length;
+        if (pageCount <= 1) return; // No need to drag if there's only one page
+
+        this.carouselState.isDragging = true;
+        this.carouselState.activeCarousel = carousel;
+        this.carouselState.startX = e.pageX || e.touches[0].pageX;
+        this.carouselState.containerWidth = carousel.parentElement.offsetWidth;
+        this.carouselState.pageCount = pageCount;
+        this.carouselState.currentIndex = isHangarMode ? state.uiState.hangarActiveIndex : state.uiState.shipyardActiveIndex;
+        this.carouselState.startTranslate = -this.carouselState.currentIndex * this.carouselState.containerWidth;
+        this.carouselState.currentTranslate = this.carouselState.startTranslate;
+        this.carouselState.moved = false; // To distinguish a drag from a click
+        
+        // Remove transition for immediate feedback while dragging
+        carousel.classList.remove('transition-transform', 'duration-300', 'ease-in-out');
+        document.body.style.cursor = 'grabbing';
+    }
+
+    _handleCarouselDragMove(e) {
+        if (!this.carouselState.isDragging) return;
+        e.preventDefault();
+
+        const currentX = e.pageX || e.touches[0].pageX;
+        const diff = currentX - this.carouselState.startX;
+        this.carouselState.currentTranslate = this.carouselState.startTranslate + diff;
+        
+        // Check if the user has dragged a meaningful amount to prevent accidental clicks
+        if (Math.abs(diff) > 10) {
+            this.carouselState.moved = true;
+        }
+
+        this.carouselState.activeCarousel.style.transform = `translateX(${this.carouselState.currentTranslate}px)`;
+    }
+
+    _handleCarouselDragEnd(e) {
+        if (!this.carouselState.isDragging) return;
+        
+        const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.carouselState;
+
+        // Restore styles and state
+        this.carouselState.isDragging = false;
+        document.body.style.cursor = 'default';
+        activeCarousel.classList.add('transition-transform', 'duration-300', 'ease-in-out');
+
+        const movedBy = currentTranslate - startTranslate;
+        let newIndex = currentIndex;
+
+        // A simple threshold to decide whether to switch pages
+        const threshold = containerWidth / 4;
+
+        if (movedBy < -threshold && currentIndex < pageCount - 1) {
+            newIndex++;
+        } else if (movedBy > threshold && currentIndex > 0) {
+            newIndex--;
+        }
+
+        const mode = this.gameState.uiState.hangarShipyardToggleState;
+        this.simulationService.setHangarCarouselIndex(newIndex, mode);
+        
+        // Let the state update handle the final transform via render()
     }
 }

@@ -43,15 +43,34 @@ CORE THEME & VARIABLE SETUP
     --frame-border-color: var(--ot-hangar-red-base);
 }
 
+
 /* ================================================================================
 COMPONENT-SPECIFIC STYLING
 ================================================================================
 */
 
 /* Carousel: Main container for ship cards */
-.carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.carousel-container::-webkit-scrollbar { display: none; }
-.carousel-page { flex: 0 0 100%; width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; }
+.carousel-container { 
+    width: 100%;
+    position: relative;
+    cursor: grab;
+}
+.carousel-container:active {
+    cursor: grabbing;
+}
+
+#hangar-carousel {
+    display: flex; /* Lays out the pages side-by-side */
+    height: 100%;
+}
+.carousel-page {
+    width: 100%;
+    flex-shrink: 0; /* Prevents the page from shrinking */
+    display: flex; 
+    flex-direction: column; 
+    user-select: none;
+}
+
 
 /* Backgrounds & Theming */
 #ship-terminal {
