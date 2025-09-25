@@ -122,7 +122,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
- * @param {object} gameState - The current game state.
+ * @param {object} gameState - The current state of the game.
  * @param {object} shipStatic - The static data for the ship.
  * @param {object} shipDynamic - The dynamic state for the ship (hangar only).
  * @param {object} player - The player object.
@@ -187,10 +187,10 @@ function _renderActionButtons(shipStatic, player, isHangarMode) {
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
         return `
             <div class="grid grid-cols-2 gap-2">
-                <button class="action-button ship-action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipStatic.id}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
+                <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipStatic.id}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
                     <span class="font-bold">${isActive ? 'ACTIVE' : 'BOARD'}</span>
                 </button>
-                <button class="action-button ship-action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipStatic.id}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
+                <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipStatic.id}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
                     <span class="font-bold">SELL</span>
                     <span class="action-button-price font-roboto-mono">${formatCredits(salePrice, true)}</span>
                 </button>
@@ -199,7 +199,7 @@ function _renderActionButtons(shipStatic, player, isHangarMode) {
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         return `
-            <button class="action-button ship-action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipStatic.id}" ${!canAfford ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
+            <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipStatic.id}" ${!canAfford ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold">PURCHASE</span>
             </button>
         `;
