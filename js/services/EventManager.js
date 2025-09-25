@@ -75,14 +75,14 @@ export class EventManager {
         document.body.addEventListener('mousedown', (e) => {
             if (e.target.closest('#refuel-btn')) this._startRefueling();
             if (e.target.closest('#repair-btn')) this._startRepairing();
-            const carousel = e.target.closest('#hangar-carousel');
-            if (carousel) this._handleCarouselDragStart(e, carousel);
+            const carouselContainer = e.target.closest('.carousel-container');
+            if (carouselContainer) this._handleCarouselDragStart(e, carouselContainer.querySelector('#hangar-carousel'));
         });
         document.body.addEventListener('touchstart', (e) => {
             if (e.target.closest('#refuel-btn')) { e.preventDefault(); this._startRefueling(); }
             if (e.target.closest('#repair-btn')) { e.preventDefault(); this._startRepairing(); }
-            const carousel = e.target.closest('#hangar-carousel');
-            if (carousel) this._handleCarouselDragStart(e, carousel);
+            const carouselContainer = e.target.closest('.carousel-container');
+            if (carouselContainer) this._handleCarouselDragStart(e, carouselContainer.querySelector('#hangar-carousel'));
         }, { passive: false });
 
         document.body.addEventListener('mousemove', (e) => this._handleCarouselDragMove(e));
@@ -240,6 +240,7 @@ export class EventManager {
                     actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                     break;
                 case ACTION_IDS.BUY_SHIP: 
+                    e.stopPropagation();
                     if (this.simulationService.buyShip(shipId)) {
                         const price = DB.SHIPS[shipId].price;
                         this.uiManager.createFloatingText(`-${formatCredits(price, false)}`, e.clientX, e.clientY, '#f87171');
@@ -247,12 +248,14 @@ export class EventManager {
                     }
                     break;
                 case ACTION_IDS.SELL_SHIP:
+                    e.stopPropagation();
                     const salePrice = this.simulationService.sellShip(shipId);
                     if (salePrice) {
                         this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, e.clientX, e.clientY, '#34d399');
                     }
                     break;
                 case ACTION_IDS.SELECT_SHIP:
+                    e.stopPropagation();
                     this.simulationService.setActiveShip(shipId);
                     actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
                     break;
@@ -591,6 +594,7 @@ export class EventManager {
     // --- Carousel Drag Logic ---
 
     _handleCarouselDragStart(e, carousel) {
+        if (!carousel) return;
         // Prevent default behavior like text selection or page scrolling
         e.preventDefault();
 
@@ -638,7 +642,10 @@ export class EventManager {
         // Restore styles and state
         this.carouselState.isDragging = false;
         document.body.style.cursor = 'default';
-        activeCarousel.classList.add('transition-transform', 'duration-300', 'ease-in-out');
+        if (activeCarousel) {
+            activeCarousel.classList.add('transition-transform', 'duration-300', 'ease-in-out');
+        }
+
 
         const movedBy = currentTranslate - startTranslate;
         let newIndex = currentIndex;

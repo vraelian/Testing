@@ -94,7 +94,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     }
 
     return `
-        <div class="carousel-page p-2 md:p-4 w-full">
+        <div class="carousel-page p-2 md:p-4 w-full" data-action="show-ship-detail" data-ship-id="${shipId}" data-context="${isHangarMode ? 'hangar' : 'shipyard'}">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div id="ship-card-main-content" class="h-full">
                     <div class="ship-card-content-wrapper h-full">
