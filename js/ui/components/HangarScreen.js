@@ -33,7 +33,7 @@ export function renderHangarScreen(gameState) {
 
     return `
         <div id="ship-terminal-container" class="flex flex-col h-full ${modeClass}">
-            <div class="toggle-container mx-auto my-2">
+            <div class="toggle-container mx-auto my-1">
                 <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                     <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
                     <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
@@ -97,7 +97,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
                 ${statusBadgeHtml}
@@ -118,7 +118,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
                 ${statusBadgeHtml}

@@ -81,8 +81,8 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
-    min-height: 490px; /* ADJUST THIS VALUE AS NEEDED */
-    height: auto; /* This is the crucial fix */
+    min-height: 550px; /* INCREASED FOR MORE VERTICAL SPACE */
+    height: auto; 
 }
 
 /* The new intermediate container for constraining height */
@@ -136,7 +136,13 @@ COMPONENT-SPECIFIC STYLING
     position: relative; 
     flex-grow: 1; /* Pushes buttons down */
 }
-.ship-image-placeholder { background: transparent; border: 1px solid var(--ot-border-light); color: var(--theme-color-primary); box-shadow: inset 0 0 15px rgba(0,0,0,0.3);}
+.ship-image-placeholder { 
+    background: transparent; 
+    border: 1px solid var(--ot-border-light); 
+    color: var(--theme-color-primary); 
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+    aspect-ratio: 1 / 0.8; /* Make it a 1:0.8 rectangle */
+}
 .status-badge {
     position: absolute;
     bottom: -1px;
@@ -156,7 +162,7 @@ COMPONENT-SPECIFIC STYLING
     border-radius: 8px;
     padding: 3px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
-    transform: scale(0.85); 
+    transform: scale(0.72); 
     flex-shrink: 0; 
 }
 .toggle-switch {
@@ -191,12 +197,19 @@ COMPONENT-SPECIFIC STYLING
     box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
 }
 
-/* Main Info Panels */
+/* Main Info Panels & Mode-Specific Spacing */
 .info-panel-content { 
     display: none; 
     flex-grow: 1; /* Pushes buttons down */
     flex-direction: column;
 }
+
+/* ADDED: Mode-specific rules for spacing above action buttons */
+#ship-terminal-container.mode-hangar .ship-display-area,
+#ship-terminal-container.mode-shipyard .info-panel-content {
+    margin-bottom: 1rem;
+}
+
 #ship-terminal-container.mode-hangar .info-panel-hangar, 
 #ship-terminal-container.mode-shipyard .info-panel-shipyard { 
     display: flex; 
