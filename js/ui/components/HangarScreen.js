@@ -93,32 +93,55 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
+    // Conditional rendering for shipyard layout
+    const shipyardLayout = `
+        <div class="col-span-3 flex flex-col justify-between">
+            <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                </div>
+                ${statusBadgeHtml}
+            </div>
+        </div>
+        <div class="col-span-2 flex flex-col justify-between">
+            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
+            <div class="action-buttons-container pt-2">
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
+            </div>
+        </div>
+    `;
+
+    const hangarLayout = `
+        <div class="col-span-2 flex flex-col justify-between">
+            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
+        </div>
+
+        <div class="col-span-3 flex flex-col justify-between">
+            <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                </div>
+                ${statusBadgeHtml}
+            </div>
+            <div class="action-buttons-container pt-2">
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
+            </div>
+        </div>
+    `;
+
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div id="ship-card-main-content" class="h-full">
                     <div class="ship-card-content-wrapper h-full">
-                        <div class="col-span-2 flex flex-col justify-between">
-                            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
-                        </div>
-
-                        <div class="col-span-3 flex flex-col justify-between">
-                            <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                                <div class="ship-image-placeholder w-full h-4/5 rounded-lg flex items-center justify-center">
-                                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
-                                </div>
-                                ${statusBadgeHtml}
-                            </div>
-                            <div class="action-buttons-container pt-2">
-                                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
-                            </div>
-                        </div>
+                        ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
             </div>
         </div>
     `;
 }
+
 
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
