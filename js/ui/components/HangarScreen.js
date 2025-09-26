@@ -242,8 +242,10 @@ function _renderSpecCard(label, value) {
  * @private
  */
 function _getShipyardInventory(gameState) {
-    const { player, currentLocationId, market, introSequenceActive } = gameState;
-    if (introSequenceActive) {
+    const { player, currentLocationId, market, tutorials } = gameState;
+    const isHangarTutorialActive = tutorials.activeBatchId === 'intro_hangar';
+
+    if (isHangarTutorialActive) {
         return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
     } else {
         const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];

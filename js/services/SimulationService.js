@@ -667,6 +667,10 @@ export class SimulationService {
         delete this.gameState.player.shipStates[shipId];
         delete this.gameState.player.inventories[shipId];
 
+        // After selling, clamp the hangar index to a valid value
+        const newOwnedCount = this.gameState.player.ownedShipIds.length;
+        this.gameState.uiState.hangarActiveIndex = Math.min(this.gameState.uiState.hangarActiveIndex, Math.max(0, newOwnedCount - 1));
+
         this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
         this.gameState.setState({});
         return salePrice;
@@ -1233,7 +1237,15 @@ export class SimulationService {
      * @private
      */
     _updateShipyardStock() {
-        const { player } = this.gameState;
+        const { player, tutorials } = this.gameState;
+
+        // Tutorial Override: If the hangar tutorial is active, ensure the correct ships are available.
+        if (tutorials.activeBatchId === 'intro_hangar') {
+            const marsStock = this.gameState.market.shipyardStock[LOCATION_IDS.MARS];
+            marsStock.day = this.gameState.day;
+            marsStock.shipsForSale = [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE];
+            return;
+        }
 
         player.unlockedLocationIds.forEach(locationId => {
             const stock = this.gameState.market.shipyardStock[locationId];
