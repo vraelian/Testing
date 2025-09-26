@@ -49,6 +49,10 @@ COMPONENT-SPECIFIC STYLING
 ================================================================================
 */
 
+#ship-terminal-container {
+    margin-top: -0.9625rem;
+}
+
 /* Carousel: Main container for ship cards */
 .carousel-container { 
     width: 100%;
