@@ -597,6 +597,7 @@ export class EventManager {
         
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.carouselState;
         this.carouselState.isDragging = false;
+        this.carouselState.moved = false; // <-- FIX: Reset moved state here
         document.body.style.cursor = 'default';
         
         if (!activeCarousel) return;
@@ -616,10 +617,5 @@ export class EventManager {
             // Snap back to the original position if not moved enough
             activeCarousel.style.transform = `translateX(${startTranslate}px)`;
         }
-        
-        // Use a short timeout to reset the 'moved' flag, allowing immediate clicks after a snap-back.
-        setTimeout(() => {
-            this.carouselState.moved = false;
-        }, 50);
     }
 }
