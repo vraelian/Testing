@@ -1,0 +1,12 @@
+/* css/screens/intel-screen.css */
+.intel-scroll-panel {
+    height: 75vh; /* Enforce a fixed height based on the viewport */
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+    touch-action: pan-y; /* Allow vertical scrolling */
+}
+.intel-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}

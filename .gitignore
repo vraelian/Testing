@@ -1,0 +1,12 @@
+# macOS system files
+.DS_Store
+js/.DS_Store
+
+# Development scripts
+combine.sh
+
+# Build output
+dist/
+
+# Node.js dependencies
+node_modules/

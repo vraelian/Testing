@@ -1,0 +1,304 @@
+/* css/screens/hangar-screen.css */
+
+/* ================================================================================
+CORE THEME & VARIABLE SETUP
+- Defines the color palette, fonts, and dynamic variables used throughout the component.
+- Theming is driven by CSS variables to allow for easy changes based on game state (e.g., location).
+================================================================================
+*/
+:root {
+    /* Base Colors */
+    --ot-bg-dark: #0c101d;
+    --ot-border-light: #4a6a8a;
+    --ot-text-primary: #d0d8e8;
+    --ot-text-secondary: #9ca3af;
+    --ot-green-accent: #4ade80;
+    --ot-red-accent: #f87171;
+    --ot-cyan-base: #22d3ee;
+    --ot-cyan-glow: #67e8f9;
+
+    /* Toggle & Mode-Specific Colors */
+    --ot-hangar-red-base: #ef4444;
+    --ot-hangar-red-glow: #f87171;
+    --ot-shipyard-blue-base: #60a5fa;
+    --ot-shipyard-blue-glow: #93c5fd;
+
+    /* Ship Class Colors */
+    --class-s-color: #facc15;
+    --class-a-color: #60a5fa;
+    --class-b-color: #4ade80;
+    --class-c-color: #e5e7eb;
+    
+    /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set.
+ */
+    --theme-color-primary: #fde047;
+    --theme-color-glow: #fef08a;
+    --theme-bg-gradient: linear-gradient(145deg, rgba(113, 63, 18, 0.5), rgba(49, 46, 129, 0.8));
+
+    /* Dynamic Frame Border Color - Changes based on Hangar/Shipyard mode */
+    --frame-border-color: var(--ot-shipyard-blue-base);
+}
+
+/* Set Hangar-specific frame color when the .mode-hangar class is active */
+#ship-terminal-container.mode-hangar {
+    --frame-border-color: var(--ot-hangar-red-base);
+}
+
+
+/* ================================================================================
+COMPONENT-SPECIFIC STYLING
+================================================================================
+*/
+
+#ship-terminal-container {
+    margin-top: -0.9625rem;
+}
+
+/* Carousel: Main container for ship cards */
+.carousel-container { 
+    width: 100%;
+    position: relative;
+    cursor: grab;
+    flex-grow: 1; /* Ensure this container fills available vertical space */
+    display: flex;
+}
+.carousel-container:active {
+    cursor: grabbing;
+}
+
+#hangar-carousel {
+    display: flex; /* Lays out the pages side-by-side */
+    height: 100%;
+    width: 100%;
+    /* ALWAYS have the transition property defined in CSS for smooth animations */
+    transition: transform 0.4s ease-out;
+}
+.carousel-page {
+    width: 100%;
+    flex-shrink: 0; /* Prevents the page from shrinking */
+    display: flex; 
+    flex-direction: column; 
+    user-select: none;
+}
+
+/* Backgrounds & Theming */
+#ship-terminal {
+    background-image: var(--theme-bg-gradient); /* Base theme from location */
+    display: flex; 
+    flex-direction: column; 
+    flex-grow: 1; /* Make the card itself grow to fill the page */
+    min-height: 545px; /* INCREASED FOR MORE VERTICAL SPACE */
+    height: auto; 
+}
+
+/* The new intermediate container for constraining height */
+#ship-card-main-content {
+    flex: 1 1 auto; /* Grow to fill space */
+    min-height: 0; /* CRUCIAL for allowing the child to scroll */
+    display: flex;
+    flex-direction: column;
+}
+
+/* The scrollable grid content wrapper */
+.ship-card-content-wrapper {
+    overflow-y: auto; 
+    scrollbar-width: none;
+    display: grid; 
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    flex-grow: 1; /* Make the grid wrapper fill the container */
+}
+.ship-card-content-wrapper::-webkit-scrollbar {
+    display: none; 
+}
+
+/* Force grid columns to behave as flex containers to distribute space */
+.ship-card-content-wrapper > .col-span-2,
+.ship-card-content-wrapper > .col-span-3 {
+    display: flex;
+    flex-direction: column;
+}
+
+
+#ship-terminal-container.mode-hangar #ship-terminal {
+    background-blend-mode: overlay;
+    background-color: #1a193d; 
+}
+#ship-terminal-container.mode-hangar #ship-terminal::after { 
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+        radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+}
+
+
+/* Hologram */
+.ship-display-area { 
+    perspective: 1500px; 
+    position: relative; 
+    flex-grow: 1; /* Pushes buttons down */
+}
+.ship-image-placeholder { 
+    background: transparent; 
+    border: 1px solid var(--ot-border-light); 
+    color: var(--theme-color-primary); 
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+    aspect-ratio: 1 / 0.72; /* Make it a 1:0.8 rectangle */
+}
+.status-badge {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%) translateY(50%);
+    background-color: #1a2030;
+    border: 1px solid;
+    padding: 3px 11px;
+    border-radius: 99px;
+    font-size: 0.77rem;
+    font-weight: 700;
+}
+
+/* Hangar/Shipyard Toggle Switch */
+.toggle-container {
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 3px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    transform: scale(0.72); 
+    flex-shrink: 0; 
+}
+.toggle-switch {
+    background-color: transparent;
+    display: flex;
+}
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    flex-grow: 1;
+    transition: all 0.3s ease;
+    color: var(--ot-text-secondary);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%);
+}
+.toggle-label.shipyard {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 85%);
+}
+
+#ship-terminal-container.mode-hangar .toggle-label.hangar,
+#ship-terminal-container.mode-shipyard .toggle-label.shipyard {
+    color: var(--ot-bg-dark);
+    font-weight: 900;
+}
+#ship-terminal-container.mode-hangar .toggle-label.hangar { 
+    background-color: var(--ot-hangar-red-base);
+    box-shadow: 0 0 10px var(--ot-hangar-red-glow);
+}
+#ship-terminal-container.mode-shipyard .toggle-label.shipyard { 
+    background-color: var(--ot-shipyard-blue-base);
+    box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
+}
+
+/* Main Info Panels & Mode-Specific Spacing */
+.info-panel-content { 
+    display: none; 
+    flex-grow: 1; /* Pushes buttons down */
+    flex-direction: column;
+}
+
+/* ADDED: Mode-specific rules for spacing above action buttons */
+#ship-terminal-container.mode-hangar .ship-display-area,
+#ship-terminal-container.mode-shipyard .info-panel-content {
+    margin-bottom: 1rem;
+}
+
+#ship-terminal-container.mode-hangar .info-panel-hangar, 
+#ship-terminal-container.mode-shipyard .info-panel-shipyard { 
+    display: flex; 
+}
+
+/* NEW: Ship Price Display for Shipyard */
+.ship-price-display {
+    margin-top: 0.5rem;
+    color: var(--ot-cyan-base);
+    text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
+}
+
+
+/* Stat Readouts */
+.spec-readout { display: grid; align-items: center; margin-bottom: 0.75rem; font-family: 'Roboto Mono', sans-serif;}
+.hangar-specs { grid-template-columns: 60px 1fr 60px;}
+.hangar-specs .w-4\/5 { width: 80%; } 
+.hangar-specs .text-xs { font-size: 0.7rem; } 
+
+.spec-bar { height: 13px; background-color: rgba(0,0,0,0.3); flex-grow: 1; border-radius: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);}
+.spec-bar-fill { height: 100%; border-radius: 4px; box-shadow: 0 0 8px var(--bar-color); }
+
+/* Action Buttons */
+.action-button { 
+    transition: transform 0.2s ease; 
+    border-radius: 0.5rem; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0.8rem;
+}
+.action-button:not(:disabled) {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
+.action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
+
+/* NEW: Price text specifically for action buttons (like Sell) */
+.action-button-price {
+    font-size: 1.1rem;
+    color: var(--ot-cyan-base);
+    text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Flavor Text Styling */
+.flavor-text-box {
+    padding-left: 0.75rem;
+    border-left: 2px solid;
+    box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.5);
+}
+
+/* Inset Text Shadow for ship names/roles */
+.inset-text-shadow {
+    text-shadow: 0 2px 3px rgba(0,0,0,0.6);
+}
+
+/* Pagination Dots */
+#hangar-pagination {
+    flex-shrink: 0; 
+    padding-bottom: 8px; 
+}
+.pagination-dot.active { background-color: var(--theme-color-primary); box-shadow: 0 0 8px var(--theme-color-glow); }
+
+/* Spec Cards (Shipyard) */
+.spec-card {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    text-align: center;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.6);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .ship-card-content-wrapper {
+        grid-template-columns: 1fr; /* Stack columns vertically */
+    }
+    .ship-card-content-wrapper > .col-span-2,
+    .ship-card-content-wrapper > .col-span-3 {
+        grid-column: span 1 / span 1; /* Make each column take full width */
+    }
+    .ship-display-area {
+        min-height: 180px; /* Ensure hologram area has enough height */
+    }
+}

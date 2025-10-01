@@ -1,0 +1,213 @@
+{
+  "project_info": {
+    "project_name": "Orbital Trading",
+    "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
+    "core_mechanics": [
+      "arbitrage_trading",
+      "ship_progression",
+      "procedural_events",
+      "debt_management",
+      "wealth_milestones"
+    ],
+    "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
+  },
+  "ai_collaboration_guidelines": {
+    "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
+    "bug_reporting_protocol": {
+      "title": "Standard Bug Reporting and Diagnostic Workflow",
+      "steps": [
+        "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
+        "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
+        "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
+        "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
+        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide critical context that a simple description cannot.",
+        "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
+      ]
+    },
+    "logging_utility_overview": {
+      "title": "About the Centralized Logging System",
+      "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
+    }
+  },
+  "key_concepts": {
+    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. Heavy selling increases pressure, driving prices down over time, while heavy buying decreases it, driving prices up.",
+    "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
+    "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
+    "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
+    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards."
+  },
+  "service_summaries": {
+    "GameState": {
+      "description": "The single source of truth for all mutable game data. It holds the current state and notifies other services of changes.",
+      "dependencies": [],
+      "key_functions": {
+        "setState": "Merges a partial state object into the main state and notifies subscribers.",
+        "getState": "Returns a deep copy of the current game state.",
+        "startNewGame": "Initializes the entire game state for a new session.",
+        "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
+      },
+      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "tutorials", "introSequenceActive", "uiState"]
+    },
+    "SimulationService": {
+      "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
+      "key_functions": {
+        "constructor": "Instantiates all specialized services.",
+        "setScreen": "Sets the active navigation tab and screen.",
+        "travelTo": "Facade method that delegates to TravelService.",
+        "buyItem": "Facade method that delegates to PlayerActionService."
+      },
+      "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
+    },
+    "IntroService": {
+      "description": "Manages the entire new game introduction sequence, from the initial lore modals to the final tutorial kickoff.",
+      "dependencies": ["GameState", "UIManager", "Logger", "SimulationService (Facade)"],
+      "key_functions": {
+        "start": "Begins the intro sequence.",
+        "handleIntroClick": "Handles clicks on intro-specific buttons.",
+        "continueAfterTutorial": "Resumes the intro sequence after a tutorial batch is completed."
+      },
+      "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
+    },
+    "PlayerActionService": {
+      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)"],
+      "key_functions": {
+        "buyItem": "Handles the logic for purchasing a commodity.",
+        "sellItem": "Handles the logic for selling a commodity.",
+        "buyShip": "Manages the purchase of a new ship.",
+        "refuelTick": "Processes one 'tick' of refueling."
+      },
+      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
+    },
+    "TravelService": {
+      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
+      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)"],
+      "key_functions": {
+        "travelTo": "Validates and begins travel to a new location.",
+        "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
+        "resumeTravel": "Continues a pending travel action after an event."
+      },
+      "mutates_state": ["pendingTravel", "player.shipStates.health", "player.shipStates.fuel"]
+    },
+    "TimeService": {
+      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates.",
+      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)"],
+      "key_functions": {
+        "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
+      },
+      "mutates_state": ["day", "player.playerAge", "player.debt", "player.shipStates.health", "market.prices", "market.inventory"]
+    },
+    "MarketService": {
+      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades.",
+      "dependencies": ["GameState"],
+      "key_functions": {
+          "evolveMarketPrices": "Simulates daily price changes for all commodities.",
+          "replenishMarketInventory": "Handles the weekly restocking of all markets.",
+          "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
+          "_updateShipyardStock": "Updates the available ships for sale at each location."
+      },
+      "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
+    },
+    "UIManager": {
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager.",
+      "dependencies": ["Logger", "EffectsManager", "MissionService", "SimulationService"],
+      "key_functions": {
+        "render": "The main function that orchestrates the re-drawing of all UI components.",
+        "queueModal": "Manages a queue for displaying modals to prevent overlap.",
+        "triggerEffect": "Initiates a visual effect through the EffectsManager."
+      },
+      "mutates_state": []
+    },
+    "EventManager": {
+      "description": "The universal input layer. Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.",
+      "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService", "DebugService", "Logger"],
+      "key_functions": {
+        "bindEvents": "Sets up all global event listeners for the application.",
+        "_handleClick": "The central delegated click handler that routes events to the appropriate handler module."
+      },
+      "mutates_state": []
+    },
+    "ActionClickHandler": {
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
+        "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
+        "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
+        "mutates_state": []
+    },
+    "MarketEventHandler": {
+        "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
+        "dependencies": ["GameState", "SimulationService", "UIManager"],
+        "key_functions": {"handleClick": "Handles clicks on market card controls.", "handleInput": "Handles direct input into the quantity field."},
+        "mutates_state": []
+    },
+    "HoldEventHandler": {
+        "description": "Manages the 'hold-to-act' functionality for continuous actions like refueling and repairing.",
+        "dependencies": ["GameState", "SimulationService", "UIManager"],
+        "key_functions": {"handleHoldStart": "Starts a continuous action.", "handleHoldEnd": "Stops all continuous actions."},
+        "mutates_state": []
+    },
+    "CarouselEventHandler": {
+        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
+        "dependencies": ["GameState", "SimulationService"],
+        "key_functions": {"handleDragStart": "Initiates a drag sequence.", "handleDragMove": "Updates the carousel during a drag.", "handleDragEnd": "Concludes a drag sequence and snaps to a page.", "handleWheel": "Handles mouse wheel scrolling."},
+        "mutates_state": []
+    },
+    "TooltipHandler": {
+        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
+        "dependencies": ["GameState", "UIManager"],
+        "key_functions": {"handleClick": "Manages tooltip visibility on click.", "handleMouseOver": "Shows tooltips on hover.", "handleMouseOut": "Hides tooltips on hover out."},
+        "mutates_state": []
+    },
+    "MissionService": {
+        "description": "Manages the state, progression, and availability of player missions.",
+        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService"],
+        "key_functions": {
+            "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
+            "acceptMission": "Sets a mission as active and initializes its progress tracking.",
+            "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
+            "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
+        },
+        "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    }
+  },
+  "asset_index": {
+    "F001": {"path": "./index.html", "role": "DOCUMENT_ROOT"},
+    "F003": {"path": "./js/main.js", "role": "ENTRY_POINT"},
+    "F004": {"path": "./js/utils.js", "role": "UTILITY_LIBRARY"},
+    "F005": {"path": "./js/data/constants.js", "role": "DATA_DEFINITION"},
+    "F006": {"path": "./js/data/database.js", "role": "DATA_DEFINITION"},
+    "F009": {"path": "./js/services/GameState.js", "role": "STATE_MANAGER"},
+    "F010": {"path": "./js/services/simulation/MarketService.js", "role": "LOGIC_SERVICE"},
+    "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_FACADE"},
+    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE"},
+    "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
+    "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
+    "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
+    "F018": {"path": "./js/services/MissionService.js", "role": "LOGIC_SERVICE"},
+    "F019": {"path": "./js/ui/components/CargoScreen.js", "role": "UI_COMPONENT"},
+    "F020": {"path": "./js/ui/components/FinanceScreen.js", "role": "UI_COMPONENT"},
+    "F021": {"path": "./js/ui/components/HangarScreen.js", "role": "UI_COMPONENT"},
+    "F022": {"path": "./js/ui/components/IntelScreen.js", "role": "UI_COMPONENT"},
+    "F023": {"path": "./js/ui/components/MarketScreen.js", "role": "UI_COMPONENT"},
+    "F024": {"path": "./js/ui/components/MissionsScreen.js", "role": "UI_COMPONENT"},
+    "F025": {"path": "./js/ui/components/NavigationScreen.js", "role": "UI_COMPONENT"},
+    "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
+    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT"},
+    "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
+    "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
+    "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
+    "F032": {"path": "./js/effects/EffectsManager.js", "role": "LOGIC_SERVICE"},
+    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE"},
+    "F034": {"path": "./js/services/game/IntroService.js", "role": "LOGIC_SERVICE"},
+    "F035": {"path": "./js/services/player/PlayerActionService.js", "role": "LOGIC_SERVICE"},
+    "F036": {"path": "./js/services/world/TimeService.js", "role": "LOGIC_SERVICE"},
+    "F037": {"path": "./js/services/world/TravelService.js", "role": "LOGIC_SERVICE"},
+    "F038": {"path": "./meta/ROADMAP.md", "role": "DOCUMENTATION"},
+    "F039": {"path": "./meta/ARCHITECTURAL_DECISIONS.md", "role": "DOCUMENTATION"},
+    "F040": {"path": "./js/services/handlers/ActionClickHandler.js", "role": "EVENT_HANDLER"},
+    "F041": {"path": "./js/services/handlers/MarketEventHandler.js", "role": "EVENT_HANDLER"},
+    "F042": {"path": "./js/services/handlers/HoldEventHandler.js", "role": "EVENT_HANDLER"},
+    "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
+    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"}
+  }
+}

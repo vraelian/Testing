@@ -1,0 +1,141 @@
+/* css/missions.css */
+.mission-card {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.mission-card:hover .sci-fi-frame::before, .mission-card:hover .sci-fi-frame::after {
+    border-color: rgba(96, 165, 250, 0.7);
+}
+.mission-type {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    letter-spacing: 0.1em;
+}
+.mission-host {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #d1d5db;
+}
+.mission-reward {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    color: #facc15;
+    text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
+}
+
+/* Host Themes */
+.host-guild {
+    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border-color: #FFD700;
+}
+#mission-modal .modal-content.host-guild {
+    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border-color: #FFD700;
+}
+#mission-modal .modal-content.host-guild #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #FFD700;
+}
+
+.host-syndicate {
+    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    border-color: #a855f7;
+}
+#mission-modal .modal-content.host-syndicate {
+    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    border-color: #a855f7;
+}
+#mission-modal .modal-content.host-syndicate #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #a855f7;
+}
+
+.host-unknown {
+    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    border-color: #5f616b;
+}
+#mission-modal .modal-content.host-unknown {
+    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    border-color: #5f616b;
+}
+#mission-modal .modal-content.host-unknown #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #5f616b;
+}
+
+.host-crew {
+    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    border-color: #c9bfb1;
+}
+#mission-modal .modal-content.host-crew {
+    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    border-color: #c9bfb1;
+}
+#mission-modal .modal-content.host-crew #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #c9bfb1;
+}
+
+.host-tutorial {
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    border-color: #5aa66d;
+}
+#mission-modal .modal-content.host-tutorial {
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    border-color: #5aa66d;
+}
+#mission-modal .modal-content.host-tutorial #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #5aa66d;
+}
+
+.host-station {
+    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    border-color: #8f9acc;
+}
+#mission-modal .modal-content.host-station {
+    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    border-color: #8f9acc;
+}
+#mission-modal .modal-content.host-station #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #8f9acc;
+}
+
+/* Mission Status Styles */
+.mission-active {
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+    border-width: 3px;
+    border-color: rgba(96, 165, 250, 0.7);
+}
+.mission-active .sci-fi-frame::before, .mission-active .sci-fi-frame::after {
+    border-color: #93c5fd;
+}
+.mission-complete {
+    opacity: 0.6;
+    background: #111827;
+}
+.mission-complete .sci-fi-frame::before, .mission-complete .sci-fi-frame::after {
+    border-color: #34d399;
+}
+
+.mission-turn-in {
+    overflow: hidden;
+    position: relative;
+    --glow-color: #fde047;
+    animation: glow-border 2s infinite, shimmer-effect 3s linear infinite;
+    background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
+    background-repeat: no-repeat;
+    background-size: 400px 100%;
+}
+
+.objective-progress-flash {
+    animation: flash-green 0.7s ease-in-out;
+}
+
+.missions-scroll-panel {
+    height: 68vh; /* Specific height for this screen layout */
+    touch-action: pan-y;
+}

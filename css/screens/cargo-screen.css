@@ -1,0 +1,99 @@
+/* css/screens/cargo-screen.css */
+.cargo-scroll-panel {
+    height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    padding: 0.25rem;
+    touch-action: pan-y; /* Allow vertical scrolling */
+}
+.cargo-scroll-panel::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* Grid container for the min-cargo items */
+.cargo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+}
+
+/* Individual min-cargo item styling */
+.min-cargo-item {
+    aspect-ratio: 1 / 0.8; /* Ensures the item is shorter */
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.min-cargo-item .pt-quantity {
+    opacity: 0.85; /* Make the quantity text slightly transparent */
+    color: #a0aec0; /* Change the quantity text color to grey */
+}
+
+.min-cargo-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Styles for the max-cargo modal */
+#cargo-detail-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    max-width: 350px; /* Or adjust as needed */
+}
+
+.max-cargo-card {
+    width: 100%;
+    border-radius: 15px;
+    color: #fff;
+    padding: 1.5rem;
+    text-align: left;
+    border: 2px solid;
+}
+
+.max-cargo-card h3, .max-cargo-card p, .max-cargo-card div {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7); /* Add text outline for clarity */
+}
+
+.max-cargo-card .tier-type-line {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9); /* Darker outline for more contrast */
+}
+
+.max-cargo-card .flavor-text {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.max-cargo-card .avg-cost {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cargo-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .cargo-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

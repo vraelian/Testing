@@ -1,0 +1,153 @@
+# Changelog
+
+All notable changes to the Orbital Trading project will be documented in this file.
+
+## [27.10] - 2025-09-29
+- SimulationService refactor
+- EventManager refactor
+- created Architectural Decisions meta file
+- created Roadmap meta file
+
+
+## [27.00] - 2025-09-28
+- shipyard/hangar overhaul
+- UI update
+
+## [26.15] - 2025-09-20
+- portrait mode enforcement
+- PWA optimization
+
+## [26.10] - 2025-09-20
+- UI update
+- cargo overhaul
+
+## [26.00] - 2025-09-18
+- celebratory effects layer
+- updated lexicon.json
+- updated data_flow.md
+
+## [25.60] - 2025-09-16
+- tutorial update
+- writing
+- license bug fixes
+
+## [25.50] - 2025-09-15
+- refactoring
+- bug fixes
+
+## [25.40] - 2025-09-15
+- removed tutorial editor tooling
+- improved sub nav bar visibility
+
+## [25.30] - 2025-09-14
+- tutorial editor tools
+
+## [25.20] - 2025-09-13
+- scrollbar indicator
+
+## [25.20] - 2025-09-13
+- console debug diagnostic tools
+
+## [25.10] - 2025-09-12
+- minimizable commodities
+
+## [25.00] - 2025-09-12
+- launch confirmation modal
+
+## [24.70] - 2025-09-10
+- shipyard/hangar visual overhaul
+- balance update
+- writing update
+
+## [24.30] - 2025-09-7
+- cargo visual overhaul
+
+## [24.20] - 2025-09-6
+- economy v4 update
+- commodity card update
+
+## [24.00] - 2025-09-3
+- economy v3 update
+- progression update
+- ship cargo balancing
+- wealth milestone update
+
+## [23.20] - 2025-08-31
+- diminishing returns in economy
+- expected profit display
+
+## [23.00] - 2025-08-30
+- navigation bar overhaul
+
+## [22.30] - 2025-08-29
+- debug/market toasts removed
+- economy adjusted
+
+## [22.20] - 2025-08-28
+- transaction module visual overhaul
+
+## [22.10] - 2025-08-28
+- debug gui for visual overhauls added
+- market screen visuals updated
+
+## [22.00] - 2025-08-28
+- CSS Refactor
+
+## [21.01] - 2025-08-24
+- transaction visual overhaul
+- indicator overhaul
+
+## [21.00] - 2025-08-24
+- intro completed
+- tutorial completed
+- removed tutorial highlighting
+- writing polish
+
+## [20.02] - 2025-08-17
+- Polished introduction sequence with gated navigation access
+- UI polish
+
+## [20.01] - 2025-08-16
+- Implemented mission prerequisite system. Missions now only appear when their conditions are met.
+
+## [20.00] - 2025-08-15
+- implemented V1 MissionEngine
+
+## [19.14] - 2025-08-11
+- intro overhaul
+- shipyard/hanger tutorial v1
+- style, writing, and functionality polish
+
+## [19.13] - 2025-08-10
+- bug fixes
+- polish
+
+## [19.12] - 2025-08-09
+- v1 intro sequence
+
+## [19.11] - 2025-08-07
+- removed test tools
+
+## [19.09] - 2025-08-07
+- updated lexicon
+- new build tools: OrbitalBuilder
+
+## [19.08] - 2025-08-06
+- added meta/ folder
+- added lexicon.json
+- added CHANGELOG.md
+- commentary overhaul
+
+## [19.07] - 2025-07-XX
+- Added extensive code comments to improve readability and AI-assisted development.
+- Reached a stable build, code is considered well-documented.
+
+## [19.06] - 2025-07-XX
+- Created `combine.sh` script to aggregate project files for analysis.
+
+## [19.05] - 2025-07-XX
+- Overhauled UI navigation with a new top-bar and sub-navigation system.
+- Refactored screen rendering logic in `UIManager.js`.
+
+## [19.04] - 2025-07-XX
+- Major refactor of game logic into distinct services (`GameState`, `SimulationService`, `EventManager`).

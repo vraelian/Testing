@@ -1,0 +1,156 @@
+    /* css/tutorial.css */
+    @keyframes shimmer {
+        0% { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+    }
+    @keyframes green-pulse {
+        0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+        50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
+        100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+    }
+
+    #tutorial-toast-container {
+        background-color: rgba(13, 42, 42, 0.95);
+        color: #f0fff0;
+        border: 2px solid transparent;
+        border-image: linear-gradient(to right, #d4af37, #fde047, #d4af37);
+        border-image-slice: 1;
+        animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out;
+        background-image: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+        background-repeat: no-repeat;
+        background-size: 200px 100%;
+        z-index: 190;
+        width: 90%;
+        max-width: 385px; /* Reduced width by ~15% from 450px */
+        max-height: 225px; /* Reduced height by 10% from 250px */
+    }
+
+    /* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
+    #tutorial-toast-container:not(.hidden) {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #tutorial-toast-text {
+        text-align: left;
+        overflow-y: auto; /* Allow vertical scrolling */
+        flex-grow: 1; /* Allow the text container to fill available space */
+        padding-right: 1rem; /* Add padding for the scrollbar */
+    }
+
+    .tutorial-highlight {
+        position: relative;
+        z-index: 99;
+    }
+
+    .tt-top-center, .tt-top { top: 5%; left: 50%; transform: translateX(-50%); }
+    .tt-left { top: 50%; left: 2%; transform: translateY(-50%); }
+    .tt-right { top: 50%; right: 2%; transform: translateY(-50%); }
+    .tt-bottom-center { bottom: 15%; left: 50%; transform: translateX(-50%); }
+    .tt-bottom-right { bottom: 15%; right: 2%; }
+
+    .lore-container {
+        cursor: pointer;
+        display: inline;
+        color: #a3b8ee;
+        font-style: italic;
+        font-weight: bold;
+    }
+    .lore-tooltip {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        max-width: 90vw;
+        max-height: 55vh;
+        overflow-y: auto;
+        background-color: #1f2937;
+        border: 2px solid #ffffff;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #d0d8e8;
+        z-index: 60;
+        text-align: left;
+        font-style: normal;
+        animation: pulse-white 2.5s infinite;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .tutorial-tooltip {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        max-width: 90vw;
+        max-height: 55vh;
+        overflow-y: auto;
+        background-color: #1f2937;
+        border: 2px solid #10b981;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #d0d8e8;
+        z-index: 60;
+        text-align: left;
+        font-style: normal;
+        animation: pulse-green-border 2.5s infinite;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .lore-tooltip.visible, .tutorial-tooltip.visible {
+        display: block;
+    }
+    .lore-tooltip::-webkit-scrollbar, .tutorial-tooltip::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
+    #tutorial-toast-text::-webkit-scrollbar {
+    width: 8px;
+    }
+    #tutorial-toast-text::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    }
+    #tutorial-toast-text::-webkit-scrollbar-thumb {
+    background-color: #d4af37;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    }
+    #tutorial-toast-text::-webkit-scrollbar-thumb:hover {
+    background-color: #fde047;
+    }
+    /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
+
+    @media (max-width: 768px) {
+        #tutorial-toast-container {
+            width: 90%; /* Explicitly set width for mobile */
+            max-width: 385px; /* Ensure max-width is consistent */
+        }
+
+        /* Override positions for mobile to be more consistent */
+        .tt-top-center, .tt-left, .tt-right, .tt-top {
+            top: 2% !important;
+            left: 5% !important; /* Anchor to the left */
+            transform: none !important; /* Remove horizontal centering */
+            right: auto !important;
+            bottom: auto !important;
+        }
+        
+        .tt-bottom-center, .tt-bottom-right {
+            bottom: 15% !important;
+            top: auto !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            right: auto !important;
+        }
+    }

@@ -1,0 +1,226 @@
+/* css/modals.css */
+.modal-visible {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+.modal-hiding {
+    animation: fadeOut 0.5s ease-in forwards;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(12, 16, 29, 0.95);
+    display: flex; align-items: center;
+    justify-content: center; z-index: 200;
+}
+.age-event-modal.modal-backdrop {
+    align-items: flex-start;
+    padding-top: 15vh;
+}
+.modal-content {
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid #3a4a6a;
+    border-radius: 15px; padding: 2rem; max-width: 500px;
+    width: 90%; text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+}
+.modal-content h3 {
+    text-align: center;
+}
+.modal-content .flex.justify-center {
+    justify-content: center;
+}
+#charter-description > .text-justify {
+    text-align: justify;
+}
+
+.modal-theme-gold .modal-content {
+    border-color: #D4AF37;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+}
+
+.modal-theme-admin .modal-content, .modal-theme-admin.modal-content {
+    background: #0c101d;
+    border-color: #4a6a8a;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#signature-input {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid #a3a3a3;
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 2px;
+}
+
+.age-event-modal .modal-content {
+    background: rgba(240, 240, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 2px solid #D4AF37;
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+    max-width: 600px;
+}
+.age-event-modal h3 { color: #FFD700; }
+.age-event-modal p { color: #f0f0f0; }
+
+.perk-button {
+    background: #C0C0C0;
+    color: #111827;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: left;
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.perk-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 15px #FFD700, 0 0 25px #FFD700;
+    border-color: #FFD700;
+}
+.perk-button h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.875rem;
+    color: #0c101d;
+    text-align: center;
+}
+.perk-button p {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+#travel-animation-modal #travel-animation-content {
+    width: 90%;
+    max-width: 800px;
+    padding: 0;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border-color: #4a6a8a;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#travel-animation-modal #travel-header-panel, #travel-animation-modal #travel-footer-panel {
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    background-color: rgba(12, 16, 29, 0.5);
+    z-index: 10;
+}
+#travel-animation-modal #travel-header-panel {
+    border-bottom: 1px solid #3a4a6a;
+    min-height: 80px;
+}
+#travel-animation-modal #travel-footer-panel {
+    border-top: 1px solid #3a4a6a;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#travel-animation-modal #travel-canvas {
+    width: 100%;
+    height: 150px;
+    display: block;
+}
+#travel-animation-modal #travel-arrival-lore, #travel-animation-modal #travel-readout-container, #travel-animation-modal #travel-confirm-button {
+    opacity: 0;
+    transition: opacity 0.75s ease-in-out;
+}
+#travel-animation-modal #travel-status-text {
+    transition: all 0.5s ease;
+}
+
+#random-event-modal .modal-content .btn {
+    text-align: center;
+}
+
+#ship-detail-modal {
+    align-items: center;
+    justify-content: center;
+}
+#ship-detail-modal .modal-content {
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    margin: 0;
+    padding: 1.5rem;
+}
+
+#mission-modal .modal-content {
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+#mission-modal .modal-header {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+#mission-modal .close-button {
+    font-size: 2rem;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+#mission-modal .close-button:hover {
+    color: #fff;
+}
+#mission-modal .reward-section {
+    background-color: rgba(0,0,0,0.3);
+    border-left: 3px solid #facc15;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    text-align: center;
+    width: 80%;
+    margin: 0 auto;
+}
+#mission-modal-objectives {
+    width: 80%;
+    margin: 1rem auto;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* --- [[START]] LAUNCH MODAL STYLES --- */
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 100%;
+    max-width: 350px;
+    height: 305px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex; /* Keep flex display */
+    flex-direction: column; /* Keep flex-direction column */
+    justify-content: space-between; /* Change from flex-start to space-between */
+    gap: 1rem;
+}
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+
+@keyframes launch-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+    }
+}
+.btn-launch-glow {
+    animation: launch-glow-animation 2.5s infinite;
+    border-color: var(--launch-glow-color);
+}
+/* --- [[END]] LAUNCH MODAL STYLES --- */
