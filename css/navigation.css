@@ -103,8 +103,6 @@
 
 
 /* --- [[START]] DEPRECATED STYLES --- */
-/* The styles below are no longer used by the navigation system but are kept for other UI elements.
-*/
 .btn-header {
      padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
@@ -114,8 +112,6 @@
 }
 
 @media (max-width: 768px) {
-    /* .btn-header rules are no longer needed for navigation but might be used elsewhere.
-*/
     .btn-header {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;

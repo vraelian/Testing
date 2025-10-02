@@ -102,7 +102,7 @@ export class PlayerActionService {
             return 0;
         }
 
-        const { totalPrice } = this._calculateDiminishingReturns(goodId, quantity, state.currentLocationId);
+        const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
         
         const profit = totalSaleValue - (item.avgCost * quantity);
@@ -416,41 +416,5 @@ export class PlayerActionService {
         this.simulationService._checkHullWarnings(ship.id);
         this.gameState.setState({});
         return costPerTick;
-    }
-
-    /**
-     * Calculates the effect of diminishing returns on a sale.
-     * @param {string} goodId The ID of the commodity being sold.
-     * @param {number} quantity The amount being sold.
-     * @param {string} locationId The ID of the market location.
-     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
-     * @private
-     */
-    _calculateDiminishingReturns(goodId, quantity, locationId) {
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketStock = this.gameState.market.inventory[locationId][goodId].quantity;
-        const basePrice = this.uiManager.getItemPrice(this.gameState.getState(), goodId, true);
-        
-        const threshold = marketStock * 0.1;
-        if (quantity <= threshold) {
-            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
-        }
-
-        const excessRatio = quantity / marketStock;
-        let reduction = 0;
-
-        if (good.tier <= 2) { // Low-Tier
-            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) { // Mid-Tier
-            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else { // High-Tier
-            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
-        }
-        
-        const effectivePrice = basePrice * (1 - reduction);
-        return {
-            totalPrice: Math.floor(effectivePrice * quantity),
-            effectivePricePerUnit: effectivePrice
-        };
     }
 }

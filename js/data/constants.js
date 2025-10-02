@@ -196,16 +196,6 @@ export const WEALTH_MILESTONES = [
 ];
 
 /**
- * Defines rules for how player transactions impact local market prices.
- */
-export const MARKET_IMPACT_RULES = {
-    SENSITIVITY: 0.1, // Base multiplier for how much a transaction affects price
-    MAX_IMPACT: 0.25, // Maximum percentage a single transaction can shift the price
-    TIER_THRESHOLD: 4 // Only goods of this tier and above cause an impact
-};
-
-
-/**
  * The key used to store and retrieve the game state from the browser's localStorage.
  * @type {string}
  */
