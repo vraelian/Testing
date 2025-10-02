@@ -86,6 +86,12 @@ export class MarketEventHandler {
                     const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                     const color = mode === 'buy' ? '#f87171' : '#34d399';
                     this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
+
+                    // Check for tutorial completion on relevant actions
+                    if (mode === 'sell') {
+                        const actionData = { type: 'ACTION', action: 'sell-item', goodId };
+                        this.simulationService.tutorialService.checkState(actionData);
+                    }
                 }
                 break;
             }
