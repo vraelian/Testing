@@ -918,6 +918,7 @@ body {
     height: 100dvh;
     overflow: hidden;
     touch-action: none; /* Prevents panning/zooming on the whole page */
+    margin: 0;
 }
 
 body {
@@ -927,7 +928,6 @@ body {
     -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10 and IE 11 */
     user-select: none; /* Standard syntax */
-    margin: 0;
 }
 
 /* Remove focus outlines from all elements */
@@ -2752,8 +2752,6 @@ COMPONENT-SPECIFIC STYLING
 
 
 /* --- [[START]] DEPRECATED STYLES --- */
-/* The styles below are no longer used by the navigation system but are kept for other UI elements.
-*/
 .btn-header {
      padding: 0.2rem 1.5rem;
      font-size: 1.125rem;
@@ -2763,8 +2761,6 @@ COMPONENT-SPECIFIC STYLING
 }
 
 @media (max-width: 768px) {
-    /* .btn-header rules are no longer needed for navigation but might be used elsewhere.
-*/
     .btn-header {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;
@@ -3803,6 +3799,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Perform an initial check for any tutorials that should trigger on game load.
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
+
+        // --- Mobile Viewport Fix ---
+        // Force a repaint after a short delay to correct initial viewport height issues on mobile.
+        setTimeout(() => {
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) {
+                gameContainer.style.display = 'none';
+                void gameContainer.offsetHeight; // This line forces the browser to reflow the layout.
+                gameContainer.style.display = ''; // Revert to the default display property.
+            }
+        }, 100);
     }
 });
 --- END OF FILE: ./js/main.js ---
@@ -4629,16 +4636,6 @@ export const WEALTH_MILESTONES = [
     { threshold: 300000000, revealsTier: 6 },
     { threshold: 2500000000, revealsTier: 7 }
 ];
-
-/**
- * Defines rules for how player transactions impact local market prices.
- */
-export const MARKET_IMPACT_RULES = {
-    SENSITIVITY: 0.1, // Base multiplier for how much a transaction affects price
-    MAX_IMPACT: 0.25, // Maximum percentage a single transaction can shift the price
-    TIER_THRESHOLD: 4 // Only goods of this tier and above cause an impact
-};
-
 
 /**
  * The key used to store and retrieve the game state from the browser's localStorage.
@@ -10478,7 +10475,7 @@ export class PlayerActionService {
             return 0;
         }
 
-        const { totalPrice } = this._calculateDiminishingReturns(goodId, quantity, state.currentLocationId);
+        const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
         
         const profit = totalSaleValue - (item.avgCost * quantity);
@@ -10792,42 +10789,6 @@ export class PlayerActionService {
         this.simulationService._checkHullWarnings(ship.id);
         this.gameState.setState({});
         return costPerTick;
-    }
-
-    /**
-     * Calculates the effect of diminishing returns on a sale.
-     * @param {string} goodId The ID of the commodity being sold.
-     * @param {number} quantity The amount being sold.
-     * @param {string} locationId The ID of the market location.
-     * @returns {{totalPrice: number, effectivePricePerUnit: number}}
-     * @private
-     */
-    _calculateDiminishingReturns(goodId, quantity, locationId) {
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketStock = this.gameState.market.inventory[locationId][goodId].quantity;
-        const basePrice = this.uiManager.getItemPrice(this.gameState.getState(), goodId, true);
-        
-        const threshold = marketStock * 0.1;
-        if (quantity <= threshold) {
-            return { totalPrice: basePrice * quantity, effectivePricePerUnit: basePrice };
-        }
-
-        const excessRatio = quantity / marketStock;
-        let reduction = 0;
-
-        if (good.tier <= 2) { // Low-Tier
-            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) { // Mid-Tier
-            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else { // High-Tier
-            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
-        }
-        
-        const effectivePrice = basePrice * (1 - reduction);
-        return {
-            totalPrice: Math.floor(effectivePrice * quantity),
-            effectivePricePerUnit: effectivePrice
-        };
     }
 }
 --- END OF FILE: ./js/services/player/PlayerActionService.js ---
