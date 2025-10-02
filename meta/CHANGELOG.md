@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [27.20] - 2025-10-02
+- travel animation refactor
+- code cleanup
+
 ## [27.10] - 2025-09-29
 - SimulationService refactor
 - EventManager refactor

@@ -36,15 +36,19 @@ export class ActionClickHandler {
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
-            case ACTION_IDS.BUY_SHIP:
+            case ACTION_IDS.BUY_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation();
+                this.simulationService.buyShip(shipId, e);
+                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                break;
+            }
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                this.simulationService.initiateShipTransactionAnimation(shipId, action, e);
-                if (action === ACTION_IDS.BUY_SHIP) {
-                    actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
-                }
+                this.simulationService.sellShip(shipId, e);
                 break;
             }
             case ACTION_IDS.SELECT_SHIP: {

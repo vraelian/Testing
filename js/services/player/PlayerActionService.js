@@ -133,20 +133,6 @@ export class PlayerActionService {
     }
 
     /**
-     * Coordinates the ship purchase/sale animation and the actual transaction.
-     * @param {string} shipId - The ID of the ship being bought or sold.
-     * @param {string} action - The type of transaction ('buy-ship' or 'sell-ship').
-     * @param {Event} event - The original click event for visual effects.
-     */
-    initiateShipTransactionAnimation(shipId, action, event) {
-        if (action === ACTION_IDS.BUY_SHIP) {
-            this.buyShip(shipId, event);
-        } else if (action === ACTION_IDS.SELL_SHIP) {
-            this.sellShip(shipId, event);
-        }
-    }
-
-    /**
      * Purchases a new ship and adds it to the player's hangar.
      * @param {string} shipId - The ID of the ship to buy.
      * @param {Event} [event] - The click event for placing floating text.

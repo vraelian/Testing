@@ -154,11 +154,6 @@ export class TutorialService {
             return;
         }
 
-        // --- NEW: Special handling for hangar tutorial mode switch ---
-        if (step.stepId === 'hangar_2a') {
-            this.simulationService.setHangarShipyardMode('hangar');
-        }
-
         // Apply navigation lock based on tutorial data.
         if (step.hasOwnProperty('navLock')) {
             // A step can explicitly define its own lock (or null to unlock).

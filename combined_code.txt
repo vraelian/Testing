@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 27.10</title>
+    <title>Orbital Trading 27.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -46,7 +46,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 27.10</p>
+            <p>Version 27.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -223,6 +223,7 @@
     <div id="generic-tooltip" class="generic-tooltip"></div>
     
     <div id="tutorial-highlight-overlay" class="hidden"></div>
+    <div id="orientation-overlay">Please rotate your device to portrait mode.</div>
 
     <script type="module" src="./js/main.js"></script>
     <script>
@@ -236,7 +237,6 @@
             });
         }
     </script>
-    <div id="orientation-overlay">Please rotate your device to portrait mode.</div>
 </body>
 </html>
 --- END OF FILE: ./index.html ---
@@ -503,162 +503,197 @@
 --- END OF FILE: ./css/debug.css ---
 
 --- START OF FILE: ./css/tutorial.css ---
-    /* css/tutorial.css */
-    @keyframes shimmer {
-        0% { background-position: -400px 0; }
-        100% { background-position: 400px 0; }
+/* css/tutorial.css */
+@keyframes shimmer {
+    0% {
+        background-position: -400px 0;
     }
-    @keyframes green-pulse {
-        0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
-        50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
-        100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+    100% {
+        background-position: 400px 0;
     }
-
-    #tutorial-toast-container {
-        background-color: rgba(13, 42, 42, 0.95);
-        color: #f0fff0;
-        border: 2px solid transparent;
-        border-image: linear-gradient(to right, #d4af37, #fde047, #d4af37);
-        border-image-slice: 1;
-        animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out;
-        background-image: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-        background-repeat: no-repeat;
-        background-size: 200px 100%;
-        z-index: 190;
-        width: 90%;
-        max-width: 385px; /* Reduced width by ~15% from 450px */
-        max-height: 225px; /* Reduced height by 10% from 250px */
+}
+@keyframes green-pulse {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
     }
-
-    /* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
-    #tutorial-toast-container:not(.hidden) {
-        display: flex;
-        flex-direction: column;
+    50% {
+        box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
     }
-
-    #tutorial-toast-text {
-        text-align: left;
-        overflow-y: auto; /* Allow vertical scrolling */
-        flex-grow: 1; /* Allow the text container to fill available space */
-        padding-right: 1rem; /* Add padding for the scrollbar */
+    100% {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
     }
-
-    .tutorial-highlight {
-        position: relative;
-        z-index: 99;
-    }
-
-    .tt-top-center, .tt-top { top: 5%; left: 50%; transform: translateX(-50%); }
-    .tt-left { top: 50%; left: 2%; transform: translateY(-50%); }
-    .tt-right { top: 50%; right: 2%; transform: translateY(-50%); }
-    .tt-bottom-center { bottom: 15%; left: 50%; transform: translateX(-50%); }
-    .tt-bottom-right { bottom: 15%; right: 2%; }
-
-    .lore-container {
-        cursor: pointer;
-        display: inline;
-        color: #a3b8ee;
-        font-style: italic;
-        font-weight: bold;
-    }
-    .lore-tooltip {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 420px;
-        max-width: 90vw;
-        max-height: 55vh;
-        overflow-y: auto;
-        background-color: #1f2937;
-        border: 2px solid #ffffff;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        font-family: 'Exo 2', sans-serif;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #d0d8e8;
-        z-index: 60;
-        text-align: left;
-        font-style: normal;
-        animation: pulse-white 2.5s infinite;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .tutorial-tooltip {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 420px;
-        max-width: 90vw;
-        max-height: 55vh;
-        overflow-y: auto;
-        background-color: #1f2937;
-        border: 2px solid #10b981;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #d0d8e8;
-        z-index: 60;
-        text-align: left;
-        font-style: normal;
-        animation: pulse-green-border 2.5s infinite;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .lore-tooltip.visible, .tutorial-tooltip.visible {
-        display: block;
-    }
-    .lore-tooltip::-webkit-scrollbar, .tutorial-tooltip::-webkit-scrollbar {
-        display: none;
-    }
-
-    /* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
-    #tutorial-toast-text::-webkit-scrollbar {
+}
+#tutorial-toast-container {
+    background-color: rgba(13, 42, 42, 0.95);
+    color: #f0fff0;
+    border: 2px solid transparent;
+    border-image: linear-gradient(to right, #d4af37, #fde047, #d4af37);
+    border-image-slice: 1;
+    animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    background-repeat: no-repeat;
+    background-size: 200px 100%;
+    z-index: 190;
+    width: 90%;
+    max-width: 385px;
+    max-height: 225px;
+}
+/* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
+#tutorial-toast-container:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+}
+#tutorial-toast-text {
+    text-align: left;
+    overflow-y: auto;
+    /* Allow vertical scrolling */
+    flex-grow: 1;
+    /* Allow the text container to fill available space */
+    padding-right: 1rem;
+    /* Add padding for the scrollbar */
+}
+.tutorial-highlight {
+    position: relative;
+    z-index: 99;
+}
+.tt-top-center,
+.tt-top {
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.tt-left {
+    top: 50%;
+    left: 2%;
+    transform: translateY(-50%);
+}
+.tt-right {
+    top: 50%;
+    right: 2%;
+    transform: translateY(-50%);
+}
+.tt-bottom-center {
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.tt-bottom-right {
+    bottom: 15%;
+    right: 2%;
+}
+.lore-container {
+    cursor: pointer;
+    display: inline;
+    color: #a3b8ee;
+    font-style: italic;
+    font-weight: bold;
+}
+.lore-tooltip {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    max-width: 90vw;
+    max-height: 55vh;
+    overflow-y: auto;
+    background-color: #1f2937;
+    border: 2px solid #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #d0d8e8;
+    z-index: 60;
+    text-align: left;
+    font-style: normal;
+    animation: pulse-white 2.5s infinite;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.tutorial-tooltip {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    max-width: 90vw;
+    max-height: 55vh;
+    overflow-y: auto;
+    background-color: #1f2937;
+    border: 2px solid #10b981;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #d0d8e8;
+    z-index: 60;
+    text-align: left;
+    font-style: normal;
+    animation: pulse-green-border 2.5s infinite;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.lore-tooltip.visible,
+.tutorial-tooltip.visible {
+    display: block;
+}
+.lore-tooltip::-webkit-scrollbar,
+.tutorial-tooltip::-webkit-scrollbar {
+    display: none;
+}
+/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
+#tutorial-toast-text::-webkit-scrollbar {
     width: 8px;
-    }
-    #tutorial-toast-text::-webkit-scrollbar-track {
+}
+#tutorial-toast-text::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
-    }
-    #tutorial-toast-text::-webkit-scrollbar-thumb {
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb {
     background-color: #d4af37;
     border-radius: 4px;
     border: 2px solid transparent;
     background-clip: content-box;
-    }
-    #tutorial-toast-text::-webkit-scrollbar-thumb:hover {
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb:hover {
     background-color: #fde047;
+}
+/* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
+@media (max-width: 768px) {
+    #tutorial-toast-container {
+        width: 90%;
+        /* Explicitly set width for mobile */
+        max-width: 385px;
+        /* Ensure max-width is consistent */
     }
-    /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
-
-    @media (max-width: 768px) {
-        #tutorial-toast-container {
-            width: 90%; /* Explicitly set width for mobile */
-            max-width: 385px; /* Ensure max-width is consistent */
-        }
-
-        /* Override positions for mobile to be more consistent */
-        .tt-top-center, .tt-left, .tt-right, .tt-top {
-            top: 2% !important;
-            left: 5% !important; /* Anchor to the left */
-            transform: none !important; /* Remove horizontal centering */
-            right: auto !important;
-            bottom: auto !important;
-        }
-        
-        .tt-bottom-center, .tt-bottom-right {
-            bottom: 15% !important;
-            top: auto !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            right: auto !important;
-        }
+    /* Override positions for mobile to be more consistent */
+    .tt-top-center,
+    .tt-left,
+    .tt-right,
+    .tt-top {
+        top: 2% !important;
+        left: 5% !important;
+        /* Anchor to the left */
+        transform: none !important;
+        /* Remove horizontal centering */
+        right: auto !important;
+        bottom: auto !important;
     }
+    .tt-bottom-center,
+    .tt-bottom-right {
+        bottom: 15% !important;
+        top: auto !important;
+        left: 5% !important;
+        /* Anchor to the left like the top ones to restore width */
+        transform: none !important;
+        /* Remove the centering transform */
+        right: auto !important;
+    }
+}
 --- END OF FILE: ./css/tutorial.css ---
 
 --- START OF FILE: ./css/hud.css ---
@@ -2295,7 +2330,8 @@ CORE THEME & VARIABLE SETUP
     --class-b-color: #4ade80;
     --class-c-color: #e5e7eb;
     
-    /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set. */
+    /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set.
+ */
     --theme-color-primary: #fde047;
     --theme-color-glow: #fef08a;
     --theme-bg-gradient: linear-gradient(145deg, rgba(113, 63, 18, 0.5), rgba(49, 46, 129, 0.8));
@@ -2345,32 +2381,6 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column; 
     user-select: none;
 }
-
-/* --- PHASE 2: ANIMATION STYLES (REFINED) --- */
-@keyframes glow-and-fade-out {
-    0% {
-        opacity: 1;
-        filter: brightness(1) blur(0);
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.8;
-        filter: brightness(2.5) blur(4px);
-        transform: scale(1.05);
-    }
-    100% {
-        opacity: 0;
-        filter: brightness(1) blur(12px);
-        transform: scale(0.9);
-    }
-}
-
-.ship-page-minimizing {
-    animation: glow-and-fade-out 3s ease-in-out forwards;
-}
-/* --- END PHASE 2 --- */
-
-
 
 /* Backgrounds & Theming */
 #ship-terminal {
@@ -5205,7 +5215,7 @@ export const DB = {
                 {
                     stepId: 'finance_1',
                     text: "That was a big purchase, but don't worry - you've still got some <b class='hl-yellow font-bold'>credits</b> left over!<br><br>Your transaction history and debts can be viewed on the <b>Finance</b> tab within <b>Data</b>.",
-                    position: { desktop: 'bottom-right', mobile: 'top' },
+                    position: { desktop: 'bottom-right', mobile: 'top-center' },
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: 'finance_2',
                     isSkippable: false
@@ -5213,7 +5223,7 @@ export const DB = {
                 {
                     stepId: 'finance_2',
                     text: "Dont forget, your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>3 years</b>.<br><br>You will need to earn <b class='hl-yellow font-bold'>credits</b> to <b>pay off your debt</b>!",
-                    position: { desktop: 'bottom-right', mobile: 'top' },
+                    position: { desktop: 'bottom-right', mobile: 'bottom-center' },
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: null,
                     isSkippable: false
@@ -5226,26 +5236,167 @@ export const DB = {
             trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
             navLock: true,
             steps: [
-                { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>.<br><br>Check the <b>Missions</b> tab often for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
-                { "stepId": "mission_1_2", "text": "A freelancer at the <b>Mars</b> station has put in a <b>Delivery</b> request. Select the mission '<b>Milk Run to Luna</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
-                { "stepId": "mission_1_3", "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
-                { "stepId": "mission_1_4", "text": "Mission accepted!<br><br>The contract is now <b>active</b> and the cargo as been loaded onto your ship, the <b>{shipName}</b>.<br><br>The freelancer has also loaded extra <b>Plasteel</b> which you can sell for <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-                { "stepId": "mission_1_5", "text": "This mission must be completed on the <b>Moon</b>, but you are presently docked at <b>Mars</b>! Therefore, it's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>On the <b>nav bar</b> at the top, select the <b>Ship</b> tab, then the <b>Navigation</b> tab.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
-                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b class='hl-blue'>fuel</b>, and wear on the <b class='hl-green'>hull</b> of your ship.<br><br>Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
-                { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station!<br><br>It's time to deliver the <b>Plasteel</b>. Select the active mission and <b>deliver the Plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
-                { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the <b>Starport</b> tab, then the <b>Market</b> tab.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } },
-                { "stepId": "mission_2_2", "text": "This is the <b>Moon Market</b>.<br>On each commodity you will find a wealth of information to aid your trading.<br><br>The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>Select the <b class='hl-yellow font-bold'>Buy/Sell toggle</b> to transition to sale mode, and then sell your single unit of <b>Plasteel</b>.", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
-                { "stepId": "mission_2_3", "text": "<b class='hl-green font-bold'>Pure profit</b>!<br><br>However, you still need more <b class='hl-yellow font-bold'>credits</b>! Return to the <b>Mission Terminal</b> by selecting the <b>Data</b> tab.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_2_4", "text": "This mission offers a <b class='hl-yellow font-bold'>credit</b> reward.<br><br>Accept the mission, <b>Martian Resupply</b>.", "position": { "desktop": "bottom-right", "mobile": "top" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
-                { "stepId": "mission_3_1", "text": "To complete this mission you will need <b>travel to Mars</b> after you have purchased <b>two Plasteel</b> from any <b>Market</b>.<br><br>After you have acquired the <b>Plasteel</b>, visit the <b>Mission</b> tab on <b>Mars</b> to submit the cargo and complete the mission. ", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
-                { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "top" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
+                { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>.<br><br>Check the <b>Missions</b> tab often for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
+                { "stepId": "mission_1_2", "text": "A freelancer at the <b>Mars</b> station has put in a <b>Delivery</b> request. Select the mission '<b>Milk Run to Luna</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
+                { "stepId": "mission_1_3", "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
+                { "stepId": "mission_1_4", "text": "Mission accepted!<br><br>The contract is now <b>active</b> and the cargo as been loaded onto your ship, the <b>{shipName}</b>.<br><br>The freelancer has also loaded extra <b>Plasteel</b> which you can sell for <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
+                { "stepId": "mission_1_5", "text": "This mission must be completed on the <b>Moon</b>, but you are presently docked at <b>Mars</b>! Therefore, it's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>On the <b>nav bar</b> at the top, select the <b>Ship</b> tab, then the <b>Navigation</b> tab.", "position": { "desktop": "bottom-center", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
+                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b class='hl-blue'>fuel</b>, and wear on the <b class='hl-green'>hull</b> of your ship.<br><br>Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top-center" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
+                { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station!<br><br>It's time to deliver the <b>Plasteel</b>. Select the active mission and <b>deliver the Plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
+                { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
+                { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
+                { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the <b>Starport</b> tab, then the <b>Market</b> tab.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } },
+                { "stepId": "mission_2_2", "text": "This is the <b>Moon Market</b>.<br>On each commodity you will find a wealth of information to aid your trading.<br><br>The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>Select the <b class='hl-yellow font-bold'>Buy/Sell toggle</b> to transition to sale mode, and then sell your single unit of <b>Plasteel</b>.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
+                { "stepId": "mission_2_3", "text": "<b class='hl-green font-bold'>Pure profit</b>!<br><br>However, you still need more <b class='hl-yellow font-bold'>credits</b>! Return to the <b>Mission Terminal</b> by selecting the <b>Data</b> tab.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
+                { "stepId": "mission_2_4", "text": "This mission offers a <b class='hl-yellow font-bold'>credit</b> reward.<br><br>Accept the mission, <b>Martian Resupply</b>.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
+                { "stepId": "mission_3_1", "text": "To complete this mission you will need to <b>travel to Mars</b> after you have purchased <b>two Plasteel</b> from any <b>Market</b>.<br><br>After you have acquired the <b>Plasteel</b>, visit the <b>Mission</b> tab on <b>Mars</b> to submit the cargo and complete the mission. ", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
+                { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
             ]
         }
     }
 };
 --- END OF FILE: ./js/data/database.js ---
+
+--- START OF FILE: ./js/services/ui/TravelAnimationService.js ---
+// js/services/ui/TravelAnimationService.js
+import { DB } from '../../data/database.js';
+
+export class TravelAnimationService {
+    /**
+     * @param {boolean} isMobile - Flag to determine layout adjustments.
+     */
+    constructor(isMobile) {
+        this.isMobile = isMobile;
+    }
+
+    /**
+     * Renders and controls the entire travel animation sequence.
+     * @param {object} from - The starting location object.
+     * @param {object} to - The destination location object.
+     * @param {object} travelInfo - Contains travel time and fuel cost.
+     * @param {number} totalHullDamagePercent - The hull damage percentage to display.
+     * @param {function} finalCallback - The function to call when the animation is complete.
+     */
+    play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
+        const modal = document.getElementById('travel-animation-modal');
+        const statusText = document.getElementById('travel-status-text');
+        const arrivalLore = document.getElementById('travel-arrival-lore');
+        const canvas = document.getElementById('travel-canvas');
+        const ctx = canvas.getContext('2d');
+        const progressContainer = document.getElementById('travel-progress-container');
+        const progressBar = document.getElementById('travel-progress-bar');
+        const readoutContainer = document.getElementById('travel-readout-container');
+        const infoText = document.getElementById('travel-info-text');
+        const hullDamageText = document.getElementById('travel-hull-damage');
+        const confirmButton = document.getElementById('travel-confirm-button');
+        let animationFrameId = null;
+
+        statusText.textContent = `Traveling to ${to.name}...`;
+        arrivalLore.textContent = '';
+        arrivalLore.style.opacity = 0;
+        readoutContainer.classList.add('hidden');
+        readoutContainer.style.opacity = 0;
+        confirmButton.classList.add('hidden');
+        confirmButton.style.opacity = 0;
+        progressContainer.classList.remove('hidden');
+        progressBar.style.width = '0%';
+        modal.classList.remove('hidden');
+        
+        const duration = 2500;
+        let startTime = null;
+        const fromEmoji = DB.LOCATION_VISUALS[from.id] || '❓';
+        const toEmoji = DB.LOCATION_VISUALS[to.id] || '❓';
+        const shipEmoji = '🚀';
+
+        let stars = [];
+        const numStars = 150;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        for (let i = 0; i < numStars; i++) {
+            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 1.5, speed: 0.2 + Math.random() * 0.8, alpha: 0.5 + Math.random() * 0.5 });
+        }
+
+        const animationLoop = (currentTime) => {
+            if (!startTime) startTime = currentTime;
+            const elapsedTime = currentTime - startTime;
+            let progress = Math.min(elapsedTime / duration, 1);
+            progress = 1 - Math.pow(1 - progress, 3);
+
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#FFF';
+            for (let i = 0; i < numStars; i++) {
+                const star = stars[i];
+                if (progress < 1) {
+                    star.x -= star.speed;
+                    if (star.x < 0) star.x = canvas.width;
+                }
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.globalAlpha = star.alpha;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+
+            const padding = 60;
+            const startX = padding;
+            const endX = canvas.width - padding;
+            const y = canvas.height / 2;
+            ctx.font = '42px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(fromEmoji, startX, y);
+            ctx.fillText(toEmoji, endX, y);
+            const shipX = startX + (endX - startX) * progress;
+            ctx.save();
+            ctx.translate(shipX, y);
+            ctx.font = '17px sans-serif';
+            ctx.fillText(shipEmoji, 0, 0);
+            ctx.restore();
+
+            progressBar.style.width = `${progress * 100}%`;
+
+            if (progress < 1) {
+                animationFrameId = requestAnimationFrame(animationLoop);
+            } else {
+                statusText.textContent = `Arrived at ${to.name}`;
+                arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
+                infoText.innerHTML = `
+                    <div class="text-center ${this.isMobile ? 'travel-info-mobile' : ''}">
+                        <div>Journey Time: ${travelInfo.time} Days</div>
+                        <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
+                    </div>`;
+                hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
+                if (totalHullDamagePercent > 0.01) {
+                    hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;
+                    if (this.isMobile) {
+                        infoText.querySelector('div').appendChild(hullDamageText);
+                    }
+                } else {
+                    hullDamageText.innerHTML = '';
+                }
+                
+                arrivalLore.style.opacity = 1;
+                progressContainer.classList.add('hidden');
+                readoutContainer.classList.remove('hidden');
+                confirmButton.classList.remove('hidden');
+                setTimeout(() => {
+                    readoutContainer.style.opacity = 1;
+                    confirmButton.style.opacity = 1;
+                }, 50);
+            }
+        }
+
+        animationFrameId = requestAnimationFrame(animationLoop);
+        confirmButton.onclick = () => {
+            cancelAnimationFrame(animationFrameId);
+            modal.classList.add('hidden');
+            if (finalCallback) finalCallback();
+        };
+    }
+}
+--- END OF FILE: ./js/services/ui/TravelAnimationService.js ---
 
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
@@ -7875,11 +8026,6 @@ export class TutorialService {
             return;
         }
 
-        // --- NEW: Special handling for hangar tutorial mode switch ---
-        if (step.stepId === 'hangar_2a') {
-            this.simulationService.setHangarShipyardMode('hangar');
-        }
-
         // Apply navigation lock based on tutorial data.
         if (step.hasOwnProperty('navLock')) {
             // A step can explicitly define its own lock (or null to unlock).
@@ -8250,6 +8396,7 @@ import { renderCargoScreen, _renderMaxCargoModal } from '../ui/components/CargoS
 import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
+import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
 export class UIManager {
     /**
@@ -8267,9 +8414,11 @@ export class UIManager {
         this.simulationService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
+        this.marketScrollPosition = 0;
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
+        this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
@@ -8569,9 +8718,16 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
+        const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        if (marketScrollPanel) {
+            this.marketScrollPosition = marketScrollPanel.scrollTop;
+        }
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
+        if (marketScrollPanel) {
+            marketScrollPanel.scrollTop = this.marketScrollPosition;
+        }
     }
 
     _saveMarketTransactionState() {
@@ -8738,122 +8894,7 @@ export class UIManager {
     }
     
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        const modal = document.getElementById('travel-animation-modal');
-        const statusText = document.getElementById('travel-status-text');
-        const arrivalLore = document.getElementById('travel-arrival-lore');
-        const canvas = document.getElementById('travel-canvas');
-        const ctx = canvas.getContext('2d');
-        const progressContainer = document.getElementById('travel-progress-container');
-        const progressBar = document.getElementById('travel-progress-bar');
-        const readoutContainer = document.getElementById('travel-readout-container');
-        const infoText = document.getElementById('travel-info-text');
-        const hullDamageText = document.getElementById('travel-hull-damage');
-        const confirmButton = document.getElementById('travel-confirm-button');
-        let animationFrameId = null;
-
-        statusText.textContent = `Traveling to ${to.name}...`;
-        arrivalLore.textContent = '';
-        arrivalLore.style.opacity = 0;
-        readoutContainer.classList.add('hidden');
-        readoutContainer.style.opacity = 0;
-        confirmButton.classList.add('hidden');
-        confirmButton.style.opacity = 0;
-        progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        modal.classList.remove('hidden');
-        
-        const duration = 2500;
-        let startTime = null;
-        const fromEmoji = DB.LOCATION_VISUALS[from.id] || '❓';
-        const toEmoji = DB.LOCATION_VISUALS[to.id] || '❓';
-        const shipEmoji = '🚀';
-
-        let stars = [];
-        const numStars = 150;
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        for (let i = 0; i < numStars; i++) {
-            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 1.5, speed: 0.2 + Math.random() * 0.8, alpha: 0.5 + Math.random() * 0.5 });
-        }
-
-        const animationLoop = (currentTime) => {
-            if (!startTime) startTime = currentTime;
-            const elapsedTime = currentTime - startTime;
-            let progress = Math.min(elapsedTime / duration, 1);
-            progress = 1 - Math.pow(1 - progress, 3);
-
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#FFF';
-            for (let i = 0; i < numStars; i++) {
-                const star = stars[i];
-                if (progress < 1) {
-                    star.x -= star.speed;
-                    if (star.x < 0) star.x = canvas.width;
-                }
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.globalAlpha = star.alpha;
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1.0;
-
-            const padding = 60;
-            const startX = padding;
-            const endX = canvas.width - padding;
-            const y = canvas.height / 2;
-            ctx.font = '42px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(fromEmoji, startX, y);
-            ctx.fillText(toEmoji, endX, y);
-            const shipX = startX + (endX - startX) * progress;
-            ctx.save();
-            ctx.translate(shipX, y);
-            ctx.font = '17px sans-serif';
-            ctx.fillText(shipEmoji, 0, 0);
-            ctx.restore();
-
-            progressBar.style.width = `${progress * 100}%`;
-
-            if (progress < 1) {
-                animationFrameId = requestAnimationFrame(animationLoop);
-            } else {
-                statusText.textContent = `Arrived at ${to.name}`;
-                arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
-                infoText.innerHTML = `
-                    <div class="text-center ${this.isMobile ? 'travel-info-mobile' : ''}">
-                        <div>Journey Time: ${travelInfo.time} Days</div>
-                        <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
-                    </div>`;
-                hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
-                if (totalHullDamagePercent > 0.01) {
-                    hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;
-                    if (this.isMobile) {
-                        infoText.querySelector('div').appendChild(hullDamageText);
-                    }
-                } else {
-                    hullDamageText.innerHTML = '';
-                }
-                
-                arrivalLore.style.opacity = 1;
-                progressContainer.classList.add('hidden');
-                readoutContainer.classList.remove('hidden');
-                confirmButton.classList.remove('hidden');
-                setTimeout(() => {
-                    readoutContainer.style.opacity = 1;
-                    confirmButton.style.opacity = 1;
-                }, 50);
-            }
-        }
-
-        animationFrameId = requestAnimationFrame(animationLoop);
-        confirmButton.onclick = () => {
-            cancelAnimationFrame(animationFrameId);
-            modal.classList.add('hidden');
-            if (finalCallback) finalCallback();
-        };
+        this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
 
     queueModal(modalId, title, description, callback = null, options = {}) {
@@ -9621,27 +9662,6 @@ export class UIManager {
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
     }
-
-    /**
-     * @JSDoc
-     * @method applyShipTransactionAnimation
-     * @description Applies the minimization animation to a ship card.
-     * @param {string} shipId - The ID of the ship being transacted.
-     */
-    applyShipTransactionAnimation(shipId) {
-        const carousel = this.cache.hangarScreen.querySelector('#hangar-carousel');
-        if (!carousel) return;
-
-        const pages = Array.from(carousel.children);
-        const pageToAnimate = pages.find(p => {
-            const button = p.querySelector(`[data-ship-id="${shipId}"]`);
-            return button !== null;
-        });
-
-        if (pageToAnimate) {
-            pageToAnimate.classList.add('ship-page-minimizing');
-        }
-    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -9734,6 +9754,12 @@ export class MarketEventHandler {
                     const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                     const color = mode === 'buy' ? '#f87171' : '#34d399';
                     this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
+
+                    // Check for tutorial completion on relevant actions
+                    if (mode === 'sell') {
+                        const actionData = { type: 'ACTION', action: 'sell-item', goodId };
+                        this.simulationService.tutorialService.checkState(actionData);
+                    }
                 }
                 break;
             }
@@ -9896,15 +9922,19 @@ export class ActionClickHandler {
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
-            case ACTION_IDS.BUY_SHIP:
+            case ACTION_IDS.BUY_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation();
+                this.simulationService.buyShip(shipId, e);
+                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                break;
+            }
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                this.simulationService.initiateShipTransactionAnimation(shipId, action, e);
-                if (action === ACTION_IDS.BUY_SHIP) {
-                    actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
-                }
+                this.simulationService.sellShip(shipId, e);
                 break;
             }
             case ACTION_IDS.SELECT_SHIP: {
@@ -10479,24 +10509,6 @@ export class PlayerActionService {
     }
 
     /**
-     * Coordinates the ship purchase/sale animation and the actual transaction.
-     * @param {string} shipId - The ID of the ship being bought or sold.
-     * @param {string} action - The type of transaction ('buy-ship' or 'sell-ship').
-     * @param {Event} event - The original click event for visual effects.
-     */
-    initiateShipTransactionAnimation(shipId, action, event) {
-        const transactionCallback = () => {
-            if (action === ACTION_IDS.BUY_SHIP) {
-                this.buyShip(shipId, event);
-            } else if (action === ACTION_IDS.SELL_SHIP) {
-                this.sellShip(shipId, event);
-            }
-        };
-
-        this.uiManager.applyShipTransactionAnimation(shipId, transactionCallback);
-    }
-
-    /**
      * Purchases a new ship and adds it to the player's hangar.
      * @param {string} shipId - The ID of the ship to buy.
      * @param {Event} [event] - The click event for placing floating text.
@@ -10824,6 +10836,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [27.20] - 2025-10-02
+- travel animation refactor
+- code cleanup
 
 ## [27.10] - 2025-09-29
 - SimulationService refactor

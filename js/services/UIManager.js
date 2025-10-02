@@ -33,6 +33,7 @@ export class UIManager {
         this.simulationService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
+        this.marketScrollPosition = 0;
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
@@ -336,9 +337,16 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
+        const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        if (marketScrollPanel) {
+            this.marketScrollPosition = marketScrollPanel.scrollTop;
+        }
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
+        if (marketScrollPanel) {
+            marketScrollPanel.scrollTop = this.marketScrollPosition;
+        }
     }
 
     _saveMarketTransactionState() {
@@ -1272,39 +1280,5 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
-    }
-
-    /**
-     * @JSDoc
-     * @method applyShipTransactionAnimation
-     * @description Applies the minimization animation to a ship card.
-     * @param {string} shipId - The ID of the ship being transacted.
-     * @param {function} onAnimationEnd - The callback to execute when the animation finishes.
-     */
-    applyShipTransactionAnimation(shipId, onAnimationEnd) {
-        const carousel = this.cache.hangarScreen.querySelector('#hangar-carousel');
-        if (!carousel) {
-            onAnimationEnd(); // If carousel isn't visible, just run the logic.
-            return;
-        }
-
-        const pages = Array.from(carousel.children);
-        const pageToAnimate = pages.find(p => {
-            const button = p.querySelector(`[data-ship-id="${shipId}"]`);
-            return button !== null;
-        });
-
-        if (pageToAnimate) {
-            pageToAnimate.classList.add('ship-page-minimizing');
-            
-            // Use a timeout that is slightly shorter than the animation duration
-            // to ensure the state update happens just before the animation ends.
-            setTimeout(() => {
-                onAnimationEnd();
-            }, 2800); // Animation is 3s, so this gives a small buffer.
-
-        } else {
-            onAnimationEnd(); // If the page isn't found, run the logic immediately.
-        }
     }
 }
