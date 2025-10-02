@@ -23,6 +23,8 @@
 
 html,
 body {
+    position: fixed; /* Prevent scrolling/rubber-banding on iOS */
+    width: 100%;
     height: 100dvh;
     overflow: hidden;
     touch-action: none; /* Prevents panning/zooming on the whole page */
