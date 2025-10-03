@@ -14,8 +14,19 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
+/**
+ * Sets the --app-height CSS variable to the actual window inner height.
+ * This is the definitive fix for the mobile viewport height bug on iOS.
+ */
+const setAppHeight = () => {
+    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+};
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Set the app height on initial load and whenever the window is resized.
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
@@ -52,9 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // --- Dependency Injection ---
-        // Services are created first, then dependencies are injected to avoid circular reference issues during instantiation.
         uiManager.setMissionService(missionService);
-        uiManager.setSimulationService(simulationService); // Inject SimulationService into UIManager
+        uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
@@ -66,22 +76,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
         if (!hasSave) {
-            // If no save file is found, begin the new game intro sequence.
             gameState.startNewGame('');
-            simulationService.timeService.advanceDays(7); // Seed market with 1 week of price history.
+            simulationService.timeService.advanceDays(7);
             simulationService.startIntroSequence();
         }
 
         // --- Bindings ---
         eventManager.bindEvents();
         
-        // If a save file was loaded, the intro is skipped, and the game container is shown immediately.
         if (hasSave) {
             document.getElementById('game-container').classList.remove('hidden');
             uiManager.render(gameState.getState());
         }
         
-        // Perform an initial check for any tutorials that should trigger on game load.
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
 });
