@@ -446,12 +446,10 @@ body {
 }
 /* --- [[END]] ORIENTATION LOCK OVERLAY --- */
 
-/* --- [[START]] PWA-SPECIFIC FULLSCREEN FIX --- */
-/* Specifically target the PWA when running in standalone mode on iOS 
-   to enforce the stable, large viewport height and fix the initial sizing bug. */
-@media all and (display-mode: standalone) {
-    .game-container {
-        height: 100lvh;
-    }
+/* --- [[START]] PWA/HOMESCREEN-SPECIFIC FULLSCREEN FIX --- */
+/* This rule applies ONLY when the JS detects it's a homescreen app on iOS.
+   It forces the container to use the large, stable viewport height, fixing the gap. */
+.is-ios-pwa .game-container {
+    height: 100lvh;
 }
-/* --- [[END]] PWA-SPECIFIC FULLSCREEN FIX --- */
+/* --- [[END]] PWA/HOMESCREEN-SPECIFIC FULLSCREEN FIX --- */

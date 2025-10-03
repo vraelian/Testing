@@ -27,6 +27,12 @@
     <link rel="stylesheet" href="./css/screens/services-screen.css">
     <link rel="stylesheet" href="./css/screens/cargo-screen.css">
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <script>
+        // iOS PWA detection script
+        if (window.navigator.standalone) {
+            document.documentElement.classList.add('is-ios-pwa');
+        }
+    </script>
 </head>
 <body>
 
