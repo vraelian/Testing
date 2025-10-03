@@ -2,9 +2,8 @@
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Tutorial step hangar_2 not correctly transition to hangar_3 because shipyard mode isn't changing to hangar mode on shipyard screen after purchase and disappearance of first ship
-- Ship card dismissal transition animations broken
 - Transactions reset the scroll page position on the market screen
+- Non-acceptable names break game after submission.
 - Introduce screen-surge effects vignette
 
 
