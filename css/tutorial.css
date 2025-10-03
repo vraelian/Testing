@@ -55,7 +55,7 @@
 }
 .tt-top-center,
 .tt-top {
-    top: 20%; /* Lowered from 5% */
+    top: 5%; 
     left: 50%;
     transform: translateX(-50%);
 }
@@ -172,7 +172,7 @@
     .tt-left,
     .tt-right,
     .tt-top {
-        top: 20% !important; /* Lowered from 2% */
+        top: 5% !important; 
         left: 5% !important;
         /* Anchor to the left */
         transform: none !important;

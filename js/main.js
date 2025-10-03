@@ -14,11 +14,32 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
+/**
+ * Sets the --app-height CSS variable to the actual window inner height.
+ * This is the definitive fix for the mobile viewport height bug on iOS.
+ */
+const setAppHeight = () => {
+    // Use the visualViewport height if available, as it's more reliable on mobile.
+    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
     const DEV_MODE = true; // Guard for development features.
+
+    // Set the app height on initial load and whenever the viewport changes.
+    setAppHeight();
+    
+    // The visualViewport API is a more reliable way to track viewport changes on mobile.
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setAppHeight);
+    } else {
+        window.addEventListener('resize', setAppHeight);
+    }
+
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
@@ -73,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         eventManager.bindEvents();
         
         if (hasSave) {
-            uiManager.showGameContainer(); // Use the UIManager method to show the container
+            uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
         

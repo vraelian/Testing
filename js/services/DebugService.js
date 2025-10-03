@@ -487,13 +487,14 @@ ${logHistory}
         this.diagElements = {
             winW: document.getElementById('diag-window-w'),
             winH: document.getElementById('diag-window-h'),
+            visualVpW: document.getElementById('diag-visual-vp-w'),
+            visualVpH: document.getElementById('diag-visual-vp-h'),
             gameW: document.getElementById('diag-game-container-w'),
             gameH: document.getElementById('diag-game-container-h'),
             bodyW: document.getElementById('diag-body-w'),
             bodyH: document.getElementById('diag-body-h'),
             pixelRatio: document.getElementById('diag-pixel-ratio'),
             displayMode: document.getElementById('diag-display-mode'),
-            userAgent: document.getElementById('diag-user-agent'),
             day: document.getElementById('diag-day'),
             navScreen: document.getElementById('diag-nav-screen'),
             tutorialBatch: document.getElementById('diag-tutorial-batch'),
@@ -517,13 +518,18 @@ ${logHistory}
 
         this.diagElements.winW.textContent = window.innerWidth;
         this.diagElements.winH.textContent = window.innerHeight;
+        
+        if (window.visualViewport) {
+            this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
+            this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
+        }
+
         this.diagElements.gameW.textContent = gameContainer.clientWidth;
         this.diagElements.gameH.textContent = gameContainer.clientHeight;
         this.diagElements.bodyW.textContent = document.body.clientWidth;
         this.diagElements.bodyH.textContent = document.body.clientHeight;
         this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
         this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
-        this.diagElements.userAgent.textContent = navigator.userAgent.substring(0, 40) + '...';
         this.diagElements.day.textContent = state.day;
         this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
         this.diagElements.tutorialBatch.textContent = state.tutorials.activeBatchId || 'none';
