@@ -87,7 +87,6 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
-    min-height: 545px; /* INCREASED FOR MORE VERTICAL SPACE */
     height: auto; 
 }
 

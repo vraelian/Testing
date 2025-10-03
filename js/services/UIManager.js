@@ -113,6 +113,7 @@ export class UIManager {
             launchModal: document.getElementById('launch-modal'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
+            
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -121,6 +122,7 @@ export class UIManager {
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
+            
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
@@ -1280,5 +1282,20 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
+
+        // --- Mobile Viewport Fix ---
+        // This is called when the game container becomes visible to force a repaint.
+        // This corrects layout issues on mobile browsers (especially iOS) where the initial
+        // viewport height might be calculated incorrectly before browser UI elements settle.
+        setTimeout(() => {
+            const gameContainer = this.cache.gameContainer;
+            if (gameContainer) {
+                // Forcing a reflow by quickly toggling the display property.
+                const originalDisplay = gameContainer.style.display;
+                gameContainer.style.display = 'none';
+                void gameContainer.offsetHeight; // This line forces a browser reflow.
+                gameContainer.style.display = originalDisplay || 'flex'; // Restore original or default
+            }
+        }, 150); // Increased delay slightly for more reliability
     }
 }

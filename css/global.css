@@ -23,7 +23,8 @@
 
 html,
 body {
-    height: 100dvh;
+    min-height: 100dvh; /* Use dynamic viewport height */
+    height: 100%; /* Fallback and reference for child elements */
     overflow: hidden;
     touch-action: none; /* Prevents panning/zooming on the whole page */
     margin: 0;
@@ -55,7 +56,7 @@ body {
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    min-height: 100%; /* Ensure it fills the full height of the body */
     padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
@@ -65,7 +66,7 @@ body {
     flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-top: 1.5rem; /* Replaces mt-6 */
+    padding-top: 1rem; /* Adjusted from 1.5rem */
     min-height: 0; /* Required for flex children to scroll */
 }
 

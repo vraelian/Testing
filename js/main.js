@@ -83,16 +83,5 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Perform an initial check for any tutorials that should trigger on game load.
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
-
-        // --- Mobile Viewport Fix ---
-        // Force a repaint after a short delay to correct initial viewport height issues on mobile.
-        setTimeout(() => {
-            const gameContainer = document.getElementById('game-container');
-            if (gameContainer) {
-                gameContainer.style.display = 'none';
-                void gameContainer.offsetHeight; // This line forces the browser to reflow the layout.
-                gameContainer.style.display = ''; // Revert to the default display property.
-            }
-        }, 100);
     }
 });
