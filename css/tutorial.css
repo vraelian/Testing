@@ -32,6 +32,7 @@
     width: 90%;
     max-width: 385px;
     max-height: 225px;
+    padding: 0.8rem; /* Reduced padding */
 }
 /* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
 #tutorial-toast-container:not(.hidden) {
@@ -46,6 +47,7 @@
     /* Allow the text container to fill available space */
     padding-right: 1rem;
     /* Add padding for the scrollbar */
+    font-size: 0.9rem; /* Reduced font size */
 }
 .tutorial-highlight {
     position: relative;
@@ -53,7 +55,7 @@
 }
 .tt-top-center,
 .tt-top {
-    top: 5%;
+    top: 20%; /* Lowered from 5% */
     left: 50%;
     transform: translateX(-50%);
 }
@@ -170,7 +172,7 @@
     .tt-left,
     .tt-right,
     .tt-top {
-        top: 2% !important;
+        top: 20% !important; /* Lowered from 2% */
         left: 5% !important;
         /* Anchor to the left */
         transform: none !important;
