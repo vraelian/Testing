@@ -47,13 +47,17 @@ export class UIManager {
 
         this._cacheDOM();
 
-        window.addEventListener('resize', () => {
-            const wasMobile = this.isMobile;
-            this.isMobile = window.innerWidth <= 768;
-            if (wasMobile !== this.isMobile) {
-                this.render(this.lastKnownState);
-            }
-        });
+        // This remains the correct way to handle orientation changes or desktop resizing.
+        window.addEventListener('resize', this._setAppHeight);
+    }
+
+    /**
+     * Sets the --app-height CSS variable to the actual window inner height.
+     * This is the definitive fix for the mobile viewport height bug on iOS.
+     * @private
+     */
+    _setAppHeight() {
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     }
 
     /**
@@ -1282,5 +1286,13 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
+    
+        // Set height immediately on show
+        this._setAppHeight();
+    
+        // Set height again on the next animation frame to catch the final, stable value
+        requestAnimationFrame(() => {
+            this._setAppHeight();
+        });
     }
 }

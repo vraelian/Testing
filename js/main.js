@@ -14,20 +14,7 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
-/**
- * Sets the --app-height CSS variable to the actual window inner height.
- * This is the definitive fix for the mobile viewport height bug on iOS.
- */
-const setAppHeight = () => {
-    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-};
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Set the app height on initial load (with a slight delay to allow the viewport to stabilize)
-    // and whenever the window is resized.
-    setTimeout(setAppHeight, 100);
-    window.addEventListener('resize', setAppHeight);
-
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
@@ -86,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         eventManager.bindEvents();
         
         if (hasSave) {
-            document.getElementById('game-container').classList.remove('hidden');
+            uiManager.showGameContainer(); // Use the UIManager method to show the container
             uiManager.render(gameState.getState());
         }
         
