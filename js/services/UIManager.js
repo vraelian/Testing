@@ -1282,20 +1282,5 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
-
-        // --- Mobile Viewport Fix ---
-        // This is called when the game container becomes visible to force a repaint.
-        // This corrects layout issues on mobile browsers (especially iOS) where the initial
-        // viewport height might be calculated incorrectly before browser UI elements settle.
-        setTimeout(() => {
-            const gameContainer = this.cache.gameContainer;
-            if (gameContainer) {
-                // Forcing a reflow by quickly toggling the display property.
-                const originalDisplay = gameContainer.style.display;
-                gameContainer.style.display = 'none';
-                void gameContainer.offsetHeight; // This line forces a browser reflow.
-                gameContainer.style.display = originalDisplay || 'flex'; // Restore original or default
-            }
-        }, 150); // Increased delay slightly for more reliability
     }
 }

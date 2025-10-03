@@ -139,7 +139,7 @@ export class EventManager {
      */
     _handleKeyDown(e) {
         if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
-        if (e.key === '`' && this.debugService) {
+        if ((e.key === '`' || e.key === '&') && this.debugService) {
             this.debugService.toggleVisibility();
             return;
         }

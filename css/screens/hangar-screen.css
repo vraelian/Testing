@@ -217,7 +217,7 @@ COMPONENT-SPECIFIC STYLING
 
 #ship-terminal-container.mode-hangar .info-panel-hangar, 
 #ship-terminal-container.mode-shipyard .info-panel-shipyard { 
-    display: flex; 
+    display: flex;
 }
 
 /* NEW: Ship Price Display for Shipyard */

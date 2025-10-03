@@ -23,8 +23,7 @@
 
 html,
 body {
-    min-height: 100dvh; /* Use dynamic viewport height */
-    height: 100%; /* Fallback and reference for child elements */
+    height: 100dvh; /* Use dynamic viewport height for modern mobile browsers */
     overflow: hidden;
     touch-action: none; /* Prevents panning/zooming on the whole page */
     margin: 0;
@@ -56,7 +55,7 @@ body {
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    min-height: 100%; /* Ensure it fills the full height of the body */
+    height: 100%; /* Fill the full height of the correctly sized body */
     padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
@@ -446,3 +445,13 @@ body {
     }
 }
 /* --- [[END]] ORIENTATION LOCK OVERLAY --- */
+
+/* --- [[START]] PWA-SPECIFIC FULLSCREEN FIX --- */
+/* Specifically target the PWA when running in standalone mode on iOS 
+   to enforce the stable, large viewport height and fix the initial sizing bug. */
+@media all and (display-mode: standalone) {
+    .game-container {
+        height: 100lvh;
+    }
+}
+/* --- [[END]] PWA-SPECIFIC FULLSCREEN FIX --- */

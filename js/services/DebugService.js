@@ -201,6 +201,8 @@ export class DebugService {
         this.logger = logger;
         this.gui = null;
         this.active = false;
+        this.diagActive = false;
+        this.diagElements = {};
         this.actions = {};
         this.debugState = {}; // Holds state for GUI controllers
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
@@ -211,10 +213,12 @@ export class DebugService {
      */
     init() {
         if (this.gui) return;
+        this._cacheDiagElements();
         this.gui = new lil.GUI();
         this.gui.domElement.style.display = 'none';
         this._registerDebugActions();
         this.buildGui();
+        this._startDiagLoop();
     }
 
     /**
@@ -235,6 +239,14 @@ export class DebugService {
         if (!this.gui) return;
         this.active = !this.active;
         this.gui.domElement.style.display = this.active ? 'block' : 'none';
+    }
+
+    toggleDiagnosticOverlay() {
+        this.diagActive = !this.diagActive;
+        const overlay = document.getElementById('diagnostic-overlay');
+        if (overlay) {
+            overlay.classList.toggle('hidden', !this.diagActive);
+        }
     }
 
     /**
@@ -471,6 +483,53 @@ ${logHistory}
         };
     }
 
+    _cacheDiagElements() {
+        this.diagElements = {
+            winW: document.getElementById('diag-window-w'),
+            winH: document.getElementById('diag-window-h'),
+            gameW: document.getElementById('diag-game-container-w'),
+            gameH: document.getElementById('diag-game-container-h'),
+            bodyW: document.getElementById('diag-body-w'),
+            bodyH: document.getElementById('diag-body-h'),
+            pixelRatio: document.getElementById('diag-pixel-ratio'),
+            displayMode: document.getElementById('diag-display-mode'),
+            userAgent: document.getElementById('diag-user-agent'),
+            day: document.getElementById('diag-day'),
+            navScreen: document.getElementById('diag-nav-screen'),
+            tutorialBatch: document.getElementById('diag-tutorial-batch'),
+            tutorialStep: document.getElementById('diag-tutorial-step'),
+        };
+    }
+    
+    _startDiagLoop() {
+        const update = () => {
+            this._updateDiagOverlay();
+            requestAnimationFrame(update);
+        };
+        requestAnimationFrame(update);
+    }
+
+    _updateDiagOverlay() {
+        if (!this.diagActive) return;
+
+        const state = this.gameState.getState();
+        const gameContainer = document.getElementById('game-container');
+
+        this.diagElements.winW.textContent = window.innerWidth;
+        this.diagElements.winH.textContent = window.innerHeight;
+        this.diagElements.gameW.textContent = gameContainer.clientWidth;
+        this.diagElements.gameH.textContent = gameContainer.clientHeight;
+        this.diagElements.bodyW.textContent = document.body.clientWidth;
+        this.diagElements.bodyH.textContent = document.body.clientHeight;
+        this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
+        this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
+        this.diagElements.userAgent.textContent = navigator.userAgent.substring(0, 40) + '...';
+        this.diagElements.day.textContent = state.day;
+        this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
+        this.diagElements.tutorialBatch.textContent = state.tutorials.activeBatchId || 'none';
+        this.diagElements.tutorialStep.textContent = state.tutorials.activeStepId || 'none';
+    }
+
     /**
      * @private
      */
@@ -547,6 +606,7 @@ ${logHistory}
         surgeFolder.add(this.actions.triggerSystemSurge, 'handler').name('Trigger Effect');
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
+        automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
         this.debugState.logLevel = 'INFO';
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
