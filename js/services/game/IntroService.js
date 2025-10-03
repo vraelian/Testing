@@ -51,20 +51,25 @@ export class IntroService {
         } else if (targetId === 'intro-submit-btn') {
             button.disabled = true;
             const input = document.getElementById('signature-input');
-            let playerName = input.value.trim().replace(/[^a-zA-Z0-9 ]/g, '');
-            if (!playerName) {
-                this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a name on the contract. Please provide your legal mark.");
-                button.disabled = false;
-                this._showNextModal(); // Re-show signature modal.
+            const playerName = input.value.trim();
+            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
+    
+            if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
+                this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
+                    // This callback runs after the "Invalid Signature" modal is closed.
+                    // We need to re-show the signature modal without advancing the step.
+                    this.gameState.player.introStep--; // Decrement to counteract the increment in _showNextModal
+                    this._showNextModal();
+                });
             } else {
-                this.gameState.player.name = playerName;
+                this.gameState.player.name = sanitizedPlayerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 390;
-
-                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${playerName} accepted Guild loan.`, {
+    
+                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
-                    name: playerName
+                    name: sanitizedPlayerName
                 });
                 this._startProcessingSequence();
             }
