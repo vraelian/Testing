@@ -23,8 +23,9 @@ const setAppHeight = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Set the app height on initial load and whenever the window is resized.
-    setAppHeight();
+    // Set the app height on initial load (with a slight delay to allow the viewport to stabilize)
+    // and whenever the window is resized.
+    setTimeout(setAppHeight, 100);
     window.addEventListener('resize', setAppHeight);
 
     // --- App Initialization ---
