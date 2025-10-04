@@ -17,10 +17,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - created Architectural Decisions meta file
 - created Roadmap meta file
 
-
 ## [27.00] - 2025-09-28
 - shipyard/hangar overhaul
 - UI update
+- hardest godamn update yet
 
 ## [26.15] - 2025-09-20
 - portrait mode enforcement
@@ -61,10 +61,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - minimizable commodities
 
 ## [25.00] - 2025-09-12
-- launch confirmation modal
+- navigation launch confirmation modal
 
 ## [24.70] - 2025-09-10
-- shipyard/hangar visual overhaul
+- shipyard/hangar visual overhaul v1
 - balance update
 - writing update
 

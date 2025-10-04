@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 27.20</title>
+    <title>Orbital Trading 27.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
     <link rel="stylesheet" href="./css/debug.css">
+    <link rel="stylesheet" href="./css/effects.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
@@ -46,7 +47,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 27.20</p>
+            <p>Version 27.30</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -228,13 +229,13 @@
     <div id="diagnostic-overlay" class="hidden">
         <div class="diag-section">
             <p><strong>Viewport:</strong> <span id="diag-window-w"></span>x<span id="diag-window-h"></span></p>
+            <p><strong>Visual VP:</strong> <span id="diag-visual-vp-w"></span>x<span id="diag-visual-vp-h"></span></p>
             <p><strong>Game Cont:</strong> <span id="diag-game-container-w"></span>x<span id="diag-game-container-h"></span></p>
             <p><strong>Body:</strong> <span id="diag-body-w"></span>x<span id="diag-body-h"></span></p>
         </div>
         <div class="diag-section">
             <p><strong>Pixel Ratio:</strong> <span id="diag-pixel-ratio"></span></p>
             <p><strong>Display Mode:</strong> <span id="diag-display-mode"></span></p>
-            <p><strong>User Agent:</strong> <span id="diag-user-agent"></span></p>
         </div>
         <div class="diag-section">
             <p><strong>Day:</strong> <span id="diag-day"></span></p>
@@ -600,6 +601,7 @@
     width: 90%;
     max-width: 385px;
     max-height: 225px;
+    padding: 0.8rem; /* Reduced padding */
 }
 /* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
 #tutorial-toast-container:not(.hidden) {
@@ -614,6 +616,7 @@
     /* Allow the text container to fill available space */
     padding-right: 1rem;
     /* Add padding for the scrollbar */
+    font-size: 0.9rem; /* Reduced font size */
 }
 .tutorial-highlight {
     position: relative;
@@ -621,7 +624,7 @@
 }
 .tt-top-center,
 .tt-top {
-    top: 5%;
+    top: 5%; 
     left: 50%;
     transform: translateX(-50%);
 }
@@ -738,7 +741,7 @@
     .tt-left,
     .tt-right,
     .tt-top {
-        top: 2% !important;
+        top: 5% !important; 
         left: 5% !important;
         /* Anchor to the left */
         transform: none !important;
@@ -955,6 +958,7 @@
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 :root {
+    --app-height: 100%; /* Default/fallback height */
     --module-width: 100px;
     --font-size: 0.6rem;
     --border-radius: 20px;
@@ -978,9 +982,9 @@
 
 html,
 body {
-    height: 100dvh; /* Use dynamic viewport height for modern mobile browsers */
+    height: 100%;
     overflow: hidden;
-    touch-action: none; /* Prevents panning/zooming on the whole page */
+    touch-action: none;
     margin: 0;
 }
 
@@ -988,12 +992,11 @@ body {
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
     color: #d0d8e8;
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10 and IE 11 */
-    user-select: none; /* Standard syntax */
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-/* Remove focus outlines from all elements */
 *:focus {
     outline: none;
 }
@@ -1010,7 +1013,7 @@ body {
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    height: 100%; /* Fill the full height of the correctly sized body */
+    height: var(--app-height); /* Use the JS-driven height variable */
     padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
@@ -1020,23 +1023,21 @@ body {
     flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-top: 1rem; /* Adjusted from 1.5rem */
-    min-height: 0; /* Required for flex children to scroll */
+    padding-top: 1rem;
+    min-height: 0;
 }
 
-/* New shared class for scrollable panels */
 .scroll-panel {
-    height: 75vh; /* Default height, can be overridden */
+    height: 75vh;
     overflow-y: auto;
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     padding: 0.25rem;
-    touch-action: pan-y; /* Allow vertical panning/scrolling within this element */
+    touch-action: pan-y;
 }
 .scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none;
 }
-
 
 .btn {
     transition: all 0.3s ease;
@@ -1086,105 +1087,35 @@ body {
     min-height: 0;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-@keyframes fadeOut {
-    from { opacity: 1; transform: scale(1); }
-    to { opacity: 0; transform: scale(0.95); }
-}
-@keyframes pulse-green-border {
-    0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
-    border-color: #10b981; }
-    50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
-    border-color: #34d399; }
-}
-@keyframes pulse-gold-border {
-    0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3);
-    border-color: #D4AF37; }
-    50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5);
-    border-color: #FFD700; }
-}
-@keyframes credits-pulse-glow {
-  0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
-  50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; }
-  100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; }
-}
-@keyframes pulse-green-glow {
-    0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; }
-    50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; }
-}
-@keyframes float-up {
-    from { transform: translateY(0); opacity: 1; }
-    to { transform: translateY(-60px);
-    opacity: 0; }
-}
-@keyframes shimmer {
-    0% { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
-}
-@keyframes green-pulse {
-    0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
-    50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); }
-    100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
-}
-@keyframes blue-pulse-glow {
-    0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
-    50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); }
-}
-@keyframes flash-green {
-    0%, 100% { color: #34d399; }
-    50% { color: #f0fdf4; }
-}
-@keyframes shimmer-effect {
-    0% { background-position: -600px 0; }
-    100% { background-position: 600px 0; }
-}
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes pulse-green-border { 0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3); border-color: #10b981; } 50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5); border-color: #34d399; } }
+@keyframes pulse-gold-border { 0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3); border-color: #D4AF37; } 50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5); border-color: #FFD700; } }
+@keyframes credits-pulse-glow { 0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } 50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; } 100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } }
+@keyframes pulse-green-glow { 0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; } 50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; } }
+@keyframes float-up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-60px); opacity: 0; } }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+@keyframes green-pulse { 0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); } 50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); } 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); } }
+@keyframes blue-pulse-glow { 0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); } 50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); } }
+@keyframes flash-green { 0%, 100% { color: #34d399; } 50% { color: #f0fdf4; } }
+@keyframes shimmer-effect { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
 
-.highlight-current {
-    border-color: #facc15;
-}
-.btn-pulse-green {
-    animation: pulse-green-border 2s infinite;
-}
-.btn-pulse-gold {
-    animation: pulse-gold-border 2s infinite;
-}
-.btn-pulse {
-    animation: pulse-green-border 2.5s infinite;
-}
-.credits-text-pulsing {
-  color: #bae6fd;
-  animation: credits-pulse-glow 2.5s infinite ease-in-out;
-}
-.pulse-green-glow {
-    animation: pulse-green-glow 2s infinite;
-}
+.highlight-current { border-color: #facc15; }
+.btn-pulse-green { animation: pulse-green-border 2s infinite; }
+.btn-pulse-gold { animation: pulse-gold-border 2s infinite; }
+.btn-pulse { animation: pulse-green-border 2.5s infinite; }
+.credits-text-pulsing { color: #bae6fd; animation: credits-pulse-glow 2.5s infinite ease-in-out; }
+.pulse-green-glow { animation: pulse-green-glow 2s infinite; }
 .hl { color: #fde047; font-weight: 700; }
 .hl-blue { color: #60a5fa; font-weight: 700; }
-.hl-red { color: #f87171; font-weight: 700;
-}
+.hl-red { color: #f87171; font-weight: 700; }
 .hl-green { color: #16a34a; font-weight: 700; }
 .hl-yellow { color: #facc15; font-weight: 700; }
-.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-}
+.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
-#save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip {
-    z-index: 101;
-}
-
-#garnishment-toast {
-     background-color: #991b1b;
-     border: 1px solid #f87171;
-     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
-}
-#hull-warning-toast {
-    background-color: #166534;
-    border: 1px solid #34d399;
-    box-shadow: 0 0 15px rgba(52, 211, 153, 0.7);
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
-}
+#save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip { z-index: 101; }
+#garnishment-toast { background-color: #991b1b; border: 1px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.7); }
+#hull-warning-toast { background-color: #166534; border: 1px solid #34d399; box-shadow: 0 0 15px rgba(52, 211, 153, 0.7); text-shadow: 0 0 5px rgba(255, 255, 255, 0.7); }
 
 [data-tooltip] { position: relative; }
 .tooltip-container[data-tooltip]:hover::after,
@@ -1193,223 +1124,34 @@ body {
 .hanger-ship-name[data-tooltip]:hover::after,
 .tooltip-active::after,
 .tooltip-container-below[data-tooltip]:hover::after,
-.loan-btn-tooltip[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    background-color: #111827;
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    white-space: pre-wrap;
-    width: max-content;
-    max-width: 220px;
-    word-wrap: break-word;
-    text-align: center;
-    z-index: 100;
-    display: block;
-    pointer-events: none;
-    font-family: 'Exo 2', sans-serif;
-    left: 105%;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.loan-btn-tooltip[data-tooltip]:hover::after {
-    font-family: 'Roboto Mono', monospace;
-}
-.tooltip-container-below[data-tooltip]:hover::after {
-    top: 100%;
-    margin-top: 5px;
-}
+.loan-btn-tooltip[data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; background-color: #111827; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.875rem; white-space: pre-wrap; width: max-content; max-width: 220px; word-wrap: break-word; text-align: center; z-index: 100; display: block; pointer-events: none; font-family: 'Exo 2', sans-serif; left: 105%; top: 50%; transform: translateY(-50%); }
+.loan-btn-tooltip[data-tooltip]:hover::after { font-family: 'Roboto Mono', monospace; }
+.tooltip-container-below[data-tooltip]:hover::after { top: 100%; margin-top: 5px; }
 
-#graph-tooltip {
-    position: fixed;
-    display: none;
-    background-color: #111827;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    padding: 0.75rem;
-    z-index: 60;
-    pointer-events: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    white-space: pre-wrap;
-    text-align: center;
-    font-size: 0.875rem;
-}
+#graph-tooltip { position: fixed; display: none; background-color: #111827; border: 1px solid #374151; border-radius: 8px; padding: 0.75rem; z-index: 60; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); white-space: pre-wrap; text-align: center; font-size: 0.875rem; }
+.generic-tooltip { position: fixed; display: none; background-color: #111827; border-radius: 6px; padding: 5px 10px; z-index: 60; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); white-space: pre-wrap; text-align: center; font-size: 0.875rem; color: #fff; font-family: 'Exo 2', sans-serif; max-width: 60vw; }
 
-.generic-tooltip {
-    position: fixed;
-    display: none;
-    background-color: #111827;
-    border-radius: 6px;
-    padding: 5px 10px;
-    z-index: 60;
-    pointer-events: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    white-space: pre-wrap;
-    text-align: center;
-    font-size: 0.875rem;
-    color: #fff;
-    font-family: 'Exo 2', sans-serif;
-    max-width: 60vw;
-}
+.panel-border { position: relative; }
+.panel-border::before, .panel-border::after { content: ''; position: absolute; width: 15px; height: 15px; border-color: var(--theme-border-color, #7a9ac0); border-style: solid; }
+.panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; border-top-left-radius: 10px; }
+.panel-border::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
 
-.panel-border {
-    position: relative;
-}
-.panel-border::before, .panel-border::after {
-    content: '';
-    position: absolute; width: 15px; height: 15px;
-    border-color: var(--theme-border-color, #7a9ac0);
-    border-style: solid;
-}
-.panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
-    border-top-left-radius: 10px; }
-.panel-border::after { bottom: -2px; right: -2px;
-    border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
+.floating-text { position: fixed; pointer-events: none; font-weight: 700; font-size: 1.25rem; text-shadow: 0 2px 4px rgba(0,0,0,0.7); z-index: 100; animation: float-up 2.5s forwards ease-out; }
 
-.floating-text {
-    position: fixed;
-    pointer-events: none;
-    font-weight: 700;
-    font-size: 1.25rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-    z-index: 100;
-    animation: float-up 2.5s forwards ease-out;
-}
+.cargo-item-card { width: 118px; height: 118px; border-radius: 8px; display: flex; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.4); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-sizing: border-box; }
+.base-concept { width: 100%; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; color: #fff; padding: 0; }
+.pt-header { display: flex; justify-content: space-between; width: 100%; padding: 4px 6px; background: rgba(0,0,0,0.3); align-items: center; box-sizing: border-box; flex-shrink: 0; }
+.pt-number, .pt-category { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; white-space: nowrap; }
+.pt-symbol-wrapper { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.pt-symbol { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.6rem; color: #333; -webkit-text-stroke: 1.1px #888; text-transform: uppercase; }
+.pt-quantity { font-family: 'Roboto Mono', monospace; font-size: 0.8rem; font-weight: 600; margin-top: 4px; text-shadow: 0 0 6px rgba(0,0,0,0.7); }
+.pt-name { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 6px; flex-shrink: 0; }
 
-/* --- [[START]] CARGO ITEM STYLES --- */
-.cargo-item-card {
-    width: 118px;
-    height: 118px;
-    border-radius: 8px;
-    display: flex;
-    position: relative;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-sizing: border-box;
-}
+@media (min-width: 768px) { .game-container { padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem; } }
+@media (max-width: 768px) { .cargo-item-tooltip[data-tooltip]:hover::after, .commodity-name-tooltip[data-tooltip]:hover::after, .hanger-ship-name[data-tooltip]:hover::after { display: none; } #header-main { flex-wrap: wrap; justify-content: center; } }
 
-.base-concept {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
-    color: #fff;
-    padding: 0;
-}
-.pt-header { 
-    display: flex; 
-    justify-content: space-between; 
-    width: 100%; 
-    padding: 4px 6px; 
-    background: rgba(0,0,0,0.3);
-    align-items: center;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-.pt-number, .pt-category { 
-    font-family: 'Share Tech Mono', monospace; 
-    font-size: 0.5rem;
-    white-space: nowrap;
-}
-.pt-symbol-wrapper {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-.pt-symbol {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 1.6rem;
-    color: #333;
-    -webkit-text-stroke: 1.1px #888;
-    text-transform: uppercase;
-}
-.pt-quantity {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-top: 4px;
-    text-shadow: 0 0 6px rgba(0,0,0,0.7);
-}
-.pt-name { 
-    font-family: 'Share Tech Mono', monospace; 
-    font-size: 0.5rem; 
-    text-align: center; 
-    text-transform: uppercase; 
-    letter-spacing: 0.5px;
-    padding: 4px 6px;
-    flex-shrink: 0;
-}
-/* --- [[END]] CARGO ITEM STYLES --- */
-
-@media (min-width: 768px) {
-    .game-container {
-        padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .cargo-item-tooltip[data-tooltip]:hover::after,
-    .commodity-name-tooltip[data-tooltip]:hover::after,
-    .hanger-ship-name[data-tooltip]:hover::after {
-        display: none;
-    }
-
-    #header-main {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-}
-
-/* --- [[START]] ORIENTATION LOCK OVERLAY --- */
-#orientation-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100dvh; /* Use dynamic viewport height */
-    background-color: #0c101d;
-    color: #d0d8e8;
-    z-index: 9999; /* Ensure it's on top of everything */
-    /* Flexbox properties for centering */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.2rem;
-    padding: 1rem;
-    display: none; /* Hidden by default */
-}
-
-/* This media query activates the overlay when in landscape */
-@media (orientation: landscape) {
-    #orientation-overlay {
-        display: flex;
-    }
-
-    #game-container {
-        display: none;
-    }
-}
-/* --- [[END]] ORIENTATION LOCK OVERLAY --- */
-
-/* --- [[START]] PWA-SPECIFIC FULLSCREEN FIX --- */
-/* Specifically target the PWA when running in standalone mode on iOS 
-   to enforce the stable, large viewport height and fix the initial sizing bug. */
-@media all and (display-mode: standalone) {
-    .game-container {
-        height: 100lvh;
-    }
-}
-/* --- [[END]] PWA-SPECIFIC FULLSCREEN FIX --- */
+#orientation-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: #0c101d; color: #d0d8e8; z-index: 9999; display: flex; justify-content: center; align-items: center; text-align: center; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; padding: 1rem; display: none; }
+@media (orientation: landscape) { #orientation-overlay { display: flex; } #game-container { display: none; } }
 --- END OF FILE: ./css/global.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -2718,6 +2460,76 @@ COMPONENT-SPECIFIC STYLING
 }
 --- END OF FILE: ./css/screens/navigation-screen.css ---
 
+--- START OF FILE: ./css/effects.css ---
+/* css/effects.css */
+#celebration-overlay {
+    --surge-color: #00ffff;
+    --surge-glow: #00ffff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 0;
+}
+.system-surge-active #celebration-overlay {
+    opacity: 1;
+    transition: opacity 0.2s ease-in;
+}
+.system-surge-fading #celebration-overlay {
+    opacity: 0;
+    transition: opacity 3s ease-out;
+}
+
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.surge-light {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, var(--surge-color), transparent 60%);
+    opacity: 0;
+    transition: opacity 2.9s ease-out;
+    z-index: 1;
+}
+.system-surge-active .surge-light {
+    opacity: 0.6;
+}
+
+.surge-text {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
+    transform: scale(0.5);
+    opacity: 0;
+    transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    text-align: center;
+    position: relative;
+    z-index: 3;
+}
+.system-surge-active .surge-text {
+    transform: scale(1);
+    opacity: 1;
+    transition-delay: 0.4s;
+}
+--- END OF FILE: ./css/effects.css ---
+
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */
 
@@ -3802,12 +3614,32 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
+/**
+ * Sets the --app-height CSS variable to the actual window inner height.
+ * This is the definitive fix for the mobile viewport height bug on iOS.
+ */
+const setAppHeight = () => {
+    // Use the visualViewport height if available, as it's more reliable on mobile.
+    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${height}px`);
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
     const DEV_MODE = true; // Guard for development features.
+
+    // Set the app height on initial load and whenever the viewport changes.
+    setAppHeight();
+    
+    // The visualViewport API is a more reliable way to track viewport changes on mobile.
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setAppHeight);
+    } else {
+        window.addEventListener('resize', setAppHeight);
+    }
+
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
@@ -3840,9 +3672,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // --- Dependency Injection ---
-        // Services are created first, then dependencies are injected to avoid circular reference issues during instantiation.
         uiManager.setMissionService(missionService);
-        uiManager.setSimulationService(simulationService); // Inject SimulationService into UIManager
+        uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
@@ -3854,22 +3685,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
         if (!hasSave) {
-            // If no save file is found, begin the new game intro sequence.
             gameState.startNewGame('');
-            simulationService.timeService.advanceDays(7); // Seed market with 1 week of price history.
+            simulationService.timeService.advanceDays(7);
             simulationService.startIntroSequence();
         }
 
         // --- Bindings ---
         eventManager.bindEvents();
         
-        // If a save file was loaded, the intro is skipped, and the game container is shown immediately.
         if (hasSave) {
-            document.getElementById('game-container').classList.remove('hidden');
+            uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
         
-        // Perform an initial check for any tutorials that should trigger on game load.
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
 });
@@ -4069,14 +3897,17 @@ export class SystemSurgeEffect extends BaseEffect {
         const theme = options.theme || 'blue';
         const profile = SystemSurgeEffect.PROFILES[theme] || SystemSurgeEffect.PROFILES.blue;
 
-        // Combine the profile defaults with any specific overrides from the options.
         this.options = {
             ...profile,
-            ...options, // Any options passed in will override the profile defaults.
-            theme: theme // Ensure the theme is correctly set.
+            ...options,
+            theme: theme
         };
 
         this.domElements = {};
+        this.particles = [];
+        this.animationFrameId = null;
+        this._animationLoop = this._animationLoop.bind(this);
+
         this.themes = {
             gold: { color: 'rgba(255, 223, 0, 0.8)', glow: '#ffd700' },
             green: { color: 'rgba(50, 255, 150, 0.8)', glow: '#32ff96' },
@@ -4092,31 +3923,21 @@ export class SystemSurgeEffect extends BaseEffect {
     /**
      * @method play
      * @override
-     * @description Runs the entire System Surge effect from creation to cleanup.
-     * @returns {Promise<void>} A promise that resolves when the effect is finished.
      */
     async play() {
         return new Promise(resolve => {
-            this._injectCSS();
             this._createDOM();
+            this.animationFrameId = requestAnimationFrame(this._animationLoop);
 
-            const onsetDuration = this.options.fadeInTime;
-            const holdDuration = this.options.lingerTime;
-            const fadeDuration = this.options.fadeOutTime;
+            const { fadeInTime, lingerTime, fadeOutTime } = this.options;
+            const totalDuration = fadeInTime + lingerTime + fadeOutTime;
 
-            setTimeout(() => {
-                document.body.classList.add('system-surge-active');
-            }, 50);
-
-            setTimeout(() => {
-                document.body.classList.remove('system-surge-active');
-                document.body.classList.add('system-surge-fading');
-            }, onsetDuration + holdDuration);
-
+            setTimeout(() => document.body.classList.add('system-surge-active'), 50);
+            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
             setTimeout(() => {
                 this._cleanup();
                 resolve();
-            }, onsetDuration + holdDuration + fadeDuration);
+            }, totalDuration);
         });
     }
 
@@ -4124,7 +3945,6 @@ export class SystemSurgeEffect extends BaseEffect {
      * @method _createDOM
      * @protected
      * @override
-     * @description Creates the DOM elements for the System Surge effect.
      */
     _createDOM() {
         const themeColors = this.themes[this.options.theme] || this.themes.blue;
@@ -4133,7 +3953,6 @@ export class SystemSurgeEffect extends BaseEffect {
         overlay.id = 'celebration-overlay';
         overlay.style.setProperty('--surge-color', themeColors.color);
         overlay.style.setProperty('--surge-glow', themeColors.glow);
-        overlay.style.setProperty('--particle-travel-distance', `${this.options.travelDistance}vh`);
         this.domElements.overlay = overlay;
 
         const surgeLight = document.createElement('div');
@@ -4145,58 +3964,83 @@ export class SystemSurgeEffect extends BaseEffect {
         surgeText.textContent = this.options.text;
         surgeText.style.fontSize = this.options.textSize;
         this.domElements.surgeText = surgeText;
-
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'particle-canvas';
+        this.domElements.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        
         overlay.appendChild(surgeLight);
+        overlay.appendChild(canvas);
         overlay.appendChild(surgeText);
-        this._createParticles(this.options.particleCount);
-
         document.body.appendChild(overlay);
+
+        this._resizeCanvas();
+        this._initializeParticles();
+        window.addEventListener('resize', this._resizeCanvas.bind(this));
+    }
+
+    _resizeCanvas() {
+        const canvas = this.domElements.canvas;
+        if (canvas) {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
     }
     
-    /**
-     * @method _createParticles
-     * @private
-     * @description Creates and animates a specified number of particle elements.
-     * @param {number} count - The number of particles to create.
-     */
-    _createParticles(count) {
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            particle.className = `particle particle-shape-${this.options.particleShape}`;
-            
-            const size = Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min;
-            const speed = Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min;
-            
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 1.5}s`;
-            particle.style.animationDuration = `${speed}s`;
-            this.domElements.overlay.appendChild(particle);
+    _initializeParticles() {
+        const canvas = this.domElements.canvas;
+        if (!canvas) return;
+        this.particles = [];
+        for (let i = 0; i < this.options.particleCount; i++) {
+            this.particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min,
+                speed: Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min,
+                alpha: 0.5 + Math.random() * 0.5
+            });
         }
     }
 
-    /**
-     * @method _injectCSS
-     * @protected
-     * @override
-     * @description Injects the CSS required for the System Surge effect into the document head.
-     */
-    _injectCSS() {
-        const style = document.createElement('style');
-        style.id = 'system-surge-styles';
-        style.textContent = SystemSurgeEffect.css;
-        document.head.appendChild(style);
-        this.domElements.style = style;
-    }
+    _animationLoop() {
+        if (!this.ctx) return;
+        
+        const canvas = this.domElements.canvas;
+        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const themeColors = this.themes[this.options.theme] || this.themes.blue;
+        this.ctx.fillStyle = themeColors.color;
+        
+        this.particles.forEach(p => {
+            p.y -= p.speed;
+            if (p.y < -p.size) {
+                p.y = canvas.height + p.size;
+                p.x = Math.random() * canvas.width;
+            }
+            
+            this.ctx.globalAlpha = p.alpha;
+            this.ctx.beginPath();
 
-    /**
-     * @method _cleanup
-     * @protected
-     * @override
-     * @description Removes all DOM elements, styles, and body classes added by the effect.
-     */
+            if (this.options.particleShape === 'circle') {
+                this.ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+            } else if (this.options.particleShape === 'sliver') {
+                this.ctx.rect(p.x, p.y, 2, p.size);
+            } else {
+                this.ctx.rect(p.x - 2, p.y, 4, p.size);
+            }
+            this.ctx.fill();
+        });
+        
+        this.animationFrameId = requestAnimationFrame(this._animationLoop);
+    }
+    
     _cleanup() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        window.removeEventListener('resize', this._resizeCanvas.bind(this));
         document.body.classList.remove('system-surge-active', 'system-surge-fading');
         Object.values(this.domElements).forEach(element => element && element.remove());
     }
@@ -4204,155 +4048,57 @@ export class SystemSurgeEffect extends BaseEffect {
     /**
      * @property {Object} PROFILES
      * @static
-     * @description Static property containing the default parameter profiles for each theme.
      */
     static PROFILES = {
         tan: {
-            text: 'LICENSE ACQUIRED',
+            text: 'TRADING LICENSE ACQUIRED',
             textSize: '8vw', particleCount: 74, particleShape: 'sliver',
             particleSize: { min: 1, max: 11 }, particleSpeed: { min: 1, max: 7.5 },
-            travelDistance: 110, fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
+            fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
         },
         silver: {
             text: 'SHIP PURCHASED',
             textSize: '8vw', particleCount: 90, particleShape: 'sliver',
             particleSize: { min: 1, max: 3 }, particleSpeed: { min: 1, max: 4 },
-            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
         },
         purple: {
-            text: 'WEALTH MILESTONE',
+            text: 'WEALTH MILESTONE ACHIEVED',
             textSize: '8vw', particleCount: 18, particleShape: 'rectangle',
             particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
-            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
         },
         orange: {
             text: 'ORANGE',
             textSize: '8vw', particleCount: 96, particleShape: 'sliver',
             particleSize: { min: 1, max: 6 }, particleSpeed: { min: 2.5, max: 8.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
         },
         blue: {
             text: 'HAPPY BIRTHDAY',
             textSize: '8vw', particleCount: 50, particleShape: 'circle',
             particleSize: { min: 7, max: 20 }, particleSpeed: { min: 5, max: 8.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
         },
         red: {
-            text: 'TOP CLASS',
+            text: 'SUPERIOR SHIP ACQUIRED',
             textSize: '8vw', particleCount: 115, particleShape: 'rectangle',
             particleSize: { min: 5, max: 6 }, particleSpeed: { min: 1, max: 5.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         green: {
-            text: 'WEALTH MILESTONE',
+            text: 'WEALTH MILESTONE ACHIEVED',
             textSize: '8vw', particleCount: 200, particleShape: 'sliver',
             particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 4 },
-            travelDistance: 50, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         gold: {
             text: 'MISSION COMPLETE',
             textSize: '8vw', particleCount: 62, particleShape: 'circle',
             particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
-            travelDistance: 115, fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
         }
     };
-
-    /**
-     * @property {string} css
-     * @static
-     * @description Static property containing all CSS for this effect.
-     */
-    static css = `
-        #celebration-overlay {
-            --surge-color: #00ffff;
-            --surge-glow: #00ffff;
-            --particle-travel-distance: 105vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            opacity: 0;
-        }
-
-        .system-surge-active #celebration-overlay {
-            opacity: 1;
-            transition: opacity 0.2s ease-in;
-        }
-        .system-surge-fading #celebration-overlay {
-            opacity: 0;
-            transition: opacity 3s ease-out;
-        }
-
-        .surge-light {
-            position: absolute;
-            bottom: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, var(--surge-color), transparent 60%);
-            opacity: 0.6;
-            transition: all 2.9s ease-out;
-        }
-        .system-surge-active .surge-light {
-            bottom: 0;
-            opacity: 0.6;
-            transition-delay: 0.2s;
-        }
-
-        .surge-text {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
-            transform: scale(0.5);
-            opacity: 0;
-            transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
-        .system-surge-active .surge-text {
-            transform: scale(1);
-            opacity: 1;
-            transition-delay: 0.4s;
-        }
-
-        .particle {
-            position: absolute;
-            bottom: -20px;
-            background-color: var(--surge-color);
-            opacity: 0;
-            animation: system-surge-rise 8s ease-in forwards;
-            box-shadow: 0 0 8px var(--surge-color);
-        }
-
-        .particle-shape-circle {
-            border-radius: 50%;
-        }
-        .particle-shape-star {
-            background-color: transparent;
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            border: 1px solid var(--surge-color);
-        }
-        .particle-shape-sliver {
-            width: 2px !important;
-            height: 20px !important;
-            border-radius: 2px;
-        }
-        .particle-shape-rectangle {
-            height: 12px !important;
-            width: 4px !important;
-        }
-
-        @keyframes system-surge-rise {
-            0% { transform: translateY(0); opacity: 0.9; }
-            100% { transform: translateY(calc(-1 * var(--particle-travel-distance))); opacity: 0; }
-        }
-    `;
 }
 --- END OF FILE: ./js/effects/SystemSurgeEffect.js ---
 
@@ -5926,7 +5672,6 @@ ${logHistory}
                         lingerTime: this.debugState.surgeLinger,
                         fadeOutTime: this.debugState.surgeFadeOut,
                         textSize: this.debugState.surgeTextSize,
-                        travelDistance: this.debugState.surgeTravelDistance,
                     });
                 }
             },
@@ -5946,13 +5691,14 @@ ${logHistory}
         this.diagElements = {
             winW: document.getElementById('diag-window-w'),
             winH: document.getElementById('diag-window-h'),
+            visualVpW: document.getElementById('diag-visual-vp-w'),
+            visualVpH: document.getElementById('diag-visual-vp-h'),
             gameW: document.getElementById('diag-game-container-w'),
             gameH: document.getElementById('diag-game-container-h'),
             bodyW: document.getElementById('diag-body-w'),
             bodyH: document.getElementById('diag-body-h'),
             pixelRatio: document.getElementById('diag-pixel-ratio'),
             displayMode: document.getElementById('diag-display-mode'),
-            userAgent: document.getElementById('diag-user-agent'),
             day: document.getElementById('diag-day'),
             navScreen: document.getElementById('diag-nav-screen'),
             tutorialBatch: document.getElementById('diag-tutorial-batch'),
@@ -5976,13 +5722,18 @@ ${logHistory}
 
         this.diagElements.winW.textContent = window.innerWidth;
         this.diagElements.winH.textContent = window.innerHeight;
+        
+        if (window.visualViewport) {
+            this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
+            this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
+        }
+
         this.diagElements.gameW.textContent = gameContainer.clientWidth;
         this.diagElements.gameH.textContent = gameContainer.clientHeight;
         this.diagElements.bodyW.textContent = document.body.clientWidth;
         this.diagElements.bodyH.textContent = document.body.clientHeight;
         this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
         this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
-        this.diagElements.userAgent.textContent = navigator.userAgent.substring(0, 40) + '...';
         this.diagElements.day.textContent = state.day;
         this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
         this.diagElements.tutorialBatch.textContent = state.tutorials.activeBatchId || 'none';
@@ -6035,30 +5786,54 @@ ${logHistory}
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
 
         const surgeFolder = this.gui.addFolder('System Surge Effect');
-        this.debugState.surgeTheme = 'gold';
-        this.debugState.surgeText = 'SYSTEM SURGE';
-        this.debugState.surgeParticleCount = 62;
-        this.debugState.surgeParticleShape = 'circle';
-        this.debugState.surgeParticleSizeMin = 3;
-        this.debugState.surgeParticleSizeMax = 18;
-        this.debugState.surgeParticleSpeedMin = 2.5;
-        this.debugState.surgeParticleSpeedMax = 12;
-        this.debugState.surgeFadeIn = 1750;
-        this.debugState.surgeLinger = 3600;
-        this.debugState.surgeFadeOut = 5000;
-        this.debugState.surgeTextSize = '8vw';
-        this.debugState.surgeTravelDistance = 90;
+        
+        // Initial state from the 'gold' profile
+        const initialProfile = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES.gold;
+        this.debugState.surgeThemePreset = 'gold';
+        this.debugState.surgeText = initialProfile.text;
+        this.debugState.surgeParticleCount = initialProfile.particleCount;
+        this.debugState.surgeParticleShape = initialProfile.particleShape;
+        this.debugState.surgeParticleSizeMin = initialProfile.particleSize.min;
+        this.debugState.surgeParticleSizeMax = initialProfile.particleSize.max;
+        this.debugState.surgeParticleSpeedMin = initialProfile.particleSpeed.min;
+        this.debugState.surgeParticleSpeedMax = initialProfile.particleSpeed.max;
+        this.debugState.surgeFadeIn = initialProfile.fadeInTime;
+        this.debugState.surgeLinger = initialProfile.lingerTime;
+        this.debugState.surgeFadeOut = initialProfile.fadeOutTime;
+        this.debugState.surgeTextSize = initialProfile.textSize;
 
-        surgeFolder.add(this.debugState, 'surgeTheme', ['gold', 'green', 'red', 'blue', 'orange', 'purple', 'silver', 'tan']).name('Theme');
+        const profiles = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES;
+        const themeNames = Object.keys(profiles);
+
+        surgeFolder.add(this.debugState, 'surgeThemePreset', themeNames).name('Load Preset').onChange(themeName => {
+            const profile = profiles[themeName];
+            if (profile) {
+                this.debugState.surgeTheme = themeName;
+                this.debugState.surgeText = profile.text;
+                this.debugState.surgeParticleCount = profile.particleCount;
+                this.debugState.surgeParticleShape = profile.particleShape;
+                this.debugState.surgeParticleSizeMin = profile.particleSize.min;
+                this.debugState.surgeParticleSizeMax = profile.particleSize.max;
+                this.debugState.surgeParticleSpeedMin = profile.particleSpeed.min;
+                this.debugState.surgeParticleSpeedMax = profile.particleSpeed.max;
+                this.debugState.surgeFadeIn = profile.fadeInTime;
+                this.debugState.surgeLinger = profile.lingerTime;
+                this.debugState.surgeFadeOut = profile.fadeOutTime;
+                this.debugState.surgeTextSize = profile.textSize;
+                // Refresh the GUI to show the new values
+                surgeFolder.controllers.forEach(c => c.updateDisplay());
+            }
+        });
+        
         surgeFolder.add(this.debugState, 'surgeText').name('Text');
+        surgeFolder.add(this.debugState, 'surgeTheme', themeNames).name('Theme');
         surgeFolder.add(this.debugState, 'surgeTextSize').name('Text Size');
         surgeFolder.add(this.debugState, 'surgeParticleCount', 0, 200, 1).name('Particle Count');
-        surgeFolder.add(this.debugState, 'surgeParticleShape', ['circle', 'star', 'sliver', 'rectangle']).name('Particle Shape');
+        surgeFolder.add(this.debugState, 'surgeParticleShape', ['circle', 'sliver', 'rectangle']).name('Particle Shape');
         surgeFolder.add(this.debugState, 'surgeParticleSizeMin', 1, 20, 1).name('Min Size');
         surgeFolder.add(this.debugState, 'surgeParticleSizeMax', 1, 20, 1).name('Max Size');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMin', 1, 20, 0.5).name('Min Speed (s)');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMax', 1, 20, 0.5).name('Max Speed (s)');
-        surgeFolder.add(this.debugState, 'surgeTravelDistance', 50, 200, 5).name('Travel Dist (vh)');
+        surgeFolder.add(this.debugState, 'surgeParticleSpeedMin', 1, 20, 0.5).name('Min Speed');
+        surgeFolder.add(this.debugState, 'surgeParticleSpeedMax', 1, 20, 0.5).name('Max Speed');
         surgeFolder.add(this.debugState, 'surgeFadeIn', 500, 5000, 50).name('Fade In (ms)');
         surgeFolder.add(this.debugState, 'surgeLinger', 500, 5000, 50).name('Linger (ms)');
         surgeFolder.add(this.debugState, 'surgeFadeOut', 500, 5000, 50).name('Fade Out (ms)');
@@ -7244,20 +7019,25 @@ export class IntroService {
         } else if (targetId === 'intro-submit-btn') {
             button.disabled = true;
             const input = document.getElementById('signature-input');
-            let playerName = input.value.trim().replace(/[^a-zA-Z0-9 ]/g, '');
-            if (!playerName) {
-                this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a name on the contract. Please provide your legal mark.");
-                button.disabled = false;
-                this._showNextModal(); // Re-show signature modal.
+            const playerName = input.value.trim();
+            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
+    
+            if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
+                this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
+                    // This callback runs after the "Invalid Signature" modal is closed.
+                    // We need to re-show the signature modal without advancing the step.
+                    this.gameState.player.introStep--; // Decrement to counteract the increment in _showNextModal
+                    this._showNextModal();
+                });
             } else {
-                this.gameState.player.name = playerName;
+                this.gameState.player.name = sanitizedPlayerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 390;
-
-                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${playerName} accepted Guild loan.`, {
+    
+                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
-                    name: playerName
+                    name: sanitizedPlayerName
                 });
                 this._startProcessingSequence();
             }
@@ -8546,13 +8326,17 @@ export class UIManager {
 
         this._cacheDOM();
 
-        window.addEventListener('resize', () => {
-            const wasMobile = this.isMobile;
-            this.isMobile = window.innerWidth <= 768;
-            if (wasMobile !== this.isMobile) {
-                this.render(this.lastKnownState);
-            }
-        });
+        // This remains the correct way to handle orientation changes or desktop resizing.
+        window.addEventListener('resize', this._setAppHeight);
+    }
+
+    /**
+     * Sets the --app-height CSS variable to the actual window inner height.
+     * This is the definitive fix for the mobile viewport height bug on iOS.
+     * @private
+     */
+    _setAppHeight() {
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     }
 
     /**
@@ -8751,9 +8535,7 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                this._saveMarketTransactionState();
-                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
-                this._restoreMarketTransactionState();
+                this.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
@@ -8839,14 +8621,17 @@ export class UIManager {
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
-        if (marketScrollPanel) {
+        if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
+        } else {
+            this.marketScrollPosition = 0;
         }
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
-        if (marketScrollPanel) {
-            marketScrollPanel.scrollTop = this.marketScrollPosition;
+        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        if (newMarketScrollPanel) {
+            newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
     }
 
@@ -9781,6 +9566,14 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
+    
+        // Set height immediately on show
+        this._setAppHeight();
+    
+        // Set height again on the next animation frame to catch the final, stable value
+        requestAnimationFrame(() => {
+            this._setAppHeight();
+        });
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
@@ -10921,6 +10714,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [27.30] - 2025-10-03
+- bug fixes
+- mobile screen viewport optimization
+- tutorial positioning adjustment
+
 ## [27.20] - 2025-10-02
 - travel animation refactor
 - code cleanup
@@ -10931,10 +10729,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - created Architectural Decisions meta file
 - created Roadmap meta file
 
-
 ## [27.00] - 2025-09-28
 - shipyard/hangar overhaul
 - UI update
+- hardest godamn update yet
 
 ## [26.15] - 2025-09-20
 - portrait mode enforcement
@@ -10975,10 +10773,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - minimizable commodities
 
 ## [25.00] - 2025-09-12
-- launch confirmation modal
+- navigation launch confirmation modal
 
 ## [24.70] - 2025-09-10
-- shipyard/hangar visual overhaul
+- shipyard/hangar visual overhaul v1
 - balance update
 - writing update
 
@@ -11297,9 +11095,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Tutorial step hangar_2 not correctly transition to hangar_3 because shipyard mode isn't changing to hangar mode on shipyard screen after purchase and disappearance of first ship
-- Ship card dismissal transition animations broken
 - Transactions reset the scroll page position on the market screen
+- Non-acceptable names break game after submission.
 - Introduce screen-surge effects vignette
 
 

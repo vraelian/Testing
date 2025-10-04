@@ -19,14 +19,17 @@ export class SystemSurgeEffect extends BaseEffect {
         const theme = options.theme || 'blue';
         const profile = SystemSurgeEffect.PROFILES[theme] || SystemSurgeEffect.PROFILES.blue;
 
-        // Combine the profile defaults with any specific overrides from the options.
         this.options = {
             ...profile,
-            ...options, // Any options passed in will override the profile defaults.
-            theme: theme // Ensure the theme is correctly set.
+            ...options,
+            theme: theme
         };
 
         this.domElements = {};
+        this.particles = [];
+        this.animationFrameId = null;
+        this._animationLoop = this._animationLoop.bind(this);
+
         this.themes = {
             gold: { color: 'rgba(255, 223, 0, 0.8)', glow: '#ffd700' },
             green: { color: 'rgba(50, 255, 150, 0.8)', glow: '#32ff96' },
@@ -42,31 +45,21 @@ export class SystemSurgeEffect extends BaseEffect {
     /**
      * @method play
      * @override
-     * @description Runs the entire System Surge effect from creation to cleanup.
-     * @returns {Promise<void>} A promise that resolves when the effect is finished.
      */
     async play() {
         return new Promise(resolve => {
-            this._injectCSS();
             this._createDOM();
+            this.animationFrameId = requestAnimationFrame(this._animationLoop);
 
-            const onsetDuration = this.options.fadeInTime;
-            const holdDuration = this.options.lingerTime;
-            const fadeDuration = this.options.fadeOutTime;
+            const { fadeInTime, lingerTime, fadeOutTime } = this.options;
+            const totalDuration = fadeInTime + lingerTime + fadeOutTime;
 
-            setTimeout(() => {
-                document.body.classList.add('system-surge-active');
-            }, 50);
-
-            setTimeout(() => {
-                document.body.classList.remove('system-surge-active');
-                document.body.classList.add('system-surge-fading');
-            }, onsetDuration + holdDuration);
-
+            setTimeout(() => document.body.classList.add('system-surge-active'), 50);
+            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
             setTimeout(() => {
                 this._cleanup();
                 resolve();
-            }, onsetDuration + holdDuration + fadeDuration);
+            }, totalDuration);
         });
     }
 
@@ -74,7 +67,6 @@ export class SystemSurgeEffect extends BaseEffect {
      * @method _createDOM
      * @protected
      * @override
-     * @description Creates the DOM elements for the System Surge effect.
      */
     _createDOM() {
         const themeColors = this.themes[this.options.theme] || this.themes.blue;
@@ -83,7 +75,6 @@ export class SystemSurgeEffect extends BaseEffect {
         overlay.id = 'celebration-overlay';
         overlay.style.setProperty('--surge-color', themeColors.color);
         overlay.style.setProperty('--surge-glow', themeColors.glow);
-        overlay.style.setProperty('--particle-travel-distance', `${this.options.travelDistance}vh`);
         this.domElements.overlay = overlay;
 
         const surgeLight = document.createElement('div');
@@ -95,58 +86,83 @@ export class SystemSurgeEffect extends BaseEffect {
         surgeText.textContent = this.options.text;
         surgeText.style.fontSize = this.options.textSize;
         this.domElements.surgeText = surgeText;
-
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'particle-canvas';
+        this.domElements.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        
         overlay.appendChild(surgeLight);
+        overlay.appendChild(canvas);
         overlay.appendChild(surgeText);
-        this._createParticles(this.options.particleCount);
-
         document.body.appendChild(overlay);
+
+        this._resizeCanvas();
+        this._initializeParticles();
+        window.addEventListener('resize', this._resizeCanvas.bind(this));
+    }
+
+    _resizeCanvas() {
+        const canvas = this.domElements.canvas;
+        if (canvas) {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
     }
     
-    /**
-     * @method _createParticles
-     * @private
-     * @description Creates and animates a specified number of particle elements.
-     * @param {number} count - The number of particles to create.
-     */
-    _createParticles(count) {
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            particle.className = `particle particle-shape-${this.options.particleShape}`;
-            
-            const size = Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min;
-            const speed = Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min;
-            
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.animationDelay = `${Math.random() * 1.5}s`;
-            particle.style.animationDuration = `${speed}s`;
-            this.domElements.overlay.appendChild(particle);
+    _initializeParticles() {
+        const canvas = this.domElements.canvas;
+        if (!canvas) return;
+        this.particles = [];
+        for (let i = 0; i < this.options.particleCount; i++) {
+            this.particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min,
+                speed: Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min,
+                alpha: 0.5 + Math.random() * 0.5
+            });
         }
     }
 
-    /**
-     * @method _injectCSS
-     * @protected
-     * @override
-     * @description Injects the CSS required for the System Surge effect into the document head.
-     */
-    _injectCSS() {
-        const style = document.createElement('style');
-        style.id = 'system-surge-styles';
-        style.textContent = SystemSurgeEffect.css;
-        document.head.appendChild(style);
-        this.domElements.style = style;
-    }
+    _animationLoop() {
+        if (!this.ctx) return;
+        
+        const canvas = this.domElements.canvas;
+        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const themeColors = this.themes[this.options.theme] || this.themes.blue;
+        this.ctx.fillStyle = themeColors.color;
+        
+        this.particles.forEach(p => {
+            p.y -= p.speed;
+            if (p.y < -p.size) {
+                p.y = canvas.height + p.size;
+                p.x = Math.random() * canvas.width;
+            }
+            
+            this.ctx.globalAlpha = p.alpha;
+            this.ctx.beginPath();
 
-    /**
-     * @method _cleanup
-     * @protected
-     * @override
-     * @description Removes all DOM elements, styles, and body classes added by the effect.
-     */
+            if (this.options.particleShape === 'circle') {
+                this.ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+            } else if (this.options.particleShape === 'sliver') {
+                this.ctx.rect(p.x, p.y, 2, p.size);
+            } else {
+                this.ctx.rect(p.x - 2, p.y, 4, p.size);
+            }
+            this.ctx.fill();
+        });
+        
+        this.animationFrameId = requestAnimationFrame(this._animationLoop);
+    }
+    
     _cleanup() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        window.removeEventListener('resize', this._resizeCanvas.bind(this));
         document.body.classList.remove('system-surge-active', 'system-surge-fading');
         Object.values(this.domElements).forEach(element => element && element.remove());
     }
@@ -154,153 +170,55 @@ export class SystemSurgeEffect extends BaseEffect {
     /**
      * @property {Object} PROFILES
      * @static
-     * @description Static property containing the default parameter profiles for each theme.
      */
     static PROFILES = {
         tan: {
-            text: 'LICENSE ACQUIRED',
+            text: 'TRADING LICENSE ACQUIRED',
             textSize: '8vw', particleCount: 74, particleShape: 'sliver',
             particleSize: { min: 1, max: 11 }, particleSpeed: { min: 1, max: 7.5 },
-            travelDistance: 110, fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
+            fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
         },
         silver: {
             text: 'SHIP PURCHASED',
             textSize: '8vw', particleCount: 90, particleShape: 'sliver',
             particleSize: { min: 1, max: 3 }, particleSpeed: { min: 1, max: 4 },
-            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
         },
         purple: {
-            text: 'WEALTH MILESTONE',
+            text: 'WEALTH MILESTONE ACHIEVED',
             textSize: '8vw', particleCount: 18, particleShape: 'rectangle',
             particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
-            travelDistance: 100, fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
         },
         orange: {
             text: 'ORANGE',
             textSize: '8vw', particleCount: 96, particleShape: 'sliver',
             particleSize: { min: 1, max: 6 }, particleSpeed: { min: 2.5, max: 8.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
         },
         blue: {
             text: 'HAPPY BIRTHDAY',
             textSize: '8vw', particleCount: 50, particleShape: 'circle',
             particleSize: { min: 7, max: 20 }, particleSpeed: { min: 5, max: 8.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
         },
         red: {
-            text: 'TOP CLASS',
+            text: 'SUPERIOR SHIP ACQUIRED',
             textSize: '8vw', particleCount: 115, particleShape: 'rectangle',
             particleSize: { min: 5, max: 6 }, particleSpeed: { min: 1, max: 5.5 },
-            travelDistance: 120, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         green: {
-            text: 'WEALTH MILESTONE',
+            text: 'WEALTH MILESTONE ACHIEVED',
             textSize: '8vw', particleCount: 200, particleShape: 'sliver',
             particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 4 },
-            travelDistance: 50, fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         gold: {
             text: 'MISSION COMPLETE',
             textSize: '8vw', particleCount: 62, particleShape: 'circle',
             particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
-            travelDistance: 115, fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
+            fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
         }
     };
-
-    /**
-     * @property {string} css
-     * @static
-     * @description Static property containing all CSS for this effect.
-     */
-    static css = `
-        #celebration-overlay {
-            --surge-color: #00ffff;
-            --surge-glow: #00ffff;
-            --particle-travel-distance: 105vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            opacity: 0;
-        }
-
-        .system-surge-active #celebration-overlay {
-            opacity: 1;
-            transition: opacity 0.2s ease-in;
-        }
-        .system-surge-fading #celebration-overlay {
-            opacity: 0;
-            transition: opacity 3s ease-out;
-        }
-
-        .surge-light {
-            position: absolute;
-            bottom: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, var(--surge-color), transparent 60%);
-            opacity: 0.6;
-            transition: all 2.9s ease-out;
-        }
-        .system-surge-active .surge-light {
-            bottom: 0;
-            opacity: 0.6;
-            transition-delay: 0.2s;
-        }
-
-        .surge-text {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
-            transform: scale(0.5);
-            opacity: 0;
-            transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        }
-        .system-surge-active .surge-text {
-            transform: scale(1);
-            opacity: 1;
-            transition-delay: 0.4s;
-        }
-
-        .particle {
-            position: absolute;
-            bottom: -20px;
-            background-color: var(--surge-color);
-            opacity: 0;
-            animation: system-surge-rise 8s ease-in forwards;
-            box-shadow: 0 0 8px var(--surge-color);
-        }
-
-        .particle-shape-circle {
-            border-radius: 50%;
-        }
-        .particle-shape-star {
-            background-color: transparent;
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            border: 1px solid var(--surge-color);
-        }
-        .particle-shape-sliver {
-            width: 2px !important;
-            height: 20px !important;
-            border-radius: 2px;
-        }
-        .particle-shape-rectangle {
-            height: 12px !important;
-            width: 4px !important;
-        }
-
-        @keyframes system-surge-rise {
-            0% { transform: translateY(0); opacity: 0.9; }
-            100% { transform: translateY(calc(-1 * var(--particle-travel-distance))); opacity: 0; }
-        }
-    `;
 }
