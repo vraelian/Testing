@@ -256,9 +256,7 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 break;
             case SCREEN_IDS.MARKET:
-                this._saveMarketTransactionState();
-                this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
-                this._restoreMarketTransactionState();
+                this.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
@@ -344,14 +342,17 @@ export class UIManager {
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
-        if (marketScrollPanel) {
+        if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
+        } else {
+            this.marketScrollPosition = 0;
         }
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
-        if (marketScrollPanel) {
-            marketScrollPanel.scrollTop = this.marketScrollPosition;
+        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        if (newMarketScrollPanel) {
+            newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
     }
 

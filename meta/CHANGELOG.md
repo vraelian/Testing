@@ -3,6 +3,7 @@
 All notable changes to the Orbital Trading project will be documented in this file.
 
 ## [27.30] - 2025-10-03
+- bug fixes
 - mobile screen viewport optimization
 - tutorial positioning adjustment
 
