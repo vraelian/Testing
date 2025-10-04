@@ -52,7 +52,7 @@
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     color: #fff;
-    text-shadow: 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
     transform: scale(0.5);
     opacity: 0;
     transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);

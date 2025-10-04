@@ -43,7 +43,11 @@ export class TimeService {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.triggerEffect('systemSurge', { theme: 'blue', text: `AGE ${this.gameState.player.playerAge}` });
+                this.uiManager.triggerEffect('systemSurge', { 
+                    theme: 'blue', 
+                    text: `Happy Birthday, ${this.gameState.player.name}`,
+                    subtext: `Age: ${this.gameState.player.playerAge}`
+                });
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 

@@ -11,6 +11,7 @@ export class SystemSurgeEffect extends BaseEffect {
      * @constructor
      * @param {object} options - Configuration for the effect.
      * @param {string} [options.text='SYSTEM SURGE'] - The text to display, overrides profile default.
+     * @param {string} [options.subtext=''] - The subtext to display below the main text.
      * @param {string} [options.theme='blue'] - The color theme, determines the profile to use.
      */
     constructor(options = {}) {
@@ -81,11 +82,24 @@ export class SystemSurgeEffect extends BaseEffect {
         surgeLight.className = 'surge-light';
         this.domElements.surgeLight = surgeLight;
 
+        const textContainer = document.createElement('div');
+        textContainer.className = 'surge-text';
+
         const surgeText = document.createElement('div');
-        surgeText.className = 'surge-text';
         surgeText.textContent = this.options.text;
         surgeText.style.fontSize = this.options.textSize;
-        this.domElements.surgeText = surgeText;
+        textContainer.appendChild(surgeText);
+
+        if (this.options.subtext) {
+            const surgeSubText = document.createElement('div');
+            surgeSubText.textContent = this.options.subtext;
+            surgeSubText.style.fontSize = this.options.subtextSize || '6vw';
+            surgeSubText.style.opacity = '0.8';
+            surgeSubText.style.marginTop = '1rem';
+            textContainer.appendChild(surgeSubText);
+        }
+
+        this.domElements.surgeText = textContainer;
         
         const canvas = document.createElement('canvas');
         canvas.id = 'particle-canvas';
@@ -94,7 +108,7 @@ export class SystemSurgeEffect extends BaseEffect {
         
         overlay.appendChild(surgeLight);
         overlay.appendChild(canvas);
-        overlay.appendChild(surgeText);
+        overlay.appendChild(textContainer);
         document.body.appendChild(overlay);
 
         this._resizeCanvas();
@@ -174,49 +188,52 @@ export class SystemSurgeEffect extends BaseEffect {
     static PROFILES = {
         tan: {
             text: 'TRADING LICENSE ACQUIRED',
-            textSize: '8vw', particleCount: 74, particleShape: 'sliver',
-            particleSize: { min: 1, max: 11 }, particleSpeed: { min: 1, max: 7.5 },
-            fadeInTime: 1900, lingerTime: 3150, fadeOutTime: 5000
+            textSize: '7vw', particleCount: 20, particleShape: 'sliver',
+            particleSize: { min: 2, max: 20 }, particleSpeed: { min: 1, max: 7 },
+            fadeInTime: 1900, lingerTime: 3950, fadeOutTime: 3750
         },
         silver: {
             text: 'SHIP PURCHASED',
-            textSize: '8vw', particleCount: 90, particleShape: 'sliver',
-            particleSize: { min: 1, max: 3 }, particleSpeed: { min: 1, max: 4 },
-            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            textSize: '7vw', particleCount: 20, particleShape: 'sliver',
+            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 5 },
+            fadeInTime: 500, lingerTime: 3900, fadeOutTime: 3500
         },
         purple: {
             text: 'WEALTH MILESTONE ACHIEVED',
-            textSize: '8vw', particleCount: 18, particleShape: 'rectangle',
+            textSize: '7vw', particleCount: 18, particleShape: 'rectangle',
             particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
-            fadeInTime: 500, lingerTime: 3050, fadeOutTime: 3500
+            fadeInTime: 500, lingerTime: 4250, fadeOutTime: 3500
         },
         orange: {
             text: 'ORANGE',
-            textSize: '8vw', particleCount: 96, particleShape: 'sliver',
+            textSize: '7vw', particleCount: 40, particleShape: 'sliver',
             particleSize: { min: 1, max: 6 }, particleSpeed: { min: 2.5, max: 8.5 },
-            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            fadeInTime: 1750, lingerTime: 3250, fadeOutTime: 3500
         },
         blue: {
             text: 'HAPPY BIRTHDAY',
-            textSize: '8vw', particleCount: 50, particleShape: 'circle',
-            particleSize: { min: 7, max: 20 }, particleSpeed: { min: 5, max: 8.5 },
-            fadeInTime: 1750, lingerTime: 3750, fadeOutTime: 3500
+            subtext: 'Age: XX',
+            textSize: '7vw', 
+            subtextSize: '6vw',
+            particleCount: 30, particleShape: 'circle',
+            particleSize: { min: 5, max: 20 }, particleSpeed: { min: 4, max: 7.5 },
+            fadeInTime: 1750, lingerTime: 4300, fadeOutTime: 5000
         },
         red: {
             text: 'SUPERIOR SHIP ACQUIRED',
-            textSize: '8vw', particleCount: 115, particleShape: 'rectangle',
-            particleSize: { min: 5, max: 6 }, particleSpeed: { min: 1, max: 5.5 },
+            textSize: '7vw', particleCount: 30, particleShape: 'rectangle',
+            particleSize: { min: 3, max: 10 }, particleSpeed: { min: 1, max: 3.5 },
             fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         green: {
             text: 'WEALTH MILESTONE ACHIEVED',
-            textSize: '8vw', particleCount: 200, particleShape: 'sliver',
-            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 4 },
+            textSize: '7vw', particleCount: 22, particleShape: 'sliver',
+            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 2.5, max: 15.5 },
             fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
         },
         gold: {
             text: 'MISSION COMPLETE',
-            textSize: '8vw', particleCount: 62, particleShape: 'circle',
+            textSize: '7vw', particleCount: 62, particleShape: 'circle',
             particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
             fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
         }
