@@ -6,7 +6,6 @@ This document outlines the planned features and high-level goals for the future 
 
 
 ## Planned Ideas
-- Screen transitions
 - Overhaul ship fuel, hull costs and gameplay
 - Improve finance screen, logging
 - Verify consistency in projected journey stats vs actual
