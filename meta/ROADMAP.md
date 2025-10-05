@@ -14,6 +14,7 @@ This document outlines the planned features and high-level goals for the future 
 - Overhaul ship status screen
 - Overhaul intel screen
 - Refine ship storage
+- News ticker
 
 
 ## Long-Term Ideas
@@ -23,7 +24,7 @@ This document outlines the planned features and high-level goals for the future 
 - Finalize mobile views
 - Optimize repititive calculations, long-term data accumulation, and re-renders
 - Reputation system
-- News ticker
+
 
 
 ## Far-Future Wishlist Ideas ()
