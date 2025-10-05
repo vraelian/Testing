@@ -51,7 +51,7 @@
 }
 
 .status-bar {
-    width: 27px;
+    width: 34px;
     height: 8px;
     background-color: #222;
     border: 1px solid #111;
@@ -89,11 +89,11 @@
 }
 
 .fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 44px));
+    transform: translateX(calc(-50% - 51px));
 }
 
 .cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 88px));
+    transform: translateX(calc(-50% - 102px));
 }
 
 

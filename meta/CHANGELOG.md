@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [27.50] - 2025-10-04
+- navigation bar visual update
+- bug fixes
+
 ## [27.40] - 2025-10-04
 - effects polish
 - effects performance improvements

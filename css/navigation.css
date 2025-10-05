@@ -111,9 +111,9 @@ BULKHEAD NAVIGATION STYLES
     transform: translateX(-50%);
     width: 60%;
     height: 2px;
-    background-color: var(--theme-color-primary, #fde047);
+    background-color: var(--theme-border-color, #fde047);
     border-radius: 1px;
-    box-shadow: 0 0 5px var(--theme-color-glow, #fde047);
+    box-shadow: 0 0 5px var(--theme-border-color, #fde047);
 }
 
 
