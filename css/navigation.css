@@ -1,6 +1,12 @@
 /* css/navigation.css */
 
-/* --- [[START]] NEW BULKHEAD STYLES (Concept 207+) --- */
+/* ================================================================================
+BULKHEAD NAVIGATION STYLES
+- Uses an overlapping clip-path strategy for a clean, interlocking look.
+- A negative margin on each tab pulls it over the previous one.
+- The :first-child selector creates a clean starting edge.
+- The .active selector uses z-index to bring the selected tab to the front.
+================================================================================ */
 .nav-wrapper {
     background-color: #383838;
     background-image: radial-gradient(circle, rgba(255,255,255,.03) 1px, transparent 1px);
@@ -8,7 +14,8 @@
     display: flex;
     align-items: center;
     padding: 0 5px 0 10px;
-    border-bottom: 1px solid #111;
+    /* Bevel effect to connect with the context bar above */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .nav-main {
@@ -17,39 +24,46 @@
 
 .tab {
     padding: 7.5px 15px;
-    color: #a0aec0; /* Default text color */
-    opacity: 0.7; /* Default opacity */
+    color: #a0aec0;
+    opacity: 0.7;
     cursor: pointer;
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     font-size: 0.8rem;
-    position: relative;
+    position: relative; /* Establishes stacking context for z-index */
     background-color: #444;
     border-top: 1px solid #666;
-    margin-right: -6px;
-    transition: all 0.2s;
+    /* Added transition for smooth scaling and filter effects */
+    transition: all 0.3s ease;
     text-decoration: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+
+    /* --- Core Interlocking Logic --- */
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
+    margin-left: -12px; /* Overlap by the same amount as the clip-path skew */
 }
+
+/* Straighten the left edge of the very first tab and remove its negative margin */
+.tab:first-child {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
+    margin-left: 0;
+}
+
 .tab.disabled {
     pointer-events: none;
     filter: grayscale(1);
     opacity: 0.3;
 }
 
-.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%);
-}
-.starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
-
 .tab.active {
     opacity: 1;
-    z-index: 2;
-    transform: scale(1.05);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+    z-index: 2; /* Bring the active tab to the front */
+    transform: scale(1.05); /* The "raised" effect */
+    /* Active tab has a drop-shadow for depth and a theme-colored glow */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)) drop-shadow(0 0 8px var(--theme-color-glow, #fde047));
 }
 
 #sub-nav-bar {
@@ -69,11 +83,14 @@
     flex-grow: 1;
     text-align: center;
     opacity: 0.8;
-    font-size: 0.7rem;
+    font-family: 'Orbitron', sans-serif; /* Matched font */
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Added text shadow for depth */
     text-transform: uppercase;
     padding: 8.75px 0;
     text-decoration: none;
-    position: relative;
+    position: relative; /* Needed for the ::after pseudo-element */
     transition: all 0.2s;
     background-color: #3a3a3a;
     border-right: 1px solid #1c1c1c;
@@ -84,6 +101,22 @@
     -ms-user-select: none;
     user-select: none;
 }
+
+/* Active Sub-Nav Indicator */
+.nav-sub a.sub-nav-active::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; /* Position the line just below the text */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background-color: var(--theme-color-primary, #fde047);
+    border-radius: 1px;
+    box-shadow: 0 0 5px var(--theme-color-glow, #fde047);
+}
+
+
 .nav-sub a.disabled {
     pointer-events: none;
     filter: grayscale(1);
@@ -95,10 +128,6 @@
 }
 .nav-sub a:last-child { border-right: none; }
 
-.nav-sub a:hover:not(.disabled) {
-    opacity: 1;
-    background-color: #4a4a4a;
-}
 /* --- [[END]] NEW BULKHEAD STYLES --- */
 
 

@@ -26,7 +26,7 @@ html,
 body {
     height: 100%;
     overflow: hidden;
-    touch-action: none;
+    /* touch-action: none; <-- This was the line causing the issue */
     margin: 0;
 }
 

@@ -18,7 +18,7 @@
     align-items: center;
     font-size: 0.9rem;
     font-family: 'Share Tech Mono', monospace;
-    border-bottom: 2px solid rgba(0,0,0,0.3);
+    /* border-bottom has been removed to allow for the bevel effect */
     text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Increased shadow for readability */
     transition: background 0.5s ease-out, color 0.5s ease-out;
 }

@@ -226,10 +226,7 @@ export class DebugService {
      * @param {string} key
      */
     handleKeyPress(key) {
-        const action = Object.values(this.actions).find(a => a.key === key);
-        if (action && action.handler) {
-            action.handler();
-        }
+        // No longer needed as all shortcuts are removed.
     }
 
     /**
@@ -382,11 +379,11 @@ ${logHistory}
      */
     _registerDebugActions() {
         this.actions = {
-            godMode: { name: 'God Mode', type: 'button', key: 't', handler: () => this.godMode() },
-            simpleStart: { name: 'Simple Start', type: 'button', key: 'y', handler: () => this.simpleStart() },
-            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', key: 'h', handler: () => this.skipToHangarTutorial() },
+            godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
+            simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
+            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: {
-                name: 'Add Credits', type: 'button', key: 'c', handler: () => {
+                name: 'Add Credits', type: 'button', handler: () => {
                     this.gameState.player.credits += this.debugState.creditsToAdd;
                     this.simulationService.timeService._checkMilestones();
                     this.uiManager.render(this.gameState.getState());
@@ -419,8 +416,8 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
-            grantAllItems: { name: 'Grant 1x All Items', type: 'button', key: 'g', handler: () => this.grantAllItems() },
-            advanceTime: { name: 'Advance Days', type: 'button', key: 'a', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
+            grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
+            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
             replenishStock: {
                 name: 'Replenish All Stock', type: 'button', handler: () => {
                     this.simulationService.marketService.replenishMarketInventory();
@@ -429,7 +426,7 @@ ${logHistory}
             },
             fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
             triggerRandomEvent: {
-                name: 'Trigger Random Event', type: 'button', key: 'e', handler: () => {
+                name: 'Trigger Random Event', type: 'button', handler: () => {
                     const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                     if (dest) {
                         this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
@@ -445,7 +442,7 @@ ${logHistory}
                 }
             },
             triggerMission: {
-                name: 'Trigger Mission', type: 'button', key: 'm', handler: () => {
+                name: 'Trigger Mission', type: 'button', handler: () => {
                     if (this.debugState.selectedMission) {
                         if(this.gameState.missions.activeMissionId) {
                             this.simulationService.missionService.abandonMission();

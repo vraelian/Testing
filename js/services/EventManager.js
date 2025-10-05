@@ -141,10 +141,6 @@ export class EventManager {
         if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
         if ((e.key === '`' || e.key === '&') && this.debugService) {
             this.debugService.toggleVisibility();
-            return;
-        }
-        if (this.debugService) {
-            this.debugService.handleKeyPress(e.key);
         }
     }
 }
