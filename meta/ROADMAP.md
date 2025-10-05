@@ -2,9 +2,7 @@
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Transactions reset the scroll page position on the market screen
-- Non-acceptable names break game after submission.
-- Introduce screen-surge effects vignette
+- 
 
 
 ## Planned Ideas
