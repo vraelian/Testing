@@ -1,56 +1,142 @@
 // js/ui/components/ServicesScreen.js
 /**
- * @fileoverview This file contains the rendering logic for the Station Services screen.
- * It displays options for refueling and repairing the player's active ship, calculating
- * costs based on the current location and any active player perks.
+ * @fileoverview ServicesScreen component responsible for rendering the services
+ * available at the current location, such as refueling, repairs, and special services.
  */
-import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
-import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import GameState from '../../services/GameState.js';
+import { formatNumber } from '../../utils.js';
+import { LOCATION_IDS } from '../../data/constants.js';
 
-/**
- * Renders the entire Services screen UI.
- * @param {object} gameState - The current state of the game.
- * @returns {string} The HTML content for the Services screen.
- */
-export function renderServicesScreen(gameState) {
-    const { player, currentLocationId } = gameState;
-    const shipStatic = DB.SHIPS[player.activeShipId];
-    const shipState = player.shipStates[player.activeShipId];
-    const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
-    const theme = currentMarket?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
-
-
-    // Calculate fuel price, applying perks if applicable.
-    let fuelPrice = currentMarket.fuelPrice / 2;
-    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
-    }
-    
-    // Calculate repair price per tick, applying perks if applicable.
-    let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
-    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+export class ServicesScreen {
+    constructor() {
+        this.gameState = GameState.getState();
+        this.currentLocation = this.gameState.currentLocation;
+        this.activeShip = this.gameState.activeShip;
     }
 
-    const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-    const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-    
-    return `
-        <div class="services-scroll-panel">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                    <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
+    getFuelPrice() {
+        let price = this.currentLocation.fuelPrice || 250;
+        // Apply Jupiter's specialty discount
+        if (this.currentLocation.id === LOCATION_IDS.JUPITER) {
+            price *= 0.5;
+        }
+        return price;
+    }
+
+    getRepairCost() {
+        if (!this.activeShip) return 0;
+        const damage = this.activeShip.maxHealth - this.activeShip.health;
+        const baseCost = damage * 150; // Base cost per point of damage
+        
+        let multiplier = 1.0;
+        // Apply Luna's specialty discount
+        if (this.currentLocation.id === LOCATION_IDS.LUNA) {
+            multiplier = 0.9;
+        }
+
+        return Math.ceil(baseCost * multiplier);
+    }
+
+    render() {
+        const fuelPrice = this.getFuelPrice();
+        const repairCost = this.getRepairCost();
+        const canAffordRepair = this.gameState.player.credits >= repairCost;
+        const needsRepair = this.activeShip && this.activeShip.health < this.activeShip.maxHealth;
+
+        const services = [
+            {
+                id: 'refuel',
+                icon: '⛽',
+                title: 'Refuel Ship',
+                description: `Replenish your ship's fuel reserves. The price is currently <span class="hl-yellow">${formatNumber(fuelPrice)} credits</span> per unit.`,
+                buttonText: 'Refuel',
+                action: 'refuel-ship',
+                disabled: !this.activeShip || this.activeShip.fuel === this.activeShip.maxFuel,
+            },
+            {
+                id: 'repair',
+                icon: '🔧',
+                title: 'Repair Hull',
+                description: `Restore your ship's hull integrity. The total cost for repairs is <span class="hl-yellow">${formatNumber(repairCost)} credits</span>.`,
+                buttonText: canAffordRepair ? 'Repair' : 'Insufficient Funds',
+                action: 'repair-ship',
+                disabled: !this.activeShip || !needsRepair || !canAffordRepair,
+            },
+            // Placeholder for future Bank service
+            // {
+            //     id: 'bank',
+            //     icon: '🏦',
+            //     title: 'Galactic Bank',
+            //     description: 'Manage your finances, take out loans, or make investments across the system.',
+            //     buttonText: 'Access Terminal',
+            //     action: 'open-bank',
+            //     disabled: true,
+            // }
+        ];
+
+        // Add location-specific specialty services
+        this.addSpecialtyServices(services);
+
+
+        let servicesHtml = services.map(service => `
+            <div class="service-item ${service.disabled ? 'service-item-disabled' : ''}">
+                <div class="service-icon">${service.icon}</div>
+                <div class="service-content">
+                    <h3 class="service-title">${service.title}</h3>
+                    <p class="service-description">${service.description}</p>
                 </div>
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                    <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
+                <button class="service-button" data-action="${service.action}" ${service.disabled ? 'disabled' : ''}>${service.buttonText}</button>
+            </div>
+        `).join('');
+
+        return `
+            <div id="services-screen" class="screen">
+                <h2 class="screen-title">Station Services at ${this.currentLocation.name}</h2>
+                <div class="services-container">
+                    ${servicesHtml}
                 </div>
             </div>
-        </div>`;
+        `;
+    }
+    
+    addSpecialtyServices(services) {
+        const specialty = this.currentLocation.specialty;
+        if (!specialty) return;
+
+        if (this.currentLocation.id === LOCATION_IDS.VENUS) {
+             services.push({
+                id: 'intel',
+                icon: '🤫',
+                title: 'Venetian Syndicate',
+                description: 'Purchase valuable market intel that reveals temporary, extreme price spikes in other systems. High risk, high reward.',
+                buttonText: 'Buy Intel',
+                action: 'navigate-to-intel', // This will be handled by the event manager
+                disabled: false
+            });
+        }
+        
+        if (this.currentLocation.id === LOCATION_IDS.URANUS) {
+            services.push({
+                id: 'research',
+                icon: '🔬',
+                title: 'Research & Development',
+                description: 'Invest commodities and credits to temporarily overclock your ship\'s components for a significant performance boost.',
+                buttonText: 'Coming Soon',
+                action: 'feature-coming-soon',
+                disabled: true,
+            });
+        }
+        
+        if (this.currentLocation.id === LOCATION_IDS.NEPTUNE) {
+            services.push({
+                id: 'surplus',
+                icon: '🛡️',
+                title: 'Military Surplus',
+                description: 'The military shipyard occasionally sells heavily damaged, high-tier frigates for a fraction of their market price.',
+                buttonText: 'Coming Soon',
+                action: 'feature-coming-soon',
+                disabled: true,
+            });
+        }
+    }
 }
