@@ -225,6 +225,7 @@ export class PlayerActionService {
         }
 
         this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
+        
         this.gameState.setState({
             uiState: {
                 ...this.gameState.uiState,
@@ -242,7 +243,7 @@ export class PlayerActionService {
     setActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
-
+        
         const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
         if (newIndex !== -1) {
             this.gameState.uiState.hangarActiveIndex = newIndex;

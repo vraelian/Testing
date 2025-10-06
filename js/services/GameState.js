@@ -1,235 +1,234 @@
 // js/services/GameState.js
-/**
- * @fileoverview Manages the application's state, providing a single source of truth.
- * Adheres to a unidirectional data flow model: state is updated, then subscribers are notified to re-render.
- */
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
-import { DATE_CONFIG } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, COMMODITY_IDS, GAME_RULES } from '../data/constants.js';
+import { skewedRandom } from '../utils.js';
 
-class GameState {
+/**
+ * Procedurally generates the travel data matrix, calculating the time and fuel cost
+ * for travel between every pair of locations in the game.
+ * @param {Array<object>} markets - The array of market objects from the database.
+ * @returns {object} A nested object where `travelData[fromId][toId]` contains travel info.
+ */
+function procedurallyGenerateTravelData(markets) {
+    const travelData = {};
+    markets.forEach((fromMarket, i) => {
+        travelData[fromMarket.id] = {};
+        markets.forEach((toMarket, j) => {
+            if (i === j) return;
+            // Simple index difference is used as a proxy for orbital distance.
+            const distance = Math.abs(i - j);
+            const fuelTime = distance * 2 + Math.floor(Math.random() * 3);
+            let fuelCost = Math.round(fuelTime * GAME_RULES.FUEL_SCALAR * (1 + (j / markets.length) * 0.5));
+            let travelTime;
+            // Special case for Earth-Luna to make it a quick, early-game trip.
+            if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
+                travelTime = 1 + Math.floor(Math.random() * 3);
+            } else {
+                travelTime = 15 + (distance * 10) + Math.floor(Math.random() * 5);
+            }
+            travelData[fromMarket.id][toMarket.id] = { time: travelTime, fuelCost: Math.max(1, fuelCost) };
+        });
+    });
+    return travelData;
+}
+
+/**
+ * @class GameState
+ * @description Holds all mutable data for the game session, acting as the single source of truth.
+ * Static data (e.g., ship base stats, commodity types) is imported from the /data directory.
+ * Dynamic data (e.g., player credits, ship health, cargo inventories) is stored and managed here.
+ * For example, `DB.SHIPS` contains a ship's max health, while `player.shipStates` in this class
+ * contains the *current* health of each ship the player owns.
+ */
+export class GameState {
     constructor() {
-        this.state = this.getInitialState();
+        this.state = {};
         this.subscribers = [];
-        this.gameStateHistory = [];
-        this.maxHistoryLength = 50;
-    }
-
-    getInitialState() {
-        return {
-            player: {
-                name: null,
-                credits: 25000,
-                debt: 25000,
-                locationId: LOCATION_IDS.MARS,
-                perks: [],
-                title: 'Captain',
-                licenses: [],
-                wealthMilestone: 0,
-                ships: [],
-                activeShipId: null,
-                totalDistanceTraveled: 0
-            },
-            gameDate: {
-                day: 1,
-                month: 1,
-                year: DATE_CONFIG.START_YEAR
-            },
-            market: {},
-            log: [],
-            activeModals: [],
-            isTraveling: false,
-            travelData: null,
-            currentLocation: DB.MARKETS.find(m => m.id === LOCATION_IDS.MARS),
-            activeShip: null,
-            activeInventory: {},
-            lastRandomEventDay: 0,
-            activeMissions: {},
-            completedMissions: [],
-            logHistory: [],
-            systemState: {
-                currentState: 'NEUTRAL',
-                daysRemaining: 28,
-                history: ['NEUTRAL']
-            },
-            intel: [],
-            ui: {
-                activeNavId: 'starport',
-                activeScreenId: 'hangar',
-                isModalOpen: false,
-                isContextMenuOpen: false,
-                contextMenu: {},
-                activeSystemSurgeEffect: null,
-                isSidebarCollapsed: false,
-            },
-            settings: {
-                disableRandomEvents: false,
-                autoSave: true,
-            },
-            tutorial: {
-                isActive: true,
-                currentBatch: 'intro_hangar',
-                currentStepId: 'hangar_1',
-                completedBatches: []
-            },
-        };
+        this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
     }
 
     /**
-     * Subscribes a listener function to state changes.
-     * @param {Function} callback - The function to call when the state changes.
+     * Subscribes a callback function to be executed whenever the game state changes.
+     * @param {function} callback - The function to call on state changes.
      */
     subscribe(callback) {
         this.subscribers.push(callback);
     }
 
     /**
-     * Notifies all subscribers of a state change.
+     * Notifies all subscribed components that the state has changed.
      * @private
      */
     _notify() {
-        this.subscribers.forEach(callback => callback(this.state));
+        this.subscribers.forEach(callback => callback(this));
     }
 
     /**
-     * Updates the state and notifies subscribers. This is the primary method for state mutation.
-     * @param {Partial<GameState['state']>} newState - An object representing the part of the state to update.
+     * Updates the game state by merging a partial state object and notifies subscribers.
+     * This is the primary method for mutating the game state.
+     * @param {object} partialState - An object containing the properties of the state to update.
      */
-    setState(newState) {
-        this.state = { ...this.state, ...newState };
+    setState(partialState) {
+        Object.assign(this, partialState);
         this._notify();
+        // this.saveGame(); // NOTE: Saving is currently disabled.
     }
-
+    
     /**
-     * Retrieves the current state.
-     * @returns {GameState['state']} The current game state.
+     * Returns a deep copy of the current game state to prevent direct mutation.
+     * @returns {object} A JSON-serialized and parsed copy of the game state.
      */
     getState() {
-        return this.state;
+        return JSON.parse(JSON.stringify(this));
     }
 
     /**
-     * Retrieves a specific ship by its ID.
-     * @param {string} shipId - The ID of the ship to retrieve.
-     * @returns {object | undefined} The ship object or undefined if not found.
+     * Saves the current game state to localStorage.
+     * NOTE: This functionality is currently disabled.
      */
-    getShipById(shipId) {
-        return DB.SHIPS[shipId];
+    saveGame() {
+        // try {
+        //     const stateToSave = { ...this };
+        //     delete stateToSave.subscribers;
+        //     localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
+        // } catch (error) {
+        //     console.error("Error saving game state:", error);
+        // }
     }
 
     /**
-     * Retrieves a specific market by its ID.
-     * @param {string} locationId - The ID of the location.
-     * @returns {object | undefined} The market object or undefined if not found.
+     * Loads the game state from localStorage.
+     * NOTE: This functionality is currently disabled and will always start a new game.
+     * @returns {boolean} True if a game was successfully loaded, false otherwise.
      */
-    getMarketById(locationId) {
-        return DB.MARKETS.find(market => market.id === locationId);
+    loadGame() {
+        return false;
+        // try {
+        //     const serializedState = localStorage.getItem(SAVE_KEY);
+        //     if (serializedState === null) return false;
+            
+        //     const loadedState = JSON.parse(serializedState);
+        //     Object.assign(this, loadedState);
+        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
+        //     this._notify();
+        //     return true;
+        // } catch (error) {
+        //     console.warn("Could not parse save data. Starting new game.", error);
+        //     localStorage.removeItem(SAVE_KEY);
+        //     return false;
+        // }
     }
 
     /**
-     * Retrieves a specific commodity by its ID.
-     * @param {string} goodId - The ID of the commodity.
-     * @returns {object | undefined} The commodity object or undefined if not found.
+     * Initializes the game state for a new game session, setting all player, market,
+     * and other dynamic data to their default starting values.
+     * @param {string} playerName - The name entered by the player.
      */
-    getCommodityById(goodId) {
-        return DB.COMMODITIES.find(g => g.id === goodId);
+    startNewGame(playerName) {
+        const initialState = {
+            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
+            subNavCollapsed: false,
+            introSequenceActive: true,
+            lastActiveScreen: {
+                [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
+                [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
+                [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
+            },
+            pendingTravel: null,
+            player: {
+                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
+                introStep: 0,
+                credits: 3000, debt: 0, monthlyInterestAmount: 0,
+                loanStartDate: null, seenGarnishmentWarning: false,
+                revealedTier: 1,
+                unlockedLicenseIds: [],
+                unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
+                seenCommodityMilestones: [], financeLog: [],
+                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
+                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
+                inventories: { },
+                debugEventIndex: 0
+            },
+            market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
+            intel: { active: null, available: {} },
+            tutorials: {
+                activeBatchId: null,
+                activeStepId: null,
+                seenBatchIds: [],
+                skippedTutorialBatches: [],
+                navLock: null
+            },
+            missions: {
+                activeMissionId: null,
+                completedMissionIds: [],
+                missionProgress: {},
+                activeMissionObjectivesMet: false
+            },
+            uiState: {
+                marketCardMinimized: {},
+                hangarShipyardToggleState: 'shipyard',
+                hangarActiveIndex: 0,
+                shipyardActiveIndex: 0
+            }
+        };
+
+        initialState.player.inventories[SHIP_IDS.WANDERER] = {};
+        DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
+
+        DB.MARKETS.forEach(m => {
+            initialState.market.priceHistory[m.id] = {};
+            initialState.intel.available[m.id] = (Math.random() < 0.3);
+            initialState.market.inventory[m.id] = {};
+            initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] };
+            DB.COMMODITIES.forEach(c => {
+                initialState.market.priceHistory[m.id][c.id] = [];
+                
+                const [min, max] = c.canonicalAvailability;
+                const modifier = m.availabilityModifier?.[c.id] ?? 1.0;
+                let quantity = Math.floor(skewedRandom(min, max) * modifier);
+
+                if (m.specialDemand && m.specialDemand[c.id]) quantity = 0;
+
+                initialState.market.inventory[m.id][c.id] = { 
+                    quantity: Math.max(0, quantity),
+                    marketPressure: 0.0,
+                    lastPlayerInteractionTimestamp: 0,
+                    hoverUntilDay: 0,
+                    rivalArbitrage: { isActive: false, endDay: 0 }
+                };
+            });
+        });
+
+        Object.assign(this, initialState);
+        this._calculateGalacticAverages();
+        this._seedInitialMarketPrices();
+        this.setState({});
     }
 
     /**
-     * Retrieves a specific mission by its ID.
-     * @param {string} missionId - The ID of the mission.
-     * @returns {object | undefined} The mission object or undefined if not found.
+     * Calculates the baseline galactic average price for all commodities.
+     * This is used as a reference point for market price fluctuations.
+     * @private
      */
-    getMissionById(missionId) {
-        return DB.MISSIONS[missionId];
+    _calculateGalacticAverages() {
+        this.market.galacticAverages = {};
+        DB.COMMODITIES.forEach(good => {
+            this.market.galacticAverages[good.id] = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
+        });
     }
 
     /**
-     * Adds a log entry to the game's log history.
-     * @param {string} message - The message to log.
-     * @param {string} [type='info'] - The type of log entry (e.g., 'info', 'warning', 'success').
+     * Seeds the initial market prices for all commodities at all locations.
+     * Prices are based on the galactic average with randomness applied.
+     * @private
      */
-    addLog(message, type = 'info') {
-        const timestamp = this.getFormattedDate();
-        const newLog = { timestamp, message, type, id: Date.now() }; // Add unique ID
-        const logHistory = [newLog, ...this.state.logHistory.slice(0, 99)]; // Keep log to 100 entries
-        this.setState({ logHistory });
-    }
-
-    /**
-     * Generates travel data between two locations.
-     * Incorporates new logic for travel zones.
-     * @param {string} fromLocationId - The starting location ID.
-     * @param {string} toLocationId - The destination location ID.
-     * @returns {{time: number, fuel: number, hullDecay: number, distance: number}} - The calculated travel data.
-     */
-    procedurallyGenerateTravelData(fromLocationId, toLocationId) {
-        const fromMarket = this.getMarketById(fromLocationId);
-        const toMarket = this.getMarketById(toLocationId);
-
-        if (!fromMarket || !toMarket) {
-            console.error("Invalid location ID provided for travel data generation.");
-            return { time: 0, fuel: 0, hullDecay: 0, distance: 0 };
-        }
-
-        const innerSphere = [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT];
-        const outerReaches = [LOCATION_IDS.URANUS, LOCATION_IDS.NEPTUNE, LOCATION_IDS.PLUTO, LOCATION_IDS.EXCHANGE];
-
-        const isInInnerSphere = (id) => innerSphere.includes(id);
-        const isInOuterReaches = (id) => outerReaches.includes(id);
-
-        let distance = Math.abs(DB.MARKETS.indexOf(fromMarket) - DB.MARKETS.indexOf(toMarket)) * 10;
-        let timeMultiplier = 3.5;
-        let fuelMultiplier = GAME_RULES.FUEL_SCALAR;
-
-        // Adjust multipliers based on travel zones
-        if (isInInnerSphere(fromLocationId) && isInInnerSphere(toLocationId)) {
-            timeMultiplier = 2.8; // Faster travel within the core
-            fuelMultiplier *= 0.9;
-        } else if (isInOuterReaches(fromLocationId) || isInOuterReaches(toLocationId)) {
-            timeMultiplier = 4.5; // Slower travel to/from the outer reaches
-            fuelMultiplier *= 1.2;
-        }
-
-        // Special case for Earth-Luna quick trip
-        if ((fromLocationId === LOCATION_IDS.EARTH && toLocationId === LOCATION_IDS.LUNA) ||
-            (fromLocationId === LOCATION_IDS.LUNA && toLocationId === LOCATION_IDS.EARTH)) {
-            distance = 2;
-            timeMultiplier = 1.5;
-        }
-
-        const baseTime = Math.round(distance * timeMultiplier) + 1;
-        const time = Math.max(1, baseTime + Math.floor(Math.random() * 5) - 2); // Add some variance
-
-        const baseFuel = Math.round(distance * fuelMultiplier);
-        const fuel = Math.max(5, baseFuel);
-
-        const hullDecay = Math.max(1, Math.ceil(distance / 20));
-
-        return { time, fuel, hullDecay, distance };
-    }
-
-    /**
-     * Formats the current game date into a readable string.
-     * @returns {string} The formatted date string (e.g., "Jan 1, 2140").
-     */
-    getFormattedDate() {
-        const { day, month, year } = this.state.gameDate;
-        const monthName = DATE_CONFIG.MONTH_NAMES[month - 1].substring(0, 3);
-        return `${monthName} ${day}, ${year}`;
-    }
-
-    /**
-     * Formats the current game date with the day of the week.
-     * @returns {string} The formatted date string (e.g., "Monday, Jan 1, 2140").
-     */
-    getFormattedDateWithDay() {
-        const { day, month, year } = this.state.gameDate;
-        const date = new Date(year, month - 1, day);
-        const dayName = DATE_CONFIG.DAY_NAMES[date.getDay()];
-        const monthName = DATE_CONFIG.MONTH_NAMES[month - 1];
-        return `${dayName}, ${monthName} ${day}, ${year}`;
+    _seedInitialMarketPrices() {
+        DB.MARKETS.forEach(location => {
+            this.market.prices[location.id] = {};
+            DB.COMMODITIES.forEach(good => {
+                let price = this.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.15); // +/- 7.5% variance
+                this.market.prices[location.id][good.id] = Math.max(1, Math.round(price));
+            });
+        });
     }
 }
-
-export default new GameState();
