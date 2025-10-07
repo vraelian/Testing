@@ -132,6 +132,13 @@ export class TravelService {
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
+        
+        if (!fromLocation || !destination) {
+            this.logger.error('TravelService', `Invalid location ID provided for travel animation. From: ${fromId}, To: ${locationId}`);
+            this.uiManager.queueModal('event-modal', 'Navigation Error', 'Could not plot a course. The destination is unknown.');
+            return;
+        }
+
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
         
         this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
