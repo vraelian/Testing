@@ -409,7 +409,7 @@ export class UIManager {
     
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        const basePrice = this.getItemPrice(state, goodId, true);
+        const basePrice = this.uiManager.getItemPrice(state, goodId, true);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
     
@@ -492,7 +492,7 @@ export class UIManager {
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: this.getItemPrice(state, goodId, true),
+                sellPrice: this.uiManager.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -513,7 +513,7 @@ export class UIManager {
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
+                sellPrice: effectivePricePerUnit || this.uiManager.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -1038,37 +1038,33 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
-        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
-        const COMMODITY_CATEGORIES = {
-            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
-            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
-            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
-            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
-        };
+        const allCommodities = Object.entries(location.availabilityModifier || {})
+            .map(([id, modifier]) => ({ id, modifier, name: DB.COMMODITIES.find(c => c.id === id)?.name }))
+            .filter(item => item.name);
 
-        let imports = [];
-        let exports = [];
-        for (const goodId in location.availabilityModifier) {
-            const modifier = location.availabilityModifier[goodId];
-            const category = COMMODITY_CATEGORIES[goodId];
-            if (modifier < 1.0 && !imports.includes(category)) {
-                imports.push(category);
-            } else if (modifier > 1.0 && !exports.includes(category)) {
-                exports.push(category);
-            }
-        }
+        const imports = allCommodities
+            .filter(item => item.modifier < 1.0)
+            .sort((a, b) => a.modifier - b.modifier)
+            .slice(0, 2)
+            .map(item => `<span class="commodity-name">${item.name}</span>`);
+
+        const exports = allCommodities
+            .filter(item => item.modifier > 1.0)
+            .sort((a, b) => b.modifier - a.modifier)
+            .slice(0, 2)
+            .map(item => `<span class="commodity-name">${item.name}</span>`);
         
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b>${imports.join('')}</div>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b>${exports.join('')}</div>`;
         }
         if (intelHtml === '') {
-            intelHtml = '<p>Market data is unreliable.</p>';
+            intelHtml = '<p class="text-center">Market data is unreliable.</p>';
         }
         
         const modalContentHtml = `
@@ -1077,7 +1073,7 @@ export class UIManager {
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
+                <div class="border-t border-b py-2 space-y-2" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
                 <div class="font-roboto-mono text-xs"> 
@@ -1090,11 +1086,10 @@ export class UIManager {
             </div>`;
 
         const modal = this.cache.launchModal;
-        modal.innerHTML = modalContentHtml; // Directly set the innerHTML of the modal backdrop
+        modal.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
 
-        // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
                 this.hideModal('launch-modal');
@@ -1126,7 +1121,6 @@ export class UIManager {
     
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
-            // Fix: Add a guard clause to handle missions with no objectives.
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;

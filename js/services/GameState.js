@@ -11,6 +11,9 @@ import { skewedRandom } from '../utils.js';
  */
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
+    const innerSphereIds = [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT];
+    const outerReachesIds = [LOCATION_IDS.URANUS, LOCATION_IDS.NEPTUNE, LOCATION_IDS.PLUTO];
+
     markets.forEach((fromMarket, i) => {
         travelData[fromMarket.id] = {};
         markets.forEach((toMarket, j) => {
@@ -26,7 +29,23 @@ function procedurallyGenerateTravelData(markets) {
             } else {
                 travelTime = 15 + (distance * 10) + Math.floor(Math.random() * 5);
             }
-            travelData[fromMarket.id][toMarket.id] = { time: travelTime, fuelCost: Math.max(1, fuelCost) };
+
+            // Apply Zoned Travel Cost modifiers
+            const isInnerSphereTrip = innerSphereIds.includes(fromMarket.id) && innerSphereIds.includes(toMarket.id);
+            const isOuterReachesTrip = outerReachesIds.includes(fromMarket.id) || outerReachesIds.includes(toMarket.id);
+
+            if (isInnerSphereTrip) {
+                travelTime *= 0.9;
+                fuelCost *= 0.9;
+            } else if (isOuterReachesTrip) {
+                travelTime *= 1.2;
+                fuelCost *= 1.2;
+            }
+            
+            travelData[fromMarket.id][toMarket.id] = { 
+                time: Math.max(1, Math.round(travelTime)), 
+                fuelCost: Math.max(1, Math.round(fuelCost)) 
+            };
         });
     });
     return travelData;
