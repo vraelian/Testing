@@ -28,7 +28,8 @@ function procedurallyGenerateTravelData(markets) {
             const moonCorrection = (fromMarket.parent || toMarket.parent) ? 15 : 0;
             const finalDistance = distance + moonCorrection;
 
-            let travelTime = 1 + finalDistance * timeScalar;
+            // Travel time now scales exponentially with distance for a greater impact on long journeys.
+            let travelTime = 1 + Math.pow(finalDistance, 1.15) * timeScalar;
             let fuelCost = 5 + finalDistance * fuelScalar;
             
             // Special case for Earth-Luna to make it a quick, early-game trip.
