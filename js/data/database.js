@@ -129,6 +129,23 @@ export const DB = {
         [LOCATION_IDS.KEPLER]: '👁️'
     },
 
+    TRAVEL_VISUALS: {
+        zones: {
+            inner_sphere: {
+                locations: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
+                gradient: ['#0f172a', '#1e3a8a']
+            },
+            outer_reaches: {
+                locations: [LOCATION_IDS.JUPITER, LOCATION_IDS.SATURN, LOCATION_IDS.URANUS, LOCATION_IDS.NEPTUNE],
+                gradient: ['#0f172a', '#312e81']
+            }
+        },
+        objects: {
+            'earth_to_mars': [{ type: 'planet', emoji: '🌕', position: { x: 0.5, y: 0.3 }, scale: 0.8, speed: 0.3 }],
+            'belt_to_jupiter': [{ type: 'asteroid_field', count: 15, speed: 0.2 }]
+        }
+    },
+
     // --- Player Perks and Their Effects ---
     PERKS: {
         [PERK_IDS.TRADEMASTER]: { profitBonus: 0.05 },

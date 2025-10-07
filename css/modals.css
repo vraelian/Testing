@@ -131,6 +131,13 @@
 #travel-animation-modal #travel-status-text {
     transition: all 0.5s ease;
 }
+#travel-progress-container {
+    margin-bottom: 0.75rem;
+}
+#travel-progress-bar {
+    box-shadow: 0 0 8px var(--progress-glow-color), inset 0 0 4px var(--progress-glow-color);
+}
+
 
 #random-event-modal .modal-content .btn {
     text-align: center;

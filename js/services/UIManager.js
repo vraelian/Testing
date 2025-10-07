@@ -540,6 +540,10 @@ export class UIManager {
             return this.processModalQueue();
         }
 
+        if (options.nonDismissible) {
+            modal.classList.add('dismiss-disabled');
+        }
+
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
         const titleEl = modal.querySelector(`#${titleElId}`);
@@ -587,6 +591,7 @@ export class UIManager {
 
     showRandomEventModal(event, choicesCallback) {
         this.queueModal('random-event-modal', event.title, event.scenario, null, {
+            nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
@@ -606,6 +611,7 @@ export class UIManager {
 
     showAgeEventModal(event, choiceCallback) {
         const modal = document.getElementById('age-event-modal');
+        modal.classList.add('dismiss-disabled');
         document.getElementById('age-event-title').innerHTML = event.title;
         document.getElementById('age-event-description').innerHTML = event.description;
         const btnContainer = document.getElementById('age-event-button-container');
@@ -630,7 +636,7 @@ export class UIManager {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled');
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }
@@ -1068,7 +1074,7 @@ export class UIManager {
         }
         
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border modal-content" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
@@ -1089,14 +1095,6 @@ export class UIManager {
         modal.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-
-        const closeHandler = (e) => {
-            if (e.target.id === 'launch-modal') {
-                this.hideModal('launch-modal');
-                modal.removeEventListener('click', closeHandler);
-            }
-        };
-        modal.addEventListener('click', closeHandler);
     }
     
     showCargoDetailModal(gameState, goodId) {
@@ -1262,7 +1260,7 @@ export class UIManager {
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+        if (modalBackdrop && modalBackdrop.id && !modalBackdrop.classList.contains('dismiss-disabled') && !e.target.closest('.modal-content')) {
             return modalBackdrop.id;
         }
         return null;
