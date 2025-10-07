@@ -2,137 +2,169 @@
 import { DB } from '../../data/database.js';
 
 export class TravelAnimationService {
-    /**
-     * @param {boolean} isMobile - Flag to determine layout adjustments.
-     */
     constructor(isMobile) {
         this.isMobile = isMobile;
+        this.modal = document.getElementById('travel-animation-modal');
+        this.content = document.getElementById('travel-animation-content');
+        this.canvas = document.getElementById('travel-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.statusText = document.getElementById('travel-status-text');
+        this.arrivalLore = document.getElementById('travel-arrival-lore');
+        this.progressBar = document.getElementById('travel-progress-bar');
+        this.readoutContainer = document.getElementById('travel-readout-container');
+        this.infoText = document.getElementById('travel-info-text');
+        this.hullDamageText = document.getElementById('travel-hull-damage');
+        this.confirmButton = document.getElementById('travel-confirm-button');
+        this.animationFrame = null;
+        this.stars = [];
     }
 
-    /**
-     * Renders and controls the entire travel animation sequence.
-     * @param {object} from - The starting location object.
-     * @param {object} to - The destination location object.
-     * @param {object} travelInfo - Contains travel time and fuel cost.
-     * @param {number} totalHullDamagePercent - The hull damage percentage to display.
-     * @param {function} finalCallback - The function to call when the animation is complete.
-     */
-    play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        const modal = document.getElementById('travel-animation-modal');
-        const statusText = document.getElementById('travel-status-text');
-        const arrivalLore = document.getElementById('travel-arrival-lore');
-        const canvas = document.getElementById('travel-canvas');
-        const ctx = canvas.getContext('2d');
-        const progressContainer = document.getElementById('travel-progress-container');
-        const progressBar = document.getElementById('travel-progress-bar');
-        const readoutContainer = document.getElementById('travel-readout-container');
-        const infoText = document.getElementById('travel-info-text');
-        const hullDamageText = document.getElementById('travel-hull-damage');
-        const confirmButton = document.getElementById('travel-confirm-button');
-        let animationFrameId = null;
+    play(fromLocationId, toLocationId, travelInfo, totalHullDamagePercent, finalCallback) {
+        this.modal.classList.remove('hidden');
+        this.modal.classList.add('dismiss-disabled');
+        const fromLocation = DB.MARKETS.find(m => m.id === fromLocationId);
+        const toLocation = DB.MARKETS.find(m => m.id === toLocationId);
 
-        statusText.textContent = `Traveling to ${to.name}...`;
-        arrivalLore.textContent = '';
-        arrivalLore.style.opacity = 0;
-        readoutContainer.classList.add('hidden');
-        readoutContainer.style.opacity = 0;
-        confirmButton.classList.add('hidden');
-        confirmButton.style.opacity = 0;
-        progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        modal.classList.remove('hidden');
-        
-        const duration = 2500;
+        this.statusText.textContent = `Departing ${fromLocation.name}...`;
+        this.arrivalLore.textContent = toLocation.arrivalFlavor;
+        this.arrivalLore.style.opacity = '0';
+        this.readoutContainer.classList.add('hidden');
+        this.infoText.textContent = '';
+        this.hullDamageText.textContent = '';
+        this.confirmButton.style.opacity = '0';
+        this.confirmButton.disabled = true;
+        this.progressBar.style.width = '0%';
+
+        const duration = travelInfo.time * 200;
         let startTime = null;
-        const fromEmoji = DB.LOCATION_VISUALS[from.id] || '❓';
-        const toEmoji = DB.LOCATION_VISUALS[to.id] || '❓';
-        const shipEmoji = '🚀';
 
-        let stars = [];
-        const numStars = 150;
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        for (let i = 0; i < numStars; i++) {
-            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 1.5, speed: 0.2 + Math.random() * 0.8, alpha: 0.5 + Math.random() * 0.5 });
-        }
+        const animate = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            this.progressBar.style.width = `${progress * 100}%`;
+            this._drawStars(progress);
 
-        const animationLoop = (currentTime) => {
-            if (!startTime) startTime = currentTime;
-            const elapsedTime = currentTime - startTime;
-            let progress = Math.min(elapsedTime / duration, 1);
-            progress = 1 - Math.pow(1 - progress, 3);
-
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#FFF';
-            for (let i = 0; i < numStars; i++) {
-                const star = stars[i];
-                if (progress < 1) {
-                    star.x -= star.speed;
-                    if (star.x < 0) star.x = canvas.width;
-                }
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.globalAlpha = star.alpha;
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1.0;
-
-            const padding = 60;
-            const startX = padding;
-            const endX = canvas.width - padding;
-            const y = canvas.height / 2;
-            ctx.font = '42px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(fromEmoji, startX, y);
-            ctx.fillText(toEmoji, endX, y);
-            const shipX = startX + (endX - startX) * progress;
-            ctx.save();
-            ctx.translate(shipX, y);
-            ctx.font = '17px sans-serif';
-            ctx.fillText(shipEmoji, 0, 0);
-            ctx.restore();
-
-            progressBar.style.width = `${progress * 100}%`;
-
-            if (progress < 1) {
-                animationFrameId = requestAnimationFrame(animationLoop);
+            if (progress >= 1) {
+                this._onArrival(toLocation, travelInfo, totalHullDamagePercent, finalCallback);
             } else {
-                statusText.textContent = `Arrived at ${to.name}`;
-                arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
-                infoText.innerHTML = `
-                    <div class="text-center ${this.isMobile ? 'travel-info-mobile' : ''}">
-                        <div>Journey Time: ${travelInfo.time} Days</div>
-                        <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
-                    </div>`;
-                hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
-                if (totalHullDamagePercent > 0.01) {
-                    hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;
-                    if (this.isMobile) {
-                        infoText.querySelector('div').appendChild(hullDamageText);
-                    }
-                } else {
-                    hullDamageText.innerHTML = '';
-                }
-                
-                arrivalLore.style.opacity = 1;
-                progressContainer.classList.add('hidden');
-                readoutContainer.classList.remove('hidden');
-                confirmButton.classList.remove('hidden');
-                setTimeout(() => {
-                    readoutContainer.style.opacity = 1;
-                    confirmButton.style.opacity = 1;
-                }, 50);
+                this.animationFrame = requestAnimationFrame(animate);
             }
-        }
-
-        animationFrameId = requestAnimationFrame(animationLoop);
-        confirmButton.onclick = () => {
-            cancelAnimationFrame(animationFrameId);
-            modal.classList.add('hidden');
-            if (finalCallback) finalCallback();
         };
+        
+        this._setupCanvas(fromLocation.navTheme.gradient, toLocation.navTheme.gradient);
+        this.animationFrame = requestAnimationFrame(animate);
+    }
+
+    _onArrival(toLocation, travelInfo, totalHullDamagePercent, finalCallback) {
+        this.statusText.textContent = `Arrived at ${toLocation.name}`;
+        this.arrivalLore.style.opacity = '1';
+        this.readoutContainer.classList.remove('hidden');
+        this.infoText.textContent = `Distance: ${travelInfo.distance.toFixed(2)} AU | Time: ${travelInfo.time} Days`;
+
+        if (totalHullDamagePercent > 0) {
+            this.hullDamageText.textContent = `Hull integrity compromised by ${totalHullDamagePercent.toFixed(2)}% during transit.`;
+            this.hullDamageText.classList.add('warning-text');
+        } else {
+            this.hullDamageText.textContent = 'Transit successful. No hull damage detected.';
+            this.hullDamageText.classList.remove('warning-text');
+        }
+        
+        this.readoutContainer.style.opacity = '1';
+
+        setTimeout(() => {
+            this.confirmButton.style.opacity = '1';
+            this.confirmButton.disabled = false;
+        }, 750);
+
+        this.confirmButton.onclick = () => {
+            cancelAnimationFrame(this.animationFrame);
+            this.modal.classList.add('hidden');
+            this.modal.classList.remove('dismiss-disabled');
+            finalCallback();
+        };
+    }
+
+    _setupCanvas(fromGradient, toGradient) {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+        this.stars = [];
+        for (let i = 0; i < 150; i++) {
+            this.stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                z: Math.random() * this.canvas.width
+            });
+        }
+        this.fromGradient = this._createGradient(fromGradient);
+        this.toGradient = this._createGradient(toGradient);
+    }
+
+    _createGradient(cssGradient) {
+        const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, 0);
+        const colors = cssGradient.match(/#[0-9a-f]{6}|#[0-9a-f]{3}/ig);
+        if (colors && colors.length > 1) {
+            gradient.addColorStop(0, colors[0]);
+            gradient.addColorStop(1, colors[1]);
+        } else {
+            gradient.addColorStop(0, '#0c101d');
+            gradient.addColorStop(1, '#1a2030');
+        }
+        return gradient;
+    }
+
+    _drawStars(progress) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Interpolate background gradient
+        const r1 = parseInt(this.fromGradient.colorStops[0].color.slice(1,3), 16);
+        const g1 = parseInt(this.fromGradient.colorStops[0].color.slice(3,5), 16);
+        const b1 = parseInt(this.fromGradient.colorStops[0].color.slice(5,7), 16);
+        const r2 = parseInt(this.toGradient.colorStops[0].color.slice(1,3), 16);
+        const g2 = parseInt(this.toGradient.colorStops[0].color.slice(3,5), 16);
+        const b2 = parseInt(this.toGradient.colorStops[0].color.slice(5,7), 16);
+
+        const r = Math.round(r1 + (r2 - r1) * progress);
+        const g = Math.round(g1 + (g2 - g1) * progress);
+        const b = Math.round(b1 + (b2 - b1) * progress);
+
+        const r1_end = parseInt(this.fromGradient.colorStops[1].color.slice(1,3), 16);
+        const g1_end = parseInt(this.fromGradient.colorStops[1].color.slice(3,5), 16);
+        const b1_end = parseInt(this.fromGradient.colorStops[1].color.slice(5,7), 16);
+        const r2_end = parseInt(this.toGradient.colorStops[1].color.slice(1,3), 16);
+        const g2_end = parseInt(this.toGradient.colorStops[1].color.slice(3,5), 16);
+        const b2_end = parseInt(this.toGradient.colorStops[1].color.slice(5,7), 16);
+
+        const r_end = Math.round(r1_end + (r2_end - r1_end) * progress);
+        const g_end = Math.round(g1_end + (g2_end - g1_end) * progress);
+        const b_end = Math.round(b1_end + (b2_end - b1_end) * progress);
+
+        const currentGradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, 0);
+        currentGradient.addColorStop(0, `rgb(${r},${g},${b})`);
+        currentGradient.addColorStop(1, `rgb(${r_end},${g_end},${b_end})`);
+
+        this.ctx.fillStyle = currentGradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+
+        this.ctx.fillStyle = 'white';
+        this.ctx.save();
+        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+
+        this.stars.forEach(star => {
+            star.z -= 2;
+            if (star.z <= 0) {
+                star.z = this.canvas.width;
+            }
+
+            const k = 128 / star.z;
+            const px = star.x * k;
+            const py = star.y * k;
+            const size = (1 - star.z / this.canvas.width) * 2.5;
+
+            this.ctx.beginPath();
+            this.ctx.arc(px, py, size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        this.ctx.restore();
     }
 }

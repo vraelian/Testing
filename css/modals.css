@@ -215,15 +215,12 @@
     text-align: center;
 }
 
-.launch-modal-commodity {
-    color: white;
-    text-shadow:
-        -1px -1px 0 #000,
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000;
+.launch-modal-wrapper .commodity-name {
+    position: static; /* Override absolute positioning from market.css */
     display: block;
-    margin-top: 0.25rem;
+    padding-left: 1rem;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 @keyframes launch-glow-animation {
