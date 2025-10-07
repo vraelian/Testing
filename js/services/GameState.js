@@ -5,46 +5,41 @@ import { skewedRandom } from '../utils.js';
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
- * for travel between every pair of locations in the game.
- * @param {Array<object>} markets - The array of market objects from the database.
+ * for travel between every pair of locations in the game based on their explicit distances.
+ * @param {Array<object>} markets - The array of market objects from the database, including distance property.
  * @returns {object} A nested object where `travelData[fromId][toId]` contains travel info.
  */
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
-    const innerSphereIds = [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT];
-    const outerReachesIds = [LOCATION_IDS.URANUS, LOCATION_IDS.NEPTUNE, LOCATION_IDS.PLUTO];
+    const timeScalar = 0.1;  // Controls how much distance affects time
+    const fuelScalar = 1.5; // Controls how much distance affects fuel
 
-    markets.forEach((fromMarket, i) => {
+    markets.forEach(fromMarket => {
         travelData[fromMarket.id] = {};
-        markets.forEach((toMarket, j) => {
-            if (i === j) return;
-            // Simple index difference is used as a proxy for orbital distance.
-            const distance = Math.abs(i - j);
-            const fuelTime = distance * 2 + Math.floor(Math.random() * 3);
-            let fuelCost = Math.round(fuelTime * GAME_RULES.FUEL_SCALAR * (1 + (j / markets.length) * 0.5));
-            let travelTime;
+        markets.forEach(toMarket => {
+            if (fromMarket.id === toMarket.id) return;
+
+            const fromDistance = fromMarket.parent ? (markets.find(m => m.id === fromMarket.parent)?.distance || 0) : fromMarket.distance;
+            const toDistance = toMarket.parent ? (markets.find(m => m.id === toMarket.parent)?.distance || 0) : toMarket.distance;
+
+            const distance = Math.abs(toDistance - fromDistance);
+            
+            // Add the moon's own small distance from its parent if it's involved
+            const moonCorrection = (fromMarket.parent || toMarket.parent) ? 15 : 0;
+            const finalDistance = distance + moonCorrection;
+
+            let travelTime = 1 + finalDistance * timeScalar;
+            let fuelCost = 5 + finalDistance * fuelScalar;
+            
             // Special case for Earth-Luna to make it a quick, early-game trip.
             if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
-                travelTime = 1 + Math.floor(Math.random() * 3);
-            } else {
-                travelTime = 15 + (distance * 10) + Math.floor(Math.random() * 5);
+                travelTime = 2 + Math.floor(Math.random() * 2);
+                fuelCost = 15 + Math.floor(Math.random() * 5);
             }
 
-            // Apply Zoned Travel Cost modifiers
-            const isInnerSphereTrip = innerSphereIds.includes(fromMarket.id) && innerSphereIds.includes(toMarket.id);
-            const isOuterReachesTrip = outerReachesIds.includes(fromMarket.id) || outerReachesIds.includes(toMarket.id);
-
-            if (isInnerSphereTrip) {
-                travelTime *= 0.9;
-                fuelCost *= 0.9;
-            } else if (isOuterReachesTrip) {
-                travelTime *= 1.2;
-                fuelCost *= 1.2;
-            }
-            
-            travelData[fromMarket.id][toMarket.id] = { 
-                time: Math.max(1, Math.round(travelTime)), 
-                fuelCost: Math.max(1, Math.round(fuelCost)) 
+            travelData[fromMarket.id][toMarket.id] = {
+                time: Math.max(1, Math.round(travelTime)),
+                fuelCost: Math.max(1, Math.round(fuelCost)),
             };
         });
     });
