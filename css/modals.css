@@ -103,7 +103,6 @@
 }
 
 #travel-progress-bar {
-    transition: width 2.5s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 8px var(--progress-glow-color, #fff), 0 0 12px var(--progress-glow-color, #fff);
 }
 
@@ -139,30 +138,25 @@
     max-width: 450px;
 }
 
-/* --- [[START]] LAUNCH MODAL STYLES --- */
 .launch-modal-wrapper {
-    position: relative;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border: 2px solid;
-    border-radius: 15px;
-    padding: 1rem;
-    width: 100%;
-    max-width: 350px;
-    height: 305px;
-    margin: 0 auto;
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 10px;
 }
-.launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
+
+.launch-modal-wrapper .flavor-text {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    opacity: 0.8;
 }
-.flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
-    opacity: 0.80;
+
+.launch-modal-wrapper .intel-section {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.8rem;
 }
 
 .launch-modal-wrapper .commodity-name {
@@ -173,19 +167,19 @@
 }
 
 .btn-launch-glow {
-    animation: launch-glow-animation 2.5s infinite;
-    border-color: var(--launch-glow-color);
+    position: relative;
+    overflow: hidden;
+    animation: pulse-launch-glow 2s infinite;
 }
 
-@keyframes launch-glow-animation {
+@keyframes pulse-launch-glow {
     0%, 100% {
-        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+        box-shadow: 0 0 5px var(--launch-glow-color), 0 0 10px var(--launch-glow-color);
     }
     50% {
-        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+        box-shadow: 0 0 15px var(--launch-glow-color), 0 0 25px var(--launch-glow-color);
     }
 }
-/* --- [[END]] LAUNCH MODAL STYLES --- */
 
 
 /* Cargo Detail Modal */
@@ -323,3 +317,48 @@
     gap: 0.5rem;
     padding-right: 0.5rem; /* For scrollbar */
 }
+
+/* --- [[START]] LAUNCH MODAL STYLES --- */
+#launch-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 100%;
+    max-width: 350px;
+    height: 305px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+@keyframes launch-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+    }
+}
+.btn-launch-glow {
+    animation: launch-glow-animation 2.5s infinite;
+    border-color: var(--launch-glow-color);
+}
+/* --- [[END]] LAUNCH MODAL STYLES --- */

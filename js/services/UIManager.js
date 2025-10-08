@@ -1047,57 +1047,70 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
+        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
-        const allCommodities = Object.entries(location.availabilityModifier || {})
-            .map(([id, modifier]) => ({ id, modifier, name: DB.COMMODITIES.find(c => c.id === id)?.name }))
-            .filter(item => item.name);
-
-        const imports = allCommodities
-            .filter(item => item.modifier < 1.0)
-            .sort((a, b) => a.modifier - b.modifier)
-            .slice(0, 2)
-            .map(item => `<span class="commodity-name">${item.name}</span>`);
-
-        const exports = allCommodities
-            .filter(item => item.modifier > 1.0)
-            .sort((a, b) => b.modifier - a.modifier)
-            .slice(0, 2)
-            .map(item => `<span class="commodity-name">${item.name}</span>`);
-
+        const COMMODITY_CATEGORIES = {
+            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
+            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
+            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
+            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
+        };
+        let imports = [];
+        let exports = [];
+        for (const goodId in location.availabilityModifier) {
+            const modifier = location.availabilityModifier[goodId];
+            const category = COMMODITY_CATEGORIES[goodId];
+            if (modifier < 1.0 && !imports.includes(category)) {
+                imports.push(category);
+            } else if (modifier > 1.0 && !exports.includes(category)) {
+                exports.push(category);
+            }
+        }
+        
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<div class="text-center"><b style="color: ${theme.textColor};">Imports:</b><div class="mt-1 flex flex-wrap justify-center gap-2">${imports.join('')}</div></div>`;
+            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<div class="text-center mt-2"><b style="color: ${theme.textColor};">Exports:</b><div class="mt-1 flex flex-wrap justify-center gap-2">${exports.join('')}</div></div>`;
+            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
         }
         if (intelHtml === '') {
-            intelHtml = '<p class="text-center text-gray-400">Market data is unreliable.</p>';
+            intelHtml = '<p>Market data is unreliable.</p>';
         }
-
+        
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border modal-content" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 space-y-2" style="border-color: ${theme.borderColor}50;">
+                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
-                <div class="font-roboto-mono text-xs">
+                <div class="font-roboto-mono text-xs"> 
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
-                <div class="pt-2">
+                <div class="pt-2"> 
                    <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
             </div>`;
 
         const modal = this.cache.launchModal;
-        modal.innerHTML = modalContentHtml;
+        // This is a key change: inject the HTML directly into the #launch-modal element, not its child.
+        modal.innerHTML = modalContentHtml; 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
+
+        // Add a one-time click listener to the backdrop to close the modal.
+        const closeHandler = (e) => {
+            if (e.target.id === 'launch-modal') {
+                this.hideModal('launch-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
     }
     
     showCargoDetailModal(gameState, goodId) {
