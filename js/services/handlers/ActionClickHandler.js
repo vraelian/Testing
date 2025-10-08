@@ -116,6 +116,12 @@ export class ActionClickHandler {
             case 'show-launch-modal':
                 this.uiManager.showLaunchModal(dataset.locationId);
                 break;
+            case 'show-map-modal':
+                this.uiManager.showMapDetailModal(dataset.locationId);
+                break;
+            case 'close-map-modal':
+                this.uiManager.hideMapDetailModal();
+                break;
 
             // --- Mission Actions ---
             case 'accept-mission':

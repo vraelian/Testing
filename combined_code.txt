@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 27.40</title>
+    <title>Orbital Trading 28.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
     <link rel="stylesheet" href="./css/screens/finance-screen.css">
     <link rel="stylesheet" href="./css/screens/intel-screen.css">
-    <link rel="stylesheet" href="./css/screens/status-screen.css">
+    <link rel="stylesheet" href="./css/screens/map-screen.css">
     <link rel="stylesheet" href="./css/screens/services-screen.css">
     <link rel="stylesheet" href="./css/screens/cargo-screen.css">
     <link rel="icon" href="./favicon.svg" type="image/svg+xml">
@@ -47,7 +47,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 27.40</p>
+            <p>Version 28.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -70,7 +70,7 @@
         
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
-                <div id="status-screen" class="screen"></div>
+                <div id="map-screen" class="screen"></div>
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
                
@@ -99,6 +99,13 @@
                 <div id="mission-modal-buttons" class="mt-4"></div>
             </div>
         </div>
+        <div id="map-detail-modal" class="modal-backdrop hidden">
+             <div class="modal-content">
+                <button class="absolute top-4 right-4 text-2xl font-bold opacity-70 hover:opacity-100" data-action="close-map-modal">&times;</button>
+                <div id="map-modal-content-container">
+                    </div>
+             </div>
+        </div>
     </main>
     <div id="mission-sticky-bar" class="bottom-sticky-bar">
         <div class="sticky-content sci-fi-frame">
@@ -116,7 +123,7 @@
             <canvas id="travel-canvas"></canvas>
             <div id="travel-footer-panel">
                 <div id="travel-progress-container" class="w-full bg-slate-700 rounded-full h-1.5">
-                    <div id="travel-progress-bar" class="bg-cyan-400 h-1.5 rounded-full" style="width: 0%"></div>
+                    <div id="travel-progress-bar" class="h-1.5 rounded-full" style="width: 0%"></div>
                 </div>
                 <div id="travel-readout-container" class="hidden">
                     <p id="travel-info-text" class="text-base font-roboto-mono"></p>
@@ -783,7 +790,7 @@
     align-items: center;
     font-size: 0.9rem;
     font-family: 'Share Tech Mono', monospace;
-    border-bottom: 2px solid rgba(0,0,0,0.3);
+    /* border-bottom has been removed to allow for the bevel effect */
     text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Increased shadow for readability */
     transition: background 0.5s ease-out, color 0.5s ease-out;
 }
@@ -816,7 +823,7 @@
 }
 
 .status-bar {
-    width: 27px;
+    width: 34px;
     height: 8px;
     background-color: #222;
     border: 1px solid #111;
@@ -854,11 +861,11 @@
 }
 
 .fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 44px));
+    transform: translateX(calc(-50% - 51px));
 }
 
 .cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 88px));
+    transform: translateX(calc(-50% - 102px));
 }
 
 
@@ -984,7 +991,6 @@ html,
 body {
     height: 100%;
     overflow: hidden;
-    touch-action: none;
     margin: 0;
 }
 
@@ -1288,6 +1294,13 @@ body {
 #travel-animation-modal #travel-status-text {
     transition: all 0.5s ease;
 }
+#travel-progress-container {
+    margin-bottom: 0.75rem;
+}
+#travel-progress-bar {
+    box-shadow: 0 0 8px var(--progress-glow-color), inset 0 0 4px var(--progress-glow-color);
+}
+
 
 #random-event-modal .modal-content .btn {
     text-align: center;
@@ -1351,13 +1364,13 @@ body {
     padding: 1rem;
     width: 100%;
     max-width: 350px;
-    height: 305px;
+    height: 395px; /* Increased height */
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    display: flex; /* Keep flex display */
-    flex-direction: column; /* Keep flex-direction column */
-    justify-content: space-between; /* Change from flex-start to space-between */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     gap: 1rem;
 }
 .launch-modal-wrapper h3 {
@@ -1366,6 +1379,18 @@ body {
 .flavor-text {
     font-size: 0.8125rem; /* 13px, a 1pt reduction */
     opacity: 0.80;
+}
+
+.intel-section {
+    text-align: center;
+}
+
+.launch-modal-wrapper .commodity-name {
+    position: static; /* Override absolute positioning from market.css */
+    display: block;
+    padding-left: 1rem;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 @keyframes launch-glow-animation {
@@ -1397,6 +1422,86 @@ body {
     display: none; /* For Chrome, Safari, and Opera */
 }
 --- END OF FILE: ./css/screens/services-screen.css ---
+
+--- START OF FILE: ./css/screens/map-screen.css ---
+/* css/screens/map-screen.css */
+#map-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#map-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sun {
+    filter: drop-shadow(0 0 20px #fde047);
+}
+
+.central-axis {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+}
+
+.poi-group {
+    cursor: pointer;
+    transition: transform 0.2s ease-out;
+}
+
+.poi-group:hover {
+    transform: scale(1.1);
+}
+
+.poi-label {
+    font-family: 'Orbitron', sans-serif;
+    fill: #d0d8e8;
+    font-size: 0.8rem;
+    text-anchor: middle;
+    paint-order: stroke;
+    stroke: #0c101d;
+    stroke-width: 3px;
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
+}
+
+#map-detail-modal .modal-content {
+    background: rgba(12, 16, 29, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    clip-path: polygon(0% 20px, 20px 0%, calc(100% - 20px) 0%, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0% calc(100% - 20px));
+}
+
+#map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.imprinted-text {
+    color: #e0e0e0;
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.5);
+}
+
+.market-profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.commodity-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    border-width: 1px;
+    border-style: solid;
+    margin: 0.25rem;
+}
+--- END OF FILE: ./css/screens/map-screen.css ---
 
 --- START OF FILE: ./css/screens/market-screen.css ---
 /* css/screens/market-screen.css */
@@ -2098,21 +2203,6 @@ body {
 }
 --- END OF FILE: ./css/screens/finance-screen.css ---
 
---- START OF FILE: ./css/screens/status-screen.css ---
-/* css/screens/status-screen.css */
-.status-scroll-panel {
-    height: 75vh; /* Enforce a fixed height based on the viewport */
-    overflow-y: auto;
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
-    touch-action: pan-y; /* Allow vertical scrolling */
-}
-.status-scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
-}
---- END OF FILE: ./css/screens/status-screen.css ---
-
 --- START OF FILE: ./css/screens/hangar-screen.css ---
 /* css/screens/hangar-screen.css */
 
@@ -2533,7 +2623,13 @@ COMPONENT-SPECIFIC STYLING
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */
 
-/* --- [[START]] NEW BULKHEAD STYLES (Concept 207+) --- */
+/* ================================================================================
+BULKHEAD NAVIGATION STYLES
+- Uses an overlapping clip-path strategy for a clean, interlocking look.
+- A negative margin on each tab pulls it over the previous one.
+- The :first-child selector creates a clean starting edge.
+- The .active selector uses z-index to bring the selected tab to the front.
+================================================================================ */
 .nav-wrapper {
     background-color: #383838;
     background-image: radial-gradient(circle, rgba(255,255,255,.03) 1px, transparent 1px);
@@ -2541,7 +2637,8 @@ COMPONENT-SPECIFIC STYLING
     display: flex;
     align-items: center;
     padding: 0 5px 0 10px;
-    border-bottom: 1px solid #111;
+    /* Bevel effect to connect with the context bar above */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .nav-main {
@@ -2550,39 +2647,46 @@ COMPONENT-SPECIFIC STYLING
 
 .tab {
     padding: 7.5px 15px;
-    color: #a0aec0; /* Default text color */
-    opacity: 0.7; /* Default opacity */
+    color: #a0aec0;
+    opacity: 0.7;
     cursor: pointer;
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     font-size: 0.8rem;
-    position: relative;
+    position: relative; /* Establishes stacking context for z-index */
     background-color: #444;
     border-top: 1px solid #666;
-    margin-right: -6px;
-    transition: all 0.2s;
+    /* Added transition for smooth scaling and filter effects */
+    transition: all 0.3s ease;
     text-decoration: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+
+    /* --- Core Interlocking Logic --- */
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
+    margin-left: -12px; /* Overlap by the same amount as the clip-path skew */
 }
+
+/* Straighten the left edge of the very first tab and remove its negative margin */
+.tab:first-child {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
+    margin-left: 0;
+}
+
 .tab.disabled {
     pointer-events: none;
     filter: grayscale(1);
     opacity: 0.3;
 }
 
-.ship-tab { clip-path: polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%);
-}
-.starport-tab, .data-tab { clip-path: polygon(15% 0, 100% 0, 85% 100%, 0% 100%); }
-
 .tab.active {
     opacity: 1;
-    z-index: 2;
-    transform: scale(1.05);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+    z-index: 2; /* Bring the active tab to the front */
+    transform: scale(1.05); /* The "raised" effect */
+    /* Active tab has a drop-shadow for depth and a theme-colored glow */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)) drop-shadow(0 0 8px var(--theme-color-glow, #fde047));
 }
 
 #sub-nav-bar {
@@ -2602,11 +2706,14 @@ COMPONENT-SPECIFIC STYLING
     flex-grow: 1;
     text-align: center;
     opacity: 0.8;
-    font-size: 0.7rem;
+    font-family: 'Orbitron', sans-serif; /* Matched font */
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Added text shadow for depth */
     text-transform: uppercase;
     padding: 8.75px 0;
     text-decoration: none;
-    position: relative;
+    position: relative; /* Needed for the ::after pseudo-element */
     transition: all 0.2s;
     background-color: #3a3a3a;
     border-right: 1px solid #1c1c1c;
@@ -2617,6 +2724,22 @@ COMPONENT-SPECIFIC STYLING
     -ms-user-select: none;
     user-select: none;
 }
+
+/* Active Sub-Nav Indicator */
+.nav-sub a.sub-nav-active::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; /* Position the line just below the text */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background-color: var(--theme-border-color, #fde047);
+    border-radius: 1px;
+    box-shadow: 0 0 5px var(--theme-border-color, #fde047);
+}
+
+
 .nav-sub a.disabled {
     pointer-events: none;
     filter: grayscale(1);
@@ -2628,10 +2751,6 @@ COMPONENT-SPECIFIC STYLING
 }
 .nav-sub a:last-child { border-right: none; }
 
-.nav-sub a:hover:not(.disabled) {
-    opacity: 1;
-    background-color: #4a4a4a;
-}
 /* --- [[END]] NEW BULKHEAD STYLES --- */
 
 
@@ -2685,91 +2804,90 @@ COMPONENT-SPECIFIC STYLING
 }
 --- END OF FILE: ./css/orientation.css ---
 
---- START OF FILE: ./js/ui/components/StatusScreen.js ---
-// js/ui/components/StatusScreen.js
+--- START OF FILE: ./js/ui/components/MapScreen.js ---
+// js/ui/components/MapScreen.js
 /**
- * @fileoverview This file contains the rendering logic for the main Status screen.
- * It serves as the primary dashboard for the player, displaying the current date,
- * active ship information, and essential ship status metrics like hull, fuel, and cargo.
+ * @fileoverview This file contains the rendering logic for the new Map screen.
+ * It uses D3.js to render a stylized, interactive map of the solar system.
  */
 import { DB } from '../../data/database.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay } from '../../utils.js';
 
 /**
- * Renders the entire Status screen UI.
- * @param {object} gameState - The current state of the game.
- * @returns {string} The HTML content for the Status screen.
+ * Renders the container for the Map screen UI.
+ * @returns {string} The HTML content for the Map screen container.
  */
-export function renderStatusScreen(gameState) {
-    const { player, day, currentLocationId } = gameState;
-    const shipStatic = DB.SHIPS[player.activeShipId];
-    const shipState = player.shipStates[player.activeShipId];
-    const inventory = player.inventories[player.activeShipId];
-    const cargoUsed = calculateInventoryUsed(inventory);
-    const location = DB.MARKETS.find(l => l.id === currentLocationId);
-    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
-    const shipClassLower = shipStatic.class.toLowerCase();
-
-    // Active Ship Bar component logic from Hangar screen
-    const hullPercent = Math.floor((shipState.health / shipStatic.maxHealth) * 100);
-    const fuelPercent = Math.floor((shipState.fuel / shipStatic.maxFuel) * 100);
-    const cargoSegments = Array.from({ length: Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))) }, (_, i) => {
-        const filledSegments = Math.round((cargoUsed / shipStatic.cargoCapacity) * Math.max(10, Math.min(25, Math.floor(shipStatic.cargoCapacity / 8))));
-        return `<div class="segment ${i < filledSegments ? 'filled' : ''}"></div>`;
-    }).join('');
-
-    const activeShipBarHtml = `
-        <div class="ship-bar-wrapper bg-class-${shipClassLower} class-${shipClassLower}" style="cursor: default;">
-            <div class="status-sidelabel sidelabel-active">ACTIVE</div>
-            <div class="main-content">
-                <div class="ship-info-top">
-                    <div class="ship-info">
-                        <span class="ship-name class-${shipClassLower}">${shipStatic.name}</span>
-                        <span class="ship-class">Class ${shipStatic.class}</span>
-                    </div>
-                    <div class="ship-stats-text">
-                        <span class="stat-hull">HULL: <span class="value">${hullPercent}%</span></span>
-                        <span class="stat-fuel">FUEL: <span class="value">${fuelPercent}%</span></span>
-                    </div>
-                </div>
-                <div class="bottom-line">
-                    <div class="cargo-bar">${cargoSegments}</div>
-                    <div class="cargo-text">CARGO: <span class="value">${cargoUsed}/${shipStatic.cargoCapacity}</span></div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    return `
-        <div class="status-scroll-panel">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/30 p-4 rounded-lg mb-6 items-start">
-                <div class="md:col-span-2 h-full p-4 rounded-lg flex items-center justify-between transition-all duration-500 panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <div class="text-left pl-4">
-                        <span class="block text-lg uppercase tracking-widest" style="color: ${theme.textColor}a0;">Day</span>
-                        <span class="text-4xl font-bold font-orbitron">${day}</span>
-                    </div>
-                    <div class="text-right flex flex-col items-end">
-                        <p class="text-xs font-roboto-mono text-right" style="color: ${theme.textColor}cc;">${getDateFromDay(day)}</p>
-                        <div class="mt-2 pt-2 border-t" style="border-color: ${theme.textColor}50;">
-                            <div class="text-right">
-                                <p class="text-sm tracking-wider" style="color: ${theme.textColor}a0;">Vessel</p>
-                                <p>${shipStatic.name}</p>
-                                <p>Class: ${shipStatic.class}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-1 flex flex-col gap-4">
-                    ${activeShipBarHtml}
-                    <div class="text-center text-lg font-orbitron flex items-center justify-center gap-2" style="color: ${theme.textColor};">
-                        <span>${player.playerTitle} ${player.name}, ${player.playerAge}</span>
-                    </div>
-                </div>
-            </div>
-        </div>`;
+export function renderMapScreen() {
+    return `<div id="map-container" class="w-full h-full"></div>`;
 }
---- END OF FILE: ./js/ui/components/StatusScreen.js ---
+
+/**
+ * Initializes and renders the D3 map within the #map-container element.
+ * @param {import('../../services/UIManager.js').UIManager} uiManager - The UIManager instance, passed for modal interactivity.
+ */
+export function initMap(uiManager) {
+    const container = d3.select("#map-container");
+    // Exit if the container doesn't exist or if the SVG is already there.
+    if (!container.node() || !container.select("svg").empty()) {
+        return;
+    }
+
+    const svg = container.append("svg")
+        .attr("id", "map-svg")
+        .attr("width", "100%")
+        .attr("height", "100%");
+
+    // Add sun and glow
+    const defs = svg.append("defs");
+    const radialGradient = defs.append("radialGradient")
+        .attr("id", "sun-gradient");
+    radialGradient.append("stop").attr("offset", "0%").attr("stop-color", "#fef08a");
+    radialGradient.append("stop").attr("offset", "100%").attr("stop-color", "#fde047");
+
+    svg.append("circle")
+        .attr("class", "sun")
+        .attr("cx", "50%")
+        .attr("cy", 50)
+        .attr("r", 30)
+        .attr("fill", "url(#sun-gradient)");
+
+    // Add central axis
+    svg.append("line")
+        .attr("class", "central-axis")
+        .attr("x1", "50%")
+        .attr("y1", 50)
+        .attr("x2", "50%")
+        .attr("y2", "100%");
+
+    const y = d3.scaleLog()
+      .domain([1, 1200])
+      .range([120, container.node().clientHeight - 50]);
+
+    const poiData = DB.MARKETS.filter(loc => uiManager.lastKnownState.player.unlockedLocationIds.includes(loc.id));
+
+    const poiGroups = svg.selectAll(".poi-group")
+        .data(poiData)
+        .enter()
+        .append("g")
+        .attr("class", "poi-group")
+        .attr("data-action", "show-map-modal")
+        .attr("data-location-id", d => d.id)
+        .on("click", (event, d) => {
+             uiManager.showMapDetailModal(d.id);
+         });
+
+    poiGroups.append("circle")
+        .attr("cx", (d, i) => i % 2 === 0 ? "35%" : "65%")
+        .attr("cy", d => y(d.distance))
+        .attr("r", d => d.parent ? 10 : 15)
+        .attr("fill", d => d.navTheme.borderColor);
+
+    poiGroups.append("text")
+        .attr("class", "poi-label")
+        .attr("x", (d, i) => i % 2 === 0 ? "35%" : "65%")
+        .attr("y", d => y(d.distance) + (d.parent ? 22 : 28))
+        .text(d => d.name);
+}
+--- END OF FILE: ./js/ui/components/MapScreen.js ---
 
 --- START OF FILE: ./js/ui/components/HangarScreen.js ---
 // js/ui/components/HangarScreen.js
@@ -4276,7 +4394,7 @@ export class EffectsManager {
  * @enum {string}
  */
 export const SCREEN_IDS = Object.freeze({
-    STATUS: 'status',
+    MAP: 'map',
     NAVIGATION: 'navigation',
     SERVICES: 'services',
     MARKET: 'market',
@@ -4600,6 +4718,23 @@ export const DB = {
         [LOCATION_IDS.KEPLER]: '👁️'
     },
 
+    TRAVEL_VISUALS: {
+        zones: {
+            inner_sphere: {
+                locations: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
+                gradient: ['#0f172a', '#1e3a8a']
+            },
+            outer_reaches: {
+                locations: [LOCATION_IDS.JUPITER, LOCATION_IDS.SATURN, LOCATION_IDS.URANUS, LOCATION_IDS.NEPTUNE],
+                gradient: ['#0f172a', '#312e81']
+            }
+        },
+        objects: {
+            'earth_to_mars': [{ type: 'planet', emoji: '🌕', position: { x: 0.5, y: 0.3 }, scale: 0.8, speed: 0.3 }],
+            'belt_to_jupiter': [{ type: 'asteroid_field', count: 15, speed: 0.2 }]
+        }
+    },
+
     // --- Player Perks and Their Effects ---
     PERKS: {
         [PERK_IDS.TRADEMASTER]: { profitBonus: 0.05 },
@@ -4921,18 +5056,18 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.EARTH, name: 'Earth Orbit', launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", availabilityModifier: { 'cybernetics': 2.0, 'gmo_seeds': 2.0, 'cloned_organs': 0.1, 'sentient_ai': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", availabilityModifier: { 'plasteel': 2.0 } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", availabilityModifier: { 'plasteel': 2.0, 'hydroponics': 2.0, 'gmo_seeds': 0.5, 'cryo_pods': 0.5 } },
-        { id: LOCATION_IDS.VENUS, name: 'Venus', launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", availabilityModifier: { 'processors': 0.5, 'atmo_processors': 0.5, 'cloned_organs': 2.0 } },
-        { id: LOCATION_IDS.BELT, name: 'The Asteroid Belt', launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5 } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn\'s Rings', launchFlavor: "Opulent stations drift among majestic rings.", navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", availabilityModifier: { 'hydroponics': 0.5, 'cryo_pods': 2.0 } },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", availabilityModifier: { 'water_ice': 2.0, 'propellant': 2.0, 'atmo_processors': 2.0 } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', launchFlavor: "A silent, ice-cold world of strange science.", navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", availabilityModifier: { 'water_ice': 2.0, 'processors': 0.5, 'xeno_geologicals': 0.5, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', launchFlavor: "The stormy edge of military-controlled space.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", availabilityModifier: { 'water_ice': 2.0, 'sentient_ai': 0.5, 'antimatter': 0.5, 'folded_drives': 0.5 } },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', launchFlavor: "A haven for outcasts at the system's fringe.", navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", availabilityModifier: {} },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", launchFlavor: "A colossal lens staring into the infinite void.", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", availabilityModifier: {} }
+        { id: LOCATION_IDS.VENUS, name: 'Venus', distance: 97, launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", specialty: "Exclusive access to the Venetian Syndicate for high-risk, high-reward intel and missions.", availabilityModifier: { [COMMODITY_IDS.CLONED_ORGANS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 2.0, [COMMODITY_IDS.GMO_SEEDS]: 0.5, [COMMODITY_IDS.SENTIENT_AI]: 0.5 } },
+        { id: LOCATION_IDS.EARTH, name: 'Earth', distance: 180, launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", specialty: "Offers the best sell prices for rare, high-tier goods and is the exclusive source for top-tier ship licenses.", availabilityModifier: { [COMMODITY_IDS.HYDROPONICS]: 2.0, [COMMODITY_IDS.GMO_SEEDS]: 2.0, [COMMODITY_IDS.CLONED_ORGANS]: 0.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', parent: 'loc_earth', distance: 15, launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", specialty: "Offers a slight discount on all ship repairs.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.WATER_ICE]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5 } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', distance: 226, launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", specialty: "Offers a higher-than-average number of colonial supply missions.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.WATER_ICE]: 0.5 } },
+        { id: LOCATION_IDS.BELT, name: 'The Belt', distance: 292, launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", specialty: "Increased chance to find rare derelict ships in its shipyards.", availabilityModifier: { [COMMODITY_IDS.WATER_ICE]: 2.0, [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CYBERNETICS]: 0.5 } },
+        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', distance: 309, launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", specialty: "The notorious black market of the outer belt.", availabilityModifier: {} },
+        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', distance: 443, launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", specialty: "Fuel is sold at 50% of the galactic average price, making it an essential stop for any long-haul journey.", availabilityModifier: { [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
+        { id: LOCATION_IDS.SATURN, name: 'Saturn', distance: 618, launchFlavor: "Opulent stations drift among majestic rings.", navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", specialty: "Offers the highest sell prices for luxury and bio-tech goods.", availabilityModifier: { [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.CLONED_ORGANS]: 0.5 } },
+        { id: LOCATION_IDS.URANUS, name: 'Uranus', distance: 775, launchFlavor: "A silent, ice-cold world of strange science.", navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", specialty: "A unique R&D service to temporarily \"overclock\" ship components.", availabilityModifier: { [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.SENTIENT_AI]: 0.5, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
+        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', distance: 877, launchFlavor: "The stormy edge of military-controlled space.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", specialty: "A military surplus shipyard that occasionally sells damaged, high-tier frigates.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 0.1, [COMMODITY_IDS.PROPELLANT]: 0.5 } },
+        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", distance: 903, launchFlavor: "A colossal lens staring into the infinite void.", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", specialty: "A colossal lens staring into the infinite void.", availabilityModifier: {} },
+        { id: LOCATION_IDS.PLUTO, name: 'Pluto', distance: 1080, launchFlavor: "A haven for outcasts at the system's fringe.", navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", specialty: "A haven for outcasts at the system's fringe.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } }
     ],
 
     // --- Mission Data ---
@@ -5083,138 +5218,277 @@ export const DB = {
 import { DB } from '../../data/database.js';
 
 export class TravelAnimationService {
-    /**
-     * @param {boolean} isMobile - Flag to determine layout adjustments.
-     */
     constructor(isMobile) {
         this.isMobile = isMobile;
+        this.modal = document.getElementById('travel-animation-modal');
+        this.canvas = document.getElementById('travel-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.statusText = document.getElementById('travel-status-text');
+        this.arrivalLore = document.getElementById('travel-arrival-lore');
+        this.progressBar = document.getElementById('travel-progress-bar');
+        this.readoutContainer = document.getElementById('travel-readout-container');
+        this.infoText = document.getElementById('travel-info-text');
+        this.hullDamageText = document.getElementById('travel-hull-damage');
+        this.confirmButton = document.getElementById('travel-confirm-button');
+        
+        this.animationFrame = null;
+        this.starLayers = [];
+        this.engineParticles = [];
+        this.celestialObjects = [];
     }
 
-    /**
-     * Renders and controls the entire travel animation sequence.
-     * @param {object} from - The starting location object.
-     * @param {object} to - The destination location object.
-     * @param {object} travelInfo - Contains travel time and fuel cost.
-     * @param {number} totalHullDamagePercent - The hull damage percentage to display.
-     * @param {function} finalCallback - The function to call when the animation is complete.
-     */
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        const modal = document.getElementById('travel-animation-modal');
-        const statusText = document.getElementById('travel-status-text');
-        const arrivalLore = document.getElementById('travel-arrival-lore');
-        const canvas = document.getElementById('travel-canvas');
-        const ctx = canvas.getContext('2d');
-        const progressContainer = document.getElementById('travel-progress-container');
-        const progressBar = document.getElementById('travel-progress-bar');
-        const readoutContainer = document.getElementById('travel-readout-container');
-        const infoText = document.getElementById('travel-info-text');
-        const hullDamageText = document.getElementById('travel-hull-damage');
-        const confirmButton = document.getElementById('travel-confirm-button');
-        let animationFrameId = null;
+        this.modal.classList.remove('hidden');
+        this.modal.classList.add('dismiss-disabled');
 
-        statusText.textContent = `Traveling to ${to.name}...`;
-        arrivalLore.textContent = '';
-        arrivalLore.style.opacity = 0;
-        readoutContainer.classList.add('hidden');
-        readoutContainer.style.opacity = 0;
-        confirmButton.classList.add('hidden');
-        confirmButton.style.opacity = 0;
-        progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        modal.classList.remove('hidden');
+        const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
         
-        const duration = 2500;
+        // Lighten the gradient for better visibility
+        const lightenedGradient = this._lightenGradient(theme.gradient);
+        this.progressBar.style.background = lightenedGradient;
+
+        // Set the glow color for the progress bar
+        this.progressBar.style.setProperty('--progress-glow-color', theme.borderColor);
+
+        this._setupInitialState(to, travelInfo);
+        this._setupAnimationElements(from, to);
+
         let startTime = null;
-        const fromEmoji = DB.LOCATION_VISUALS[from.id] || '❓';
-        const toEmoji = DB.LOCATION_VISUALS[to.id] || '❓';
-        const shipEmoji = '🚀';
+        const duration = 2500;
 
-        let stars = [];
-        const numStars = 150;
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        for (let i = 0; i < numStars; i++) {
-            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 1.5, speed: 0.2 + Math.random() * 0.8, alpha: 0.5 + Math.random() * 0.5 });
-        }
-
-        const animationLoop = (currentTime) => {
+        const animate = (currentTime) => {
             if (!startTime) startTime = currentTime;
             const elapsedTime = currentTime - startTime;
             let progress = Math.min(elapsedTime / duration, 1);
-            progress = 1 - Math.pow(1 - progress, 3);
 
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#FFF';
-            for (let i = 0; i < numStars; i++) {
-                const star = stars[i];
-                if (progress < 1) {
-                    star.x -= star.speed;
-                    if (star.x < 0) star.x = canvas.width;
-                }
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.globalAlpha = star.alpha;
-                ctx.fill();
+            if (progress > 0.8) {
+                const normalized = (progress - 0.8) / 0.2;
+                progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
             }
-            ctx.globalAlpha = 1.0;
 
-            const padding = 60;
-            const startX = padding;
-            const endX = canvas.width - padding;
-            const y = canvas.height / 2;
-            ctx.font = '42px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(fromEmoji, startX, y);
-            ctx.fillText(toEmoji, endX, y);
-            const shipX = startX + (endX - startX) * progress;
-            ctx.save();
-            ctx.translate(shipX, y);
-            ctx.font = '17px sans-serif';
-            ctx.fillText(shipEmoji, 0, 0);
-            ctx.restore();
-
-            progressBar.style.width = `${progress * 100}%`;
+            this._draw(progress, from, to);
+            this.progressBar.style.width = `${progress * 100}%`;
 
             if (progress < 1) {
-                animationFrameId = requestAnimationFrame(animationLoop);
+                this.animationFrame = requestAnimationFrame(animate);
             } else {
-                statusText.textContent = `Arrived at ${to.name}`;
-                arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
-                infoText.innerHTML = `
-                    <div class="text-center ${this.isMobile ? 'travel-info-mobile' : ''}">
-                        <div>Journey Time: ${travelInfo.time} Days</div>
-                        <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
-                    </div>`;
-                hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
-                if (totalHullDamagePercent > 0.01) {
-                    hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;
-                    if (this.isMobile) {
-                        infoText.querySelector('div').appendChild(hullDamageText);
-                    }
-                } else {
-                    hullDamageText.innerHTML = '';
-                }
-                
-                arrivalLore.style.opacity = 1;
-                progressContainer.classList.add('hidden');
-                readoutContainer.classList.remove('hidden');
-                confirmButton.classList.remove('hidden');
-                setTimeout(() => {
-                    readoutContainer.style.opacity = 1;
-                    confirmButton.style.opacity = 1;
-                }, 50);
+                this._onArrival(to, travelInfo, totalHullDamagePercent, finalCallback);
             }
-        }
+        };
 
-        animationFrameId = requestAnimationFrame(animationLoop);
-        confirmButton.onclick = () => {
-            cancelAnimationFrame(animationFrameId);
-            modal.classList.add('hidden');
+        this.animationFrame = requestAnimationFrame(animate);
+
+        this.confirmButton.onclick = () => {
+            cancelAnimationFrame(this.animationFrame);
+            this.modal.classList.add('hidden');
+            this.modal.classList.remove('dismiss-disabled');
             if (finalCallback) finalCallback();
         };
+    }
+
+    _lightenGradient(gradientString) {
+        const colorStops = gradientString.match(/#[0-9a-f]{6}|#[0-9a-f]{3}/ig);
+        if (!colorStops) return gradientString;
+
+        const lightenHex = (hex, percent) => {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            const num = parseInt(hex, 16);
+            let r = (num >> 16) + percent;
+            if (r > 255) r = 255;
+            if (r < 0) r = 0;
+            let b = ((num >> 8) & 0x00FF) + percent;
+            if (b > 255) b = 255;
+            if (b < 0) b = 0;
+            let g = (num & 0x0000FF) + percent;
+            if (g > 255) g = 255;
+            if (g < 0) g = 0;
+            return '#' + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+        };
+        
+        const lightenedColors = colorStops.map(color => lightenHex(color, 40));
+        return `linear-gradient(to right, ${lightenedColors.join(', ')})`;
+    }
+
+
+    _setupInitialState(to, travelInfo) {
+        this.statusText.textContent = `Traveling to ${to.name}...`;
+        this.arrivalLore.textContent = '';
+        this.arrivalLore.style.opacity = 0;
+        this.readoutContainer.classList.add('hidden');
+        this.readoutContainer.style.opacity = 0;
+        this.confirmButton.style.opacity = 0;
+        this.confirmButton.disabled = true;
+        this.progressBar.style.width = '0%';
+    }
+
+    _setupAnimationElements(from, to) {
+        this.canvas.width = this.canvas.clientWidth;
+        this.canvas.height = this.canvas.clientHeight;
+
+        this.starLayers = [
+            this._createStarLayer(80, 0.5, 0.8),
+            this._createStarLayer(50, 1.2, 1.2),
+            this._createStarLayer(20, 1.8, 2.0)
+        ];
+
+        this.engineParticles = [];
+
+        this.backgroundGradient = this._getBackgroundGradient(from, to);
+        this.celestialObjects = this._getCelestialObjects(from.id, to.id);
+    }
+
+    _createStarLayer(count, minSpeed, maxSpeed) {
+        let stars = [];
+        for (let i = 0; i < count; i++) {
+            stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                radius: Math.random() * 1.5,
+                speed: minSpeed + Math.random() * (maxSpeed - minSpeed),
+                alpha: 0.5 + Math.random() * 0.5
+            });
+        }
+        return stars;
+    }
+
+    _getBackgroundGradient(from, to) {
+        const getZone = (location) => {
+            for (const zoneName in DB.TRAVEL_VISUALS.zones) {
+                if (DB.TRAVEL_VISUALS.zones[zoneName].locations.includes(location.id)) {
+                    return DB.TRAVEL_VISUALS.zones[zoneName];
+                }
+            }
+            return DB.TRAVEL_VISUALS.zones.inner_sphere;
+        };
+        const toZone = getZone(to);
+        
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, toZone.gradient[0]);
+        gradient.addColorStop(1, toZone.gradient[1]);
+        return gradient;
+    }
+
+    _getCelestialObjects(fromId, toId) {
+        const routeKey = `${fromId}_to_${toId}`;
+        const objects = DB.TRAVEL_VISUALS.objects[routeKey] || [];
+        return objects.map(obj => ({
+            ...obj,
+            x: this.canvas.width + Math.random() * 200,
+            y: obj.position.y * this.canvas.height,
+        }));
+    }
+
+    _draw(progress, from, to) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.fillStyle = this.backgroundGradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.starLayers.forEach((layer, index) => {
+            const speedMultiplier = progress < 0.8 ? 1 : 1 - ((progress - 0.8) / 0.2);
+            
+            layer.forEach(star => {
+                star.x -= star.speed * speedMultiplier;
+                if (star.x < 0) star.x = this.canvas.width;
+                this.ctx.beginPath();
+                this.ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                this.ctx.globalAlpha = star.alpha;
+                this.ctx.fillStyle = '#FFF';
+                this.ctx.fill();
+            });
+
+            if (index === 1) {
+                this.celestialObjects.forEach(obj => {
+                    obj.x -= obj.speed * speedMultiplier;
+                    this.ctx.font = `${40 * (obj.scale || 1)}px sans-serif`;
+                    this.ctx.globalAlpha = 0.5;
+                    this.ctx.fillText(obj.emoji, obj.x, obj.y);
+                });
+            }
+        });
+        this.ctx.globalAlpha = 1.0;
+
+        const padding = 60;
+        const startX = padding;
+        const endX = this.canvas.width - padding;
+        const y = this.canvas.height / 2;
+        this.ctx.font = '42px sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(DB.LOCATION_VISUALS[from.id] || '❓', startX, y);
+        this.ctx.fillText(DB.LOCATION_VISUALS[to.id] || '❓', endX, y);
+        
+        const shipX = startX + (endX - startX) * progress;
+        this.ctx.save();
+        this.ctx.translate(shipX, y);
+        this.ctx.font = '17px sans-serif';
+        this.ctx.fillText('🚀', 0, 0);
+        this.ctx.restore();
+
+        this._updateEngineParticles(shipX, y);
+        this._drawEngineParticles();
+    }
+    
+    _updateEngineParticles(shipX, shipY) {
+        if(Math.random() > 0.5) {
+            this.engineParticles.push({
+                x: shipX - 15,
+                y: shipY + (Math.random() - 0.5) * 8,
+                life: 1,
+                speedX: -2 - Math.random() * 2,
+                speedY: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 1
+            });
+        }
+        
+        for (let i = this.engineParticles.length - 1; i >= 0; i--) {
+            const p = this.engineParticles[i];
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.life -= 0.05;
+            if (p.life <= 0) {
+                this.engineParticles.splice(i, 1);
+            }
+        }
+    }
+    
+    _drawEngineParticles() {
+        this.engineParticles.forEach(p => {
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = `rgba(255, 220, 180, ${p.life})`;
+            this.ctx.fill();
+        });
+        this.ctx.globalAlpha = 1.0;
+    }
+
+    _onArrival(to, travelInfo, totalHullDamagePercent, finalCallback) {
+        this.statusText.textContent = `Arrived at ${to.name}`;
+        this.arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
+        this.infoText.innerHTML = `
+            <div class="text-center">
+                <div>Journey Time: ${travelInfo.time} Days</div>
+                <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
+            </div>`;
+        this.hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
+        if (totalHullDamagePercent > 0.01) {
+            this.hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;
+        } else {
+            this.hullDamageText.innerHTML = '';
+        }
+        
+        this.arrivalLore.style.opacity = 1;
+        this.readoutContainer.classList.remove('hidden');
+        
+        setTimeout(() => {
+            this.readoutContainer.style.opacity = 1;
+            this.confirmButton.style.opacity = 1;
+            this.confirmButton.disabled = false;
+        }, 150);
     }
 }
 --- END OF FILE: ./js/services/ui/TravelAnimationService.js ---
@@ -5448,10 +5722,7 @@ export class DebugService {
      * @param {string} key
      */
     handleKeyPress(key) {
-        const action = Object.values(this.actions).find(a => a.key === key);
-        if (action && action.handler) {
-            action.handler();
-        }
+        // No longer needed as all shortcuts are removed.
     }
 
     /**
@@ -5604,11 +5875,11 @@ ${logHistory}
      */
     _registerDebugActions() {
         this.actions = {
-            godMode: { name: 'God Mode', type: 'button', key: 't', handler: () => this.godMode() },
-            simpleStart: { name: 'Simple Start', type: 'button', key: 'y', handler: () => this.simpleStart() },
-            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', key: 'h', handler: () => this.skipToHangarTutorial() },
+            godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
+            simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
+            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: {
-                name: 'Add Credits', type: 'button', key: 'c', handler: () => {
+                name: 'Add Credits', type: 'button', handler: () => {
                     this.gameState.player.credits += this.debugState.creditsToAdd;
                     this.simulationService.timeService._checkMilestones();
                     this.uiManager.render(this.gameState.getState());
@@ -5641,8 +5912,8 @@ ${logHistory}
                     this.gameState.setState({});
                 }
             },
-            grantAllItems: { name: 'Grant 1x All Items', type: 'button', key: 'g', handler: () => this.grantAllItems() },
-            advanceTime: { name: 'Advance Days', type: 'button', key: 'a', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
+            grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
+            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
             replenishStock: {
                 name: 'Replenish All Stock', type: 'button', handler: () => {
                     this.simulationService.marketService.replenishMarketInventory();
@@ -5651,7 +5922,7 @@ ${logHistory}
             },
             fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
             triggerRandomEvent: {
-                name: 'Trigger Random Event', type: 'button', key: 'e', handler: () => {
+                name: 'Trigger Random Event', type: 'button', handler: () => {
                     const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                     if (dest) {
                         this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
@@ -5667,7 +5938,7 @@ ${logHistory}
                 }
             },
             triggerMission: {
-                name: 'Trigger Mission', type: 'button', key: 'm', handler: () => {
+                name: 'Trigger Mission', type: 'button', handler: () => {
                     if (this.debugState.selectedMission) {
                         if(this.gameState.missions.activeMissionId) {
                             this.simulationService.missionService.abandonMission();
@@ -5881,28 +6152,43 @@ import { skewedRandom } from '../utils.js';
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
- * for travel between every pair of locations in the game.
- * @param {Array<object>} markets - The array of market objects from the database.
+ * for travel between every pair of locations in the game based on their explicit distances.
+ * @param {Array<object>} markets - The array of market objects from the database, including distance property.
  * @returns {object} A nested object where `travelData[fromId][toId]` contains travel info.
  */
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
-    markets.forEach((fromMarket, i) => {
+    const timeScalar = 0.1;  // Controls how much distance affects time
+    const fuelScalar = 1.5; // Controls how much distance affects fuel
+
+    markets.forEach(fromMarket => {
         travelData[fromMarket.id] = {};
-        markets.forEach((toMarket, j) => {
-            if (i === j) return;
-            // Simple index difference is used as a proxy for orbital distance.
-            const distance = Math.abs(i - j);
-            const fuelTime = distance * 2 + Math.floor(Math.random() * 3);
-            let fuelCost = Math.round(fuelTime * GAME_RULES.FUEL_SCALAR * (1 + (j / markets.length) * 0.5));
-            let travelTime;
+        markets.forEach(toMarket => {
+            if (fromMarket.id === toMarket.id) return;
+
+            const fromDistance = fromMarket.parent ? (markets.find(m => m.id === fromMarket.parent)?.distance || 0) : fromMarket.distance;
+            const toDistance = toMarket.parent ? (markets.find(m => m.id === toMarket.parent)?.distance || 0) : toMarket.distance;
+
+            const distance = Math.abs(toDistance - fromDistance);
+            
+            // Add the moon's own small distance from its parent if it's involved
+            const moonCorrection = (fromMarket.parent || toMarket.parent) ? 15 : 0;
+            const finalDistance = distance + moonCorrection;
+
+            // Travel time now scales exponentially with distance for a greater impact on long journeys.
+            let travelTime = 1 + Math.pow(finalDistance, 1.15) * timeScalar;
+            let fuelCost = 5 + finalDistance * fuelScalar;
+            
             // Special case for Earth-Luna to make it a quick, early-game trip.
             if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
-                travelTime = 1 + Math.floor(Math.random() * 3);
-            } else {
-                travelTime = 15 + (distance * 10) + Math.floor(Math.random() * 5);
+                travelTime = 2 + Math.floor(Math.random() * 2);
+                fuelCost = 15 + Math.floor(Math.random() * 5);
             }
-            travelData[fromMarket.id][toMarket.id] = { time: travelTime, fuelCost: Math.max(1, fuelCost) };
+
+            travelData[fromMarket.id][toMarket.id] = {
+                time: Math.max(1, Math.round(travelTime)),
+                fuelCost: Math.max(1, Math.round(fuelCost)),
+            };
         });
     });
     return travelData;
@@ -6006,7 +6292,7 @@ export class GameState {
             subNavCollapsed: false,
             introSequenceActive: true,
             lastActiveScreen: {
-                [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
+                [NAV_IDS.SHIP]: SCREEN_IDS.MAP,
                 [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
                 [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
@@ -6703,6 +6989,13 @@ export class TravelService {
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
+        
+        if (!fromLocation || !destination) {
+            this.logger.error('TravelService', `Invalid location ID provided for travel animation. From: ${fromId}, To: ${locationId}`);
+            this.uiManager.queueModal('event-modal', 'Navigation Error', 'Could not plot a course. The destination is unknown.');
+            return;
+        }
+
         const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
         
         this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
@@ -7779,10 +8072,6 @@ export class EventManager {
         if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
         if ((e.key === '`' || e.key === '&') && this.debugService) {
             this.debugService.toggleVisibility();
-            return;
-        }
-        if (this.debugService) {
-            this.debugService.handleKeyPress(e.key);
         }
     }
 }
@@ -8300,7 +8589,7 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 --- START OF FILE: ./js/services/UIManager.js ---
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills, getCommodityStyle } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
@@ -8308,7 +8597,7 @@ import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
 import { renderMarketScreen } from '../ui/components/MarketScreen.js';
-import { renderStatusScreen } from '../ui/components/StatusScreen.js';
+import { renderMapScreen, initMap } from '../ui/components/MapScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
 import { renderCargoScreen, _renderMaxCargoModal } from '../ui/components/CargoScreen.js';
@@ -8340,7 +8629,7 @@ export class UIManager {
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
         this.navStructure = {
-            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
+            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.MAP]: 'Map', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
             [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
@@ -8401,7 +8690,7 @@ export class UIManager {
             topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
-            statusScreen: document.getElementById(`${SCREEN_IDS.STATUS}-screen`),
+            mapScreen: document.getElementById(`${SCREEN_IDS.MAP}-screen`),
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
@@ -8417,6 +8706,7 @@ export class UIManager {
             launchModal: document.getElementById('launch-modal'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
+            mapDetailModal: document.getElementById('map-detail-modal'),
             
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
@@ -8480,8 +8770,7 @@ export class UIManager {
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
-            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${navId}-tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
     
         let statusPodHtml = '';
@@ -8520,11 +8809,8 @@ export class UIManager {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
-                 let subStyle = `style="color: ${theme.textColor};"`;
-                 if (isSubNavActive) {
-                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
-                 }
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 const activeClass = isSubNavActive ? 'sub-nav-active' : '';
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -8546,8 +8832,11 @@ export class UIManager {
         }
 
         switch (gameState.activeScreen) {
-            case SCREEN_IDS.STATUS:
-                this.cache.statusScreen.innerHTML = renderStatusScreen(gameState);
+            case SCREEN_IDS.MAP:
+                this.cache.mapScreen.innerHTML = renderMapScreen();
+                // Defer map initialization until after the browser has painted the new DOM elements,
+                // ensuring the map container has a valid clientHeight for D3 to use.
+                requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
@@ -8839,6 +9128,10 @@ export class UIManager {
             return this.processModalQueue();
         }
 
+        if (options.nonDismissible) {
+            modal.classList.add('dismiss-disabled');
+        }
+
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
         const titleEl = modal.querySelector(`#${titleElId}`);
@@ -8886,6 +9179,7 @@ export class UIManager {
 
     showRandomEventModal(event, choicesCallback) {
         this.queueModal('random-event-modal', event.title, event.scenario, null, {
+            nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
@@ -8905,6 +9199,7 @@ export class UIManager {
 
     showAgeEventModal(event, choiceCallback) {
         const modal = document.getElementById('age-event-modal');
+        modal.classList.add('dismiss-disabled');
         document.getElementById('age-event-title').innerHTML = event.title;
         document.getElementById('age-event-description').innerHTML = event.description;
         const btnContainer = document.getElementById('age-event-button-container');
@@ -8929,7 +9224,7 @@ export class UIManager {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled');
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }
@@ -9337,46 +9632,42 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
-        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
-        const COMMODITY_CATEGORIES = {
-            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
-            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
-            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
-            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
-        };
+        const allCommodities = Object.entries(location.availabilityModifier || {})
+            .map(([id, modifier]) => ({ id, modifier, name: DB.COMMODITIES.find(c => c.id === id)?.name }))
+            .filter(item => item.name);
 
-        let imports = [];
-        let exports = [];
-        for (const goodId in location.availabilityModifier) {
-            const modifier = location.availabilityModifier[goodId];
-            const category = COMMODITY_CATEGORIES[goodId];
-            if (modifier < 1.0 && !imports.includes(category)) {
-                imports.push(category);
-            } else if (modifier > 1.0 && !exports.includes(category)) {
-                exports.push(category);
-            }
-        }
+        const imports = allCommodities
+            .filter(item => item.modifier < 1.0)
+            .sort((a, b) => a.modifier - b.modifier)
+            .slice(0, 2)
+            .map(item => `<span class="commodity-name">${item.name}</span>`);
+
+        const exports = allCommodities
+            .filter(item => item.modifier > 1.0)
+            .sort((a, b) => b.modifier - a.modifier)
+            .slice(0, 2)
+            .map(item => `<span class="commodity-name">${item.name}</span>`);
         
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b>${imports.join('')}</div>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b>${exports.join('')}</div>`;
         }
         if (intelHtml === '') {
-            intelHtml = '<p>Market data is unreliable.</p>';
+            intelHtml = '<p class="text-center">Market data is unreliable.</p>';
         }
         
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border modal-content" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
+                <div class="border-t border-b py-2 space-y-2" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
                 <div class="font-roboto-mono text-xs"> 
@@ -9389,18 +9680,9 @@ export class UIManager {
             </div>`;
 
         const modal = this.cache.launchModal;
-        modal.innerHTML = modalContentHtml; // Directly set the innerHTML of the modal backdrop
+        modal.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-
-        // Add a one-time click listener to the backdrop to close the modal.
-        const closeHandler = (e) => {
-            if (e.target.id === 'launch-modal') {
-                this.hideModal('launch-modal');
-                modal.removeEventListener('click', closeHandler);
-            }
-        };
-        modal.addEventListener('click', closeHandler);
     }
     
     showCargoDetailModal(gameState, goodId) {
@@ -9425,7 +9707,6 @@ export class UIManager {
     
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
-            // Fix: Add a guard clause to handle missions with no objectives.
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;
@@ -9567,7 +9848,7 @@ export class UIManager {
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !e.target.closest('.modal-content')) {
+        if (modalBackdrop && modalBackdrop.id && !modalBackdrop.classList.contains('dismiss-disabled') && !e.target.closest('.modal-content')) {
             return modalBackdrop.id;
         }
         return null;
@@ -9595,6 +9876,83 @@ export class UIManager {
         requestAnimationFrame(() => {
             this._setAppHeight();
         });
+    }
+
+    showMapDetailModal(locationId) {
+        const location = DB.MARKETS.find(l => l.id === locationId);
+        if (!location) return;
+
+        const modal = this.cache.mapDetailModal;
+        const contentContainer = modal.querySelector('#map-modal-content-container');
+
+        const theme = location.navTheme;
+        
+        const imports = [];
+        const exports = [];
+
+        if (location.availabilityModifier) {
+            for (const [commodityId, modifier] of Object.entries(location.availabilityModifier)) {
+                const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                if (commodity) {
+                    const tag = {
+                        name: commodity.name,
+                        style: getCommodityStyle(commodity.styleClass)
+                    };
+                    if (modifier < 1.0) {
+                        imports.push(tag);
+                    } else if (modifier > 1.0) {
+                        exports.push(tag);
+                    }
+                }
+            }
+        }
+        
+        const renderTags = (tagArray) => tagArray.map(tag => 
+            `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
+        ).join('');
+        
+        const contentHtml = `
+            <div class="text-center">
+                <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
+                <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
+            </div>
+            <div class="my-4 p-4 rounded-lg" style="background-color: rgba(0,0,0,0.3);">
+                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Intel Report</h4>
+                <div class="text-center font-roboto-mono space-y-1 imprinted-text">
+                    <p><b>Position:</b> ${location.distance} AU</p>
+                    <p><b>Quirk:</b> ${location.specialty}</p>
+                    <p><b>Services:</b> Fuel @ ${formatCredits(location.fuelPrice, true)}/unit</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Market Profile</h4>
+                <div class="text-center">
+                    <div>
+                        <h5 class="font-bold">Primary Exports:</h5>
+                        <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                    </div>
+                    <div class="mt-2">
+                        <h5 class="font-bold">Primary Imports:</h5>
+                        <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        contentContainer.innerHTML = contentHtml;
+        modal.classList.remove('hidden');
+
+        const closeHandler = (e) => {
+            if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {
+                this.hideMapDetailModal();
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
+    }
+
+    hideMapDetailModal() {
+        this.hideModal('map-detail-modal');
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
@@ -9935,6 +10293,12 @@ export class ActionClickHandler {
                 break;
             case 'show-launch-modal':
                 this.uiManager.showLaunchModal(dataset.locationId);
+                break;
+            case 'show-map-modal':
+                this.uiManager.showMapDetailModal(dataset.locationId);
+                break;
+            case 'close-map-modal':
+                this.uiManager.hideMapDetailModal();
                 break;
 
             // --- Mission Actions ---
@@ -10735,6 +11099,20 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [28.00] - 2025-10-06
+- rebalanced solar system map distances.
+- updated travel calculation
+- zoned travel cost updates
+- location supply/demand update
+- launch modal update
+- travel animation visual update
+- location quirks
+- bug fixes
+
+## [27.50] - 2025-10-04
+- navigation bar visual update
+- bug fixes
+
 ## [27.40] - 2025-10-04
 - effects polish
 - effects performance improvements
@@ -11120,13 +11498,13 @@ All notable changes to the Orbital Trading project will be documented in this fi
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Transactions reset the scroll page position on the market screen
-- Non-acceptable names break game after submission.
-- Introduce screen-surge effects vignette
-
+- Refine hull deterioation
+- Refine ship cargo capacity
+- Refine ship fuel capacity
+- Improve ship fueling
+- Improve communication about Station Quirks
 
 ## Planned Ideas
-- Screen transitions
 - Overhaul ship fuel, hull costs and gameplay
 - Improve finance screen, logging
 - Verify consistency in projected journey stats vs actual
@@ -11134,8 +11512,9 @@ This document outlines the planned features and high-level goals for the future 
 - Refine licenses
 - Overhaul ship status screen
 - Overhaul intel screen
-- Refine ship storage
 
+- News ticker
+- Storyline Timeline Governor (Mission availability, System States, Features)
 
 ## Long-Term Ideas
 - System states influencing market performance
@@ -11144,7 +11523,8 @@ This document outlines the planned features and high-level goals for the future 
 - Finalize mobile views
 - Optimize repititive calculations, long-term data accumulation, and re-renders
 - Reputation system
-- News ticker
+
+
 
 
 ## Far-Future Wishlist Ideas ()

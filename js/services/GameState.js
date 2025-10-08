@@ -145,7 +145,7 @@ export class GameState {
             subNavCollapsed: false,
             introSequenceActive: true,
             lastActiveScreen: {
-                [NAV_IDS.SHIP]: SCREEN_IDS.STATUS,
+                [NAV_IDS.SHIP]: SCREEN_IDS.MAP,
                 [NAV_IDS.STARPORT]: SCREEN_IDS.MARKET,
                 [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },

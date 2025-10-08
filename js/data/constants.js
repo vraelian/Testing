@@ -10,7 +10,7 @@
  * @enum {string}
  */
 export const SCREEN_IDS = Object.freeze({
-    STATUS: 'status',
+    MAP: 'map',
     NAVIGATION: 'navigation',
     SERVICES: 'services',
     MARKET: 'market',

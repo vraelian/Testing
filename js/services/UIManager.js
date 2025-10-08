@@ -1,6 +1,6 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills, getCommodityStyle } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
@@ -8,7 +8,7 @@ import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
 import { renderMarketScreen } from '../ui/components/MarketScreen.js';
-import { renderStatusScreen } from '../ui/components/StatusScreen.js';
+import { renderMapScreen, initMap } from '../ui/components/MapScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
 import { renderCargoScreen, _renderMaxCargoModal } from '../ui/components/CargoScreen.js';
@@ -40,7 +40,7 @@ export class UIManager {
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
         this.navStructure = {
-            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.STATUS]: 'Status', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
+            [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.MAP]: 'Map', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
             [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
@@ -101,7 +101,7 @@ export class UIManager {
             topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
-            statusScreen: document.getElementById(`${SCREEN_IDS.STATUS}-screen`),
+            mapScreen: document.getElementById(`${SCREEN_IDS.MAP}-screen`),
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
@@ -117,6 +117,7 @@ export class UIManager {
             launchModal: document.getElementById('launch-modal'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
+            mapDetailModal: document.getElementById('map-detail-modal'),
             
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
@@ -180,8 +181,7 @@ export class UIManager {
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
-            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
     
         let statusPodHtml = '';
@@ -221,11 +221,7 @@ export class UIManager {
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
-                 let subStyle = `style="color: ${theme.textColor};"`;
-                 if (isSubNavActive) {
-                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
-                 }
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -247,8 +243,11 @@ export class UIManager {
         }
 
         switch (gameState.activeScreen) {
-            case SCREEN_IDS.STATUS:
-                this.cache.statusScreen.innerHTML = renderStatusScreen(gameState);
+            case SCREEN_IDS.MAP:
+                this.cache.mapScreen.innerHTML = renderMapScreen();
+                // Defer map initialization until after the browser has painted the new DOM elements,
+                // ensuring the map container has a valid clientHeight for D3 to use.
+                requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
@@ -1288,5 +1287,82 @@ export class UIManager {
         requestAnimationFrame(() => {
             this._setAppHeight();
         });
+    }
+
+    showMapDetailModal(locationId) {
+        const location = DB.MARKETS.find(l => l.id === locationId);
+        if (!location) return;
+
+        const modal = this.cache.mapDetailModal;
+        const contentContainer = modal.querySelector('#map-modal-content-container');
+
+        const theme = location.navTheme;
+        
+        const imports = [];
+        const exports = [];
+
+        if (location.availabilityModifier) {
+            for (const [commodityId, modifier] of Object.entries(location.availabilityModifier)) {
+                const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                if (commodity) {
+                    const tag = {
+                        name: commodity.name,
+                        style: getCommodityStyle(commodity.styleClass)
+                    };
+                    if (modifier < 1.0) {
+                        imports.push(tag);
+                    } else if (modifier > 1.0) {
+                        exports.push(tag);
+                    }
+                }
+            }
+        }
+        
+        const renderTags = (tagArray) => tagArray.map(tag => 
+            `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
+        ).join('');
+        
+        const contentHtml = `
+            <div class="text-center">
+                <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
+                <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
+            </div>
+            <div class="my-4 p-4 rounded-lg" style="background-color: rgba(0,0,0,0.3);">
+                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Intel Report</h4>
+                <div class="text-center font-roboto-mono space-y-1 imprinted-text">
+                    <p><b>Position:</b> ${location.distance} AU</p>
+                    <p><b>Quirk:</b> ${location.specialty}</p>
+                    <p><b>Services:</b> Fuel @ ${formatCredits(location.fuelPrice, true)}/unit</p>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Market Profile</h4>
+                <div class="text-center">
+                    <div>
+                        <h5 class="font-bold">Primary Exports:</h5>
+                        <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                    </div>
+                    <div class="mt-2">
+                        <h5 class="font-bold">Primary Imports:</h5>
+                        <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        contentContainer.innerHTML = contentHtml;
+        modal.classList.remove('hidden');
+
+        const closeHandler = (e) => {
+            if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {
+                this.hideMapDetailModal();
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
+    }
+
+    hideMapDetailModal() {
+        this.hideModal('map-detail-modal');
     }
 }
