@@ -110,12 +110,13 @@
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager.",
-      "dependencies": ["Logger", "EffectsManager", "MissionService", "SimulationService"],
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
+      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
-        "triggerEffect": "Initiates a visual effect through the EffectsManager."
+        "triggerEffect": "Initiates a visual effect through the EffectsManager.",
+        "showTravelAnimation": "Initiates the travel animation sequence."
       },
       "mutates_state": []
     },
@@ -168,6 +169,23 @@
             "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
         },
         "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    },
+    "TravelAnimationService": {
+      "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
+      "dependencies": [],
+      "key_functions": {
+        "play": "Starts the travel animation sequence."
+      },
+      "mutates_state": []
+    },
+    "MapScreen": {
+        "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
+        "dependencies": ["UIManager"],
+        "key_functions": {
+            "renderMapScreen": "Renders the initial container for the map.",
+            "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
+        },
+        "mutates_state": []
     }
   },
   "asset_index": {
@@ -192,7 +210,8 @@
     "F024": {"path": "./js/ui/components/MissionsScreen.js", "role": "UI_COMPONENT"},
     "F025": {"path": "./js/ui/components/NavigationScreen.js", "role": "UI_COMPONENT"},
     "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
-    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT"},
+    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT", "status": "deprecated"},
+    "F028": {"path": "./js/ui/components/MapScreen.js", "role": "UI_COMPONENT"},
     "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
     "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
     "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
@@ -208,6 +227,8 @@
     "F041": {"path": "./js/services/handlers/MarketEventHandler.js", "role": "EVENT_HANDLER"},
     "F042": {"path": "./js/services/handlers/HoldEventHandler.js", "role": "EVENT_HANDLER"},
     "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
-    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"}
+    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
+    "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
+    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"}
   }
 }

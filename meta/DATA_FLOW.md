@@ -16,6 +16,7 @@
     4.  **GameState**: The single source of truth for all dynamic data.
     5.  **UIManager**: The output layer, responsible for rendering the game state.
     6.  **EffectsManager**: A dedicated service within the UIManager for handling visual effects.
+    7.  **TravelAnimationService**: A dedicated service within the UIManager for handling the travel animation sequence.
 
 ---
 
