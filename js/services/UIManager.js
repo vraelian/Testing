@@ -117,6 +117,7 @@ export class UIManager {
             launchModal: document.getElementById('launch-modal'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
+            
             mapDetailModal: document.getElementById('map-detail-modal'),
             
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -539,6 +540,9 @@ export class UIManager {
             return this.processModalQueue();
         }
 
+        if (options.specialClass) {
+            modal.classList.add(options.specialClass);
+        }
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
         }
@@ -635,7 +639,7 @@ export class UIManager {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }

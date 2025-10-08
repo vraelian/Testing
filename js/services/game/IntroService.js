@@ -104,6 +104,11 @@ export class IntroService {
             buttonClass: step.buttonClass,
             contentClass: step.contentClass,
         };
+        
+        if (this.gameState.player.introStep === 0) {
+            options.specialClass = 'intro-fade-in';
+        }
+
         let modalId = 'event-modal';
 
         if (step.id === 'charter' || step.id === 'signature') {
