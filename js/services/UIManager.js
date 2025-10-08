@@ -182,7 +182,8 @@ export class UIManager {
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
     
         let statusPodHtml = '';
@@ -222,7 +223,11 @@ export class UIManager {
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 let subStyle = '';
+                 if (isSubNavActive) {
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                 }
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
