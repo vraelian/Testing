@@ -12,7 +12,7 @@ import { skewedRandom } from '../utils.js';
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
     const timeScalar = 0.1;  // Controls how much distance affects time
-    const fuelScalar = 1.5; // Controls how much distance affects fuel
+    const fuelScalar = 0.45; // Controls how much distance affects fuel
 
     markets.forEach(fromMarket => {
         travelData[fromMarket.id] = {};
@@ -30,12 +30,12 @@ function procedurallyGenerateTravelData(markets) {
 
             // Travel time now scales exponentially with distance for a greater impact on long journeys.
             let travelTime = 1 + Math.pow(finalDistance, 1.15) * timeScalar;
-            let fuelCost = 5 + finalDistance * fuelScalar;
+            let fuelCost = 2 + finalDistance * fuelScalar;
             
             // Special case for Earth-Luna to make it a quick, early-game trip.
             if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
                 travelTime = 2 + Math.floor(Math.random() * 2);
-                fuelCost = 15 + Math.floor(Math.random() * 5);
+                fuelCost = 5 + Math.floor(Math.random() * 2);
             }
 
             travelData[fromMarket.id][toMarket.id] = {

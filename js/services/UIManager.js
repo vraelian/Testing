@@ -1067,13 +1067,13 @@ export class UIManager {
         
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b>${imports.join('')}</div>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(' ')}</div>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b>${exports.join('')}</div>`;
+            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(' ')}</div>`;
         }
         if (intelHtml === '') {
-            intelHtml = '<p class="text-center">Market data is unreliable.</p>';
+            intelHtml = '<p class="text-center text-gray-400">Market data is unreliable.</p>';
         }
         
         const modalContentHtml = `
@@ -1337,17 +1337,14 @@ export class UIManager {
                     <p><b>Services:</b> Fuel @ ${formatCredits(location.fuelPrice, true)}/unit</p>
                 </div>
             </div>
-            <div>
-                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Market Profile</h4>
-                <div class="text-center">
-                    <div>
-                        <h5 class="font-bold">Primary Exports:</h5>
-                        <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
-                    </div>
-                    <div class="mt-2">
-                        <h5 class="font-bold">Primary Imports:</h5>
-                        <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
-                    </div>
+            <div class="text-center">
+                <div>
+                    <h5 class="font-bold">Primary Exports:</h5>
+                    <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                </div>
+                <div class="mt-2">
+                    <h5 class="font-bold">Primary Imports:</h5>
+                    <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
         `;
