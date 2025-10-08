@@ -1047,6 +1047,7 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
+        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
         const allCommodities = Object.entries(location.availabilityModifier || {})
@@ -1064,18 +1065,18 @@ export class UIManager {
             .sort((a, b) => b.modifier - a.modifier)
             .slice(0, 2)
             .map(item => `<span class="commodity-name">${item.name}</span>`);
-        
+
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(' ')}</div>`;
+            intelHtml += `<div class="text-center"><b style="color: ${theme.textColor};">Imports:</b><div class="mt-1 flex flex-wrap justify-center gap-2">${imports.join('')}</div></div>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(' ')}</div>`;
+            intelHtml += `<div class="text-center mt-2"><b style="color: ${theme.textColor};">Exports:</b><div class="mt-1 flex flex-wrap justify-center gap-2">${exports.join('')}</div></div>`;
         }
         if (intelHtml === '') {
             intelHtml = '<p class="text-center text-gray-400">Market data is unreliable.</p>';
         }
-        
+
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border modal-content" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
