@@ -1047,7 +1047,6 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
-        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
         const allCommodities = Object.entries(location.availabilityModifier || {})
@@ -1086,11 +1085,11 @@ export class UIManager {
                 <div class="border-t border-b py-2 space-y-2" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
-                <div class="font-roboto-mono text-xs"> 
+                <div class="font-roboto-mono text-xs">
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
-                <div class="pt-2"> 
+                <div class="pt-2">
                    <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
             </div>`;

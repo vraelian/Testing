@@ -173,19 +173,19 @@
 }
 
 .btn-launch-glow {
-    position: relative;
-    overflow: hidden;
-    animation: pulse-launch-glow 2s infinite;
+    animation: launch-glow-animation 2.5s infinite;
+    border-color: var(--launch-glow-color);
 }
 
-@keyframes pulse-launch-glow {
+@keyframes launch-glow-animation {
     0%, 100% {
-        box-shadow: 0 0 5px var(--launch-glow-color), 0 0 10px var(--launch-glow-color);
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
     }
     50% {
-        box-shadow: 0 0 15px var(--launch-glow-color), 0 0 25px var(--launch-glow-color);
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
     }
 }
+/* --- [[END]] LAUNCH MODAL STYLES --- */
 
 
 /* Cargo Detail Modal */
