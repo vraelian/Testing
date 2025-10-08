@@ -2,7 +2,7 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
-## [28.00] - 2025-10-06
+## [28.00] - 2025-10-07
 - rebalanced solar system map distances.
 - updated travel calculation
 - zoned travel cost updates
@@ -10,6 +10,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - launch modal update
 - travel animation visual update
 - location quirks
+- deprecated status screen
+- new map screen
 - bug fixes
 
 ## [27.50] - 2025-10-04

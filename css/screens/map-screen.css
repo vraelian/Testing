@@ -22,6 +22,11 @@
     stroke-width: 1;
 }
 
+.leader-line {
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 1;
+}
+
 .poi-group {
     cursor: pointer;
     transition: transform 0.2s ease-out;
@@ -34,8 +39,7 @@
 .poi-label {
     font-family: 'Orbitron', sans-serif;
     fill: #d0d8e8;
-    font-size: 0.8rem;
-    text-anchor: middle;
+    font-size: 0.9rem;
     paint-order: stroke;
     stroke: #0c101d;
     stroke-width: 3px;

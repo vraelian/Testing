@@ -68,6 +68,12 @@ body {
     min-height: 0;
 }
 
+#main-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .scroll-panel {
     height: 75vh;
     overflow-y: auto;

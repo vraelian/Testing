@@ -234,11 +234,11 @@ export class UIManager {
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
 
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
-            this.lastActiveScreenEl.style.display = 'none';
+            this.lastActiveScreenEl.classList.remove('active-screen');
         }
 
         if (activeScreenEl) {
-            activeScreenEl.style.display = 'block';
+            activeScreenEl.classList.add('active-screen');
             this.lastActiveScreenEl = activeScreenEl;
         }
 
@@ -1295,9 +1295,7 @@ export class UIManager {
 
         const modal = this.cache.mapDetailModal;
         const contentContainer = modal.querySelector('#map-modal-content-container');
-
         const theme = location.navTheme;
-        
         const imports = [];
         const exports = [];
 
@@ -1352,6 +1350,12 @@ export class UIManager {
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
+        
+        // Use requestAnimationFrame to ensure the browser has rendered the modal
+        // before we add the class that triggers the animation.
+        requestAnimationFrame(() => {
+            modal.classList.add('modal-visible');
+        });
 
         const closeHandler = (e) => {
             if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {

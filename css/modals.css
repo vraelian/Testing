@@ -1,245 +1,272 @@
 /* css/modals.css */
-.modal-visible {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-.modal-hiding {
-    animation: fadeOut 0.5s ease-in forwards;
-}
 
+/* General Modal Backdrop Styling */
 .modal-backdrop {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(12, 16, 29, 0.95);
-    display: flex; align-items: center;
-    justify-content: center; z-index: 200;
-}
-.age-event-modal.modal-backdrop {
-    align-items: flex-start;
-    padding-top: 15vh;
-}
-.modal-content {
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border: 2px solid #3a4a6a;
-    border-radius: 15px; padding: 2rem; max-width: 500px;
-    width: 90%; text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
-}
-.modal-content h3 {
-    text-align: center;
-}
-.modal-content .flex.justify-center {
-    justify-content: center;
-}
-#charter-description > .text-justify {
-    text-align: justify;
-}
-
-.modal-theme-gold .modal-content {
-    border-color: #D4AF37;
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
-}
-
-.modal-theme-admin .modal-content, .modal-theme-admin.modal-content {
-    background: #0c101d;
-    border-color: #4a6a8a;
-    font-family: 'Roboto Mono', monospace;
-}
-
-#signature-input {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid #a3a3a3;
-    font-family: 'Roboto Mono', monospace;
-    letter-spacing: 2px;
-}
-
-.age-event-modal .modal-content {
-    background: rgba(240, 240, 255, 0.1);
-    backdrop-filter: blur(15px);
-    border: 2px solid #D4AF37;
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-    max-width: 600px;
-}
-.age-event-modal h3 { color: #FFD700; }
-.age-event-modal p { color: #f0f0f0; }
-
-.perk-button {
-    background: #C0C0C0;
-    color: #111827;
-    border: 2px solid transparent;
-    border-radius: 10px;
-    padding: 1rem;
-    text-align: left;
-    width: 100%;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-.perk-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 15px #FFD700, 0 0 25px #FFD700;
-    border-color: #FFD700;
-}
-.perk-button h4 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.875rem;
-    color: #0c101d;
-    text-align: center;
-}
-.perk-button p {
-    font-family: 'Exo 2', sans-serif;
-    font-size: 0.9rem;
-    color: #374151;
-}
-
-#travel-animation-modal #travel-animation-content {
-    width: 90%;
-    max-width: 800px;
-    padding: 0;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border-color: #4a6a8a;
-    overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: var(--app-height, 100vh);
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
-    flex-direction: column;
-}
-#travel-animation-modal #travel-header-panel, #travel-animation-modal #travel-footer-panel {
-    padding: 0.75rem 1.5rem;
-    text-align: center;
-    flex-shrink: 0;
-    background-color: rgba(12, 16, 29, 0.5);
-    z-index: 10;
-}
-#travel-animation-modal #travel-header-panel {
-    border-bottom: 1px solid #3a4a6a;
-    min-height: 80px;
-}
-#travel-animation-modal #travel-footer-panel {
-    border-top: 1px solid #3a4a6a;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-#travel-animation-modal #travel-canvas {
-    width: 100%;
-    height: 150px;
-    display: block;
-}
-#travel-animation-modal #travel-arrival-lore, #travel-animation-modal #travel-readout-container, #travel-animation-modal #travel-confirm-button {
+    z-index: 50;
     opacity: 0;
-    transition: opacity 0.75s ease-in-out;
-}
-#travel-animation-modal #travel-status-text {
-    transition: all 0.5s ease;
-}
-#travel-progress-container {
-    margin-bottom: 0.75rem;
-}
-#travel-progress-bar {
-    box-shadow: 0 0 8px var(--progress-glow-color), inset 0 0 4px var(--progress-glow-color);
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
 }
 
-
-#random-event-modal .modal-content .btn {
-    text-align: center;
+/* Base styles for when a modal is active/visible */
+.modal-backdrop:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
 }
 
-#ship-detail-modal {
-    align-items: center;
-    justify-content: center;
-}
-#ship-detail-modal .modal-content {
-    border-radius: 15px;
-    width: 90%;
-    max-width: 500px;
-    margin: 0;
+/* General Modal Content Box Styling */
+.modal-content {
+    background-color: #111827;
     padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    max-width: 90%;
+    width: 400px;
 }
 
-#mission-modal .modal-content {
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-}
-#mission-modal .modal-header {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-}
-#mission-modal .close-button {
-    font-size: 2rem;
-    line-height: 1;
-    color: #9ca3af;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-#mission-modal .close-button:hover {
-    color: #fff;
-}
-#mission-modal .reward-section {
-    background-color: rgba(0,0,0,0.3);
-    border-left: 3px solid #facc15;
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    text-align: center;
-    width: 80%;
-    margin: 0 auto;
-}
-#mission-modal-objectives {
-    width: 80%;
-    margin: 1rem auto;
-    padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    text-align: left;
+/* State class for a modal that is currently visible */
+.modal-visible {
+    opacity: 1 !important;
+    pointer-events: auto;
 }
 
-/* --- [[START]] LAUNCH MODAL STYLES --- */
+/* State class for a modal that is in the process of closing */
+.modal-hiding {
+    animation: pureFadeOut 0.3s ease-out forwards;
+}
+.modal-hiding .modal-content {
+    animation: pureFadeOut 0.3s ease-out forwards;
+}
+
+
+/* Keyframe Animations */
+@keyframes pureFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pureFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Specific Modal Styling */
+
+/* Map Detail Modal */
+#map-detail-modal .modal-content {
+    animation: pureFadeIn 0.3s ease-out forwards;
+}
+
+/* Hide modal backdrops by default */
+.modal-backdrop.hidden {
+    display: none;
+}
+
+/* Disable pointer events on modals that shouldn't be dismissible */
+.dismiss-disabled {
+    pointer-events: none;
+}
+
+/* Ship Detail Modal */
+#ship-detail-modal .modal-content {
+    background: linear-gradient(145deg, #1f2937, #111827);
+    border-color: #4b5563;
+}
+
+/* Launch Confirmation Modal */
+#launch-modal .modal-content {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
 .launch-modal-wrapper {
-    position: relative;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border: 2px solid;
-    border-radius: 15px;
-    padding: 1rem;
-    width: 100%;
-    max-width: 350px;
-    height: 395px; /* Increased height */
-    margin: 0 auto;
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-}
-.launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
-}
-.flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
-    opacity: 0.80;
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 10px;
 }
 
-.intel-section {
-    text-align: center;
+.launch-modal-wrapper .flavor-text {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    opacity: 0.8;
+}
+
+.launch-modal-wrapper .intel-section {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.8rem;
 }
 
 .launch-modal-wrapper .commodity-name {
-    position: static; /* Override absolute positioning from market.css */
-    display: block;
-    padding-left: 1rem;
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-@keyframes launch-glow-animation {
+.btn-launch-glow {
+    position: relative;
+    overflow: hidden;
+    animation: pulse-launch-glow 2s infinite;
+}
+
+@keyframes pulse-launch-glow {
     0%, 100% {
-        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+        box-shadow: 0 0 5px var(--launch-glow-color), 0 0 10px var(--launch-glow-color);
     }
     50% {
-        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+        box-shadow: 0 0 15px var(--launch-glow-color), 0 0 25px var(--launch-glow-color);
     }
 }
-.btn-launch-glow {
-    animation: launch-glow-animation 2.5s infinite;
-    border-color: var(--launch-glow-color);
+
+
+/* Cargo Detail Modal */
+#cargo-detail-modal .modal-content {
+    max-width: 320px;
+    width: 100%;
 }
-/* --- [[END]] LAUNCH MODAL STYLES --- */
+
+.max-cargo-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.max-cargo-modal-content .commodity-card {
+    margin-bottom: 1rem;
+    transform: scale(1.2); /* Make the card a bit larger */
+}
+
+/* Random Event Modal */
+#random-event-modal .modal-content, #age-event-modal .modal-content {
+    background: radial-gradient(circle, #2d3748, #1a202c);
+    border: 2px solid #4a5568;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(74, 85, 104, 0.3);
+    text-align: center;
+}
+
+#random-event-modal h3, #age-event-modal h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #e2e8f0;
+    text-shadow: 0 0 8px rgba(147, 197, 253, 0.4);
+}
+
+#random-event-choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Age Event / Perk Selection Modal */
+#age-event-button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.perk-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: left;
+    transition: all 0.2s ease-in-out;
+}
+
+.perk-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #fde047;
+    transform: translateY(-2px);
+}
+
+.perk-button h4 {
+    font-family: 'Orbitron', sans-serif;
+    color: #fde047;
+    margin-bottom: 0.5rem;
+}
+
+.perk-button p {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+}
+
+
+/* Processing / Loading Modal */
+#processing-modal .modal-content {
+    text-align: center;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #2d3748;
+    border-radius: 99px;
+    height: 10px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+#processing-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #60a5fa;
+    transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 99px;
+}
+
+
+/* Tutorial Skip Confirmation Modal */
+#skip-tutorial-modal .modal-content {
+    text-align: center;
+}
+
+#skip-tutorial-modal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+
+/* Tutorial Log Modal */
+#tutorial-log-modal {
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+#tutorial-log-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#tutorial-log-modal .modal-content {
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#tutorial-log-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.5rem; /* For scrollbar */
+}
