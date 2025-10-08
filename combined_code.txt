@@ -144,7 +144,7 @@
 
     <div id="event-modal" class="modal-backdrop hidden">
         <div class="modal-content">
-            <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300"></h3>
+            <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
             <p id="event-description" class="mb-6 text-lg"></p>
             <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
         </div>
@@ -152,7 +152,7 @@
 
     <div id="charter-modal" class="modal-backdrop hidden modal-theme-gold">
         <div class="modal-content">
-            <h3 id="charter-title" class="text-2xl font-orbitron mb-4 text-gray-300"></h3>
+            <h3 id="charter-title" class="text-2xl font-orbitron mb-4 text-gray-300 text-center"></h3>
             <div id="charter-description" class="mb-6 text-lg"></div>
             <div id="charter-button-container" class="mt-6 flex justify-center gap-4"></div>
         </div>
@@ -160,9 +160,9 @@
 
     <div id="signature-modal" class="modal-backdrop hidden modal-theme-gold">
         <div class="modal-content">
-            <h3 id="signature-title" class="text-2xl font-orbitron mb-4 text-gray-300"></h3>
+            <h3 id="signature-title" class="text-2xl font-orbitron mb-4 text-gray-300 text-center"></h3>
             <div id="signature-description" class="mb-6 text-lg"></div>
-            <input type="text" id="signature-input" maxlength="18" class="w-full p-2 rounded text-center text-lg mb-4 text-gray-200" placeholder="INPUT YOUR NAME...">
+            <input type="text" id="signature-input" maxlength="18" class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-center text-lg mb-4 text-gray-200" placeholder="INPUT YOUR NAME...">
             <div id="signature-button-container" class="mt-6 flex justify-center gap-4"></div>
         </div>
     </div>
@@ -1101,6 +1101,18 @@ body {
 
 @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes scanlineFadeOut {
+    from {
+        opacity: 1;
+        -webkit-mask-position: 0 0;
+        mask-position: 0 0;
+    }
+    to {
+        opacity: 0;
+        -webkit-mask-position: 0 100%;
+        mask-position: 0 100%;
+    }
+}
 @keyframes pulse-green-border { 0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3); border-color: #10b981; } 50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5); border-color: #34d399; } }
 @keyframes pulse-gold-border { 0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3); border-color: #D4AF37; } 50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5); border-color: #FFD700; } }
 @keyframes credits-pulse-glow { 0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } 50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; } 100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } }
@@ -1186,6 +1198,14 @@ body {
     pointer-events: none;
 }
 
+/* Special override for slow intro fade */
+.intro-fade-in {
+    transition-duration: 2s !important;
+}
+.intro-fade-in .modal-content {
+    animation-duration: 2s !important;
+}
+
 /* Base styles for when a modal is active/visible */
 .modal-backdrop:not(.hidden) {
     opacity: 1;
@@ -1204,36 +1224,33 @@ body {
 }
 
 /* State class for a modal that is currently visible */
-.modal-visible {
-    opacity: 1 !important;
-    pointer-events: auto;
+.modal-visible .modal-content {
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: pureFadeOut 0.3s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on backdrop */
 }
 .modal-hiding .modal-content {
-    animation: pureFadeOut 0.3s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on content */
 }
 
-
-/* Keyframe Animations */
-@keyframes pureFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* New class for the splash screen's unique exit animation */
+.splash-screen-hiding {
+    -webkit-mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    -webkit-mask-size: 100% 400%;
+    mask-size: 100% 400%;
+    animation: scanlineFadeOut 2s ease-in-out forwards;
 }
 
-@keyframes pureFadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
 
 /* Specific Modal Styling */
 
-/* Map Detail Modal */
-#map-detail-modal .modal-content {
-    animation: pureFadeIn 0.3s ease-out forwards;
+/* Map Detail Modal has its own animation override already */
+#map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
+    animation: fadeIn 0.3s ease-out forwards;
 }
 
 /* Hide modal backdrops by default */
@@ -3850,12 +3867,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
         // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('modal-hiding');
+        splashScreen.classList.add('splash-screen-hiding');
         splashScreen.addEventListener('animationend', () => {
             splashScreen.style.display = 'none';
+            startGame();
         }, { once: true });
-
-        startGame();
 
     }, { once: true });
 
@@ -7474,6 +7490,11 @@ export class IntroService {
             buttonClass: step.buttonClass,
             contentClass: step.contentClass,
         };
+        
+        if (this.gameState.player.introStep === 0) {
+            options.specialClass = 'intro-fade-in';
+        }
+
         let modalId = 'event-modal';
 
         if (step.id === 'charter' || step.id === 'signature') {
@@ -8794,6 +8815,7 @@ export class UIManager {
             launchModal: document.getElementById('launch-modal'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
+            
             mapDetailModal: document.getElementById('map-detail-modal'),
             
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -9216,6 +9238,9 @@ export class UIManager {
             return this.processModalQueue();
         }
 
+        if (options.specialClass) {
+            modal.classList.add(options.specialClass);
+        }
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
         }
@@ -9312,7 +9337,7 @@ export class UIManager {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }

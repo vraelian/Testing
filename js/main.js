@@ -44,12 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
         // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('modal-hiding');
+        splashScreen.classList.add('splash-screen-hiding');
         splashScreen.addEventListener('animationend', () => {
             splashScreen.style.display = 'none';
+            startGame();
         }, { once: true });
-
-        startGame();
 
     }, { once: true });
 

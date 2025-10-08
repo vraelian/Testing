@@ -136,6 +136,18 @@ body {
 
 @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes scanlineFadeOut {
+    from {
+        opacity: 1;
+        -webkit-mask-position: 0 0;
+        mask-position: 0 0;
+    }
+    to {
+        opacity: 0;
+        -webkit-mask-position: 0 100%;
+        mask-position: 0 100%;
+    }
+}
 @keyframes pulse-green-border { 0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3); border-color: #10b981; } 50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5); border-color: #34d399; } }
 @keyframes pulse-gold-border { 0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3); border-color: #D4AF37; } 50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5); border-color: #FFD700; } }
 @keyframes credits-pulse-glow { 0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } 50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; } 100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } }
