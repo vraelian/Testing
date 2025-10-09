@@ -48,7 +48,6 @@ export class SystemSurgeEffect extends BaseEffect {
      * @override
      */
     async play() {
-        console.log("EFFECT: SystemSurgeEffect.play() called."); // DIAGNOSTIC LOG
         return new Promise(resolve => {
             this._createDOM();
             this.animationFrameId = requestAnimationFrame(this._animationLoop);
@@ -57,7 +56,10 @@ export class SystemSurgeEffect extends BaseEffect {
             const totalDuration = fadeInTime + lingerTime + fadeOutTime;
 
             setTimeout(() => document.body.classList.add('system-surge-active'), 50);
-            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
+            setTimeout(() => {
+                document.body.classList.remove('system-surge-active');
+                document.body.classList.add('system-surge-fading');
+            }, fadeInTime + lingerTime);
             setTimeout(() => {
                 this._cleanup();
                 resolve();
@@ -71,7 +73,6 @@ export class SystemSurgeEffect extends BaseEffect {
      * @override
      */
     _createDOM() {
-        console.log("CREATE: SystemSurgeEffect._createDOM() called."); // DIAGNOSTIC LOG
         const themeColors = this.themes[this.options.theme] || this.themes.blue;
 
         const overlay = document.createElement('div');
@@ -111,7 +112,16 @@ export class SystemSurgeEffect extends BaseEffect {
         overlay.appendChild(surgeLight);
         overlay.appendChild(canvas);
         overlay.appendChild(textContainer);
-        document.body.appendChild(overlay);
+        
+        // --- THE FIX ---
+        // Append to the game container to ensure it's in the same stacking context
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.appendChild(overlay);
+        } else {
+            document.body.appendChild(overlay); // Fallback
+        }
+        // --- END FIX ---
 
         this._resizeCanvas();
         this._initializeParticles();

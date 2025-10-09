@@ -37,7 +37,6 @@ export class UIManager {
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
-        console.log("DIAGNOSTIC: UIManager constructor finished initializing EffectsManager."); // FINAL DIAGNOSTIC LOG
 
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
