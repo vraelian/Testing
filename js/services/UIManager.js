@@ -37,7 +37,6 @@ export class UIManager {
 
         this.effectsManager = new EffectsManager();
         this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
-
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
         this.navStructure = {
@@ -811,6 +810,7 @@ export class UIManager {
         const lastDay = history[history.length - 1].day;
         svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
         svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+
         svg += `<text x="${padding - 8}" y="${getY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
         svg += `<text x="${padding - 8}" y="${getY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
         svg += `</svg>`;

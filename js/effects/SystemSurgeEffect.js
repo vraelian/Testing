@@ -56,10 +56,7 @@ export class SystemSurgeEffect extends BaseEffect {
             const totalDuration = fadeInTime + lingerTime + fadeOutTime;
 
             setTimeout(() => document.body.classList.add('system-surge-active'), 50);
-            setTimeout(() => {
-                document.body.classList.remove('system-surge-active');
-                document.body.classList.add('system-surge-fading');
-            }, fadeInTime + lingerTime);
+            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
             setTimeout(() => {
                 this._cleanup();
                 resolve();
@@ -112,16 +109,7 @@ export class SystemSurgeEffect extends BaseEffect {
         overlay.appendChild(surgeLight);
         overlay.appendChild(canvas);
         overlay.appendChild(textContainer);
-        
-        // --- THE FIX ---
-        // Append to the game container to ensure it's in the same stacking context
-        const gameContainer = document.getElementById('game-container');
-        if (gameContainer) {
-            gameContainer.appendChild(overlay);
-        } else {
-            document.body.appendChild(overlay); // Fallback
-        }
-        // --- END FIX ---
+        document.body.appendChild(overlay);
 
         this._resizeCanvas();
         this._initializeParticles();

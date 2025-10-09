@@ -1015,7 +1015,7 @@ body {
     margin: auto;
     border: 2px solid #3a4a6a;
     border-radius: 55px;
-    transition: background 0.5s ease-out, opacity 1s ease-in-out;
+    transition: background 0.5s ease-out;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
@@ -1024,15 +1024,6 @@ body {
     box-sizing: border-box;
     overflow: hidden;
 }
-
-.game-container.fade-in {
-    opacity: 1;
-}
-
-.game-container.fade-out {
-    opacity: 0;
-}
-
 
 .main-content-wrapper {
     flex-grow: 1;
@@ -1203,7 +1194,7 @@ body {
     align-items: center;
     z-index: 50;
     opacity: 0;
-    transition: opacity 1s ease-out;
+    transition: opacity 0.3s ease-out;
     pointer-events: none;
 }
 
@@ -1234,15 +1225,15 @@ body {
 
 /* State class for a modal that is currently visible */
 .modal-visible .modal-content {
-    animation: fadeIn 1s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on backdrop */
+    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on backdrop */
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on content */
+    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on content */
 }
 
 /* New class for the splash screen's unique exit animation */
@@ -1299,7 +1290,7 @@ body {
 
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
-    animation: fadeIn 1s ease-out forwards;
+    animation: fadeIn 0.3s ease-out forwards;
 }
 
 /* Hide modal backdrops by default */
@@ -1319,19 +1310,6 @@ body {
 }
 
 /* Launch Confirmation Modal */
-#launch-modal {
-    transition: opacity 0.7s ease-out;
-}
-#launch-modal.modal-visible .modal-content {
-    animation: fadeIn 0.7s ease-out;
-}
-#launch-modal.modal-hiding {
-    animation: fadeOut 0.7s ease-out forwards;
-}
-#launch-modal.modal-hiding .modal-content {
-    animation: fadeOut 0.7s ease-out forwards;
-}
-
 #launch-modal .modal-content {
     padding: 0;
     background: transparent;
@@ -1341,10 +1319,25 @@ body {
     max-width: 450px;
 }
 
+.launch-modal-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 10px;
+}
+
 .launch-modal-wrapper .flavor-text {
     font-size: 0.9rem;
     color: #cbd5e1;
     opacity: 0.8;
+}
+
+.launch-modal-wrapper .intel-section {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.8rem;
 }
 
 .launch-modal-wrapper .commodity-name {
@@ -1353,6 +1346,22 @@ body {
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+.btn-launch-glow {
+    position: relative;
+    overflow: hidden;
+    animation: pulse-launch-glow 2s infinite;
+}
+
+@keyframes pulse-launch-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px var(--launch-glow-color), 0 0 10px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 15px var(--launch-glow-color), 0 0 25px var(--launch-glow-color);
+    }
+}
+
 
 /* Cargo Detail Modal */
 #cargo-detail-modal .modal-content {
@@ -1468,7 +1477,7 @@ body {
 /* Tutorial Log Modal */
 #tutorial-log-modal {
     opacity: 0;
-    transition: opacity 1s;
+    transition: opacity 0.3s;
     pointer-events: none;
 }
 #tutorial-log-modal.visible {
@@ -1505,7 +1514,7 @@ body {
     padding: 1rem;
     width: 100%;
     max-width: 350px;
-    height: 366px; /* Increased by 20% */
+    height: 305px;
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
@@ -1521,10 +1530,6 @@ body {
     font-size: 0.8125rem; /* 13px, a 1pt reduction */
     opacity: 0.80;
 }
-.travel-info-text {
-    font-size: 15px; /* Increased by 3pt from 12px */
-    font-family: 'Roboto Mono', monospace;
-}
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
@@ -1534,29 +1539,8 @@ body {
     }
 }
 .btn-launch-glow {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #4a5568, #1a202c);
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
-    border: 4px solid var(--launch-glow-color);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 2px 3px rgba(255,255,255,0.2), inset 0 -3px 5px rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.1s ease-in-out;
     animation: launch-glow-animation 2.5s infinite;
-    margin: 0 auto; /* Center the button */
-    text-shadow: 0 0 5px #fff;
-}
-
-.btn-launch-glow:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
+    border-color: var(--launch-glow-color);
 }
 /* --- [[END]] LAUNCH MODAL STYLES --- */
 --- END OF FILE: ./css/modals.css ---
@@ -5428,7 +5412,6 @@ export class TravelAnimationService {
     constructor(isMobile) {
         this.isMobile = isMobile;
         this.modal = document.getElementById('travel-animation-modal');
-        this.gameContainer = document.getElementById('game-container');
         this.canvas = document.getElementById('travel-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.statusText = document.getElementById('travel-status-text');
@@ -5449,8 +5432,6 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
-        this.gameContainer.classList.add('fade-out');
-
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -5492,24 +5473,9 @@ export class TravelAnimationService {
 
         this.confirmButton.onclick = () => {
             cancelAnimationFrame(this.animationFrame);
-        
-            this.modal.classList.add('modal-hiding');
-            
-            // Execute the callback to render the market screen *before* the fade-in starts.
-            if (finalCallback) {
-                finalCallback();
-            }
-
-            // A short delay to ensure the market screen is rendered before the fade-in starts.
-            setTimeout(() => {
-                this.gameContainer.classList.remove('fade-out');
-                this.gameContainer.classList.add('fade-in');
-            }, 50); // Small buffer
-
-            setTimeout(() => {
-                this.modal.classList.add('hidden');
-                this.modal.classList.remove('modal-hiding', 'dismiss-disabled');
-            }, 1000); // 1s to match CSS transition
+            this.modal.classList.add('hidden');
+            this.modal.classList.remove('dismiss-disabled');
+            if (finalCallback) finalCallback();
         };
     }
 
@@ -8932,7 +8898,6 @@ export class UIManager {
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
-            launchModalContent: document.getElementById('launch-modal-content'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
             
@@ -9862,39 +9827,70 @@ export class UIManager {
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
-    
+
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
-    
+
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
-    
+
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
-    
+
+        const COMMODITY_CATEGORIES = {
+            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
+            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
+            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
+            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
+        };
+        let imports = [];
+        let exports = [];
+        for (const goodId in location.availabilityModifier) {
+            const modifier = location.availabilityModifier[goodId];
+            const category = COMMODITY_CATEGORIES[goodId];
+            if (modifier < 1.0 && !imports.includes(category)) {
+                imports.push(category);
+            } else if (modifier > 1.0 && !exports.includes(category)) {
+                exports.push(category);
+            }
+        }
+        
+        let intelHtml = '';
+        if (imports.length > 0) {
+            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
+        }
+        if (exports.length > 0) {
+            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
+        }
+        if (intelHtml === '') {
+            intelHtml = '<p>Market data is unreliable.</p>';
+        }
+        
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-    
-                <div class="flex-grow flex items-center justify-center"> 
-                   <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
+                    ${intelHtml}
                 </div>
-    
-                <div class="travel-info-text"> 
+                <div class="font-roboto-mono text-xs"> 
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
+                <div class="pt-2"> 
+                   <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                </div>
             </div>`;
-    
+
         const modal = this.cache.launchModal;
-        this.cache.launchModalContent.innerHTML = modalContentHtml;
+        // This is a key change: inject the HTML directly into the #launch-modal element, not its child.
+        modal.innerHTML = modalContentHtml; 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-    
+
         // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
