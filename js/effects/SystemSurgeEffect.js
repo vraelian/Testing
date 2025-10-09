@@ -17,9 +17,6 @@ export class SystemSurgeEffect extends BaseEffect {
     constructor(options = {}) {
         super(options);
 
-        // --- MOBILE-FIRST OPTIMIZATIONS ---
-        this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
         const theme = options.theme || 'blue';
         const profile = SystemSurgeEffect.PROFILES[theme] || SystemSurgeEffect.PROFILES.blue;
 
@@ -29,18 +26,10 @@ export class SystemSurgeEffect extends BaseEffect {
             theme: theme
         };
 
-        // Reduce particle count on mobile to lessen performance load.
-        if (this.isMobile) {
-            this.options.particleCount = Math.floor(this.options.particleCount / 2);
-        }
-
         this.domElements = {};
         this.particles = [];
-        this.animationIntervalId = null; // Used for both rAF and setInterval
-        this.isPaused = false;
-
+        this.animationFrameId = null;
         this._animationLoop = this._animationLoop.bind(this);
-        this._handleVisibilityChange = this._handleVisibilityChange.bind(this);
 
         this.themes = {
             gold: { color: 'rgba(255, 223, 0, 0.8)', glow: '#ffd700' },
@@ -56,33 +45,19 @@ export class SystemSurgeEffect extends BaseEffect {
 
     /**
      * @method play
-     * @description Creates DOM, forces reflow, starts CSS transitions, then starts a robust animation loop.
-     * Uses setInterval on mobile as a fallback for the heavily throttled requestAnimationFrame.
      * @override
-     * @async
-     * @returns {Promise<void>} A promise that resolves when the effect is complete.
      */
     async play() {
+        console.log("EFFECT: SystemSurgeEffect.play() called."); // DIAGNOSTIC LOG
         return new Promise(resolve => {
             this._createDOM();
-            document.addEventListener('visibilitychange', this._handleVisibilityChange);
-
-            if (this.domElements.overlay) {
-                const reflow = this.domElements.overlay.offsetHeight;
-            }
-
-            document.body.classList.add('system-surge-active');
-
-            this.resume(); // Start the animation loop
+            this.animationFrameId = requestAnimationFrame(this._animationLoop);
 
             const { fadeInTime, lingerTime, fadeOutTime } = this.options;
             const totalDuration = fadeInTime + lingerTime + fadeOutTime;
 
-            setTimeout(() => {
-                document.body.classList.remove('system-surge-active');
-                document.body.classList.add('system-surge-fading');
-            }, fadeInTime + lingerTime);
-
+            setTimeout(() => document.body.classList.add('system-surge-active'), 50);
+            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
             setTimeout(() => {
                 this._cleanup();
                 resolve();
@@ -91,50 +66,12 @@ export class SystemSurgeEffect extends BaseEffect {
     }
 
     /**
-     * @method pause
-     * @description Pauses the animation loop.
+     * @method _createDOM
+     * @protected
+     * @override
      */
-    pause() {
-        if (this.isPaused) return;
-        this.isPaused = true;
-        if (this.isMobile) {
-            clearInterval(this.animationIntervalId);
-        } else {
-            cancelAnimationFrame(this.animationIntervalId);
-        }
-        this.animationIntervalId = null;
-    }
-
-    /**
-     * @method resume
-     * @description Resumes the animation loop.
-     */
-    resume() {
-        if (!this.isPaused && this.animationIntervalId) return;
-        this.isPaused = false;
-        if (this.isMobile) {
-            // Use setInterval for more reliable execution on throttled mobile browsers.
-            this.animationIntervalId = setInterval(this._animationLoop, 1000 / 60);
-        } else {
-            // Use requestAnimationFrame for smoother animation on desktop.
-            this.animationIntervalId = requestAnimationFrame(this._animationLoop);
-        }
-    }
-
-    /**
-     * @method _handleVisibilityChange
-     * @description Pauses or resumes the animation when the page visibility changes.
-     * @private
-     */
-    _handleVisibilityChange() {
-        if (document.hidden) {
-            this.pause();
-        } else {
-            this.resume();
-        }
-    }
-
     _createDOM() {
+        console.log("CREATE: SystemSurgeEffect._createDOM() called."); // DIAGNOSTIC LOG
         const themeColors = this.themes[this.options.theme] || this.themes.blue;
 
         const overlay = document.createElement('div');
@@ -205,7 +142,7 @@ export class SystemSurgeEffect extends BaseEffect {
     }
 
     _animationLoop() {
-        if (!this.ctx || this.isPaused) return;
+        if (!this.ctx) return;
         
         const canvas = this.domElements.canvas;
         this.ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -232,17 +169,15 @@ export class SystemSurgeEffect extends BaseEffect {
             }
             this.ctx.fill();
         });
-
-        // If using requestAnimationFrame, we need to re-queue the next frame.
-        // For setInterval, this is not needed as it loops automatically.
-        if (!this.isMobile) {
-            this.animationIntervalId = requestAnimationFrame(this._animationLoop);
-        }
+        
+        this.animationFrameId = requestAnimationFrame(this._animationLoop);
     }
     
     _cleanup() {
-        this.pause(); // Stop the animation loop
-        document.removeEventListener('visibilitychange', this._handleVisibilityChange);
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
         window.removeEventListener('resize', this._resizeCanvas.bind(this));
         document.body.classList.remove('system-surge-active', 'system-surge-fading');
         Object.values(this.domElements).forEach(element => element && element.remove());

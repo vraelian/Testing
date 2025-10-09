@@ -157,6 +157,7 @@ export class PlayerActionService {
         this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.simulationService.addShipToHangar(shipId);
 
+        console.log("ACTION: PlayerActionService.buyShip is calling triggerEffect."); // DIAGNOSTIC LOG
         if (['S', 'O'].includes(ship.class)) {
             this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
         } else {

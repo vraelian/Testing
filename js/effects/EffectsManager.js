@@ -35,6 +35,7 @@ export class EffectsManager {
      * @param {object} options - The configuration object to pass to the effect's constructor.
      */
     trigger(effectName, options) {
+        console.log(`MANAGER: EffectsManager.trigger received call for '${effectName}'. Queue length: ${this.effectQueue.length}`); // DIAGNOSTIC LOG
         this.effectQueue.push({ effectName, options });
         this._processQueue();
     }
@@ -64,6 +65,7 @@ export class EffectsManager {
         }
 
         try {
+            console.log(`MANAGER: Instantiating and playing effect: '${request.effectName}'.`); // DIAGNOSTIC LOG
             const effect = new EffectClass(request.options);
             await effect.play();
         } catch (error) {
