@@ -122,7 +122,7 @@
             </div>
             <canvas id="travel-canvas"></canvas>
             <div id="travel-footer-panel">
-                <div id="travel-progress-container" class="w-full bg-slate-700 rounded-full h-1.5">
+                <div id="travel-progress-container" class="w-full bg-slate-700 rounded-full h-1.5 my-4">
                     <div id="travel-progress-bar" class="h-1.5 rounded-full" style="width: 0%"></div>
                 </div>
                 <div id="travel-readout-container" class="hidden">
@@ -218,7 +218,7 @@
     </div>
 
     <div id="launch-modal" class="modal-backdrop hidden">
-        <div id="launch-modal-content">
+        <div id="launch-modal-content" class="modal-content">
             </div>
     </div>
 
@@ -1248,6 +1248,46 @@ body {
 
 /* Specific Modal Styling */
 
+/* Travel Animation Modal */
+#travel-animation-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+    padding: 0;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border-color: #4a6a8a;
+    overflow: hidden;
+}
+
+#travel-header-panel, #travel-footer-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    background-color: rgba(12, 16, 29, 0.5);
+    z-index: 10;
+}
+#travel-header-panel {
+    border-bottom: 1px solid #3a4a6a;
+    min-height: 80px;
+}
+#travel-footer-panel {
+    border-top: 1px solid #3a4a6a;
+    min-height: 80px;
+    justify-content: center;
+}
+
+#travel-progress-bar {
+    box-shadow: 0 0 8px var(--progress-glow-color, #fff), 0 0 12px var(--progress-glow-color, #fff);
+}
+
+
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
     animation: fadeIn 0.3s ease-out forwards;
@@ -1275,6 +1315,8 @@ body {
     background: transparent;
     border: none;
     box-shadow: none;
+    width: auto; /* Allow the content to define the width */
+    max-width: 450px;
 }
 
 .launch-modal-wrapper {
@@ -1456,6 +1498,51 @@ body {
     gap: 0.5rem;
     padding-right: 0.5rem; /* For scrollbar */
 }
+
+/* --- [[START]] LAUNCH MODAL STYLES --- */
+#launch-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 100%;
+    max-width: 350px;
+    height: 305px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+@keyframes launch-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+    }
+}
+.btn-launch-glow {
+    animation: launch-glow-animation 2.5s infinite;
+    border-color: var(--launch-glow-color);
+}
+/* --- [[END]] LAUNCH MODAL STYLES --- */
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/screens/services-screen.css ---
@@ -5330,6 +5417,7 @@ export class TravelAnimationService {
         this.statusText = document.getElementById('travel-status-text');
         this.arrivalLore = document.getElementById('travel-arrival-lore');
         this.progressBar = document.getElementById('travel-progress-bar');
+        this.progressContainer = document.getElementById('travel-progress-container');
         this.readoutContainer = document.getElementById('travel-readout-container');
         this.infoText = document.getElementById('travel-info-text');
         this.hullDamageText = document.getElementById('travel-hull-damage');
@@ -5346,7 +5434,7 @@ export class TravelAnimationService {
         this.modal.classList.add('dismiss-disabled');
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
-        
+
         // Lighten the gradient for better visibility
         const lightenedGradient = this._lightenGradient(theme.gradient);
         this.progressBar.style.background = lightenedGradient;
@@ -5365,6 +5453,7 @@ export class TravelAnimationService {
             const elapsedTime = currentTime - startTime;
             let progress = Math.min(elapsedTime / duration, 1);
 
+            // Ease-out cubic for the slow-down effect at the end
             if (progress > 0.8) {
                 const normalized = (progress - 0.8) / 0.2;
                 progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
@@ -5431,13 +5520,11 @@ export class TravelAnimationService {
     _setupAnimationElements(from, to) {
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
-
         this.starLayers = [
             this._createStarLayer(80, 0.5, 0.8),
             this._createStarLayer(50, 1.2, 1.2),
             this._createStarLayer(20, 1.8, 2.0)
         ];
-
         this.engineParticles = [];
 
         this.backgroundGradient = this._getBackgroundGradient(from, to);
@@ -5465,7 +5552,7 @@ export class TravelAnimationService {
                     return DB.TRAVEL_VISUALS.zones[zoneName];
                 }
             }
-            return DB.TRAVEL_VISUALS.zones.inner_sphere;
+            return DB.TRAVEL_VISUALS.zones.inner_sphere; // Default fallback
         };
         const toZone = getZone(to);
         
@@ -5487,7 +5574,6 @@ export class TravelAnimationService {
 
     _draw(progress, from, to) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
         this.ctx.fillStyle = this.backgroundGradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
@@ -5587,7 +5673,6 @@ export class TravelAnimationService {
         
         this.arrivalLore.style.opacity = 1;
         this.readoutContainer.classList.remove('hidden');
-        
         setTimeout(() => {
             this.readoutContainer.style.opacity = 1;
             this.confirmButton.style.opacity = 1;
@@ -6263,7 +6348,7 @@ import { skewedRandom } from '../utils.js';
 function procedurallyGenerateTravelData(markets) {
     const travelData = {};
     const timeScalar = 0.1;  // Controls how much distance affects time
-    const fuelScalar = 1.5; // Controls how much distance affects fuel
+    const fuelScalar = 0.45; // Controls how much distance affects fuel
 
     markets.forEach(fromMarket => {
         travelData[fromMarket.id] = {};
@@ -6281,12 +6366,12 @@ function procedurallyGenerateTravelData(markets) {
 
             // Travel time now scales exponentially with distance for a greater impact on long journeys.
             let travelTime = 1 + Math.pow(finalDistance, 1.15) * timeScalar;
-            let fuelCost = 5 + finalDistance * fuelScalar;
+            let fuelCost = 2 + finalDistance * fuelScalar;
             
             // Special case for Earth-Luna to make it a quick, early-game trip.
             if ((fromMarket.id === LOCATION_IDS.EARTH && toMarket.id === LOCATION_IDS.LUNA) || (fromMarket.id === LOCATION_IDS.LUNA && toMarket.id === LOCATION_IDS.EARTH)) {
                 travelTime = 2 + Math.floor(Math.random() * 2);
-                fuelCost = 15 + Math.floor(Math.random() * 5);
+                fuelCost = 5 + Math.floor(Math.random() * 2);
             }
 
             travelData[fromMarket.id][toMarket.id] = {
@@ -8880,7 +8965,8 @@ export class UIManager {
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
     
         let statusPodHtml = '';
@@ -8920,7 +9006,11 @@ export class UIManager {
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 let subStyle = '';
+                 if (isSubNavActive) {
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                 }
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -9745,42 +9835,45 @@ export class UIManager {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
+        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
-        const allCommodities = Object.entries(location.availabilityModifier || {})
-            .map(([id, modifier]) => ({ id, modifier, name: DB.COMMODITIES.find(c => c.id === id)?.name }))
-            .filter(item => item.name);
-
-        const imports = allCommodities
-            .filter(item => item.modifier < 1.0)
-            .sort((a, b) => a.modifier - b.modifier)
-            .slice(0, 2)
-            .map(item => `<span class="commodity-name">${item.name}</span>`);
-
-        const exports = allCommodities
-            .filter(item => item.modifier > 1.0)
-            .sort((a, b) => b.modifier - a.modifier)
-            .slice(0, 2)
-            .map(item => `<span class="commodity-name">${item.name}</span>`);
+        const COMMODITY_CATEGORIES = {
+            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
+            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
+            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
+            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
+        };
+        let imports = [];
+        let exports = [];
+        for (const goodId in location.availabilityModifier) {
+            const modifier = location.availabilityModifier[goodId];
+            const category = COMMODITY_CATEGORIES[goodId];
+            if (modifier < 1.0 && !imports.includes(category)) {
+                imports.push(category);
+            } else if (modifier > 1.0 && !exports.includes(category)) {
+                exports.push(category);
+            }
+        }
         
         let intelHtml = '';
         if (imports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Imports:</b>${imports.join('')}</div>`;
+            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
         }
         if (exports.length > 0) {
-            intelHtml += `<div class="intel-section"><b style="color: ${theme.textColor};">Exports:</b>${exports.join('')}</div>`;
+            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
         }
         if (intelHtml === '') {
-            intelHtml = '<p class="text-center">Market data is unreliable.</p>';
+            intelHtml = '<p>Market data is unreliable.</p>';
         }
         
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border modal-content" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 space-y-2" style="border-color: ${theme.borderColor}50;">
+                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
                     ${intelHtml}
                 </div>
                 <div class="font-roboto-mono text-xs"> 
@@ -9793,9 +9886,19 @@ export class UIManager {
             </div>`;
 
         const modal = this.cache.launchModal;
-        modal.innerHTML = modalContentHtml;
+        // This is a key change: inject the HTML directly into the #launch-modal element, not its child.
+        modal.innerHTML = modalContentHtml; 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
+
+        // Add a one-time click listener to the backdrop to close the modal.
+        const closeHandler = (e) => {
+            if (e.target.id === 'launch-modal') {
+                this.hideModal('launch-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
     }
     
     showCargoDetailModal(gameState, goodId) {
@@ -10035,17 +10138,14 @@ export class UIManager {
                     <p><b>Services:</b> Fuel @ ${formatCredits(location.fuelPrice, true)}/unit</p>
                 </div>
             </div>
-            <div>
-                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Market Profile</h4>
-                <div class="text-center">
-                    <div>
-                        <h5 class="font-bold">Primary Exports:</h5>
-                        <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
-                    </div>
-                    <div class="mt-2">
-                        <h5 class="font-bold">Primary Imports:</h5>
-                        <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
-                    </div>
+            <div class="text-center">
+                <div>
+                    <h5 class="font-bold">Primary Exports:</h5>
+                    <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                </div>
+                <div class="mt-2">
+                    <h5 class="font-bold">Primary Imports:</h5>
+                    <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
         `;
@@ -11509,12 +11609,13 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager.",
-      "dependencies": ["Logger", "EffectsManager", "MissionService", "SimulationService"],
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
+      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
-        "triggerEffect": "Initiates a visual effect through the EffectsManager."
+        "triggerEffect": "Initiates a visual effect through the EffectsManager.",
+        "showTravelAnimation": "Initiates the travel animation sequence."
       },
       "mutates_state": []
     },
@@ -11567,6 +11668,23 @@ All notable changes to the Orbital Trading project will be documented in this fi
             "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
         },
         "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    },
+    "TravelAnimationService": {
+      "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
+      "dependencies": [],
+      "key_functions": {
+        "play": "Starts the travel animation sequence."
+      },
+      "mutates_state": []
+    },
+    "MapScreen": {
+        "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
+        "dependencies": ["UIManager"],
+        "key_functions": {
+            "renderMapScreen": "Renders the initial container for the map.",
+            "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
+        },
+        "mutates_state": []
     }
   },
   "asset_index": {
@@ -11591,7 +11709,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F024": {"path": "./js/ui/components/MissionsScreen.js", "role": "UI_COMPONENT"},
     "F025": {"path": "./js/ui/components/NavigationScreen.js", "role": "UI_COMPONENT"},
     "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
-    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT"},
+    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT", "status": "deprecated"},
+    "F028": {"path": "./js/ui/components/MapScreen.js", "role": "UI_COMPONENT"},
     "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
     "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
     "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
@@ -11607,7 +11726,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F041": {"path": "./js/services/handlers/MarketEventHandler.js", "role": "EVENT_HANDLER"},
     "F042": {"path": "./js/services/handlers/HoldEventHandler.js", "role": "EVENT_HANDLER"},
     "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
-    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"}
+    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
+    "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
+    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
@@ -11690,6 +11811,18 @@ This document records the key architectural decisions made during the developmen
 **Reason:** To improve code readability, maintainability, and separation of concerns in alignment with the project's architectural principles. The original `EventManager` violated the Single Responsibility Principle, making it difficult to modify and debug. The new structure isolates the logic for complex UI components like the market and carousel, making them easier to manage and extend.
 
 ---
+
+### 4. Implementation of an Interactive D3.js Map Screen
+
+**Decision Date:** 2025-10-07
+
+**Decision:** The original text-based navigation/status screen was deprecated and replaced with a new, interactive Map Screen built using the D3.js library.
+
+**Reason:** The previous implementation was purely functional but lacked visual engagement and failed to provide a strong sense of place within the solar system. The new D3-based map offers several advantages:
+1.  **Improved UX:** It provides a clear, visual representation of the game world, making navigation more intuitive and immersive.
+2.  **Enhanced Interactivity:** The map serves as a hub for location-based information, with clickable points of interest that reveal detailed modals about each market.
+3.  **Scalability:** The SVG-based nature of D3 allows the map to be easily extended with new locations, trade routes, or visual indicators in the future.
+This change shifts the primary navigation paradigm from a list to a visual map, fundamentally improving the player's connection to the game world.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -11711,6 +11844,7 @@ This document records the key architectural decisions made during the developmen
     4.  **GameState**: The single source of truth for all dynamic data.
     5.  **UIManager**: The output layer, responsible for rendering the game state.
     6.  **EffectsManager**: A dedicated service within the UIManager for handling visual effects.
+    7.  **TravelAnimationService**: A dedicated service within the UIManager for handling the travel animation sequence.
 
 ---
 
