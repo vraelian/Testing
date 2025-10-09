@@ -5,6 +5,7 @@ export class TravelAnimationService {
     constructor(isMobile) {
         this.isMobile = isMobile;
         this.modal = document.getElementById('travel-animation-modal');
+        this.gameContainer = document.getElementById('game-container');
         this.canvas = document.getElementById('travel-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.statusText = document.getElementById('travel-status-text');
@@ -25,6 +26,8 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
+        this.gameContainer.classList.add('fade-out');
+
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -66,12 +69,24 @@ export class TravelAnimationService {
 
         this.confirmButton.onclick = () => {
             cancelAnimationFrame(this.animationFrame);
+        
             this.modal.classList.add('modal-hiding');
-            this.modal.addEventListener('animationend', () => {
+            
+            // Execute the callback to render the market screen *before* the fade-in starts.
+            if (finalCallback) {
+                finalCallback();
+            }
+
+            // A short delay to ensure the market screen is rendered before the fade-in starts.
+            setTimeout(() => {
+                this.gameContainer.classList.remove('fade-out');
+                this.gameContainer.classList.add('fade-in');
+            }, 50); // Small buffer
+
+            setTimeout(() => {
                 this.modal.classList.add('hidden');
                 this.modal.classList.remove('modal-hiding', 'dismiss-disabled');
-                if (finalCallback) finalCallback();
-            }, { once: true });
+            }, 1000); // 1s to match CSS transition
         };
     }
 

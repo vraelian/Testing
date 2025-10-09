@@ -1045,69 +1045,39 @@ export class UIManager {
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
-
+    
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
-
+    
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
-
+    
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
-
-        const COMMODITY_CATEGORIES = {
-            'water_ice': 'RAW', 'plasteel': 'IND', 'hydroponics': 'AGRI', 'cybernetics': 'TECH', 
-            'propellant': 'IND', 'processors': 'TECH', 'gmo_seeds': 'AGRI', 'cryo_pods': 'CIV', 
-            'atmos_processors': 'IND', 'cloned_organs': 'BIO', 'xeno_geologicals': 'RAW', 
-            'sentient_ai': 'TECH', 'antimatter': 'RARE', 'folded_drives': 'RARE'
-        };
-        let imports = [];
-        let exports = [];
-        for (const goodId in location.availabilityModifier) {
-            const modifier = location.availabilityModifier[goodId];
-            const category = COMMODITY_CATEGORIES[goodId];
-            if (modifier < 1.0 && !imports.includes(category)) {
-                imports.push(category);
-            } else if (modifier > 1.0 && !exports.includes(category)) {
-                exports.push(category);
-            }
-        }
-        
-        let intelHtml = '';
-        if (imports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Imports:</b> ${imports.join(', ')}</p>`;
-        }
-        if (exports.length > 0) {
-            intelHtml += `<p><b style="color: ${theme.textColor};">Exports:</b> ${exports.join(', ')}</p>`;
-        }
-        if (intelHtml === '') {
-            intelHtml = '<p>Market data is unreliable.</p>';
-        }
-        
+    
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-                <div class="border-t border-b py-2 text-center space-y-1" style="border-color: ${theme.borderColor}50;">
-                    ${intelHtml}
+    
+                <div class="flex-grow flex items-center justify-center"> 
+                   <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
-                <div class="font-roboto-mono text-xs"> 
+    
+                <div class="travel-info-text"> 
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
-                <div class="pt-2"> 
-                   <button class="btn btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
-                </div>
             </div>`;
-
+    
         const modal = this.cache.launchModal;
-        this.cache.launchModalContent.innerHTML = modalContentHtml; 
+        this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-
+    
         // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {

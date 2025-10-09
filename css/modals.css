@@ -151,26 +151,10 @@
     max-width: 450px;
 }
 
-
-.launch-modal-wrapper {
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    gap: 0.75rem;
-    border-radius: 10px;
-}
-
 .launch-modal-wrapper .flavor-text {
     font-size: 0.9rem;
     color: #cbd5e1;
     opacity: 0.8;
-}
-
-.launch-modal-wrapper .intel-section {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    font-size: 0.8rem;
 }
 
 .launch-modal-wrapper .commodity-name {
@@ -179,22 +163,6 @@
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
-
-.btn-launch-glow {
-    position: relative;
-    overflow: hidden;
-    animation: pulse-launch-glow 2s infinite;
-}
-
-@keyframes pulse-launch-glow {
-    0%, 100% {
-        box-shadow: 0 0 5px var(--launch-glow-color), 0 0 10px var(--launch-glow-color);
-    }
-    50% {
-        box-shadow: 0 0 15px var(--launch-glow-color), 0 0 25px var(--launch-glow-color);
-    }
-}
-
 
 /* Cargo Detail Modal */
 #cargo-detail-modal .modal-content {
@@ -347,7 +315,7 @@
     padding: 1rem;
     width: 100%;
     max-width: 350px;
-    height: 305px;
+    height: 366px; /* Increased by 20% */
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
@@ -363,6 +331,10 @@
     font-size: 0.8125rem; /* 13px, a 1pt reduction */
     opacity: 0.80;
 }
+.travel-info-text {
+    font-size: 15px; /* Increased by 3pt from 12px */
+    font-family: 'Roboto Mono', monospace;
+}
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
@@ -372,7 +344,28 @@
     }
 }
 .btn-launch-glow {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #4a5568, #1a202c);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    border: 4px solid var(--launch-glow-color);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 2px 3px rgba(255,255,255,0.2), inset 0 -3px 5px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
     animation: launch-glow-animation 2.5s infinite;
-    border-color: var(--launch-glow-color);
+    margin: 0 auto; /* Center the button */
+    text-shadow: 0 0 5px #fff;
+}
+
+.btn-launch-glow:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
 }
 /* --- [[END]] LAUNCH MODAL STYLES --- */
