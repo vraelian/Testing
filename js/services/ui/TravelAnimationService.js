@@ -66,9 +66,12 @@ export class TravelAnimationService {
 
         this.confirmButton.onclick = () => {
             cancelAnimationFrame(this.animationFrame);
-            this.modal.classList.add('hidden');
-            this.modal.classList.remove('dismiss-disabled');
-            if (finalCallback) finalCallback();
+            this.modal.classList.add('modal-hiding');
+            this.modal.addEventListener('animationend', () => {
+                this.modal.classList.add('hidden');
+                this.modal.classList.remove('modal-hiding', 'dismiss-disabled');
+                if (finalCallback) finalCallback();
+            }, { once: true });
         };
     }
 

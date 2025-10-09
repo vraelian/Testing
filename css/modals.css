@@ -13,7 +13,7 @@
     align-items: center;
     z-index: 50;
     opacity: 0;
-    transition: opacity 0.3s ease-out;
+    transition: opacity 1s ease-out;
     pointer-events: none;
 }
 
@@ -44,15 +44,15 @@
 
 /* State class for a modal that is currently visible */
 .modal-visible .modal-content {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 1s ease-out;
 }
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on backdrop */
+    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on backdrop */
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 0.3s ease-out forwards; /* Uses global fadeOut on content */
+    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on content */
 }
 
 /* New class for the splash screen's unique exit animation */
@@ -109,7 +109,7 @@
 
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
-    animation: fadeIn 0.3s ease-out forwards;
+    animation: fadeIn 1s ease-out forwards;
 }
 
 /* Hide modal backdrops by default */
@@ -129,6 +129,19 @@
 }
 
 /* Launch Confirmation Modal */
+#launch-modal {
+    transition: opacity 0.7s ease-out;
+}
+#launch-modal.modal-visible .modal-content {
+    animation: fadeIn 0.7s ease-out;
+}
+#launch-modal.modal-hiding {
+    animation: fadeOut 0.7s ease-out forwards;
+}
+#launch-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.7s ease-out forwards;
+}
+
 #launch-modal .modal-content {
     padding: 0;
     background: transparent;
@@ -137,6 +150,7 @@
     width: auto; /* Allow the content to define the width */
     max-width: 450px;
 }
+
 
 .launch-modal-wrapper {
     display: flex;
@@ -296,7 +310,7 @@
 /* Tutorial Log Modal */
 #tutorial-log-modal {
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 1s;
     pointer-events: none;
 }
 #tutorial-log-modal.visible {

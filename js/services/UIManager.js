@@ -115,6 +115,7 @@ export class UIManager {
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
+            launchModalContent: document.getElementById('launch-modal-content'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
             
@@ -1103,8 +1104,7 @@ export class UIManager {
             </div>`;
 
         const modal = this.cache.launchModal;
-        // This is a key change: inject the HTML directly into the #launch-modal element, not its child.
-        modal.innerHTML = modalContentHtml; 
+        this.cache.launchModalContent.innerHTML = modalContentHtml; 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
 
