@@ -26,7 +26,7 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
-        this.gameContainer.classList.add('fade-out');
+        // this.gameContainer.classList.add('fade-out');
 
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
@@ -79,7 +79,7 @@ export class TravelAnimationService {
 
             // A short delay to ensure the market screen is rendered before the fade-in starts.
             setTimeout(() => {
-                this.gameContainer.classList.remove('fade-out');
+                // this.gameContainer.classList.remove('fade-out');
                 this.gameContainer.classList.add('fade-in');
             }, 50); // Small buffer
 
