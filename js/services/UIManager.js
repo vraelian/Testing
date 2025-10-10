@@ -3,7 +3,6 @@ import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills, getCommodityStyle } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
-import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -36,7 +35,6 @@ export class UIManager {
         this.marketScrollPosition = 0;
 
         this.effectsManager = new EffectsManager();
-        this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
 
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 

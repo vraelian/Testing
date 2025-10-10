@@ -451,22 +451,6 @@ ${logHistory}
                     }
                 }
             },
-            triggerSystemSurge: {
-                name: 'Trigger System Surge', type: 'button', handler: () => {
-                    this.uiManager.triggerEffect('systemSurge', {
-                        text: this.debugState.surgeText,
-                        theme: this.debugState.surgeTheme,
-                        particleCount: this.debugState.surgeParticleCount,
-                        particleShape: this.debugState.surgeParticleShape,
-                        particleSize: { min: this.debugState.surgeParticleSizeMin, max: this.debugState.surgeParticleSizeMax },
-                        particleSpeed: { min: this.debugState.surgeParticleSpeedMin, max: this.debugState.surgeParticleSpeedMax },
-                        fadeInTime: this.debugState.surgeFadeIn,
-                        lingerTime: this.debugState.surgeLinger,
-                        fadeOutTime: this.debugState.surgeFadeOut,
-                        textSize: this.debugState.surgeTextSize,
-                    });
-                }
-            },
             startBot: {
                 name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                     const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
@@ -576,60 +560,6 @@ ${logHistory}
         this.debugState.selectedMission = Object.keys(missionOptions)[0];
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
-
-        const surgeFolder = this.gui.addFolder('System Surge Effect');
-        
-        // Initial state from the 'gold' profile
-        const initialProfile = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES.gold;
-        this.debugState.surgeThemePreset = 'gold';
-        this.debugState.surgeText = initialProfile.text;
-        this.debugState.surgeParticleCount = initialProfile.particleCount;
-        this.debugState.surgeParticleShape = initialProfile.particleShape;
-        this.debugState.surgeParticleSizeMin = initialProfile.particleSize.min;
-        this.debugState.surgeParticleSizeMax = initialProfile.particleSize.max;
-        this.debugState.surgeParticleSpeedMin = initialProfile.particleSpeed.min;
-        this.debugState.surgeParticleSpeedMax = initialProfile.particleSpeed.max;
-        this.debugState.surgeFadeIn = initialProfile.fadeInTime;
-        this.debugState.surgeLinger = initialProfile.lingerTime;
-        this.debugState.surgeFadeOut = initialProfile.fadeOutTime;
-        this.debugState.surgeTextSize = initialProfile.textSize;
-
-        const profiles = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES;
-        const themeNames = Object.keys(profiles);
-
-        surgeFolder.add(this.debugState, 'surgeThemePreset', themeNames).name('Load Preset').onChange(themeName => {
-            const profile = profiles[themeName];
-            if (profile) {
-                this.debugState.surgeTheme = themeName;
-                this.debugState.surgeText = profile.text;
-                this.debugState.surgeParticleCount = profile.particleCount;
-                this.debugState.surgeParticleShape = profile.particleShape;
-                this.debugState.surgeParticleSizeMin = profile.particleSize.min;
-                this.debugState.surgeParticleSizeMax = profile.particleSize.max;
-                this.debugState.surgeParticleSpeedMin = profile.particleSpeed.min;
-                this.debugState.surgeParticleSpeedMax = profile.particleSpeed.max;
-                this.debugState.surgeFadeIn = profile.fadeInTime;
-                this.debugState.surgeLinger = profile.lingerTime;
-                this.debugState.surgeFadeOut = profile.fadeOutTime;
-                this.debugState.surgeTextSize = profile.textSize;
-                // Refresh the GUI to show the new values
-                surgeFolder.controllers.forEach(c => c.updateDisplay());
-            }
-        });
-        
-        surgeFolder.add(this.debugState, 'surgeText').name('Text');
-        surgeFolder.add(this.debugState, 'surgeTheme', themeNames).name('Theme');
-        surgeFolder.add(this.debugState, 'surgeTextSize').name('Text Size');
-        surgeFolder.add(this.debugState, 'surgeParticleCount', 0, 200, 1).name('Particle Count');
-        surgeFolder.add(this.debugState, 'surgeParticleShape', ['circle', 'sliver', 'rectangle']).name('Particle Shape');
-        surgeFolder.add(this.debugState, 'surgeParticleSizeMin', 1, 20, 1).name('Min Size');
-        surgeFolder.add(this.debugState, 'surgeParticleSizeMax', 1, 20, 1).name('Max Size');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMin', 1, 20, 0.5).name('Min Speed');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMax', 1, 20, 0.5).name('Max Speed');
-        surgeFolder.add(this.debugState, 'surgeFadeIn', 500, 5000, 50).name('Fade In (ms)');
-        surgeFolder.add(this.debugState, 'surgeLinger', 500, 5000, 50).name('Linger (ms)');
-        surgeFolder.add(this.debugState, 'surgeFadeOut', 500, 5000, 50).name('Fade Out (ms)');
-        surgeFolder.add(this.actions.triggerSystemSurge, 'handler').name('Trigger Effect');
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');

@@ -43,11 +43,6 @@ export class TimeService {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.triggerEffect('systemSurge', { 
-                    theme: 'blue', 
-                    text: `Happy Birthday, ${this.gameState.player.name}`,
-                    subtext: `Age: ${this.gameState.player.playerAge}`
-                });
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 
@@ -114,8 +109,6 @@ export class TimeService {
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
-            
-            this.uiManager.triggerEffect('systemSurge', { theme: 'purple', text: `TIER ${nextMilestone.revealsTier} UNLOCKED` });
             
             currentTier = nextMilestone.revealsTier;
             nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
