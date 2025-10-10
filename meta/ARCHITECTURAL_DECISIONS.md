@@ -4,44 +4,38 @@ This document records the key architectural decisions made during the developmen
 
 ---
 
-### 1. Unidirectional Data Flow Model
+### ADR-001: Service-Oriented Architecture & Unidirectional Data Flow
 
-**Decision Date:** 2025-08-26
-
-**Decision:** The project strictly adheres to a unidirectional data flow model (Input -> Logic -> State -> Render).
-
-**Reason:** This model ensures that all state mutations are predictable and easily traceable. By centralizing state changes within `GameState` and having a single trigger point (`GameState.setState()`), we prevent complex, circular dependencies where a UI update could accidentally trigger more logic. This makes debugging significantly more straightforward and the overall application more stable.
-
----
-
-### 2. SimulationService as a Facade
-
-**Decision Date:** 2025-09-28
-
-**Decision:** `SimulationService.js` was refactored from a monolithic "do-everything" class into a lean **Facade**.
-
-**Reason:** The original `SimulationService` had too many disparate responsibilities (e.g., handling player actions, time progression, travel, and the intro sequence), which violated the Single Responsibility Principle and made the file difficult to maintain. The Facade pattern was chosen because it maintains a simple, consistent API for the `EventManager` while delegating all complex work to new, specialized services (`PlayerActionService`, `TravelService`, etc.). This dramatically improves code organization and makes it much easier to locate and modify specific pieces of game logic.
+* **Status**: Accepted (2025-07-XX)
+* **Context**: The initial prototype had game logic loosely distributed, making state management and debugging difficult. A predictable and traceable state mutation model was required to build a stable application.
+* **Decision**: The application was architected around a strict unidirectional data flow model (`Input -> Logic -> State -> Render`). All mutable game data is held in a single `GameState` object. Game logic is encapsulated in specialized, single-responsibility services that are coordinated by a central `SimulationService` facade. The `UIManager` reads from the `GameState` to render the UI, but never modifies it directly.
+* **Consequences**:
+    * **Pro**: State changes are highly predictable and easy to trace back to the service that initiated them.
+    * **Pro**: Prevents complex, circular dependencies and potential race conditions.
+    * **Pro**: Simplifies debugging by creating a single source of truth for all game data.
+    * **Con**: Can introduce boilerplate, as even minor state changes must flow through the entire service -> state -> UI loop.
 
 ---
 
-### 3. Decoupling Event Handling with Specialized Modules
+### ADR-002: SimulationService as a Facade & EventManager Refactor
 
-**Decision Date:** 2025-09-30
-
-**Decision:** The monolithic `EventManager` was refactored into a coordinator class that delegates to specialized, single-responsibility handler modules (e.g., `MarketEventHandler`, `CarouselEventHandler`).
-
-**Reason:** To improve code readability, maintainability, and separation of concerns in alignment with the project's architectural principles. The original `EventManager` violated the Single Responsibility Principle, making it difficult to modify and debug. The new structure isolates the logic for complex UI components like the market and carousel, making them easier to manage and extend.
+* **Status**: Accepted (2025-09-29)
+* **Context**: As new features were added, `SimulationService` was becoming a "god object" with too many direct responsibilities (player actions, time progression, travel, etc.). Similarly, the `EventManager` contained a large, monolithic click handler with complex conditional logic.
+* **Decision**: `SimulationService` was refactored into a lean **Facade**. Its direct logic was extracted into new, specialized services (`PlayerActionService`, `TravelService`, `TimeService`, etc.). `EventManager` was refactored to delegate input handling to context-specific modules (`MarketEventHandler`, `CarouselEventHandler`, etc.).
+* **Consequences**:
+    * **Pro**: Enforces the Single Responsibility Principle, making the codebase significantly more modular and organized.
+    * **Pro**: Logic for a specific domain (e.g., travel) is now located in a single, predictable place.
+    * **Pro**: Reduces the cognitive load required to understand and modify any single part of the system.
+    * **Con**: Increases the number of files and the initial setup complexity in `SimulationService`'s constructor.
 
 ---
 
-### 4. Implementation of an Interactive D3.js Map Screen
+### ADR-003: Decommissioning of `SystemSurgeEffect`
 
-**Decision Date:** 2025-10-07
-
-**Decision:** The original text-based navigation/status screen was deprecated and replaced with a new, interactive Map Screen built using the D3.js library.
-
-**Reason:** The previous implementation was purely functional but lacked visual engagement and failed to provide a strong sense of place within the solar system. The new D3-based map offers several advantages:
-1.  **Improved UX:** It provides a clear, visual representation of the game world, making navigation more intuitive and immersive.
-2.  **Enhanced Interactivity:** The map serves as a hub for location-based information, with clickable points of interest that reveal detailed modals about each market.
-3.  **Scalability:** The SVG-based nature of D3 allows the map to be easily extended with new locations, trade routes, or visual indicators in the future.
-This change shifts the primary navigation paradigm from a list to a visual map, fundamentally improving the player's connection to the game world.
+* **Status**: Accepted (2025-10-10)
+* **Context**: The `SystemSurgeEffect` was a visual effect intended to celebrate major player achievements. However, it suffered from persistent and critical rendering bugs on the primary target platform (iOS PWA) that proved difficult to resolve.
+* **Decision**: The entire feature was surgically removed from the codebase. This included its dedicated JavaScript and CSS files, all HTML containers, and every line of code that triggered the effect from other services (`GameState`, `MissionService`, `DebugService`).
+* **Consequences**:
+    * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
+    * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
+    * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.

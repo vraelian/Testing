@@ -216,7 +216,7 @@
     "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
     "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
     "F032": {"path": "./js/effects/EffectsManager.js", "role": "LOGIC_SERVICE"},
-    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE"},
+    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE", "status": "deprecated"},
     "F034": {"path": "./js/services/game/IntroService.js", "role": "LOGIC_SERVICE"},
     "F035": {"path": "./js/services/player/PlayerActionService.js", "role": "LOGIC_SERVICE"},
     "F036": {"path": "./js/services/world/TimeService.js", "role": "LOGIC_SERVICE"},

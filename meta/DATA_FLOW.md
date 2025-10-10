@@ -1,59 +1,40 @@
-# Orbital Trading - Core Data Flow (Post-Refactor)
+# Orbital Trading - Core Data Flow
 
 ## System Architecture
 
--   **Model**: Unidirectional Data Flow
--   **Description**: A predictable and traceable state mutation model. `SimulationService` acts as a central **Facade** that delegates logic to specialized services.
--   **Primary Services**:
-    1.  **EventManager**: The universal input layer. Captures DOM events and delegates them to the appropriate specialized **Handler Service** or the **SimulationService**.
-        -   **Handler Services**: `ActionClickHandler`, `MarketEventHandler`, `HoldEventHandler`, `CarouselEventHandler`, and `TooltipHandler` process raw user input into specific game actions.
-    2.  **SimulationService (Facade)**: The central coordinator. It receives calls from `EventManager` and delegates them to the appropriate specialized service. It is the only service that should directly call `GameState.setState()`.
-    3.  **Specialized Services**:
-        -   `IntroService`: Manages the new game introduction sequence.
-        -   `PlayerActionService`: Handles immediate player actions (buy, sell, refuel, etc.).
-        -   `TravelService`: Manages all logic related to interstellar travel and events.
-        -   `TimeService`: Controls the passage of game time and time-based events.
-    4.  **GameState**: The single source of truth for all dynamic data.
-    5.  **UIManager**: The output layer, responsible for rendering the game state.
-    6.  **EffectsManager**: A dedicated service within the UIManager for handling visual effects.
-    7.  **TravelAnimationService**: A dedicated service within the UIManager for handling the travel animation sequence.
+The application is built on a strict **unidirectional data flow** model. This ensures that the state of the game is always predictable and that data mutations are traceable.
+
+-   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions.
+-   **Logic Layer (`SimulationService` & Sub-Services)**: Executes the core game logic in response to actions from the input layer. This is the only layer authorized to request a state change.
+-   **State Layer (`GameState`)**: The single source of truth. It holds all mutable game data and notifies the UI layer when changes occur.
+-   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it.
 
 ---
 
-## Core Data Flows
+## Core Logic Loop Flowchart
 
-### Flow: Core Logic Loop
+```mermaid
+graph TD
+    subgraph Input Layer
+        A[User Interaction e.g., Click] --> B{EventManager};
+        B --> C[Specialized Handler e.g., MarketEventHandler];
+    end
 
-1.  **Actor**: `User`
-    -   **Action**: Interacts with a UI element (e.g., clicks a "Buy" button).
-    -   **Target**: `DOM`
+    subgraph Logic Layer
+        C --> D[SimulationService Facade];
+        D --> E[Specialized Service e.g., PlayerActionService];
+    end
 
-2.  **Actor**: `EventManager`
-    -   **Action**: Captures the DOM event.
-    -   **Target**: `Specialized Handler` (e.g., `ActionClickHandler`)
-    -   **Details**: The `EventManager`'s global listeners pass the event to the relevant handler based on the event type (e.g., 'click', 'mousedown').
+    subgraph State Layer
+        E -- 1. Executes logic & computes new state --> F((GameState));
+    end
 
-3.  **Actor**: `Specialized Handler` (e.g., `ActionClickHandler`)
-    -   **Action**: Interprets the event and calls the appropriate high-level service.
-    -   **Target**: `SimulationService (Facade)`
-    -   **Details**: Reads the `data-action` attribute and calls the corresponding public method on the `SimulationService` facade (e.g., `simulationService.buyItem(...)`).
+    subgraph Output Layer
+        F -- 2. Notifies subscribers of change --> G[UIManager];
+        G -- 3. Reads new state & re-renders UI --> H[DOM];
+    end
 
-4.  **Actor**: `SimulationService (Facade)`
-    -   **Action**: Delegates the call to the appropriate specialized service.
-    -   **Target**: `PlayerActionService` (in this example)
-    -   **Details**: The facade's `buyItem` method simply calls `this.playerActionService.buyItem(...)`.
+    H --> A;
 
-5.  **Actor**: `PlayerActionService` (or other specialized service)
-    -   **Action**: Executes the core game logic.
-    -   **Target**: `GameState`
-    -   **Details**: The service validates the action, calculates the outcome (e.g., deducts credits, adds cargo), and then calls `GameState.setState()` to mutate the state. This is the **sole point of state mutation**.
-
-6.  **Actor**: `GameState`
-    -   **Action**: Notifies subscribers of the state change.
-    -   **Target**: `UIManager`
-    -   **Details**: The `setState` method triggers the `_notify` method, which calls the `render` function subscribed by the `UIManager`.
-
-7.  **Actor**: `UIManager`
-    -   **Action**: Re-renders all necessary UI components.
-    -   **Target**: `DOM`
-    -   **Details**: Reads the entire updated state from `GameState` to ensure the UI is a perfect reflection of the current game state.
+    style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
+    style G fill:#f4a261,stroke:#fff,stroke-width:2px

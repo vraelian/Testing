@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 28.00</title>
+    <title>Orbital Trading 28.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -19,7 +19,6 @@
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
     <link rel="stylesheet" href="./css/debug.css">
-    <link rel="stylesheet" href="./css/effects.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
@@ -47,7 +46,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 28.00</p>
+            <p>Version 28.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1258,6 +1257,11 @@ body {
 /* Specific Modal Styling */
 
 /* Travel Animation Modal */
+#travel-animation-modal.modal-backdrop {
+    background-color: #0c101d; /* Use the game's base background color for a seamless transition */
+    transition: opacity 0.5s ease-out; /* Add a fade for the modal itself to maintain a smooth feel */
+}
+
 #travel-animation-content {
     display: flex;
     flex-direction: column;
@@ -2707,76 +2711,6 @@ COMPONENT-SPECIFIC STYLING
 }
 --- END OF FILE: ./css/screens/navigation-screen.css ---
 
---- START OF FILE: ./css/effects.css ---
-/* css/effects.css */
-#celebration-overlay {
-    --surge-color: #00ffff;
-    --surge-glow: #00ffff;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    opacity: 0;
-}
-.system-surge-active #celebration-overlay {
-    opacity: 1;
-    transition: opacity 0.2s ease-in;
-}
-.system-surge-fading #celebration-overlay {
-    opacity: 0;
-    transition: opacity 3s ease-out;
-}
-
-#particle-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-}
-
-.surge-light {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, var(--surge-color), transparent 60%);
-    opacity: 0;
-    transition: opacity 2.9s ease-out;
-    z-index: 1;
-}
-.system-surge-active .surge-light {
-    opacity: 0.6;
-}
-
-.surge-text {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 10px #fff, 0 0 25px var(--surge-glow), 0 0 50px var(--surge-glow);
-    transform: scale(0.5);
-    opacity: 0;
-    transition: all 1.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    text-align: center;
-    position: relative;
-    z-index: 3;
-}
-.system-surge-active .surge-text {
-    transform: scale(1);
-    opacity: 1;
-    transition-delay: 0.4s;
-}
---- END OF FILE: ./css/effects.css ---
-
 --- START OF FILE: ./css/navigation.css ---
 /* css/navigation.css */
 
@@ -4200,250 +4134,6 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 }
 --- END OF FILE: ./js/utils.js ---
 
---- START OF FILE: ./js/effects/SystemSurgeEffect.js ---
-// js/effects/SystemSurgeEffect.js
-import { BaseEffect } from './BaseEffect.js';
-
-/**
- * @fileoverview Defines the SystemSurgeEffect class, a full-screen celebration effect.
- */
-
-export class SystemSurgeEffect extends BaseEffect {
-
-    /**
-     * @constructor
-     * @param {object} options - Configuration for the effect.
-     * @param {string} [options.text='SYSTEM SURGE'] - The text to display, overrides profile default.
-     * @param {string} [options.subtext=''] - The subtext to display below the main text.
-     * @param {string} [options.theme='blue'] - The color theme, determines the profile to use.
-     */
-    constructor(options = {}) {
-        super(options);
-
-        const theme = options.theme || 'blue';
-        const profile = SystemSurgeEffect.PROFILES[theme] || SystemSurgeEffect.PROFILES.blue;
-
-        this.options = {
-            ...profile,
-            ...options,
-            theme: theme
-        };
-
-        this.domElements = {};
-        this.particles = [];
-        this.animationFrameId = null;
-        this._animationLoop = this._animationLoop.bind(this);
-
-        this.themes = {
-            gold: { color: 'rgba(255, 223, 0, 0.8)', glow: '#ffd700' },
-            green: { color: 'rgba(50, 255, 150, 0.8)', glow: '#32ff96' },
-            red: { color: 'rgba(255, 50, 50, 0.8)', glow: '#ff3232' },
-            blue: { color: 'rgba(50, 150, 255, 0.8)', glow: '#3296ff' },
-            orange: { color: 'rgba(255, 165, 0, 0.8)', glow: '#ffa500' },
-            purple: { color: 'rgba(220, 50, 255, 0.8)', glow: '#dc32ff' },
-            silver: { color: 'rgba(192, 192, 192, 0.9)', glow: '#c0c0c0' },
-            tan: { color: 'rgba(210, 180, 140, 0.9)', glow: '#d2b48c' }
-        };
-    }
-
-    /**
-     * @method play
-     * @override
-     */
-    async play() {
-        return new Promise(resolve => {
-            this._createDOM();
-            this.animationFrameId = requestAnimationFrame(this._animationLoop);
-
-            const { fadeInTime, lingerTime, fadeOutTime } = this.options;
-            const totalDuration = fadeInTime + lingerTime + fadeOutTime;
-
-            setTimeout(() => document.body.classList.add('system-surge-active'), 50);
-            setTimeout(() => document.body.classList.add('system-surge-fading'), fadeInTime + lingerTime);
-            setTimeout(() => {
-                this._cleanup();
-                resolve();
-            }, totalDuration);
-        });
-    }
-
-    /**
-     * @method _createDOM
-     * @protected
-     * @override
-     */
-    _createDOM() {
-        const themeColors = this.themes[this.options.theme] || this.themes.blue;
-
-        const overlay = document.createElement('div');
-        overlay.id = 'celebration-overlay';
-        overlay.style.setProperty('--surge-color', themeColors.color);
-        overlay.style.setProperty('--surge-glow', themeColors.glow);
-        this.domElements.overlay = overlay;
-
-        const surgeLight = document.createElement('div');
-        surgeLight.className = 'surge-light';
-        this.domElements.surgeLight = surgeLight;
-
-        const textContainer = document.createElement('div');
-        textContainer.className = 'surge-text';
-
-        const surgeText = document.createElement('div');
-        surgeText.textContent = this.options.text;
-        surgeText.style.fontSize = this.options.textSize;
-        textContainer.appendChild(surgeText);
-
-        if (this.options.subtext) {
-            const surgeSubText = document.createElement('div');
-            surgeSubText.textContent = this.options.subtext;
-            surgeSubText.style.fontSize = this.options.subtextSize || '6vw';
-            surgeSubText.style.opacity = '0.8';
-            surgeSubText.style.marginTop = '1rem';
-            textContainer.appendChild(surgeSubText);
-        }
-
-        this.domElements.surgeText = textContainer;
-        
-        const canvas = document.createElement('canvas');
-        canvas.id = 'particle-canvas';
-        this.domElements.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        
-        overlay.appendChild(surgeLight);
-        overlay.appendChild(canvas);
-        overlay.appendChild(textContainer);
-        document.body.appendChild(overlay);
-
-        this._resizeCanvas();
-        this._initializeParticles();
-        window.addEventListener('resize', this._resizeCanvas.bind(this));
-    }
-
-    _resizeCanvas() {
-        const canvas = this.domElements.canvas;
-        if (canvas) {
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
-        }
-    }
-    
-    _initializeParticles() {
-        const canvas = this.domElements.canvas;
-        if (!canvas) return;
-        this.particles = [];
-        for (let i = 0; i < this.options.particleCount; i++) {
-            this.particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * (this.options.particleSize.max - this.options.particleSize.min) + this.options.particleSize.min,
-                speed: Math.random() * (this.options.particleSpeed.max - this.options.particleSpeed.min) + this.options.particleSpeed.min,
-                alpha: 0.5 + Math.random() * 0.5
-            });
-        }
-    }
-
-    _animationLoop() {
-        if (!this.ctx) return;
-        
-        const canvas = this.domElements.canvas;
-        this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const themeColors = this.themes[this.options.theme] || this.themes.blue;
-        this.ctx.fillStyle = themeColors.color;
-        
-        this.particles.forEach(p => {
-            p.y -= p.speed;
-            if (p.y < -p.size) {
-                p.y = canvas.height + p.size;
-                p.x = Math.random() * canvas.width;
-            }
-            
-            this.ctx.globalAlpha = p.alpha;
-            this.ctx.beginPath();
-
-            if (this.options.particleShape === 'circle') {
-                this.ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
-            } else if (this.options.particleShape === 'sliver') {
-                this.ctx.rect(p.x, p.y, 2, p.size);
-            } else {
-                this.ctx.rect(p.x - 2, p.y, 4, p.size);
-            }
-            this.ctx.fill();
-        });
-        
-        this.animationFrameId = requestAnimationFrame(this._animationLoop);
-    }
-    
-    _cleanup() {
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
-        }
-        window.removeEventListener('resize', this._resizeCanvas.bind(this));
-        document.body.classList.remove('system-surge-active', 'system-surge-fading');
-        Object.values(this.domElements).forEach(element => element && element.remove());
-    }
-
-    /**
-     * @property {Object} PROFILES
-     * @static
-     */
-    static PROFILES = {
-        tan: {
-            text: 'TRADING LICENSE ACQUIRED',
-            textSize: '7vw', particleCount: 20, particleShape: 'sliver',
-            particleSize: { min: 2, max: 20 }, particleSpeed: { min: 1, max: 7 },
-            fadeInTime: 1900, lingerTime: 3950, fadeOutTime: 3750
-        },
-        silver: {
-            text: 'SHIP PURCHASED',
-            textSize: '7vw', particleCount: 20, particleShape: 'sliver',
-            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 1, max: 5 },
-            fadeInTime: 500, lingerTime: 3900, fadeOutTime: 3500
-        },
-        purple: {
-            text: 'WEALTH MILESTONE ACHIEVED',
-            textSize: '7vw', particleCount: 18, particleShape: 'rectangle',
-            particleSize: { min: 1, max: 9 }, particleSpeed: { min: 1.5, max: 4 },
-            fadeInTime: 500, lingerTime: 4250, fadeOutTime: 3500
-        },
-        orange: {
-            text: 'ORANGE',
-            textSize: '7vw', particleCount: 40, particleShape: 'sliver',
-            particleSize: { min: 1, max: 6 }, particleSpeed: { min: 2.5, max: 8.5 },
-            fadeInTime: 1750, lingerTime: 3250, fadeOutTime: 3500
-        },
-        blue: {
-            text: 'HAPPY BIRTHDAY',
-            subtext: 'Age: XX',
-            textSize: '7vw', 
-            subtextSize: '6vw',
-            particleCount: 30, particleShape: 'circle',
-            particleSize: { min: 5, max: 20 }, particleSpeed: { min: 4, max: 7.5 },
-            fadeInTime: 1750, lingerTime: 4300, fadeOutTime: 5000
-        },
-        red: {
-            text: 'SUPERIOR SHIP ACQUIRED',
-            textSize: '7vw', particleCount: 30, particleShape: 'rectangle',
-            particleSize: { min: 3, max: 10 }, particleSpeed: { min: 1, max: 3.5 },
-            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
-        },
-        green: {
-            text: 'WEALTH MILESTONE ACHIEVED',
-            textSize: '7vw', particleCount: 22, particleShape: 'sliver',
-            particleSize: { min: 1, max: 20 }, particleSpeed: { min: 2.5, max: 15.5 },
-            fadeInTime: 1750, lingerTime: 3000, fadeOutTime: 5000
-        },
-        gold: {
-            text: 'MISSION COMPLETE',
-            textSize: '7vw', particleCount: 62, particleShape: 'circle',
-            particleSize: { min: 3, max: 18 }, particleSpeed: { min: 2.5, max: 12 },
-            fadeInTime: 1750, lingerTime: 1900, fadeOutTime: 5000
-        }
-    };
-}
---- END OF FILE: ./js/effects/SystemSurgeEffect.js ---
-
 --- START OF FILE: ./js/effects/BaseEffect.js ---
 /**
  * @fileoverview Defines the BaseEffect class, an abstract blueprint for all visual effects.
@@ -4546,6 +4236,7 @@ export class EffectsManager {
      * @param {object} options - The configuration object to pass to the effect's constructor.
      */
     trigger(effectName, options) {
+        console.log(`MANAGER: EffectsManager.trigger received call for '${effectName}'. Queue length: ${this.effectQueue.length}`); // DIAGNOSTIC LOG
         this.effectQueue.push({ effectName, options });
         this._processQueue();
     }
@@ -4575,6 +4266,7 @@ export class EffectsManager {
         }
 
         try {
+            console.log(`MANAGER: Instantiating and playing effect: '${request.effectName}'.`); // DIAGNOSTIC LOG
             const effect = new EffectClass(request.options);
             await effect.play();
         } catch (error) {
@@ -5449,7 +5141,7 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
-        this.gameContainer.classList.add('fade-out');
+        // this.gameContainer.classList.add('fade-out');
 
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
@@ -5502,7 +5194,7 @@ export class TravelAnimationService {
 
             // A short delay to ensure the market screen is rendered before the fade-in starts.
             setTimeout(() => {
-                this.gameContainer.classList.remove('fade-out');
+                // this.gameContainer.classList.remove('fade-out');
                 this.gameContainer.classList.add('fade-in');
             }, 50); // Small buffer
 
@@ -6170,22 +5862,6 @@ ${logHistory}
                     }
                 }
             },
-            triggerSystemSurge: {
-                name: 'Trigger System Surge', type: 'button', handler: () => {
-                    this.uiManager.triggerEffect('systemSurge', {
-                        text: this.debugState.surgeText,
-                        theme: this.debugState.surgeTheme,
-                        particleCount: this.debugState.surgeParticleCount,
-                        particleShape: this.debugState.surgeParticleShape,
-                        particleSize: { min: this.debugState.surgeParticleSizeMin, max: this.debugState.surgeParticleSizeMax },
-                        particleSpeed: { min: this.debugState.surgeParticleSpeedMin, max: this.debugState.surgeParticleSpeedMax },
-                        fadeInTime: this.debugState.surgeFadeIn,
-                        lingerTime: this.debugState.surgeLinger,
-                        fadeOutTime: this.debugState.surgeFadeOut,
-                        textSize: this.debugState.surgeTextSize,
-                    });
-                }
-            },
             startBot: {
                 name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                     const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
@@ -6295,60 +5971,6 @@ ${logHistory}
         this.debugState.selectedMission = Object.keys(missionOptions)[0];
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
-
-        const surgeFolder = this.gui.addFolder('System Surge Effect');
-        
-        // Initial state from the 'gold' profile
-        const initialProfile = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES.gold;
-        this.debugState.surgeThemePreset = 'gold';
-        this.debugState.surgeText = initialProfile.text;
-        this.debugState.surgeParticleCount = initialProfile.particleCount;
-        this.debugState.surgeParticleShape = initialProfile.particleShape;
-        this.debugState.surgeParticleSizeMin = initialProfile.particleSize.min;
-        this.debugState.surgeParticleSizeMax = initialProfile.particleSize.max;
-        this.debugState.surgeParticleSpeedMin = initialProfile.particleSpeed.min;
-        this.debugState.surgeParticleSpeedMax = initialProfile.particleSpeed.max;
-        this.debugState.surgeFadeIn = initialProfile.fadeInTime;
-        this.debugState.surgeLinger = initialProfile.lingerTime;
-        this.debugState.surgeFadeOut = initialProfile.fadeOutTime;
-        this.debugState.surgeTextSize = initialProfile.textSize;
-
-        const profiles = this.simulationService.uiManager.effectsManager.effectsRegistry.systemSurge.PROFILES;
-        const themeNames = Object.keys(profiles);
-
-        surgeFolder.add(this.debugState, 'surgeThemePreset', themeNames).name('Load Preset').onChange(themeName => {
-            const profile = profiles[themeName];
-            if (profile) {
-                this.debugState.surgeTheme = themeName;
-                this.debugState.surgeText = profile.text;
-                this.debugState.surgeParticleCount = profile.particleCount;
-                this.debugState.surgeParticleShape = profile.particleShape;
-                this.debugState.surgeParticleSizeMin = profile.particleSize.min;
-                this.debugState.surgeParticleSizeMax = profile.particleSize.max;
-                this.debugState.surgeParticleSpeedMin = profile.particleSpeed.min;
-                this.debugState.surgeParticleSpeedMax = profile.particleSpeed.max;
-                this.debugState.surgeFadeIn = profile.fadeInTime;
-                this.debugState.surgeLinger = profile.lingerTime;
-                this.debugState.surgeFadeOut = profile.fadeOutTime;
-                this.debugState.surgeTextSize = profile.textSize;
-                // Refresh the GUI to show the new values
-                surgeFolder.controllers.forEach(c => c.updateDisplay());
-            }
-        });
-        
-        surgeFolder.add(this.debugState, 'surgeText').name('Text');
-        surgeFolder.add(this.debugState, 'surgeTheme', themeNames).name('Theme');
-        surgeFolder.add(this.debugState, 'surgeTextSize').name('Text Size');
-        surgeFolder.add(this.debugState, 'surgeParticleCount', 0, 200, 1).name('Particle Count');
-        surgeFolder.add(this.debugState, 'surgeParticleShape', ['circle', 'sliver', 'rectangle']).name('Particle Shape');
-        surgeFolder.add(this.debugState, 'surgeParticleSizeMin', 1, 20, 1).name('Min Size');
-        surgeFolder.add(this.debugState, 'surgeParticleSizeMax', 1, 20, 1).name('Max Size');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMin', 1, 20, 0.5).name('Min Speed');
-        surgeFolder.add(this.debugState, 'surgeParticleSpeedMax', 1, 20, 0.5).name('Max Speed');
-        surgeFolder.add(this.debugState, 'surgeFadeIn', 500, 5000, 50).name('Fade In (ms)');
-        surgeFolder.add(this.debugState, 'surgeLinger', 500, 5000, 50).name('Linger (ms)');
-        surgeFolder.add(this.debugState, 'surgeFadeOut', 500, 5000, 50).name('Fade Out (ms)');
-        surgeFolder.add(this.actions.triggerSystemSurge, 'handler').name('Trigger Effect');
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
@@ -6820,9 +6442,6 @@ export class MissionService {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
-
-        // Trigger the celebration effect using the 'gold' profile
-        this.uiManager.triggerEffect('systemSurge', { theme: 'gold' });
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
@@ -7395,11 +7014,6 @@ export class TimeService {
                 this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.triggerEffect('systemSurge', { 
-                    theme: 'blue', 
-                    text: `Happy Birthday, ${this.gameState.player.name}`,
-                    subtext: `Age: ${this.gameState.player.playerAge}`
-                });
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
             }
 
@@ -7466,8 +7080,6 @@ export class TimeService {
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
             this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
-            
-            this.uiManager.triggerEffect('systemSurge', { theme: 'purple', text: `TIER ${nextMilestone.revealsTier} UNLOCKED` });
             
             currentTier = nextMilestone.revealsTier;
             nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
@@ -8820,7 +8432,6 @@ import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills, getCommodityStyle } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
-import { SystemSurgeEffect } from '../effects/SystemSurgeEffect.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
@@ -8853,7 +8464,7 @@ export class UIManager {
         this.marketScrollPosition = 0;
 
         this.effectsManager = new EffectsManager();
-        this.effectsManager.registerEffect('systemSurge', SystemSurgeEffect);
+
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
         this.navStructure = {
@@ -9627,7 +9238,6 @@ export class UIManager {
         const lastDay = history[history.length - 1].day;
         svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
         svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
-
         svg += `<text x="${padding - 8}" y="${getY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
         svg += `<text x="${padding - 8}" y="${getY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
         svg += `</svg>`;
@@ -11052,6 +10662,7 @@ export class PlayerActionService {
         this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.simulationService.addShipToHangar(shipId);
 
+        console.log("ACTION: PlayerActionService.buyShip is calling triggerEffect."); // DIAGNOSTIC LOG
         if (['S', 'O'].includes(ship.class)) {
             this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
         } else {
@@ -11319,6 +10930,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file.
+
+## [28.10] - 2025-10-10
+- decommissioned the 'System Surge' celebratory effect, removing all associated JS, CSS, and HTML to prepare for a new implementation.
+- updated debug settings 
 
 ## [28.00] - 2025-10-07
 - rebalanced solar system map distances.
@@ -11719,7 +11334,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
     "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
     "F032": {"path": "./js/effects/EffectsManager.js", "role": "LOGIC_SERVICE"},
-    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE"},
+    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE", "status": "deprecated"},
     "F034": {"path": "./js/services/game/IntroService.js", "role": "LOGIC_SERVICE"},
     "F035": {"path": "./js/services/player/PlayerActionService.js", "role": "LOGIC_SERVICE"},
     "F036": {"path": "./js/services/world/TimeService.js", "role": "LOGIC_SERVICE"},
@@ -11786,109 +11401,84 @@ This document records the key architectural decisions made during the developmen
 
 ---
 
-### 1. Unidirectional Data Flow Model
+### ADR-001: Service-Oriented Architecture & Unidirectional Data Flow
 
-**Decision Date:** 2025-08-26
-
-**Decision:** The project strictly adheres to a unidirectional data flow model (Input -> Logic -> State -> Render).
-
-**Reason:** This model ensures that all state mutations are predictable and easily traceable. By centralizing state changes within `GameState` and having a single trigger point (`GameState.setState()`), we prevent complex, circular dependencies where a UI update could accidentally trigger more logic. This makes debugging significantly more straightforward and the overall application more stable.
-
----
-
-### 2. SimulationService as a Facade
-
-**Decision Date:** 2025-09-28
-
-**Decision:** `SimulationService.js` was refactored from a monolithic "do-everything" class into a lean **Facade**.
-
-**Reason:** The original `SimulationService` had too many disparate responsibilities (e.g., handling player actions, time progression, travel, and the intro sequence), which violated the Single Responsibility Principle and made the file difficult to maintain. The Facade pattern was chosen because it maintains a simple, consistent API for the `EventManager` while delegating all complex work to new, specialized services (`PlayerActionService`, `TravelService`, etc.). This dramatically improves code organization and makes it much easier to locate and modify specific pieces of game logic.
+* **Status**: Accepted (2025-07-XX)
+* **Context**: The initial prototype had game logic loosely distributed, making state management and debugging difficult. A predictable and traceable state mutation model was required to build a stable application.
+* **Decision**: The application was architected around a strict unidirectional data flow model (`Input -> Logic -> State -> Render`). All mutable game data is held in a single `GameState` object. Game logic is encapsulated in specialized, single-responsibility services that are coordinated by a central `SimulationService` facade. The `UIManager` reads from the `GameState` to render the UI, but never modifies it directly.
+* **Consequences**:
+    * **Pro**: State changes are highly predictable and easy to trace back to the service that initiated them.
+    * **Pro**: Prevents complex, circular dependencies and potential race conditions.
+    * **Pro**: Simplifies debugging by creating a single source of truth for all game data.
+    * **Con**: Can introduce boilerplate, as even minor state changes must flow through the entire service -> state -> UI loop.
 
 ---
 
-### 3. Decoupling Event Handling with Specialized Modules
+### ADR-002: SimulationService as a Facade & EventManager Refactor
 
-**Decision Date:** 2025-09-30
-
-**Decision:** The monolithic `EventManager` was refactored into a coordinator class that delegates to specialized, single-responsibility handler modules (e.g., `MarketEventHandler`, `CarouselEventHandler`).
-
-**Reason:** To improve code readability, maintainability, and separation of concerns in alignment with the project's architectural principles. The original `EventManager` violated the Single Responsibility Principle, making it difficult to modify and debug. The new structure isolates the logic for complex UI components like the market and carousel, making them easier to manage and extend.
+* **Status**: Accepted (2025-09-29)
+* **Context**: As new features were added, `SimulationService` was becoming a "god object" with too many direct responsibilities (player actions, time progression, travel, etc.). Similarly, the `EventManager` contained a large, monolithic click handler with complex conditional logic.
+* **Decision**: `SimulationService` was refactored into a lean **Facade**. Its direct logic was extracted into new, specialized services (`PlayerActionService`, `TravelService`, `TimeService`, etc.). `EventManager` was refactored to delegate input handling to context-specific modules (`MarketEventHandler`, `CarouselEventHandler`, etc.).
+* **Consequences**:
+    * **Pro**: Enforces the Single Responsibility Principle, making the codebase significantly more modular and organized.
+    * **Pro**: Logic for a specific domain (e.g., travel) is now located in a single, predictable place.
+    * **Pro**: Reduces the cognitive load required to understand and modify any single part of the system.
+    * **Con**: Increases the number of files and the initial setup complexity in `SimulationService`'s constructor.
 
 ---
 
-### 4. Implementation of an Interactive D3.js Map Screen
+### ADR-003: Decommissioning of `SystemSurgeEffect`
 
-**Decision Date:** 2025-10-07
-
-**Decision:** The original text-based navigation/status screen was deprecated and replaced with a new, interactive Map Screen built using the D3.js library.
-
-**Reason:** The previous implementation was purely functional but lacked visual engagement and failed to provide a strong sense of place within the solar system. The new D3-based map offers several advantages:
-1.  **Improved UX:** It provides a clear, visual representation of the game world, making navigation more intuitive and immersive.
-2.  **Enhanced Interactivity:** The map serves as a hub for location-based information, with clickable points of interest that reveal detailed modals about each market.
-3.  **Scalability:** The SVG-based nature of D3 allows the map to be easily extended with new locations, trade routes, or visual indicators in the future.
-This change shifts the primary navigation paradigm from a list to a visual map, fundamentally improving the player's connection to the game world.
+* **Status**: Accepted (2025-10-10)
+* **Context**: The `SystemSurgeEffect` was a visual effect intended to celebrate major player achievements. However, it suffered from persistent and critical rendering bugs on the primary target platform (iOS PWA) that proved difficult to resolve.
+* **Decision**: The entire feature was surgically removed from the codebase. This included its dedicated JavaScript and CSS files, all HTML containers, and every line of code that triggered the effect from other services (`GameState`, `MissionService`, `DebugService`).
+* **Consequences**:
+    * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
+    * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
+    * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
-# Orbital Trading - Core Data Flow (Post-Refactor)
+# Orbital Trading - Core Data Flow
 
 ## System Architecture
 
--   **Model**: Unidirectional Data Flow
--   **Description**: A predictable and traceable state mutation model. `SimulationService` acts as a central **Facade** that delegates logic to specialized services.
--   **Primary Services**:
-    1.  **EventManager**: The universal input layer. Captures DOM events and delegates them to the appropriate specialized **Handler Service** or the **SimulationService**.
-        -   **Handler Services**: `ActionClickHandler`, `MarketEventHandler`, `HoldEventHandler`, `CarouselEventHandler`, and `TooltipHandler` process raw user input into specific game actions.
-    2.  **SimulationService (Facade)**: The central coordinator. It receives calls from `EventManager` and delegates them to the appropriate specialized service. It is the only service that should directly call `GameState.setState()`.
-    3.  **Specialized Services**:
-        -   `IntroService`: Manages the new game introduction sequence.
-        -   `PlayerActionService`: Handles immediate player actions (buy, sell, refuel, etc.).
-        -   `TravelService`: Manages all logic related to interstellar travel and events.
-        -   `TimeService`: Controls the passage of game time and time-based events.
-    4.  **GameState**: The single source of truth for all dynamic data.
-    5.  **UIManager**: The output layer, responsible for rendering the game state.
-    6.  **EffectsManager**: A dedicated service within the UIManager for handling visual effects.
-    7.  **TravelAnimationService**: A dedicated service within the UIManager for handling the travel animation sequence.
+The application is built on a strict **unidirectional data flow** model. This ensures that the state of the game is always predictable and that data mutations are traceable.
+
+-   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions.
+-   **Logic Layer (`SimulationService` & Sub-Services)**: Executes the core game logic in response to actions from the input layer. This is the only layer authorized to request a state change.
+-   **State Layer (`GameState`)**: The single source of truth. It holds all mutable game data and notifies the UI layer when changes occur.
+-   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it.
 
 ---
 
-## Core Data Flows
+## Core Logic Loop Flowchart
 
-### Flow: Core Logic Loop
+```mermaid
+graph TD
+    subgraph Input Layer
+        A[User Interaction e.g., Click] --> B{EventManager};
+        B --> C[Specialized Handler e.g., MarketEventHandler];
+    end
 
-1.  **Actor**: `User`
-    -   **Action**: Interacts with a UI element (e.g., clicks a "Buy" button).
-    -   **Target**: `DOM`
+    subgraph Logic Layer
+        C --> D[SimulationService Facade];
+        D --> E[Specialized Service e.g., PlayerActionService];
+    end
 
-2.  **Actor**: `EventManager`
-    -   **Action**: Captures the DOM event.
-    -   **Target**: `Specialized Handler` (e.g., `ActionClickHandler`)
-    -   **Details**: The `EventManager`'s global listeners pass the event to the relevant handler based on the event type (e.g., 'click', 'mousedown').
+    subgraph State Layer
+        E -- 1. Executes logic & computes new state --> F((GameState));
+    end
 
-3.  **Actor**: `Specialized Handler` (e.g., `ActionClickHandler`)
-    -   **Action**: Interprets the event and calls the appropriate high-level service.
-    -   **Target**: `SimulationService (Facade)`
-    -   **Details**: Reads the `data-action` attribute and calls the corresponding public method on the `SimulationService` facade (e.g., `simulationService.buyItem(...)`).
+    subgraph Output Layer
+        F -- 2. Notifies subscribers of change --> G[UIManager];
+        G -- 3. Reads new state & re-renders UI --> H[DOM];
+    end
 
-4.  **Actor**: `SimulationService (Facade)`
-    -   **Action**: Delegates the call to the appropriate specialized service.
-    -   **Target**: `PlayerActionService` (in this example)
-    -   **Details**: The facade's `buyItem` method simply calls `this.playerActionService.buyItem(...)`.
+    H --> A;
 
-5.  **Actor**: `PlayerActionService` (or other specialized service)
-    -   **Action**: Executes the core game logic.
-    -   **Target**: `GameState`
-    -   **Details**: The service validates the action, calculates the outcome (e.g., deducts credits, adds cargo), and then calls `GameState.setState()` to mutate the state. This is the **sole point of state mutation**.
-
-6.  **Actor**: `GameState`
-    -   **Action**: Notifies subscribers of the state change.
-    -   **Target**: `UIManager`
-    -   **Details**: The `setState` method triggers the `_notify` method, which calls the `render` function subscribed by the `UIManager`.
-
-7.  **Actor**: `UIManager`
-    -   **Action**: Re-renders all necessary UI components.
-    -   **Target**: `DOM`
-    -   **Details**: Reads the entire updated state from `GameState` to ensure the UI is a perfect reflection of the current game state.
+    style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
+    style G fill:#f4a261,stroke:#fff,stroke-width:2px
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./manifest.json ---

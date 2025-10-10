@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [28.10] - 2025-10-10
+- decommissioned the 'System Surge' celebratory effect, removing all associated JS, CSS, and HTML to prepare for a new implementation.
+- updated debug settings 
+
 ## [28.00] - 2025-10-07
 - rebalanced solar system map distances.
 - updated travel calculation
