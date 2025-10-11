@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
+        window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
