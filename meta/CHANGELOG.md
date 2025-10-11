@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+
+## [29.00] - 2025-10-11
+- adapted Xcode into workflow
+- simulating native iOS for dev
+- programmatic webview with ViewController.swift
+- simulator connected to VSCode LiveServer
+
 ## [28.10] - 2025-10-10
 - decommissioned the 'System Surge' celebratory effect, removing all associated JS, CSS, and HTML to prepare for a new implementation.
 - updated debug settings 
