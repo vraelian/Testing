@@ -113,7 +113,10 @@ export class IntroService {
 
         if (step.id === 'charter' || step.id === 'signature') {
             modalId = `${step.id}-modal`;
-            options.customSetup = (modal, closeHandler) => { this._setupInteractiveModal(modal, step, closeHandler) };
+            options.customSetup = (modal, closeHandler) => { this._setupInteractiveModal(modal, step, closeHandler); };
+            if (step.id === 'signature') {
+                options.specialClass = 'keyboard-ignore';
+            }
         } else {
             options.customSetup = (modal, closeHandler) => {
                 const btnContainer = modal.querySelector('#event-button-container');
