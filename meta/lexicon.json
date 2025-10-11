@@ -186,6 +186,14 @@
             "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
         },
         "mutates_state": []
+    },
+    "ViewController": {
+        "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
+        "dependencies": ["WKWebView"],
+        "key_functions": {
+            "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
+        },
+        "mutates_state": []
     }
   },
   "asset_index": {
@@ -229,6 +237,7 @@
     "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
     "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
     "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
-    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"}
+    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
+    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"}
   }
 }
