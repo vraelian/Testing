@@ -644,7 +644,7 @@ export class UIManager {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'keyboard-ignore');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }

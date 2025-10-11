@@ -17,10 +17,6 @@
     pointer-events: none;
 }
 
-.modal-backdrop.keyboard-ignore {
-    height: 100vh; /* Override var(--app-height) to ignore visual viewport changes */
-}
-
 /* Special override for slow intro fade */
 .intro-fade-in {
     transition-duration: 2s !important;
