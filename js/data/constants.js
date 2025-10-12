@@ -109,6 +109,7 @@ export const PERK_IDS = Object.freeze({
  * @enum {string}
  */
 export const ACTION_IDS = Object.freeze({
+    DEBUG_SIMPLE_START: 'debug-simple-start',
     SET_SCREEN: 'set-screen',
     TRAVEL: 'travel',
     BUY_SHIP: 'buy-ship',

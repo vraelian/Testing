@@ -117,6 +117,14 @@
     animation: fadeIn 1s ease-out forwards;
 }
 
+/* --- [[START]] SIGNATURE MODAL KEYBOARD FIX --- */
+#signature-modal {
+    align-items: flex-start; /* Override the default vertical centering */
+    padding-top: 15vh;      /* Push the modal down from the top edge */
+}
+/* --- [[END]] SIGNATURE MODAL KEYBOARD FIX --- */
+
+
 /* Hide modal backdrops by default */
 .modal-backdrop.hidden {
     display: none;

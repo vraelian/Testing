@@ -4,7 +4,7 @@
  * for the application. It binds event listeners and delegates the logic to specialized handler modules,
  * acting as the primary bridge between the UI and the game's logic.
  */
-import { NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { NAV_IDS, SCREEN_IDS, ACTION_IDS } from '../data/constants.js';
 
 // Import all specialized event handlers
 import { ActionClickHandler } from './handlers/ActionClickHandler.js';
@@ -114,6 +114,12 @@ export class EventManager {
         this.tooltipHandler.handleClick(e);
 
         if (actionTarget) {
+            if (actionTarget.dataset.action === ACTION_IDS.DEBUG_SIMPLE_START) {
+                if (this.debugService) {
+                    this.debugService.simpleStart();
+                }
+                return;
+            }
             this.actionClickHandler.handle(e, actionTarget);
             this.marketEventHandler.handleClick(e, actionTarget);
             return;

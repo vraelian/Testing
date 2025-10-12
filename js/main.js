@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
+    const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; // Guard for development features.
 
     // Set the app height on initial load and whenever the viewport changes.
@@ -52,12 +53,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
 
     }, { once: true });
+    
+    debugStartButton.addEventListener('click', () => {
+        // Fade out the splash screen and then start the game logic.
+        splashScreen.classList.add('splash-screen-hiding');
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+            startGame(true); // Pass flag for simple start
+        }, { once: true });
+    });
 
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
      */
-    function startGame() {
+    function startGame(isSimpleStart = false) {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager(Logger);
@@ -85,15 +95,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
         if (!hasSave) {
-            gameState.startNewGame('');
-            simulationService.timeService.advanceDays(7);
-            simulationService.startIntroSequence();
+            if (isSimpleStart && debugService) {
+                gameState.startNewGame('');
+                debugService.simpleStart();
+            } else {
+                gameState.startNewGame('');
+                simulationService.timeService.advanceDays(7);
+                simulationService.startIntroSequence();
+            }
         }
 
         // --- Bindings ---
         eventManager.bindEvents();
         
-        if (hasSave) {
+        if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
