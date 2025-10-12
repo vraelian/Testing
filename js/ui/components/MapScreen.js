@@ -94,7 +94,6 @@ export function initMap(uiManager) {
         .enter()
         .append("g")
         .attr("class", "poi-group")
-        .attr("data-action", "show-map-modal")
         .attr("data-location-id", d => d.id)
         .on("click", (event, d) => {
             uiManager.showMapDetailModal(d.id);

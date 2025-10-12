@@ -32,10 +32,6 @@
     transition: transform 0.2s ease-out;
 }
 
-.poi-group:hover {
-    transform: scale(1.1);
-}
-
 .poi-label {
     font-family: 'Orbitron', sans-serif;
     fill: #d0d8e8;
