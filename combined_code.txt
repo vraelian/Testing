@@ -1,13 +1,27 @@
 --- START OF FILE: ./index.html ---
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
+
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        // This function will catch any uncaught JavaScript error.
+        var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
+        
+        // Check if the webkit message handler exists and send the error message to our Swift code.
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
+          window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
+        }
+        
+        // Prevent the browser's default error handling.
+        return true;
+      };
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 28.10</title>
+    <title>Orbital Trading 29.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -32,6 +46,7 @@
 <body>
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
+        <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
@@ -39,14 +54,14 @@
     
             <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
-                <button class="btn btn-header w-full" disabled>Load Game</button>
-                <button class="btn btn-header w-full" disabled>Options</button>
+                <button class="btn btn-header w-full" disabled="">Load Game</button>
+                <button class="btn btn-header w-full" disabled="">Options</button>
             </div>
     
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 28.10</p>
+            <p>Version 29.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -98,11 +113,10 @@
                 <div id="mission-modal-buttons" class="mt-4"></div>
             </div>
         </div>
-        <div id="map-detail-modal" class="modal-backdrop hidden">
+         <div id="map-detail-modal" class="modal-backdrop hidden">
              <div class="modal-content">
-                <button class="absolute top-4 right-4 text-2xl font-bold opacity-70 hover:opacity-100" data-action="close-map-modal">&times;</button>
                 <div id="map-modal-content-container">
-                    </div>
+                </div>
              </div>
         </div>
     </main>
@@ -193,10 +207,10 @@
     </div>
 
     <div id="tutorial-toast-container" class="hidden fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto">
-        <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">&times;</button>
+        <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">×</button>
         <p id="tutorial-toast-text" class="text-lg pr-6"></p>
         <div class="mt-3 text-right">
-            <button id="tutorial-toast-next-btn" class="btn btn-sm">Next &rarr;</button>
+            <button id="tutorial-toast-next-btn" class="btn btn-sm">Next →</button>
         </div>
      </div>
     
@@ -964,7 +978,8 @@
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 :root {
-    --app-height: 100%; /* Default/fallback height */
+    --app-height: 100%;
+    /* Default/fallback height */
     --module-width: 100px;
     --font-size: 0.6rem;
     --border-radius: 20px;
@@ -986,14 +1001,20 @@
     --max-text: #a5aab1;
 }
 
-html,
-body {
-    height: 100%;
-    overflow: hidden;
+html {
+    padding: 0;
     margin: 0;
 }
 
 body {
+    height: 100vh;
+    /* Fallback */
+    height: var(--app-height);
+    overflow: hidden;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1006,19 +1027,40 @@ body {
     outline: none;
 }
 
-.font-orbitron { font-family: 'Orbitron', sans-serif; }
-.font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+#debug-start-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    font-family: 'Orbitron', sans-serif;
+    background-color: #4a5568;
+    color: #1a202c;
+    border: 2px solid #2d3748;
+    z-index: 100;
+}
+
+.font-orbitron {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.font-roboto-mono {
+    font-family: 'Roboto Mono', monospace;
+}
 
 .game-container {
     max-width: 1200px;
-    margin: auto;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     border: 2px solid #3a4a6a;
     border-radius: 55px;
     transition: background 0.5s ease-out, opacity 1s ease-in-out;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    height: var(--app-height); /* Use the JS-driven height variable */
     padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
@@ -1055,6 +1097,7 @@ body {
     padding: 0.25rem;
     touch-action: pan-y;
 }
+
 .scroll-panel::-webkit-scrollbar {
     display: none;
 }
@@ -1072,25 +1115,31 @@ body {
     -ms-user-select: none;
     user-select: none;
 }
+
 .btn-sm {
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
 }
+
 #restart-game-container .btn {
     padding: 0.3rem 0.6rem;
     font-size: 0.875rem;
 }
+
 .btn:hover:not(:disabled) {
     background-color: #32405a;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     color: #e0f0ff;
 }
-.btn:disabled, [disabled] {
+
+.btn:disabled,
+[disabled] {
     opacity: 0.4;
     cursor: not-allowed;
     filter: grayscale(80%);
 }
+
 .btn-intro-locked {
     filter: grayscale(1);
     opacity: 0.3;
@@ -1100,6 +1149,7 @@ body {
 .screen {
     display: none;
 }
+
 .active-screen {
     display: flex;
     flex-direction: column;
@@ -1107,83 +1157,477 @@ body {
     min-height: 0;
 }
 
-@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
 @keyframes scanlineFadeOut {
     from {
         opacity: 1;
         -webkit-mask-position: 0 0;
         mask-position: 0 0;
     }
+
     to {
         opacity: 0;
         -webkit-mask-position: 0 100%;
         mask-position: 0 100%;
     }
 }
-@keyframes pulse-green-border { 0%, 100% { box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3); border-color: #10b981; } 50% { box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5); border-color: #34d399; } }
-@keyframes pulse-gold-border { 0%, 100% { box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3); border-color: #D4AF37; } 50% { box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5); border-color: #FFD700; } }
-@keyframes credits-pulse-glow { 0% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } 50% { text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9; } 100% { text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc; } }
-@keyframes pulse-green-glow { 0%, 100% { text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a; } 50% { text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e; } }
-@keyframes float-up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-60px); opacity: 0; } }
-@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
-@keyframes green-pulse { 0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); } 50% { box-shadow: 0 0 24px rgba(52, 211, 153, 0.9); } 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); } }
-@keyframes blue-pulse-glow { 0%, 100% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); } 50% { box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2); } }
-@keyframes flash-green { 0%, 100% { color: #34d399; } 50% { color: #f0fdf4; } }
-@keyframes shimmer-effect { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
 
-.highlight-current { border-color: #facc15; }
-.btn-pulse-green { animation: pulse-green-border 2s infinite; }
-.btn-pulse-gold { animation: pulse-gold-border 2s infinite; }
-.btn-pulse { animation: pulse-green-border 2.5s infinite; }
-.credits-text-pulsing { color: #bae6fd; animation: credits-pulse-glow 2.5s infinite ease-in-out; }
-.pulse-green-glow { animation: pulse-green-glow 2s infinite; }
-.hl { color: #fde047; font-weight: 700; }
-.hl-blue { color: #60a5fa; font-weight: 700; }
-.hl-red { color: #f87171; font-weight: 700; }
-.hl-green { color: #16a34a; font-weight: 700; }
-.hl-yellow { color: #facc15; font-weight: 700; }
-.text-outline { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+@keyframes pulse-green-border {
 
-#save-toast, #garnishment-toast, #hull-warning-toast, #starport-unlock-tooltip { z-index: 101; }
-#garnishment-toast { background-color: #991b1b; border: 1px solid #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.7); }
-#hull-warning-toast { background-color: #166534; border: 1px solid #34d399; box-shadow: 0 0 15px rgba(52, 211, 153, 0.7); text-shadow: 0 0 5px rgba(255, 255, 255, 0.7); }
+    0%,
+    100% {
+        box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
+        border-color: #10b981;
+    }
 
-[data-tooltip] { position: relative; }
+    50% {
+        box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
+        border-color: #34d399;
+    }
+}
+
+@keyframes pulse-gold-border {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px #D4AF37, inset 0 0 10px rgba(212, 175, 55, 0.3);
+        border-color: #D4AF37;
+    }
+
+    50% {
+        box-shadow: 0 0 20px #FFD700, inset 0 0 15px rgba(255, 215, 0, 0.5);
+        border-color: #FFD700;
+    }
+}
+
+@keyframes credits-pulse-glow {
+    0% {
+        text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
+    }
+
+    50% {
+        text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9;
+    }
+
+    100% {
+        text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
+    }
+}
+
+@keyframes pulse-green-glow {
+
+    0%,
+    100% {
+        text-shadow: 0 0 2px #16a34a, 0 0 4px #16a34a;
+    }
+
+    50% {
+        text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e;
+    }
+}
+
+@keyframes float-up {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(-60px);
+        opacity: 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -400px 0;
+    }
+
+    100% {
+        background-position: 400px 0;
+    }
+}
+
+@keyframes green-pulse {
+    0% {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+    }
+
+    50% {
+        box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
+    }
+
+    100% {
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+    }
+}
+
+@keyframes blue-pulse-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+    }
+}
+
+@keyframes flash-green {
+
+    0%,
+    100% {
+        color: #34d399;
+    }
+
+    50% {
+        color: #f0fdf4;
+    }
+}
+
+@keyframes shimmer-effect {
+    0% {
+        background-position: -600px 0;
+    }
+
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+.highlight-current {
+    border-color: #facc15;
+}
+
+.btn-pulse-green {
+    animation: pulse-green-border 2s infinite;
+}
+
+.btn-pulse-gold {
+    animation: pulse-gold-border 2s infinite;
+}
+
+.btn-pulse {
+    animation: pulse-green-border 2.5s infinite;
+}
+
+.credits-text-pulsing {
+    color: #bae6fd;
+    animation: credits-pulse-glow 2.5s infinite ease-in-out;
+}
+
+.pulse-green-glow {
+    animation: pulse-green-glow 2s infinite;
+}
+
+.hl {
+    color: #fde047;
+    font-weight: 700;
+}
+
+.hl-blue {
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+.hl-red {
+    color: #f87171;
+    font-weight: 700;
+}
+
+.hl-green {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.hl-yellow {
+    color: #facc15;
+    font-weight: 700;
+}
+
+.text-outline {
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+#save-toast,
+#garnishment-toast,
+#hull-warning-toast,
+#starport-unlock-tooltip {
+    z-index: 101;
+}
+
+#garnishment-toast {
+    background-color: #991b1b;
+    border: 1px solid #f87171;
+    box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
+}
+
+#hull-warning-toast {
+    background-color: #166534;
+    border: 1px solid #34d399;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.7);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+[data-tooltip] {
+    position: relative;
+}
+
 .tooltip-container[data-tooltip]:hover::after,
 .cargo-item-tooltip[data-tooltip]:hover::after,
 .commodity-name-tooltip[data-tooltip]:hover::after,
 .hanger-ship-name[data-tooltip]:hover::after,
 .tooltip-active::after,
 .tooltip-container-below[data-tooltip]:hover::after,
-.loan-btn-tooltip[data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; background-color: #111827; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.875rem; white-space: pre-wrap; width: max-content; max-width: 220px; word-wrap: break-word; text-align: center; z-index: 100; display: block; pointer-events: none; font-family: 'Exo 2', sans-serif; left: 105%; top: 50%; transform: translateY(-50%); }
-.loan-btn-tooltip[data-tooltip]:hover::after { font-family: 'Roboto Mono', monospace; }
-.tooltip-container-below[data-tooltip]:hover::after { top: 100%; margin-top: 5px; }
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    background-color: #111827;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    width: max-content;
+    max-width: 220px;
+    word-wrap: break-word;
+    text-align: center;
+    z-index: 100;
+    display: block;
+    pointer-events: none;
+    font-family: 'Exo 2', sans-serif;
+    left: 105%;
+    top: 50%;
+    transform: translateY(-50%);
+}
 
-#graph-tooltip { position: fixed; display: none; background-color: #111827; border: 1px solid #374151; border-radius: 8px; padding: 0.75rem; z-index: 60; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); white-space: pre-wrap; text-align: center; font-size: 0.875rem; }
-.generic-tooltip { position: fixed; display: none; background-color: #111827; border-radius: 6px; padding: 5px 10px; z-index: 60; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); white-space: pre-wrap; text-align: center; font-size: 0.875rem; color: #fff; font-family: 'Exo 2', sans-serif; max-width: 60vw; }
+.loan-btn-tooltip[data-tooltip]:hover::after {
+    font-family: 'Roboto Mono', monospace;
+}
 
-.panel-border { position: relative; }
-.panel-border::before, .panel-border::after { content: ''; position: absolute; width: 15px; height: 15px; border-color: var(--theme-border-color, #7a9ac0); border-style: solid; }
-.panel-border::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; border-top-left-radius: 10px; }
-.panel-border::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
+.tooltip-container-below[data-tooltip]:hover::after {
+    top: 100%;
+    margin-top: 5px;
+}
 
-.floating-text { position: fixed; pointer-events: none; font-weight: 700; font-size: 1.25rem; text-shadow: 0 2px 4px rgba(0,0,0,0.7); z-index: 100; animation: float-up 2.5s forwards ease-out; }
+#graph-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 0.75rem;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+}
 
-.cargo-item-card { width: 118px; height: 118px; border-radius: 8px; display: flex; position: relative; box-shadow: inset 0 0 10px rgba(0,0,0,0.4); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-sizing: border-box; }
-.base-concept { width: 100%; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; color: #fff; padding: 0; }
-.pt-header { display: flex; justify-content: space-between; width: 100%; padding: 4px 6px; background: rgba(0,0,0,0.3); align-items: center; box-sizing: border-box; flex-shrink: 0; }
-.pt-number, .pt-category { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; white-space: nowrap; }
-.pt-symbol-wrapper { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
-.pt-symbol { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.6rem; color: #333; -webkit-text-stroke: 1.1px #888; text-transform: uppercase; }
-.pt-quantity { font-family: 'Roboto Mono', monospace; font-size: 0.8rem; font-weight: 600; margin-top: 4px; text-shadow: 0 0 6px rgba(0,0,0,0.7); }
-.pt-name { font-family: 'Share Tech Mono', monospace; font-size: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 6px; flex-shrink: 0; }
+.generic-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #111827;
+    border-radius: 6px;
+    padding: 5px 10px;
+    z-index: 60;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    white-space: pre-wrap;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #fff;
+    font-family: 'Exo 2', sans-serif;
+    max-width: 60vw;
+}
 
-@media (min-width: 768px) { .game-container { padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem; } }
-@media (max-width: 768px) { .cargo-item-tooltip[data-tooltip]:hover::after, .commodity-name-tooltip[data-tooltip]:hover::after, .hanger-ship-name[data-tooltip]:hover::after { display: none; } #header-main { flex-wrap: wrap; justify-content: center; } }
+.panel-border {
+    position: relative;
+}
 
-#orientation-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: #0c101d; color: #d0d8e8; z-index: 9999; display: flex; justify-content: center; align-items: center; text-align: center; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; padding: 1rem; display: none; }
-@media (orientation: landscape) { #orientation-overlay { display: flex; } #game-container { display: none; } }
+.panel-border::before,
+.panel-border::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-color: var(--theme-border-color, #7a9ac0);
+    border-style: solid;
+}
+
+.panel-border::before {
+    top: -2px;
+    left: -2px;
+    border-width: 2px 0 0 2px;
+    border-top-left-radius: 10px;
+}
+
+.panel-border::after {
+    bottom: -2px;
+    right: -2px;
+    border-width: 0 2px 2px 0;
+    border-bottom-right-radius: 10px;
+}
+
+.floating-text {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    animation: float-up 2.5s forwards ease-out;
+}
+
+.cargo-item-card {
+    width: 118px;
+    height: 118px;
+    border-radius: 8px;
+    display: flex;
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+}
+
+.base-concept {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    color: #fff;
+    padding: 0;
+}
+
+.pt-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.3);
+    align-items: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.pt-number,
+.pt-category {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    white-space: nowrap;
+}
+
+.pt-symbol-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.pt-symbol {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    color: #333;
+    -webkit-text-stroke: 1.1px #888;
+    text-transform: uppercase;
+}
+
+.pt-quantity {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 4px;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+.pt-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 6px;
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .game-container {
+        padding: calc(2rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .cargo-item-tooltip[data-tooltip]:hover::after,
+    .commodity-name-tooltip[data-tooltip]:hover::after,
+    .hanger-ship-name[data-tooltip]:hover::after {
+        display: none;
+    }
+
+    #header-main {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+#orientation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: #0c101d;
+    color: #d0d8e8;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    padding: 1rem;
+    display: none;
+}
+
+@media (orientation: landscape) {
+    #orientation-overlay {
+        display: flex;
+    }
+
+    #game-container {
+        display: none;
+    }
+}
 --- END OF FILE: ./css/global.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -1305,6 +1749,14 @@ body {
 #map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
     animation: fadeIn 1s ease-out forwards;
 }
+
+/* --- [[START]] SIGNATURE MODAL KEYBOARD FIX --- */
+#signature-modal {
+    align-items: flex-start; /* Override the default vertical centering */
+    padding-top: 15vh;      /* Push the modal down from the top edge */
+}
+/* --- [[END]] SIGNATURE MODAL KEYBOARD FIX --- */
+
 
 /* Hide modal backdrops by default */
 .modal-backdrop.hidden {
@@ -1494,6 +1946,23 @@ body {
     padding-right: 0.5rem; /* For scrollbar */
 }
 
+/* --- [[START]] GENERIC THEMED GLOW --- */
+@keyframes themed-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 24px var(--theme-glow-color), inset 0 0 16px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+}
+
+.is-glowing {
+    animation: themed-glow-animation 3s infinite;
+}
+/* --- [[END]] GENERIC THEMED GLOW --- */
+
 /* --- [[START]] LAUNCH MODAL STYLES --- */
 #launch-modal .modal-content {
     background: transparent;
@@ -1612,11 +2081,6 @@ body {
 
 .poi-group {
     cursor: pointer;
-    transition: transform 0.2s ease-out;
-}
-
-.poi-group:hover {
-    transform: scale(1.1);
 }
 
 .poi-label {
@@ -1630,14 +2094,43 @@ body {
     stroke-linejoin: miter;
 }
 
-#map-detail-modal .modal-content {
-    background: rgba(12, 16, 29, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    clip-path: polygon(0% 20px, 20px 0%, calc(100% - 20px) 0%, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0% calc(100% - 20px));
+@keyframes map-modal-glow {
+    0%, 100% {
+        box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 24px var(--theme-glow-color), inset 0 0 16px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
 }
 
-#map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
+#map-detail-modal .modal-content {
+    background: transparent; /* Make default background see-through */
+    border: none; /* Border is now on the pseudo-element */
+    position: relative; /* Needed for pseudo-element positioning */
+}
+
+/* Create a pseudo-element to handle the border and the infinite glow animation */
+#map-detail-modal .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px; /* Match the modal's border-radius */
+    border: 2px solid var(--theme-glow-color);
+    z-index: -1; /* Place it behind the modal's actual content */
+}
+
+/* New rule to trigger the animation */
+#map-detail-modal.is-glowing .modal-content::before {
+    animation: map-modal-glow 3s infinite;
+}
+
+
+#map-detail-modal.modal-visible .modal-content {
     animation: fadeIn 0.3s ease-out forwards;
 }
 
@@ -2698,6 +3191,11 @@ COMPONENT-SPECIFIC STYLING
 }
 .location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
 .location-card.disabled-current { cursor: pointer; }
+
+.location-card.highlight-current {
+    animation: themed-glow-animation 3s infinite;
+}
+
 .location-card-footer {
     margin-top: auto;
 }
@@ -2992,7 +3490,6 @@ export function initMap(uiManager) {
         .enter()
         .append("g")
         .attr("class", "poi-group")
-        .attr("data-action", "show-map-modal")
         .attr("data-location-id", d => d.id)
         .on("click", (event, d) => {
             uiManager.showMapDetailModal(d.id);
@@ -3350,6 +3847,8 @@ import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
 export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
     const { navLock } = tutorials;
+    const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
+
 
     // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
@@ -3373,9 +3872,12 @@ export function renderNavigationScreen(gameState) {
                         isDisabled = !tempDiv.querySelector(enabledElementQuery);
                     }
                     const disabledClass = isDisabled ? 'disabled-location' : '';
+                    
+                    const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
+
 
                     return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
+                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -3888,6 +4390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
+    const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; // Guard for development features.
 
     // Set the app height on initial load and whenever the viewport changes.
@@ -3896,6 +4399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
+        window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
@@ -3911,12 +4415,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
 
     }, { once: true });
+    
+    debugStartButton.addEventListener('click', () => {
+        // Fade out the splash screen and then start the game logic.
+        splashScreen.classList.add('splash-screen-hiding');
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+            startGame(true); // Pass flag for simple start
+        }, { once: true });
+    });
 
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
      */
-    function startGame() {
+    function startGame(isSimpleStart = false) {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager(Logger);
@@ -3944,15 +4457,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
         if (!hasSave) {
-            gameState.startNewGame('');
-            simulationService.timeService.advanceDays(7);
-            simulationService.startIntroSequence();
+            if (isSimpleStart && debugService) {
+                gameState.startNewGame('');
+                debugService.simpleStart();
+            } else {
+                gameState.startNewGame('');
+                simulationService.timeService.advanceDays(7);
+                simulationService.startIntroSequence();
+            }
         }
 
         // --- Bindings ---
         eventManager.bindEvents();
         
-        if (hasSave) {
+        if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
@@ -4392,6 +4910,7 @@ export const PERK_IDS = Object.freeze({
  * @enum {string}
  */
 export const ACTION_IDS = Object.freeze({
+    DEBUG_SIMPLE_START: 'debug-simple-start',
     SET_SCREEN: 'set-screen',
     TRAVEL: 'travel',
     BUY_SHIP: 'buy-ship',
@@ -4959,7 +5478,7 @@ export const DB = {
         { id: LOCATION_IDS.EARTH, name: 'Earth', distance: 180, launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", specialty: "Offers the best sell prices for rare, high-tier goods and is the exclusive source for top-tier ship licenses.", availabilityModifier: { [COMMODITY_IDS.HYDROPONICS]: 2.0, [COMMODITY_IDS.GMO_SEEDS]: 2.0, [COMMODITY_IDS.CLONED_ORGANS]: 0.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 } },
         { id: LOCATION_IDS.LUNA, name: 'The Moon', parent: 'loc_earth', distance: 15, launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", specialty: "Offers a slight discount on all ship repairs.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.WATER_ICE]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5 } },
         { id: LOCATION_IDS.MARS, name: 'Mars', distance: 226, launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", specialty: "Offers a higher-than-average number of colonial supply missions.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.WATER_ICE]: 0.5 } },
-        { id: LOCATION_IDS.BELT, name: 'The Belt', distance: 292, launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#ca8a04' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", specialty: "Increased chance to find rare derelict ships in its shipyards.", availabilityModifier: { [COMMODITY_IDS.WATER_ICE]: 2.0, [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CYBERNETICS]: 0.5 } },
+        { id: LOCATION_IDS.BELT, name: 'The Belt', distance: 292, launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#a16207' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", specialty: "Increased chance to find rare derelict ships in its shipyards.", availabilityModifier: { [COMMODITY_IDS.WATER_ICE]: 2.0, [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CYBERNETICS]: 0.5 } },
         { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', distance: 309, launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", specialty: "The notorious black market of the outer belt.", availabilityModifier: {} },
         { id: LOCATION_IDS.JUPITER, name: 'Jupiter', distance: 443, launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", specialty: "Fuel is sold at 50% of the galactic average price, making it an essential stop for any long-haul journey.", availabilityModifier: { [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
         { id: LOCATION_IDS.SATURN, name: 'Saturn', distance: 618, launchFlavor: "Opulent stations drift among majestic rings.", navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", specialty: "Offers the highest sell prices for luxury and bio-tech goods.", availabilityModifier: { [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.CLONED_ORGANS]: 0.5 } },
@@ -7775,7 +8294,7 @@ export function resolveSpaceRace(gameState, simulationService, effectData, outco
  * for the application. It binds event listeners and delegates the logic to specialized handler modules,
  * acting as the primary bridge between the UI and the game's logic.
  */
-import { NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { NAV_IDS, SCREEN_IDS, ACTION_IDS } from '../data/constants.js';
 
 // Import all specialized event handlers
 import { ActionClickHandler } from './handlers/ActionClickHandler.js';
@@ -7885,6 +8404,12 @@ export class EventManager {
         this.tooltipHandler.handleClick(e);
 
         if (actionTarget) {
+            if (actionTarget.dataset.action === ACTION_IDS.DEBUG_SIMPLE_START) {
+                if (this.debugService) {
+                    this.debugService.simpleStart();
+                }
+                return;
+            }
             this.actionClickHandler.handle(e, actionTarget);
             this.marketEventHandler.handleClick(e, actionTarget);
             return;
@@ -9472,19 +9997,19 @@ export class UIManager {
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
-    
+
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
-    
+
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
-    
+
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
-    
+
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
@@ -9503,7 +10028,17 @@ export class UIManager {
         const modal = this.cache.launchModal;
         this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
-        modal.classList.add('modal-visible');
+
+        // Two-step render for the glow
+        requestAnimationFrame(() => {
+            modal.classList.add('modal-visible');
+            const wrapper = modal.querySelector('.launch-modal-wrapper');
+            if (wrapper) {
+                requestAnimationFrame(() => {
+                    wrapper.classList.add('is-glowing');
+                });
+            }
+        });
     
         // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
@@ -9713,8 +10248,15 @@ export class UIManager {
         if (!location) return;
 
         const modal = this.cache.mapDetailModal;
+        const modalContent = modal.querySelector('.modal-content');
         const contentContainer = modal.querySelector('#map-modal-content-container');
         const theme = location.navTheme;
+        
+        // Apply theme styles
+        modalContent.style.background = theme.gradient;
+        modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
+
+
         const imports = [];
         const exports = [];
 
@@ -9766,11 +10308,13 @@ export class UIManager {
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
+        modal.classList.remove('is-glowing');
         
         // Use requestAnimationFrame to ensure the browser has rendered the modal
         // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
+            modal.classList.add('is-glowing');
         });
 
         const closeHandler = (e) => {
@@ -9783,6 +10327,10 @@ export class UIManager {
     }
 
     hideMapDetailModal() {
+        const modal = this.cache.mapDetailModal;
+        if (modal) {
+            modal.classList.remove('is-glowing');
+        }
         this.hideModal('map-detail-modal');
     }
 }
@@ -10931,6 +11479,21 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [29.20] - 2025-10-13
+- added border glows to more modals
+- deprecaded some map screen code
+
+## [29.10] - 2025-10-12
+- fixed map screen bug
+- fixed signature modal bug
+- title screen debug 'simple start'
+
+## [29.00] - 2025-10-11
+- adapted Xcode into workflow
+- simulating native iOS for dev
+- programmatic webview with ViewController.swift
+- simulator connected to VSCode LiveServer
+
 ## [28.10] - 2025-10-10
 - decommissioned the 'System Surge' celebratory effect, removing all associated JS, CSS, and HTML to prepare for a new implementation.
 - updated debug settings 
@@ -11304,6 +11867,14 @@ All notable changes to the Orbital Trading project will be documented in this fi
             "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
         },
         "mutates_state": []
+    },
+    "ViewController": {
+        "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
+        "dependencies": ["WKWebView"],
+        "key_functions": {
+            "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
+        },
+        "mutates_state": []
     }
   },
   "asset_index": {
@@ -11347,7 +11918,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
     "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
     "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
-    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"}
+    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
+    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
