@@ -1350,9 +1350,7 @@ export class UIManager {
         // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
-            requestAnimationFrame(() => {
-                modal.classList.add('is-glowing');
-            });
+            modal.classList.add('is-glowing');
         });
 
         const closeHandler = (e) => {
