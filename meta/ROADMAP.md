@@ -14,7 +14,6 @@ This document outlines the planned features and high-level goals for the future 
 - Verify consistency in projected journey stats vs actual
 - Design cononical missions, storyline
 - Refine licenses
-- Overhaul ship status screen
 - Overhaul intel screen
 
 - News ticker
