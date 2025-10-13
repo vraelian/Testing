@@ -69,8 +69,12 @@
     bottom: 0;
     border-radius: 12px; /* Match the modal's border-radius */
     border: 2px solid var(--theme-glow-color);
-    animation: map-modal-glow 3s infinite;
     z-index: -1; /* Place it behind the modal's actual content */
+}
+
+/* New rule to trigger the animation */
+#map-detail-modal.is-glowing .modal-content::before {
+    animation: map-modal-glow 3s infinite;
 }
 
 

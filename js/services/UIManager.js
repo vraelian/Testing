@@ -1344,16 +1344,19 @@ export class UIManager {
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
+        modal.classList.remove('is-glowing');
         
         // Use requestAnimationFrame to ensure the browser has rendered the modal
         // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
+            requestAnimationFrame(() => {
+                modal.classList.add('is-glowing');
+            });
         });
 
         const closeHandler = (e) => {
-            // Updated logic: close on any click on the backdrop, which includes the content area now.
-            if (e.target.closest('.modal-backdrop')) {
+            if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {
                 this.hideMapDetailModal();
                 modal.removeEventListener('click', closeHandler);
             }
@@ -1362,6 +1365,10 @@ export class UIManager {
     }
 
     hideMapDetailModal() {
+        const modal = this.cache.mapDetailModal;
+        if (modal) {
+            modal.classList.remove('is-glowing');
+        }
         this.hideModal('map-detail-modal');
     }
 }
