@@ -1284,8 +1284,15 @@ export class UIManager {
         if (!location) return;
 
         const modal = this.cache.mapDetailModal;
+        const modalContent = modal.querySelector('.modal-content');
         const contentContainer = modal.querySelector('#map-modal-content-container');
         const theme = location.navTheme;
+        
+        // Apply theme styles
+        modalContent.style.background = theme.gradient;
+        modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
+
+
         const imports = [];
         const exports = [];
 
@@ -1345,7 +1352,8 @@ export class UIManager {
         });
 
         const closeHandler = (e) => {
-            if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {
+            // Updated logic: close on any click on the backdrop, which includes the content area now.
+            if (e.target.closest('.modal-backdrop')) {
                 this.hideMapDetailModal();
                 modal.removeEventListener('click', closeHandler);
             }
