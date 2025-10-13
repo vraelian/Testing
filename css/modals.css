@@ -313,6 +313,23 @@
     padding-right: 0.5rem; /* For scrollbar */
 }
 
+/* --- [[START]] GENERIC THEMED GLOW --- */
+@keyframes themed-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 24px var(--theme-glow-color), inset 0 0 16px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+}
+
+.is-glowing {
+    animation: themed-glow-animation 3s infinite;
+}
+/* --- [[END]] GENERIC THEMED GLOW --- */
+
 /* --- [[START]] LAUNCH MODAL STYLES --- */
 #launch-modal .modal-content {
     background: transparent;

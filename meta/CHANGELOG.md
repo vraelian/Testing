@@ -2,6 +2,14 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [29.20] - 2025-10-13
+- added border glows to more modals
+- deprecaded some map screen code
+
+## [29.10] - 2025-10-12
+- fixed map screen bug
+- fixed signature modal bug
+- title screen debug 'simple start'
 
 ## [29.00] - 2025-10-11
 - adapted Xcode into workflow

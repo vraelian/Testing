@@ -25,6 +25,11 @@
 }
 .location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
 .location-card.disabled-current { cursor: pointer; }
+
+.location-card.highlight-current {
+    animation: themed-glow-animation 3s infinite;
+}
+
 .location-card-footer {
     margin-top: auto;
 }

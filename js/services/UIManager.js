@@ -1043,19 +1043,19 @@ export class UIManager {
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
-    
+
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
-    
+
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
-    
+
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
-    
+
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
@@ -1074,7 +1074,17 @@ export class UIManager {
         const modal = this.cache.launchModal;
         this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
-        modal.classList.add('modal-visible');
+
+        // Two-step render for the glow
+        requestAnimationFrame(() => {
+            modal.classList.add('modal-visible');
+            const wrapper = modal.querySelector('.launch-modal-wrapper');
+            if (wrapper) {
+                requestAnimationFrame(() => {
+                    wrapper.classList.add('is-glowing');
+                });
+            }
+        });
     
         // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {

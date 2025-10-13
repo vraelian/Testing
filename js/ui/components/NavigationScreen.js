@@ -15,6 +15,8 @@ import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
 export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
     const { navLock } = tutorials;
+    const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
+
 
     // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
@@ -38,9 +40,12 @@ export function renderNavigationScreen(gameState) {
                         isDisabled = !tempDiv.querySelector(enabledElementQuery);
                     }
                     const disabledClass = isDisabled ? 'disabled-location' : '';
+                    
+                    const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
+
 
                     return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''}>
+                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
