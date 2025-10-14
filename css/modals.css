@@ -230,7 +230,7 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     padding: 1rem;
-    text-align: left;
+    text-align: center;
     transition: all 0.2s ease-in-out;
 }
 

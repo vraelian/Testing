@@ -560,10 +560,24 @@ export class UIManager {
         if (titleEl) titleEl.innerHTML = title;
         if (descEl) {
             descEl.innerHTML = description;
-            descEl.className = 'my-4 text-gray-300'; 
-            if(modalId !== 'mission-modal') descEl.classList.add('mb-6', 'text-lg');
+            descEl.className = 'my-4 text-gray-300'; // Reset classes
+            
+            if (modalId !== 'mission-modal') {
+                descEl.classList.add('mb-6', 'text-lg');
+            }
+
+            // Default to centered text for generic event modals, which are mostly short notices.
+            if (modalId === 'event-modal' || modalId === 'random-event-modal') {
+                descEl.classList.add('text-center');
+            }
+            
             if (options.contentClass) {
-                descEl.classList.add(options.contentClass);
+                // Allow `contentClass` to override the default alignment.
+                if (options.contentClass.includes('text-left') || options.contentClass.includes('text-right') || options.contentClass.includes('text-justify')) {
+                    descEl.classList.remove('text-center');
+                }
+                // Add all provided custom classes.
+                descEl.classList.add(...options.contentClass.split(' ').filter(Boolean));
             }
         }
 
@@ -605,7 +619,7 @@ export class UIManager {
                 choicesContainer.innerHTML = '';
                 event.choices.forEach((choice, index) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full text-left p-4 hover:bg-slate-700';
+                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
                     button.innerHTML = choice.title;
                     button.onclick = () => {
                         choicesCallback(event.id, index);

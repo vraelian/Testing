@@ -224,7 +224,9 @@ export class TravelService {
         }
     
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose '${choice.title}' for event '${event.title}'.`);
-        this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), { buttonText: 'Continue Journey' });
+        this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), {
+            buttonText: 'Continue Journey'
+        });
     }
 
     /**
