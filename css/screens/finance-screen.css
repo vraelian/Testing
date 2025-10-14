@@ -1,6 +1,7 @@
 /* css/screens/finance-screen.css */
 .finance-log-panel {
     height: 50vh; /* Enforce a fixed height based on the viewport */
+    overflow-y: auto; /* Allow vertical scrolling when content exceeds height */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     touch-action: pan-y; /* Allow vertical scrolling */
@@ -9,9 +10,43 @@
     display: none; /* For Chrome, Safari, and Opera */
 }
 
+/* NEW: Style for individual log entries */
+.log-entry {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    font-size: 0.8rem;
+}
+
+/* NEW: Zebra-striping for better readability */
+.log-entry:nth-child(even) {
+    background-color: rgba(0,0,0,0.2);
+}
+
+/* NEW: Column separators */
+.log-entry > span:first-child {
+    border-right: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    padding-right: 0.5rem;
+}
+.log-entry > span:last-child {
+    border-left: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    padding-left: 0.5rem;
+}
+
+/* Header-specific styles */
+.log-header {
+    border-bottom-width: 2px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    color: var(--theme-text-color, #f0f0f0);
+}
+
 
 @media (max-width: 768px) {
-    #finance-screen .grid-cols-4 {
+    /* Existing media query remains the same */
+    .log-entry, #finance-screen .grid-cols-4 {
         grid-template-columns: 0.5fr 2fr 1fr;
         font-size: 0.8rem;
     }

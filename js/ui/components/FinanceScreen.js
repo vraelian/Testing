@@ -66,10 +66,10 @@ export function renderFinanceScreen(gameState) {
         const amountColor = entry.amount > 0 ? 'text-green-400' : 'text-red-400';
         const sign = entry.amount > 0 ? '+' : '';
         return `
-            <div class="grid grid-cols-4 gap-2 p-2 border-b border-slate-700 text-sm">
-                <span class="text-gray-400">${entry.day}</span>
-                <span class="col-span-2">${entry.description}</span>
-                <span class="${amountColor} text-right">${sign}${formatCredits(entry.amount, false)}</span>
+            <div class="log-entry">
+                <span class="text-gray-400 text-center">${entry.day}</span>
+                <span>${entry.description}</span>
+                <span class="${amountColor} text-right font-roboto-mono">${sign}${formatCredits(entry.amount, false)}</span>
             </div>
         `;
        }).join('');
@@ -81,10 +81,10 @@ export function renderFinanceScreen(gameState) {
             </div>
             <div class="md:col-span-2">
                  <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
-                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <div class="grid grid-cols-4 gap-2 p-2 border-b-2 font-bold" style="border-color: ${theme.borderColor};">
-                       <span>Day</span>
-                       <span class="col-span-2">Description</span>
+                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; background: ${theme.gradient}; --theme-text-color: ${theme.textColor};">
+                    <div class="log-entry log-header" style="border-color: ${theme.borderColor};">
+                       <span class="text-center">Day</span>
+                       <span>Description</span>
                        <span class="text-right">Amount</span>
                     </div>
                     ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}

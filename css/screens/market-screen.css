@@ -140,6 +140,7 @@
     color: var(--market-card-price-color);
     text-shadow: var(--market-card-price-text-shadow);
     font-family: var(--market-card-price-font-family);
+    cursor: pointer;
 }
 
 .profit-text {
@@ -392,6 +393,11 @@
 /* --- [[END]] MIN/MAX VIEW STYLES --- */
 
 /* --- [[START]] SOLID STATE TRANSACTION BUTTONS --- */
+@keyframes stepper-border-pulse {
+    0%, 100% { border-color: var(--active-primary); }
+    50% { border-color: var(--active-text-dark); }
+}
+
 .transaction-controls {
     position: absolute;
     top: var(--market-card-module-top);
@@ -444,6 +450,9 @@
     border-radius: var(--border-radius);
     padding: 0 0.5rem;
     transition: all 0.3s ease-in-out;
+}
+.qty-stepper.stepper-active {
+    animation: stepper-border-pulse 1s infinite;
 }
 .qty-stepper input {
     width: 30%;
