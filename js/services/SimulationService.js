@@ -282,6 +282,7 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
+                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }

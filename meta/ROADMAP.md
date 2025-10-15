@@ -10,10 +10,12 @@ This document outlines the planned features and high-level goals for the future 
 
 ## Planned Ideas
 - Overhaul ship fuel, hull costs and gameplay
+- Improve finance screen, logging
 - Verify consistency in projected journey stats vs actual
 - Design cononical missions, storyline
 - Refine licenses
 - Overhaul intel screen
+
 - News ticker
 - Storyline Timeline Governor (Mission availability, System States, Features)
 

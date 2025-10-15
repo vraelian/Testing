@@ -17,6 +17,7 @@ export function renderNavigationScreen(gameState) {
     const { navLock } = tutorials;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
+
     // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
     const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
@@ -33,16 +34,15 @@ export function renderNavigationScreen(gameState) {
                     // Determine if this card should be disabled due to a tutorial lock.
                     let isDisabled = false;
                     if (isNavLocked && enabledElementQuery) {
-                        // OPTIMIZED: Instead of creating a temp DOM element, parse the selector string directly.
-                        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
-                        if (match && match[1]) {
-                            const enabledLocationId = match[1];
-                            isDisabled = location.id !== enabledLocationId;
-                        }
+                        // A workaround to check if this location card matches the tutorial's enabled element query.
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
+                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
                     }
                     const disabledClass = isDisabled ? 'disabled-location' : '';
                     
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
+
 
                     return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
                                  data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>

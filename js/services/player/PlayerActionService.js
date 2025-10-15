@@ -157,6 +157,13 @@ export class PlayerActionService {
         this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
         this.simulationService.addShipToHangar(shipId);
 
+        console.log("ACTION: PlayerActionService.buyShip is calling triggerEffect."); // DIAGNOSTIC LOG
+        if (['S', 'O'].includes(ship.class)) {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
+        } else {
+            this.uiManager.triggerEffect('systemSurge', { theme: 'silver', text: 'VESSEL ACQUIRED' });
+        }
+
         if (this.gameState.tutorials.activeBatchId === 'intro_hangar') {
             this.simulationService.setHangarShipyardMode('hangar');
             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
@@ -270,7 +277,8 @@ export class PlayerActionService {
         player.debt = 0;
         player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
-        
+
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan', text: 'DEBT CLEARED' });
         this.timeService._checkMilestones();
         this.gameState.setState({});
     }
@@ -325,6 +333,7 @@ export class PlayerActionService {
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
         
+        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
         this.gameState.setState({});
         
         return { success: true };
