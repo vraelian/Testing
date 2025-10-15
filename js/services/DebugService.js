@@ -4,9 +4,8 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
-import { calculateInventoryUsed } from '../utils.js';
 
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.
@@ -215,12 +214,11 @@ export class DebugService {
     init() {
         if (this.gui) return;
         this._cacheDiagElements();
-        this.gui = new lil.GUI({ title: 'Debug Menu' });
-        this.gui.domElement.id = 'debug-panel';
+        this.gui = new lil.GUI();
+        this.gui.domElement.style.display = 'none';
         this._registerDebugActions();
         this.buildGui();
         this._startDiagLoop();
-        this._makeDraggable();
     }
 
     /**
@@ -237,7 +235,7 @@ export class DebugService {
     toggleVisibility() {
         if (!this.gui) return;
         this.active = !this.active;
-        this.gui.domElement.classList.toggle('debug-visible', this.active);
+        this.gui.domElement.style.display = this.active ? 'block' : 'none';
     }
 
     toggleDiagnosticOverlay() {
@@ -279,7 +277,7 @@ ${logHistory}
             });
     }
 
-    // --- GAME FLOW & CHEAT METHODS ---
+    // --- NEWLY MOVED DEBUG METHODS ---
     godMode() {
         this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
@@ -343,84 +341,6 @@ ${logHistory}
         this.gameState.setState({});
     }
 
-    // --- NEW SHIP-SPECIFIC HANDLERS ---
-    deductHull(amount) {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = Math.max(0, shipState.health - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    restoreHull() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = ship.maxHealth;
-            this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    destroyShip() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = 0;
-            this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
-            this.simulationService.travelService._handleShipDestruction(ship.id);
-        }
-    }
-
-    deductFuel(amount) {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.fuel = Math.max(0, shipState.fuel - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    restoreFuel() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.fuel = ship.maxFuel;
-            this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    removeAllCargo() {
-        const inventory = this.simulationService._getActiveInventory();
-        if (inventory) {
-            for (const goodId in inventory) {
-                inventory[goodId].quantity = 0;
-                inventory[goodId].avgCost = 0;
-            }
-            this.logger.warn('DebugService', 'All cargo removed from active ship.');
-            this.gameState.setState({});
-        }
-    }
-
-    fillWithCybernetics() {
-        const ship = this.simulationService._getActiveShip();
-        const inventory = this.simulationService._getActiveInventory();
-        if (ship && inventory) {
-            this.removeAllCargo();
-            const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
-            if (!inventory[COMMODITY_IDS.CYBERNETICS]) {
-                inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
-            }
-            inventory[COMMODITY_IDS.CYBERNETICS].quantity = space;
-            this.logger.warn('DebugService', `Filled cargo with ${space} Cybernetics.`);
-            this.gameState.setState({});
-        }
-    }
-
     grantAllItems() {
         const inventory = this.simulationService._getActiveInventory();
         if (!inventory) {
@@ -462,75 +382,84 @@ ${logHistory}
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
             skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
-            addCredits: { name: 'Add Credits', type: 'button', handler: () => {
-                this.gameState.player.credits += this.debugState.creditsToAdd;
-                this.simulationService.timeService._checkMilestones();
-                this.uiManager.render(this.gameState.getState());
-            }},
+            addCredits: {
+                name: 'Add Credits', type: 'button', handler: () => {
+                    this.gameState.player.credits += this.debugState.creditsToAdd;
+                    this.simulationService.timeService._checkMilestones();
+                    this.uiManager.render(this.gameState.getState());
+                }
+            },
             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
-            teleport: { name: 'Teleport', type: 'button', handler: () => {
-                if (this.debugState.selectedLocation) {
-                    this.gameState.currentLocationId = this.debugState.selectedLocation;
+            teleport: {
+                name: 'Teleport', type: 'button', handler: () => {
+                    if (this.debugState.selectedLocation) {
+                        this.gameState.currentLocationId = this.debugState.selectedLocation;
+                        this.gameState.setState({});
+                    }
+                }
+            },
+            unlockAll: {
+                name: 'Unlock All', type: 'button', handler: () => {
+                    this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
+                    this.gameState.player.revealedTier = 7;
+                    this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
                     this.gameState.setState({});
                 }
-            }},
-            unlockAll: { name: 'Unlock All', type: 'button', handler: () => {
-                this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
-                this.gameState.player.revealedTier = 7;
-                this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
-                this.gameState.setState({});
-            }},
-            grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
-                Object.keys(DB.SHIPS).forEach(shipId => {
-                    if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
-                    }
-                });
-                this.gameState.setState({});
-            }},
-            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
-            replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
-                this.simulationService.marketService.replenishMarketInventory();
-                this.gameState.setState({});
-            }},
-            triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
-                const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
-                if (dest) {
-                    this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+            },
+            grantAllShips: {
+                name: 'Grant All Ships', type: 'button', handler: () => {
+                    Object.keys(DB.SHIPS).forEach(shipId => {
+                        if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+                            this.simulationService.addShipToHangar(shipId);
+                        }
+                    });
+                    this.gameState.setState({});
                 }
-            }},
-            triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
-                const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
-                if (event) {
-                    this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
-                }
-            }},
-            triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
-                if (this.debugState.selectedMission) {
-                    if(this.gameState.missions.activeMissionId) {
-                        this.simulationService.missionService.abandonMission();
-                    }
-                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
-                }
-            }},
-            startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
-                const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
-                this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
-                    if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
-                });
-            }},
-            stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
-
-            // NEW & MOVED SHIP ACTIONS
-            fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
-            deductHull20: { name: 'Deduct 20 Hull', type: 'button', handler: () => this.deductHull(20) },
-            restoreHull: { name: 'Restore Hull', type: 'button', handler: () => this.restoreHull() },
-            destroyShip: { name: 'Destroy Current Ship', type: 'button', handler: () => this.destroyShip() },
-            deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
-            restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
-            removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
+            },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
-            fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
+            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
+            replenishStock: {
+                name: 'Replenish All Stock', type: 'button', handler: () => {
+                    this.simulationService.marketService.replenishMarketInventory();
+                    this.gameState.setState({});
+                }
+            },
+            fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
+            triggerRandomEvent: {
+                name: 'Trigger Random Event', type: 'button', handler: () => {
+                    const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
+                    if (dest) {
+                        this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                    }
+                }
+            },
+            triggerAgeEvent: {
+                name: 'Trigger Age Event', type: 'button', handler: () => {
+                    const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
+                    if (event) {
+                        this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
+                    }
+                }
+            },
+            triggerMission: {
+                name: 'Trigger Mission', type: 'button', handler: () => {
+                    if (this.debugState.selectedMission) {
+                        if(this.gameState.missions.activeMissionId) {
+                            this.simulationService.missionService.abandonMission();
+                        }
+                        this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
+                    }
+                }
+            },
+            startBot: {
+                name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
+                    const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
+                    this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
+                        if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
+                    });
+                }
+            },
+            stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() }
         };
     }
 
@@ -590,47 +519,6 @@ ${logHistory}
     /**
      * @private
      */
-    _makeDraggable() {
-        const elmnt = this.gui.domElement;
-        const titleEl = elmnt.querySelector('.title');
-        if (!titleEl) return;
-
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-        const dragMouseDown = (e) => {
-            e = e || window.event;
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            document.onmousemove = elementDrag;
-        };
-
-        const elementDrag = (e) => {
-            e = e || window.event;
-            e.preventDefault();
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-            // Remove transform so it doesn't interfere with dragging
-            elmnt.style.transform = `scale(0.75)`; 
-        };
-
-        const closeDragElement = () => {
-            document.onmouseup = null;
-            document.onmousemove = null;
-        };
-
-        titleEl.onmousedown = dragMouseDown;
-    }
-
-
-    /**
-     * @private
-     */
     buildGui() {
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
@@ -642,31 +530,22 @@ ${logHistory}
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
-
-        const shipFolder = this.gui.addFolder('Ship');
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
         this.debugState.selectedLocation = this.gameState.currentLocationId;
-        shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
-        shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
-        shipFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
-        shipFolder.add(this.actions.restoreHull, 'handler').name(this.actions.restoreHull.name);
-        shipFolder.add(this.actions.destroyShip, 'handler').name(this.actions.destroyShip.name);
-        shipFolder.add(this.actions.deductFuel20, 'handler').name(this.actions.deductFuel20.name);
-        shipFolder.add(this.actions.restoreFuel, 'handler').name(this.actions.restoreFuel.name);
-        shipFolder.add(this.actions.removeAllCargo, 'handler').name(this.actions.removeAllCargo.name);
-        shipFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
-        shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
-        shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
-        shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
-        
+        playerFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
+        playerFolder.add(this.actions.teleport, 'handler').name('Teleport');
+
         const worldFolder = this.gui.addFolder('World & Time');
         this.debugState.daysToAdvance = 7;
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
-        
+
         const economyFolder = this.gui.addFolder('Economy');
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
+        economyFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+        economyFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
+        economyFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});

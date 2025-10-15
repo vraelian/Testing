@@ -1,24 +1,18 @@
 /* css/debug.css */
 #debug-panel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.75);
-    transform-origin: top left;
-    width: 450px; /* Base width before scaling */
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 450px;
+    height: 100vh;
+    background-color: #1f2937;
+    padding: 1rem;
+    overflow-y: auto;
+    color: #e5e7eb;
     z-index: 1000;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    display: none; /* Hidden by default */
+    box-shadow: -10px 0 20px rgba(0,0,0,0.5);
+    display: none; /* Initially hidden */
 }
-
-#debug-panel.debug-visible {
-    display: block; /* Shown when class is applied */
-}
-
-#debug-panel .lil-gui .title {
-    cursor: move;
-}
-
 
 #debug-panel h2 {
     font-family: 'Orbitron', sans-serif;
@@ -149,11 +143,6 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.05);
-}
-
-#debug-panel .lil-gui.root {
-    background-color: #1f2937;
-    color: #e5e7eb;
 }
 
 #diagnostic-overlay p {
