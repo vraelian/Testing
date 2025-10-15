@@ -26,6 +26,7 @@ export class PlayerActionService {
         this.timeService = timeService;
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
+        this.isTransactionInProgress = false;
     }
 
     /**
@@ -139,43 +140,50 @@ export class PlayerActionService {
      * @returns {object|null} - The purchased ship object on success, otherwise null.
      */
     buyShip(shipId, event) {
-        const ship = DB.SHIPS[shipId];
-        if (!ship) {
-            this.logger.error('PlayerActionService', `buyShip called with invalid shipId: ${shipId}`);
-            return null;
-        }
-        if (this.gameState.player.credits < ship.price) {
-            this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
-            return null;
-        }
-        
-        this.gameState.player.credits -= ship.price;
-        this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
-        if (event) {
-            this.uiManager.createFloatingText(`-${formatCredits(ship.price, false)}`, event.clientX, event.clientY, '#f87171');
-        }
-        this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
-        this.simulationService.addShipToHangar(shipId);
+        if (this.isTransactionInProgress) return null;
+        this.isTransactionInProgress = true;
 
-        console.log("ACTION: PlayerActionService.buyShip is calling triggerEffect."); // DIAGNOSTIC LOG
-        if (['S', 'O'].includes(ship.class)) {
-            this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
-        } else {
-            this.uiManager.triggerEffect('systemSurge', { theme: 'silver', text: 'VESSEL ACQUIRED' });
-        }
-
-        if (this.gameState.tutorials.activeBatchId === 'intro_hangar') {
-            this.simulationService.setHangarShipyardMode('hangar');
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
-        }
-
-        this.gameState.setState({
-            uiState: {
-                ...this.gameState.uiState,
-                lastTransactionTimestamp: Date.now()
+        try {
+            const ship = DB.SHIPS[shipId];
+            if (!ship) {
+                this.logger.error('PlayerActionService', `buyShip called with invalid shipId: ${shipId}`);
+                return null;
             }
-        });
-        return ship;
+            if (this.gameState.player.credits < ship.price) {
+                this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
+                return null;
+            }
+            
+            this.gameState.player.credits -= ship.price;
+            this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
+            if (event) {
+                this.uiManager.createFloatingText(`-${formatCredits(ship.price, false)}`, event.clientX, event.clientY, '#f87171');
+            }
+            this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
+            this.simulationService.addShipToHangar(shipId);
+
+            console.log("ACTION: PlayerActionService.buyShip is calling triggerEffect."); // DIAGNOSTIC LOG
+            if (['S', 'O'].includes(ship.class)) {
+                this.uiManager.triggerEffect('systemSurge', { theme: 'red', text: 'TOP CLASS' });
+            } else {
+                this.uiManager.triggerEffect('systemSurge', { theme: 'silver', text: 'VESSEL ACQUIRED' });
+            }
+
+            if (this.gameState.tutorials.activeBatchId === 'intro_hangar') {
+                this.simulationService.setHangarShipyardMode('hangar');
+                this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
+            }
+
+            this.gameState.setState({
+                uiState: {
+                    ...this.gameState.uiState,
+                    lastTransactionTimestamp: Date.now()
+                }
+            });
+            return ship;
+        } finally {
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
+        }
     }
 
     /**
@@ -185,56 +193,63 @@ export class PlayerActionService {
      * @returns {number|false} - The sale price, or false if the sale is not allowed.
      */
     sellShip(shipId, event) {
-        const state = this.gameState.getState();
-        if (state.player.ownedShipIds.length <= 1) {
-            this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your last remaining ship.");
-            return false;
-        }
-        if (shipId === state.player.activeShipId) {
-            this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your active ship.");
-            return false;
-        }
-        if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-            this.uiManager.queueModal('event-modal', 'Cannot Sell Ship', 'This vessel\'s cargo hold is not empty.');
-            return false;
-        }
-
-        const ship = DB.SHIPS[shipId];
-        if (!ship) {
-            this.logger.error('PlayerActionService', `sellShip called with invalid shipId: ${shipId}`);
-            return false;
-        }
-        const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
-        this.gameState.player.credits += salePrice;
-        this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
-        if (event) {
-            this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
-        }
-        this.simulationService._logTransaction('ship', salePrice, `Sold ${ship.name}`);
-        
-        const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
-        this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
-        delete this.gameState.player.shipStates[shipId];
-        delete this.gameState.player.inventories[shipId];
-
-        let newActiveIndex = this.gameState.uiState.hangarActiveIndex;
-        if (shipIndex < newActiveIndex) {
-            newActiveIndex--;
-        }
-        if (newActiveIndex >= this.gameState.player.ownedShipIds.length) {
-            newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
-        }
-
-        this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
-        
-        this.gameState.setState({
-            uiState: {
-                ...this.gameState.uiState,
-                hangarActiveIndex: newActiveIndex,
-                lastTransactionTimestamp: Date.now()
+        if (this.isTransactionInProgress) return false;
+        this.isTransactionInProgress = true;
+    
+        try {
+            const state = this.gameState.getState();
+            if (state.player.ownedShipIds.length <= 1) {
+                this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your last remaining ship.");
+                return false;
             }
-        });
-        return salePrice;
+            if (shipId === state.player.activeShipId) {
+                this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your active ship.");
+                return false;
+            }
+            if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
+                this.uiManager.queueModal('event-modal', 'Cannot Sell Ship', 'This vessel\'s cargo hold is not empty.');
+                return false;
+            }
+
+            const ship = DB.SHIPS[shipId];
+            if (!ship) {
+                this.logger.error('PlayerActionService', `sellShip called with invalid shipId: ${shipId}`);
+                return false;
+            }
+            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            this.gameState.player.credits += salePrice;
+            this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
+            if (event) {
+                this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
+            }
+            this.simulationService._logTransaction('ship', salePrice, `Sold ${ship.name}`);
+            
+            const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
+            this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
+            delete this.gameState.player.shipStates[shipId];
+            delete this.gameState.player.inventories[shipId];
+
+            let newActiveIndex = this.gameState.uiState.hangarActiveIndex;
+            if (shipIndex < newActiveIndex) {
+                newActiveIndex--;
+            }
+            if (newActiveIndex >= this.gameState.player.ownedShipIds.length) {
+                newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
+            }
+
+            this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
+            
+            this.gameState.setState({
+                uiState: {
+                    ...this.gameState.uiState,
+                    hangarActiveIndex: newActiveIndex,
+                    lastTransactionTimestamp: Date.now()
+                }
+            });
+            return salePrice;
+        } finally {
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
+        }
     }
 
     /**
