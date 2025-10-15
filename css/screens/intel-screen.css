@@ -1,6 +1,5 @@
 /* css/screens/intel-screen.css */
 .intel-scroll-panel {
-    height: 75vh; /* Enforce a fixed height based on the viewport */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */

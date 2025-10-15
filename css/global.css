@@ -103,6 +103,8 @@ body {
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
     min-height: 0;
+    display: flex; /* ADDED: Use flexbox */
+    flex-direction: column; /* ADDED: Stack children vertically */
 }
 
 #main-content {
@@ -112,7 +114,7 @@ body {
 }
 
 .scroll-panel {
-    height: 75vh;
+    flex-grow: 1; /* MODIFIED: Allow panel to fill available space */
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;

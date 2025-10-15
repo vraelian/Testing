@@ -1,10 +1,12 @@
 /* css/screens/finance-screen.css */
 .finance-log-panel {
-    height: 50vh; /* Enforce a fixed height based on the viewport */
     overflow-y: auto; /* Allow vertical scrolling when content exceeds height */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     touch-action: pan-y; /* Allow vertical scrolling */
+    display: flex; /* ADDED: Use flexbox */
+    flex-direction: column; /* ADDED: Stack children vertically */
+    flex-grow: 1; /* ADDED: Allow this panel to grow */
 }
 .finance-log-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
@@ -18,6 +20,7 @@
     padding: 0.5rem;
     border-bottom: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
     font-size: 0.8rem;
+    flex-shrink: 0; /* ADDED: Prevent entries from shrinking */
 }
 
 /* NEW: Zebra-striping for better readability */
@@ -41,6 +44,9 @@
     font-family: 'Orbitron', sans-serif;
     font-weight: bold;
     color: var(--theme-text-color, #f0f0f0);
+    position: sticky; /* ADDED: Keep header visible on scroll */
+    top: 0; /* ADDED: Stick to the top of the container */
+    background: inherit; /* ADDED: Inherit the gradient background */
 }
 
 

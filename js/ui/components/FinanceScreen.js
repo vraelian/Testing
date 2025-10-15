@@ -75,12 +75,12 @@ export function renderFinanceScreen(gameState) {
        }).join('');
 
     return `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 h-full">
             <div class="md:col-span-1">
                 ${loanHtml}
             </div>
-            <div class="md:col-span-2">
-                 <h3 class="text-2xl font-orbitron text-center mb-4">Transaction Log</h3>
+            <div class="md:col-span-2 flex flex-col">
+                 <h3 class="text-2xl font-orbitron text-center mb-4 flex-shrink-0">Transaction Log</h3>
                  <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; background: ${theme.gradient}; --theme-text-color: ${theme.textColor};">
                     <div class="log-entry log-header" style="border-color: ${theme.borderColor};">
                        <span class="text-center">Day</span>

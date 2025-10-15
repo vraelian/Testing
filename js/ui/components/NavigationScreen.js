@@ -32,7 +32,7 @@ export function renderNavigationScreen(gameState) {
     }
     
     return `
-        <div class="scroll-panel p-1">
+        <div class="scroll-panel navigation-scroll-panel p-1">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             ${DB.MARKETS
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
