@@ -21,6 +21,15 @@ export function renderNavigationScreen(gameState) {
     // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
     const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
+
+    // Efficiently parse the enabled location ID from the query selector string.
+    let enabledLocationId = null;
+    if (enabledElementQuery) {
+        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
+        if (match && match[1]) {
+            enabledLocationId = match[1];
+        }
+    }
     
     return `
         <div class="scroll-panel p-1">
@@ -32,13 +41,7 @@ export function renderNavigationScreen(gameState) {
                     const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
 
                     // Determine if this card should be disabled due to a tutorial lock.
-                    let isDisabled = false;
-                    if (isNavLocked && enabledElementQuery) {
-                        // A workaround to check if this location card matches the tutorial's enabled element query.
-                        const tempDiv = document.createElement('div');
-                        tempDiv.innerHTML = `<div data-location-id="${location.id}"></div>`;
-                        isDisabled = !tempDiv.querySelector(enabledElementQuery);
-                    }
+                    const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
                     const disabledClass = isDisabled ? 'disabled-location' : '';
                     
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';

@@ -2,9 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
-## [29.30] - 2025-10-13
-- updated finance log
-- added auto-increment/decrement to market screen
+## [29.30] - 2025-10-14
+- fixed navigation screen performance bug
+- 
 
 ## [29.20] - 2025-10-13
 - added border glows to more modals
