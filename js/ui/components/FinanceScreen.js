@@ -79,15 +79,17 @@ export function renderFinanceScreen(gameState) {
             <div class="md:col-span-1">
                 ${loanHtml}
             </div>
-            <div class="md:col-span-2 flex flex-col">
+            <div class="md:col-span-2 flex flex-col min-h-0">
                  <h3 class="text-2xl font-orbitron text-center mb-4 flex-shrink-0">Transaction Log</h3>
                  <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; background: ${theme.gradient}; --theme-text-color: ${theme.textColor};">
-                    <div class="log-entry log-header" style="border-color: ${theme.borderColor};">
+                    <div class="log-header" style="border-color: ${theme.borderColor};">
                        <span class="text-center">Day</span>
                        <span>Description</span>
                        <span class="text-right">Amount</span>
                     </div>
-                    ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                    <div class="log-entries-container">
+                        ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                    </div>
                  </div>
             </div>
         </div>

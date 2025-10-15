@@ -136,6 +136,6 @@
 }
 
 .missions-scroll-panel {
-    height: 68vh; /* Specific height for this screen layout */
+    /* height: 68vh; */ /* REMOVED */
     touch-action: pan-y;
 }

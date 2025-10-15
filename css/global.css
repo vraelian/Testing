@@ -43,6 +43,8 @@ body {
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    position: fixed; /* ADDED */
+    width: 100%; /* ADDED */
 }
 
 *:focus {
@@ -103,8 +105,8 @@ body {
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
     min-height: 0;
-    display: flex; /* ADDED: Use flexbox */
-    flex-direction: column; /* ADDED: Stack children vertically */
+    display: flex; /* ADDED */
+    flex-direction: column; /* ADDED */
 }
 
 #main-content {

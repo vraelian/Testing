@@ -5,6 +5,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
 ## [29.30] - 2025-10-14
 - fixed navigation screen performance bug
 - Improved screen adaptability by removing fixed viewport heights.
+- fixed transaction log container sizing
+- limited transaction log limit to 25 entries
 
 ## [29.20] - 2025-10-13
 - added border glows to more modals

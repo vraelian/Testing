@@ -224,6 +224,10 @@ export class SimulationService {
             balance: this.gameState.player.credits,
             description: description
         });
+        // Enforce the history limit
+        while (this.gameState.player.financeLog.length > GAME_RULES.FINANCE_HISTORY_LENGTH) {
+            this.gameState.player.financeLog.shift();
+        }
     }
 
     _logConsolidatedTrade(goodName, quantity, transactionValue) {

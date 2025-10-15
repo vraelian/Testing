@@ -1,5 +1,6 @@
 /* css/screens/navigation-screen.css */
 .navigation-scroll-panel {
+    /* height: 75vh; */ /* REMOVED */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
@@ -23,7 +24,8 @@
     line-height: 1.25rem;
 }
 .location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
-.location-card.disabled-current { cursor: pointer; }
+.location-card.disabled-current { cursor: pointer;
+}
 
 .location-card.highlight-current {
     animation: themed-glow-animation 3s infinite;

@@ -1,62 +1,79 @@
 /* css/screens/finance-screen.css */
 .finance-log-panel {
-    overflow-y: auto; /* Allow vertical scrolling when content exceeds height */
+    display: flex; /* Use flexbox to manage children */
+    flex-direction: column; /* Stack header and log entries vertically */
+    flex-grow: 1; /* Allow this panel to grow and fill space */
+    min-height: 0; /* Crucial for allowing a child element to scroll within a flex parent */
+    overflow: hidden; /* Prevent this panel itself from scrolling */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    touch-action: pan-y; /* Allow vertical scrolling */
-    display: flex; /* ADDED: Use flexbox */
-    flex-direction: column; /* ADDED: Stack children vertically */
-    flex-grow: 1; /* ADDED: Allow this panel to grow */
 }
 .finance-log-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
 
-/* NEW: Style for individual log entries */
+/* Container for the actual log entries */
+.log-entries-container {
+    overflow-y: auto; /* This is the element that will scroll */
+    flex-grow: 1; /* It will take up all available space after the header */
+    touch-action: pan-y; /* Allow vertical scrolling */
+}
+
 .log-entry {
     display: grid;
     grid-template-columns: 0.5fr 2fr 1fr;
     gap: 0.5rem;
     padding: 0.5rem;
-    border-bottom: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    border-bottom: 1px solid rgba(var(--theme-border-color, #4a6a8a), 0.2);
     font-size: 0.8rem;
-    flex-shrink: 0; /* ADDED: Prevent entries from shrinking */
+    flex-shrink: 0;
 }
 
-/* NEW: Zebra-striping for better readability */
+/* Zebra-striping for better readability */
 .log-entry:nth-child(even) {
     background-color: rgba(0,0,0,0.2);
 }
 
-/* NEW: Column separators */
+/* Column separators */
 .log-entry > span:first-child {
-    border-right: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    border-right: 1px solid rgba(var(--theme-border-color, #4a6a8a), 0.2);
     padding-right: 0.5rem;
 }
 .log-entry > span:last-child {
-    border-left: 1px solid var(--theme-border-color, #4a6a8a) / 0.2;
+    border-left: 1px solid rgba(var(--theme-border-color, #4a6a8a), 0.2);
     padding-left: 0.5rem;
 }
 
 /* Header-specific styles */
 .log-header {
+    display: grid; /* Make header use grid just like entries */
+    grid-template-columns: 0.5fr 2fr 1fr; /* Match the columns */
+    gap: 0.5rem; /* Match the gap */
+    padding: 0.5rem; /* Match the padding */
     border-bottom-width: 2px;
     font-family: 'Orbitron', sans-serif;
     font-weight: bold;
     color: var(--theme-text-color, #f0f0f0);
-    position: sticky; /* ADDED: Keep header visible on scroll */
-    top: 0; /* ADDED: Stick to the top of the container */
-    background: inherit; /* ADDED: Inherit the gradient background */
+    position: sticky;
+    top: 0;
+    background: inherit;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
+/* Align header text to match entry alignment */
+.log-header > span:first-child {
+    border-right: 1px solid rgba(var(--theme-border-color, #4a6a8a), 0.2);
+    padding-right: 0.5rem;
+}
+.log-header > span:last-child {
+    border-left: 1px solid rgba(var(--theme-border-color, #4a6a8a), 0.2);
+    padding-left: 0.5rem;
+}
 
 @media (max-width: 768px) {
     /* Existing media query remains the same */
-    .log-entry, #finance-screen .grid-cols-4 {
+    .log-entry, .log-header {
         grid-template-columns: 0.5fr 2fr 1fr;
         font-size: 0.8rem;
-    }
-    #finance-screen .grid-cols-4 > span:nth-child(2) {
-        grid-column: span 1;
     }
 }
