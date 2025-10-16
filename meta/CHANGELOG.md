@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file.
 
+## [29.40] - 2025-10-16
+- reduced space below notch
+-
+
 ## [29.30] - 2025-10-15
 - fixed navigation screen performance bug
 - Improved screen adaptability by removing fixed viewport heights.
