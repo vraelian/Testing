@@ -279,6 +279,8 @@ COMPONENT-SPECIFIC STYLING
     padding-bottom: 0.5rem;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    display: flex;
+    justify-content: center;
 }
 
 #hangar-pagination-wrapper::-webkit-scrollbar {
@@ -291,7 +293,6 @@ COMPONENT-SPECIFIC STYLING
     align-items: center;
     gap: 0.9775rem;
     width: max-content;
-    margin: 0 auto;
     padding: 0 1rem;
 }
 
