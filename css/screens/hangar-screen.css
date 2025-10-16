@@ -52,6 +52,7 @@ COMPONENT-SPECIFIC STYLING
 
 #ship-terminal-container {
     margin-top: -0.9625rem;
+    position: relative; /* Make container a positioning context for pagers */
 }
 
 /* Carousel: Main container for ship cards */
@@ -79,6 +80,7 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     user-select: none;
+    padding-bottom: 3rem; /* Add padding to prevent content from hiding behind pagers */
 }
 
 /* Backgrounds & Theming */
@@ -271,12 +273,29 @@ COMPONENT-SPECIFIC STYLING
     text-shadow: 0 2px 3px rgba(0,0,0,0.6);
 }
 
-/* Pagination Dots */
+/* Pagination 'Pagers' */
 #hangar-pagination {
-    flex-shrink: 0; 
-    padding-bottom: 8px; 
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: 32px;
+    gap: 2.3rem; /* Increased space between pagers */
 }
-.pagination-dot.active { background-color: var(--theme-color-primary); box-shadow: 0 0 8px var(--theme-color-glow); }
+.pagination-pager {
+    width: 1.35rem; /* Thinner pagers */
+    height: 3rem; /* Longer pagers */
+    border-radius: 4px;
+    background-color: #4b5563;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    opacity: 0.75; /* Dim inactive pagers */
+}
+.pagination-pager.active {
+    opacity: 1;
+    background-color: var(--theme-border-color);
+    box-shadow: 0 0 8px var(--theme-border-color);
+}
 
 /* Spec Cards (Shipyard) */
 .spec-card {
