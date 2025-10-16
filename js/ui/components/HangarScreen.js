@@ -46,7 +46,7 @@ export function renderHangarScreen(gameState, simulationService) {
             </div>
 
             <div id="hangar-pagination" class="flex justify-center items-center p-2 flex-nowrap overflow-x-auto">
-                ${shipList.map((_, index) => `<div class="pagination-pager transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
+                ${shipList.map((_, index) => `<div class="pagination-dot transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
             </div>
         </div>
     `;
