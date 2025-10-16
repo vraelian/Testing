@@ -272,14 +272,27 @@ COMPONENT-SPECIFIC STYLING
 }
 
 /* Pagination Dots */
+#hangar-pagination-wrapper {
+    flex-shrink: 0;
+    overflow-x: auto;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#hangar-pagination-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
 #hangar-pagination {
-    position: absolute;
-    bottom: 1.50rem;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    pointer-events: none; /* Make container non-interactive */
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     gap: 0.9775rem;
+    width: max-content;
+    margin: 0 auto;
+    padding: 0 1rem;
 }
 
 .pagination-dot {

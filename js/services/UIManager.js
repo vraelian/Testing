@@ -301,20 +301,41 @@ export class UIManager {
      */
     _updateHangarScreen(gameState) {
         const { uiState } = gameState;
-        const carousel = this.cache.hangarScreen.querySelector('#hangar-carousel');
-        const paginationDots = this.cache.hangarScreen.querySelectorAll('.pagination-dot');
-        if (!carousel || !paginationDots) return;
-
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return;
+    
+        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
+        const paginationDots = hangarScreenEl.querySelectorAll('.pagination-dot');
+        if (!carousel || paginationDots.length === 0) return;
+    
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
-
+    
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
-
-        // Update pagination dots
+    
+        // Update pagination dots active state
         paginationDots.forEach((dot, index) => {
             dot.classList.toggle('active', index === activeIndex);
         });
+    
+        // Scroll the pagination container to center the active dot
+        const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
+        const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
+    
+        if (paginationWrapper && activeDot) {
+            const wrapperWidth = paginationWrapper.clientWidth;
+            const dotOffsetLeft = activeDot.offsetLeft;
+            const dotWidth = activeDot.offsetWidth;
+    
+            // Calculate the target scroll position to center the active dot
+            const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
+    
+            paginationWrapper.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
     }
 
     updateStickyBar(gameState) {

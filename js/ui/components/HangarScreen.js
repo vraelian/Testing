@@ -31,22 +31,26 @@ export function renderHangarScreen(gameState, simulationService) {
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
     return `
-        <div id="ship-terminal-container" class="flex flex-col h-full ${modeClass}">
-            <div class="toggle-container mx-auto my-1">
-                <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
-                    <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
-                    <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
+        <div class="flex flex-col h-full">
+            <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
+                <div class="toggle-container mx-auto my-1">
+                    <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
+                        <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
+                        <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="carousel-container flex-grow overflow-hidden relative">
-                <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
-                    ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                <div class="carousel-container flex-grow overflow-hidden relative">
+                    <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
+                        ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                    </div>
                 </div>
             </div>
-        </div>
-        <div id="hangar-pagination" class="flex justify-center items-center p-2 flex-nowrap overflow-x-auto">
-            ${shipList.map((_, index) => `<div class="pagination-dot transition-all duration-300 ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
+            <div id="hangar-pagination-wrapper">
+                <div id="hangar-pagination">
+                    ${shipList.map((_, index) => `<div class="pagination-dot ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
+                </div>
+            </div>
         </div>
     `;
 }
