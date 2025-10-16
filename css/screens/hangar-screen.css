@@ -79,6 +79,7 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     user-select: none;
+    padding-bottom: 4.5rem; /* New: Add space at the bottom for the absolute-positioned paginator */
 }
 
 /* Backgrounds & Theming */
@@ -273,6 +274,12 @@ COMPONENT-SPECIFIC STYLING
 
 /* Pagination Dots */
 #hangar-pagination-wrapper {
+    position: absolute;
+    bottom: 1.25rem; /* The 55% value, as a gap from the bottom of the screen */
+    left: 0;
+    right: 0;
+    z-index: 10; /* Ensure it's above the card content */
+
     flex-shrink: 0;
     overflow-x: auto;
     padding-top: 0.5rem;
@@ -304,6 +311,12 @@ COMPONENT-SPECIFIC STYLING
     transition: all 0.3s ease;
     cursor: pointer;
     pointer-events: auto; /* Make pagers interactive */
+    display: none; /* Hide all dots by default */
+}
+
+/* Only display the first 8 dots */
+.pagination-dot:nth-child(-n+8) {
+    display: block;
 }
 
 .pagination-dot.active { 
