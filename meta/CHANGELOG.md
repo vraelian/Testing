@@ -4,7 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [29.40] - 2025-10-16
 - reduced space below notch
--
+- overhauled shipyard pagination indicators
 
 ## [29.30] - 2025-10-15
 - fixed navigation screen performance bug
