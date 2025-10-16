@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Orbital Trading project will be documented in this file.
+All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
 ## [29.40] - 2025-10-16
 - reduced space below notch
