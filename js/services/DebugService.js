@@ -464,7 +464,12 @@ ${logHistory}
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits += this.debugState.creditsToAdd;
                 this.simulationService.timeService._checkMilestones();
-                this.uiManager.render(this.gameState.getState());
+                this.gameState.setState({});
+            }},
+            reduceCredits: { name: 'Reduce Credits', type: 'button', handler: () => {
+                this.gameState.player.credits -= this.debugState.creditsToReduce;
+                this.simulationService._checkGameOverConditions();
+                this.gameState.setState({});
             }},
             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
@@ -599,6 +604,11 @@ ${logHistory}
         this.debugState.creditsToAdd = 100000;
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
+
+        this.debugState.creditsToReduce = 100000;
+        playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
+        playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
+        
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');

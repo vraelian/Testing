@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [29.50] - 2025-10-17
+- added game over condition for zero credits
+
 ## [29.40] - 2025-10-16
 - reduced space below notch
 - overhauled shipyard pagination indicators

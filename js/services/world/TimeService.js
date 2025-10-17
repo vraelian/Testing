@@ -76,6 +76,9 @@ export class TimeService {
                 this.logger.info.system('Finance', this.gameState.day, 'INTEREST', `Charged ${formatCredits(interest)} interest on debt.`);
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
+
+            // Apply garnishment must be called daily
+            this._applyGarnishment();
         }
         
         this.logger.groupEnd();
@@ -126,10 +129,19 @@ export class TimeService {
     _applyGarnishment() {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
+            
+            // Garnishment only happens on the 30-day interval
+            if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) {
+                return;
+            }
+
             const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
                 this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
+                
+                // This is the single, non-performative place to check for game over
+                this.simulationService._checkGameOverConditions(); 
             }
 
             if (!player.seenGarnishmentWarning) {

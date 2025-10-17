@@ -159,12 +159,27 @@ export class SimulationService {
      * @private
      */
     _gameOver(message) {
+        if (this.gameState.isGameOver) return; // Prevent multiple game over triggers
         this.logger.info.state(this.gameState.day, 'GAME_OVER', message);
         this.gameState.setState({ isGameOver: true });
         this.uiManager.queueModal('event-modal', "Game Over", message, () => {
             localStorage.removeItem(SAVE_KEY);
             window.location.reload();
         }, { buttonText: 'Restart' });
+    }
+
+    /**
+     * Checks for any condition that would end the game, such as bankruptcy.
+     * This is intended to be called only by automated processes that can
+     * reduce credits without a prior "insufficient funds" check (e.g., garnishment, debug).
+     * @private
+     */
+    _checkGameOverConditions() {
+        // This is the performant check: it reads directly from the state
+        // object instead of creating an expensive deep copy with getState().
+        if (this.gameState.player.credits <= 0) {
+            this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
+        }
     }
 
     // --- HELPER & PRIVATE METHODS (SHARED) ---
