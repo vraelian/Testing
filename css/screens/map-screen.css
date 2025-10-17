@@ -3,7 +3,7 @@
     width: 100%;
     height: 100%;
     position: relative;
-    -webkit-overflow-scrolling: touch; 
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
 
     /* *** MODIFIED: Hide scrollbar *** */
@@ -12,7 +12,7 @@
 
 /* *** MODIFIED: Hide scrollbar for Webkit browsers *** */
 #map-container::-webkit-scrollbar {
-    display: none; 
+    display: none;
 }
 
 #map-svg {
@@ -20,6 +20,7 @@
     top: 0;
     left: 0;
     width: 100%;
+    /* height is set dynamically by initMap */
 }
 
 .sun {
@@ -33,33 +34,32 @@
 
 .leader-line {
     stroke: rgba(255, 255, 255, 0.2);
-    /* *** MODIFIED: Doubled thickness and added drop shadow *** */
     stroke-width: 2.5;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+    /* Removed drop-shadow */
 }
 
 .poi-group {
     cursor: pointer;
 }
 
-/* *** ADDED: Drop shadow for POI shapes *** */
+/* *** MODIFIED: Added stroke to POI shapes and removed filter *** */
 .poi-group circle,
 .poi-group path {
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+    stroke: #0c101d; /* Outline color */
+    stroke-width: 2px; /* Doubled stroke width */
+    /* filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); */ /* REMOVED */
 }
 
 .poi-label {
     font-family: 'Orbitron', sans-serif;
     fill: #d0d8e8;
     font-size: 0.9rem;
-    
-    /* *** MODIFIED: Replaced stroke with a drop shadow for depth *** */
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-    /* paint-order: stroke; */
-    /* stroke: #0c101d; */
-    /* stroke-width: 3px; */
-    /* stroke-linecap: butt; */
-    /* stroke-linejoin: miter; */
+    /* Removed drop shadow, reverted to stroke for contrast */
+    paint-order: stroke;
+    stroke: #0c101d;
+    stroke-width: 3px;
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
 }
 
 @keyframes map-modal-glow {

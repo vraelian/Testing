@@ -117,9 +117,9 @@ export class UIManager {
             launchModalContent: document.getElementById('launch-modal-content'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
-            
+
             mapDetailModal: document.getElementById('map-detail-modal'),
-            
+
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -128,7 +128,7 @@ export class UIManager {
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
             skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
             tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
-            
+
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
@@ -137,10 +137,10 @@ export class UIManager {
 
     render(gameState) {
         if (!gameState || !gameState.player) return;
-        
+
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
-        
+
         if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
             return;
         }
@@ -155,7 +155,7 @@ export class UIManager {
                 document.documentElement.style.removeProperty('--theme-border-color');
             }
         }
-        
+
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         this.updateStickyBar(gameState);
@@ -170,13 +170,13 @@ export class UIManager {
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
-    
+
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
                 <span class="credit-text">${formatCredits(player.credits)}</span>
             </div>`;
-    
+
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
@@ -185,14 +185,14 @@ export class UIManager {
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
-    
+
         let statusPodHtml = '';
         if (activeShipStatic && activeShipState && inventory) {
             const cargoUsed = calculateInventoryUsed(inventory);
             const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
             const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
             const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
-    
+
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
@@ -212,9 +212,9 @@ export class UIManager {
                     </div>
                 </div>`;
         }
-    
+
         const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
-    
+
         const subNavsHtml = Object.keys(this.navStructure).map(navId => {
             const screens = this.navStructure[navId].screens;
             const isActive = navId === activeNav;
@@ -231,7 +231,7 @@ export class UIManager {
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
-    
+
         this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
@@ -268,7 +268,7 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR: {
-                const needsFullRender = !previousState || 
+                const needsFullRender = !previousState ||
                     previousState.activeScreen !== SCREEN_IDS.HANGAR ||
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId ||
@@ -303,31 +303,31 @@ export class UIManager {
         const { uiState } = gameState;
         const hangarScreenEl = this.cache.hangarScreen;
         if (!hangarScreenEl) return;
-    
+
         const carousel = hangarScreenEl.querySelector('#hangar-carousel');
         if (!carousel) return;
 
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
-    
+
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
-    
+
         // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
-        
+
         // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
-    
+
         if (paginationWrapper && activeDot) {
             const wrapperWidth = paginationWrapper.clientWidth;
             const dotOffsetLeft = activeDot.offsetLeft;
             const dotWidth = activeDot.offsetWidth;
-    
+
             // Calculate the target scroll position to center the active dot
             const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
-    
+
             paginationWrapper.scrollTo({
                 left: scrollLeft,
                 behavior: 'smooth'
@@ -363,7 +363,7 @@ export class UIManager {
 
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const theme = location?.navTheme || { borderColor: '#7a9ac0' };
-        
+
         const VISIBLE_FULL_DOTS = 6;
         let dots = [];
 
@@ -414,13 +414,13 @@ export class UIManager {
                 return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
-        
+
         paginationContainer.innerHTML = dotsHtml;
     }
 
 
     updateStickyBar(gameState) {
-        this.cache.stickyBar.innerHTML = ''; 
+        this.cache.stickyBar.innerHTML = '';
         this.cache.topBarContainer.classList.remove('has-sticky-bar');
     }
 
@@ -471,7 +471,7 @@ export class UIManager {
             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
-            
+
             if (qtyInput) {
                 this.marketTransactionState[goodId] = {
                     quantity: qtyInput.value,
@@ -509,22 +509,22 @@ export class UIManager {
         }
         return Math.max(1, Math.round(price));
     }
-    
+
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-    
+
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         const basePrice = this.getItemPrice(state, goodId, true);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
-    
+
         // Guard against division by zero if market stock is depleted.
         if (marketStock <= 0) {
             return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
         }
-    
+
         const threshold = marketStock * 0.1;
         if (quantity <= threshold) {
             const totalPrice = basePrice * quantity;
@@ -536,10 +536,10 @@ export class UIManager {
             }
             return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
         }
-    
+
         const excessRatio = quantity / marketStock;
         let reduction = 0;
-    
+
         if (good.tier <= 2) {
             reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
         } else if (good.tier <= 5) {
@@ -547,7 +547,7 @@ export class UIManager {
         } else {
             reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
         }
-    
+
         const effectivePrice = basePrice * (1 - reduction);
         const totalPrice = Math.floor(effectivePrice * quantity);
         const totalCost = avgCost * quantity;
@@ -556,15 +556,15 @@ export class UIManager {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             netProfit += netProfit * totalBonus;
         }
-    
+
         return {
             totalPrice,
             effectivePricePerUnit: effectivePrice,
             netProfit
         };
     }
-    
-    
+
+
     updateMarketCardPrice(goodId, newPrice) {
         const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
         if (priceEl) {
@@ -581,32 +581,32 @@ export class UIManager {
         const effectivePriceEl = this.cache.marketScreen.querySelector(`#effective-price-display-${goodId}`);
         const indicatorEl = this.cache.marketScreen.querySelector(`#indicators-${goodId}`);
         const avgCostEl = this.cache.marketScreen.querySelector(`#avg-cost-${goodId}`);
-    
+
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
-    
+
         const state = this.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-    
+
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
-    
+
         if (mode === 'buy') {
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
             effectivePriceEl.textContent = '';
-            
+
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
-    
+
         } else { // 'sell' mode
             const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
-            
+
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
@@ -617,7 +617,7 @@ export class UIManager {
                 priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
-            
+
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
@@ -626,7 +626,7 @@ export class UIManager {
             });
         }
     }
-    
+
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
@@ -663,7 +663,7 @@ export class UIManager {
         if (descEl) {
             descEl.innerHTML = description;
             descEl.className = 'my-4 text-gray-300'; // Reset classes
-            
+
             if (modalId !== 'mission-modal') {
                 descEl.classList.add('mb-6', 'text-lg');
             }
@@ -672,7 +672,7 @@ export class UIManager {
             if (modalId === 'event-modal' || modalId === 'random-event-modal') {
                 descEl.classList.add('text-center');
             }
-            
+
             if (options.contentClass) {
                 // Allow `contentClass` to override the default alignment.
                 if (options.contentClass.includes('text-left') || options.contentClass.includes('text-right') || options.contentClass.includes('text-justify')) {
@@ -708,7 +708,7 @@ export class UIManager {
                 button.onclick = closeHandler;
             }
         }
-        
+
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }
@@ -767,24 +767,24 @@ export class UIManager {
             }, { once: true });
         }
     }
-    
+
     showProcessingAnimation(playerName, callback) {
         const modal = this.cache.processingModal;
         if (!modal) return;
-    
+
         const titleEl = modal.querySelector('#processing-title');
         const progressBar = modal.querySelector('#processing-progress-bar');
         const statusText = modal.querySelector('#processing-status');
-    
+
         titleEl.textContent = `Processing application for ${playerName}...`;
         progressBar.style.width = '0%';
         statusText.textContent = '';
         modal.classList.remove('hidden');
-    
+
         setTimeout(() => {
             progressBar.style.width = '100%';
         }, 100);
-    
+
         setTimeout(() => {
             statusText.textContent = 'Processing complete!';
             setTimeout(() => {
@@ -804,7 +804,7 @@ export class UIManager {
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 2450);
     }
-    
+
     showGraph(anchorEl, gameState) {
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
@@ -817,7 +817,7 @@ export class UIManager {
         } else if (action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
             tooltip.innerHTML = this._renderFinanceGraph(gameState);
         }
-        
+
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
     }
@@ -828,22 +828,22 @@ export class UIManager {
             this.activeGraphAnchor = null;
         }
     }
-    
+
     updateGraphTooltipPosition() {
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
-    
+
         const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
-    
+
         let topPos = rect.top - tooltipHeight - 10;
         let leftPos = rect.left;
-    
+
         if (topPos < 10) {
             topPos = rect.bottom + 10;
         }
-    
+
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
@@ -930,10 +930,10 @@ export class UIManager {
         svg += `</svg>`;
         return svg;
     }
-    
+
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
-        
+
         let processedText = step.text;
         if (processedText.includes('{shipName}')) {
             const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
@@ -945,7 +945,7 @@ export class UIManager {
         this.cache.tutorialToastText.innerHTML = processedText;
 
         toast.className = 'hidden fixed p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto';
-        
+
         let positionClass;
         if (this.isMobile) {
             positionClass = `tt-${step.position.mobile || 'mobile'}`;
@@ -979,7 +979,7 @@ export class UIManager {
         this.cache.tutorialToastContainer.classList.add('hidden');
         this.applyTutorialHighlight(null);
     }
-    
+
     applyTutorialHighlight(highlightConfig) {
         this.activeHighlightConfig = highlightConfig;
         this._renderHighlightsFromConfig(this.activeHighlightConfig);
@@ -1015,7 +1015,7 @@ export class UIManager {
             if (cue.type === 'Shape') {
                 content = `
                     <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
-                        ${cue.shapeType === 'Rectangle' ? 
+                        ${cue.shapeType === 'Rectangle' ?
                             `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
                         }
@@ -1053,7 +1053,7 @@ export class UIManager {
     showSkipTutorialModal(onConfirm) {
         const modal = this.cache.skipTutorialModal;
         modal.classList.remove('hidden');
-        
+
         const confirmHandler = () => {
             onConfirm();
             this.hideModal('skip-tutorial-modal');
@@ -1101,7 +1101,7 @@ export class UIManager {
         const { player, tutorials } = gameState;
         const shipStatic = DB.SHIPS[shipId];
         let modalContentHtml;
-    
+
         if (context === 'shipyard') {
             const canAfford = player.credits >= shipStatic.price;
             const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
@@ -1148,14 +1148,14 @@ export class UIManager {
                     </div>
                 </div>`;
         }
-    
+
         const modal = this.cache.shipDetailModal;
         const modalContent = modal.querySelector('#ship-detail-content');
         modalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }
-    
+
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
@@ -1176,17 +1176,17 @@ export class UIManager {
                     <h3 class="font-orbitron">${location.name}</h3>
                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
-    
-                <div class="flex-grow flex items-center justify-center"> 
+
+                <div class="flex-grow flex items-center justify-center">
                    <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
-    
-                <div class="travel-info-text"> 
+
+                <div class="travel-info-text">
                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
             </div>`;
-    
+
         const modal = this.cache.launchModal;
         this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
@@ -1201,7 +1201,7 @@ export class UIManager {
                 });
             }
         });
-    
+
         // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
@@ -1211,7 +1211,7 @@ export class UIManager {
         };
         modal.addEventListener('click', closeHandler);
     }
-    
+
     showCargoDetailModal(gameState, goodId) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
@@ -1231,7 +1231,7 @@ export class UIManager {
         const contentEl = stickyBarEl.querySelector('.sticky-content');
         const objectiveTextEl = this.cache.stickyObjectiveText;
         const objectiveProgressEl = this.cache.stickyObjectiveProgress;
-    
+
         if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
@@ -1239,20 +1239,20 @@ export class UIManager {
                 return;
             }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
-    
+
             const objective = mission.objectives[0];
             const current = progress.objectives[objective.goodId]?.current ?? 0;
             const target = objective.quantity;
             const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
             const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
-    
+
             objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
-    
+
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
             let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
-    
+
             stickyBarEl.style.display = 'block';
         } else {
             stickyBarEl.style.display = 'none';
@@ -1262,13 +1262,13 @@ export class UIManager {
     showMissionModal(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
-    
+
         const { missions, currentLocationId } = this.lastKnownState;
         const { activeMissionId, activeMissionObjectivesMet } = missions;
 
         const isActive = activeMissionId === missionId;
         const canComplete = isActive && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId;
-        
+
         if (canComplete) {
             this._showMissionCompletionModal(mission);
         } else {
@@ -1298,7 +1298,7 @@ export class UIManager {
                 const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>Deliver ${obj.quantity}x ${DB.COMMODITIES.find(c => c.id === obj.goodId).name}</li>`).join('') + '</ul>';
                 objectivesEl.innerHTML = objectivesHtml;
                 objectivesEl.style.display = 'block';
-                
+
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     const rewardsHtml = mission.rewards.map(r => {
@@ -1311,12 +1311,12 @@ export class UIManager {
                     rewardsEl.innerHTML = '';
                     rewardsEl.style.display = 'none';
                 }
-                
+
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
-                if (isActive) { 
+                if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
-                } else { 
+                } else {
                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
                 }
             }
@@ -1338,7 +1338,7 @@ export class UIManager {
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
                 modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
                 modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
-                
+
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 objectivesEl.style.display = 'none';
 
@@ -1371,7 +1371,7 @@ export class UIManager {
             }, 700);
         }
     }
-    
+
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
@@ -1395,10 +1395,10 @@ export class UIManager {
 
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
-    
+
         // Set height immediately on show
         this._setAppHeight();
-    
+
         // Set height again on the next animation frame to catch the final, stable value
         requestAnimationFrame(() => {
             this._setAppHeight();
@@ -1413,7 +1413,7 @@ export class UIManager {
         const modalContent = modal.querySelector('.modal-content');
         const contentContainer = modal.querySelector('#map-modal-content-container');
         const theme = location.navTheme;
-        
+
         // Apply theme styles
         modalContent.style.background = theme.gradient;
         modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
@@ -1438,11 +1438,11 @@ export class UIManager {
                 }
             }
         }
-        
-        const renderTags = (tagArray) => tagArray.map(tag => 
+
+        const renderTags = (tagArray) => tagArray.map(tag =>
             `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
         ).join('');
-        
+
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -1471,7 +1471,7 @@ export class UIManager {
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
         modal.classList.remove('is-glowing');
-        
+
         // Use requestAnimationFrame to ensure the browser has rendered the modal
         // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
@@ -1479,19 +1479,32 @@ export class UIManager {
             modal.classList.add('is-glowing');
         });
 
+        // *** MODIFIED: Combined backdrop and content click listeners ***
         const closeHandler = (e) => {
-            if (!e.target.closest('.modal-content') || e.target.closest('[data-action="close-map-modal"]')) {
+            // Close if clicking the backdrop OR the content area
+            if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
                 this.hideMapDetailModal();
-                modal.removeEventListener('click', closeHandler);
+                modal.removeEventListener('click', closeHandler); // Ensure listener is removed
             }
         };
-        modal.addEventListener('click', closeHandler);
+        // Add the listener *after* the modal is made visible
+        requestAnimationFrame(() => {
+             modal.addEventListener('click', closeHandler);
+        });
     }
 
     hideMapDetailModal() {
         const modal = this.cache.mapDetailModal;
         if (modal) {
             modal.classList.remove('is-glowing');
+            // Remove the specific click listener if it exists
+            // This is slightly less clean than adding it with .once, but necessary
+            // if we need to manually remove it elsewhere in the future.
+            const existingHandler = modal.__mapDetailCloseHandler; // Assume we store it if needed
+            if(existingHandler) {
+                modal.removeEventListener('click', existingHandler);
+                delete modal.__mapDetailCloseHandler;
+            }
         }
         this.hideModal('map-detail-modal');
     }

@@ -21,9 +21,21 @@ export function renderMapScreen() {
 export function initMap(uiManager) {
     const container = d3.select("#map-container");
     if (!container.node() || !container.select("svg").empty()) {
+        console.warn("Map container not found or map already initialized.");
         return;
     }
     
+    // Check if clientWidth is available, otherwise wait briefly
+    let containerWidth = container.node().clientWidth;
+    if (containerWidth <= 0) {
+        console.warn("Map container width not available yet. Retrying initialization shortly.");
+        // If width isn't ready (e.g., due to CSS loading or layout shifts),
+        // try again after a short delay. Avoid infinite loops.
+        setTimeout(() => initMap(uiManager), 100); 
+        return;
+    }
+
+
     const svg = container.append("svg")
         .attr("id", "map-svg")
         .attr("width", "100%"); 
@@ -92,7 +104,7 @@ export function initMap(uiManager) {
         .attr("x2", "50%")
         .attr("y2", totalHeight);
 
-    const centerX = container.node().clientWidth / 2;
+    const centerX = containerWidth / 2;
 
     const poiGroups = svg.selectAll(".poi-group")
         .data(allPoiData)
@@ -101,9 +113,23 @@ export function initMap(uiManager) {
         .attr("class", "poi-group")
         .attr("data-location-id", d => d.id)
         .on("click", (event, d) => {
-            uiManager.showMapDetailModal(d.id);
+             // Check if the click was directly on the POI shape or its label
+            const targetElement = event.target;
+            const groupElement = targetElement.closest('.poi-group');
+            if (groupElement && (targetElement.tagName === 'circle' || targetElement.tagName === 'path' || targetElement.tagName === 'text')) {
+                uiManager.showMapDetailModal(d.id);
+            }
         });
 
+    // *** MODIFIED: Draw leader lines FIRST ***
+    poiGroups.append("line")
+        .attr("class", "leader-line")
+        .attr("x1", "50%")
+        .attr("y1", d => yPositions.get(d.id))
+        .attr("x2", (d, i) => centerX + (i % 2 === 0 ? -50 : 50))
+        .attr("y2", d => yPositions.get(d.id));
+
+    // *** MODIFIED: Draw POI shapes SECOND ***
     poiGroups.filter(d => d.id !== LOCATION_IDS.BELT)
         .append("circle")
         .attr("cx", "50%")
@@ -111,6 +137,7 @@ export function initMap(uiManager) {
         .attr("r", d => d.finalRadius)
         .attr("fill", d => d.navTheme.borderColor);
 
+    // *** MODIFIED: Draw Belt shape SECOND ***
     const beltGroup = poiGroups.filter(d => d.id === LOCATION_IDS.BELT);
     if (!beltGroup.empty()) {
         const beltRadius = beltGroup.datum().finalRadius;
@@ -120,13 +147,7 @@ export function initMap(uiManager) {
             .attr("fill", d => d.navTheme.borderColor);
     }
         
-    poiGroups.append("line")
-        .attr("class", "leader-line")
-        .attr("x1", "50%")
-        .attr("y1", d => yPositions.get(d.id))
-        .attr("x2", (d, i) => centerX + (i % 2 === 0 ? -50 : 50))
-        .attr("y2", d => yPositions.get(d.id));
-
+    // *** MODIFIED: Draw labels THIRD ***
     poiGroups.append("text")
         .attr("class", "poi-label")
         .attr("x", (d, i) => centerX + (i % 2 === 0 ? -56 : 56  ))
