@@ -30,6 +30,7 @@ export function renderHangarScreen(gameState, simulationService) {
     // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
+    // NOTE: The pagination dots are now rendered dynamically by the UIManager._updateHangarScreen method.
     return `
         <div class="flex flex-col h-full">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
@@ -48,7 +49,7 @@ export function renderHangarScreen(gameState, simulationService) {
             </div>
             <div id="hangar-pagination-wrapper">
                 <div id="hangar-pagination">
-                    ${shipList.map((_, index) => `<div class="pagination-dot ${index === displayIndex ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${index}"></div>`).join('')}
+                    {/* This will be populated by UIManager._renderHangarPagination */}
                 </div>
             </div>
         </div>

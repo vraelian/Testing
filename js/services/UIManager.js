@@ -305,20 +305,17 @@ export class UIManager {
         if (!hangarScreenEl) return;
     
         const carousel = hangarScreenEl.querySelector('#hangar-carousel');
-        const paginationDots = hangarScreenEl.querySelectorAll('.pagination-dot');
-        if (!carousel || paginationDots.length === 0) return;
-    
+        if (!carousel) return;
+
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
     
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
     
-        // Update pagination dots active state
-        paginationDots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === activeIndex);
-        });
-    
+        // RENDER VIRTUAL PAGINATION
+        this._renderHangarPagination(gameState);
+        
         // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
@@ -337,6 +334,81 @@ export class UIManager {
             });
         }
     }
+
+    /**
+     * Renders the virtualized pagination for the hangar/shipyard screen.
+     * It shows a maximum of 6 full dots and up to 2 half-dots as indicators for more items.
+     * @param {object} gameState The current game state.
+     * @private
+     */
+    _renderHangarPagination(gameState) {
+        const { uiState, player } = gameState;
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return;
+
+        const paginationContainer = hangarScreenEl.querySelector('#hangar-pagination');
+        if (!paginationContainer) return;
+
+        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+        const shipList = isHangarMode ? player.ownedShipIds : this.simulationService._getShipyardInventory().map(([id]) => id);
+        const totalItems = shipList.length;
+        if (totalItems === 0) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+        
+        const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+        
+        const VISIBLE_FULL_DOTS = 6;
+        let dots = [];
+
+        if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
+            for (let i = 0; i < totalItems; i++) {
+                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+            }
+        } else {
+            let start, end;
+            const isNearStart = activeIndex < VISIBLE_FULL_DOTS - 1;
+            const isNearEnd = activeIndex > totalItems - VISIBLE_FULL_DOTS;
+
+            if (isNearStart) {
+                start = 0;
+                end = VISIBLE_FULL_DOTS;
+            } else if (isNearEnd) {
+                start = totalItems - VISIBLE_FULL_DOTS;
+                end = totalItems;
+            } else {
+                start = activeIndex - Math.floor(VISIBLE_FULL_DOTS / 2) + 1;
+                end = activeIndex + Math.ceil(VISIBLE_FULL_DOTS / 2);
+            }
+
+            // Add previous indicator if needed
+            if (start > 0) {
+                dots.push({ isHalf: true, jump: 'prev' });
+            }
+
+            // Add the main window of full dots
+            for (let i = start; i < end; i++) {
+                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+            }
+
+            // Add next indicator if needed
+            if (end < totalItems) {
+                dots.push({ isHalf: true, jump: 'next' });
+            }
+        }
+
+        const dotsHtml = dots.map(dot => {
+            if (dot.isHalf) {
+                return `<div class="pagination-dot half" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
+            } else {
+                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
+            }
+        }).join('');
+        
+        paginationContainer.innerHTML = dotsHtml;
+    }
+
 
     updateStickyBar(gameState) {
         this.cache.stickyBar.innerHTML = ''; 

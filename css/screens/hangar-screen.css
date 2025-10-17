@@ -311,12 +311,7 @@ COMPONENT-SPECIFIC STYLING
     transition: all 0.3s ease;
     cursor: pointer;
     pointer-events: auto; /* Make pagers interactive */
-    display: none; /* Hide all dots by default */
-}
-
-/* Only display the first 8 dots */
-.pagination-dot:nth-child(-n+8) {
-    display: block;
+    display: block; /* REMOVED: :nth-child selector */
 }
 
 .pagination-dot.active { 
@@ -324,6 +319,11 @@ COMPONENT-SPECIFIC STYLING
     box-shadow: 0 0 8px var(--theme-color-glow); 
 }
 
+/* NEW: Half-sized pagination dot for "more" indicators */
+.pagination-dot.half {
+    width: 0.9rem; /* Half the original width */
+    opacity: 0.6;
+}
 
 /* Spec Cards (Shipyard) */
 .spec-card {
