@@ -342,7 +342,7 @@ export class UIManager {
      * @private
      */
     _renderHangarPagination(gameState) {
-        const { uiState, player } = gameState;
+        const { uiState, player, currentLocationId } = gameState;
         const hangarScreenEl = this.cache.hangarScreen;
         if (!hangarScreenEl) return;
 
@@ -352,12 +352,17 @@ export class UIManager {
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const shipList = isHangarMode ? player.ownedShipIds : this.simulationService._getShipyardInventory().map(([id]) => id);
         const totalItems = shipList.length;
-        if (totalItems === 0) {
+
+        // Hide pagination if there is only one or zero ships.
+        if (totalItems <= 1) {
             paginationContainer.innerHTML = '';
             return;
         }
-        
+
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+
+        const location = DB.MARKETS.find(l => l.id === currentLocationId);
+        const theme = location?.navTheme || { borderColor: '#7a9ac0' };
         
         const VISIBLE_FULL_DOTS = 6;
         let dots = [];
@@ -399,10 +404,14 @@ export class UIManager {
         }
 
         const dotsHtml = dots.map(dot => {
+            const style = `
+                --theme-color-primary: ${theme.borderColor};
+                --theme-glow-color: ${theme.borderColor};
+            `;
             if (dot.isHalf) {
-                return `<div class="pagination-dot half" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
+                return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
-                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
+                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
         

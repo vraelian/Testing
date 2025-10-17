@@ -79,7 +79,7 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     user-select: none;
-    padding-bottom: 4.5rem; /* New: Add space at the bottom for the absolute-positioned paginator */
+    padding-bottom: 4.0rem; /* New: Add space at the bottom for the absolute-positioned paginator */
 }
 
 /* Backgrounds & Theming */
@@ -307,22 +307,23 @@ COMPONENT-SPECIFIC STYLING
     width: 1.8rem;
     height: 2.25rem;
     border-radius: 4px;
-    background-color: #4b5563;
+    background-color: var(--theme-color-primary, #4b5563);
+    opacity: 0.3;
     transition: all 0.3s ease;
     cursor: pointer;
     pointer-events: auto; /* Make pagers interactive */
-    display: block; /* REMOVED: :nth-child selector */
+    display: block; 
 }
 
 .pagination-dot.active { 
-    background-color: var(--theme-color-primary); 
-    box-shadow: 0 0 8px var(--theme-color-glow); 
+    background-color: var(--theme-color-primary, #fde047);
+    box-shadow: 0 0 8px var(--theme-glow-color, #fef08a);
+    opacity: 1.0;
 }
 
-/* NEW: Half-sized pagination dot for "more" indicators */
 .pagination-dot.half {
     width: 0.9rem; /* Half the original width */
-    opacity: 0.6;
+    opacity: 0.2;
 }
 
 /* Spec Cards (Shipyard) */

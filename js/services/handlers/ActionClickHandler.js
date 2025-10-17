@@ -67,12 +67,28 @@ export class ActionClickHandler {
                 }
                 break;
             case ACTION_IDS.SET_HANGAR_PAGE: {
-                const newIndex = parseInt(dataset.index, 10);
                 const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
+                const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
+                const shipList = isHangarMode ? state.player.ownedShipIds : this.simulationService._getShipyardInventory();
+                const totalItems = shipList.length;
+
+                let newIndex;
+                const JUMP_DISTANCE = 5; // How many pages to jump with half-dots
+
+                if (dataset.jumpDirection) {
+                    if (dataset.jumpDirection === 'next') {
+                        newIndex = Math.min(totalItems - 1, currentIndex + JUMP_DISTANCE);
+                    } else { // 'prev'
+                        newIndex = Math.max(0, currentIndex - JUMP_DISTANCE);
+                    }
+                } else {
+                    newIndex = parseInt(dataset.index, 10);
+                }
+
+                if (isNaN(newIndex)) return;
 
                 const carousel = document.getElementById('hangar-carousel');
                 if (carousel) {
-                    const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
                     const pagesToSkip = Math.abs(newIndex - currentIndex);
                     const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
                     carousel.style.transitionDuration = `${duration}s`;
