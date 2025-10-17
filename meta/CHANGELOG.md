@@ -4,9 +4,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [29.50] - 2025-10-17
 - added game over condition for zero credits
+- removed tap-hold link preview on sub-navigation
 
 ## [29.40] - 2025-10-16
-- reduced space below notch
+- reduced space below iphone camera notch
 - overhauled shipyard pagination indicators
 
 ## [29.30] - 2025-10-15

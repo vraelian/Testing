@@ -100,6 +100,7 @@ BULKHEAD NAVIGATION STYLES
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none; /* Add this line to disable tap-hold menu on iOS */
 }
 
 /* Active Sub-Nav Indicator */
