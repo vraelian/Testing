@@ -11,7 +11,7 @@ import { LOCATION_IDS } from '../../data/constants.js';
  * @returns {string} The HTML content for the Map screen container.
  */
 export function renderMapScreen() {
-    return `<div id="map-container" class="w-full h-full"></div>`;
+    return `<div id="map-container" class="w-full h-full overflow-y-auto"></div>`;
 }
 
 /**
@@ -23,11 +23,10 @@ export function initMap(uiManager) {
     if (!container.node() || !container.select("svg").empty()) {
         return;
     }
-
+    
     const svg = container.append("svg")
         .attr("id", "map-svg")
-        .attr("width", "100%")
-        .attr("height", "100%");
+        .attr("width", "100%"); 
 
     const defs = svg.append("defs");
     const radialGradient = defs.append("radialGradient")
@@ -41,13 +40,6 @@ export function initMap(uiManager) {
         .attr("cy", -195)
         .attr("r", 225)
         .attr("fill", "url(#sun-gradient)");
-
-    svg.append("line")
-        .attr("class", "central-axis")
-        .attr("x1", "50%")
-        .attr("y1", 0)
-        .attr("x2", "50%")
-        .attr("y2", "100%");
 
     const sizeModifiers = {
         [LOCATION_IDS.VENUS]: 1.035,
@@ -67,7 +59,7 @@ export function initMap(uiManager) {
     const allPoiData = DB.MARKETS
         .filter(loc => uiManager.lastKnownState.player.unlockedLocationIds.includes(loc.id))
         .map(loc => {
-            const baseRadius = loc.parent ? 8 : 12;
+            const baseRadius = loc.parent ? 12 : 16; 
             const finalRadius = baseRadius * (sizeModifiers[loc.id] || 1);
             let effectiveDistance = loc.distance;
 
@@ -81,11 +73,24 @@ export function initMap(uiManager) {
         })
         .sort((a, b) => a.effectiveDistance - b.effectiveDistance);
 
-    // Create a point scale for equidistant vertical spacing with padding
-    const y = d3.scalePoint()
-        .domain(allPoiData.map(d => d.id))
-        .range([120, container.node().clientHeight - 80])
-        .padding(0.1); // Adds 10% spacing between points
+    const verticalSpacing = 130; // pixels
+    const topPadding = 110;
+    const bottomPadding = 30;
+
+    const totalHeight = topPadding + ((allPoiData.length - 1) * verticalSpacing) + bottomPadding;
+    svg.attr("height", totalHeight);
+
+    const yPositions = new Map();
+    allPoiData.forEach((d, i) => {
+        yPositions.set(d.id, topPadding + (i * verticalSpacing));
+    });
+
+    svg.append("line")
+        .attr("class", "central-axis")
+        .attr("x1", "50%")
+        .attr("y1", 0)
+        .attr("x2", "50%")
+        .attr("y2", totalHeight);
 
     const centerX = container.node().clientWidth / 2;
 
@@ -102,7 +107,7 @@ export function initMap(uiManager) {
     poiGroups.filter(d => d.id !== LOCATION_IDS.BELT)
         .append("circle")
         .attr("cx", "50%")
-        .attr("cy", d => y(d.id))
+        .attr("cy", d => yPositions.get(d.id))
         .attr("r", d => d.finalRadius)
         .attr("fill", d => d.navTheme.borderColor);
 
@@ -111,21 +116,21 @@ export function initMap(uiManager) {
         const beltRadius = beltGroup.datum().finalRadius;
         beltGroup.append("path")
             .attr("d", `M 0,${-beltRadius} L ${beltRadius},0 L 0,${beltRadius} L ${-beltRadius},0 Z`)
-            .attr("transform", d => `translate(${centerX}, ${y(d.id)})`)
+            .attr("transform", d => `translate(${centerX}, ${yPositions.get(d.id)})`)
             .attr("fill", d => d.navTheme.borderColor);
     }
         
     poiGroups.append("line")
         .attr("class", "leader-line")
         .attr("x1", "50%")
-        .attr("y1", d => y(d.id))
-        .attr("x2", (d, i) => centerX + (i % 2 === 0 ? -46 : 46))
-        .attr("y2", d => y(d.id));
+        .attr("y1", d => yPositions.get(d.id))
+        .attr("x2", (d, i) => centerX + (i % 2 === 0 ? -50 : 50))
+        .attr("y2", d => yPositions.get(d.id));
 
     poiGroups.append("text")
         .attr("class", "poi-label")
-        .attr("x", (d, i) => centerX + (i % 2 === 0 ? -52 : 52))
-        .attr("y", d => y(d.id))
+        .attr("x", (d, i) => centerX + (i % 2 === 0 ? -56 : 56  ))
+        .attr("y", d => yPositions.get(d.id))
         .attr("text-anchor", (d, i) => i % 2 === 0 ? "end" : "start")
         .attr("dominant-baseline", "middle")
         .text(d => d.name);
