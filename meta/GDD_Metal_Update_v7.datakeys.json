@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "fileName": "js/services/GameState.js",
+      "additions": [
+        { "parentObject": "player", "property": "metalScrap", "dataType": "Number", "default": 0 },
+        { "parentObject": "player.flags", "property": "hasSeenScrapTutorial", "dataType": "Boolean", "default": false },
+        { "parentObject": "uiState", "property": "marketSubScreen", "dataType": "String", "default": "commodities" }
+      ],
+      "notes": "Ensure all new 'player.*' properties are added to saveGame() and loadGame()."
+    },
+    {
+      "fileName": "js/data/database.js",
+      "additions": [
+        { "parentObject": "DB", "property": "MATERIALS", "dataType": "Object", "default": {} },
+        { "parentObject": "DB.MATERIALS", "property": "'metal-scrap'", "dataType": "Object", "default": { "id": "metal-scrap", "name": "Metal Scrap", "description": "...", "sellValue": 1500 } }
+      ]
+    },
+    {
+      "fileName": "js/data/constants.js",
+      "additions": [
+        { "parentObject": "CONSTANTS", "property": "SCRAP_PER_HULL_POINT", "dataType": "Number", "default": 0.02 }
+      ]
+    }
+  ]
+}
