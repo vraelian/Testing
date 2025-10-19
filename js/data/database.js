@@ -439,6 +439,22 @@ export const DB = {
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
+        // --- [[START]] Added for Metal Update V1 ---
+        {
+            id: COMMODITY_IDS.METAL_SCRAP,
+            name: 'Metal Scrap',
+            tier: 0,
+            basePriceRange: [5, 25],
+            volatility: 0.05,
+            canonicalAvailability: [100, 300],
+            styleClass: 'item-style-0',
+            lore: 'Salvaged hull plating and structural components. The raw material for basic repairs and fabrication.',
+            cat: 'RAW',
+            symbol: 'SCRP',
+            isRefinable: true,
+            isNonStandard: true
+        },
+        // --- [[END]] Added for Metal Update V1 ---
         { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [15, 80], volatility: 0.01, canonicalAvailability: [80, 150], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', cat: 'RAW', symbol: 'H2O' },
         { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [100, 280], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
         { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [850, 2400], volatility: 0.025, canonicalAvailability: [40, 70], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
@@ -536,7 +552,7 @@ export const DB = {
              id: "mission_license_t5", name: "Governor's Contract", type: "LICENSE_GRANT", host: "STATION", isRepeatable: false, isAbandonable: false, description: "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 5 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
         },
         'mission_license_t7': {
-             id: "mission_license_t7", name: "Legendary Run", type: "LICENSE_GRANT", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Your name is spoken in the farthest corners of the system. Only a legend of your stature may be granted the right to trade the most advanced technologies known.", prerequisites: [{ "type": "revealed_tier", "tier": 7 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
+             id: "mission_license_t7", name: "Legendary Run", type: "LICENSE_GRANT", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Your name is spoken in the farthest corners of the system. Only a legend of your stature may be granted the right to trade the most advanced technologies known.", prerequisites: [{ "type": "reveALED_TIER", "tier": 7 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
         }
     },
 

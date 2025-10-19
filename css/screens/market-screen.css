@@ -242,6 +242,13 @@
 
 
 /* --- [[START]] COMMODITY CARD STYLES --- */
+.item-style-0 {
+    border-color: #78350f; /* amber-800 */
+    --market-card-gradient-color1: #f59e0b; /* amber-500 */
+    --market-card-gradient-color2: #92400e; /* amber-700 */
+    background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
+    color: #fffbeb;
+}
 .item-style-1 {
     border-color: #60a5fa;
     --market-card-gradient-color1: #93c5fd;
@@ -551,15 +558,107 @@
 }
 /* --- [[END]] SOLID STATE TRANSACTION BUTTONS --- */
 
-.market-scroll-panel {
-    /* height: 75vh; */ /* REMOVED */
+
+/* --- [[START]] Modified for Metal Update V1 --- */
+
+/* Pager Container (copied from hangar-screen.css) */
+#market-pager-container {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: var(--color-bg-tertiary); /* Matches sub-nav bar */
+    border-bottom: 1px solid var(--color-border-primary);
+    box-shadow: var(--shadow-md);
+    z-index: var(--z-sticky-bar); /* Ensure it's above content */
+    width: 100%;
+}
+
+#market-pager-container .btn {
+    flex: 1;
+    max-width: 200px;
+    border-radius: 0;
+    border: 1px solid var(--color-border-primary);
+    background-color: var(--color-bg-interactive);
+    color: var(--color-text-secondary);
+}
+
+#market-pager-container .btn:first-child {
+    border-top-left-radius: var(--border-radius-md);
+    border-bottom-left-radius: var(--border-radius-md);
+    border-right: none;
+}
+
+#market-pager-container .btn:last-child {
+    border-top-right-radius: var(--border-radius-md);
+    border-bottom-right-radius: var(--border-radius-md);
+    border-left: none;
+}
+
+#market-pager-container .btn.btn-primary {
+    background-color: var(--color-accent-blue);
+    color: var(--color-dark-1);
+    border-color: var(--color-accent-blue);
+    font-weight: 700;
+}
+
+#market-pager-container .btn.btn-secondary {
+    /* This is the default state, just re-affirming */
+    background-color: var(--color-bg-interactive);
+    color: var(--color-text-secondary);
+}
+
+/* Carousel Container */
+#market-carousel-container {
+    flex-grow: 1;
+    overflow: hidden;
+    width: 100%;
+    position: relative; /* Needed for child absolute positioning */
+}
+
+#market-carousel-slider {
+    display: flex;
+    width: 200%; /* Two screens */
+    height: 100%;
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+}
+
+.market-sub-screen {
+    width: 50%; /* Each screen takes half of the slider */
+    height: 100%;
+    overflow-y: auto;
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Base scroll panel styles (copied from other screens) */
+.market-sub-screen.scroll-panel {
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+    padding: 0.5rem;
     touch-action: pan-y; /* Allow vertical scrolling */
 }
 
-.market-scroll-panel::-webkit-scrollbar {
+.market-sub-screen.scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
+
+
+/* Material Card */
+.material-card {
+    /* GDD D-01: Use sharp corners for performance and visual distinction */
+    border-radius: 0 !important; 
+    background-color: color-mix(in srgb, var(--color-dark-5) 75%, transparent);
+    border: 1px solid var(--color-border-primary);
+    height: var(--market-card-height);
+    position: relative;
+    overflow: visible;
+}
+
+/* Ensure the material card uses the correct transaction control spacing */
+.material-card .transaction-controls {
+    gap: 1.15rem; /* Tweak to fit removed toggle */
+    top: 50px; /* Adjust vertical position */
+}
+/* --- [[END]] Modified for Metal Update V1 --- */
