@@ -63,7 +63,10 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * Generates the HTML for a single commodity card on the market screen.
  * @param {object} good - The commodity data from the database.
  * @param {object} gameState - The current game state.
- *... [rest of _getMarketItemHtml function remains unchanged] ...
+ * @param {function} getItemPrice - A function to calculate the item's current price.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
+ * @returns {string} The HTML string for the commodity card.
+ * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
     const { player, market, currentLocationId, tutorials, uiState } = gameState;
