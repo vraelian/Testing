@@ -5,7 +5,7 @@
     --market-card-min-height: 40px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
-
+    
     /* Positioning */
     --market-card-info-top: 7px;
     --market-card-info-left: 16px;
@@ -17,7 +17,7 @@
     --market-card-avail-left: 17px;
     --market-card-price-top: 58px;
     --market-card-price-left: 16px;
-
+    
     /* Spacing */
     --market-card-price-indicator-v-gap: 7px;
 
@@ -32,7 +32,7 @@
     --market-card-pinv-own-color: #ffea00;
     --market-card-pinv-own-font-size: 0.85rem;
     --market-card-pinv-text-shadow: 0.40px 0.00px 0 #000000, 0.28px 0.28px 0 #000000, 0.00px 0.40px 0 #000000, -0.28px 0.28px 0 #000000, -0.40px 0.00px 0 #000000, -0.28px -0.28px 0 #000000, 0.00px -0.40px 0 #000000, 0.28px -0.28px 0 #000000, 0px 1.5px 2.5px #616b70;
-
+    
     /* Avail Text */
     --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
@@ -59,7 +59,7 @@
     --market-card-module-button-height: 29px;
     --market-card-module-stepper-arrow-size: 1.4em;
     --font-size: 0.85rem; /* Overriding global for module */
-
+    
     /* Glassy Theme Colors */
     --buy-primary: #146171;
     --sell-primary: #a73535;
@@ -67,7 +67,7 @@
     --buy-secondary-border: 1px solid rgba(255,255,255,0.1);
     --buy-text-light: #c8d8e8;
     --buy-text-dark: #ffffff;
-
+    
     --sell-secondary-bg: linear-gradient(145deg, rgba(30,20,20,0.2), rgba(0,0,0,0.5));
     --sell-secondary-border: 1px solid rgba(255,255,255,0.1);
     --sell-text-light: #e8c8c8;
@@ -563,53 +563,3 @@
 .market-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
-
-/* --- [[START]] MARKET CAROUSEL STYLES --- */
-
-/* The pager container uses the .toggle-container class,
-  which is already styled globally in navigation.css
-  (e.g., display: flex, justify-content: center, gap, padding).
-  No specific styles for #market-pager-container are needed
-  as long as .toggle-container is present.
-*/
-
-#market-carousel-container {
-    width: 100%;
-    overflow: hidden;
-    /* This container's height will be determined by its content.
-      We need to ensure the .scroll-panel inside the active
-      .market-sub-screen defines the height.
-    */
-}
-
-#market-carousel-slider {
-    display: flex;
-    width: 200%; /* 100% for each of the 2 sub-screens */
-    transition: transform 0.3s ease-in-out;
-    /* The transform: translateX() will be applied by UIManager
-      based on gameState.uiState.marketSubScreen
-    */
-}
-
-.market-sub-screen {
-    width: 50%; /* Each screen takes up 50% of the *slider's* width */
-    flex-shrink: 0;
-    /* This ensures each sub-screen is 100% of the *container's* width
-      (50% of the 200% slider width = 100% of container width)
-    */
-}
-
-/* Ensure the scroll-panel within the sub-screen behaves correctly.
-  We need to make sure it fills the available height.
-  This might need adjustment, but for now, we'll let it
-  behave as it did before.
-*/
-.market-sub-screen .scroll-panel {
-    /* The .scroll-panel already has overflow-y: auto.
-      We might need to explicitly set a height or flex-grow
-      in the parent container in UIManager if height is an issue.
-      For now, this should work.
-    */
-}
-
-/* --- [[END]] MARKET CAROUSEL STYLES --- */
