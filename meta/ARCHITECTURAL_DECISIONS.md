@@ -39,3 +39,32 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
     * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
     * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.
+
+---
+
+### ADR-004: Market Screen Refactor (Wrap & Fork) for Materials
+
+* **Status**: Accepted (During Metal Update V1 Design)
+* **Context**: The "Metal Update V1" required adding a new "Materials" section to the Market screen, distinct from existing Commodities but sharing some transactional UI elements. A simple append would clutter the screen, and a separate top-level screen felt unnecessary for a single material type initially.
+* **Decision**: The existing `MarketScreen.js` content rendering was wrapped within a new horizontal carousel structure (`#market-carousel-slider`) with two distinct sub-screens: `#market-commodities-screen` (containing the original commodity list) and `#market-materials-screen` (for the new material cards). Navigation between these is handled by a new segmented pager (`#market-pager-container`) and swipe gestures, managed by a dedicated `CarouselEventHandler` instance. The `MarketEventHandler.js` was "forked" with conditional logic based on a `data-item-type` attribute to handle the slightly different interaction patterns for materials (e.g., sell-only). This preserves the existing commodity logic while extending functionality.
+* **Consequences**:
+    * **Pro**: Reuses existing UI patterns (carousel, pager) for consistency.
+    * **Pro**: Keeps related market functionalities within the same primary screen, maintaining logical grouping.
+    * **Pro**: Provides a scalable structure for adding more material types later without further major refactoring.
+    * **Con**: Increases the complexity of `MarketScreen.js` and `MarketEventHandler.js` due to the added wrapping and conditional logic.
+    * **Con**: Requires careful management of the new `CarouselEventHandler` instance to avoid conflicts with the Hangar screen's instance.
+
+---
+
+### ADR-005: UI Update Logic (Push/Pull Hybrid) for Scrap Bar
+
+* **Status**: Accepted (During Metal Update V1 Design - Refinement D-03)
+* **Context**: The new Scrap Bar on the Services screen needs to update in real-time when scrap is generated (e.g., during hull repair) *and* reflect the correct state when the screen is initially loaded. Simply calling an update function within the main `UIManager.render()` loop for the Services screen could be inefficient if called unnecessarily on every render cycle.
+* **Decision**: A hybrid "push/pull" update strategy was implemented. A dedicated public method `UIManager.updateScrapBar()` was created.
+    * **Push:** `PlayerActionService.repairTick()` directly calls `uiManager.updateScrapBar()` *only when* scrap is actually generated *and* the player is currently on the Services screen.
+    * **Pull:** `UIManager.render()` calls `updateScrapBar()` *only when* rendering the `services-screen`, ensuring the bar displays the correct state upon screen load or refresh.
+* **Consequences**:
+    * **Pro**: Ensures real-time updates for the player during scrap-generating actions without constant polling.
+    * **Pro**: Efficiently updates the bar only when necessary, avoiding performance overhead during general rendering.
+    * **Pro**: Guarantees the bar displays the correct state when the Services screen is loaded.
+    * **Con**: Introduces a slightly more complex update flow compared to a purely pull-based approach within `render()`. Requires the generating service (`PlayerActionService`) to have a dependency on `UIManager`.

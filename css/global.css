@@ -21,6 +21,11 @@
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
+
+    /* --- [[START]] GDD_Metal_Update_v7 --- */
+    --color-border-medium: #7a9ac0; /* Extracted from .panel-border::before */
+    --color-metal-scrap: var(--color-border-medium);
+    /* --- [[END]] GDD_Metal_Update_v7 --- */
 }
 
 html {
@@ -529,6 +534,16 @@ body {
     z-index: 100;
     animation: float-up 2.5s forwards ease-out;
 }
+
+/* --- [[START]] GDD_Metal_Update_v7 --- */
+/* This class is referenced in the GDD, but not used yet */
+.floating-text.center-screen {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float-up 2.5s forwards ease-out; /* Re-apply animation */
+}
+/* --- [[END]] GDD_Metal_Update_v7 --- */
 
 .cargo-item-card {
     width: 118px;

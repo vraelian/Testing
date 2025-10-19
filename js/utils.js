@@ -4,7 +4,8 @@
  * such as formatting numbers, calculating inventory usage, and handling date conversions.
  * These helpers are used throughout the application to standardize common operations.
  */
-import { DATE_CONFIG } from './data/database.js';
+import { DATE_CONFIG, DB } from './data/database.js'; // Added DB import
+import { COMMODITY_IDS } from './data/constants.js'; // Added COMMODITY_IDS import
 
 /**
  * A centralized map for commodity visual styles.
@@ -25,6 +26,7 @@ const commodityStyleMap = {
     'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
     'item-style-13': { hex: '#d8b4fe', gradient: 'linear-gradient(45deg, #a855f7, #3b0764)' },
     'item-style-14': { hex: '#f472b6', gradient: 'linear-gradient(45deg, #ec4899, #831843)' },
+    'item-style-scrap': { hex: '#9ca3af', gradient: 'linear-gradient(45deg, #6b7280, #1f2937)' } // Added for Metal Update
 };
 
 /**
@@ -68,14 +70,18 @@ export function formatCredits(amount, withSymbol = true) {
 
 
 /**
- * Calculates the total number of cargo units currently used in a given inventory object.
+ * Calculates the total number of standard cargo units currently used in a given inventory object,
+ * excluding non-tradable items like Metal Scrap.
  * @param {object} inventory - The inventory object to calculate, where keys are commodity IDs
  * and values are objects containing a 'quantity' property.
- * @returns {number} The total sum of all item quantities in the inventory.
+ * @returns {number} The total sum of all tradable item quantities in the inventory.
  */
 export function calculateInventoryUsed(inventory) {
      if (!inventory) return 0;
-    return Object.values(inventory).reduce((acc, item) => acc + item.quantity, 0);
+    // Filter out Metal Scrap before reducing
+    return Object.entries(inventory)
+        .filter(([goodId]) => goodId !== COMMODITY_IDS.METAL_SCRAP) // Exclude scrap
+        .reduce((acc, [, item]) => acc + item.quantity, 0);
 }
 
 /**

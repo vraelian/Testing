@@ -6,7 +6,8 @@ import { EffectsManager } from '../effects/EffectsManager.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
-import { renderMarketScreen } from '../ui/components/MarketScreen.js';
+// (Phase 4) Import _updateMarketPager, which is created in Phase 3
+import { renderMarketScreen, _updateMarketPager } from '../ui/components/MarketScreen.js';
 import { renderMapScreen, initMap } from '../ui/components/MapScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
@@ -260,6 +261,7 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                this.updateScrapBar(gameState); // (Phase 4) Update Scrap Bar on render
                 break;
             case SCREEN_IDS.MARKET:
                 this.updateMarketScreen(gameState);
@@ -292,6 +294,59 @@ export class UIManager {
                 this.cache.intelScreen.innerHTML = renderIntelScreen();
                 break;
         }
+    }
+
+    /**
+     * (Phase 4) Surgically updates the Metal Scrap bar on the Services screen.
+     * This can be called for real-time updates (push) or on screen render (pull).
+     * @param {object} [gameState] - The optional current game state. If not provided, uses lastKnownState.
+     */
+    updateScrapBar(gameState) {
+        const state = gameState || this.lastKnownState;
+        if (!state) return;
+
+        // Find the elements defensively. If Phase 3 HTML isn't rendered, do nothing.
+        const fillEl = document.getElementById('scrap-bar-fill');
+        const textEl = document.getElementById('scrap-bar-text');
+
+        if (!fillEl || !textEl) {
+            return; // Scrap bar elements not found, abort.
+        }
+
+        const scrap = state.player.metalScrap || 0;
+        const wholeTons = Math.floor(scrap);
+        const fractionalTons = scrap - wholeTons;
+
+        // Update Text: Always show whole tons, rounded down.
+        textEl.textContent = `${wholeTons} TONS`;
+
+        // Update Fill Bar: GDD UX-Refined Logic (Sec 3.3.4, 3.3.5)
+        let fillPercent = 0;
+        const INCREMENT_SIZE = 0.20; // 5 increments per ton (20%)
+        const THRESHOLD = 0.19; // "Window of opportunity" to see 100%
+
+        if (fractionalTons <= THRESHOLD) {
+            // Player is at X.00 to X.19 tons. Show 100% full bar.
+            fillPercent = 100;
+        } else {
+            // Player is at X.20 or more. Show progress to *next* ton.
+            // Snap down to the nearest 20% increment.
+            const increments = Math.floor(fractionalTons / INCREMENT_SIZE);
+            fillPercent = increments * 20;
+        }
+        
+        // Handle the 0% case
+        if (scrap < INCREMENT_SIZE && scrap > 0) {
+            fillPercent = 0; // Show 0% until 0.20 is reached (after the 0.19 window)
+        } else if (scrap === 0) {
+            fillPercent = 0;
+        } else if (wholeTons === 0 && fractionalTons <= THRESHOLD) {
+            // Special case: if player has 0.00 to 0.19 tons, bar should be 0%, not 100%.
+            fillPercent = 0;
+        }
+
+
+        fillEl.style.width = `${fillPercent}%`;
     }
 
     /**
@@ -445,11 +500,14 @@ export class UIManager {
             repairBar.style.width = `${healthPct}%`;
             repairBtn.disabled = shipState.health >= shipStatic.maxHealth;
         }
+        
+        // (Phase 4) Update Scrap Bar
+        this.updateScrapBar(gameState);
     }
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        const marketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); // (Phase 4) Updated selector
         if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
         } else {
@@ -458,9 +516,14 @@ export class UIManager {
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
-        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); // (Phase 4) Updated selector
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
+        }
+
+        // (Phase 4) Call the pager/carousel updater function (from Phase 3)
+        if (typeof _updateMarketPager === 'function') {
+            _updateMarketPager(gameState);
         }
     }
 
@@ -487,11 +550,15 @@ export class UIManager {
             const control = this.cache.marketScreen.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
+                const itemType = control.dataset.itemType || 'commodity';
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
                     // After restoring state, immediately update the display to reflect it.
-                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    // (Phase 4) Only update display for commodities, materials are static.
+                    if (itemType === 'commodity') {
+                        this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    }
                 }
             }
         }

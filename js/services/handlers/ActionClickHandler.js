@@ -7,6 +7,7 @@
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js'; // Import formatCredits
 
 export class ActionClickHandler {
     /**
@@ -120,6 +121,17 @@ export class ActionClickHandler {
                 this.simulationService.travelTo(dataset.locationId);
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
+
+            // --- Market Sub-Screen Pager (Phase 4) ---
+            case 'market-page-materials':
+            case 'market-page-commodities': {
+                const targetSubScreen = action === 'market-page-materials' ? 'materials' : 'commodities';
+                if (this.gameState.uiState.marketSubScreen !== targetSubScreen) {
+                    this.gameState.uiState.marketSubScreen = targetSubScreen;
+                    this.gameState.setState({});
+                }
+                break;
+            }
 
             // --- Modals ---
             case 'show-mission-modal':
