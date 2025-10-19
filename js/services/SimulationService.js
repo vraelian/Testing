@@ -12,7 +12,6 @@ import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
-import { EffectsManager } from '../effects/EffectsManager.js'; // Import EffectsManager
 
 /**
  * @class SimulationService
@@ -30,21 +29,16 @@ export class SimulationService {
         this.logger = logger;
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
-        this.effectsManager = new EffectsManager(); // Instantiate EffectsManager
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger);
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
-        // Pass effectsManager to PlayerActionService constructor
-        this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this, this.effectsManager, null);
-
+        this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
-        // Inject effectsManager into PlayerActionService after instantiation
-        this.playerActionService.setEffectsManager(this.effectsManager);
     }
 
     /**
@@ -53,8 +47,6 @@ export class SimulationService {
      */
     setTutorialService(tutorialService) {
         this.tutorialService = tutorialService;
-        // Inject tutorialService into PlayerActionService
-        this.playerActionService.setTutorialService(tutorialService);
     }
 
     /**
@@ -74,7 +66,7 @@ export class SimulationService {
     startIntroSequence() { this.introService.start(); }
     handleIntroClick(e) { this.introService.handleIntroClick(e); }
     _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
-
+    
     // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
@@ -87,8 +79,8 @@ export class SimulationService {
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); }
     refuelTick() { return this.playerActionService.refuelTick(); }
-    repairTick(hullToRepair) { return this.playerActionService.repairTick(hullToRepair); } // Pass hullToRepair
-
+    repairTick() { return this.playerActionService.repairTick(); }
+    
     // TravelService Delegation
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
@@ -104,10 +96,10 @@ export class SimulationService {
      */
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
-        this.gameState.setState({
-            activeNav: navId,
+        this.gameState.setState({ 
+            activeNav: navId, 
             activeScreen: screenId,
-            lastActiveScreen: newLastActive
+            lastActiveScreen: newLastActive 
         });
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
@@ -124,7 +116,7 @@ export class SimulationService {
             this.gameState.setState({});
         }
     }
-
+    
     /**
      * Updates the active index for the hangar or shipyard carousel.
      * @param {number} index
@@ -147,7 +139,7 @@ export class SimulationService {
         const { uiState, player } = this.gameState;
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const shipList = isHangarMode ? player.ownedShipIds : this._getShipyardInventory().map(([id]) => id);
-
+        
         if (shipList.length <= 1) return;
 
         let currentIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
@@ -216,7 +208,7 @@ export class SimulationService {
         }
         this.gameState.setState({});
     }
-
+    
     _getActiveShip() {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
@@ -228,21 +220,21 @@ export class SimulationService {
         if (!this.gameState.player.activeShipId) return null;
         return this.gameState.player.inventories[this.gameState.player.activeShipId];
     }
-
+    
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = DB.SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; }
+        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;
         if (healthPct > 15) shipState.hullAlerts.two = false;
     }
 
     _logTransaction(type, amount, description) {
-        this.gameState.player.financeLog.push({
+        this.gameState.player.financeLog.push({ 
             day: this.gameState.day,
-            type: type,
+            type: type, 
             amount: amount,
             balance: this.gameState.player.credits,
             description: description
@@ -257,7 +249,7 @@ export class SimulationService {
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
-        const existingEntry = log.find(entry =>
+        const existingEntry = log.find(entry => 
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
@@ -315,7 +307,7 @@ export class SimulationService {
             }
         });
     }
-
+    
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;
@@ -334,53 +326,5 @@ export class SimulationService {
         if (this.missionService) {
             this.missionService.checkTriggers();
         }
-    }
-
-    /**
-     * Sells a specified quantity of a material from the player's inventory.
-     * @param {string} materialId - The ID of the material (e.g., 'metal-scrap').
-     * @param {number} quantity - The amount to sell.
-     * @param {Event} [event] - The click event for placing floating text.
-     * @returns {boolean} True if the sale was successful, false otherwise.
-     */
-    sellMaterial(materialId, quantity, event) {
-        const material = DB.MATERIALS[materialId];
-        if (!material) {
-            this.logger.error('SimulationService', `sellMaterial: Invalid materialId ${materialId}`);
-            return false;
-        }
-        // TODO: This currently only supports 'metal-scrap'. Will need generalization.
-        const playerScrap = this.gameState.player.metalScrap;
-
-        // Defensive validation
-        if (quantity <= 0 || quantity > playerScrap) {
-            this.logger.warn('SimulationService', `sellMaterial: Invalid quantity ${quantity}. Player has ${playerScrap}`);
-            if (quantity > playerScrap) {
-                this.uiManager.queueModal('event-modal', "Insufficient Materials", `You only have ${playerScrap.toFixed(2)} Tons of Metal Scrap.`);
-            }
-            return false;
-        }
-
-        const sellValue = material.sellValue * quantity;
-
-        // Use defensive toFixed(2) to prevent floating point errors
-        this.gameState.player.metalScrap = parseFloat((playerScrap - quantity).toFixed(2));
-        this.gameState.player.credits += sellValue;
-
-        // Feedback
-        this.logger.info.player(this.gameState.day, 'SELL_MATERIAL', `Sold ${quantity} Tons of ${material.name} for ${formatCredits(sellValue)}`);
-        // Log transaction (consider if consolidation is needed if more materials are added)
-        this._logTransaction('trade', sellValue, `Sold ${quantity.toFixed(2)}x ${material.name}`);
-
-        if (event) {
-             this.uiManager.createFloatingText(`+${formatCredits(sellValue, false)}`, event.clientX, event.clientY, '#34d399');
-        }
-
-        // Trigger milestone check after gaining credits
-        this.timeService._checkMilestones();
-        // Set state to trigger UI update
-        this.gameState.setState({});
-
-        return true;
     }
 }

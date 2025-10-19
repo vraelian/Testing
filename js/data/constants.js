@@ -71,7 +71,6 @@ export const COMMODITY_IDS = Object.freeze({
     SENTIENT_AI: 'sentient_ai',
     ANTIMATTER: 'antimatter',
     FOLDED_DRIVES: 'folded_drives',
-    METAL_SCRAP: 'metal_scrap' // Added for Metal Update
 });
 
 /**
@@ -131,7 +130,6 @@ export const ACTION_IDS = Object.freeze({
     TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
     TOGGLE_HANGAR_MODE: 'toggle-hangar-mode',
     SET_HANGAR_PAGE: 'set-hangar-page',
-    RECYCLE_SCRAP: 'recycle-scrap' // Added for Metal Update
 });
 
 /**
@@ -142,7 +140,6 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
     SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
     ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
     INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
-    SCRAP_COLLECTED: 'SCRAP_COLLECTED' // Added for Metal Update
 });
 
 /**
@@ -204,14 +201,3 @@ export const WEALTH_MILESTONES = [
  * @type {string}
  */
 export const SAVE_KEY = 'orbitalTraderSave_v2';
-
-/**
- * New constants for the Metal Scrap update.
- */
-export const CONSTANTS = Object.freeze({
-    SCRAP_PER_HULL_POINT: 0.01,
-    RECYCLE_SCRAP_COST_PER_TON: 50,
-    RECYCLE_SCRAP_CREDITS_PER_TON: 300,
-    RECYCLE_EFFICIENCY_MIN: 0.75,
-    RECYCLE_EFFICIENCY_MAX: 0.95
-});

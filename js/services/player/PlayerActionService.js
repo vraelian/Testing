@@ -17,10 +17,8 @@ export class PlayerActionService {
      * @param {import('../world/TimeService.js').TimeService} timeService
      * @param {import('../../services/LoggingService.js').Logger} logger
      * @param {import('../SimulationService.js').SimulationService} simulationServiceFacade
-     * @param {import('../../effects/EffectsManager.js').EffectsManager} effectsManager
-     * @param {import('../TutorialService.js').TutorialService} tutorialService
      */
-    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade, effectsManager, tutorialService) {
+    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade) {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.missionService = missionService;
@@ -28,25 +26,7 @@ export class PlayerActionService {
         this.timeService = timeService;
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
-        this.effectsManager = effectsManager; // Injected
-        this.tutorialService = tutorialService; // Injected
         this.isTransactionInProgress = false;
-    }
-
-    /**
-     * Injects the EffectsManager post-instantiation (if not provided in constructor).
-     * @param {import('../../effects/EffectsManager.js').EffectsManager} effectsManager
-     */
-    setEffectsManager(effectsManager) {
-        this.effectsManager = effectsManager;
-    }
-
-    /**
-     * Injects the TutorialService post-instantiation (if not provided in constructor).
-     * @param {import('../TutorialService.js').TutorialService} tutorialService
-     */
-    setTutorialService(tutorialService) {
-        this.tutorialService = tutorialService;
     }
 
     /**
@@ -91,10 +71,7 @@ export class PlayerActionService {
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
         this.timeService._checkMilestones();
-        
-        if (this.missionService) {
-            this.missionService.checkTriggers();
-        }
+        this.missionService.checkTriggers();
         
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
@@ -147,10 +124,7 @@ export class PlayerActionService {
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
         
         this.timeService._checkMilestones();
-        
-        if (this.missionService) {
-            this.missionService.checkTriggers();
-        }
+        this.missionService.checkTriggers();
         
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
@@ -195,9 +169,7 @@ export class PlayerActionService {
 
             if (this.gameState.tutorials.activeBatchId === 'intro_hangar') {
                 this.simulationService.setHangarShipyardMode('hangar');
-                if (this.tutorialService) {
-                    this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
-                }
+                this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
             this.gameState.setState({
@@ -295,9 +267,7 @@ export class PlayerActionService {
         this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
 
         if (this.gameState.introSequenceActive) {
-            if (this.tutorialService) {
-                this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
-            }
+            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
         }
 
         this.gameState.setState({});
@@ -440,43 +410,24 @@ export class PlayerActionService {
 
     /**
      * Processes one "tick" of repairing while the button is held, costing credits and restoring health.
-     * @param {number} hullToRepair - The exact amount of hull HP being repaired in this tick.
      * @returns {number} - The cost of the repair tick, or 0 if no repairs were made.
      */
-    repairTick(hullToRepair) {
+    repairTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        // Check for max health is now handled by the HoldEventHandler,
-        // but we keep a redundant check here for safety.
-        if (ship.health >= ship.maxHealth || hullToRepair <= 0) return 0;
+        if (ship.health >= ship.maxHealth) return 0;
         
-        let costPerTick = hullToRepair * GAME_RULES.REPAIR_COST_PER_HP;
-        
+        let costPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
         if (state.player.credits < costPerTick) return 0;
         
-        // --- Metal Scrap Generation ---
-        const scrapGenerated = hullToRepair * GAME_RULES.SCRAP_PER_HP;
-        if (scrapGenerated > 0) {
-            state.player.metalScrap = parseFloat((state.player.metalScrap + scrapGenerated).toFixed(2));
-            this.logger.info.player(state.day, 'SCRAP_GAIN', `Gained ${scrapGenerated.toFixed(2)} scrap from repairs.`);
-            // Create floating text in the center of the screen
-            this.uiManager.createFloatingText(`+${scrapGenerated.toFixed(2)} Scrap`, 0, 0, 'var(--color-metal-scrap)', 'center-screen');
-        }
-        // ------------------------------
-
         state.player.credits -= costPerTick;
-        // The HoldEventHandler is now responsible for incrementing the health.
-        // We just process the financial and scrap transaction here.
-        // state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + hullToRepair);
-        
+        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)));
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
-        
-        // setState is called by the HoldEventHandler's animation frame loop
-        // this.gameState.setState({}); 
+        this.gameState.setState({});
         return costPerTick;
     }
 }

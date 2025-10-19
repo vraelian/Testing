@@ -162,10 +162,6 @@ export class GameState {
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
                 inventories: { },
-                metalScrap: 0, // Added for Metal Update
-                flags: { // Added for Metal Update
-                    hasSeenScrapTutorial: false
-                },
                 debugEventIndex: 0
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },

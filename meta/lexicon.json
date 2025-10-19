@@ -34,11 +34,7 @@
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
-    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
-    "Metal_Scrap": "A passive, non-cargo resource generated primarily through ship hull repair. It is stored directly on the player object (`player.metalScrap`), has no quantity limit, and can be sold on the Materials Screen.",
-    "Scrap_Bar": "A UI element on the Services screen displaying the player's current Metal Scrap inventory with a progress bar representing fractional tons.",
-    "Materials_Screen": "A new sub-screen within the Market screen, accessed via the Market Pager, dedicated to trading non-cargo resources like Metal Scrap.",
-    "Market_Pager": "A segmented control UI element added to the Market screen to switch between the 'Commodities' and 'Materials' sub-screens."
+    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards."
   },
   "service_summaries": {
     "GameState": {
@@ -74,16 +70,15 @@
       "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
     },
     "PlayerActionService": {
-      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair). Also handles Metal Scrap generation.",
+      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
       "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)"],
       "key_functions": {
         "buyItem": "Handles the logic for purchasing a commodity.",
         "sellItem": "Handles the logic for selling a commodity.",
         "buyShip": "Manages the purchase of a new ship.",
-        "refuelTick": "Processes one 'tick' of refueling.",
-        "repairTick": "Processes one 'tick' of repairing and generates Metal Scrap."
+        "refuelTick": "Processes one 'tick' of refueling."
       },
-      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "player.metalScrap", "market.inventory"]
+      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
     },
     "TravelService": {
       "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
@@ -115,14 +110,13 @@
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService. Manages the Scrap Bar and Market Pager/Carousel updates.",
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
       "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence.",
-        "updateScrapBar": "Updates the visual state of the Scrap Bar on the Services screen."
+        "showTravelAnimation": "Initiates the travel animation sequence."
       },
       "mutates_state": []
     },
@@ -136,13 +130,13 @@
       "mutates_state": []
     },
     "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Market Pager clicks.",
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
         "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
         "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
         "mutates_state": []
     },
     "MarketEventHandler": {
-        "description": "Manages all interactions within a market commodity or material card, including mode toggling, quantity changes, and trade confirmations.",
+        "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
         "dependencies": ["GameState", "SimulationService", "UIManager"],
         "key_functions": {"handleClick": "Handles clicks on market card controls.", "handleInput": "Handles direct input into the quantity field."},
         "mutates_state": []
@@ -154,7 +148,7 @@
         "mutates_state": []
     },
     "CarouselEventHandler": {
-        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of carousels (e.g., hangar/shipyard, market). Manages multiple instances.",
+        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
         "dependencies": ["GameState", "SimulationService"],
         "key_functions": {"handleDragStart": "Initiates a drag sequence.", "handleDragMove": "Updates the carousel during a drag.", "handleDragEnd": "Concludes a drag sequence and snaps to a page.", "handleWheel": "Handles mouse wheel scrolling."},
         "mutates_state": []
