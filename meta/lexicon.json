@@ -34,11 +34,7 @@
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
-    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
-    "Metal_Scrap": "A passive, non-cargo resource generated primarily through ship maintenance (hull repair). It does not use cargo space, has no quantity limit, and can be sold for a fixed price or used for future construction projects.",
-    "Scrap_Bar": "A UI element on the Services screen displaying the player's current Metal Scrap inventory with a progress bar tracking accumulation towards the next full ton.",
-    "Materials_Screen": "A new sub-screen within the Market screen, accessed via the Market Pager, dedicated to trading non-commodity resources like Metal Scrap.",
-    "Market_Pager": "A UI element (segmented control) on the Market screen used to switch between the 'Materials' and 'Commodities' sub-screens."
+    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards."
   },
   "service_summaries": {
     "GameState": {
@@ -54,13 +50,12 @@
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService", "EffectsManager"],
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
         "travelTo": "Facade method that delegates to TravelService.",
-        "buyItem": "Facade method that delegates to PlayerActionService.",
-        "sellMaterial": "Handles the logic for selling non-commodity materials like Metal Scrap."
+        "buyItem": "Facade method that delegates to PlayerActionService."
       },
       "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
     },
@@ -75,16 +70,15 @@
       "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
     },
     "PlayerActionService": {
-      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair). Also handles scrap generation during repairs.",
-      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)", "EffectsManager", "TutorialService"],
+      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)"],
       "key_functions": {
         "buyItem": "Handles the logic for purchasing a commodity.",
         "sellItem": "Handles the logic for selling a commodity.",
         "buyShip": "Manages the purchase of a new ship.",
-        "refuelTick": "Processes one 'tick' of refueling.",
-        "repairTick": "Processes one 'tick' of repairing and generates Metal Scrap."
+        "refuelTick": "Processes one 'tick' of refueling."
       },
-      "mutates_state": ["player.credits", "player.debt", "player.metalScrap", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
+      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
     },
     "TravelService": {
       "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
@@ -122,8 +116,7 @@
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence.",
-        "updateScrapBar": "Surgically updates the Scrap Bar UI on the Services screen."
+        "showTravelAnimation": "Initiates the travel animation sequence."
       },
       "mutates_state": []
     },
@@ -137,25 +130,25 @@
       "mutates_state": []
     },
     "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, simple state changes, and Market Pager clicks.",
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
         "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
         "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
         "mutates_state": []
     },
     "MarketEventHandler": {
-        "description": "Manages all interactions within market commodity and material cards, including mode toggling, quantity changes, and trade confirmations.",
+        "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
         "dependencies": ["GameState", "SimulationService", "UIManager"],
         "key_functions": {"handleClick": "Handles clicks on market card controls.", "handleInput": "Handles direct input into the quantity field."},
         "mutates_state": []
     },
     "HoldEventHandler": {
-        "description": "Manages the 'hold-to-act' functionality for continuous actions like refueling, repairing, and market quantity steppers.",
+        "description": "Manages the 'hold-to-act' functionality for continuous actions like refueling and repairing.",
         "dependencies": ["GameState", "SimulationService", "UIManager"],
         "key_functions": {"handleHoldStart": "Starts a continuous action.", "handleHoldEnd": "Stops all continuous actions."},
         "mutates_state": []
     },
     "CarouselEventHandler": {
-        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of carousels (e.g., hangar/shipyard, market sub-screens). Requires instantiation per carousel.",
+        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
         "dependencies": ["GameState", "SimulationService"],
         "key_functions": {"handleDragStart": "Initiates a drag sequence.", "handleDragMove": "Updates the carousel during a drag.", "handleDragEnd": "Concludes a drag sequence and snaps to a page.", "handleWheel": "Handles mouse wheel scrolling."},
         "mutates_state": []
@@ -193,14 +186,6 @@
             "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
         },
         "mutates_state": []
-    },
-    "EffectsManager": {
-      "description": "Manages the creation and lifecycle of visual effects like floating text.",
-      "dependencies": [],
-      "key_functions": {
-        "floatingText": "Creates and animates floating text on the screen."
-      },
-      "mutates_state": []
     },
     "ViewController": {
         "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",

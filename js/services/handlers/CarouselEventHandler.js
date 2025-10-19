@@ -1,112 +1,140 @@
 // js/services/handlers/CarouselEventHandler.js
 /**
- * @fileoverview Provides a reusable class to handle swipe (touch) gestures on a carousel element.
+ * @fileoverview Manages all pointer, touch, and wheel events for the
+ * hangar/shipyard carousel, providing a smooth drag-and-swipe interface.
  */
 export class CarouselEventHandler {
     /**
-     * @param {HTMLElement} carousel The carousel element to attach swipe listeners to.
-     * @param {Function} onSwipe A callback function to execute on a successful swipe.
-     * It receives the direction ('left' or 'right') as an argument.
-     * @param {number} [threshold=50] The minimum horizontal distance (in pixels) to trigger a swipe.
+     * @param {import('../GameState.js').GameState} gameState The central game state object.
+     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
      */
-    constructor(carousel, onSwipe, threshold = 50) {
-        if (!carousel || typeof onSwipe !== 'function') {
-            console.error('CarouselEventHandler: Invalid carousel element or onSwipe callback.');
+    constructor(gameState, simulationService) {
+        this.gameState = gameState;
+        this.simulationService = simulationService;
+
+        this.isScrolling = false;
+        this.scrollTimeout = null;
+
+        this.state = {
+            isDragging: false,
+            startX: 0,
+            startTranslate: 0,
+            currentTranslate: 0,
+            activeCarousel: null,
+            containerWidth: 0,
+            pageCount: 0,
+            currentIndex: 0,
+            moved: false
+        };
+    }
+
+    /**
+     * Handles wheel events (mouse scroll) over the carousel to navigate between pages.
+     * @param {WheelEvent} e The wheel event.
+     */
+    handleWheel(e) {
+        if (this.isScrolling) return;
+
+        let direction = e.deltaY > 0 ? 'next' : 'prev';
+        this.simulationService.cycleHangarCarousel(direction);
+
+        this.isScrolling = true;
+        clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(() => {
+            this.isScrolling = false;
+        }, 300); // Throttle scroll events
+    }
+
+    /**
+     * Initiates a drag sequence on the carousel.
+     * @param {MouseEvent|TouchEvent} e The mousedown or touchstart event.
+     */
+    handleDragStart(e) {
+        const carouselContainer = e.target.closest('.carousel-container');
+        const carousel = carouselContainer ? carouselContainer.querySelector('#hangar-carousel') : null;
+
+        if (e.target.closest('.action-button') || !carousel || carousel.children.length <= 1) {
+            this.state.isDragging = false;
             return;
         }
+        e.preventDefault();
 
-        this.carousel = carousel;
-        this.onSwipe = onSwipe;
-        this.threshold = threshold;
-        this.touchStartX = 0;
-        this.touchEndX = 0;
-        this.isSwiping = false;
-        this.swipeStartTime = 0;
-        this.SWIPE_TIME_LIMIT = 500; // Max time for a swipe (ms)
+        const gameState = this.gameState.getState();
+        const isHangarMode = gameState.uiState.hangarShipyardToggleState === 'hangar';
 
-        this.onTouchStart = this.onTouchStart.bind(this);
-        this.onTouchMove = this.onTouchMove.bind(this);
-        this.onTouchEnd = this.onTouchEnd.bind(this);
+        this.state.isDragging = true;
+        this.state.activeCarousel = carousel;
+        this.state.startX = e.pageX ?? e.touches[0].pageX;
+        this.state.containerWidth = carousel.parentElement.offsetWidth;
+        this.state.pageCount = carousel.children.length;
+        this.state.currentIndex = isHangarMode ? (gameState.uiState.hangarActiveIndex || 0) : (gameState.uiState.shipyardActiveIndex || 0);
+        this.state.startTranslate = -this.state.currentIndex * this.state.containerWidth;
+        this.state.currentTranslate = this.state.startTranslate;
+        this.state.moved = false;
 
-        this.attachListeners();
+        carousel.style.transitionDuration = '0s'; // Make drag instant
+        document.body.style.cursor = 'grabbing';
     }
 
     /**
-     * Attaches touch event listeners to the carousel element.
+     * Handles the movement during a carousel drag.
+     * @param {MouseEvent|TouchEvent} e The mousemove or touchmove event.
      */
-    attachListeners() {
-        this.carousel.addEventListener('touchstart', this.onTouchStart, { passive: true });
-        this.carousel.addEventListener('touchmove', this.onTouchMove, { passive: true });
-        this.carousel.addEventListener('touchend', this.onTouchEnd, { passive: true });
-        this.carousel.addEventListener('touchcancel', this.onTouchEnd, { passive: true });
+    handleDragMove(e) {
+        if (!this.state.isDragging) return;
+        e.preventDefault();
+
+        const currentX = e.pageX ?? e.touches[0].pageX;
+        const diff = currentX - this.state.startX;
+        this.state.currentTranslate = this.state.startTranslate + diff;
+
+        if (Math.abs(diff) > 10) this.state.moved = true;
+
+        if (this.state.activeCarousel) {
+            this.state.activeCarousel.style.transform = `translateX(${this.state.currentTranslate}px)`;
+        }
     }
 
     /**
-     * Removes touch event listeners from the carousel element.
+     * Ends the drag sequence and snaps the carousel to the nearest or intended page.
      */
-    destroy() {
-        this.carousel.removeEventListener('touchstart', this.onTouchStart);
-        this.carousel.removeEventListener('touchmove', this.onTouchMove);
-        this.carousel.removeEventListener('touchend', this.onTouchEnd);
-        this.carousel.removeEventListener('touchcancel', this.onTouchEnd);
+    handleDragEnd() {
+        if (!this.state.isDragging) return;
+
+        const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.state;
+
+        this.state.isDragging = false;
+        document.body.style.cursor = 'default';
+
+        if (!activeCarousel) return;
+
+        activeCarousel.style.transitionDuration = ''; // Revert to CSS-defined duration for smooth snap
+
+        const movedBy = currentTranslate - startTranslate;
+        let newIndex = currentIndex;
+        const threshold = containerWidth / 4;
+
+        if (movedBy < -threshold && currentIndex < pageCount - 1) {
+            newIndex++;
+        } else if (movedBy > threshold && currentIndex > 0) {
+            newIndex--;
+        }
+
+        const mode = this.gameState.uiState.hangarShipyardToggleState;
+        this.simulationService.setHangarCarouselIndex(newIndex, mode);
+
+        // A timeout is used to reset the 'moved' flag, preventing a click event from firing immediately after a drag.
+        setTimeout(() => {
+            this.state.moved = false;
+        }, 50);
     }
-
+    
     /**
-     * Handles the touchstart event.
-     * @param {TouchEvent} e The TouchEvent object.
+     * Returns whether the carousel was moved during the last drag operation.
+     * Used by EventManager to suppress clicks after a drag.
+     * @returns {boolean}
      */
-    onTouchStart(e) {
-        // Only track single-finger touches
-        if (e.touches.length > 1) {
-            this.isSwiping = false;
-            return;
-        }
-        this.touchStartX = e.touches[0].clientX;
-        this.touchEndX = this.touchStartX; // Reset endX on new touch
-        this.isSwiping = true;
-        this.swipeStartTime = Date.now();
-    }
-
-    /**
-     * Handles the touchmove event.
-     * @param {TouchEvent} e The TouchEvent object.
-     */
-    onTouchMove(e) {
-        if (!this.isSwiping || e.touches.length > 1) {
-            return;
-        }
-        this.touchEndX = e.touches[0].clientX;
-    }
-
-    /**
-     * Handles the touchend event.
-     * @param {TouchEvent} e The TouchEvent object.
-     */
-    onTouchEnd(e) {
-        // Do not register swipe if multiple fingers were used at any point
-        // or if the touch event ended with more than 0 fingers (e.g., pinch)
-        if (!this.isSwiping || (e.touches.length > 0 && e.type !== 'touchcancel')) {
-            this.isSwiping = false;
-            return;
-        }
-
-        this.isSwiping = false;
-        const swipeDist = this.touchEndX - this.touchStartX;
-        const swipeTime = Date.now() - this.swipeStartTime;
-
-        if (swipeTime > this.SWIPE_TIME_LIMIT) {
-            return; // Swipe was too slow
-        }
-
-        // Check if the swipe distance meets the threshold
-        if (Math.abs(swipeDist) >= this.threshold) {
-            if (swipeDist < 0) {
-                // Swiped left (next item)
-                this.onSwipe('left');
-            } else {
-                // Swiped right (previous item)
-                this.onSwipe('right');
-            }
-        }
+    wasMoved() {
+        return this.state.moved;
     }
 }

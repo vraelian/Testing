@@ -1,75 +1,79 @@
-// js/effects/EffectsManager.js
 /**
- * @fileoverview Manages the creation and lifecycle of visual effects like
- * floating text, screen flashes, etc.
+ * @fileoverview Defines the EffectsManager, a controller for queueing and playing visual effects.
  */
+
 export class EffectsManager {
     /**
-     * Initializes the EffectsManager with a reference to the main game container.
-     * @param {HTMLElement} gameContainer - The main container element for the game.
+     * @JSDoc
+     * @constructor
      */
-    constructor(gameContainer) {
-        this.gameContainer = gameContainer;
+    constructor() {
+        /** @private @type {Array<object>} */
+        this.effectQueue = [];
+        /** @private @type {boolean} */
+        this.isEffectActive = false;
+        /** @private @type {Object<string, typeof BaseEffect>} */
+        this.effectsRegistry = {};
     }
 
     /**
-     * Creates floating text that appears at a specific location and fades out.
-     * Supports two signatures:
-     * 1. (text, x, y, color) for cursor-relative text.
-     * 2. (text, color, position) for predefined screen positions.
-     * @param {string} text - The text content to display.
-     * @param {number|string} xOrColor - The x-coordinate, or a color string.
-     * @param {number|string} yOrPosition - The y-coordinate, or a position string like 'center-screen'.
-     * @param {string} [color] - The color of the text (e.g., '#ff0000' or 'green'). Only used if x/y are numbers.
+     * @JSDoc
+     * @method registerEffect
+     * @description Adds an effect class to the registry, making it available to be triggered.
+     * @param {string} name - The unique name to identify the effect (e.g., 'systemSurge').
+     * @param {typeof BaseEffect} effectClass - The class definition for the effect, which must extend BaseEffect.
      */
-    floatingText(text, xOrColor, yOrPosition, color) {
-        let x, y, pos, textColor;
+    registerEffect(name, effectClass) {
+        this.effectsRegistry[name] = effectClass;
+    }
 
-        // Argument parsing to support both (text, x, y, color) and (text, color, position)
-        if (typeof xOrColor === 'string' && typeof yOrPosition === 'string' && color === undefined) {
-            // Overload: floatingText(text, color, position)
-            textColor = xOrColor;
-            pos = yOrPosition;
-        } else if (typeof xOrColor === 'number' && typeof yOrPosition === 'number') {
-            // Original: floatingText(text, x, y, color)
-            x = xOrColor;
-            y = yOrPosition;
-            textColor = color;
-        } else {
-            console.error("Invalid arguments for floatingText", { text, xOrColor, yOrPosition, color });
+    /**
+     * @JSDoc
+     * @method trigger
+     * @description Adds an effect request to the queue and starts processing.
+     * @param {string} effectName - The name of the effect to trigger, must match a registered effect.
+     * @param {object} options - The configuration object to pass to the effect's constructor.
+     */
+    trigger(effectName, options) {
+        console.log(`MANAGER: EffectsManager.trigger received call for '${effectName}'. Queue length: ${this.effectQueue.length}`); // DIAGNOSTIC LOG
+        this.effectQueue.push({ effectName, options });
+        this._processQueue();
+    }
+
+    /**
+     * @JSDoc
+     * @method _processQueue
+     * @private
+     * @async
+     * @description Processes the effect queue sequentially. It takes the next effect from the queue,
+     * plays it, and waits for it to complete before starting the next one.
+     */
+    async _processQueue() {
+        if (this.isEffectActive || this.effectQueue.length === 0) {
             return;
         }
 
-        const textElement = document.createElement('div');
-        textElement.className = 'floating-text';
-        textElement.textContent = text;
-        if (textColor) {
-            // Use CSS variables for predefined colors, otherwise use the direct value
-            if (textColor === 'blue') {
-                textElement.style.color = 'var(--color-info)';
-            } else if (textColor === 'red') {
-                textElement.style.color = 'var(--color-danger)';
-            } else if (textColor === 'green') {
-                 textElement.style.color = 'var(--color-success)';
-            } else {
-                textElement.style.color = textColor;
-            }
+        this.isEffectActive = true;
+        const request = this.effectQueue.shift();
+        const EffectClass = this.effectsRegistry[request.effectName];
+
+        if (!EffectClass) {
+            console.warn(`EffectManager: Attempted to trigger unregistered effect '${request.effectName}'.`);
+            this.isEffectActive = false;
+            this._processQueue(); // Process next item
+            return;
         }
 
-        // Handle positioning
-        if (pos === 'center-screen') {
-            textElement.classList.add('center-screen');
-        } else if (x !== undefined && y !== undefined) {
-            textElement.style.left = `${x}px`;
-            textElement.style.top = `${y}px`;
+        try {
+            console.log(`MANAGER: Instantiating and playing effect: '${request.effectName}'.`); // DIAGNOSTIC LOG
+            const effect = new EffectClass(request.options);
+            await effect.play();
+        } catch (error) {
+            console.error(`Error playing effect '${request.effectName}':`, error);
+        } finally {
+            this.isEffectActive = false;
+            // Check for more effects that may have been added during playback
+            this._processQueue();
         }
-
-        this.gameContainer.appendChild(textElement);
-
-        textElement.addEventListener('animationend', () => {
-            if (textElement.parentElement) {
-                textElement.parentElement.removeChild(textElement);
-            }
-        });
     }
 }

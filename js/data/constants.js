@@ -148,7 +148,6 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  * @property {number} STARTING_DEBT_INTEREST - The initial monthly interest on the starting debt.
  * @property {number} REPAIR_COST_PER_HP - The credit cost to repair one point of hull damage.
  * @property {number} REPAIR_AMOUNT_PER_TICK - The percentage of max hull repaired per service tick.
- * @property {number} SCRAP_PER_HULL_POINT - The amount of Metal Scrap (in tons) generated per hull point repaired.
  * @property {number} FUEL_SCALAR - A base multiplier used in travel fuel cost calculations.
  * @property {number} INTEREST_INTERVAL - The number of days between interest charges on debt.
  * @property {number} PASSIVE_REPAIR_RATE - The percentage of max hull repaired per day on inactive ships.
@@ -169,7 +168,6 @@ export const GAME_RULES = Object.freeze({
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,
-    SCRAP_PER_HULL_POINT: 0.02,
     FUEL_SCALAR: 3,
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,

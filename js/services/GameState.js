@@ -154,15 +154,12 @@ export class GameState {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0,
                 credits: 3000, debt: 0, monthlyInterestAmount: 0,
-                metalScrap: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 revealedTier: 1,
                 unlockedLicenseIds: [],
                 unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
                 seenCommodityMilestones: [], financeLog: [],
-                activePerks: {}, seenEvents: [],
-                flags: { hasSeenScrapTutorial: false },
-                activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
+                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
                 inventories: { },
                 debugEventIndex: 0
@@ -184,7 +181,6 @@ export class GameState {
             },
             uiState: {
                 marketCardMinimized: {},
-                marketSubScreen: 'commodities',
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
                 shipyardActiveIndex: 0

@@ -141,61 +141,6 @@ export class TutorialService {
     }
 
     /**
-     * Checks and displays the one-time tutorial for Metal Scrap.
-     * This is designed to be null-safe and called from PlayerActionService.
-     * @JSDoc
-     */
-    triggerScrapTutorial() {
-        // Ensure flags object exists before accessing
-        if (!this.gameState.player.flags) {
-             this.logger.warn('TutorialService', 'Player flags object not found when trying to trigger scrap tutorial.');
-             return;
-        }
-        if (this.gameState.player.flags.hasSeenScrapTutorial) {
-            return;
-        }
-        // Set the flag immediately to prevent multiple triggers
-        this.gameState.player.flags.hasSeenScrapTutorial = true;
-        this.gameState.setState({}); // Save the flag change
-
-        const toastId = 'tt_metal_scrap_1';
-        const content = {
-            header: 'NEW RESOURCE: METAL SCRAP',
-            body: "Repairing your hull now generates Metal Scrap. This is a special resource that <strong>doesn't use cargo space</strong>. You can sell it for credits at any station via the <strong>Market > Materials</strong> tab."
-        };
-        // Use showToast to display the tutorial step
-        this.showToast(toastId, content);
-         this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_TRIGGER', `Triggered Metal Scrap tutorial toast.`);
-    }
-
-    /**
-     * Displays a tutorial toast message.
-     * @param {string} toastId A unique ID for this toast message.
-     * @param {object} content An object containing `header` and `body` strings for the toast.
-     * @param {string} [position='bottom-center'] The desired screen position (e.g., 'top-left', 'center').
-     * @JSDoc
-     */
-    showToast(toastId, content, position = 'bottom-center') {
-        // This is a simplified version for the Metal Scrap tutorial.
-        // It directly calls the UIManager's toast display logic.
-        // A more robust implementation might manage toast state within TutorialService.
-        this.uiManager.showTutorialToast({
-            step: {
-                stepId: toastId, // Use the toastId as a pseudo stepId
-                text: `<strong>${content.header}</strong><br><br>${content.body}`,
-                position: { desktop: position, mobile: position }, // Use the provided position
-                completion: { type: 'INFO' }, // Assume it's an info step, dismissed by 'Next'
-                nextStepId: null, // No next step for this simple toast
-                isSkippable: false, // Make it non-skippable for this context
-                 buttonText: 'Got It!' // Custom button text
-            },
-            onSkip: () => {}, // No skip functionality for this simple toast
-            onNext: () => this.uiManager.hideTutorialToast(), // 'Next' button just hides it
-            gameState: this.gameState.getState()
-        });
-    }
-
-    /**
      * Displays a specific tutorial step by its ID and manages UI navigation locks.
      * @param {string} stepId The ID of the step to display.
      * @private
@@ -283,15 +228,6 @@ export class TutorialService {
             case TUTORIAL_ACTION_TYPES.ACTION:
                 if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
                     return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
-                }
-                 // Allow matching specific goodId for sell actions
-                if (condition.action === 'sell-item' && actionData.action === 'sell-item') {
-                    return !condition.goodId || condition.goodId === actionData.goodId;
-                }
-                // Allow matching specific missionId for accept/complete actions
-                if ((condition.action === 'accept-mission' || condition.action === 'complete-mission') &&
-                    (actionData.action === 'accept-mission' || actionData.action === 'complete-mission')) {
-                    return !condition.missionId || condition.missionId === actionData.missionId;
                 }
                 return condition.action === actionData.action;
             case TUTORIAL_ACTION_TYPES.INFO:

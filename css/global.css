@@ -21,9 +21,6 @@
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
-
-    /* Metal Update V1 - GDD Sec 7.4 */
-    --color-metal-scrap: linear-gradient(135deg, #A4BAD1 0%, #7B8A9C 100%);
 }
 
 html {
@@ -531,15 +528,6 @@ body {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
     z-index: 100;
     animation: float-up 2.5s forwards ease-out;
-}
-
-/* Metal Update V1 - Phase 2a - GDD Sec 3.4 */
-.floating-text.center-screen {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    animation: float-up 2.5s forwards ease-out;
-    /* Re-declare animation in case of specificity override */
 }
 
 .cargo-item-card {

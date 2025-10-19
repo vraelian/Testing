@@ -39,33 +39,3 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
     * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
     * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.
-
----
-
-### ADR-004: Market Screen Refactor (Wrap & Fork)
-
-* **Status**: Accepted (2025-10-19)
-* **Context**: The "Metal Update" required adding a new "Materials" screen to the existing "Market" screen, which was only designed to show "Commodities". A full rewrite of the `MarketScreen` and its complex `MarketEventHandler` would be high-risk and time-consuming.
-* **Decision**: A "Wrap & Fork" strategy was implemented.
-    1.  **Wrap**: The existing commodity list (`#market-list-container`) was *wrapped* inside a new carousel structure (`#market-carousel-slider`) and became the "Commodities" sub-screen. The new "Materials" sub-screen was added alongside it.
-    2.  **Fork**: The `MarketEventHandler` logic (e.g., `handleConfirmTrade`) was "forked" using an `if` condition based on a `data-item-type` attribute. This allows the same handler to manage both commodity and material trades, minimizing new code and regression risk.
-* **Consequences**:
-    * **Pro**: Enabled the addition of a new, distinct market sub-screen with minimal disruption to the existing, stable commodity trading logic.
-    * **Pro**: Reused the vast majority of `MarketEventHandler`'s logic, significantly reducing development time and risk.
-    * **Pro**: Created an extensible pattern. Future sub-screens (e.g., "Bounties") can be easily added to the carousel.
-    * **Con**: Slightly increases the complexity of `MarketEventHandler`, which must now differentiate between item types.
-
----
-
-### ADR-005: UI Update Optimization (Push/Pull Hybrid)
-
-* **Status**: Accepted (2025-10-19)
-* **Context**: The new "Scrap Bar" on the Services screen needed to update in real-time as the player held down the "Repair" button. Updating it via the standard `GameState` -> `UIManager.render()` loop (a "pull" model) would be inefficient and could cause lag, as it would re-render the entire screen on every tick.
-* **Decision**: A hybrid "push/pull" model was adopted (GDD Appendix D-03).
-    1.  **Pull (On-Load)**: `UIManager.render('services')` calls a new `updateScrapBar()` function to ensure the bar is correct when the screen is first loaded.
-    2.  **Push (On-Demand)**: `PlayerActionService.repairTick()`, the function that *changes* the scrap value, *also* gets a direct reference to the `UIManager` and calls `uiManager.updateScrapBar()` on every tick. This call is guarded to only run if the active screen is 'services'.
-* **Consequences**:
-    * **Pro**: Achieves real-time UI updates with maximum performance by bypassing the full render loop. The update is surgical, only targeting the Scrap Bar's DOM elements.
-    * **Pro**: Architecturally sound, as the "push" logic is correctly placed in the service responsible for the action (`PlayerActionService`).
-    * **Pro**: The "pull" logic ensures state-UI synchronization even if the "push" fails or the screen is loaded from scratch.
-    * **Con**: Introduces a minor violation of pure unidirectional flow, as `PlayerActionService` now has a direct dependency on `UIManager` and calls one of its methods. This is considered an acceptable trade-off for a critical performance optimization.
