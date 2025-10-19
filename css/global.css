@@ -21,7 +21,9 @@
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
-    --color-metal-scrap: #4a6a8a; /* Default: var(--color-border-medium) */
+
+    /* Metal Update V1 - GDD Sec 7.4 */
+    --color-metal-scrap: linear-gradient(135deg, #A4BAD1 0%, #7B8A9C 100%);
 }
 
 html {
@@ -531,6 +533,7 @@ body {
     animation: float-up 2.5s forwards ease-out;
 }
 
+/* Metal Update V1 - Phase 2a - GDD Sec 3.4 */
 .floating-text.center-screen {
     top: 50%;
     left: 50%;
