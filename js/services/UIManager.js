@@ -1,7 +1,7 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, getDateFromDay, renderIndicatorPills, getCommodityStyle } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS, SHIP_IDS, COMMODITY_IDS, CONSTANTS } from '../data/constants.js'; // Phase 4c: Import CONSTANTS
 import { EffectsManager } from '../effects/EffectsManager.js';
 import { CarouselEventHandler } from './handlers/CarouselEventHandler.js'; // Phase 4a Import
 
@@ -202,13 +202,13 @@ export class UIManager {
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
-                    <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
+                    <div classs="status-bar-group fuel-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">F</span>
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">C</span>
+                        <span classs-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -262,6 +262,9 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                // --- Phase 4c: "Pull" Update ---
+                // Call updateScrapBar() after the services screen HTML is rendered.
+                this.updateScrapBar();
                 break;
             case SCREEN_IDS.MARKET:
                 this.updateMarketScreen(gameState);
@@ -449,6 +452,55 @@ export class UIManager {
         }
     }
 
+    // --- Phase 4c: New Public Method ---
+    /**
+     * Surgically updates the Metal Scrap bar on the Services screen.
+     * This is "pull" safe and can be called at any time.
+     */
+    updateScrapBar() {
+        // Only proceed if the services screen is active and we have a state
+        if (this.lastKnownState?.activeScreen !== SCREEN_IDS.SERVICES) {
+            return;
+        }
+
+        // Find the elements in the DOM (must be defensive)
+        const fillEl = this.cache.servicesScreen.querySelector('#scrap-bar-fill');
+        const textEl = this.cache.servicesScreen.querySelector('#scrap-bar-text');
+
+        if (!fillEl || !textEl) {
+            // Elements don't exist, silently return.
+            return;
+        }
+
+        const scrapAmount = this.lastKnownState.player.metalScrap;
+        const tons = Math.floor(scrapAmount);
+
+        // --- GDD Appendix D-03: "Full Bar Window" Logic ---
+        const decimalPart = scrapAmount - tons; // Get the value after the decimal
+        let fillPct;
+
+        // e.g., scrapAmount = 2.05 -> decimalPart = 0.05
+        // We show 100% full for the "window" between X.00 and X.19
+        if (decimalPart < CONSTANTS.SCRAP_WINDOW_THRESHOLD) {
+            // (e.g., 0.00 to 0.19)
+            fillPct = 100;
+        } else {
+            // (e.g., 0.20 to 0.99)
+            // Scale the 0.20-0.99 range to be 20%-99%
+            // (decimalPart - 0.20) / (1.0 - 0.20) = (0.xx - 0.2) / 0.8
+            // We scale this from 0.20 (the threshold) up to 1.0
+            const scaledDecimal = (decimalPart - CONSTANTS.SCRAP_WINDOW_THRESHOLD) / (1.0 - CONSTANTS.SCRAP_WINDOW_THRESHOLD);
+            // Now scale this 0.0-1.0 value to the 20%-100% range
+            fillPct = CONSTANTS.SCRAP_WINDOW_THRESHOLD * 100 + (scaledDecimal * (100 - CONSTANTS.SCRAP_WINDOW_THRESHOLD * 100));
+            // Ensure it's capped at 100 (e.g., if scrapAmount is exactly 1.0)
+            fillPct = Math.min(100, fillPct);
+        }
+
+        // Update DOM
+        fillEl.style.width = `${fillPct}%`;
+        textEl.textContent = `${tons} / 1 T`;
+    }
+
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
@@ -552,7 +604,11 @@ export class UIManager {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
                     // After restoring state, immediately update the display to reflect it.
-                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    // Phase 4b: Only update commodities
+                    const itemType = control.dataset.itemType || 'commodity';
+                    if (itemType === 'commodity') {
+                        this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    }
                 }
             }
         }
