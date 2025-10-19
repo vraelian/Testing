@@ -7,6 +7,7 @@
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js'; // Added formatCredits import
 
 export class ActionClickHandler {
     /**
@@ -90,15 +91,17 @@ export class ActionClickHandler {
                 const carousel = document.getElementById('hangar-carousel');
                 if (carousel) {
                     const pagesToSkip = Math.abs(newIndex - currentIndex);
-                    const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
+                    const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1); // Calculate dynamic duration
                     carousel.style.transitionDuration = `${duration}s`;
 
                     this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
 
+                    // Reset transition duration after animation completes
                     setTimeout(() => {
                         if (carousel) carousel.style.transitionDuration = '';
                     }, duration * 1000);
                 } else {
+                    // Fallback if carousel element isn't found immediately (should not happen in normal flow)
                     this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
                 }
                 break;
@@ -106,11 +109,14 @@ export class ActionClickHandler {
 
             // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN:
-                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV') {
+                // Special handling for main nav clicks vs sub-nav clicks
+                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV' && actionTarget.classList.contains('tab')) {
+                    // Clicked the *currently active* main nav tab - toggle subnav collapse
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
-                    this.uiManager.render(this.gameState.getState());
+                    this.uiManager.render(this.gameState.getState()); // Re-render to show/hide subnav
                 } else {
-                    this.gameState.subNavCollapsed = false;
+                    // Clicked a different main nav tab OR a sub-nav link
+                    this.gameState.subNavCollapsed = false; // Always expand subnav when changing screens/main tabs
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
                 actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
@@ -119,6 +125,20 @@ export class ActionClickHandler {
                 this.uiManager.hideModal('launch-modal');
                 this.simulationService.travelTo(dataset.locationId);
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
+                break;
+
+            // --- Market Screen Pager ---
+            case 'market-page-materials':
+                if (this.gameState.uiState.marketSubScreen !== 'materials') {
+                    this.gameState.uiState.marketSubScreen = 'materials';
+                    this.gameState.setState({}); // Trigger UI update for carousel/pager visuals
+                }
+                break;
+            case 'market-page-commodities':
+                if (this.gameState.uiState.marketSubScreen !== 'commodities') {
+                    this.gameState.uiState.marketSubScreen = 'commodities';
+                    this.gameState.setState({}); // Trigger UI update for carousel/pager visuals
+                }
                 break;
 
             // --- Modals ---
@@ -173,11 +193,12 @@ export class ActionClickHandler {
             case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
                 if (dataset.goodId) {
                     this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
-                    this.gameState.setState({});
+                    this.gameState.setState({}); // Trigger re-render
                 }
                 break;
         }
 
+        // After handling the action, check tutorial state if relevant data was generated
         if (actionData) {
             this.tutorialService.checkState(actionData);
         }
@@ -203,15 +224,18 @@ export class ActionClickHandler {
                     `;
                     modal.querySelector('#confirm-license-purchase').onclick = () => {
                         const result = this.simulationService.purchaseLicense(licenseId);
+                        // Handle feedback based on result (e.g., insufficient funds)
                         if (!result.success && result.error === 'INSUFFICIENT_FUNDS') {
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
                         }
+                        // TODO: Add success feedback? (Maybe a subtle effect or toast)
                         closeHandler();
                     };
                     modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
                 }
             });
         } else if (license.type === 'mission') {
+            // Show guidance text for mission-based licenses
             this.uiManager.queueModal('event-modal', license.name, license.guidanceText);
         }
     }
