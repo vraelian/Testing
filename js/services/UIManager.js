@@ -418,6 +418,41 @@ export class UIManager {
         paginationContainer.innerHTML = dotsHtml;
     }
 
+    /**
+     * Surgically updates the Market screen's carousel and pager.
+     * @param {object} gameState The current game state.
+     * @private
+     */
+    _updateMarketScreenCarousel(gameState) {
+        const { marketSubScreen } = gameState.uiState;
+        const marketScreenEl = this.cache.marketScreen;
+        if (!marketScreenEl) return;
+
+        // 1. Update Pager Buttons
+        const materialsBtn = marketScreenEl.querySelector('[data-action="market-page-materials"]');
+        const commoditiesBtn = marketScreenEl.querySelector('[data-action="market-page-commodities"]');
+
+        if (materialsBtn && commoditiesBtn) {
+            const isMaterials = marketSubScreen === 'materials';
+            
+            materialsBtn.classList.toggle('btn-primary', isMaterials);
+            materialsBtn.classList.toggle('btn-secondary', !isMaterials);
+            
+            commoditiesBtn.classList.toggle('btn-primary', !isMaterials);
+            commoditiesBtn.classList.toggle('btn-secondary', isMaterials);
+        }
+        
+        // 2. Update Carousel Position
+        const slider = marketScreenEl.querySelector('#market-carousel-slider');
+        if (slider) {
+            // 'materials' is index 0 (translateX(0%))
+            // 'commodities' is index 1 (translateX(-50%))
+            // This is based on the HTML order from MarketScreen.js in Phase 2
+            const newIndex = marketSubScreen === 'materials' ? 0 : 1;
+            slider.style.transform = `translateX(-${newIndex * 50}%)`;
+        }
+    }
+
 
     updateStickyBar(gameState) {
         this.cache.stickyBar.innerHTML = '';
@@ -458,6 +493,7 @@ export class UIManager {
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
+        this._updateMarketScreenCarousel(gameState); // <-- ADDED
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;

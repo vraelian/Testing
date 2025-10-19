@@ -22,19 +22,48 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
         return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
-    return `<div class="scroll-panel">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
-            </div>`;
+    // The original commodity list is now its own sub-screen
+    const commoditiesScreenHtml = `
+        <div class="scroll-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
+        </div>`;
+    
+    // Placeholder for the new materials sub-screen
+    const materialsScreenHtml = `
+        <div class="scroll-panel">
+            <p class="p-4 text-center text-gray-400">Materials trading will be available soon.</p>
+        </div>`;
+
+    // Pager HTML (borrows 'toggle-container' class from hangar for styling)
+    // The active button will be set dynamically in Phase 3 by UIManager
+    const pagerHtml = `
+        <div id="market-pager-container" class="toggle-container">
+            <button class="btn btn-secondary" data-action="market-page-materials">Materials</button>
+            <button class="btn btn-primary" data-action="market-page-commodities">Commodities</button>
+        </div>`;
+
+    // New carousel structure wrapping the sub-screens
+    const carouselHtml = `
+        <div id="market-carousel-container">
+            <div id="market-carousel-slider">
+                <div id="market-materials-screen" class="market-sub-screen">
+                    ${materialsScreenHtml}
+                </div>
+                <div id="market-commodities-screen" class="market-sub-screen">
+                    ${commoditiesScreenHtml}
+                </div>
+            </div>
+        </div>`;
+
+    // Return the complete market screen HTML
+    return pagerHtml + carouselHtml;
 }
 
 /**
  * Generates the HTML for a single commodity card on the market screen.
  * @param {object} good - The commodity data from the database.
  * @param {object} gameState - The current game state.
- * @param {function} getItemPrice - A function to calculate the item's current price.
- * @param {object} marketTransactionState - The saved state of the transaction modules.
- * @returns {string} The HTML string for the commodity card.
- * @private
+ *... [rest of _getMarketItemHtml function remains unchanged] ...
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
     const { player, market, currentLocationId, tutorials, uiState } = gameState;

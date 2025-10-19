@@ -563,3 +563,53 @@
 .market-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
+
+/* --- [[START]] MARKET CAROUSEL STYLES --- */
+
+/* The pager container uses the .toggle-container class,
+  which is already styled globally in navigation.css 
+  (e.g., display: flex, justify-content: center, gap, padding).
+  No specific styles for #market-pager-container are needed
+  as long as .toggle-container is present.
+*/
+
+#market-carousel-container {
+    width: 100%;
+    overflow: hidden;
+    /* This container's height will be determined by its content.
+      We need to ensure the .scroll-panel inside the active 
+      .market-sub-screen defines the height.
+    */
+}
+
+#market-carousel-slider {
+    display: flex;
+    width: 200%; /* 100% for each of the 2 sub-screens */
+    transition: transform 0.3s ease-in-out;
+    /* The transform: translateX() will be applied by UIManager 
+      based on gameState.uiState.marketSubScreen
+    */
+}
+
+.market-sub-screen {
+    width: 50%; /* Each screen takes up 50% of the *slider's* width */
+    flex-shrink: 0;
+    /* This ensures each sub-screen is 100% of the *container's* width
+      (50% of the 200% slider width = 100% of container width)
+    */
+}
+
+/* Ensure the scroll-panel within the sub-screen behaves correctly.
+  We need to make sure it fills the available height.
+  This might need adjustment, but for now, we'll let it
+  behave as it did before.
+*/
+.market-sub-screen .scroll-panel {
+    /* The .scroll-panel already has overflow-y: auto.
+      We might need to explicitly set a height or flex-grow
+      in the parent container in UIManager if height is an issue.
+      For now, this should work.
+    */
+}
+
+/* --- [[END]] MARKET CAROUSEL STYLES --- */

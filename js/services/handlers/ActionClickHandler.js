@@ -1,218 +1,279 @@
 // js/services/handlers/ActionClickHandler.js
-/**
- * @fileoverview Handles the primary routing of 'data-action' click events,
- * delegating them to the appropriate services. This module focuses on general
- * actions like navigation, modal triggers, and simple state changes, while
- * more complex interactions are handled by other specialized handlers.
- */
-import { DB } from '../../data/database.js';
-import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { ACTION_IDS, SCREEN_IDS, NAV_IDS, SHIP_IDS } from '../../data/constants.js';
 
+/**
+ * @fileoverview
+ * This file centralizes all 'data-action' click event handling.
+ * It maps action IDs from clicked DOM elements to specific game state changes
+ * or service calls.
+ *
+ * @class ActionClickHandler
+ * @description
+ * Static class that provides a centralized handler for all click events
+ * decorated with a `data-action` attribute. This delegates tasks to the
+ * appropriate services (like PlayerActionService, TravelService, etc.)
+ * based on the action ID.
+ */
 export class ActionClickHandler {
     /**
-     * @param {import('../GameState.js').GameState} gameState The central game state object.
-     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
+     * Initializes the click handler with necessary services and game state.
+     * @param {object} services - An object containing all injected services (PlayerActionService, TravelService, etc.).
+     * @param {GameState} gameState - The main game state object.
+     * @param {UIManager} uiManager - The UI manager instance.
+     * @param {TutorialService} tutorialService - The tutorial service instance.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
-        this.gameState = gameState;
-        this.simulationService = simulationService;
-        this.uiManager = uiManager;
+    constructor({ playerActionService, travelService, missionService, tutorialService, loggingService }, gameState, uiManager) {
+        this.playerActionService = playerActionService;
+        this.travelService = travelService;
+        this.missionService = missionService;
         this.tutorialService = tutorialService;
+        this.loggingService = loggingService;
+        this.gameState = gameState;
+        this.uiManager = uiManager;
     }
 
     /**
-     * Handles a delegated click event if it matches a data-action.
-     * @param {Event} e The click event object.
-     * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
+     * The primary handler for all delegated click events.
+     * It reads the `data-action` attribute from the clicked element
+     * and executes the corresponding game logic.
+     * @param {Event} event - The click event object.
      */
-    handle(e, actionTarget) {
-        const state = this.gameState.getState();
-        if (actionTarget.hasAttribute('disabled')) return;
+    handleActionClick(event) {
+        const action = event.target.dataset.action;
+        if (!action) return;
 
-        const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; // For the TutorialService
+        // Stop propagation for nested actions if necessary
+        event.stopPropagation();
+
+        // Check for tutorial locks
+        if (this.tutorialService.isActionLocked(action, event.target)) {
+            console.warn(`Action "${action}" is locked by tutorial.`);
+            this.tutorialService.showLockedActionToast(action);
+            return;
+        }
+
+        const goodId = event.target.dataset.goodId;
+        const locationId = event.target.dataset.locationId;
+        const shipId = event.target.dataset.shipId;
 
         switch (action) {
-            // --- Ship Actions (Hangar/Shipyard) ---
-            case ACTION_IDS.BUY_SHIP: {
-                const { shipId } = dataset;
-                if (!shipId) return;
-                e.stopPropagation();
-                this.simulationService.buyShip(shipId, e);
-                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+            // --- Navigation ---
+            case ACTION_IDS.NAV_SHIP:
+                this.gameState.setState({ activeNav: NAV_IDS.SHIP, activeScreen: this.gameState.lastActiveScreen[NAV_IDS.SHIP] });
                 break;
-            }
-            case ACTION_IDS.SELL_SHIP: {
-                const { shipId } = dataset;
-                if (!shipId) return;
-                e.stopPropagation();
-                this.simulationService.sellShip(shipId, e);
+            case ACTION_IDS.NAV_STARPORT:
+                this.gameState.setState({ activeNav: NAV_IDS.STARPORT, activeScreen: this.gameState.lastActiveScreen[NAV_IDS.STARPORT] });
                 break;
-            }
-            case ACTION_IDS.SELECT_SHIP: {
-                const { shipId } = dataset;
-                if (!shipId) return;
-                this.simulationService.setActiveShip(shipId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+            case ACTION_IDS.NAV_DATA:
+                this.gameState.setState({ activeNav: NAV_IDS.DATA, activeScreen: this.gameState.lastActiveScreen[NAV_IDS.DATA] });
                 break;
-            }
 
-            // --- Hangar UI ---
-            case ACTION_IDS.TOGGLE_HANGAR_MODE:
-                if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
-                    this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
-                    this.gameState.setState({});
+            // --- Sub-Navigation ---
+            case ACTION_IDS.SCREEN_MAP:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.MAP });
+                this.gameState.lastActiveScreen[NAV_IDS.SHIP] = SCREEN_IDS.MAP;
+                break;
+            case ACTION_IDS.SCREEN_CARGO:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.CARGO });
+                this.gameState.lastActiveScreen[NAV_IDS.SHIP] = SCREEN_IDS.CARGO;
+                break;
+            case ACTION_IDS.SCREEN_NAV:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.NAVIGATION });
+                this.gameState.lastActiveScreen[NAV_IDS.SHIP] = SCREEN_IDS.NAVIGATION;
+                break;
+            case ACTION_IDS.SCREEN_MARKET:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.MARKET });
+                this.gameState.lastActiveScreen[NAV_IDS.STARPORT] = SCREEN_IDS.MARKET;
+                break;
+            case ACTION_IDS.SCREEN_SERVICES:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.SERVICES });
+                this.gameState.lastActiveScreen[NAV_IDS.STARPORT] = SCREEN_IDS.SERVICES;
+                break;
+            case ACTION_IDS.SCREEN_HANGAR:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.HANGAR });
+                this.gameState.lastActiveScreen[NAV_IDS.STARPORT] = SCREEN_IDS.HANGAR;
+                break;
+            case ACTION_IDS.SCREEN_MISSIONS:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.MISSIONS });
+                this.gameState.lastActiveScreen[NAV_IDS.DATA] = SCREEN_IDS.MISSIONS;
+                break;
+            case ACTION_IDS.SCREEN_INTEL:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.INTEL });
+                this.gameState.lastActiveScreen[NAV_IDS.DATA] = SCREEN_IDS.INTEL;
+                break;
+            case ACTION_IDS.SCREEN_FINANCE:
+                this.gameState.setState({ activeScreen: SCREEN_IDS.FINANCE });
+                this.gameState.lastActiveScreen[NAV_IDS.DATA] = SCREEN_IDS.FINANCE;
+                break;
+            
+            // --- Hangar / Shipyard Pager ---
+            case ACTION_IDS.HANGAR_PAGE_SHIPYARD:
+                if (this.gameState.uiState.hangarShipyardToggleState !== 'shipyard') {
+                    this.gameState.setState({ uiState: { ...this.gameState.uiState, hangarShipyardToggleState: 'shipyard' } });
                 }
                 break;
-            case ACTION_IDS.SET_HANGAR_PAGE: {
-                const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
-                const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
-                const shipList = isHangarMode ? state.player.ownedShipIds : this.simulationService._getShipyardInventory();
-                const totalItems = shipList.length;
-
-                let newIndex;
-                const JUMP_DISTANCE = 5; // How many pages to jump with half-dots
-
-                if (dataset.jumpDirection) {
-                    if (dataset.jumpDirection === 'next') {
-                        newIndex = Math.min(totalItems - 1, currentIndex + JUMP_DISTANCE);
-                    } else { // 'prev'
-                        newIndex = Math.max(0, currentIndex - JUMP_DISTANCE);
-                    }
-                } else {
-                    newIndex = parseInt(dataset.index, 10);
-                }
-
-                if (isNaN(newIndex)) return;
-
-                const carousel = document.getElementById('hangar-carousel');
-                if (carousel) {
-                    const pagesToSkip = Math.abs(newIndex - currentIndex);
-                    const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
-                    carousel.style.transitionDuration = `${duration}s`;
-
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
-
-                    setTimeout(() => {
-                        if (carousel) carousel.style.transitionDuration = '';
-                    }, duration * 1000);
-                } else {
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+            case ACTION_IDS.HANGAR_PAGE_HANGAR:
+                 if (this.gameState.uiState.hangarShipyardToggleState !== 'hangar') {
+                    this.gameState.setState({ uiState: { ...this.gameState.uiState, hangarShipyardToggleState: 'hangar' } });
                 }
                 break;
-            }
 
-            // --- Navigation & Screen Changes ---
-            case ACTION_IDS.SET_SCREEN:
-                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV') {
-                    this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
-                    this.uiManager.render(this.gameState.getState());
-                } else {
-                    this.gameState.subNavCollapsed = false;
-                    this.simulationService.setScreen(dataset.navId, dataset.screenId);
+            // --- [[START]] Market Pager ---
+            case 'market-page-materials':
+                if (this.gameState.uiState.marketSubScreen !== 'materials') {
+                    this.gameState.setState({ uiState: { ...this.gameState.uiState, marketSubScreen: 'materials' } });
                 }
-                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
-            case ACTION_IDS.TRAVEL:
-                this.uiManager.hideModal('launch-modal');
-                this.simulationService.travelTo(dataset.locationId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
+            case 'market-page-commodities':
+                if (this.gameState.uiState.marketSubScreen !== 'commodities') {
+                    this.gameState.setState({ uiState: { ...this.gameState.uiState, marketSubScreen: 'commodities' } });
+                }
+                break;
+            // --- [[END]] Market Pager ---
+
+            // --- Travel ---
+            case ACTION_IDS.TRAVEL_TO:
+                this.travelService.initiateTravel(locationId);
+                break;
+            case ACTION_IDS.CANCEL_TRAVEL:
+                this.travelService.cancelTravel();
                 break;
 
-            // --- Modals ---
-            case 'show-mission-modal':
-                this.uiManager.showMissionModal(dataset.missionId);
-                actionData = { type: 'ACTION', action: 'show-mission-modal' };
+            // --- Market ---
+            case ACTION_IDS.TOGGLE_TRADE_MODE:
+                this.uiManager.marketEventHandler.toggleTradeMode(goodId);
                 break;
-            case 'show_cargo_detail':
-                this.uiManager.showCargoDetailModal(state, dataset.goodId);
+            case ACTION_IDS.CONFIRM_TRADE:
+                this.uiManager.marketEventHandler.confirmTrade(goodId);
                 break;
-            case 'show-launch-modal':
-                this.uiManager.showLaunchModal(dataset.locationId);
+            case ACTION_IDS.SET_MAX_TRADE:
+                this.uiManager.marketEventHandler.setMax(goodId);
                 break;
-            case 'show-map-modal':
-                this.uiManager.showMapDetailModal(dataset.locationId);
+            case ACTION_IDS.DECREMENT:
+                this.uiManager.marketEventHandler.decrement(goodId);
                 break;
-            case 'close-map-modal':
-                this.uiManager.hideMapDetailModal();
-                break;
-
-            // --- Mission Actions ---
-            case 'accept-mission':
-                this.simulationService.missionService.acceptMission(dataset.missionId);
-                this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
-                break;
-            case 'abandon-mission':
-                this.simulationService.missionService.abandonMission();
-                this.uiManager.hideModal('mission-modal');
-                break;
-            case 'complete-mission':
-                this.simulationService.missionService.completeActiveMission();
-                this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'complete-mission' };
-                break;
-
-            // --- Finance & Licenses ---
-            case ACTION_IDS.PAY_DEBT:
-                this.simulationService.payOffDebt();
-                break;
-            case ACTION_IDS.TAKE_LOAN:
-                this.simulationService.takeLoan(JSON.parse(dataset.loanDetails));
-                break;
-            case ACTION_IDS.PURCHASE_INTEL:
-                this.simulationService.purchaseIntel(parseInt(dataset.cost));
+            case ACTION_IDS.INCREMENT:
+                this.uiManager.marketEventHandler.increment(goodId);
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                this._handleAcquireLicense(dataset.licenseId);
+                const licenseId = event.target.dataset.licenseId;
+                this.playerActionService.acquireLicense(licenseId);
                 break;
-
-            // --- Market Card Minimization ---
             case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
-                if (dataset.goodId) {
-                    this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
-                    this.gameState.setState({});
+                this.uiManager.toggleMarketCardView(goodId);
+                break;
+
+            // --- Ship Actions ---
+            case ACTION_IDS.REPAIR_SHIP:
+                this.playerActionService.repairShip(shipId);
+                break;
+            case ACTION_IDS.REFILL_FUEL:
+                this.playerActionService.refillFuel(shipId);
+                break;
+            case ACTION_IDS.BUY_SHIP:
+                this.playerActionService.buyShip(shipId);
+                break;
+            case ACTION_IDS.SELL_SHIP:
+                this.playerActionService.sellShip(shipId);
+                break;
+            case ACTION_IDS.SET_ACTIVE_SHIP:
+                this.playerActionService.setActiveShip(shipId);
+                break;
+
+            // --- Finance ---
+            case ACTION_IDS.PAY_LOAN:
+                this.playerActionService.payLoan();
+                break;
+
+            // --- Missions ---
+            case ACTION_IDS.ACCEPT_MISSION:
+                const missionId = event.target.dataset.missionId;
+                this.missionService.acceptMission(missionId);
+                break;
+            case ACTION_IDS.ABANDON_MISSION:
+                this.missionService.abandonMission();
+                break;
+            case ACTION_IDS.COMPLETE_MISSION:
+                this.missionService.completeMission();
+                break;
+            
+            // --- Intel ---
+            case ACTION_IDS.BUY_INTEL:
+                const intelId = event.target.dataset.intelId;
+                this.playerActionService.buyIntel(intelId);
+                break;
+                
+            // --- Tutorial ---
+            case ACTION_IDS.TUTORIAL_NEXT_STEP:
+                this.tutorialService.nextStep();
+                break;
+            case ACTION_IDS.TUTORIAL_SKIP_BATCH:
+                this.tutorialService.skipTutorialBatch();
+                break;
+            case ACTION_IDS.TUTORIAL_CLOSE_TOAST:
+                this.tutorialService.closeTutorialToast();
+                break;
+
+            // --- Modals / Popups ---
+            case ACTION_IDS.POPUP_CLOSE:
+                this.uiManager.closeAnyModal();
+                break;
+            case ACTION_IDS.POPUP_CONFIRM:
+                this.uiManager.confirmModal();
+                break;
+            case ACTION_IDS.SHOW_PRICE_GRAPH:
+                this.uiManager.showPriceGraph(goodId);
+                break;
+
+            // --- Debug ---
+            case 'debug-day-plus-1':
+                this.loggingService.log('DEBUG: Day +1');
+                this.gameState.setState({ day: this.gameState.day + 1 });
+                break;
+            case 'debug-credits-plus-10k':
+                this.loggingService.log('DEBUG: Credits +10k');
+                this.gameState.setState({ player: { ...this.gameState.player, credits: this.gameState.player.credits + 10000 } });
+                break;
+            case 'debug-fuel-minus-10':
+                {
+                    this.loggingService.log('DEBUG: Fuel -10');
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipState = this.gameState.player.shipStates[activeShipId];
+                    const newFuel = Math.max(0, shipState.fuel - 10);
+                    this.playerActionService.updateShipState(activeShipId, { fuel: newFuel });
                 }
                 break;
-        }
-
-        if (actionData) {
-            this.tutorialService.checkState(actionData);
-        }
-    }
-
-    /**
-     * Handles the UI flow for acquiring a trade license.
-     * @param {string} licenseId The ID of the license to acquire.
-     * @private
-     */
-    _handleAcquireLicense(licenseId) {
-        const license = DB.LICENSES[licenseId];
-        if (!license) return;
-
-        if (license.type === 'purchase') {
-            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
-            this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
-                customSetup: (modal, closeHandler) => {
-                    const btnContainer = modal.querySelector('#event-button-container');
-                    btnContainer.innerHTML = `
-                        <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
-                        <button id="cancel-license-purchase" class="btn">Cancel</button>
-                    `;
-                    modal.querySelector('#confirm-license-purchase').onclick = () => {
-                        const result = this.simulationService.purchaseLicense(licenseId);
-                        if (!result.success && result.error === 'INSUFFICIENT_FUNDS') {
-                            this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
-                        }
-                        closeHandler();
-                    };
-                    modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
+            case 'debug-health-minus-10':
+                {
+                    this.loggingService.log('DEBUG: Health -10');
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipState = this.gameState.player.shipStates[activeShipId];
+                    const newHealth = Math.max(0, shipState.health - 10);
+                    this.playerActionService.updateShipState(activeShipId, { health: newHealth });
                 }
-            });
-        } else if (license.type === 'mission') {
-            this.uiManager.queueModal('event-modal', license.name, license.guidanceText);
+                break;
+            case 'debug-add-plasteel':
+                {
+                    this.loggingService.log('DEBUG: Add 10 Plasteel');
+                    const inv = this.gameState.player.inventories[this.gameState.player.activeShipId];
+                    const newQty = (inv['plasteel']?.quantity || 0) + 10;
+                    this.playerActionService.updateCargo('plasteel', newQty, 100);
+                }
+                break;
+            case 'debug-toggle-intro':
+                this.loggingService.log('DEBUG: Toggle Intro');
+                this.gameState.setState({ introSequenceActive: !this.gameState.introSequenceActive });
+                break;
+            case 'debug-trigger-event':
+                this.loggingService.log('DEBUG: Trigger Event');
+                this.uiManager.eventManager.triggerRandomEvent(true); // true = force event
+                break;
+            case 'debug-next-mission':
+                this.loggingService.log('DEBUG: Force Next Mission');
+                this.missionService.debugForceNextMission();
+                break;
+            default:
+                console.warn(`Unhandled action: ${action}`);
         }
     }
 }

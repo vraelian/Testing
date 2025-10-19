@@ -183,7 +183,8 @@ export class GameState {
                 marketCardMinimized: {},
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
-                shipyardActiveIndex: 0
+                shipyardActiveIndex: 0,
+                marketSubScreen: 'commodities' // <-- ADDED
             }
         };
 
