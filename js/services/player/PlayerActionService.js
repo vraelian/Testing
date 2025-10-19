@@ -6,7 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
-import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS, CONSTANTS } from '../../data/constants.js'; // Added CONSTANTS
 
 export class PlayerActionService {
     /**
@@ -17,8 +17,10 @@ export class PlayerActionService {
      * @param {import('../world/TimeService.js').TimeService} timeService
      * @param {import('../../services/LoggingService.js').Logger} logger
      * @param {import('../SimulationService.js').SimulationService} simulationServiceFacade
+     * @param {import('../../effects/EffectsManager.js').EffectsManager} effectsManager // Added EffectsManager injection
+     * @param {import('../TutorialService.js').TutorialService} tutorialService // Added TutorialService injection
      */
-    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade) {
+    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade, effectsManager, tutorialService) { // Added effectsManager, tutorialService
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.missionService = missionService;
@@ -26,6 +28,8 @@ export class PlayerActionService {
         this.timeService = timeService;
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
+        this.effectsManager = effectsManager; // Added assignment
+        this.tutorialService = tutorialService; // Added assignment
         this.isTransactionInProgress = false;
     }
 
@@ -38,7 +42,7 @@ export class PlayerActionService {
     buyItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return false;
-        
+
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
             this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
@@ -51,7 +55,7 @@ export class PlayerActionService {
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
-        
+
         const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
@@ -66,13 +70,13 @@ export class PlayerActionService {
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
         playerInvItem.quantity += quantity;
-        
+
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
         this.timeService._checkMilestones();
         this.missionService.checkTriggers();
-        
+
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
         this.gameState.setState({});
@@ -89,7 +93,7 @@ export class PlayerActionService {
     sellItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return 0;
-        
+
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
             this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
@@ -105,13 +109,13 @@ export class PlayerActionService {
 
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
-        
+
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             totalSaleValue += profit * totalBonus;
         }
-        
+
         totalSaleValue = Math.floor(totalSaleValue);
         this.gameState.player.credits += totalSaleValue;
         item.quantity -= quantity;
@@ -119,17 +123,17 @@ export class PlayerActionService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        
+
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
-        
+
         this.timeService._checkMilestones();
         this.missionService.checkTriggers();
-        
+
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
         this.gameState.setState({});
-        
+
         return totalSaleValue;
     }
 
@@ -153,7 +157,7 @@ export class PlayerActionService {
                 this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
                 return null;
             }
-            
+
             this.gameState.player.credits -= ship.price;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
             if (event) {
@@ -194,7 +198,7 @@ export class PlayerActionService {
     sellShip(shipId, event) {
         if (this.isTransactionInProgress) return false;
         this.isTransactionInProgress = true;
-    
+
         try {
             const state = this.gameState.getState();
             if (state.player.ownedShipIds.length <= 1) {
@@ -222,7 +226,7 @@ export class PlayerActionService {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
             }
             this.simulationService._logTransaction('ship', salePrice, `Sold ${ship.name}`);
-            
+
             const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
             this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
             delete this.gameState.player.shipStates[shipId];
@@ -237,7 +241,7 @@ export class PlayerActionService {
             }
 
             this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
-            
+
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
@@ -258,7 +262,7 @@ export class PlayerActionService {
     setActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
-        
+
         const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
         if (newIndex !== -1) {
             this.gameState.uiState.hangarActiveIndex = newIndex;
@@ -295,7 +299,7 @@ export class PlayerActionService {
         this.timeService._checkMilestones();
         this.gameState.setState({});
     }
-    
+
     /**
      * Allows the player to take out a loan, adding to their debt.
      * @param {object} loanData - Contains amount, fee, and interest for the loan.
@@ -340,14 +344,14 @@ export class PlayerActionService {
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
         if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
-        
+
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
-        
+
         this.gameState.setState({});
-        
+
         return { success: true };
     }
 
@@ -361,7 +365,7 @@ export class PlayerActionService {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You can't afford this intel.");
             return;
         }
-        
+
         player.credits -= cost;
         this.logger.info.player(day, 'INTEL_PURCHASE', `Purchased intel for ${formatCredits(cost)}.`);
         this.simulationService._logTransaction('intel', -cost, 'Purchased market intel');
@@ -373,14 +377,14 @@ export class PlayerActionService {
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];
         const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= player.revealedTier);
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
-        
+
         if (commodity) {
-            this.gameState.intel.active = { 
+            this.gameState.intel.active = {
                 targetMarketId: targetMarket.id,
-                commodityId: commodity.id, 
+                commodityId: commodity.id,
                 type: 'demand',
                 startDay: day,
-                endDay: day + 100 
+                endDay: day + 100
             };
         }
         this.gameState.setState({});
@@ -416,15 +420,61 @@ export class PlayerActionService {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
         if (ship.health >= ship.maxHealth) return 0;
-        
+
         let costPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
         if (state.player.credits < costPerTick) return 0;
-        
+
+        const healthBeforeRepair = state.player.shipStates[ship.id].health; // Store health before repair
+
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)));
+        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, healthBeforeRepair + (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)));
+
+        const hullRepaired = state.player.shipStates[ship.id].health - healthBeforeRepair; // Calculate actual hull points repaired
+
+        // --- Metal Scrap Generation ---
+        if (hullRepaired > 0 && CONSTANTS.SCRAP_PER_HULL_POINT) { // Check if constant exists
+            const scrapGained = hullRepaired * CONSTANTS.SCRAP_PER_HULL_POINT;
+            if (scrapGained > 0) {
+                const oldScrap = this.gameState.player.metalScrap;
+                // Use defensive toFixed(2) to prevent floating point precision errors
+                this.gameState.player.metalScrap = parseFloat((oldScrap + scrapGained).toFixed(2));
+
+                // Request floating text feedback using EffectsManager
+                if (this.effectsManager) {
+                    this.effectsManager.floatingText('+ METAL', 'blue', 'center-screen');
+                } else {
+                     this.logger.warn('PlayerActionService', 'EffectsManager not available for floating text.');
+                }
+
+
+                // --- Real-time UI Update (Push) ---
+                // If the player is on the Services screen, push an update to the bar
+                if (this.gameState.activeScreen === SCREEN_IDS.SERVICES) { // Check activeScreen directly
+                    // This public method (to be created in Phase 4) is performance-safe
+                    if(this.uiManager && typeof this.uiManager.updateScrapBar === 'function') {
+                        this.uiManager.updateScrapBar();
+                    } else {
+                        this.logger.warn('PlayerActionService', 'UIManager or updateScrapBar method not available.');
+                    }
+                }
+
+                // --- Onboarding Trigger (Deferred) ---
+                // Check and trigger the one-time tutorial
+                if (this.tutorialService && !this.gameState.player.flags?.hasSeenScrapTutorial) { // Check flags object existence
+                    // This function (to be created in Phase 5) is null-safe
+                    if (typeof this.tutorialService.triggerScrapTutorial === 'function') {
+                         this.tutorialService.triggerScrapTutorial();
+                    } else {
+                         this.logger.warn('PlayerActionService', 'TutorialService or triggerScrapTutorial method not available.');
+                    }
+
+                }
+            }
+        }
+
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
         this.gameState.setState({});

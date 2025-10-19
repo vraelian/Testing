@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, CONSTANTS } from '../data/constants.js'; // Added CONSTANTS
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
@@ -22,11 +22,13 @@ export class SimulationService {
      * @param {import('./GameState.js').GameState} gameState - The central state object.
      * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
+     * @param {import('../effects/EffectsManager.js').EffectsManager} effectsManager - The visual effects service.
      */
-    constructor(gameState, uiManager, logger) {
+    constructor(gameState, uiManager, logger, effectsManager) { // Added effectsManager
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
+        this.effectsManager = effectsManager; // Added this assignment
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
 
@@ -35,7 +37,8 @@ export class SimulationService {
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger);
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
-        this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
+        // Pass effectsManager and tutorialService (as null) to PlayerActionService constructor
+        this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this, this.effectsManager, this.tutorialService);
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
@@ -47,6 +50,7 @@ export class SimulationService {
      */
     setTutorialService(tutorialService) {
         this.tutorialService = tutorialService;
+        this.playerActionService.tutorialService = tutorialService; // Also inject into player service
     }
 
     /**
@@ -88,6 +92,55 @@ export class SimulationService {
     // --- CORE & SHARED METHODS ---
     // These methods remain in the facade because they are either simple state setters
     // or are helpers required by multiple services.
+
+    /**
+     * Sells a specified quantity of a material (e.g., Metal Scrap).
+     * This bypasses the market service as materials have a fixed price.
+     * @param {string} materialId - The ID of the material to sell (e.g., 'metalScrap').
+     * @param {number} quantity - The amount to sell (can be float).
+     * @returns {number|false} - The total sale value if successful, false otherwise.
+     */
+    sellMaterial(materialId, quantity) {
+        if (quantity <= 0) return false;
+
+        const state = this.gameState;
+
+        if (materialId === 'metalScrap') {
+            const playerScrap = state.player.metalScrap;
+            
+            // Check precision slightly beyond display (e.g., 0.001) to handle floating point noise
+            if ((quantity - playerScrap) > 0.001) {
+                this.uiManager.queueModal('event-modal', "Insufficient Scrap", `You only have ${playerScrap.toFixed(2)} tons of Metal Scrap.`);
+                return false;
+            }
+            
+            // Ensure we don't sell more than we have due to floating point math
+            const sellQuantity = Math.min(quantity, playerScrap);
+
+            const pricePerTon = CONSTANTS.SCRAP_SELL_PRICE;
+            if (typeof pricePerTon === 'undefined') {
+                this.logger.error('SimulationService', 'CONSTANTS.SCRAP_SELL_PRICE is not defined.');
+                return false;
+            }
+
+            const totalSaleValue = Math.floor(sellQuantity * pricePerTon);
+
+            // Use toFixed(2) to prevent floating point precision errors
+            this.gameState.player.metalScrap = parseFloat((playerScrap - sellQuantity).toFixed(2));
+            this.gameState.player.credits += totalSaleValue;
+
+            this.logger.info.player(state.day, 'SELL_MATERIAL', `Sold ${sellQuantity.toFixed(2)}t Metal Scrap for ${formatCredits(totalSaleValue)}`);
+            this._logTransaction('material', totalSaleValue, `Sold ${sellQuantity.toFixed(2)}t Metal Scrap`);
+            
+            this.gameState.setState({}); // Notify UI of changes
+
+            return totalSaleValue;
+
+        } else {
+            this.logger.warn('SimulationService', `sellMaterial called with unknown materialId: ${materialId}`);
+            return false;
+        }
+    }
 
     /**
      * Sets the active navigation tab and screen.
