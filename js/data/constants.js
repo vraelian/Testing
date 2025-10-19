@@ -162,7 +162,6 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
  * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
  * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
- * @property {number} SCRAP_PER_HULL_POINT - The amount of Metal Scrap generated per point of hull repaired.
  */
 export const GAME_RULES = Object.freeze({
     STARTING_CREDITS: 5000,
@@ -183,7 +182,6 @@ export const GAME_RULES = Object.freeze({
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,
-    SCRAP_PER_HULL_POINT: 0.02 // Added for Metal Update V1
 });
 
 /**
@@ -203,13 +201,3 @@ export const WEALTH_MILESTONES = [
  * @type {string}
  */
 export const SAVE_KEY = 'orbitalTraderSave_v2';
-
-// --- [[START]] Added for Metal Update V1 ---
-/**
- * @namespace CONSTANTS
- * @description A namespace for miscellaneous constants used throughout the game.
- */
-export const CONSTANTS = Object.freeze({
-    SCRAP_PER_HULL_POINT: 0.02
-});
-// --- [[END]] Added for Metal Update V1 ---

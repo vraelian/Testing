@@ -1,17 +1,19 @@
 // js/services/handlers/ActionClickHandler.js
 /**
- * @fileoverview Handles general delegated click events based on data-action attributes.
- * Routes actions to the appropriate SimulationService or UIManager method.
+ * @fileoverview Handles the primary routing of 'data-action' click events,
+ * delegating them to the appropriate services. This module focuses on general
+ * actions like navigation, modal triggers, and simple state changes, while
+ * more complex interactions are handled by other specialized handlers.
  */
-import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
+import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 export class ActionClickHandler {
     /**
-     * @param {import('../GameState.js').GameState} gameState - The game state instance.
-     * @param {import('../SimulationService.js').SimulationService} simulationService - The simulation service facade.
-     * @param {import('../UIManager.js').UIManager} uiManager - The UI manager instance.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService - The tutorial service instance.
+     * @param {import('../GameState.js').GameState} gameState The central game state object.
+     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
+     * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
      */
     constructor(gameState, simulationService, uiManager, tutorialService) {
         this.gameState = gameState;
@@ -21,155 +23,196 @@ export class ActionClickHandler {
     }
 
     /**
-     * Handles delegated click events on elements with data-action attributes.
-     * @param {Event} event - The click event object.
-     * @param {HTMLElement} target - The element that was clicked.
+     * Handles a delegated click event if it matches a data-action.
+     * @param {Event} e The click event object.
+     * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    handle(event, target) {
-        const action = target.dataset.action;
-        const navId = target.dataset.navId;
-        const screenId = target.dataset.screenId;
-        const locationId = target.dataset.locationId;
-        const shipId = target.dataset.shipId;
-        const licenseId = target.dataset.licenseId;
+    handle(e, actionTarget) {
+        const state = this.gameState.getState();
+        if (actionTarget.hasAttribute('disabled')) return;
+
+        const { action, ...dataset } = actionTarget.dataset;
+        let actionData = null; // For the TutorialService
 
         switch (action) {
-            case ACTION_IDS.SET_SCREEN:
-                if (navId && screenId) {
-                    this.simulationService.setScreen(navId, screenId);
+            // --- Ship Actions (Hangar/Shipyard) ---
+            case ACTION_IDS.BUY_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation();
+                this.simulationService.buyShip(shipId, e);
+                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                break;
+            }
+            case ACTION_IDS.SELL_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation();
+                this.simulationService.sellShip(shipId, e);
+                break;
+            }
+            case ACTION_IDS.SELECT_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                this.simulationService.setActiveShip(shipId);
+                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                break;
+            }
+
+            // --- Hangar UI ---
+            case ACTION_IDS.TOGGLE_HANGAR_MODE:
+                if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
+                    this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
+                    this.gameState.setState({});
                 }
+                break;
+            case ACTION_IDS.SET_HANGAR_PAGE: {
+                const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
+                const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
+                const shipList = isHangarMode ? state.player.ownedShipIds : this.simulationService._getShipyardInventory();
+                const totalItems = shipList.length;
+
+                let newIndex;
+                const JUMP_DISTANCE = 5; // How many pages to jump with half-dots
+
+                if (dataset.jumpDirection) {
+                    if (dataset.jumpDirection === 'next') {
+                        newIndex = Math.min(totalItems - 1, currentIndex + JUMP_DISTANCE);
+                    } else { // 'prev'
+                        newIndex = Math.max(0, currentIndex - JUMP_DISTANCE);
+                    }
+                } else {
+                    newIndex = parseInt(dataset.index, 10);
+                }
+
+                if (isNaN(newIndex)) return;
+
+                const carousel = document.getElementById('hangar-carousel');
+                if (carousel) {
+                    const pagesToSkip = Math.abs(newIndex - currentIndex);
+                    const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
+                    carousel.style.transitionDuration = `${duration}s`;
+
+                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+
+                    setTimeout(() => {
+                        if (carousel) carousel.style.transitionDuration = '';
+                    }, duration * 1000);
+                } else {
+                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+                }
+                break;
+            }
+
+            // --- Navigation & Screen Changes ---
+            case ACTION_IDS.SET_SCREEN:
+                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV') {
+                    this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
+                    this.uiManager.render(this.gameState.getState());
+                } else {
+                    this.gameState.subNavCollapsed = false;
+                    this.simulationService.setScreen(dataset.navId, dataset.screenId);
+                }
+                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
             case ACTION_IDS.TRAVEL:
-                if (locationId) {
-                    this.simulationService.travelTo(locationId);
-                    if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_6' && locationId === 'loc_luna') {
-                       this.tutorialService.checkState({ type: 'ACTION', action: 'travel' });
-                    }
-                }
+                this.uiManager.hideModal('launch-modal');
+                this.simulationService.travelTo(dataset.locationId);
+                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
-            case ACTION_IDS.BUY_SHIP:
-                if (shipId) {
-                    this.simulationService.buyShip(shipId, event);
-                }
+
+            // --- Modals ---
+            case 'show-mission-modal':
+                this.uiManager.showMissionModal(dataset.missionId);
+                actionData = { type: 'ACTION', action: 'show-mission-modal' };
                 break;
-            case ACTION_IDS.SELL_SHIP:
-                if (shipId) {
-                    this.simulationService.sellShip(shipId, event);
-                }
+            case 'show_cargo_detail':
+                this.uiManager.showCargoDetailModal(state, dataset.goodId);
                 break;
-            case ACTION_IDS.SELECT_SHIP:
-                if (shipId) {
-                    this.simulationService.setActiveShip(shipId);
-                }
+            case 'show-launch-modal':
+                this.uiManager.showLaunchModal(dataset.locationId);
                 break;
+            case 'show-map-modal':
+                this.uiManager.showMapDetailModal(dataset.locationId);
+                break;
+            case 'close-map-modal':
+                this.uiManager.hideMapDetailModal();
+                break;
+
+            // --- Mission Actions ---
+            case 'accept-mission':
+                this.simulationService.missionService.acceptMission(dataset.missionId);
+                this.uiManager.hideModal('mission-modal');
+                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
+                break;
+            case 'abandon-mission':
+                this.simulationService.missionService.abandonMission();
+                this.uiManager.hideModal('mission-modal');
+                break;
+            case 'complete-mission':
+                this.simulationService.missionService.completeActiveMission();
+                this.uiManager.hideModal('mission-modal');
+                actionData = { type: 'ACTION', action: 'complete-mission' };
+                break;
+
+            // --- Finance & Licenses ---
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt();
                 break;
             case ACTION_IDS.TAKE_LOAN:
-                 const loanData = JSON.parse(target.dataset.loan);
-                 this.simulationService.takeLoan(loanData);
+                this.simulationService.takeLoan(JSON.parse(dataset.loanDetails));
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
-                 const intelCost = parseInt(target.dataset.cost);
-                 this.simulationService.purchaseIntel(intelCost);
+                this.simulationService.purchaseIntel(parseInt(dataset.cost));
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                if (licenseId) {
-                    const license = DB.LICENSES[licenseId];
-                    if (license && license.type === 'purchase') {
-                        this.simulationService.purchaseLicense(licenseId);
-                    } else if (license && license.type === 'mission') {
-                         this.uiManager.queueModal('event-modal', "License Unavailable", license.guidanceText || `This license is granted via mission completion.`);
-                    }
-                }
+                this._handleAcquireLicense(dataset.licenseId);
                 break;
+
+            // --- Market Card Minimization ---
             case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
-                const goodId = target.dataset.goodId;
-                if (goodId) {
-                    this.simulationService.toggleMarketCardView(goodId);
+                if (dataset.goodId) {
+                    this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
+                    this.gameState.setState({});
                 }
                 break;
-            case ACTION_IDS.TOGGLE_HANGAR_MODE:
-                const mode = target.dataset.mode;
-                if (mode) {
-                    this.simulationService.setHangarShipyardMode(mode);
-                }
-                break;
-            case ACTION_IDS.SET_HANGAR_PAGE:
-                const direction = target.dataset.direction;
-                if (direction) {
-                    this.simulationService.setHangarPage(direction);
-                }
-                break;
+        }
 
-            // --- [[START]] Added for Metal Update V1 ---
-            case 'market-page-materials':
-                if (this.gameState.uiState.marketSubScreen !== 'materials') {
-                    this.gameState.uiState.marketSubScreen = 'materials';
-                    this.gameState.setState({}); // Notify UIManager to update pager/carousel
-                }
-                break;
-            case 'market-page-commodities':
-                if (this.gameState.uiState.marketSubScreen !== 'commodities') {
-                    this.gameState.uiState.marketSubScreen = 'commodities';
-                    this.gameState.setState({}); // Notify UIManager to update pager/carousel
-                }
-                break;
-            // --- [[END]] Added for Metal Update V1 ---
+        if (actionData) {
+            this.tutorialService.checkState(actionData);
+        }
+    }
 
-            // Tutorial specific actions
-            case 'next-tutorial-step':
-                this.tutorialService.advanceStep();
-                break;
-            case 'skip-tutorial-batch':
-                this.tutorialService.skipBatch();
-                break;
-            case 'accept-mission': // Tutorial specific interception
-                 const missionId = target.dataset.missionId;
-                 if (this.gameState.tutorials.activeBatchId === 'intro_missions') {
-                    if (missionId === 'mission_tutorial_01' && this.gameState.tutorials.activeStepId === 'mission_1_3') {
-                        this.simulationService.missionService.acceptMission(missionId);
-                        this.tutorialService.checkState({ type: 'ACTION', action: 'accept-mission' });
-                    } else if (missionId === 'mission_tutorial_02' && this.gameState.tutorials.activeStepId === 'mission_2_4') {
-                         this.simulationService.missionService.acceptMission(missionId);
-                         this.tutorialService.checkState({ type: 'ACTION', action: 'accept-mission', missionId: 'mission_tutorial_02' });
-                    } else {
-                        // Regular mission accept if not the specific tutorial step
-                         this.simulationService.missionService.acceptMission(missionId);
-                    }
-                 } else {
-                    this.simulationService.missionService.acceptMission(missionId);
-                 }
-                break;
-            case 'complete-mission': // Tutorial specific interception
-                if (this.gameState.tutorials.activeBatchId === 'intro_missions') {
-                    if (this.gameState.tutorials.activeStepId === 'mission_1_7' && this.gameState.missions.activeMissionId === 'mission_tutorial_01') {
-                        this.simulationService.missionService.completeActiveMission();
-                        this.tutorialService.checkState({ type: 'ACTION', action: 'complete-mission' });
-                    } else if (this.gameState.tutorials.activeStepId === 'mission_3_1' && this.gameState.missions.activeMissionId === 'mission_tutorial_02') {
-                        this.simulationService.missionService.completeActiveMission();
-                        this.tutorialService.checkState({ type: 'ACTION', action: 'complete-mission', missionId: 'mission_tutorial_02'});
-                    } else {
-                        this.simulationService.missionService.completeActiveMission();
-                    }
-                } else {
-                     this.simulationService.missionService.completeActiveMission();
+    /**
+     * Handles the UI flow for acquiring a trade license.
+     * @param {string} licenseId The ID of the license to acquire.
+     * @private
+     */
+    _handleAcquireLicense(licenseId) {
+        const license = DB.LICENSES[licenseId];
+        if (!license) return;
+
+        if (license.type === 'purchase') {
+            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
+            this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                customSetup: (modal, closeHandler) => {
+                    const btnContainer = modal.querySelector('#event-button-container');
+                    btnContainer.innerHTML = `
+                        <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-license-purchase" class="btn">Cancel</button>
+                    `;
+                    modal.querySelector('#confirm-license-purchase').onclick = () => {
+                        const result = this.simulationService.purchaseLicense(licenseId);
+                        if (!result.success && result.error === 'INSUFFICIENT_FUNDS') {
+                            this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
+                        }
+                        closeHandler();
+                    };
+                    modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
                 }
-                break;
-            case 'show-mission-modal': // Tutorial specific interception
-                const missionIdToShow = target.dataset.missionId;
-                if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_2' && missionIdToShow === 'mission_tutorial_01') {
-                     this.uiManager.showMissionModal(missionIdToShow);
-                     this.tutorialService.checkState({ type: 'ACTION', action: 'show-mission-modal' });
-                } else {
-                    this.uiManager.showMissionModal(missionIdToShow);
-                }
-                break;
-            // Default: If no specific action matches, log a warning
-            default:
-                if (action) { // Only log if data-action was present but unhandled
-                    console.warn(`ActionClickHandler: Unhandled action "${action}"`);
-                }
+            });
+        } else if (license.type === 'mission') {
+            this.uiManager.queueModal('event-modal', license.name, license.guidanceText);
         }
     }
 }

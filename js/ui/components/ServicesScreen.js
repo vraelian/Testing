@@ -5,9 +5,7 @@
  * costs based on the current location and any active player perks.
  */
 import { DB } from '../../data/database.js';
-// --- [[START]] Modified for Metal Update V1 ---
-import { formatCredits, formatNumber } from '../../utils.js';
-// --- [[END]] Modified for Metal Update V1 ---
+import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
 
 /**
@@ -38,24 +36,6 @@ export function renderServicesScreen(gameState) {
     const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
     const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
     
-    // --- [[START]] Added for Metal Update V1 ---
-    // Scrap Bar logic. Note: This just renders the initial state.
-    // UIManager.updateScrapBar() will handle dynamic updates.
-    const currentScrap = player.metalScrap || 0;
-    const scrapWhole = Math.floor(currentScrap);
-    const scrapFraction = currentScrap - scrapWhole;
-
-    let scrapPct = 0;
-    // GDD UX Logic: Show 100% full bar in the "window of opportunity" (e.g., 3.00 to 3.19 tons)
-    // Updated per GDD Sec 3.3.5: 0.0 to 0.19 is 0%. 1.0 to 1.19 is 100%.
-    if (scrapFraction < 0.20) {
-        scrapPct = (scrapWhole === 0) ? 0 : 100; 
-    } else {
-        // Snap to the nearest 20% increment, rounding down
-        scrapPct = Math.floor(scrapFraction / 0.20) * 20;
-    }
-    // --- [[END]] Added for Metal Update V1 ---
-
     return `
         <div class="services-scroll-panel">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
@@ -65,21 +45,12 @@ export function renderServicesScreen(gameState) {
                     <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
                     <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
                 </div>
-                
-                <div id="services-hull-repair" class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
                     <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
                     <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
                     <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
                     <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
                 </div>
-
-                <div id="scrap-bar-container" class="md:col-span-2 p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-3 text-center">Salvaged Scrap</h4>
-                    <div id="scrap-bar">
-                        <div id="scrap-bar-fill" style="width: ${scrapPct}%;"></div>
-                        <div id="scrap-bar-text">${formatNumber(scrapWhole)} TONS</div>
-                    </div>
-                </div>
-                </div>
+            </div>
         </div>`;
 }

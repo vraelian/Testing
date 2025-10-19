@@ -34,11 +34,7 @@
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
-    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
-    "Metal_Scrap": "A non-cargo, unlimited-storage resource generated primarily through HULL repair, sellable for a fixed price. [Added for Metal Update V1]",
-    "Scrap_Bar": "A UI element on the Services screen displaying the player's current Metal Scrap inventory with a progress bar. [Added for Metal Update V1]",
-    "Materials_Screen": "A new sub-screen within the Market screen dedicated to trading special materials like Metal Scrap. [Added for Metal Update V1]",
-    "Market_Pager": "A segmented control UI element used to switch between sub-screens (e.g., Materials, Commodities) on the Market screen. [Added for Metal Update V1]"
+    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards."
   },
   "service_summaries": {
     "GameState": {
@@ -54,19 +50,18 @@
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService", "EffectsManager"],
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
         "travelTo": "Facade method that delegates to TravelService.",
-        "buyItem": "Facade method that delegates to PlayerActionService.",
-        "sellMaterial": "Handles selling special materials like Metal Scrap. [Added for Metal Update V1]"
+        "buyItem": "Facade method that delegates to PlayerActionService."
       },
       "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
     },
     "IntroService": {
       "description": "Manages the entire new game introduction sequence, from the initial lore modals to the final tutorial kickoff.",
-      "dependencies": ["GameState", "UIManager", "Logger", "SimulationService (Facade)", "TutorialService"],
+      "dependencies": ["GameState", "UIManager", "Logger", "SimulationService (Facade)"],
       "key_functions": {
         "start": "Begins the intro sequence.",
         "handleIntroClick": "Handles clicks on intro-specific buttons.",
@@ -75,16 +70,15 @@
       "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
     },
     "PlayerActionService": {
-      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair). Also handles Metal Scrap generation.",
-      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)", "TutorialService"],
+      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)"],
       "key_functions": {
         "buyItem": "Handles the logic for purchasing a commodity.",
         "sellItem": "Handles the logic for selling a commodity.",
         "buyShip": "Manages the purchase of a new ship.",
-        "refuelTick": "Processes one 'tick' of refueling.",
-        "repairTick": "Processes one 'tick' of repairing, generates Metal Scrap, triggers feedback. [Modified for Metal Update V1]"
+        "refuelTick": "Processes one 'tick' of refueling."
       },
-      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory", "player.metalScrap", "player.flags.hasSeenScrapTutorial"]
+      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
     },
     "TravelService": {
       "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
@@ -106,7 +100,7 @@
     },
     "MarketService": {
       "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades.",
-      "dependencies": ["GameState", "Logger"],
+      "dependencies": ["GameState"],
       "key_functions": {
           "evolveMarketPrices": "Simulates daily price changes for all commodities.",
           "replenishMarketInventory": "Handles the weekly restocking of all markets.",
@@ -116,15 +110,13 @@
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService. Coordinates dynamic UI updates (e.g., Scrap Bar).",
-      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService", "GameState"],
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
+      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence.",
-        "updateScrapBar": "Updates the Scrap Bar display dynamically. [Added for Metal Update V1]",
-        "_initMarketCarouselHandler": "Initializes the carousel for the market screen. [Added for Metal Update V1]"
+        "showTravelAnimation": "Initiates the travel animation sequence."
       },
       "mutates_state": []
     },
@@ -138,19 +130,15 @@
       "mutates_state": []
     },
     "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, simple state changes, and Market Pager clicks.",
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
         "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
-        "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute. [Modified for Metal Update V1]"},
+        "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
         "mutates_state": []
     },
     "MarketEventHandler": {
-        "description": "Manages all interactions within a market commodity or material card, including mode toggling, quantity changes, and trade confirmations. Forks logic based on item type.",
+        "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
         "dependencies": ["GameState", "SimulationService", "UIManager"],
-        "key_functions": {
-          "handleClick": "Handles clicks on market card controls. [Modified for Metal Update V1]",
-          "handleInput": "Handles direct input into the quantity field. [Modified for Metal Update V1]",
-          "handleConfirmTrade": "Confirms buy/sell for commodities or sell for materials. [Modified for Metal Update V1]"
-          },
+        "key_functions": {"handleClick": "Handles clicks on market card controls.", "handleInput": "Handles direct input into the quantity field."},
         "mutates_state": []
     },
     "HoldEventHandler": {
@@ -160,15 +148,9 @@
         "mutates_state": []
     },
     "CarouselEventHandler": {
-        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality for carousels (Hangar/Shipyard, Market).",
+        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
         "dependencies": ["GameState", "SimulationService"],
-        "key_functions": {
-          "constructor": "Takes container/slider IDs and callbacks. [Modified for Metal Update V1]",
-          "handleDragStart": "Initiates a drag sequence.",
-          "handleDragMove": "Updates the carousel during a drag.",
-          "handleDragEnd": "Concludes a drag sequence and snaps to a page.",
-          "handleWheel": "Handles mouse wheel scrolling."
-          },
+        "key_functions": {"handleDragStart": "Initiates a drag sequence.", "handleDragMove": "Updates the carousel during a drag.", "handleDragEnd": "Concludes a drag sequence and snaps to a page.", "handleWheel": "Handles mouse wheel scrolling."},
         "mutates_state": []
     },
     "TooltipHandler": {
@@ -212,27 +194,6 @@
             "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
         },
         "mutates_state": []
-    },
-    "TutorialService": {
-      "description": "Manages the tutorial system, displaying overlays, toasts, tracking progress, and applying navigation locks.",
-      "dependencies": ["GameState", "UIManager", "Logger", "SimulationService"],
-      "key_functions": {
-        "startBatch": "Initiates a tutorial sequence.",
-        "checkState": "Evaluates if the current game state satisfies the active step's completion condition.",
-        "advanceStep": "Moves to the next step or completes the batch.",
-        "showToast": "Displays a temporary notification toast.",
-        "triggerScrapTutorial": "Displays the one-time toast for Metal Scrap. [Added for Metal Update V1]"
-      },
-      "mutates_state": ["tutorials"]
-    },
-     "EffectsManager": {
-      "description": "Manages the queueing and playing of visual effects, including floating text.",
-      "dependencies": [],
-      "key_functions": {
-        "trigger": "Adds a named effect to the queue.",
-        "floatingText": "Creates and animates floating text feedback. [Added for Metal Update V1]"
-      },
-      "mutates_state": []
     }
   },
   "asset_index": {

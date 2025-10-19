@@ -6,9 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
-// --- [[START]] Modified for Metal Update V1 ---
-import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS, CONSTANTS } from '../../data/constants.js';
-// --- [[END]] Modified for Metal Update V1 ---
+import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
 
 export class PlayerActionService {
     /**
@@ -19,9 +17,8 @@ export class PlayerActionService {
      * @param {import('../world/TimeService.js').TimeService} timeService
      * @param {import('../../services/LoggingService.js').Logger} logger
      * @param {import('../SimulationService.js').SimulationService} simulationServiceFacade
-     * @param {import('../TutorialService.js').TutorialService} tutorialService // [[START]] Added for Metal Update V1
      */
-    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade, tutorialService) { // [[MODIFIED]] Added for Metal Update V1
+    constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade) {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.missionService = missionService;
@@ -29,7 +26,6 @@ export class PlayerActionService {
         this.timeService = timeService;
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
-        this.tutorialService = tutorialService; // [[START]] Added for Metal Update V1
         this.isTransactionInProgress = false;
     }
 
@@ -421,53 +417,17 @@ export class PlayerActionService {
         const ship = this.simulationService._getActiveShip();
         if (ship.health >= ship.maxHealth) return 0;
         
-        // --- [[START]] Modified for Metal Update V1 ---
-        const repairAmountPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100));
-        
-        let costPerTick = repairAmountPerTick * GAME_RULES.REPAIR_COST_PER_HP;
+        let costPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
         if (state.player.credits < costPerTick) return 0;
         
         state.player.credits -= costPerTick;
-        
-        // Calculate actual health restored, respecting the cap
-        const oldHealth = state.player.shipStates[ship.id].health;
-        const newHealth = Math.min(ship.maxHealth, oldHealth + repairAmountPerTick);
-        const healthRestored = newHealth - oldHealth;
-        
-        state.player.shipStates[ship.id].health = newHealth;
-
-        // Calculate scrap generated based on *actual* health restored
-        const scrapGenerated = healthRestored * CONSTANTS.SCRAP_PER_HULL_POINT; // Use CONSTANTS as per GDD
-
-        if (scrapGenerated > 0) {
-            const oldScrap = state.player.metalScrap;
-            // Use precise addition for floating point numbers
-            const newScrap = parseFloat((oldScrap + scrapGenerated).toFixed(4));
-            state.player.metalScrap = newScrap;
-            
-            // Trigger floating text (will be implemented in EffectsManager)
-            // We use simulationService as it will have effectsManager injected in the next phase
-            if (this.simulationService.effectsManager) {
-                 this.simulationService.effectsManager.floatingText('METAL', 'blue');
-            }
-
-            // Trigger tutorial (will be implemented in TutorialService)
-            if (oldScrap === 0 && newScrap > 0 && !state.player.flags.hasSeenScrapTutorial) {
-                if (this.tutorialService) { // Check if tutorialService is injected
-                    this.tutorialService.triggerScrapTutorial();
-                }
-                // Set flag directly in GameState
-                this.gameState.player.flags.hasSeenScrapTutorial = true;
-            }
-        }
-        
+        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)));
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
         this.gameState.setState({});
         return costPerTick;
-        // --- [[END]] Modified for Metal Update V1 ---
     }
 }
