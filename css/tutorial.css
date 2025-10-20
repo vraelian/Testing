@@ -15,12 +15,14 @@
     box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
     border-radius: 8px; /* Standard border radius */
 
-    /* Old shimmer/clip-path styles removed */
+    /* --- [[START]] WIDTH FIX --- */
+    /* Removed width: fit-content; */
+    /* Removed max-width: 300px; */
+    min-width: 200px;
+    max-width: min(600px, 90vw); /* Generous max-width, responsive */
+    /* --- [[END]] WIDTH FIX --- */
 
     z-index: 999; 
-    width: fit-content; 
-    min-width: 200px; 
-    max-width: 300px; 
     padding: 1rem; /* Simplified padding */
     position: fixed; 
 }
@@ -69,7 +71,9 @@
     overflow-y: auto;
     flex-grow: 1; 
     max-height: 150px; 
-    padding-right: 0.75rem;
+    /* --- [[START]] PADDING FIX --- */
+    padding-right: 3rem; /* Make space for top-right control cluster */
+    /* --- [[END]] PADDING FIX --- */
     font-family: 'Exo 2', sans-serif; /* Update font */
     font-size: 0.9rem; /* Slightly larger for readability */
     line-height: 1.5; /* Increased line height */
@@ -138,43 +142,24 @@
 }
 /* --- [[END]] POPPER.JS ARROW STYLES --- */
 
-/* Style for the button container */
-#tutorial-toast-controls {
-    margin-top: 1rem; /* Standardized margin */
-     text-align: right;
-}
 
-/* Style 'Next' button like a standard game button */
-#tutorial-toast-next-btn {
-    /* Inherit from .btn */
-    transition: all 0.3s ease;
-    border: 1px solid #4a6a8a;
-    border-radius: 8px;
-    background-color: #22304a;
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 1px;
-    color: #c0d0f0;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    
-    /* Apply .btn-sm styles */
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-}
+/* --- [[START]] NEW CONTROL BUTTON STYLES --- */
 
-#tutorial-toast-next-btn:hover:not(:disabled) {
-    background-color: #32405a;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    color: #e0f0ff;
-}
-
-/* Close button positioning */
-#tutorial-toast-skip-btn {
+/* New container for top-right buttons */
+.tt-controls-container {
     position: absolute;
-    top: 8px; /* Adjusted for new padding/border */
-    right: 10px; /* Adjusted for new padding/border */
+    top: 8px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    z-index: 10;
+}
+
+/* Close ('skip') button positioning */
+#tutorial-toast-skip-btn {
+    position: static; /* No longer absolute */
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--color-text-secondary);
@@ -186,6 +171,38 @@
     opacity: 1; 
     color: var(--color-accent); 
 }
+
+/* New 'Next' arrow button styles */
+.tt-next-arrow {
+    position: static; /* No longer absolute */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--color-bg-light, #22304a);
+    border: 1px solid var(--color-border, #4a6a8a);
+    color: var(--color-text-secondary, #c0d0f0);
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 28px; /* Fine-tune vertical alignment */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    padding-left: 2px; /* Nudge arrow icon */
+    user-select: none;
+}
+
+.tt-next-arrow:hover {
+    background: var(--color-bg-light-hover, #32405a);
+    color: #e0f0ff;
+    transform: scale(1.1);
+}
+
+.tt-next-arrow.hidden {
+    display: none;
+}
+
+/* --- [[END]] NEW CONTROL BUTTON STYLES --- */
 
 
 /* --- [[START]] CUSTOM SCROLLBAR STYLES --- */

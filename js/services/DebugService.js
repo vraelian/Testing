@@ -537,7 +537,15 @@ ${logHistory}
             fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
 
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
-            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() }
+            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
+            // --- Presets ---
+            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset([-73, -285]) },
+            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset([-73, -151]) },
+            presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset([-73, 29]) },
+            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset([-73, 210]) },
+            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset([-73, 390]) },
+            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset([-128, 359]) },
+            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset([-128, -316]) },
             // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
@@ -663,16 +671,34 @@ ${logHistory}
         this.debugState.ttPlacement = 'auto';
         this.debugState.ttOffsetDistance = 0;
         this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttWidth = 0; // NEW: 0 for 'auto'
+        this.debugState.ttHeight = 0; // NEW: 0 for 'auto'
         this.debugState.ttGeneratedCode = '';
 
         tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
         tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
+        
+        // --- Size Tuners ---
+        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
+
+        // --- Position Tuners ---
         tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement').onChange(() => this._handleTutorialTune());
-        // *** INCREASED RANGE FOR SLIDERS ***
         tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance').onChange(() => this._handleTutorialTune());
         tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding').onChange(() => this._handleTutorialTune());
+        
+        // --- Position Presets ---
+        const presetFolder = tutorialFolder.addFolder('Position Presets');
+        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
+        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
+        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
+        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
+        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
+        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
+        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
+        
+        // --- Code Generator ---
         tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
-        // *** REMOVED .disable() TO ALLOW COPYING ***
         tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
         // --- [[END]] TUTORIAL TUNER FOLDER ---
 
@@ -694,15 +720,51 @@ ${logHistory}
     // --- [[START]] TUTORIAL TUNER METHODS ---
 
     /**
+     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
+     * @param {string|number|undefined} sizeValue - The value from the step definition.
+     * @returns {number} A number, with 0 representing 'auto'.
+     * @private
+     */
+    _parseSize(sizeValue) {
+        if (!sizeValue || sizeValue === 'auto') return 0;
+        if (typeof sizeValue === 'number') return sizeValue;
+        if (typeof sizeValue === 'string') {
+            const parsed = parseInt(sizeValue, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
+    }
+
+    /**
+     * Applies a position preset to the tuner sliders.
+     * @param {number[]} offsetArray - The [skidding, distance] pair.
+     * @private
+     */
+    _applyTutorialPreset(offsetArray) {
+        this.debugState.ttOffsetSkidding = offsetArray[0];
+        this.debugState.ttOffsetDistance = offsetArray[1];
+        
+        // Manually update the GUI controllers
+        this.gui.controllers.forEach(c => {
+            if (c.property === 'ttOffsetSkidding' || c.property === 'ttOffsetDistance') {
+                c.updateDisplay();
+            }
+        });
+
+        // This will trigger the UIManager update
+        this._handleTutorialTune();
+    }
+
+    /**
      * Populates the Tutorial Tuner with the active step's data.
      * Called by UIManager when a toast is shown.
      * @param {object} step - The tutorial step object.
      */
     setActiveTutorialStep(step) {
-        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`); //
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
 
         // Try to find an offset modifier if one is defined in the step's popperOptions
-        const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset'); //
+        const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
         // Extract offset values carefully, handling different ways it might be defined
         let skidding = 0;
         let distance = 0; // Default to 0 for tuner baseline
@@ -710,14 +772,14 @@ ${logHistory}
          if (typeof offsetMod?.options?.offset === 'function') {
              // If offset is a function, we can't easily get initial values for the tuner. Use 0,0.
              // The UIManager's initial positioning will still use the function.
-             this.logger.warn('DebugService', `Offset for step ${step.stepId} is a function. Using [0, 0] for tuner initial values.`); //
+             this.logger.warn('DebugService', `Offset for step ${step.stepId} is a function. Using [0, 0] for tuner initial values.`);
              skidding = 0;
              distance = 0;
          } else if (Array.isArray(offsetMod?.options?.offset)) {
             // If it's an array, use the values from the step definition.
-            skidding = offsetMod.options.offset[0] || 0; //
-            distance = offsetMod.options.offset[1] || 0; //
-         } else if (step.anchorElement !== 'body') { //
+            skidding = offsetMod.options.offset[0] || 0;
+            distance = offsetMod.options.offset[1] || 0;
+         } else if (step.anchorElement !== 'body') {
             // If not body anchor and no offset defined, use Popper's default (usually small distance)
             distance = 10; // A common default Popper distance
          }
@@ -725,12 +787,14 @@ ${logHistory}
 
 
         // Populate the debug state
-        this.debugState.ttStepId = step.stepId; //
-        this.debugState.ttAnchor = step.anchorElement; //
+        this.debugState.ttStepId = step.stepId;
+        this.debugState.ttAnchor = step.anchorElement;
         // Read placement, default depends on anchor type
-        this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || (step.anchorElement === 'body' ? 'bottom' : 'auto'); //
-        this.debugState.ttOffsetSkidding = skidding; //
-        this.debugState.ttOffsetDistance = distance; //
+        this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || (step.anchorElement === 'body' ? 'bottom' : 'auto');
+        this.debugState.ttOffsetSkidding = skidding;
+        this.debugState.ttOffsetDistance = distance;
+        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0; // NEW
+        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0; // NEW
         this.debugState.ttGeneratedCode = ''; // Clear generated code
     }
 
@@ -739,15 +803,17 @@ ${logHistory}
      * Called by UIManager when a toast is hidden.
      */
     clearActiveTutorialStep() {
-        this.logger.info.system('DebugService', 'Clearing active tutorial step.'); //
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
 
         // Reset all state properties to their defaults
-        this.debugState.ttStepId = 'None'; //
-        this.debugState.ttAnchor = 'N/A'; //
-        this.debugState.ttPlacement = 'auto'; //
-        this.debugState.ttOffsetDistance = 0; //
-        this.debugState.ttOffsetSkidding = 0; //
-        this.debugState.ttGeneratedCode = ''; //
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttWidth = 0; // NEW
+        this.debugState.ttHeight = 0; // NEW
+        this.debugState.ttGeneratedCode = '';
     }
 
     /**
@@ -756,13 +822,15 @@ ${logHistory}
      */
     _handleTutorialTune() {
         // Debounce or throttle this if performance becomes an issue
-        this.logger.info.system('DebugService', `Tune event: ${this.debugState.ttPlacement}, ${this.debugState.ttOffsetDistance}, ${this.debugState.ttOffsetSkidding}`); //
+        this.logger.info.system('DebugService', `Tune event: ${this.debugState.ttPlacement}, ${this.debugState.ttOffsetDistance}, ${this.debugState.ttOffsetSkidding}`);
 
         if (this.uiManager) {
-            this.uiManager.updateTutorialPopper({ //
-                placement: this.debugState.ttPlacement, //
-                distance: Number(this.debugState.ttOffsetDistance) || 0, //
-                skidding: Number(this.debugState.ttOffsetSkidding) || 0 //
+            this.uiManager.updateTutorialPopper({
+                placement: this.debugState.ttPlacement,
+                distance: Number(this.debugState.ttOffsetDistance) || 0,
+                skidding: Number(this.debugState.ttOffsetSkidding) || 0,
+                width: Number(this.debugState.ttWidth) || 0, // NEW
+                height: Number(this.debugState.ttHeight) || 0 // NEW
             });
         }
     }
@@ -773,17 +841,25 @@ ${logHistory}
      * @private
      */
     _generateTutorialCode() {
-        this.logger.info.system('DebugService', 'Generating tutorial code...'); //
+        this.logger.info.system('DebugService', 'Generating tutorial code...');
 
-        // **MODIFIED:** Include stepId in the comment
-        const code = `// --- ${this.debugState.ttStepId} ---
+        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
+        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
+        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
+        
+        // Only add the size object if at least one value is not default (0)
+        const sizeString = hasSize ? `
+size: { width: ${widthVal}, height: ${heightVal} },` : '';
+
+        // **MODIFIED:** Include stepId in the comment and new sizeString
+        const code = `// --- ${this.debugState.ttStepId} ---${sizeString}
 placement: '${this.debugState.ttPlacement}',
 popperOptions: {
     modifiers: [
         { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
     ]
-}`; //
-        this.debugState.ttGeneratedCode = code; //
+}`;
+        this.debugState.ttGeneratedCode = code;
     }
 
     // --- [[END]] TUTORIAL TUNER METHODS ---

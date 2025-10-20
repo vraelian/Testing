@@ -1081,12 +1081,12 @@ export class UIManager {
         // 8. Configure buttons
         const isInfoStep = step.completion.type === 'INFO';
         if (isInfoStep) {
-            const nextButtonText = step.buttonText || 'Next &rarr;';
-            this.cache.tutorialToastNextBtn.innerHTML = nextButtonText;
-            this.cache.tutorialToastNextBtn.style.display = 'inline-block';
+            // const nextButtonText = step.buttonText || 'Next &rarr;'; // No longer needed
+            // this.cache.tutorialToastNextBtn.innerHTML = nextButtonText; // No longer needed
+            this.cache.tutorialToastNextBtn.classList.remove('hidden'); // MODIFIED
             this.cache.tutorialToastNextBtn.onclick = onNext;
         } else {
-            this.cache.tutorialToastNextBtn.style.display = 'none';
+            this.cache.tutorialToastNextBtn.classList.add('hidden'); // MODIFIED
         }
 
         const showSkipButton = false; // Skipping handled by modal
