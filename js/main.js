@@ -13,6 +13,8 @@ import { IntroService } from './services/game/IntroService.js';
 import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
+// Import MarketService for injection
+import { MarketService } from './services/simulation/MarketService.js';
 
 /**
  * Sets the --app-height CSS variable to the actual window inner height.
@@ -33,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set the app height on initial load and whenever the viewport changes.
     setAppHeight();
-    
+
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
@@ -53,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
 
     }, { once: true });
-    
+
     debugStartButton.addEventListener('click', () => {
         // Fade out the splash screen and then start the game logic.
         splashScreen.classList.add('splash-screen-hiding');
@@ -72,7 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const gameState = new GameState();
         const uiManager = new UIManager(Logger);
         const missionService = new MissionService(gameState, uiManager, Logger);
-        const simulationService = new SimulationService(gameState, uiManager, Logger);
+        const simulationService = new SimulationService(gameState, uiManager, Logger); // Contains marketService instance
+
+        // Expose simulationService globally for HangarScreen pagination helper (temporary)
+        // MUST be set *before* any state change can trigger a render
+        window.simulationService = simulationService;
+
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
@@ -83,15 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.setDebugService(debugService);
             // --- [[END]] TUTORIAL TUNER WIRING ---
         }
-        
+
         // --- Dependency Injection ---
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
+        // Inject MarketService into UIManager
+        uiManager.setMarketService(simulationService.marketService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
-        
+
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
 
@@ -110,12 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Bindings ---
         eventManager.bindEvents();
-        
+
+        // window.simulationService = simulationService; // <-- This was the old, incorrect spot
+
         if (hasSave || isSimpleStart) {
-            uiManager.showGameContainer(); 
+            uiManager.showGameContainer();
             uiManager.render(gameState.getState());
         }
-        
+
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
 });

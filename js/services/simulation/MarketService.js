@@ -5,7 +5,7 @@
  * volatility and market pressure, replenishing market inventories with persistence,
  * and managing system-wide economic states.
  */
-import { GAME_RULES } from '../../data/constants.js';
+import { GAME_RULES, PERK_IDS } from '../../data/constants.js'; // Added PERK_IDS
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
 
@@ -22,6 +22,93 @@ export class MarketService {
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
     }
+
+    // --- Price Calculation Logic (Moved from UIManager) ---
+
+    /**
+     * Calculates the current price of a commodity at the player's location,
+     * considering market state, intel, and whether it's a buy or sell transaction.
+     * @param {object} gameState - The current game state.
+     * @param {string} goodId - The ID of the commodity.
+     * @param {boolean} [isSelling=false] - True if calculating the sell price.
+     * @returns {number} The calculated price per unit.
+     */
+    getItemPrice(gameState, goodId, isSelling = false) {
+        let price = gameState.market.prices[gameState.currentLocationId][goodId];
+        const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
+        if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
+            price *= market.specialDemand[goodId].bonus;
+        }
+        const intel = gameState.intel.active;
+        if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
+            price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
+        }
+        return Math.max(1, Math.round(price));
+    }
+
+    /**
+     * Calculates the effective price per unit and total price when selling a quantity of goods,
+     * applying diminishing returns based on market stock and item tier. Also calculates net profit.
+     * @param {string} goodId - The ID of the commodity being sold.
+     * @param {number} quantity - The quantity being sold.
+     * @returns {{totalPrice: number, effectivePricePerUnit: number, netProfit: number}} Details of the sale.
+     * @public - Made public as it's called by the external updateMarketCardDisplay function now.
+     */
+    _calculateSaleDetails(goodId, quantity) {
+        // Use this.gameState directly now as MarketService holds the reference
+        const state = this.gameState;
+        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        const basePrice = this.getItemPrice(state, goodId, true); // Use the internal method
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+        const avgCost = playerItem?.avgCost || 0;
+
+        if (marketStock <= 0) {
+            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+        }
+
+        const threshold = marketStock * 0.1;
+        if (quantity <= threshold) {
+            const totalPrice = basePrice * quantity;
+            const totalCost = avgCost * quantity;
+            let netProfit = totalPrice - totalCost;
+            if (netProfit > 0) {
+                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                netProfit += netProfit * totalBonus;
+            }
+            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
+        }
+
+        const excessRatio = quantity / marketStock;
+        let reduction = 0;
+        if (good.tier <= 2) {
+            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
+        } else if (good.tier <= 5) {
+            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
+        } else {
+            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
+        }
+
+        const effectivePrice = basePrice * (1 - reduction);
+        const totalPrice = Math.floor(effectivePrice * quantity);
+        const totalCost = avgCost * quantity;
+        let netProfit = totalPrice - totalCost;
+        if (netProfit > 0) {
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            netProfit += netProfit * totalBonus;
+        }
+
+        return {
+            totalPrice,
+            effectivePricePerUnit: effectivePrice,
+            netProfit
+        };
+    }
+
+
+    // --- Existing Market Simulation Logic ---
 
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
@@ -61,7 +148,7 @@ export class MarketService {
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
                 const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
-                
+
                 let reversionEffect = (baseline - price) * meanReversion;
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
@@ -78,11 +165,11 @@ export class MarketService {
 
                 const pressureEffect = baseline * inventoryItem.marketPressure * -1;
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
-                
+
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
-                
+
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
@@ -93,7 +180,7 @@ export class MarketService {
             this._recordPriceHistory(location.id);
         });
     }
-    
+
     /**
      * Simulates the weekly replenishment of commodity stock using a hybrid model.
      * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
@@ -114,7 +201,7 @@ export class MarketService {
                     // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
-                    
+
                     // Market adaptation: high player selling pressure reduces the target stock.
                     const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Pressure reduces target, capped at 50%
                     const targetStock = baseMeanStock * marketAdaptationFactor;
@@ -130,12 +217,12 @@ export class MarketService {
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
                 const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
                 inventoryItem.quantity *= finalFluctuation;
-                
+
                 // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
                     inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
-                
+
                 inventoryItem.quantity = Math.max(0, Math.round(inventoryItem.quantity));
             });
         });
@@ -150,9 +237,9 @@ export class MarketService {
     applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
-        
+
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
-        
+
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
         } else { // 'sell'
