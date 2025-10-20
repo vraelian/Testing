@@ -68,7 +68,7 @@ export class TooltipHandler {
             this._handleMobileTooltip(e);
         }
 
-        this._handleLoreAndTutorialLog(e);
+        this._handleLoreClick(e); // Renamed from _handleLoreAndTutorialLog
     }
 
     /**
@@ -95,6 +95,11 @@ export class TooltipHandler {
         }
     }
 
+    /**
+     * Toggles the visibility of a status bar tooltip.
+     * @param {HTMLElement} target The element containing the tooltip.
+     * @private
+     */
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
@@ -108,6 +113,11 @@ export class TooltipHandler {
         }
     }
 
+    /**
+     * Handles tooltip display logic specifically for mobile (tap to show/hide).
+     * @param {Event} e The click event.
+     * @private
+     */
     _handleMobileTooltip(e) {
         const tooltipTarget = e.target.closest('[data-tooltip]');
         if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) {
@@ -122,24 +132,23 @@ export class TooltipHandler {
         }
     }
 
-    _handleLoreAndTutorialLog(e) {
-        const tutorialTrigger = e.target.closest('.tutorial-container');
+    /**
+     * Handles clicks related to lore tooltips.
+     * @param {Event} e The click event.
+     * @private
+     */
+    _handleLoreClick(e) {
         const loreTrigger = e.target.closest('.lore-container');
 
-        const visibleTooltip = document.querySelector('.lore-tooltip.visible, .tutorial-tooltip.visible');
-        if (visibleTooltip && !e.target.closest('.lore-tooltip, .tutorial-tooltip')) {
+        // Close any visible lore tooltip if clicking outside of it.
+        const visibleTooltip = document.querySelector('.lore-tooltip.visible');
+        if (visibleTooltip && !e.target.closest('.lore-tooltip')) {
             visibleTooltip.classList.remove('visible');
         }
         
+        // Toggle the visibility of the clicked lore tooltip.
         if (loreTrigger) {
             loreTrigger.querySelector('.lore-tooltip')?.classList.toggle('visible');
-        }
-
-        if (tutorialTrigger) {
-            this.uiManager.showTutorialLogModal({
-                seenBatches: this.gameState.tutorials.seenBatchIds,
-                onSelect: (batchId) => this.tutorialService.triggerBatch(batchId)
-            });
         }
     }
 }

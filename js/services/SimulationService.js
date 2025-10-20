@@ -27,7 +27,7 @@ export class SimulationService {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.tutorialService = null; // Injected post-instantiation.
+        // this.tutorialService = null; // Removed
         this.missionService = null;  // Injected post-instantiation.
 
         // Instantiate all services
@@ -41,13 +41,7 @@ export class SimulationService {
         this.timeService.simulationService = this;
     }
 
-    /**
-     * Injects the TutorialService after all services have been instantiated.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService
-     */
-    setTutorialService(tutorialService) {
-        this.tutorialService = tutorialService;
-    }
+    // REMOVED setTutorialService
 
     /**
      * Injects the MissionService after all services have been instantiated.
@@ -65,8 +59,8 @@ export class SimulationService {
     // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
     handleIntroClick(e) { this.introService.handleIntroClick(e); }
-    _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
-    
+    // Removed _continueIntroSequence as it was only for tutorials
+
     // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
@@ -101,9 +95,7 @@ export class SimulationService {
             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
-        if (this.tutorialService) {
-            this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
-        }
+        // Removed tutorialService.checkState call
     }
 
     /**
@@ -281,13 +273,10 @@ export class SimulationService {
     }
 
     _getShipyardInventory() {
-        const { tutorials, player, currentLocationId, market } = this.gameState;
-        if (tutorials.activeBatchId === 'intro_hangar') {
-            return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
-        } else {
-            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
-        }
+        const { player, currentLocationId, market } = this.gameState; // Removed tutorials
+        // Removed tutorial check
+        const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
+        return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
     }
 
     _grantRewards(rewards, sourceName) {
@@ -301,7 +290,7 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
-                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
+                    // this.uiManager.triggerEffect('systemSurge', { theme: 'tan' }); // Effect removed
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }

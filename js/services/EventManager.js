@@ -22,20 +22,19 @@ export class EventManager {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, debugService = null, logger) { // Removed tutorialService
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
+        // this.tutorialService = tutorialService; // Removed
         this.debugService = debugService;
         this.logger = logger;
 
         // Instantiate all specialized handlers
-        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
+        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager); // Removed tutorialService
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
         this.holdEventHandler = new HoldEventHandler(gameState, simulationService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
@@ -122,13 +121,15 @@ export class EventManager {
             }
             this.actionClickHandler.handle(e, actionTarget);
             this.marketEventHandler.handleClick(e, actionTarget);
+            // Removed tutorialService.checkState call
             return;
         }
 
         // --- Fallback Handlers for non-action clicks ---
-        if (state.introSequenceActive && !state.tutorials.activeBatchId) {
-            this.simulationService.handleIntroClick(e);
-            return;
+        // Removed check for introSequenceActive && !state.tutorials.activeBatchId
+        if (state.introSequenceActive) {
+             this.simulationService.handleIntroClick(e);
+             return;
         }
         if (state.isGameOver) return;
 

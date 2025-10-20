@@ -3,7 +3,7 @@ import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
-import { TutorialService } from './services/TutorialService.js';
+// Removed TutorialService import
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uiManager = new UIManager(Logger);
         const missionService = new MissionService(gameState, uiManager, Logger);
         const simulationService = new SimulationService(gameState, uiManager, Logger);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
+        // Removed TutorialService instantiation
         let debugService = null;
 
         if (DEV_MODE) {
@@ -84,10 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Dependency Injection ---
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
-        simulationService.setTutorialService(tutorialService);
+        // Removed simulationService.setTutorialService call
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, Logger); // Removed tutorialService
         
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
@@ -113,6 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.render(gameState.getState());
         }
         
-        tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
+        // Removed tutorialService.checkState call
     }
 });
