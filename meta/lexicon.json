@@ -238,6 +238,8 @@
     "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
     "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
     "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
-    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"}
+    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"},
+    "F048": {"path": "./meta/STATE_SCHEMA.md", "role": "DOCUMENTATION_STATE_SCHEMA"},
+    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"}
   }
 }

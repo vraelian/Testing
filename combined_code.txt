@@ -12501,7 +12501,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
     "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
     "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
-    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"}
+    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"},
+    "F048": {"path": "./meta/STATE_SCHEMA.md", "role": "DOCUMENTATION_STATE_SCHEMA"},
+    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
@@ -12546,6 +12548,60 @@ This document outlines the planned features and high-level goals for the future 
 - Desktop version with super ultra wide compatibility
 - Extend gameplay with simple but robust IAP DLC
 --- END OF FILE: ./meta/ROADMAP.md ---
+
+--- START OF FILE: ./meta/SERVICES.md ---
+# Orbital Trading - Service Responsibilities
+**Version:** 1.0
+**Source:** `js/services/` directory structure
+
+This document defines the single responsibility of each service in the application.
+
+---
+
+### Core Services
+
+- **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
+- **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market).
+- **`EventManager.js`**: Provides a global event bus for decoupled communication, allowing services to publish events and register listeners.
+- **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
+- **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
+- **`DebugService.js`**: Manages the debug panel, synchronizing its UI controls with the `GameState.debug` object and applying CSS variable changes.
+
+### Game Logic Services
+
+#### Player
+- **`PlayerActionService.js`**: Contains all business logic for player-initiated actions, such as buying, selling, and transferring cargo.
+
+#### World
+- **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.time.currentDate` based on simulation ticks.
+- **`TravelService.js`**: Handles the business logic for player travel, initiating trips, and calculating arrival times.
+
+#### Simulation
+- **`MarketService.js`**: Simulates the galactic economy, updating prices and inventory levels for all commodities in all systems based on game time and player actions.
+- **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met.
+
+#### Game
+- **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
+- **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events.
+
+### UI/Event Handlers
+
+- **`ActionClickHandler.js`**: Attaches and manages the primary click event listener for the entire app, delegating actions based on `data-action` attributes.
+- **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen, such as quantity slider logic.
+- **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., market quantity +/-).
+- **`CarouselEventHandler.js`**: Manages the swipe/drag logic for carousel components (e.g., Hangar ship selector).
+- **`TooltipHandler.js`**: Attaches and manages global `mouseover`/`mouseout` listeners to show and hide tooltips based on `data-tooltip` attributes.
+- **`TravelAnimationService.js`**: Controls the visual "travel animation" (fade out/in, starfield) when the player travels.
+
+### Event Effects
+- **`eventEffectResolver.js`**: A central service that applies or removes the game logic effects of a world event.
+- **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event.
+- **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event.
+
+### Effects
+- **`EffectsManager.js`**: ManTESTS (particle effects, etc).
+- **`BaseEffect.js`**: The base class for all visual effects.
+--- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 # Architectural Decision Records (ADRs)
@@ -12633,4 +12689,114 @@ graph TD
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
 --- END OF FILE: ./meta/DATA_FLOW.md ---
+
+--- START OF FILE: ./meta/STATE_SCHEMA.md ---
+# Orbital Trading - GameState Schema
+**Version:** 1.0
+**Source:** `main.js (app.init)` / `js/services/GameState.js`
+
+This document defines the structure of the central `GameState` object. It is the "source of truth" for all data in the application.
+
+---
+
+- `player`: {object} - Contains all data specific to the player.
+  - `credits`: {number} - Player's current currency.
+  - `currentLocation`: {string} - `systemId` of the player's current star system.
+  - `currentShipId`: {string} - `shipId` of the player's actively controlled ship.
+  - `cargo`: {object} - A map of commodities in the *active* ship's cargo hold.
+    - `[commodityId: string]`: {number} - The quantity of the commodity.
+  - `ships`: {object} - A map of all ships owned by the player.
+    - `[shipId: string]`: {object} - The player ship object.
+      - `id`: {string} - Unique identifier (e.g., "ship_0").
+      - `type`: {string} - The `shipId` from `database.js` (e.g., "StarHopper").
+      - `name`: {string} - The player-given name (e.g., "Serenity").
+      - `cargoCapacity`: {number} - Maximum cargo units for this ship.
+      - `fuel`: {number} - Current fuel units.
+      - `fuelCapacity`: {number} - Maximum fuel units.
+      - `hull`: {number} - Current hull integrity.
+      - `cargo`: {object} - This ship's specific cargo hold.
+        - `[commodityId: string]`: {number} - The quantity.
+  - `transactionHistory`: {Array<object>} - A log of all financial transactions.
+    - `{object}`:
+      - `date`: {string} - ISO 8601 timestamp of the transaction.
+      - `type`: {string} - "buy" or "sell".
+      - `amount`: {number} - Credits value (positive for sell, negative for buy).
+      - `description`: {string} - Human-readable log (e.g., "Bought 10 Water").
+  - `cargoHoldFull`: {boolean} - A derived flag set by `PlayerActionService` for UI warnings.
+  - `log`: {Array<string>} - A general-purpose log for player-facing messages.
+
+- `market`: {object} - Contains all data related to the galactic economy.
+  - `prices`: {object} - A map of current commodity prices by system.
+    - `[systemId: string]`: {object}
+      - `[commodityId: string]`: {number} - The current price.
+  - `inventory`: {object} - A map of current commodity inventory by system.
+    - `[systemId: string]`: {object}
+      - `[commodityId: string]`: {number} - The current available quantity.
+  - `priceHistory`: {object} - A log of prices for charts.
+    - `[systemId: string]`: {object}
+      - `[commodityId: string]`: {Array<number>} - An array of the last N prices.
+  - `marketPressure`: {object} - Tracks player impact on local markets.
+    - `[systemId: string]`: {object}
+      - `[commodityId: string]`: {number} - The pressure value (decays over time).
+
+- `time`: {object} - Contains global time and date information.
+  - `currentDate`: {string} - ISO 8601 timestamp of the current game date.
+  - `lastUpdate`: {string} - ISO 8601 timestamp of the last simulation tick.
+
+- `navigation`: {object} - Contains player travel and routing data.
+  - `routes`: {Array<object>} - A list of planned warp jumps.
+    - `{object}`:
+      - `systemId`: {string} - The destination system.
+      - `eta`: {string} - ISO 8601 timestamp of arrival.
+  - `currentRoute`: {object | null} - The currently active travel route.
+    - `systemId`: {string} - The destination system.
+    - `eta`: {string} - ISO 8601 timestamp of arrival.
+    - `travelTime`: {number} - Total duration of the trip in seconds.
+    - `startTime`: {number} - `Date.now()` timestamp when travel began.
+
+- `missions`: {object} - Tracks mission states.
+  - `active`: {Array<string>} - A list of `missionId`s the player has accepted.
+  - `completed`: {Array<string>} - A list of `missionId`s the player has completed.
+  - `objectives`: {object} - A map of progress for active mission objectives.
+    - `[missionId: string]`: {object}
+      - `[objectiveId: string]`: {object}
+        - `status`: {string} - "incomplete" or "complete".
+        - `progress`: {number} - Current progress (e.g., 5 out of 10).
+
+- `ui`: {object} - Contains the state of the user interface.
+  - `activeScreen`: {string} - The key of the currently visible screen (e.g., "market", "hangar").
+  - `toastMessages`: {Array<object>} - A queue of active toast notifications.
+    - `{object}`:
+      - `id`: {number} - Unique ID for the toast.
+      - `message`: {string} - The text to display.
+      - `type`: {string} - "success", "error", "info".
+      - `duration`: {number} - Milliseconds to display.
+  - `tutorial`: {object} - State of the tutorial system.
+    - `active`: {boolean} - Is the tutorial system currently running?
+    - `currentStep`: {number} - The index of the active tutorial step.
+    - `completed`: {boolean} - Has the player finished the tutorial?
+
+- `events`: {object} - Tracks dynamic world events.
+  - `activeEvents`: {Array<object>} - A list of currently active global events.
+    - `{object}`:
+      - `id`: {string} - Unique event ID.
+      - `name`: {string} - Player-facing event name.
+      - `description`: {string} - Player-facing description.
+      - `effects`: {object} - The game logic modifiers.
+      - `duration`: {number} - (Optional) Duration in game days.
+      - `startTime`: {string} - (Optional) ISO 8601 timestamp when it started.
+  - `eventHistory`: {Array<object>} - A log of past events.
+
+- `settings`: {object} - Player-configurable settings.
+  - `eventFrequency`: {number} - (Currently unused).
+  - `simulationSpeed`: {number} - (Currently unused).
+
+- `debug`: {object} - Contains all values from the debug panel.
+  - `priceVolatility`: {number}
+  - `meanReversion`: {number}
+  - `marketPressureDecay`: {number}
+  - `inventoryReplenishRate`: {number}
+  - `baseEventChance`: {number}
+  - `...`: (and all other CSS variable controls)
+--- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
