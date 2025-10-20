@@ -40,7 +40,7 @@ export class TooltipHandler {
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
         }
-        
+
         // --- Action Handling ---
         if (actionTarget) {
             const { action } = actionTarget.dataset;
@@ -63,12 +63,12 @@ export class TooltipHandler {
                     break;
             }
         }
-        
+
         if (this.uiManager.isMobile) {
             this._handleMobileTooltip(e);
         }
 
-        this._handleLoreClick(e); // Renamed from _handleLoreAndTutorialLog
+        // this._handleLoreAndTutorialLog(e); // REMOVED
     }
 
     /**
@@ -95,11 +95,6 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Toggles the visibility of a status bar tooltip.
-     * @param {HTMLElement} target The element containing the tooltip.
-     * @private
-     */
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
@@ -113,11 +108,6 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Handles tooltip display logic specifically for mobile (tap to show/hide).
-     * @param {Event} e The click event.
-     * @private
-     */
     _handleMobileTooltip(e) {
         const tooltipTarget = e.target.closest('[data-tooltip]');
         if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) {
@@ -132,23 +122,8 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Handles clicks related to lore tooltips.
-     * @param {Event} e The click event.
-     * @private
-     */
-    _handleLoreClick(e) {
-        const loreTrigger = e.target.closest('.lore-container');
-
-        // Close any visible lore tooltip if clicking outside of it.
-        const visibleTooltip = document.querySelector('.lore-tooltip.visible');
-        if (visibleTooltip && !e.target.closest('.lore-tooltip')) {
-            visibleTooltip.classList.remove('visible');
-        }
-        
-        // Toggle the visibility of the clicked lore tooltip.
-        if (loreTrigger) {
-            loreTrigger.querySelector('.lore-tooltip')?.classList.toggle('visible');
-        }
-    }
+    // REMOVED _handleLoreAndTutorialLog method entirely
+    // _handleLoreAndTutorialLog(e) {
+    //     ...
+    // }
 }

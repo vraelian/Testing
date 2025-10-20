@@ -7,19 +7,19 @@
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js'; // Added missing import
 
 export class ActionClickHandler {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
      * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
+    constructor(gameState, simulationService, uiManager /* REMOVED, tutorialService */) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
+        // this.tutorialService = tutorialService; // REMOVED
     }
 
     /**
@@ -32,7 +32,7 @@ export class ActionClickHandler {
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; // For the TutorialService
+        // let actionData = null; // REMOVED For the TutorialService
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -41,7 +41,7 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 this.simulationService.buyShip(shipId, e);
-                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP }; // REMOVED
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
@@ -55,7 +55,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 this.simulationService.setActiveShip(shipId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP }; // REMOVED
                 break;
             }
 
@@ -113,18 +113,18 @@ export class ActionClickHandler {
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
-                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId }; // REMOVED
                 break;
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
                 this.simulationService.travelTo(dataset.locationId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL }; // REMOVED
                 break;
 
             // --- Modals ---
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
-                actionData = { type: 'ACTION', action: 'show-mission-modal' };
+                // actionData = { type: 'ACTION', action: 'show-mission-modal' }; // REMOVED
                 break;
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
@@ -143,7 +143,7 @@ export class ActionClickHandler {
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
+                // actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId }; // REMOVED
                 break;
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission();
@@ -152,7 +152,7 @@ export class ActionClickHandler {
             case 'complete-mission':
                 this.simulationService.missionService.completeActiveMission();
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'complete-mission' };
+                // actionData = { type: 'ACTION', action: 'complete-mission' }; // REMOVED
                 break;
 
             // --- Finance & Licenses ---
@@ -178,9 +178,10 @@ export class ActionClickHandler {
                 break;
         }
 
-        if (actionData) {
-            this.tutorialService.checkState(actionData);
-        }
+        // REMOVED tutorial check
+        // if (actionData) {
+        //     this.tutorialService.checkState(actionData);
+        // }
     }
 
     /**

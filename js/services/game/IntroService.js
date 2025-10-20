@@ -44,7 +44,7 @@ export class IntroService {
         const button = e.target.closest('button');
         if (!button) return;
         const targetId = button.id;
-        
+
         if (targetId === 'intro-next-btn') {
             button.disabled = true;
             this._showNextModal();
@@ -53,7 +53,7 @@ export class IntroService {
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
-    
+
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
                     // This callback runs after the "Invalid Signature" modal is closed.
@@ -66,7 +66,7 @@ export class IntroService {
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 390;
-    
+
                 this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
                     name: sanitizedPlayerName
@@ -81,13 +81,16 @@ export class IntroService {
      * @param {string} completedBatchId - The ID of the tutorial batch that just finished.
      */
     continueAfterTutorial(completedBatchId) {
-        if (completedBatchId === 'intro_hangar') {
-            this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
-        } else if (completedBatchId === 'intro_finance') {
-            this._end();
-        }
+        // This function is now obsolete as tutorials are removed.
+        // We call _end directly after the hangar transition.
+        // if (completedBatchId === 'intro_hangar') {
+        //      this._end();
+        // } else if (completedBatchId === 'intro_finance') {
+        //     this._end();
+        // }
+         this._end(); // Call end unconditionally now
     }
+
 
     /**
      * Displays the next modal in the introduction sequence.
@@ -95,16 +98,19 @@ export class IntroService {
      */
     _showNextModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
-        if (!step) {
-            this._end();
+        // Check if step exists AND if introSequence is still active
+        if (!step || !this.gameState.introSequenceActive) {
+            // If no step or intro ended prematurely, ensure cleanup
+            if(this.gameState.introSequenceActive) this._end();
             return;
         }
+
 
         const options = {
             buttonClass: step.buttonClass,
             contentClass: step.contentClass,
         };
-        
+
         if (this.gameState.player.introStep === 0) {
             options.specialClass = 'intro-fade-in';
         }
@@ -133,8 +139,16 @@ export class IntroService {
             };
         }
 
-        this.uiManager.queueModal(modalId, step.title, step.description, () => this.gameState.player.introStep++, options);
+        // Increment introStep in the callback *after* showing the current modal
+        this.uiManager.queueModal(modalId, step.title, step.description, () => {
+             // Only increment if it wasn't the signature validation failure case
+             // OR if the intro sequence hasn't already been marked as inactive
+             if ((step.id !== 'signature' || this.gameState.player.name) && this.gameState.introSequenceActive) {
+                 this.gameState.player.introStep++;
+             }
+        }, options);
     }
+
 
     /**
      * Performs custom setup for interactive modals in the intro.
@@ -149,18 +163,20 @@ export class IntroService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        button.onclick = (e) => {
-            e.target.disabled = true;
-            closeHandler();
-        };
+        // Don't disable button on click immediately for signature
+        // button.onclick = (e) => {
+        //     e.target.disabled = true;
+        //     closeHandler();
+        // };
         buttonContainer.appendChild(button);
 
         if (step.id === 'signature') {
             const input = modal.querySelector('#signature-input');
-            input.value = '';
+            input.value = ''; // Ensure input is cleared on re-display
             button.id = 'intro-submit-btn';
             button.disabled = true;
-            
+
+            // This onclick now *just* closes the modal. The actual logic is in handleIntroClick.
             button.onclick = closeHandler;
 
             input.oninput = () => {
@@ -168,8 +184,13 @@ export class IntroService {
             };
         } else {
             button.id = 'intro-next-btn';
+            button.onclick = (e) => { // Re-add standard click handler for non-signature
+                e.target.disabled = true;
+                closeHandler();
+            };
         }
     }
+
 
     /**
      * Manages the animated sequence for loan processing.
@@ -182,18 +203,22 @@ export class IntroService {
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
-                
+
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
-                
+
                 this.gameState.player.credits += 25000;
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // *** MODIFIED ***
+                // End the intro sequence here and set the initial game screen.
                 setTimeout(() => {
+                    this._end(); // Mark intro as complete and log
                     this.uiManager.showGameContainer();
-                    this.uiManager.render(this.gameState.getState());
+                    // Set initial screen to Hangar screen in Shipyard mode
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                    this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
-                }, 2000);
+                    this.simulationService.setHangarShipyardMode('shipyard'); // Ensure shipyard mode
+                    this.gameState.setState({}); // Trigger final render
+                }, 1000); // Short delay after floating text
             };
 
             this.uiManager.queueModal('event-modal', title, description, null, {
@@ -214,7 +239,7 @@ export class IntroService {
                 }
             });
         };
-        
+
         this.uiManager.showProcessingAnimation(this.gameState.player.name, showApprovalModal);
     }
 
@@ -223,19 +248,13 @@ export class IntroService {
      * @private
      */
     _end() {
-        this.gameState.introSequenceActive = false;
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
-        const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
-        const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-        const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-    
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
-    
-        this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
-        }, { buttonText: buttonText });
-        
-        this.uiManager.render(this.gameState.getState());
+        // Only mark as inactive and log if it's currently active
+        if(this.gameState.introSequenceActive) {
+            this.gameState.introSequenceActive = false;
+            this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
+            // No need to show another modal or trigger tutorials
+            this.gameState.setState({introSequenceActive: false}); // Ensure state update if called directly
+        }
     }
+
 }

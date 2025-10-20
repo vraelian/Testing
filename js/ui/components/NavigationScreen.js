@@ -13,24 +13,12 @@ import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
  * @returns {string} The HTML content for the Navigation screen.
  */
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
-    const { navLock } = tutorials;
+    // REMOVED tutorials, navLock
+    const { player, currentLocationId, TRAVEL_DATA } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
+    // REMOVED tutorial lock checks: isNavLocked, enabledElementQuery, enabledLocationId
 
-    // Check if a tutorial is active and has locked navigation.
-    const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
-    const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
-
-    // Efficiently parse the enabled location ID from the query selector string.
-    let enabledLocationId = null;
-    if (enabledElementQuery) {
-        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
-        if (match && match[1]) {
-            enabledLocationId = match[1];
-        }
-    }
-    
     return `
         <div class="scroll-panel navigation-scroll-panel p-1">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -40,19 +28,16 @@ export function renderNavigationScreen(gameState) {
                     const isCurrent = location.id === currentLocationId;
                     const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
 
-                    // Determine if this card should be disabled due to a tutorial lock.
-                    const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
-                    const disabledClass = isDisabled ? 'disabled-location' : '';
-                    
+                    // REMOVED isDisabled, disabledClass determination
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
+                    // REMOVED disabledClass and isDisabled attribute from div
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}"
+                                 data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
-                        ${isCurrent 
-                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
+                        ${isCurrent
+                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>'
                             : `<div class="flex justify-around items-center text-center">
                                    <div class="flex items-center space-x-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>

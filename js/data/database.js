@@ -6,7 +6,7 @@
  * into a single, authoritative source. This improves maintainability and clarity
  * by providing a unified structure for all core game content and configuration.
  */
-import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, ACTION_IDS, NAV_IDS } from './constants.js';
+import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, /* TUTORIAL_ACTION_TYPES, REMOVED */ ACTION_IDS, NAV_IDS } from './constants.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -104,12 +104,13 @@ export const DB = {
           `,
           buttonText: 'Submit Application'
         },
-        {
-            id: 'final',
-            title: 'Low On Credits!',
-            description: "Interest on your debt grows every month. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
-            buttonText: 'View Missions'
-        }
+        // REMOVED final step that mentioned tutorial missions
+        // {
+        //     id: 'final',
+        //     title: 'Low On Credits!',
+        //     description: "Interest on your debt grows every month. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
+        //     buttonText: 'View Missions'
+        // }
       ]
     },
 
@@ -179,7 +180,8 @@ export const DB = {
 
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: [
-        {
+        // ... (Events remain the same)
+         {
             id: 'distress_call',
             title: 'Distress Call',
             scenario: 'You pick up a distress signal from a small, damaged ship. They are out of fuel and requesting an emergency transfer to restart their reactor.',
@@ -279,7 +281,7 @@ export const DB = {
             id: 'engine_malfunction',
             title: 'Engine Malfunction',
             scenario: 'A sickening shudder runs through the ship. A key plasma injector has failed, destabilizing your engine output.',
-            precondition: (gameState, activeShip, getActiveInventory) => (getActiveInventory()[COMMODITY_IDS.PLASTEEL]?.quantity || 0) >= 5,
+            precondition: (gameState, activeShip, getActiveInventory) => (getActiveInventory()?.[COMMODITY_IDS.PLASTEEL]?.quantity || 0) >= 5, // Added null check
             choices: [
                 {
                     title: 'Quick, Risky Fix (5 Plasteel)',
@@ -454,7 +456,7 @@ export const DB = {
         { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [280000000, 800000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
         { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [350000000, 1100000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
     ],
-    
+
     // --- Trading Licenses ---
     LICENSES: {
         't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 25000 },
@@ -483,8 +485,9 @@ export const DB = {
 
     // --- Mission Data ---
     MISSIONS: {
-        // REMOVED mission_tutorial_01
-        // REMOVED mission_tutorial_02
+        // REMOVED tutorial missions
+        // 'mission_tutorial_01': { ... },
+        // 'mission_tutorial_02': { ... },
         'mission_license_t3': {
              id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
         },
@@ -496,6 +499,6 @@ export const DB = {
         }
     },
 
-    // --- Tutorial System Data ---
-    // REMOVED TUTORIAL_DATA
+    // --- Tutorial System Data --- REMOVED
+    // TUTORIAL_DATA: { ... }
 };
