@@ -1,193 +1,17 @@
 // js/services/DebugService.js
 /**
- * @fileoverview This file contains the DebugService class, which is responsible for creating and managing
- * the lil-gui developer panel for real-time testing and manipulation of the game state.
+ * @fileoverview This file contains the DebugService class, responsible for providing
+ * development and debugging tools accessible via a UI panel (lil-gui). It allows
+ * manipulation of game state, triggering events, and visualizing data.
  */
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
-import { Logger } from './LoggingService.js';
-import { calculateInventoryUsed } from '../utils.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS } from '../data/constants.js';
+import { formatCredits } from '../utils.js';
 
 /**
- * A simple bot that plays the game to stress-test the economy and find bugs.
- * @class AutomatedPlayer
+ * @class DebugService
+ * @description Manages the debug panel and associated cheat/utility functions.
  */
-class AutomatedPlayer {
-    /**
-     * @param {import('./GameState.js').GameState} gameState The central game state object.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
-     */
-    constructor(gameState, simulationService, logger) {
-        this.gameState = gameState;
-        this.simulationService = simulationService;
-        this.logger = logger;
-        this.isRunning = false;
-        this.stopRequested = false;
-    }
-
-    /**
-     * Starts the automated play simulation.
-     * @param {object} config - Configuration for the simulation run.
-     * @param {number} config.daysToRun - The number of in-game days to simulate.
-     * @param {function} updateCallback - A function to call with progress updates.
-     */
-    async runSimulation({ daysToRun }, updateCallback) {
-        if (this.isRunning) {
-            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
-            return;
-        }
-
-        this.isRunning = true;
-        this.stopRequested = false;
-        const startDay = this.gameState.day;
-        const endDay = startDay + daysToRun;
-
-        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting simulation for ${daysToRun} days.`);
-
-        while (this.gameState.day < endDay && !this.stopRequested) {
-            const activeShip = this.simulationService._getActiveShip();
-            if (activeShip) {
-                const fuelPct = (this.gameState.player.shipStates[activeShip.id].fuel / activeShip.maxFuel) * 100;
-                const healthPct = (this.gameState.player.shipStates[activeShip.id].health / activeShip.maxHealth) * 100;
-
-                if (fuelPct < 30) {
-                    this.logger.info.system('Bot', this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
-                    this.botRefuel();
-                }
-                if (healthPct < 30) {
-                    this.logger.info.system('Bot', this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
-                    this.botRepair();
-                }
-            }
-
-            const bestTrade = this._findBestTradeRoute();
-
-            if (bestTrade) {
-                this.logger.group(`[Bot] [Day ${this.gameState.day}] Executing Trade Route: ${bestTrade.goodId}`);
-                if (this.gameState.currentLocationId !== bestTrade.buyLocationId) {
-                    this.simulationService.travelService.initiateTravel(bestTrade.buyLocationId);
-                }
-                const buyQty = this._calculateMaxBuy(bestTrade.goodId, bestTrade.buyPrice);
-                if(buyQty > 0) this.simulationService.playerActionService.buyItem(bestTrade.goodId, buyQty);
-
-                if (this.gameState.currentLocationId !== bestTrade.sellLocationId) {
-                    this.simulationService.travelService.initiateTravel(bestTrade.sellLocationId);
-                }
-
-                const sellQty = this.simulationService._getActiveInventory()[bestTrade.goodId]?.quantity || 0;
-                if(sellQty > 0) this.simulationService.playerActionService.sellItem(bestTrade.goodId, sellQty);
-                this.logger.groupEnd();
-            } else {
-                this.simulationService.timeService.advanceDays(1);
-            }
-            updateCallback(this.gameState.day, endDay);
-            await new Promise(resolve => setTimeout(resolve, 10));
-        }
-
-        this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
-        this.isRunning = false;
-    }
-
-    /**
-     * Stops the currently running simulation.
-     */
-    stop() {
-        this.stopRequested = true;
-    }
-
-    /**
-     * @private
-     */
-    botRefuel() {
-        const ship = this.simulationService._getActiveShip();
-        if (!ship) return;
-        const fuelNeeded = ship.maxFuel - this.gameState.player.shipStates[ship.id].fuel;
-        if (fuelNeeded <= 0) return;
-        const currentMarket = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
-        let fuelPrice = currentMarket.fuelPrice / 2;
-        const totalCost = (fuelNeeded / 5) * fuelPrice;
-
-        if (this.gameState.player.credits >= totalCost) {
-            this.gameState.player.credits -= totalCost;
-            this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
-        }
-    }
-    
-    /**
-     * @private
-     */
-    botRepair() {
-        const ship = this.simulationService._getActiveShip();
-        if (!ship) return;
-        const healthNeeded = ship.maxHealth - this.gameState.player.shipStates[ship.id].health;
-        if (healthNeeded <= 0) return;
-        const totalCost = healthNeeded * GAME_RULES.REPAIR_COST_PER_HP;
-        if (this.gameState.player.credits >= totalCost) {
-            this.gameState.player.credits -= totalCost;
-            this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
-        }
-    }
-
-    /**
-     * @private
-     */
-    _calculateMaxBuy(goodId, price) {
-        const state = this.gameState.getState();
-        const ship = this.simulationService._getActiveShip();
-        const inventory = this.simulationService._getActiveInventory();
-        const space = ship.cargoCapacity - Object.values(inventory).reduce((acc, item) => acc + item.quantity, 0);
-        const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
-        const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        return Math.max(0, Math.min(space, canAfford, stock));
-    }
-
-    /**
-     * @private
-     */
-    _findBestTradeRoute() {
-        const state = this.gameState.getState();
-        let bestTrade = null;
-        let maxProfitPerDay = 0;
-
-        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
-
-        for (const good of availableCommodities) {
-            for (const buyLocation of DB.MARKETS) {
-                if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
-
-                for (const sellLocation of DB.MARKETS) {
-                    if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
-
-                    const buyPrice = state.market.prices[buyLocation.id][good.id];
-                    const sellPrice = state.market.prices[sellLocation.id][good.id];
-                    const profitPerUnit = sellPrice - buyPrice;
-
-                    if (profitPerUnit > 0) {
-                        const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
-                        const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
-                        const totalTime = travelTimeToBuy + travelTimeToSell + 1; // +1 for transaction time
-                        const profitPerDay = profitPerUnit / totalTime;
-
-                        if (profitPerDay > maxProfitPerDay) {
-                            maxProfitPerDay = profitPerDay;
-                            bestTrade = {
-                                goodId: good.id,
-                                buyLocationId: buyLocation.id,
-                                sellLocationId: sellLocation.id,
-                                buyPrice,
-                                sellPrice,
-                                profitPerUnit
-                            };
-                        }
-                    }
-                }
-            }
-        }
-        return bestTrade;
-    }
-}
-
 export class DebugService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state object.
@@ -201,467 +25,367 @@ export class DebugService {
         this.uiManager = uiManager;
         this.logger = logger;
         this.gui = null;
-        this.active = false;
-        this.diagActive = false;
-        this.diagElements = {};
-        this.actions = {};
-        this.debugState = {}; // Holds state for GUI controllers
-        this.bot = new AutomatedPlayer(gameState, simulationService, logger);
+        this.isVisible = false;
+
+        // --- State for GUI Controllers ---
+        // Mirror CSS variables for synchronized control
+        this.state = {
+            // General
+            bgColor: getComputedStyle(document.documentElement).getPropertyValue('--ot-bg-dark').trim(),
+            // Borders
+            frameBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--frame-border-color').trim(),
+            frameGlowColor: getComputedStyle(document.documentElement).getPropertyValue('--frame-glow-color').trim(),
+            frameGlowIntensity: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-glow-intensity').replace('px', ''), 10),
+            frameBorderStyle: getComputedStyle(document.documentElement).getPropertyValue('--frame-border-style').trim(),
+            frameBorderWidth: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--frame-border-width').replace('px', ''), 10),
+            // Panel Theme (Dark)
+            panelDarkBg: getComputedStyle(document.documentElement).getPropertyValue('--ot-panel-dark-bg').trim(),
+            panelDarkBorder: getComputedStyle(document.documentElement).getPropertyValue('--ot-panel-dark-border').trim(),
+            // Text Colors
+            textPrimary: getComputedStyle(document.documentElement).getPropertyValue('--ot-text-primary').trim(),
+            textSecondary: getComputedStyle(document.documentElement).getPropertyValue('--ot-text-secondary').trim(),
+            // Accents
+            accentCyanBase: getComputedStyle(document.documentElement).getPropertyValue('--ot-cyan-base').trim(),
+            accentGreen: getComputedStyle(document.documentElement).getPropertyValue('--ot-green-accent').trim(),
+            accentYellow: getComputedStyle(document.documentElement).getPropertyValue('--ot-yellow-accent').trim(),
+            accentRedBase: getComputedStyle(document.documentElement).getPropertyValue('--ot-red-base').trim(),
+            // Button Colors
+            btnBg: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-bg').trim(),
+            btnHoverBg: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-hover-bg').trim(),
+            btnActiveBg: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-active-bg').trim(),
+            btnBorder: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-border').trim(),
+            btnDisabledBg: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-disabled-bg').trim(),
+            btnDisabledBorder: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-disabled-border').trim(),
+            btnDisabledText: getComputedStyle(document.documentElement).getPropertyValue('--ot-btn-disabled-text').trim(),
+            // Scrollbars
+            scrollbarThumb: getComputedStyle(document.documentElement).getPropertyValue('--ot-scrollbar-thumb').trim(),
+            scrollbarTrack: getComputedStyle(document.documentElement).getPropertyValue('--ot-scrollbar-track').trim(),
+
+            // Game State Specific
+            credits: this.gameState.player?.credits || 0,
+            day: this.gameState.day || 1,
+            selectedEvent: DB.RANDOM_EVENTS[0]?.id || '',
+            targetLocation: DB.MARKETS[1]?.id || '', // Default to Luna if Mars is current
+            targetShip: DB.SHIPS.hauler_c1.name,
+            targetGood: DB.COMMODITIES[0].id,
+            targetQuantity: 10,
+            targetPriceAdjustment: 0,
+        };
+
+        // Store default values for reset functionality
+        this.defaults = { ...this.state };
     }
 
     /**
-     * Initializes the debug panel.
+     * Initializes the lil-gui panel and adds controllers.
      */
     init() {
-        if (this.gui) return;
-        this._cacheDiagElements();
-        this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
-        this.gui.domElement.id = 'debug-panel';
-        this._registerDebugActions();
-        this.buildGui();
-        this._startDiagLoop();
+        this.gui = new lil.GUI({ title: 'Orbital Trading Debug', width: 350 });
+        this.gui.domElement.style.display = 'none'; // Initially hidden
+        this.gui.domElement.style.position = 'fixed';
+        this.gui.domElement.style.top = '10px';
+        this.gui.domElement.style.right = '10px';
+        this.gui.domElement.style.zIndex = '1000'; // Ensure it's above other elements
+
+        // --- Styles Folder ---
+        const stylesFolder = this.gui.addFolder('Theme Styles');
+        this._addStyleControllers(stylesFolder);
+        stylesFolder.add(this, 'resetStyles').name('Reset Styles');
+
+        // --- Game State Folder ---
+        const gameStateFolder = this.gui.addFolder('Game State Cheats');
+        this._addGameStateControllers(gameStateFolder);
+
+        // --- Actions Folder ---
+        const actionsFolder = this.gui.addFolder('Actions');
+        this._addActionControllers(actionsFolder);
+
+        // Update state bindings when game state changes externally
+        this.gameState.subscribe(() => {
+            this.state.credits = this.gameState.player?.credits || 0;
+            this.state.day = this.gameState.day || 1;
+            // Only update controllers if the GUI is visible to avoid errors
+            if (this.isVisible) {
+                this.gui.controllers.forEach(c => c.updateDisplay());
+            }
+        });
     }
 
     /**
-     * Handles key presses forwarded from the EventManager.
-     * @param {string} key
-     */
-    handleKeyPress(key) {
-        // No longer needed as all shortcuts are removed.
-    }
-
-    /**
-     * Toggles the visibility of the debug panel UI.
+     * Toggles the visibility of the debug panel.
      */
     toggleVisibility() {
-        if (!this.gui) return;
-        this.active = !this.active;
-        this.gui.domElement.classList.toggle('debug-visible', this.active);
-    }
-
-    toggleDiagnosticOverlay() {
-        this.diagActive = !this.diagActive;
-        const overlay = document.getElementById('diagnostic-overlay');
-        if (overlay) {
-            overlay.classList.toggle('hidden', !this.diagActive);
+        this.isVisible = !this.isVisible;
+        this.gui.domElement.style.display = this.isVisible ? 'block' : 'none';
+        if (this.isVisible) {
+            // Refresh display values when showing
+            this.gui.controllers.forEach(c => c.updateDisplay());
         }
     }
 
     /**
-     * Gathers and copies a bug report to the clipboard.
+     * Adds controllers for theme style variables.
+     * @param {import('lil-gui').GUI} folder - The folder to add controllers to.
+     * @private
      */
-    generateBugReport() {
-        const logHistory = this.logger.getLogHistory();
-        const gameState = this.gameState.getState();
-        
-        delete gameState.TRAVEL_DATA;
-        delete gameState.market.priceHistory;
-
-        const report = `
-ORBITAL TRADING - BUG REPORT
-==============================
-Date: ${new Date().toISOString()}
-
---- GAME STATE SNAPSHOT ---
-${JSON.stringify(gameState, null, 2)}
-
---- RECENT LOG HISTORY ---
-${logHistory}
-        `;
-        
-        navigator.clipboard.writeText(report.trim())
-            .then(() => {
-                this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
-            })
-            .catch(err => {
-                this.logger.error('DebugService', 'Failed to copy bug report.', err);
-            });
+    _addStyleControllers(folder) {
+        folder.addColor(this.state, 'bgColor').name('Background').onChange(v => this._updateCSS('--ot-bg-dark', v));
+        // Borders Folder
+        const bordersFolder = folder.addFolder('Frames & Borders');
+        bordersFolder.addColor(this.state, 'frameBorderColor').name('Border Color').onChange(v => this._updateCSS('--frame-border-color', v));
+        bordersFolder.addColor(this.state, 'frameGlowColor').name('Glow Color').onChange(v => this._updateCSS('--frame-glow-color', v));
+        bordersFolder.add(this.state, 'frameGlowIntensity', 0, 50, 1).name('Glow Intensity (px)').onChange(v => this._updateCSS('--frame-glow-intensity', `${v}px`));
+        bordersFolder.add(this.state, 'frameBorderStyle', ['solid', 'dashed', 'dotted']).name('Border Style').onChange(v => this._updateCSS('--frame-border-style', v));
+        bordersFolder.add(this.state, 'frameBorderWidth', 0, 5, 1).name('Border Width (px)').onChange(v => this._updateCSS('--frame-border-width', `${v}px`));
+        // Panel Theme
+        const panelFolder = folder.addFolder('Dark Panels');
+        panelFolder.addColor(this.state, 'panelDarkBg').name('Panel BG').onChange(v => this._updateCSS('--ot-panel-dark-bg', v));
+        panelFolder.addColor(this.state, 'panelDarkBorder').name('Panel Border').onChange(v => this._updateCSS('--ot-panel-dark-border', v));
+        // Text Colors
+        const textFolder = folder.addFolder('Text');
+        textFolder.addColor(this.state, 'textPrimary').name('Primary Text').onChange(v => this._updateCSS('--ot-text-primary', v));
+        textFolder.addColor(this.state, 'textSecondary').name('Secondary Text').onChange(v => this._updateCSS('--ot-text-secondary', v));
+        // Accents
+        const accentsFolder = folder.addFolder('Accents');
+        accentsFolder.addColor(this.state, 'accentCyanBase').name('Cyan').onChange(v => this._updateCSS('--ot-cyan-base', v));
+        accentsFolder.addColor(this.state, 'accentGreen').name('Green').onChange(v => this._updateCSS('--ot-green-accent', v));
+        accentsFolder.addColor(this.state, 'accentYellow').name('Yellow').onChange(v => this._updateCSS('--ot-yellow-accent', v));
+        accentsFolder.addColor(this.state, 'accentRedBase').name('Red').onChange(v => this._updateCSS('--ot-red-base', v));
+        // Buttons
+        const buttonsFolder = folder.addFolder('Buttons');
+        buttonsFolder.addColor(this.state, 'btnBg').name('BG').onChange(v => this._updateCSS('--ot-btn-bg', v));
+        buttonsFolder.addColor(this.state, 'btnHoverBg').name('Hover BG').onChange(v => this._updateCSS('--ot-btn-hover-bg', v));
+        buttonsFolder.addColor(this.state, 'btnActiveBg').name('Active BG').onChange(v => this._updateCSS('--ot-btn-active-bg', v));
+        buttonsFolder.addColor(this.state, 'btnBorder').name('Border').onChange(v => this._updateCSS('--ot-btn-border', v));
+        buttonsFolder.addColor(this.state, 'btnDisabledBg').name('Disabled BG').onChange(v => this._updateCSS('--ot-btn-disabled-bg', v));
+        buttonsFolder.addColor(this.state, 'btnDisabledBorder').name('Disabled Border').onChange(v => this._updateCSS('--ot-btn-disabled-border', v));
+        buttonsFolder.addColor(this.state, 'btnDisabledText').name('Disabled Text').onChange(v => this._updateCSS('--ot-btn-disabled-text', v));
+        // Scrollbars
+        const scrollbarFolder = folder.addFolder('Scrollbars');
+        scrollbarFolder.addColor(this.state, 'scrollbarThumb').name('Thumb Color').onChange(v => this._updateCSS('--ot-scrollbar-thumb', v));
+        scrollbarFolder.addColor(this.state, 'scrollbarTrack').name('Track Color').onChange(v => this._updateCSS('--ot-scrollbar-track', v));
     }
 
-    // --- GAME FLOW & CHEAT METHODS ---
-    godMode() {
-        this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
-        this.gameState.introSequenceActive = false;
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null; 
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
-        
-        this.gameState.player.credits = 1000000000000;
-        this.gameState.player.ownedShipIds = [];
-        this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
-        this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
-        
-        this.gameState.player.revealedTier = 7;
-        this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
-        this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
+    /**
+     * Adds controllers for game state manipulation.
+     * @param {import('lil-gui').GUI} folder - The folder to add controllers to.
+     * @private
+     */
+    _addGameStateControllers(folder) {
+        folder.add(this.state, 'credits', 0, 100000000, 1000).name('Credits').listen().onChange(v => this.gameState.player.credits = v);
+        folder.add(this.state, 'day', 1, 5000, 1).name('Day').listen().onChange(v => this.gameState.day = v);
+        folder.add(this, 'advanceDay').name('Advance 1 Day');
+        folder.add(this, 'advanceMonth').name('Advance 30 Days');
+        folder.add(this, 'resetPlayer').name('Reset Player State');
+    }
 
-        this.uiManager.showGameContainer();
-        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
-        this.simulationService.timeService.advanceDays(7);
-        this.gameState.setState({});
+    /**
+     * Adds controllers for triggering game actions.
+     * @param {import('lil-gui').GUI} folder - The folder to add controllers to.
+     * @private
+     */
+    _addActionControllers(folder) {
+        folder.add(this, 'simpleStart').name('Simple Start (No Intro)');
+        // Events
+        const eventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => { acc[event.title] = event.id; return acc; }, {});
+        folder.add(this.state, 'selectedEvent', eventOptions).name('Select Event');
+        folder.add(this, 'triggerSelectedEvent').name('Trigger Event');
+        // Travel
+        const locationOptions = DB.MARKETS.reduce((acc, loc) => { acc[loc.name] = loc.id; return acc; }, {});
+        folder.add(this.state, 'targetLocation', locationOptions).name('Target Location');
+        folder.add(this, 'travelToTarget').name('Travel Instantly');
+        // Shipyard
+        const shipOptions = Object.entries(DB.SHIPS).reduce((acc, [id, ship]) => { acc[ship.name] = id; return acc; }, {});
+        folder.add(this.state, 'targetShip', shipOptions).name('Target Ship');
+        folder.add(this, 'addShipToHangar').name('Add Ship to Hangar');
+        // Cargo
+        const goodOptions = DB.COMMODITIES.reduce((acc, good) => { acc[good.name] = good.id; return acc; }, {});
+        folder.add(this.state, 'targetGood', goodOptions).name('Target Commodity');
+        folder.add(this.state, 'targetQuantity', 1, 1000, 1).name('Quantity');
+        folder.add(this, 'addCargoToShip').name('Add Cargo to Active Ship');
+        // Market Price
+        folder.add(this.state, 'targetPriceAdjustment', -100, 100, 5).name('Price Adjust %');
+        folder.add(this, 'adjustMarketPrice').name('Adjust Market Price');
+    }
+
+
+    /**
+     * Updates a CSS variable on the root element.
+     * @param {string} variable - The CSS variable name (e.g., '--ot-bg-dark').
+     * @param {string} value - The new value for the variable.
+     * @private
+     */
+    _updateCSS(variable, value) {
+        document.documentElement.style.setProperty(variable, value);
+    }
+
+    /**
+     * Resets all theme styles to their default values.
+     */
+    resetStyles() {
+        for (const key in this.defaults) {
+            if (this.state.hasOwnProperty(key)) {
+                this.state[key] = this.defaults[key];
+                // Find the corresponding CSS variable name (requires some mapping logic)
+                const cssVar = this._mapStateKeyToCSSVar(key);
+                if (cssVar) {
+                    let value = this.defaults[key];
+                    // Add 'px' back for numeric style values
+                    if (['frameGlowIntensity', 'frameBorderWidth'].includes(key)) {
+                        value = `${value}px`;
+                    }
+                    this._updateCSS(cssVar, value);
+                }
+            }
+        }
+        // Update the GUI display
+        this.gui.controllers.forEach(c => c.updateDisplay());
+    }
+
+    /**
+     * Maps internal state keys back to their CSS variable names.
+     * This is the inverse of the mapping done during initialization.
+     * @param {string} key - The internal state key (e.g., 'bgColor').
+     * @returns {string|null} - The corresponding CSS variable name or null.
+     * @private
+     */
+    _mapStateKeyToCSSVar(key) {
+        const mapping = {
+            bgColor: '--ot-bg-dark',
+            frameBorderColor: '--frame-border-color',
+            frameGlowColor: '--frame-glow-color',
+            frameGlowIntensity: '--frame-glow-intensity',
+            frameBorderStyle: '--frame-border-style',
+            frameBorderWidth: '--frame-border-width',
+            panelDarkBg: '--ot-panel-dark-bg',
+            panelDarkBorder: '--ot-panel-dark-border',
+            textPrimary: '--ot-text-primary',
+            textSecondary: '--ot-text-secondary',
+            accentCyanBase: '--ot-cyan-base',
+            accentGreen: '--ot-green-accent',
+            accentYellow: '--ot-yellow-accent',
+            accentRedBase: '--ot-red-base',
+            btnBg: '--ot-btn-bg',
+            btnHoverBg: '--ot-btn-hover-bg',
+            btnActiveBg: '--ot-btn-active-bg',
+            btnBorder: '--ot-btn-border',
+            btnDisabledBg: '--ot-btn-disabled-bg',
+            btnDisabledBorder: '--ot-btn-disabled-border',
+            btnDisabledText: '--ot-btn-disabled-text',
+            scrollbarThumb: '--ot-scrollbar-thumb',
+            scrollbarTrack: '--ot-scrollbar-track'
+        };
+        return mapping[key] || null;
+    }
+
+    // --- Action Methods ---
+
+    advanceDay() {
+        this.simulationService.timeService.advanceDay();
+        this.logger.debug.manual('Debug', 'Advanced day by 1.');
+    }
+
+    advanceMonth() {
+        this.simulationService.timeService.advanceDays(30);
+        this.logger.debug.manual('Debug', 'Advanced days by 30.');
+    }
+
+    resetPlayer() {
+        // Caution: This is a basic reset, might need expansion
+        this.gameState.player.credits = GAME_RULES.STARTING_CREDITS;
+        this.gameState.player.debt = 0; // Or initial debt if applicable
+        this.gameState.player.ownedShipIds = ['starter']; // Assuming 'starter' is the ID
+        this.gameState.player.activeShipId = 'starter';
+        this.gameState.player.shipStates = { 'starter': { health: DB.SHIPS.starter.maxHealth, fuel: DB.SHIPS.starter.maxFuel, hullAlerts: { one: false, two: false } } };
+        this.gameState.player.inventories = { 'starter': {} };
+        DB.COMMODITIES.forEach(c => { this.gameState.player.inventories['starter'][c.id] = { quantity: 0, avgCost: 0 }; });
+        this.gameState.setState({}); // Notify UI
+        this.logger.debug.manual('Debug', 'Player state reset.');
     }
 
     simpleStart() {
-        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
-        this.gameState.player.ownedShipIds = [];
-        this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
-        this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        // REMOVED tutorial skip
+        // if (this.simulationService.tutorialService) {
+        //     Object.keys(DB.TUTORIAL_DATA).forEach(batchId => {
+        //         if (!this.gameState.tutorials.skippedTutorialBatches.includes(batchId)) {
+        //             this.gameState.tutorials.skippedTutorialBatches.push(batchId);
+        //         }
+        //     });
+        //     this.simulationService.tutorialService._endBatch(); // Ensure any active tutorial is cleared
+        // }
+        this.gameState.setState({ introSequenceActive: false }); // Update state
         this.uiManager.showGameContainer();
-        this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-        this.simulationService.timeService.advanceDays(7);
-        this.gameState.setState({});
-    }
-    
-    skipToHangarTutorial() {
-        this.logger.warn('DebugService', 'SKIP TO HANGAR TUTORIAL ACTIVATED.');
-        this.gameState.introSequenceActive = true; 
-
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = [];
-
-        this.gameState.player.credits = 25000;
-        this.gameState.player.ownedShipIds = [];
-        this.gameState.player.activeShipId = null;
-        this.gameState.player.shipStates = {};
-        this.gameState.player.inventories = {};
-
-        this.uiManager.showGameContainer();
-        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-        this.simulationService.tutorialService.triggerBatch('intro_hangar', 'hangar_1');
-        this.gameState.setState({});
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR); // Go to hangar after simple start
+        this.logger.debug.manual('Debug', 'Simple start activated (Intro skipped).');
     }
 
-    // --- NEW SHIP-SPECIFIC HANDLERS ---
-    deductHull(amount) {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = Math.max(0, shipState.health - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    restoreHull() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = ship.maxHealth;
-            this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    destroyShip() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.health = 0;
-            this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
-            this.simulationService.travelService._handleShipDestruction(ship.id);
-        }
-    }
-
-    deductFuel(amount) {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.fuel = Math.max(0, shipState.fuel - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    restoreFuel() {
-        const ship = this.simulationService._getActiveShip();
-        if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
-            shipState.fuel = ship.maxFuel;
-            this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
-            this.gameState.setState({});
-        }
-    }
-
-    removeAllCargo() {
-        const inventory = this.simulationService._getActiveInventory();
-        if (inventory) {
-            for (const goodId in inventory) {
-                inventory[goodId].quantity = 0;
-                inventory[goodId].avgCost = 0;
-            }
-            this.logger.warn('DebugService', 'All cargo removed from active ship.');
-            this.gameState.setState({});
-        }
-    }
-
-    fillWithCybernetics() {
-        const ship = this.simulationService._getActiveShip();
-        const inventory = this.simulationService._getActiveInventory();
-        if (ship && inventory) {
-            this.removeAllCargo();
-            const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
-            if (!inventory[COMMODITY_IDS.CYBERNETICS]) {
-                inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
-            }
-            inventory[COMMODITY_IDS.CYBERNETICS].quantity = space;
-            this.logger.warn('DebugService', `Filled cargo with ${space} Cybernetics.`);
-            this.gameState.setState({});
-        }
-    }
-
-    grantAllItems() {
-        const inventory = this.simulationService._getActiveInventory();
-        if (!inventory) {
-            this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
-            return;
-        }
-        DB.COMMODITIES.forEach(commodity => {
-            if (inventory[commodity.id]) {
-                inventory[commodity.id].quantity += 1;
-            } else {
-                inventory[commodity.id] = { quantity: 1, avgCost: 0 };
-            }
-        });
-        this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
-        this.gameState.setState({});
-    }
-
-    fillShipyard() {
-        const { currentLocationId, day } = this.gameState;
-        if (this.gameState.market.shipyardStock[currentLocationId]) {
-            const allShipIds = Object.keys(DB.SHIPS);
-            this.gameState.market.shipyardStock[currentLocationId] = {
-                day: day,
-                shipsForSale: allShipIds
-            };
-            this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
-            this.gameState.setState({});
+    triggerSelectedEvent() {
+        const eventId = this.state.selectedEvent;
+        const eventData = DB.RANDOM_EVENTS.find(e => e.id === eventId);
+        if (eventData && this.simulationService.travelService) {
+            // Need to simulate being in travel to trigger event correctly
+            this.gameState.pendingTravel = { destinationId: this.state.targetLocation || DB.MARKETS[1].id, remainingDays: 1, startTime: this.gameState.day };
+            this.simulationService.travelService._triggerRandomEvent(eventData);
+            this.gameState.pendingTravel = null; // Clean up simulated travel state
+            this.logger.debug.manual('Debug', `Triggered event: ${eventData.title}`);
         } else {
-            this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
+            this.logger.warn('Debug', `Could not trigger event ID: ${eventId}`);
         }
     }
 
-
-    /**
-     * @private
-     */
-    _registerDebugActions() {
-        this.actions = {
-            godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
-            simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
-            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
-            addCredits: { name: 'Add Credits', type: 'button', handler: () => {
-                this.gameState.player.credits += this.debugState.creditsToAdd;
-                this.simulationService.timeService._checkMilestones();
-                this.gameState.setState({});
-            }},
-            reduceCredits: { name: 'Reduce Credits', type: 'button', handler: () => {
-                this.gameState.player.credits -= this.debugState.creditsToReduce;
-                this.simulationService._checkGameOverConditions();
-                this.gameState.setState({});
-            }},
-            payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
-            teleport: { name: 'Teleport', type: 'button', handler: () => {
-                if (this.debugState.selectedLocation) {
-                    this.gameState.currentLocationId = this.debugState.selectedLocation;
-                    this.gameState.setState({});
-                }
-            }},
-            unlockAll: { name: 'Unlock All', type: 'button', handler: () => {
-                this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
-                this.gameState.player.revealedTier = 7;
-                this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
-                this.gameState.setState({});
-            }},
-            grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
-                Object.keys(DB.SHIPS).forEach(shipId => {
-                    if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
-                    }
-                });
-                this.gameState.setState({});
-            }},
-            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
-            replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
-                this.simulationService.marketService.replenishMarketInventory();
-                this.gameState.setState({});
-            }},
-            triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
-                const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
-                if (dest) {
-                    this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
-                }
-            }},
-            triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
-                const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
-                if (event) {
-                    this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
-                }
-            }},
-            triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
-                if (this.debugState.selectedMission) {
-                    if(this.gameState.missions.activeMissionId) {
-                        this.simulationService.missionService.abandonMission();
-                    }
-                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
-                }
-            }},
-            startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
-                const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
-                this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
-                    if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
-                });
-            }},
-            stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
-
-            // NEW & MOVED SHIP ACTIONS
-            fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
-            deductHull20: { name: 'Deduct 20 Hull', type: 'button', handler: () => this.deductHull(20) },
-            restoreHull: { name: 'Restore Hull', type: 'button', handler: () => this.restoreHull() },
-            destroyShip: { name: 'Destroy Current Ship', type: 'button', handler: () => this.destroyShip() },
-            deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
-            restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
-            removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
-            grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
-            fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
-        };
-    }
-
-    _cacheDiagElements() {
-        this.diagElements = {
-            winW: document.getElementById('diag-window-w'),
-            winH: document.getElementById('diag-window-h'),
-            visualVpW: document.getElementById('diag-visual-vp-w'),
-            visualVpH: document.getElementById('diag-visual-vp-h'),
-            gameW: document.getElementById('diag-game-container-w'),
-            gameH: document.getElementById('diag-game-container-h'),
-            bodyW: document.getElementById('diag-body-w'),
-            bodyH: document.getElementById('diag-body-h'),
-            pixelRatio: document.getElementById('diag-pixel-ratio'),
-            displayMode: document.getElementById('diag-display-mode'),
-            day: document.getElementById('diag-day'),
-            navScreen: document.getElementById('diag-nav-screen'),
-            tutorialBatch: document.getElementById('diag-tutorial-batch'),
-            tutorialStep: document.getElementById('diag-tutorial-step'),
-        };
-    }
-    
-    _startDiagLoop() {
-        const update = () => {
-            this._updateDiagOverlay();
-            requestAnimationFrame(update);
-        };
-        requestAnimationFrame(update);
-    }
-
-    _updateDiagOverlay() {
-        if (!this.diagActive) return;
-
-        const state = this.gameState.getState();
-        const gameContainer = document.getElementById('game-container');
-
-        this.diagElements.winW.textContent = window.innerWidth;
-        this.diagElements.winH.textContent = window.innerHeight;
-        
-        if (window.visualViewport) {
-            this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
-            this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
+    travelToTarget() {
+        const targetId = this.state.targetLocation;
+        if (targetId && this.gameState.currentLocationId !== targetId) {
+            this.gameState.currentLocationId = targetId;
+            this.gameState.pendingTravel = null; // Ensure any pending travel is cleared
+            this.gameState.setState({}); // Update UI
+            this.logger.debug.manual('Debug', `Instant travel to ${DB.MARKETS.find(m => m.id === targetId)?.name}`);
         }
-
-        this.diagElements.gameW.textContent = gameContainer.clientWidth;
-        this.diagElements.gameH.textContent = gameContainer.clientHeight;
-        this.diagElements.bodyW.textContent = document.body.clientWidth;
-        this.diagElements.bodyH.textContent = document.body.clientHeight;
-        this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
-        this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
-        this.diagElements.day.textContent = state.day;
-        this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
-        this.diagElements.tutorialBatch.textContent = state.tutorials.activeBatchId || 'none';
-        this.diagElements.tutorialStep.textContent = state.tutorials.activeStepId || 'none';
     }
 
-    /**
-     * @private
-     */
-    buildGui() {
-        const flowFolder = this.gui.addFolder('Game Flow');
-        flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
-        flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
-        flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
+    addShipToHangar() {
+        const shipId = this.state.targetShip;
+        if (shipId && !this.gameState.player.ownedShipIds.includes(shipId)) {
+            this.simulationService.addShipToHangar(shipId);
+            this.gameState.setState({}); // Update UI
+            this.logger.debug.manual('Debug', `Added ship ${DB.SHIPS[shipId]?.name} to hangar.`);
+        } else {
+             this.logger.warn('Debug', `Ship ${shipId} already owned or invalid.`);
+        }
+    }
 
-        const playerFolder = this.gui.addFolder('Player');
-        this.debugState.creditsToAdd = 100000;
-        playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
-        playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
+    addCargoToShip() {
+        const goodId = this.state.targetGood;
+        const quantity = this.state.targetQuantity;
+        const activeShipId = this.gameState.player.activeShipId;
+        if (!activeShipId) {
+             this.logger.warn('Debug', `No active ship to add cargo to.`);
+             return;
+        }
+        const inventory = this.gameState.player.inventories[activeShipId];
+        if (goodId && quantity > 0 && inventory) {
+             if (!inventory[goodId]) {
+                 inventory[goodId] = { quantity: 0, avgCost: 0 };
+             }
+             inventory[goodId].quantity += quantity;
+             // Optionally update avgCost if needed for debug purposes
+             this.gameState.setState({});
+             this.logger.debug.manual('Debug', `Added ${quantity}x ${DB.COMMODITIES.find(c=>c.id === goodId)?.name} to active ship.`);
+        }
+    }
 
-        this.debugState.creditsToReduce = 100000;
-        playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
-        playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-        
-        playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
+    adjustMarketPrice() {
+        const goodId = this.state.targetGood;
+        const adjustmentPercent = this.state.targetPriceAdjustment;
+        const currentLocationId = this.gameState.currentLocationId;
 
-        const shipFolder = this.gui.addFolder('Ship');
-        const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
-        this.debugState.selectedLocation = this.gameState.currentLocationId;
-        shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
-        shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
-        shipFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
-        shipFolder.add(this.actions.restoreHull, 'handler').name(this.actions.restoreHull.name);
-        shipFolder.add(this.actions.destroyShip, 'handler').name(this.actions.destroyShip.name);
-        shipFolder.add(this.actions.deductFuel20, 'handler').name(this.actions.deductFuel20.name);
-        shipFolder.add(this.actions.restoreFuel, 'handler').name(this.actions.restoreFuel.name);
-        shipFolder.add(this.actions.removeAllCargo, 'handler').name(this.actions.removeAllCargo.name);
-        shipFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
-        shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
-        shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
-        shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
-        
-        const worldFolder = this.gui.addFolder('World & Time');
-        this.debugState.daysToAdvance = 7;
-        worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
-        worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
-        
-        const economyFolder = this.gui.addFolder('Economy');
-        economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
-
-        const triggerFolder = this.gui.addFolder('Triggers');
-        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
-        this.debugState.selectedRandomEvent = 0;
-        triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
-        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
-        const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-        this.debugState.selectedAgeEvent = DB.AGE_EVENTS[0].id;
-        triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
-        triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
-        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
-        this.debugState.selectedMission = Object.keys(missionOptions)[0];
-        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-        triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
-
-        const automationFolder = this.gui.addFolder('Automation & Logging');
-        automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
-        this.debugState.logLevel = 'INFO';
-        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
-        automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
-        this.debugState.botDaysToRun = 365;
-        this.debugState.botProgress = 'Idle';
-        automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
-        automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
-        automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
-        automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
-        
-        this.gui.folders.forEach(folder => folder.close());
+        if (goodId && currentLocationId && this.gameState.market.prices[currentLocationId]?.[goodId]) {
+            const currentPrice = this.gameState.market.prices[currentLocationId][goodId];
+            const newPrice = Math.max(1, Math.round(currentPrice * (1 + adjustmentPercent / 100)));
+            this.gameState.market.prices[currentLocationId][goodId] = newPrice;
+            this.gameState.setState({}); // Force UI update
+             this.logger.debug.manual('Debug', `Adjusted ${DB.COMMODITIES.find(c=>c.id === goodId)?.name} price at ${DB.MARKETS.find(m => m.id === currentLocationId)?.name} by ${adjustmentPercent}%. New price: ${newPrice}`);
+        }
     }
 }

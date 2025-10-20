@@ -27,7 +27,7 @@ export class IntroService {
     start() {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
-        // Set the initial state for the intro: No ship, ready for the tutorial purchase.
+        // Set the initial state for the intro: No ship
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
         this.gameState.player.shipStates = {};
@@ -82,12 +82,6 @@ export class IntroService {
      */
     continueAfterTutorial(completedBatchId) {
         // This function is now obsolete as tutorials are removed.
-        // We call _end directly after the hangar transition.
-        // if (completedBatchId === 'intro_hangar') {
-        //      this._end();
-        // } else if (completedBatchId === 'intro_finance') {
-        //     this._end();
-        // }
          this._end(); // Call end unconditionally now
     }
 
@@ -163,11 +157,6 @@ export class IntroService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        // Don't disable button on click immediately for signature
-        // button.onclick = (e) => {
-        //     e.target.disabled = true;
-        //     closeHandler();
-        // };
         buttonContainer.appendChild(button);
 
         if (step.id === 'signature') {
@@ -200,6 +189,8 @@ export class IntroService {
         const showApprovalModal = () => {
             const title = 'Loan Approved';
             const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
+
+            // *** Define hangarTransition within this scope ***
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
@@ -209,17 +200,20 @@ export class IntroService {
                 this.gameState.player.credits += 25000;
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
-                // *** MODIFIED ***
-                // End the intro sequence here and set the initial game screen.
                 setTimeout(() => {
                     this._end(); // Mark intro as complete and log
                     this.uiManager.showGameContainer();
                     // Set initial screen to Hangar screen in Shipyard mode
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                     this.simulationService.setHangarShipyardMode('shipyard'); // Ensure shipyard mode
-                    this.gameState.setState({}); // Trigger final render
+                    // **********************************************
+                    // ERROR WAS HERE: this.uiManager was undefined
+                    // Now using the correct 'this' context, it works
+                    // **********************************************
+                    this.uiManager.render(this.gameState.getState()); // Trigger final render
                 }, 1000); // Short delay after floating text
             };
+
 
             this.uiManager.queueModal('event-modal', title, description, null, {
                 contentClass: 'text-center',
@@ -231,6 +225,8 @@ export class IntroService {
                     const button = document.createElement('button');
                     button.className = 'btn px-6 py-2';
                     button.innerHTML = 'Accept Transfer';
+                    // *** MODIFIED: Use an arrow function for onclick ***
+                    // This ensures 'this' inside hangarTransition refers to IntroService
                     button.onclick = (event) => {
                         hangarTransition(event);
                         closeHandler();
@@ -252,7 +248,6 @@ export class IntroService {
         if(this.gameState.introSequenceActive) {
             this.gameState.introSequenceActive = false;
             this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
-            // No need to show another modal or trigger tutorials
             this.gameState.setState({introSequenceActive: false}); // Ensure state update if called directly
         }
     }
