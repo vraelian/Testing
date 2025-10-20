@@ -7,9 +7,9 @@
     background-color: rgba(18, 24, 39, 0.9); /* A color between modal bg and game bg */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    
+
     color: var(--color-text-primary, #d0d8e8); /* Default to global text color */
-    
+
     /* New border: Apply sci-fi-frame styles */
     border: 1px solid #2a3a5a;
     box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
@@ -23,7 +23,7 @@
     z-index: 999; /* Ensure toast is above anchor overlay */
     padding: 1rem; /* Simplified padding */
     /* MODIFIED: Add a little extra bottom padding for the arrow */
-    padding-bottom: 1.5rem; 
+    padding-bottom: 1.5rem;
     position: fixed; /* Changed from absolute for percentage positioning */
     transform: translate(-50%, -50%); /* Center based on top/left percentages */
 }
@@ -69,15 +69,15 @@
 #tutorial-toast-text {
     text-align: left;
     /* MODIFIED: Changed to 'scroll' to make track always visible */
-    overflow-y: scroll; 
-    flex-grow: 1; 
+    overflow-y: scroll;
+    flex-grow: 1;
     max-height: 150px; /* Adjust as needed, maybe based on height slider? */
     /* MODIFIED: Remove padding for deleted skip button */
-    padding-right: 0.5rem; 
+    padding-right: 0.5rem;
     font-family: 'Exo 2', sans-serif; /* Update font */
     font-size: 0.9rem; /* Slightly larger for readability */
     line-height: 1.5; /* Increased line height */
-    color: var(--color-text-secondary); 
+    color: var(--color-text-secondary);
 }
 
 #tutorial-highlight-overlay {
@@ -86,7 +86,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; 
+    pointer-events: none;
     z-index: 997; /* Below anchor overlay */
 }
 
@@ -167,14 +167,14 @@
 /* MODIFIED: 'Next' arrow now uses a text character */
 .tt-next-arrow {
     position: absolute;
-    /* MODIFIED: Positioned to be nested on the border */
-    bottom: -5px;
-    right: 5px;
-    
+    /* MODIFIED: Positioned to be nested on the border, adjusted position */
+    bottom: -13px; /* -5px + 10px */
+    right: -9px; /* 5px + 10px */
+
     /* MODIFIED: Hide the original '➤' from JS */
     font-size: 0;
     line-height: 0;
-    
+
     /* MODIFIED: Remove all old styles (bg, border, etc) */
     background: none;
     border: none;
@@ -194,9 +194,9 @@
 .tt-next-arrow::before {
     content: '➪';
     /* MODIFIED: 15% larger */
-    font-size: 36px; 
+    font-size: 43px;
     line-height: 1;
-    
+
     /* MODIFIED: Apply color and pulse animation here */
     color: var(--color-accent-yellow, #f7b731);
     animation: pulse-glow-text 2.5s infinite ease-in-out;
@@ -232,7 +232,7 @@
     background: #332a0e; /* Dark golden-brown track */
     border-radius: 4px;
     /* Add inner shadow for depth */
-    box-shadow: inset 0 0 3px rgba(0,0,0,0.5); 
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
 }
 
 #tutorial-toast-text::-webkit-scrollbar-thumb {
