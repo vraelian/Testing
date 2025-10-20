@@ -33,6 +33,7 @@ export class UIManager {
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
         this.marketScrollPosition = 0;
+        this.popperInstance = null; // Instance for Popper.js
 
         this.effectsManager = new EffectsManager();
 
@@ -631,6 +632,8 @@ export class UIManager {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
 
+
+
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
@@ -931,9 +934,34 @@ export class UIManager {
         return svg;
     }
 
+    /**
+     * Displays and positions the tutorial toast using Popper.js.
+     * @param {object} options - Configuration for the toast.
+     * @param {object} options.step - The tutorial step data from database.js.
+     * @param {function} options.onSkip - Callback function when skip is clicked.
+     * @param {function} options.onNext - Callback function when next is clicked (for 'INFO' steps).
+     * @param {object} options.gameState - The current game state.
+     */
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
+        const arrow = toast.querySelector('#tt-arrow');
 
+        // 1. Destroy any existing Popper instance
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
+        }
+
+        // 2. Find the anchor element
+        let referenceEl = document.querySelector(step.anchorElement);
+        if (!referenceEl) {
+            this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for tutorial step "${step.stepId}". Defaulting to body.`);
+            referenceEl = document.body;
+        }
+
+        const isDefaultPlacement = (referenceEl === document.body);
+
+        // 3. Update toast content
         let processedText = step.text;
         if (processedText.includes('{shipName}')) {
             const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
@@ -944,20 +972,99 @@ export class UIManager {
         }
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        toast.className = 'hidden fixed p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto';
-
-        let positionClass;
-        if (this.isMobile) {
-            positionClass = `tt-${step.position.mobile || 'mobile'}`;
-        } else {
-            positionClass = `tt-${step.position.desktop || 'bottom-right'}`;
-        }
-        toast.classList.add(positionClass);
-
+        // 4. Remove old positioning classes and styles
+        toast.className = 'fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto';
         toast.style.width = step.size?.width || 'auto';
 
+        // 5. Configure Popper.js
+        let defaultOptions;
+
+        if (isDefaultPlacement) {
+            // New default: center-top, 25% down the screen.
+            arrow.style.display = 'none'; // Hide arrow for default placement
+            defaultOptions = {
+                // Use 'bottom' to anchor to the bottom of the viewport
+                placement: 'bottom',
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: ({ popper, reference, placement }) => {
+                                // Calculate distance to push up from the bottom
+                                // Target: 25% from top = 75% from bottom
+                                const targetY = window.innerHeight * 0.25;
+                                const distance = -(window.innerHeight - targetY - popper.height);
+
+                                // Calculate skidding to center horizontally
+                                const skidding = (window.innerWidth / 2) - (popper.width / 2);
+
+                                return [skidding, distance];
+                            },
+                        },
+                    },
+                    {
+                        name: 'preventOverflow',
+                        options: { mainAxis: false } // Only prevent horizontal overflow
+                    },
+                    {
+                        name: 'flip',
+                        options: { enabled: false } // Don't flip for default
+                    }
+                ]
+            };
+        } else {
+            // Old default: smart positioning anchored to a specific element.
+            arrow.style.display = 'block'; // Show arrow for specific placement
+            defaultOptions = {
+                placement: 'auto',
+                modifiers: [
+                    { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
+                    {
+                        name: 'preventOverflow',
+                        options: {
+                            padding: { // Padding from viewport edges
+                                top: 60,
+                                bottom: 60,
+                                left: 10,
+                                right: 10
+                            }
+                        }
+                    },
+                    {
+                        name: 'flip',
+                        options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } // Allow flipping
+                    },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } } // Use the arrow
+                ]
+            };
+        }
+
+        // Deep merge modifiers array if specific options are provided for the step
+        const mergedModifiers = [
+            ...defaultOptions.modifiers.filter(defaultMod =>
+                !step.popperOptions?.modifiers?.find(stepMod => stepMod.name === defaultMod.name)
+            ),
+            ...(step.popperOptions?.modifiers || [])
+        ];
+
+        const finalOptions = {
+            ...defaultOptions, // Start with the correct default based on anchor
+            ...step.popperOptions, // Apply step-specific overrides
+            modifiers: mergedModifiers // Use the merged modifiers
+        };
+
+        // Ensure placement is correct if using default body anchor
+        if (isDefaultPlacement) {
+            finalOptions.placement = 'bottom';
+        }
+
+        // 6. Create Popper instance
+        this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
+
+        // 7. Show the toast
         toast.classList.remove('hidden');
 
+        // 8. Configure buttons
         const isInfoStep = step.completion.type === 'INFO';
         if (isInfoStep) {
             const nextButtonText = step.buttonText || 'Next &rarr;';
@@ -968,15 +1075,22 @@ export class UIManager {
             this.cache.tutorialToastNextBtn.style.display = 'none';
         }
 
-        const showSkipButton = false;
+        const showSkipButton = false; // Skipping is handled by a separate modal now
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
     }
 
 
+    /**
+     * Hides the tutorial toast and destroys the associated Popper.js instance.
+     */
     hideTutorialToast() {
         this.cache.tutorialToastContainer.classList.add('hidden');
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
+        }
         this.applyTutorialHighlight(null);
     }
 
