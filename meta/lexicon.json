@@ -46,11 +46,11 @@
         "startNewGame": "Initializes the entire game state for a new session.",
         "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
       },
-      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "introSequenceActive", "uiState"]
+      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "tutorials", "introSequenceActive", "uiState"]
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "MissionService"],
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
@@ -64,7 +64,8 @@
       "dependencies": ["GameState", "UIManager", "Logger", "SimulationService (Facade)"],
       "key_functions": {
         "start": "Begins the intro sequence.",
-        "handleIntroClick": "Handles clicks on intro-specific buttons."
+        "handleIntroClick": "Handles clicks on intro-specific buttons.",
+        "continueAfterTutorial": "Resumes the intro sequence after a tutorial batch is completed."
       },
       "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
     },
@@ -121,7 +122,7 @@
     },
     "EventManager": {
       "description": "The universal input layer. Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.",
-      "dependencies": ["GameState", "SimulationService", "UIManager", "DebugService", "Logger"],
+      "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService", "DebugService", "Logger"],
       "key_functions": {
         "bindEvents": "Sets up all global event listeners for the application.",
         "_handleClick": "The central delegated click handler that routes events to the appropriate handler module."
@@ -130,7 +131,7 @@
     },
     "ActionClickHandler": {
         "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
-        "dependencies": ["GameState", "SimulationService", "UIManager"],
+        "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
         "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
         "mutates_state": []
     },
@@ -206,7 +207,7 @@
     "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_FACADE"},
     "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE"},
     "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
-    "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE", "status": "deprecated"},
+    "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
     "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
     "F018": {"path": "./js/services/MissionService.js", "role": "LOGIC_SERVICE"},
     "F019": {"path": "./js/ui/components/CargoScreen.js", "role": "UI_COMPONENT"},

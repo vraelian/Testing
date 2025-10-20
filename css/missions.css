@@ -78,7 +78,18 @@
     border-color: #c9bfb1;
 }
 
-/* REMOVED .host-tutorial styles */
+.host-tutorial {
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    border-color: #5aa66d;
+}
+#mission-modal .modal-content.host-tutorial {
+    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    border-color: #5aa66d;
+}
+#mission-modal .modal-content.host-tutorial #mission-modal-objectives {
+    border-width: 2px;
+    border-color: #5aa66d;
+}
 
 .host-station {
     background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
@@ -125,5 +136,6 @@
 }
 
 .missions-scroll-panel {
+    /* height: 68vh; */ /* REMOVED */
     touch-action: pan-y;
 }

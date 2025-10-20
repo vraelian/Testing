@@ -27,7 +27,7 @@ export class SimulationService {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        // this.tutorialService = null; // REMOVED Injected post-instantiation.
+        this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
 
         // Instantiate all services
@@ -41,13 +41,13 @@ export class SimulationService {
         this.timeService.simulationService = this;
     }
 
-    /** REMOVED
+    /**
      * Injects the TutorialService after all services have been instantiated.
      * @param {import('./TutorialService.js').TutorialService} tutorialService
      */
-    // setTutorialService(tutorialService) {
-    //     this.tutorialService = tutorialService;
-    // }
+    setTutorialService(tutorialService) {
+        this.tutorialService = tutorialService;
+    }
 
     /**
      * Injects the MissionService after all services have been instantiated.
@@ -65,8 +65,8 @@ export class SimulationService {
     // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
     handleIntroClick(e) { this.introService.handleIntroClick(e); }
-    // _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); } // REMOVED
-
+    _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
+    
     // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
@@ -80,7 +80,7 @@ export class SimulationService {
     purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); }
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
-
+    
     // TravelService Delegation
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
@@ -96,15 +96,14 @@ export class SimulationService {
      */
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
-        this.gameState.setState({
-            activeNav: navId,
+        this.gameState.setState({ 
+            activeNav: navId, 
             activeScreen: screenId,
-            lastActiveScreen: newLastActive
+            lastActiveScreen: newLastActive 
         });
-        // REMOVED tutorial check
-        // if (this.tutorialService) {
-        //     this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
-        // }
+        if (this.tutorialService) {
+            this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
+        }
     }
 
     /**
@@ -117,7 +116,7 @@ export class SimulationService {
             this.gameState.setState({});
         }
     }
-
+    
     /**
      * Updates the active index for the hangar or shipyard carousel.
      * @param {number} index
@@ -140,7 +139,7 @@ export class SimulationService {
         const { uiState, player } = this.gameState;
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const shipList = isHangarMode ? player.ownedShipIds : this._getShipyardInventory().map(([id]) => id);
-
+        
         if (shipList.length <= 1) return;
 
         let currentIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
@@ -209,7 +208,7 @@ export class SimulationService {
         }
         this.gameState.setState({});
     }
-
+    
     _getActiveShip() {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
@@ -221,21 +220,21 @@ export class SimulationService {
         if (!this.gameState.player.activeShipId) return null;
         return this.gameState.player.inventories[this.gameState.player.activeShipId];
     }
-
+    
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = DB.SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; }
+        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;
         if (healthPct > 15) shipState.hullAlerts.two = false;
     }
 
     _logTransaction(type, amount, description) {
-        this.gameState.player.financeLog.push({
+        this.gameState.player.financeLog.push({ 
             day: this.gameState.day,
-            type: type,
+            type: type, 
             amount: amount,
             balance: this.gameState.player.credits,
             description: description
@@ -250,7 +249,7 @@ export class SimulationService {
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
-        const existingEntry = log.find(entry =>
+        const existingEntry = log.find(entry => 
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
@@ -282,12 +281,14 @@ export class SimulationService {
     }
 
     _getShipyardInventory() {
-        // REMOVED intro_hangar tutorial check
-        const { player, currentLocationId, market } = this.gameState;
-        const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-        return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
+        const { tutorials, player, currentLocationId, market } = this.gameState;
+        if (tutorials.activeBatchId === 'intro_hangar') {
+            return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
+        } else {
+            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
+            return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
+        }
     }
-
 
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
@@ -300,13 +301,13 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
-                    // this.uiManager.triggerEffect('systemSurge', { theme: 'tan' }); // REMOVED - Effect decommissioned
+                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }
         });
     }
-
+    
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;

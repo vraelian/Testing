@@ -3,7 +3,7 @@ import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
-// import { TutorialService } from './services/TutorialService.js'; // REMOVED
+import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set the app height on initial load and whenever the viewport changes.
     setAppHeight();
-
+    
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
 
     }, { once: true });
-
+    
     debugStartButton.addEventListener('click', () => {
         // Fade out the splash screen and then start the game logic.
         splashScreen.classList.add('splash-screen-hiding');
@@ -73,22 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const uiManager = new UIManager(Logger);
         const missionService = new MissionService(gameState, uiManager, Logger);
         const simulationService = new SimulationService(gameState, uiManager, Logger);
-        // const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger); // REMOVED
+        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
         if (DEV_MODE) {
             debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
         }
-
+        
         // --- Dependency Injection ---
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
-        // simulationService.setTutorialService(tutorialService); // REMOVED
+        simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, /* REMOVED tutorialService */ debugService, Logger); // REMOVED tutorialService
-
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
 
@@ -107,12 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Bindings ---
         eventManager.bindEvents();
-
+        
         if (hasSave || isSimpleStart) {
-            uiManager.showGameContainer();
+            uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
-
-        // tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen }); // REMOVED
+        
+        tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
 });

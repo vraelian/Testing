@@ -40,7 +40,7 @@ export class TooltipHandler {
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
         }
-
+        
         // --- Action Handling ---
         if (actionTarget) {
             const { action } = actionTarget.dataset;
@@ -63,12 +63,12 @@ export class TooltipHandler {
                     break;
             }
         }
-
+        
         if (this.uiManager.isMobile) {
             this._handleMobileTooltip(e);
         }
 
-        // this._handleLoreAndTutorialLog(e); // REMOVED
+        this._handleLoreAndTutorialLog(e);
     }
 
     /**
@@ -122,8 +122,24 @@ export class TooltipHandler {
         }
     }
 
-    // REMOVED _handleLoreAndTutorialLog method entirely
-    // _handleLoreAndTutorialLog(e) {
-    //     ...
-    // }
+    _handleLoreAndTutorialLog(e) {
+        const tutorialTrigger = e.target.closest('.tutorial-container');
+        const loreTrigger = e.target.closest('.lore-container');
+
+        const visibleTooltip = document.querySelector('.lore-tooltip.visible, .tutorial-tooltip.visible');
+        if (visibleTooltip && !e.target.closest('.lore-tooltip, .tutorial-tooltip')) {
+            visibleTooltip.classList.remove('visible');
+        }
+        
+        if (loreTrigger) {
+            loreTrigger.querySelector('.lore-tooltip')?.classList.toggle('visible');
+        }
+
+        if (tutorialTrigger) {
+            this.uiManager.showTutorialLogModal({
+                seenBatches: this.gameState.tutorials.seenBatchIds,
+                onSelect: (batchId) => this.tutorialService.triggerBatch(batchId)
+            });
+        }
+    }
 }

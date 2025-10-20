@@ -14,18 +14,17 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState, simulationService) {
-    // REMOVED tutorials from destructuring
-    const { uiState, player } = gameState;
+    const { uiState, player, tutorials } = gameState;
 
     // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
     const modeClass = isHangarMode ? 'mode-hangar' : 'mode-shipyard';
-
+    
     const shipList = isHangarMode ? player.ownedShipIds : simulationService._getShipyardInventory().map(([id]) => id);
-
+    
     // Use the active index from the UI state for the carousel
-    const activeCarouselIndex = isHangarMode
-        ? (uiState.hangarActiveIndex || 0)
+    const activeCarouselIndex = isHangarMode 
+        ? (uiState.hangarActiveIndex || 0) 
         : (uiState.shipyardActiveIndex || 0);
 
     // Ensure index is not out of bounds if ship list changes
@@ -110,7 +109,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         <div class="col-span-2 flex flex-col justify-between">
             ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode /* REMOVED, gameState.tutorials */)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
         </div>
     `;
@@ -128,7 +127,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
                 ${statusBadgeHtml}
             </div>
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode /* REMOVED, gameState.tutorials */)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
         </div>
     `;
@@ -162,12 +161,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
     const shipClassLower = shipStatic.class.toLowerCase();
 
     if (isHangarMode) {
-         // Check if shipDynamic exists before accessing its properties
-         const health = shipDynamic?.health ?? 0;
-         const fuel = shipDynamic?.fuel ?? 0;
-         const cargo = calculateInventoryUsed(player.inventories[shipId]);
-
-
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div>
@@ -175,9 +168,9 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                 </div>
                 <div class="hangar-specs my-4">
-                    ${_renderSpecBar("Hull", health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
-                    ${_renderSpecBar("Fuel", fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
-                    ${_renderSpecBar("Cargo", cargo, shipStatic.cargoCapacity, 'var(--class-s-color)')}
+                    ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
+                    ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
+                    ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
                 </div>
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p class="text-sm text-gray-300">${shipStatic.lore}</p>
@@ -212,11 +205,11 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
  * @param {object} shipStatic - The static data for the ship.
  * @param {object} player - The player object.
  * @param {boolean} isHangarMode - True if rendering the hangar view.
+ * @param {object} tutorials - The current tutorial state.
  * @returns {string} The HTML for the action buttons.
  * @private
  */
- // REMOVED tutorials parameter
-function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
+function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
@@ -234,9 +227,10 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
         `;
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
-        // REMOVED tutorial checks: activeStep, isPurchaseLocked
-        const isDisabled = !canAfford; // Simplified disabled check
-
+        const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
+        const isPurchaseLocked = tutorials.activeBatchId === 'intro_hangar' && !activeStep?.unlockPurchase;
+        const isDisabled = !canAfford || isPurchaseLocked;
+        
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold">PURCHASE</span>

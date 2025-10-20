@@ -30,6 +30,7 @@ This document defines the single responsibility of each service in the applicati
 
 #### Game
 - **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
+- **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events.
 
 ### UI/Event Handlers
 

@@ -78,6 +78,10 @@ This document defines the structure of the central `GameState` object. It is the
       - `message`: {string} - The text to display.
       - `type`: {string} - "success", "error", "info".
       - `duration`: {number} - Milliseconds to display.
+  - `tutorial`: {object} - State of the tutorial system.
+    - `active`: {boolean} - Is the tutorial system currently running?
+    - `currentStep`: {number} - The index of the active tutorial step.
+    - `completed`: {boolean} - Has the player finished the tutorial?
 
 - `events`: {object} - Tracks dynamic world events.
   - `activeEvents`: {Array<object>} - A list of currently active global events.
@@ -101,4 +105,3 @@ This document defines the structure of the central `GameState` object. It is the
   - `inventoryReplenishRate`: {number}
   - `baseEventChance`: {number}
   - `...`: (and all other CSS variable controls)
-}

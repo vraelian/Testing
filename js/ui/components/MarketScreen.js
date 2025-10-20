@@ -37,17 +37,18 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    // REMOVED tutorials
-    const { player, market, currentLocationId, uiState } = gameState;
+    const { player, market, currentLocationId, tutorials, uiState } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-
+    
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
-    // REMOVED tutorial step checks: isPlasteelTutStep, isMarketLockedForMission, isLockedForTutorial
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
+    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
+    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
@@ -62,9 +63,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         // Correctly set initial mode based on saved state, otherwise default to 'buy'
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
-        // REMOVED isLockedForTutorial check from disabled attribute
         transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}">
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
@@ -92,14 +92,14 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
-
+            
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
                 <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
                 <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
-
+                
                 <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-
+                
                 <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
                 ${avgCostHtml}

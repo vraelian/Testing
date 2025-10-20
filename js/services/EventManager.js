@@ -12,7 +12,6 @@ import { MarketEventHandler } from './handlers/MarketEventHandler.js';
 import { HoldEventHandler } from './handlers/HoldEventHandler.js';
 import { CarouselEventHandler } from './handlers/CarouselEventHandler.js';
 import { TooltipHandler } from './handlers/TooltipHandler.js';
-// Removed TutorialService import
 
 /**
  * @class EventManager
@@ -23,19 +22,20 @@ export class EventManager {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, /* REMOVED tutorialService */ debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        // this.tutorialService = tutorialService; // REMOVED
+        this.tutorialService = tutorialService;
         this.debugService = debugService;
         this.logger = logger;
 
         // Instantiate all specialized handlers
-        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager /* REMOVED, tutorialService */);
+        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
         this.holdEventHandler = new HoldEventHandler(gameState, simulationService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
@@ -73,7 +73,7 @@ export class EventManager {
             }
             startDragOrHold(e);
         }, { passive: false });
-
+        
         const endDragOrHold = () => {
             this.holdEventHandler.handleHoldEnd();
             this.carouselEventHandler.handleDragEnd();
@@ -82,12 +82,12 @@ export class EventManager {
         document.body.addEventListener('mouseleave', endDragOrHold);
         document.body.addEventListener('touchend', endDragOrHold);
         document.body.addEventListener('touchcancel', endDragOrHold);
-
+        
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
         document.body.addEventListener('touchmove', (e) => this.carouselEventHandler.handleDragMove(e), { passive: false });
 
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
-
+        
         if (this.uiManager.cache.missionStickyBar) {
             this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
@@ -109,7 +109,7 @@ export class EventManager {
 
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
-
+        
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 
@@ -126,12 +126,10 @@ export class EventManager {
         }
 
         // --- Fallback Handlers for non-action clicks ---
-        // Removed intro sequence tutorial check
-        if (state.introSequenceActive) {
-             this.simulationService.handleIntroClick(e);
-             return;
+        if (state.introSequenceActive && !state.tutorials.activeBatchId) {
+            this.simulationService.handleIntroClick(e);
+            return;
         }
-
         if (state.isGameOver) return;
 
         const modalIdToClose = this.uiManager.getModalIdFromEvent(e);

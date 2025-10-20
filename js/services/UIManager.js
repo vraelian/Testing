@@ -141,12 +141,9 @@ export class UIManager {
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
-        // Prevent rendering main UI if still in the initial part of the intro
-        if (gameState.introSequenceActive && gameState.player.introStep < DB.INTRO_SEQUENCE_V1.modals.length -1 ) {
-             // Only render if past the signature step (where player name is set)
-             return;
+        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
+            return;
         }
-
 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
@@ -214,11 +211,7 @@ export class UIManager {
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
                 </div>`;
-        } else {
-             // Show empty status pod if no ship active
-              statusPodHtml = `<div class="status-pod"></div>`;
         }
-
 
         const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
 
@@ -228,9 +221,7 @@ export class UIManager {
             const subNavButtons = Object.keys(screens).map(screenId => {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
-                 // *** MODIFIED: Disable Navigation screen if no ships are owned ***
-                 const isDisabledByNoShip = screenId === SCREEN_IDS.NAVIGATION && (!player.ownedShipIds || player.ownedShipIds.length === 0);
-                 const isDisabled = introSequenceActive || isDisabledByTutorial || isDisabledByNoShip;
+                 const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  let subStyle = '';
                  if (isSubNavActive) {
@@ -283,10 +274,7 @@ export class UIManager {
                     previousState.player.activeShipId !== gameState.player.activeShipId ||
                     previousState.uiState.lastTransactionTimestamp !== gameState.uiState.lastTransactionTimestamp ||
                     (previousState && previousState.tutorials.activeBatchId !== gameState.tutorials.activeBatchId) ||
-                    (previousState && previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId) ||
-                    // Force re-render if number of owned ships changes
-                    (previousState && previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length);
-
+                    (previousState && previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId);
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
@@ -439,15 +427,12 @@ export class UIManager {
     updateServicesScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
         const { player } = gameState;
-        // Check if player has an active ship before proceeding
-        if (!player.activeShipId) return;
-
         const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
         const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
         const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
-        if (fuelBar && refuelBtn && shipStatic && shipState) {
+        if (fuelBar && refuelBtn) {
             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
@@ -455,13 +440,12 @@ export class UIManager {
 
         const repairBar = this.cache.servicesScreen.querySelector('#repair-bar');
         const repairBtn = this.cache.servicesScreen.querySelector('#repair-btn');
-        if (repairBar && repairBtn && shipStatic && shipState) {
+        if (repairBar && repairBtn) {
             const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
             repairBar.style.width = `${healthPct}%`;
             repairBtn.disabled = shipState.health >= shipStatic.maxHealth;
         }
     }
-
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
@@ -472,14 +456,13 @@ export class UIManager {
             this.marketScrollPosition = 0;
         }
         this._saveMarketTransactionState();
-        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice.bind(this), this.marketTransactionState); // Pass bound getItemPrice
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
     }
-
 
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
@@ -530,11 +513,6 @@ export class UIManager {
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-        // Ensure activeShipId exists before proceeding
-        if (!state.player.activeShipId || !state.player.inventories[state.player.activeShipId]) {
-             return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-        }
-
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -607,14 +585,8 @@ export class UIManager {
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
 
         const state = this.lastKnownState;
-        // Ensure activeShipId exists before proceeding
-         if (!state.player.activeShipId || !state.player.inventories[state.player.activeShipId]) {
-             return; // Or handle the case where there's no active inventory
-         }
-
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
@@ -654,7 +626,6 @@ export class UIManager {
             });
         }
     }
-
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
@@ -840,15 +811,9 @@ export class UIManager {
         const action = anchorEl.dataset.action;
 
         if (action === ACTION_IDS.SHOW_PRICE_GRAPH) {
-             // Ensure activeShipId exists before accessing inventories
-             if (!gameState.player.activeShipId || !gameState.player.inventories[gameState.player.activeShipId]) {
-                 tooltip.innerHTML = `<div class="text-gray-400 text-sm p-4">No active ship inventory!</div>`;
-             } else {
-                const goodId = anchorEl.dataset.goodId;
-                const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
-                tooltip.innerHTML = this._renderPriceGraph(goodId, gameState, playerItem);
-             }
-
+            const goodId = anchorEl.dataset.goodId;
+            const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
+            tooltip.innerHTML = this._renderPriceGraph(goodId, gameState, playerItem);
         } else if (action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
             tooltip.innerHTML = this._renderFinanceGraph(gameState);
         }
@@ -856,7 +821,6 @@ export class UIManager {
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
     }
-
 
     hideGraph() {
         if (this.activeGraphAnchor) {
@@ -971,14 +935,10 @@ export class UIManager {
         const toast = this.cache.tutorialToastContainer;
 
         let processedText = step.text;
-        // Ensure activeShipId exists before trying to use it
-        if (processedText.includes('{shipName}') && gameState.player.activeShipId) {
-             const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
-             processedText = processedText.replace(/{shipName}/g, shipName);
-         } else if (processedText.includes('{shipName}')) {
-             processedText = processedText.replace(/{shipName}/g, 'your ship'); // Fallback if no active ship
-         }
-
+        if (processedText.includes('{shipName}')) {
+            const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
+            processedText = processedText.replace(/{shipName}/g, shipName);
+        }
         if (processedText.includes('{playerName}')) {
             processedText = processedText.replace(/{playerName}/g, gameState.player.name);
         }
@@ -1166,35 +1126,28 @@ export class UIManager {
                     <button class="btn w-full mt-2" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
                 </div>`;
         } else { // context === 'hangar'
-             // Ensure activeShipId exists before accessing inventories/states
-             if (!player.activeShipId || !player.shipStates[shipId] || !player.inventories[shipId]) {
-                  modalContentHtml = `<p>Error: Ship data not found.</p>`; // Or a better error message
-             } else {
-                 const shipDynamic = player.shipStates[shipId];
-                 const shipInventory = player.inventories[shipId];
-                 const cargoUsed = calculateInventoryUsed(shipInventory);
-                 const isActive = shipId === player.activeShipId;
-                 const canSell = player.ownedShipIds.length > 1 && !isActive;
-                 const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-                 modalContentHtml = `
-                     <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
-                         <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
-                         <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
-                         <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
-                         <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                             <div><span class="text-gray-500">Hull</span><div class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</div></div>
-                             <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
-                             <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
-                         </div>
-                         <div class="grid grid-cols-2 gap-2 mt-2">
-                             ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
-                             <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
-                         </div>
-                     </div>`;
-             }
-
+            const shipDynamic = player.shipStates[shipId];
+            const shipInventory = player.inventories[shipId];
+            const cargoUsed = calculateInventoryUsed(shipInventory);
+            const isActive = shipId === player.activeShipId;
+            const canSell = player.ownedShipIds.length > 1 && !isActive;
+            const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            modalContentHtml = `
+                <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
+                    <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
+                    <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
+                    <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
+                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
+                        <div><span class="text-gray-500">Hull</span><div class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</div></div>
+                        <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
+                        <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
+                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
+                    </div>
+                </div>`;
         }
-
 
         const modal = this.cache.shipDetailModal;
         const modalContent = modal.querySelector('#ship-detail-content');
@@ -1203,7 +1156,6 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
 
-
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
@@ -1211,17 +1163,9 @@ export class UIManager {
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
 
-         // Ensure activeShipId exists before accessing shipState
-         if (!state.player.activeShipId || !state.player.shipStates[state.player.activeShipId]) {
-              this.logger.warn('UIManager', 'Cannot show launch modal: No active ship state found.');
-              return;
-         }
-
-
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
-
 
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
@@ -1269,15 +1213,8 @@ export class UIManager {
     }
 
     showCargoDetailModal(gameState, goodId) {
-         // Ensure activeShipId exists before accessing inventories
-         if (!gameState.player.activeShipId || !gameState.player.inventories[gameState.player.activeShipId]) {
-             this.logger.warn('UIManager', 'Cannot show cargo detail: No active ship inventory.');
-             return;
-         }
-
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
-
 
         if (!good || !item) return;
 
@@ -1288,7 +1225,6 @@ export class UIManager {
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }
-
 
     renderStickyBar(gameState) {
         const stickyBarEl = this.cache.missionStickyBar;
@@ -1305,9 +1241,7 @@ export class UIManager {
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
 
             const objective = mission.objectives[0];
-             // Ensure progress data for the specific objective exists before accessing 'current'
-             const current = progress.objectives[objective.goodId]?.current ?? 0;
-
+            const current = progress.objectives[objective.goodId]?.current ?? 0;
             const target = objective.quantity;
             const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
             const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
@@ -1329,13 +1263,6 @@ export class UIManager {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
-         // Ensure lastKnownState exists before accessing it
-         if (!this.lastKnownState) {
-             this.logger.error('UIManager', 'Cannot show mission modal: lastKnownState is null.');
-             return;
-         }
-
-
         const { missions, currentLocationId } = this.lastKnownState;
         const { activeMissionId, activeMissionObjectivesMet } = missions;
 
@@ -1350,12 +1277,6 @@ export class UIManager {
     }
 
     _showMissionDetailsModal(mission) {
-         // Ensure lastKnownState exists before accessing it
-         if (!this.lastKnownState) {
-             this.logger.error('UIManager', 'Cannot show mission details modal: lastKnownState is null.');
-             return;
-         }
-
         const { missions, tutorials } = this.lastKnownState;
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
@@ -1405,7 +1326,6 @@ export class UIManager {
         }
         this.queueModal('mission-modal', mission.name, mission.description, null, options);
     }
-
 
     _showMissionCompletionModal(mission) {
         const options = {
@@ -1572,7 +1492,6 @@ export class UIManager {
              modal.addEventListener('click', closeHandler);
         });
     }
-
 
     hideMapDetailModal() {
         const modal = this.cache.mapDetailModal;

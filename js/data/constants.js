@@ -132,15 +132,15 @@ export const ACTION_IDS = Object.freeze({
     SET_HANGAR_PAGE: 'set-hangar-page',
 });
 
-/** REMOVED
+/**
  * Defines the types of conditions that can trigger or complete a tutorial step.
  * @enum {string}
  */
-// export const TUTORIAL_ACTION_TYPES = Object.freeze({
-//     SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
-//     ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
-//     INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
-// });
+export const TUTORIAL_ACTION_TYPES = Object.freeze({
+    SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
+    ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
+    INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
+});
 
 /**
  * A collection of core game balance numbers and rules.
