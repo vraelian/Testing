@@ -22,6 +22,8 @@
 
     z-index: 999; /* Ensure toast is above anchor overlay */
     padding: 1rem; /* Simplified padding */
+    /* MODIFIED: Add a little extra bottom padding for the arrow */
+    padding-bottom: 1.5rem; 
     position: fixed; /* Changed from absolute for percentage positioning */
     transform: translate(-50%, -50%); /* Center based on top/left percentages */
 }
@@ -66,12 +68,12 @@
 
 #tutorial-toast-text {
     text-align: left;
-    overflow-y: auto;
+    /* MODIFIED: Changed to 'scroll' to make track always visible */
+    overflow-y: scroll; 
     flex-grow: 1; 
     max-height: 150px; /* Adjust as needed, maybe based on height slider? */
-    /* --- [[START]] PADDING FIX --- */
-    padding-right: 3rem; /* Make space for top-right control cluster */
-    /* --- [[END]] PADDING FIX --- */
+    /* MODIFIED: Remove padding for deleted skip button */
+    padding-right: 0.5rem; 
     font-family: 'Exo 2', sans-serif; /* Update font */
     font-size: 0.9rem; /* Slightly larger for readability */
     line-height: 1.5; /* Increased line height */
@@ -143,57 +145,73 @@
 
 /* --- [[START]] NEW CONTROL BUTTON STYLES --- */
 
-/* New container for top-right buttons */
-.tt-controls-container {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-    z-index: 10;
+/* REMOVED: .tt-controls-container */
+/* REMOVED: #tutorial-toast-skip-btn */
+
+/* NEW: Pulse animation for the new text-based arrow */
+@keyframes pulse-glow-text {
+    0% {
+        color: var(--color-accent-yellow, #f7b731);
+        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
+    }
+    50% {
+        color: var(--color-accent-yellow-light, #f8d775);
+        filter: drop-shadow(0 0 10px var(--color-accent-yellow-light, #f8d775));
+    }
+    100% {
+        color: var(--color-accent-yellow, #f7b731);
+        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
+    }
 }
 
-/* Close ('skip') button positioning */
-#tutorial-toast-skip-btn {
-    position: static; /* No longer absolute */
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--color-text-secondary);
-    opacity: 0.7;
-    transition: opacity 0.2s, color 0.2s;
-    background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
-}
-#tutorial-toast-skip-btn:hover { 
-    opacity: 1; 
-    color: var(--color-accent); 
-}
-
-/* New 'Next' arrow button styles */
+/* MODIFIED: 'Next' arrow now uses a text character */
 .tt-next-arrow {
-    position: static; /* No longer absolute */
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--color-bg-light, #22304a);
-    border: 1px solid var(--color-border, #4a6a8a);
-    color: var(--color-text-secondary, #c0d0f0);
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 28px; /* Fine-tune vertical alignment */
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    position: absolute;
+    /* MODIFIED: Positioned to be nested on the border */
+    bottom: -5px;
+    right: 5px;
+    
+    /* MODIFIED: Hide the original '➤' from JS */
+    font-size: 0;
+    line-height: 0;
+    
+    /* MODIFIED: Remove all old styles (bg, border, etc) */
+    background: none;
+    border: none;
+    width: auto;
+    height: auto;
     padding: 0;
-    padding-left: 2px; /* Nudge arrow icon */
+    border-radius: 0; /* Override old style */
+    color: transparent; /* Override old style */
+
+    cursor: pointer;
     user-select: none;
+    z-index: 11; /* Above corner pseudo-element */
+    transition: transform 0.2s ease;
+}
+
+/* NEW: Use ::before to inject the new arrow character */
+.tt-next-arrow::before {
+    content: '➪';
+    /* MODIFIED: 15% larger */
+    font-size: 36px; 
+    line-height: 1;
+    
+    /* MODIFIED: Apply color and pulse animation here */
+    color: var(--color-accent-yellow, #f7b731);
+    animation: pulse-glow-text 2.5s infinite ease-in-out;
+    transition: all 0.2s ease;
 }
 
 .tt-next-arrow:hover {
-    background: var(--color-bg-light-hover, #32405a);
-    color: #e0f0ff;
-    transform: scale(1.1);
+    transform: scale(1.1); /* Scale the whole container */
+}
+
+.tt-next-arrow:hover::before {
+    /* MODIFIED: Stop animation, show static bright glow */
+    animation: none;
+    color: var(--color-accent-yellow-light, #f8d775);
+    filter: drop-shadow(0 0 12px var(--color-accent-yellow-light, #f8d775));
 }
 
 .tt-next-arrow.hidden {
@@ -204,17 +222,29 @@
 
 
 /* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
-#tutorial-toast-text::-webkit-scrollbar { width: 6px; }
-#tutorial-toast-text::-webkit-scrollbar-track { 
-    background: rgba(0, 0, 0, 0.3); 
-    border-radius: 3px; 
+/* MODIFIED: Full, specific styles to override global.css */
+#tutorial-toast-text::-webkit-scrollbar {
+    width: 8px;
+    background-color: transparent; /* Make scrollbar bg transparent */
 }
-#tutorial-toast-text::-webkit-scrollbar-thumb { 
-    background-color: #7a9ac0; /* Match new border color */
-    border-radius: 3px; 
-} 
-#tutorial-toast-text::-webkit-scrollbar-thumb:hover { 
-    background-color: #9ab0d0; /* Lighter version */
+
+#tutorial-toast-text::-webkit-scrollbar-track {
+    background: #332a0e; /* Dark golden-brown track */
+    border-radius: 4px;
+    /* Add inner shadow for depth */
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5); 
+}
+
+#tutorial-toast-text::-webkit-scrollbar-thumb {
+    background-color: var(--color-accent-yellow, #f7b731); /* Yellow thumb */
+    border-radius: 4px;
+    border: 1px solid var(--color-accent-yellow-light, #f8d775); /* Lighter border */
+}
+
+#tutorial-toast-text::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-accent-yellow-light, #f8d775); /* Lighter yellow */
+    border-color: #fff;
+    box-shadow: 0 0 5px var(--color-accent-yellow-light, #f8d775); /* Add glow on hover */
 }
 /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
 
