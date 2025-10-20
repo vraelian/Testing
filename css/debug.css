@@ -161,3 +161,40 @@
     color: #67e8f9; /* Cyan */
 }
 /* --- [[END]] DIAGNOSTIC OVERLAY STYLES --- */
+
+/* --- [[START]] TUTORIAL TUNER STYLES --- */
+/* Style for read-only fields (Step ID, Anchor) and the Code output */
+/* Using more specific selectors targeting the input element directly */
+.tutorial-tuner-folder .lil-gui-item > input[type=text]:disabled,
+.tutorial-tuner-folder .lil-gui-item > input[type=text][aria-labelledby$="-Code"] { /* Target Code input via its label */
+    background-color: #111 !important;
+    color: #fde047 !important; /* Highlight color */
+    font-family: 'Roboto Mono', monospace !important;
+    opacity: 1 !important;
+    border: 1px dashed #444;
+    cursor: default; /* Make it look non-interactive */
+     /* Ensure user-select is not preventing copy */
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Ensure the Code output field specifically allows text selection and text cursor */
+.tutorial-tuner-folder .lil-gui-item > input[type=text][aria-labelledby$="-Code"] {
+    cursor: text; /* Use text cursor */
+}
+
+
+.tutorial-tuner-folder .lil-gui-item.disabled > .name {
+    opacity: 0.7 !important; /* Make labels for disabled fields clearer */
+}
+
+.tutorial-tuner-folder .controller.button {
+    text-align: center !important;
+    background-color: #304a22 !important; /* Greenish for 'generate' */
+}
+.tutorial-tuner-folder .controller.button:hover {
+    background-color: #4a6a32 !important;
+}
+/* --- [[END]] TUTORIAL TUNER STYLES --- */

@@ -535,6 +535,10 @@ ${logHistory}
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
             fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
+            
+            // --- [[START]] TUTORIAL TUNER ACTIONS ---
+            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() }
+            // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
 
@@ -650,6 +654,28 @@ ${logHistory}
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
 
+        // --- [[START]] TUTORIAL TUNER FOLDER ---
+        const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
+        tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
+        
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttGeneratedCode = '';
+
+        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
+        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
+        tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement').onChange(() => this._handleTutorialTune());
+        // *** INCREASED RANGE FOR SLIDERS ***
+        tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
+        // *** REMOVED .disable() TO ALLOW COPYING ***
+        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen(); 
+        // --- [[END]] TUTORIAL TUNER FOLDER ---
+
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
         this.debugState.logLevel = 'INFO';
@@ -664,4 +690,101 @@ ${logHistory}
         
         this.gui.folders.forEach(folder => folder.close());
     }
+
+    // --- [[START]] TUTORIAL TUNER METHODS ---
+    
+    /**
+     * Populates the Tutorial Tuner with the active step's data.
+     * Called by UIManager when a toast is shown.
+     * @param {object} step - The tutorial step object.
+     */
+    setActiveTutorialStep(step) {
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
+
+        // Try to find an offset modifier if one is defined in the step's popperOptions
+        const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+        // Extract offset values carefully, handling different ways it might be defined
+        let skidding = 0;
+        let distance = 0; // Default to 0 for tuner baseline
+
+         if (typeof offsetMod?.options?.offset === 'function') {
+             // If offset is a function, we can't easily get initial values for the tuner. Use 0,0.
+             // The UIManager's initial positioning will still use the function.
+             this.logger.warn('DebugService', `Offset for step ${step.stepId} is a function. Using [0, 0] for tuner initial values.`);
+             skidding = 0;
+             distance = 0;
+         } else if (Array.isArray(offsetMod?.options?.offset)) {
+            // If it's an array, use the values from the step definition.
+            skidding = offsetMod.options.offset[0] || 0;
+            distance = offsetMod.options.offset[1] || 0;
+         } else if (step.anchorElement !== 'body') {
+            // If not body anchor and no offset defined, use Popper's default (usually small distance)
+            distance = 10; // A common default Popper distance
+         }
+         // If body anchor and no offset, distance remains 0
+
+
+        // Populate the debug state
+        this.debugState.ttStepId = step.stepId;
+        this.debugState.ttAnchor = step.anchorElement;
+        // Read placement, default depends on anchor type
+        this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || (step.anchorElement === 'body' ? 'bottom' : 'auto');
+        this.debugState.ttOffsetSkidding = skidding;
+        this.debugState.ttOffsetDistance = distance;
+        this.debugState.ttGeneratedCode = ''; // Clear generated code
+    }
+
+    /**
+     * Clears and resets the Tutorial Tuner.
+     * Called by UIManager when a toast is hidden.
+     */
+    clearActiveTutorialStep() {
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
+        
+        // Reset all state properties to their defaults
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttGeneratedCode = '';
+    }
+
+    /**
+     * Handles live tuning input from the debug panel.
+     * @private
+     */
+    _handleTutorialTune() {
+        // Debounce or throttle this if performance becomes an issue
+        this.logger.info.system('DebugService', `Tune event: ${this.debugState.ttPlacement}, ${this.debugState.ttOffsetDistance}, ${this.debugState.ttOffsetSkidding}`);
+        
+        if (this.uiManager) {
+            this.uiManager.updateTutorialPopper({
+                placement: this.debugState.ttPlacement,
+                distance: Number(this.debugState.ttOffsetDistance) || 0,
+                skidding: Number(this.debugState.ttOffsetSkidding) || 0
+            });
+        }
+    }
+
+    /**
+     * Generates the popperOptions code string from the current tuner state.
+     * This string is designed to be copied and pasted directly into database.js.
+     * @private
+     */
+    _generateTutorialCode() {
+        this.logger.info.system('DebugService', 'Generating tutorial code...');
+        
+        // Construct the code string using template literals
+        // Removed the confusing comment placeholder
+        const code = `placement: '${this.debugState.ttPlacement}',
+popperOptions: {
+    modifiers: [
+        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
+    ]
+}`;
+        this.debugState.ttGeneratedCode = code;
+    }
+    
+    // --- [[END]] TUTORIAL TUNER METHODS ---
 }

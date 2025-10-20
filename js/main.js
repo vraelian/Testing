@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (DEV_MODE) {
             debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
+            // --- [[START]] TUTORIAL TUNER WIRING ---
+            uiManager.setDebugService(debugService);
+            // --- [[END]] TUTORIAL TUNER WIRING ---
         }
         
         // --- Dependency Injection ---
