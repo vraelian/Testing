@@ -14,25 +14,23 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState, simulationService) {
-    const { uiState, player, tutorials, currentLocationId } = gameState; // Added currentLocationId
+    const { uiState, player, tutorials } = gameState;
 
     // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
     const modeClass = isHangarMode ? 'mode-hangar' : 'mode-shipyard';
-
+    
     const shipList = isHangarMode ? player.ownedShipIds : simulationService._getShipyardInventory().map(([id]) => id);
-
+    
     // Use the active index from the UI state for the carousel
-    const activeCarouselIndex = isHangarMode
-        ? (uiState.hangarActiveIndex || 0)
+    const activeCarouselIndex = isHangarMode 
+        ? (uiState.hangarActiveIndex || 0) 
         : (uiState.shipyardActiveIndex || 0);
 
     // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
-    // Generate pagination HTML directly here
-    const paginationHtml = _renderHangarPagination(gameState);
-
+    // NOTE: The pagination dots are now rendered dynamically by the UIManager._updateHangarScreen method.
     return `
         <div class="flex flex-col h-full">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
@@ -49,96 +47,14 @@ export function renderHangarScreen(gameState, simulationService) {
                     </div>
                 </div>
             </div>
-            
             <div id="hangar-pagination-wrapper">
                 <div id="hangar-pagination">
-                    ${paginationHtml}
+                    {/* This will be populated by UIManager._renderHangarPagination */}
                 </div>
             </div>
         </div>
     `;
 }
-
-/**
- * Renders the virtualized pagination for the hangar/shipyard screen.
- * It shows a maximum of 6 full dots and up to 2 half-dots as indicators for more items.
- * @param {object} gameState The current game state.
- * @returns {string} The HTML string for the pagination dots.
- * @private
- */
-function _renderHangarPagination(gameState) {
-    const { uiState, player, currentLocationId } = gameState;
-
-    const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
-    // Re-use SimulationService helper if available, otherwise calculate inline
-    // Note: Accessing global instance as a temporary measure per our discussion.
-    const simulationService = window.simulationService;
-    const shipList = isHangarMode ? player.ownedShipIds : (simulationService?._getShipyardInventory() || []).map(([id]) => id);
-    const totalItems = shipList.length;
-
-    if (totalItems <= 1) {
-        return ''; // Return empty string if no pagination needed
-    }
-
-    const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
-
-    const location = DB.MARKETS.find(l => l.id === currentLocationId);
-    const theme = location?.navTheme || { borderColor: '#7a9ac0' };
-
-    const VISIBLE_FULL_DOTS = 6;
-    let dots = [];
-
-    if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
-        for (let i = 0; i < totalItems; i++) {
-            dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
-        }
-    } else {
-        let start, end;
-        const isNearStart = activeIndex < VISIBLE_FULL_DOTS - 1;
-        const isNearEnd = activeIndex > totalItems - VISIBLE_FULL_DOTS;
-
-        if (isNearStart) {
-            start = 0;
-            end = VISIBLE_FULL_DOTS;
-        } else if (isNearEnd) {
-            start = totalItems - VISIBLE_FULL_DOTS;
-            end = totalItems;
-        } else {
-            start = activeIndex - Math.floor(VISIBLE_FULL_DOTS / 2) + 1;
-            end = activeIndex + Math.ceil(VISIBLE_FULL_DOTS / 2);
-        }
-
-        // Add previous indicator if needed
-        if (start > 0) {
-            dots.push({ isHalf: true, jump: 'prev' });
-        }
-
-        // Add the main window of full dots
-        for (let i = start; i < end; i++) {
-            dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
-        }
-
-        // Add next indicator if needed
-        if (end < totalItems) {
-            dots.push({ isHalf: true, jump: 'next' });
-        }
-    }
-
-    const dotsHtml = dots.map(dot => {
-        const style = `
-            --theme-color-primary: ${theme.borderColor};
-            --theme-glow-color: ${theme.borderColor};
-        `;
-        if (dot.isHalf) {
-            return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
-        } else {
-            return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
-        }
-    }).join('');
-
-    return dotsHtml; // Return the generated HTML
-}
-
 
 /**
  * Renders a placeholder page for when a carousel is empty.
@@ -172,8 +88,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState;
-     // Note: Accessing global instance as a temporary measure per our discussion.
-    const simulationService = window.simulationService;
 
     // Determine Status Badge
     let statusBadgeHtml = '';
@@ -316,7 +230,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
         const isPurchaseLocked = tutorials.activeBatchId === 'intro_hangar' && !activeStep?.unlockPurchase;
         const isDisabled = !canAfford || isPurchaseLocked;
-
+        
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold">PURCHASE</span>

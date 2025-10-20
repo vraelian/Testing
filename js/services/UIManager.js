@@ -6,7 +6,7 @@ import { EffectsManager } from '../effects/EffectsManager.js';
 
 // Import all screen rendering components
 import { renderHangarScreen } from '../ui/components/HangarScreen.js';
-import { renderMarketScreen, updateMarketCardPrice, updateMarketCardDisplay } from '../ui/components/MarketScreen.js'; // Import new functions
+import { renderMarketScreen } from '../ui/components/MarketScreen.js';
 import { renderMapScreen, initMap } from '../ui/components/MapScreen.js';
 import { renderNavigationScreen } from '../ui/components/NavigationScreen.js';
 import { renderServicesScreen } from '../ui/components/ServicesScreen.js';
@@ -15,10 +15,6 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
-// Import new component functions
-import { renderTopNavigation } from '../ui/components/TopNavigation.js';
-import { renderStickyBar } from '../ui/components/StickyBar.js';
-
 
 export class UIManager {
     /**
@@ -35,7 +31,6 @@ export class UIManager {
         this.missionService = null; // To be injected
         this.simulationService = null; // To be injected
         this.debugService = null; // To be injected
-        this.marketService = null; // To be injected (Phase 4)
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
         this.marketScrollPosition = 0;
@@ -93,15 +88,6 @@ export class UIManager {
         this.simulationService = simulationService;
     }
 
-     /**
-     * Injects the MarketService after instantiation.
-     * @param {import('./simulation/MarketService.js').MarketService} marketService
-     */
-    setMarketService(marketService) {
-        this.marketService = marketService;
-    }
-
-
     /**
      * Injects the DebugService after instantiation.
      * @param {import('./DebugService.js').DebugService} service
@@ -143,7 +129,7 @@ export class UIManager {
             cargoDetailContent: document.getElementById('cargo-detail-content'),
 
             mapDetailModal: document.getElementById('map-detail-modal'),
-
+            
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -184,21 +170,83 @@ export class UIManager {
 
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
-        this.updateStickyBar(gameState); // Keep this? Seems redundant now.
+        this.updateStickyBar(gameState);
         this.renderStickyBar(gameState);
     }
 
-    /**
-     * Renders the main navigation bar and sub-navigation based on the game state.
-     * Uses the external renderTopNavigation function.
-     * @param {object} gameState - The current game state.
-     */
     renderNavigation(gameState) {
-        const { contextBarHtml, navWrapperHtml, subNavsHtml } = renderTopNavigation(gameState);
+        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials, subNavCollapsed } = gameState;
+        const { navLock } = tutorials;
+        const location = DB.MARKETS.find(l => l.id === currentLocationId);
+        const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
+        const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
+        const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
+        const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
+
+        const contextBarHtml = `
+            <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
+                <span class="location-name-text">${location?.name || 'In Transit'}</span>
+                <span class="credit-text">${formatCredits(player.credits)}</span>
+            </div>`;
+
+        const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
+            const isActive = navId === activeNav;
+            const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
+            const isDisabledByTutorial = navLock && navLock.navId !== navId;
+            const isDisabled = introSequenceActive || isDisabledByTutorial;
+            const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+        }).join('');
+
+        let statusPodHtml = '';
+        if (activeShipStatic && activeShipState && inventory) {
+            const cargoUsed = calculateInventoryUsed(inventory);
+            const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
+            const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
+            const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+
+            statusPodHtml = `
+                <div class="status-pod">
+                    <div class="status-bar-group hull-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">H</span>
+                        <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
+                    </div>
+                    <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">F</span>
+                        <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
+                        <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
+                    </div>
+                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
+                        <span class="status-bar-label">C</span>
+                        <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
+                        <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
+                    </div>
+                </div>`;
+        }
+
+        const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
+
+        const subNavsHtml = Object.keys(this.navStructure).map(navId => {
+            const screens = this.navStructure[navId].screens;
+            const isActive = navId === activeNav;
+            const subNavButtons = Object.keys(screens).map(screenId => {
+                 const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
+                 const isSubNavActive = screenId === activeScreen;
+                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                 const activeClass = isSubNavActive ? 'sub-nav-active' : '';
+                 let subStyle = '';
+                 if (isSubNavActive) {
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                 }
+                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+            }).join('');
+            return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
+        }).join('');
+
         this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
-
 
     renderActiveScreen(gameState, previousState) {
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
@@ -215,6 +263,8 @@ export class UIManager {
         switch (gameState.activeScreen) {
             case SCREEN_IDS.MAP:
                 this.cache.mapScreen.innerHTML = renderMapScreen();
+                // Defer map initialization until after the browser has painted the new DOM elements,
+                // ensuring the map container has a valid clientHeight for D3 to use.
                 requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
@@ -241,7 +291,7 @@ export class UIManager {
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
-                this._updateHangarScreen(gameState); // Only update carousel/pagination visuals
+                this._updateHangarScreen(gameState);
                 break;
             }
             case SCREEN_IDS.MISSIONS:
@@ -258,7 +308,6 @@ export class UIManager {
 
     /**
      * Surgically updates the Hangar screen for smooth transitions without a full re-render.
-     * Focuses only on the carousel transform and pagination scrolling.
      * @param {object} gameState The current game state.
      * @private
      */
@@ -276,7 +325,8 @@ export class UIManager {
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
 
-        // Note: Pagination dots are now rendered directly by renderHangarScreen
+        // RENDER VIRTUAL PAGINATION
+        this._renderHangarPagination(gameState);
 
         // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
@@ -297,15 +347,94 @@ export class UIManager {
         }
     }
 
+    /**
+     * Renders the virtualized pagination for the hangar/shipyard screen.
+     * It shows a maximum of 6 full dots and up to 2 half-dots as indicators for more items.
+     * @param {object} gameState The current game state.
+     * @private
+     */
+    _renderHangarPagination(gameState) {
+        const { uiState, player, currentLocationId } = gameState;
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return;
 
-    updateStickyBar(gameState) {
-        // No longer responsible for rendering content, just visibility/state.
-        // This method might be deprecated or repurposed if StickyBar component handles everything.
-        // For now, let's keep it minimal or remove if truly unused.
-        // this.cache.stickyBar.innerHTML = ''; // Clear potentially old content if any
-        // this.cache.topBarContainer.classList.remove('has-sticky-bar'); // Example cleanup
+        const paginationContainer = hangarScreenEl.querySelector('#hangar-pagination');
+        if (!paginationContainer) return;
+
+        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+        const shipList = isHangarMode ? player.ownedShipIds : this.simulationService._getShipyardInventory().map(([id]) => id);
+        const totalItems = shipList.length;
+
+        // Hide pagination if there is only one or zero ships.
+        if (totalItems <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+
+        const location = DB.MARKETS.find(l => l.id === currentLocationId);
+        const theme = location?.navTheme || { borderColor: '#7a9ac0' };
+
+        const VISIBLE_FULL_DOTS = 6;
+        let dots = [];
+
+        if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
+            for (let i = 0; i < totalItems; i++) {
+                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+            }
+        } else {
+            let start, end;
+            const isNearStart = activeIndex < VISIBLE_FULL_DOTS - 1;
+            const isNearEnd = activeIndex > totalItems - VISIBLE_FULL_DOTS;
+
+            if (isNearStart) {
+                start = 0;
+                end = VISIBLE_FULL_DOTS;
+            } else if (isNearEnd) {
+                start = totalItems - VISIBLE_FULL_DOTS;
+                end = totalItems;
+            } else {
+                start = activeIndex - Math.floor(VISIBLE_FULL_DOTS / 2) + 1;
+                end = activeIndex + Math.ceil(VISIBLE_FULL_DOTS / 2);
+            }
+
+            // Add previous indicator if needed
+            if (start > 0) {
+                dots.push({ isHalf: true, jump: 'prev' });
+            }
+
+            // Add the main window of full dots
+            for (let i = start; i < end; i++) {
+                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+            }
+
+            // Add next indicator if needed
+            if (end < totalItems) {
+                dots.push({ isHalf: true, jump: 'next' });
+            }
+        }
+
+        const dotsHtml = dots.map(dot => {
+            const style = `
+                --theme-color-primary: ${theme.borderColor};
+                --theme-glow-color: ${theme.borderColor};
+            `;
+            if (dot.isHalf) {
+                return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
+            } else {
+                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
+            }
+        }).join('');
+
+        paginationContainer.innerHTML = dotsHtml;
     }
 
+
+    updateStickyBar(gameState) {
+        this.cache.stickyBar.innerHTML = '';
+        this.cache.topBarContainer.classList.remove('has-sticky-bar');
+    }
 
     updateServicesScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
@@ -339,8 +468,7 @@ export class UIManager {
             this.marketScrollPosition = 0;
         }
         this._saveMarketTransactionState();
-        // Pass the bound marketService.getItemPrice function
-        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.marketService.getItemPrice.bind(this.marketService), this.marketTransactionState);
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
         if (newMarketScrollPanel) {
@@ -365,33 +493,151 @@ export class UIManager {
         });
     }
 
-     /**
-     * Restores the quantity and mode for each market card after a re-render.
-     * Now calls the external updateMarketCardDisplay function.
-     * @private
-     */
     _restoreMarketTransactionState() {
         for (const goodId in this.marketTransactionState) {
             const state = this.marketTransactionState[goodId];
-            const control = document.querySelector(`.transaction-controls[data-good-id="${goodId}"]`); // Use document querySelector
+            const control = this.cache.marketScreen.querySelector(`.transaction-controls[data-good-id="${goodId}"]`);
             if (control) {
                 const qtyInput = control.querySelector('input');
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
-                    // Call the external, imported function
-                    updateMarketCardDisplay(this.marketService, this.lastKnownState, goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    // After restoring state, immediately update the display to reflect it.
+                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
                 }
             }
         }
     }
 
+    getItemPrice(gameState, goodId, isSelling = false) {
+        let price = gameState.market.prices[gameState.currentLocationId][goodId];
+        const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
+        if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
+            price *= market.specialDemand[goodId].bonus;
+        }
+        const intel = gameState.intel.active;
+        if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
+            price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
+        }
+        return Math.max(1, Math.round(price));
+    }
 
-    // getItemPrice - REMOVED (Phase 4)
-    // _calculateSaleDetails - REMOVED (Phase 4)
-    // updateMarketCardPrice - REMOVED (Phase 5)
-    // updateMarketCardDisplay - REMOVED (Phase 5)
+    _calculateSaleDetails(goodId, quantity) {
+        const state = this.lastKnownState;
+        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        const basePrice = this.getItemPrice(state, goodId, true);
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+        const avgCost = playerItem?.avgCost || 0;
+
+        // Guard against division by zero if market stock is depleted.
+        if (marketStock <= 0) {
+            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+        }
+
+        const threshold = marketStock * 0.1;
+        if (quantity <= threshold) {
+            const totalPrice = basePrice * quantity;
+            const totalCost = avgCost * quantity;
+            let netProfit = totalPrice - totalCost;
+            if (netProfit > 0) {
+                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+                netProfit += netProfit * totalBonus;
+            }
+            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
+        }
+
+        const excessRatio = quantity / marketStock;
+        let reduction = 0;
+
+        if (good.tier <= 2) {
+            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
+        } else if (good.tier <= 5) {
+            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
+        } else {
+            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
+        }
+
+        const effectivePrice = basePrice * (1 - reduction);
+        const totalPrice = Math.floor(effectivePrice * quantity);
+        const totalCost = avgCost * quantity;
+        let netProfit = totalPrice - totalCost;
+        if (netProfit > 0) {
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            netProfit += netProfit * totalBonus;
+        }
+
+        return {
+            totalPrice,
+            effectivePricePerUnit: effectivePrice,
+            netProfit
+        };
+    }
+
+
+    updateMarketCardPrice(goodId, newPrice) {
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
+        if (priceEl) {
+            priceEl.dataset.basePrice = newPrice;
+            const controls = priceEl.closest('.item-card-container').querySelector('.transaction-controls');
+            if (controls && controls.dataset.mode === 'buy') {
+                priceEl.textContent = formatCredits(newPrice);
+            }
+        }
+    }
+
+    updateMarketCardDisplay(goodId, quantity, mode) {
+        const priceEl = this.cache.marketScreen.querySelector(`#price-display-${goodId}`);
+        const effectivePriceEl = this.cache.marketScreen.querySelector(`#effective-price-display-${goodId}`);
+        const indicatorEl = this.cache.marketScreen.querySelector(`#indicators-${goodId}`);
+        const avgCostEl = this.cache.marketScreen.querySelector(`#avg-cost-${goodId}`);
+
+        if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
+
+        const state = this.lastKnownState;
+        const basePrice = parseInt(priceEl.dataset.basePrice, 10);
+        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+
+        if (avgCostEl) {
+            avgCostEl.classList.toggle('visible', mode === 'sell');
+        }
+
+        if (mode === 'buy') {
+            priceEl.textContent = formatCredits(basePrice);
+            priceEl.className = 'font-roboto-mono font-bold price-text';
+            effectivePriceEl.textContent = '';
+
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: this.getItemPrice(state, goodId, true),
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
+
+        } else { // 'sell' mode
+            const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
+
+            if (quantity > 0) {
+                let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
+                priceEl.textContent = profitText;
+                effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
+            } else {
+                priceEl.textContent = '⌬ +0';
+                priceEl.className = 'font-roboto-mono font-bold profit-text';
+                effectivePriceEl.textContent = '';
+            }
+
+            indicatorEl.innerHTML = renderIndicatorPills({
+                price: basePrice,
+                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
+                galacticAvg: state.market.galacticAverages[goodId],
+                playerItem: playerItem
+            });
+        }
+    }
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
@@ -700,30 +946,6 @@ export class UIManager {
     }
 
     /**
-     * Renders the sticky mission bar UI based on the game state.
-     * Uses the external renderStickyBar function to get state.
-     * @param {object} gameState - The current game state.
-     */
-    renderStickyBar(gameState) {
-        const stickyBarEl = this.cache.missionStickyBar;
-        const contentEl = stickyBarEl.querySelector('.sticky-content');
-        const objectiveTextEl = this.cache.stickyObjectiveText;
-        const objectiveProgressEl = this.cache.stickyObjectiveProgress;
-
-        const stickyState = renderStickyBar(gameState); // Get state from component
-
-        if (stickyState.display === 'none') {
-            stickyBarEl.style.display = 'none';
-        } else {
-            objectiveTextEl.textContent = stickyState.objectiveText;
-            objectiveProgressEl.textContent = stickyState.progressText;
-            contentEl.className = `sticky-content sci-fi-frame ${stickyState.hostClass} ${stickyState.turnInClass}`;
-            stickyBarEl.style.display = 'block';
-        }
-    }
-
-    // ... (showTutorialToast, hideTutorialToast, updateTutorialPopper, applyTutorialHighlight, etc. remain unchanged) ...
-    /**
      * Displays and positions the tutorial toast. Uses either percentage-based positioning
      * relative to an overlay or Popper.js for element anchoring.
      * @param {object} options - Configuration for the toast.
@@ -735,11 +957,11 @@ export class UIManager {
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-
+        
         // Use the new overlay if anchor is 'body', otherwise find the element
         const isOverlayAnchor = step.anchorElement === 'body';
         let referenceEl;
-
+        
         if (isOverlayAnchor) {
             referenceEl = this.cache.tutorialAnchorOverlay; // Use the dedicated overlay
         } else {
@@ -750,7 +972,7 @@ export class UIManager {
                  // TODO: Decide if we should force isOverlayAnchor = true here?
             }
         }
-
+        
         // Cleanup existing Popper instance if any
         if (this.popperInstance) {
             this.popperInstance.destroy();
@@ -759,13 +981,8 @@ export class UIManager {
 
         // --- Update Content ---
         let processedText = step.text;
-         if (processedText.includes('{shipName}')) {
-             const shipName = gameState.player.activeShipId ? DB.SHIPS[gameState.player.activeShipId].name : 'your ship';
-             processedText = processedText.replace('{shipName}', shipName);
-         }
-         if (processedText.includes('{playerName}')) {
-             processedText = processedText.replace('{playerName}', gameState.player.name || 'Captain');
-         }
+         if (processedText.includes('{shipName}')) { /* ... name replacement ... */ }
+         if (processedText.includes('{playerName}')) { /* ... name replacement ... */ }
         this.cache.tutorialToastText.innerHTML = processedText;
 
         // --- Apply Size ---
@@ -773,7 +990,7 @@ export class UIManager {
         const initialHeight = step.size?.height || 'auto';
         toast.style.width = initialWidth;
         toast.style.height = initialHeight;
-
+        
         // --- Apply Position ---
         if (isOverlayAnchor) {
             // Percentage-based positioning
@@ -784,18 +1001,18 @@ export class UIManager {
             // Ensure Popper-related styles/attributes are cleared/reset if switching modes
             toast.style.transform = 'translate(-50%, -50%)'; // Center element on the % point
             arrow.style.display = 'none'; // No arrow for overlay anchor
-            toast.removeAttribute('data-popper-placement');
-
+            toast.removeAttribute('data-popper-placement'); 
+            
             // Note: No Popper instance created in this mode
         } else {
             // Element-anchored positioning using Popper.js
             toast.style.left = ''; // Clear direct styles
-            toast.style.top = '';
+            toast.style.top = ''; 
             toast.style.transform = ''; // Clear direct transform
             arrow.style.display = 'block'; // Show arrow
 
             // Configure Popper.js
-            const defaultOptions = { /* ... Popper defaults for element anchor ... */
+            const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
                 placement: 'auto',
                 modifiers: [
                     { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
@@ -804,14 +1021,14 @@ export class UIManager {
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
             };
-
+            
              // Merge step-specific Popper options/modifiers
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset');
+            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
             if (stepOffsetMod) {
-                 baseModifiers.push(stepOffsetMod);
+                 baseModifiers.push(stepOffsetMod); 
             } else {
-                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset'));
+                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
@@ -835,7 +1052,7 @@ export class UIManager {
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
-
+        
         // --- Notify DebugService ---
         if (this.debugService) {
             this.debugService.setActiveTutorialStep(step); // Pass the raw step data
@@ -853,7 +1070,7 @@ export class UIManager {
             this.popperInstance = null;
         }
         this.applyTutorialHighlight(null);
-
+        
         // Notify DebugService
         if (this.debugService) {
             this.debugService.clearActiveTutorialStep();
@@ -886,15 +1103,15 @@ export class UIManager {
         // --- Apply Position (Conditional) ---
         if (isOverlayAnchor) {
             // Using Percentage Positioning
-
+            
             // Destroy Popper instance if it exists (switching modes)
             if (this.popperInstance) {
                 this.popperInstance.destroy();
                 this.popperInstance = null;
-                 toast.removeAttribute('data-popper-placement');
+                 toast.removeAttribute('data-popper-placement'); 
                  toast.style.transform = ''; // Clear Popper transform
             }
-
+            
             // Apply direct percentage styles
             toast.style.left = `${percentX}%`;
             toast.style.top = `${percentY}%`;
@@ -904,7 +1121,7 @@ export class UIManager {
         } else {
             // Using Popper.js Positioning
             toast.style.left = ''; // Clear direct styles
-            toast.style.top = '';
+            toast.style.top = ''; 
             toast.style.transform = ''; // Clear direct transform (Popper will add its own)
             arrow.style.display = 'block';
 
@@ -1182,7 +1399,38 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
 
-    // renderStickyBar - REMOVED (Phase 2)
+    renderStickyBar(gameState) {
+        const stickyBarEl = this.cache.missionStickyBar;
+        const contentEl = stickyBarEl.querySelector('.sticky-content');
+        const objectiveTextEl = this.cache.stickyObjectiveText;
+        const objectiveProgressEl = this.cache.stickyObjectiveProgress;
+
+        if (gameState.missions.activeMissionId) {
+            const mission = DB.MISSIONS[gameState.missions.activeMissionId];
+            if (!mission.objectives || mission.objectives.length === 0) {
+                stickyBarEl.style.display = 'none';
+                return;
+            }
+            const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
+
+            const objective = mission.objectives[0];
+            const current = progress.objectives[objective.goodId]?.current ?? 0;
+            const target = objective.quantity;
+            const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
+            const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
+
+            objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
+            objectiveProgressEl.textContent = `[${current}/${target}]`;
+
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
+            contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
+
+            stickyBarEl.style.display = 'block';
+        } else {
+            stickyBarEl.style.display = 'none';
+        }
+    }
 
     showMissionModal(missionId) {
         const mission = DB.MISSIONS[missionId];
@@ -1423,7 +1671,7 @@ export class UIManager {
         if (modal) {
             modal.classList.remove('is-glowing');
             // Remove the specific click listener if it exists
-            const existingHandler = modal.__mapDetailCloseHandler;
+            const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
                 modal.removeEventListener('click', existingHandler);
                 delete modal.__mapDetailCloseHandler;
