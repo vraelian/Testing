@@ -49,7 +49,7 @@ export function renderHangarScreen(gameState, simulationService) {
                     </div>
                 </div>
             </div>
-            {/* Inject pagination HTML directly */}
+            
             <div id="hangar-pagination-wrapper">
                 <div id="hangar-pagination">
                     ${paginationHtml}
@@ -71,8 +71,8 @@ function _renderHangarPagination(gameState) {
 
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
     // Re-use SimulationService helper if available, otherwise calculate inline
-    // Note: Assuming simulationService is passed or accessible
-    const simulationService = window.simulationService; // Example of accessing global instance, adjust as needed
+    // Note: Accessing global instance as a temporary measure per our discussion.
+    const simulationService = window.simulationService;
     const shipList = isHangarMode ? player.ownedShipIds : (simulationService?._getShipyardInventory() || []).map(([id]) => id);
     const totalItems = shipList.length;
 
@@ -172,9 +172,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState;
-     // Re-use SimulationService helper if available, otherwise calculate inline
-    // Note: Assuming simulationService is passed or accessible
-    const simulationService = window.simulationService; // Example of accessing global instance, adjust as needed
+     // Note: Accessing global instance as a temporary measure per our discussion.
+    const simulationService = window.simulationService;
 
     // Determine Status Badge
     let statusBadgeHtml = '';
