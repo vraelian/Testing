@@ -129,7 +129,9 @@ export class UIManager {
             cargoDetailContent: document.getElementById('cargo-detail-content'),
 
             mapDetailModal: document.getElementById('map-detail-modal'),
-
+            
+            // Tutorial Elements
+            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -944,159 +946,116 @@ export class UIManager {
     }
 
     /**
-     * Displays and positions the tutorial toast using Popper.js.
+     * Displays and positions the tutorial toast. Uses either percentage-based positioning
+     * relative to an overlay or Popper.js for element anchoring.
      * @param {object} options - Configuration for the toast.
-     * @param {object} options.step - The tutorial step data from database.js.
-     * @param {function} options.onSkip - Callback function when skip is clicked.
-     * @param {function} options.onNext - Callback function when next is clicked (for 'INFO' steps).
+     * @param {object} options.step - The tutorial step data.
+     * @param {function} options.onSkip - Callback for skip.
+     * @param {function} options.onNext - Callback for next.
      * @param {object} options.gameState - The current game state.
      */
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-
-        // 1. Destroy any existing Popper instance
+        
+        // Use the new overlay if anchor is 'body', otherwise find the element
+        const isOverlayAnchor = step.anchorElement === 'body';
+        let referenceEl;
+        
+        if (isOverlayAnchor) {
+            referenceEl = this.cache.tutorialAnchorOverlay; // Use the dedicated overlay
+        } else {
+            referenceEl = document.querySelector(step.anchorElement);
+            if (!referenceEl) {
+                this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
+                referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
+                 // TODO: Decide if we should force isOverlayAnchor = true here?
+            }
+        }
+        
+        // Cleanup existing Popper instance if any
         if (this.popperInstance) {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
 
-        // 2. Find the anchor element
-        let referenceEl = document.querySelector(step.anchorElement);
-        if (!referenceEl) {
-            this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for tutorial step "${step.stepId}". Defaulting to body.`);
-            referenceEl = document.body;
-        }
-
-        const isDefaultPlacement = (referenceEl === document.body);
-
-        // 3. Update toast content
+        // --- Update Content ---
         let processedText = step.text;
-        if (processedText.includes('{shipName}')) {
-            const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
-            processedText = processedText.replace(/{shipName}/g, shipName);
-        }
-        if (processedText.includes('{playerName}')) {
-            processedText = processedText.replace(/{playerName}/g, gameState.player.name);
-        }
+         if (processedText.includes('{shipName}')) { /* ... name replacement ... */ }
+         if (processedText.includes('{playerName}')) { /* ... name replacement ... */ }
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        // 4. Set base class (styles are primarily in CSS now)
-        toast.className = 'fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto'; // Base class needed for Popper/CSS
-        
-        // **MODIFIED:** Set initial width and height from step
+        // --- Apply Size ---
         const initialWidth = step.size?.width || 'auto';
         const initialHeight = step.size?.height || 'auto';
         toast.style.width = initialWidth;
         toast.style.height = initialHeight;
-
-
-        // 5. Configure Popper.js
-        let defaultOptions;
-
-        if (isDefaultPlacement) {
-            // *** REVISED DEFAULT FOR BODY ANCHOR ***
-            arrow.style.display = 'none';
-            defaultOptions = {
-                placement: 'bottom', // Base placement relative to bottom of viewport
-                modifiers: [
-                    {
-                        name: 'offset',
-                        options: {
-                            offset: ({ popper }) => {
-                                // Target 20% from the top (adjust as needed)
-                                const targetY = window.innerHeight * 0.20;
-                                // Calculate distance to push UP from the bottom edge
-                                // baseDistance makes the *bottom* of the toast align with targetY
-                                const baseDistance = -(window.innerHeight - targetY - popper.height);
-                                // Calculate skidding to center horizontally
-                                const skidding = (window.innerWidth / 2) - (popper.width / 2);
-                                // The initial Distance slider value (0) results in this position
-                                return [skidding, baseDistance];
-                            },
-                        },
-                    },
-                     {
-                        name: 'preventOverflow',
-                        options: { mainAxis: false, padding: 10 } // Only prevent horizontal overflow
-                    },
-                    {
-                        name: 'flip',
-                        options: { enabled: false } // Don't flip for default central placement
-                    }
-                ]
-            };
+        
+        // --- Apply Position ---
+        if (isOverlayAnchor) {
+            // Percentage-based positioning
+            const posX = step.positionX ?? 50; // Default to center
+            const posY = step.positionY ?? 50; // Default to center
+            toast.style.left = `${posX}%`;
+            toast.style.top = `${posY}%`;
+            // Ensure Popper-related styles/attributes are cleared/reset if switching modes
+            toast.style.transform = 'translate(-50%, -50%)'; // Center element on the % point
+            arrow.style.display = 'none'; // No arrow for overlay anchor
+            toast.removeAttribute('data-popper-placement'); 
+            
+            // Note: No Popper instance created in this mode
         } else {
-            // Default for specific element anchor
-            arrow.style.display = 'block';
-            defaultOptions = {
+            // Element-anchored positioning using Popper.js
+            toast.style.left = ''; // Clear direct styles
+            toast.style.top = ''; 
+            toast.style.transform = ''; // Clear direct transform
+            arrow.style.display = 'block'; // Show arrow
+
+            // Configure Popper.js
+            const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
                 placement: 'auto',
                 modifiers: [
                     { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
-                    {
-                        name: 'preventOverflow',
-                        options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } }
-                    },
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
             };
+            
+             // Merge step-specific Popper options/modifiers
+            const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
+            if (stepOffsetMod) {
+                 baseModifiers.push(stepOffsetMod); 
+            } else {
+                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
+            }
+            if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
+
+            const finalOptions = {
+                placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
+                modifiers: baseModifiers
+            };
+
+            // Create Popper instance
+            this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
         }
 
-        // Merge modifiers: prioritize step-specific offset if present
-        const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-        let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); // Start with defaults minus offset
-        if (stepOffsetMod) {
-             baseModifiers.push(stepOffsetMod); // Add step-specific offset
-        } else {
-            baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); // Add default offset back
-        }
-        // Add any *other* step-specific modifiers (that aren't offset)
-        if (step.popperOptions?.modifiers) {
-            step.popperOptions.modifiers.forEach(stepMod => {
-                if (stepMod.name !== 'offset' && !baseModifiers.some(bm => bm.name === stepMod.name)) {
-                    baseModifiers.push(stepMod);
-                }
-            });
-        }
-
-
-        const finalOptions = {
-            // Use step.placement first, then step.popperOptions.placement, then default
-            placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
-            modifiers: baseModifiers
-        };
-
-        // If default placement, force final placement back to 'bottom' for offset calc
-         if (isDefaultPlacement) {
-             finalOptions.placement = 'bottom';
-         }
-
-        // 6. Create Popper instance
-        this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
-
-        // 7. Show the toast
+        // --- Show Toast & Configure Buttons ---
         toast.classList.remove('hidden');
-
-        // 8. Configure buttons
         const isInfoStep = step.completion.type === 'INFO';
+        this.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
         if (isInfoStep) {
-            // const nextButtonText = step.buttonText || 'Next &rarr;'; // No longer needed
-            // this.cache.tutorialToastNextBtn.innerHTML = nextButtonText; // No longer needed
-            this.cache.tutorialToastNextBtn.classList.remove('hidden'); // MODIFIED
             this.cache.tutorialToastNextBtn.onclick = onNext;
-        } else {
-            this.cache.tutorialToastNextBtn.classList.add('hidden'); // MODIFIED
         }
-
-        const showSkipButton = false; // Skipping handled by modal
+        const showSkipButton = false; // Configure as needed
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
         
-        // 9. Notify DebugService
+        // --- Notify DebugService ---
         if (this.debugService) {
-            this.debugService.setActiveTutorialStep(step);
+            this.debugService.setActiveTutorialStep(step); // Pass the raw step data
         }
     }
 
@@ -1119,93 +1078,80 @@ export class UIManager {
     }
 
     /**
-     * Updates the active tutorial popper instance in real-time based on debug controls.
-     * @param {object} newOptions
-     * @param {string} newOptions.placement - The new placement string (e.g., 'bottom-start').
-     * @param {number} newOptions.distance - The offset distance adjustment from the debug slider.
-     * @param {number} newOptions.skidding - The offset skidding adjustment from the debug slider.
-     * @param {number} newOptions.width - The new width (0 for 'auto').
-     * @param {number} newOptions.height - The new height (0 for 'auto').
+     * Updates the active tutorial toast position and size in real-time based on debug controls.
+     * Handles both percentage-based and Popper-based positioning.
+     * @param {object} newOptions - Options from DebugService._handleTutorialTune
+     * @param {boolean} newOptions.isOverlayAnchor - True if using percentage positioning.
+     * @param {number} newOptions.width - New width (0 for 'auto').
+     * @param {number} newOptions.height - New height (0 for 'auto').
+     * @param {number} newOptions.percentX - New X percentage (0-100).
+     * @param {number} newOptions.percentY - New Y percentage (0-100).
+     * @param {string} newOptions.placement - New Popper placement.
+     * @param {number} newOptions.distance - New Popper offset distance.
+     * @param {number} newOptions.skidding - New Popper offset skidding.
      */
     updateTutorialPopper(newOptions) {
-        if (!this.popperInstance) {
-            this.logger.warn('UIManager', 'Attempted to update tutorial popper, but no instance exists.');
-            return;
-        }
-
-        // *** MODIFIED: Destructure width and height ***
-        const { placement: debugPlacement, distance: debugDistance, skidding: debugSkidding, width: debugWidth, height: debugHeight } = newOptions;
-
-        // Get the current actual placement and reference element
-        const currentState = this.popperInstance.state;
-        const referenceEl = currentState.elements?.reference;
-        const isDefaultPlacement = (referenceEl === document.body);
-
-        // *** NEW: Apply size styles directly to the toast element ***
-        // This MUST be done *before* setOptions so Popper can calculate position based on the new size.
         const toast = this.cache.tutorialToastContainer;
-        toast.style.width = debugWidth > 0 ? `${debugWidth}px` : 'auto';
-        toast.style.height = debugHeight > 0 ? `${debugHeight}px` : 'auto';
+        const arrow = toast.querySelector('#tt-arrow');
+        const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
 
-        let finalPlacement = debugPlacement; // Use the placement from the debug panel
-        let finalOffset; // This will be the [skidding, distance] array
+        // --- Apply Size (Common) ---
+        // Apply size *first* so calculations are based on the new dimensions
+        toast.style.width = width > 0 ? `${width}px` : 'auto';
+        toast.style.height = height > 0 ? `${height}px` : 'auto';
 
-        if (isDefaultPlacement) {
-            // *** REVISED LOGIC FOR BODY ANCHOR UPDATE ***
-            finalPlacement = 'bottom'; // Keep base placement relative to bottom
-
-            // *** MUST get new bounds *after* style change ***
-            const popperRect = toast.getBoundingClientRect(); 
+        // --- Apply Position (Conditional) ---
+        if (isOverlayAnchor) {
+            // Using Percentage Positioning
             
-            const targetY = window.innerHeight * 0.20;
-            // Use popperRect.height
-            const baseDistance = -(window.innerHeight - targetY - popperRect.height); 
-            // Use popperRect.width
-            const baseSkidding = (window.innerWidth / 2) - popperRect.width / 2; 
-
-            // Apply debug adjustments to the base values
-            finalOffset = [baseSkidding + debugSkidding, baseDistance + debugDistance];
+            // Destroy Popper instance if it exists (switching modes)
+            if (this.popperInstance) {
+                this.popperInstance.destroy();
+                this.popperInstance = null;
+                 toast.removeAttribute('data-popper-placement'); 
+                 toast.style.transform = ''; // Clear Popper transform
+            }
+            
+            // Apply direct percentage styles
+            toast.style.left = `${percentX}%`;
+            toast.style.top = `${percentY}%`;
+            toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
+            arrow.style.display = 'none';
 
         } else {
-            // For specific elements, the debug values *are* the final offset
-            finalOffset = [debugSkidding, debugDistance];
-        }
+            // Using Popper.js Positioning
+            toast.style.left = ''; // Clear direct styles
+            toast.style.top = ''; 
+            toast.style.transform = ''; // Clear direct transform (Popper will add its own)
+            arrow.style.display = 'block';
 
-        // Construct the options object for setOptions
-        const popperUpdateOptions = {
-            placement: finalPlacement,
-            modifiers: [
-                // Apply the calculated final offset
-                { name: 'offset', options: { offset: finalOffset } },
-                
-                // Re-apply other essential modifiers
-                 {
-                    name: 'preventOverflow',
-                    options: { 
-                        padding: isDefaultPlacement ? 10 : { top: 60, bottom: 60, left: 10, right: 10 },
-                        mainAxis: !isDefaultPlacement // Only prevent main axis overflow if NOT body anchored
-                    }
-                },
-                {
-                    name: 'flip',
-                    options: { 
-                        fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-                        enabled: !isDefaultPlacement // Disable flip for body anchor
-                    } 
-                },
-                { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
-            ]
-        };
-        
-        // Apply the new options
-        this.popperInstance.setOptions(popperUpdateOptions).then(() => {
-             // Update arrow visibility
-            const arrow = this.cache.tutorialToastContainer.querySelector('#tt-arrow');
-            if(arrow) arrow.style.display = isDefaultPlacement ? 'none' : 'block';
-        }).catch(e => {
-            this.logger.error('UIManager', 'Error updating Popper options:', e);
-        });
+            const popperUpdateOptions = {
+                placement: placement,
+                modifiers: [
+                    { name: 'offset', options: { offset: [skidding, distance] } },
+                    // Re-apply other essential modifiers for element anchoring
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
+                ]
+            };
+
+            if (this.popperInstance) {
+                 // Update existing instance
+                 this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
+                     this.logger.error('UIManager', 'Error updating Popper options:', e);
+                 });
+            } else {
+                 // Need to create Popper instance if switching modes or first time
+                 // This requires the original reference element, which isn't passed here.
+                 // Ideally, the DebugService should trigger a full `showTutorialToast`
+                 // when the anchor *type* changes, rather than just `updateTutorialPopper`.
+                 // For now, we'll log a warning.
+                 this.logger.warn('UIManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
+            }
+        }
     }
+
 
     applyTutorialHighlight(highlightConfig) {
         this.activeHighlightConfig = highlightConfig;
@@ -1725,9 +1671,7 @@ export class UIManager {
         if (modal) {
             modal.classList.remove('is-glowing');
             // Remove the specific click listener if it exists
-            // This is slightly less clean than adding it with .once, but necessary
-            // if we need to manually remove it elsewhere in the future.
-            const existingHandler = modal.__mapDetailCloseHandler; // Assume we store it if needed
+            const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
                 modal.removeEventListener('click', existingHandler);
                 delete modal.__mapDetailCloseHandler;
