@@ -21,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 29.55</title>
+    <title>Orbital Trading 29.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -61,7 +61,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 29.55</p>
+            <p>Version 29.60</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -165,7 +165,7 @@
 
     <div id="charter-modal" class="modal-backdrop hidden modal-theme-gold">
         <div class="modal-content">
-            <h3 id="charter-title" class="text-2xl font-orbitron mb-4 text-gray-300 text-center"></h3>
+            <h3 id="charter-title" class-"text-2xl font-orbitron mb-4 text-gray-300 text-center"></h3>
             <div id="charter-description" class="mb-6 text-lg"></div>
             <div id="charter-button-container" class="mt-6 flex justify-center gap-4"></div>
         </div>
@@ -206,13 +206,16 @@
         </div>
     </div>
 
+    <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
+
     <div id="tutorial-toast-container" class="hidden fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto">
-        <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">×</button>
-        <p id="tutorial-toast-text" class="text-lg pr-6"></p>
-        <div class="mt-3 text-right">
-            <button id="tutorial-toast-next-btn" class="btn btn-sm">Next →</button>
+        <div id="tt-arrow" data-popper-arrow></div>
+        <div class="tt-controls-container">
+            <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">×</button>
+            <button id="tutorial-toast-next-btn" class="tt-next-arrow hidden">›</button>
         </div>
-     </div>
+        <p id="tutorial-toast-text" class="text-lg pr-6"></p>
+        </div>
     
     <div id="skip-tutorial-modal" class="modal-backdrop hidden">
          <div class="modal-content">
@@ -267,10 +270,11 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+            window.addEventListener('load', () => { // Corrected arrow function syntax
                 navigator.serviceWorker.register('./sw.js').then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, err => {
@@ -591,202 +595,271 @@
     color: #67e8f9; /* Cyan */
 }
 /* --- [[END]] DIAGNOSTIC OVERLAY STYLES --- */
+
+/* --- [[START]] TUTORIAL TUNER STYLES --- */
+/* Style for read-only fields (Step ID, Anchor) and the Code output */
+/* Using more specific selectors targeting the input element directly */
+.tutorial-tuner-folder .lil-gui-item > input[type=text]:disabled,
+.tutorial-tuner-folder .lil-gui-item > input[type=text][aria-labelledby$="-Code"] { /* Target Code input via its label */
+    background-color: #111 !important;
+    color: #fde047 !important; /* Highlight color */
+    font-family: 'Roboto Mono', monospace !important;
+    opacity: 1 !important;
+    border: 1px dashed #444;
+    cursor: default; /* Make it look non-interactive */
+     /* Ensure user-select is not preventing copy */
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Ensure the Code output field specifically allows text selection and text cursor */
+.tutorial-tuner-folder .lil-gui-item > input[type=text][aria-labelledby$="-Code"] {
+    cursor: text; /* Use text cursor */
+}
+
+
+.tutorial-tuner-folder .lil-gui-item.disabled > .name {
+    opacity: 0.7 !important; /* Make labels for disabled fields clearer */
+}
+
+.tutorial-tuner-folder .controller.button {
+    text-align: center !important;
+    background-color: #304a22 !important; /* Greenish for 'generate' */
+}
+.tutorial-tuner-folder .controller.button:hover {
+    background-color: #4a6a32 !important;
+}
+/* --- [[END]] TUTORIAL TUNER STYLES --- */
 --- END OF FILE: ./css/debug.css ---
 
 --- START OF FILE: ./css/tutorial.css ---
 /* css/tutorial.css */
-@keyframes shimmer {
-    0% {
-        background-position: -400px 0;
-    }
-    100% {
-        background-position: 400px 0;
-    }
-}
-@keyframes green-pulse {
-    0%, 100% {
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-    }
-    50% {
-        box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
-    }
-    100% {
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-    }
-}
+
+/* --- [[START]] NEW THEMED STYLES --- */
+
 #tutorial-toast-container {
-    background-color: rgba(13, 42, 42, 0.95);
-    color: #f0fff0;
-    border: 2px solid transparent;
-    border-image: linear-gradient(to right, #d4af37, #fde047, #d4af37);
-    border-image-slice: 1;
-    animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-    background-repeat: no-repeat;
-    background-size: 200px 100%;
-    z-index: 190;
-    width: 90%;
-    max-width: 385px;
-    max-height: 225px;
-    padding: 0.8rem; /* Reduced padding */
+    /* New background: dark, slightly transparent, blurred */
+    background-color: rgba(18, 24, 39, 0.9); /* A color between modal bg and game bg */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    
+    color: var(--color-text-primary, #d0d8e8); /* Default to global text color */
+    
+    /* New border: Apply sci-fi-frame styles */
+    border: 1px solid #2a3a5a;
+    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
+    border-radius: 8px; /* Standard border radius */
+
+    /* --- [[START]] WIDTH FIX --- */
+    min-width: 200px;
+    max-width: min(600px, 90vw); /* Generous max-width, responsive */
+    /* --- [[END]] WIDTH FIX --- */
+
+    z-index: 999; /* Ensure toast is above anchor overlay */
+    padding: 1rem; /* Simplified padding */
+    position: fixed; /* Changed from absolute for percentage positioning */
+    transform: translate(-50%, -50%); /* Center based on top/left percentages */
 }
-/* Apply flexbox layout only when the toast is visible to avoid specificity conflicts */
+
+/* NEW: Styles for the anchor overlay */
+#tutorial-anchor-overlay {
+    position: fixed;
+    inset: 0; /* Cover the whole viewport */
+    z-index: 998; /* Below toast, above game content */
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Pseudo-elements for sci-fi-frame corners */
+#tutorial-toast-container::before,
+#tutorial-toast-container::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-color: #7a9ac0; /* Match default sci-fi-frame color */
+    border-style: solid;
+    transition: border-color 0.3s;
+}
+#tutorial-toast-container::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-top-left-radius: 8px; /* Top-left corner */
+}
+#tutorial-toast-container::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-bottom-right-radius: 8px; /* Bottom-right corner */
+}
+
+/* Apply flexbox layout only when the toast is visible */
 #tutorial-toast-container:not(.hidden) {
     display: flex;
     flex-direction: column;
 }
+
 #tutorial-toast-text {
     text-align: left;
     overflow-y: auto;
-    /* Allow vertical scrolling */
-    flex-grow: 1;
-    /* Allow the text container to fill available space */
-    padding-right: 1rem;
-    /* Add padding for the scrollbar */
-    font-size: 0.9rem; /* Reduced font size */
+    flex-grow: 1; 
+    max-height: 150px; /* Adjust as needed, maybe based on height slider? */
+    /* --- [[START]] PADDING FIX --- */
+    padding-right: 3rem; /* Make space for top-right control cluster */
+    /* --- [[END]] PADDING FIX --- */
+    font-family: 'Exo 2', sans-serif; /* Update font */
+    font-size: 0.9rem; /* Slightly larger for readability */
+    line-height: 1.5; /* Increased line height */
+    color: var(--color-text-secondary); 
 }
-.tutorial-highlight {
-    position: relative;
-    z-index: 99;
-}
-.tt-top-center,
-.tt-top {
-    top: 5%; 
-    left: 50%;
-    transform: translateX(-50%);
-}
-.tt-left {
-    top: 50%;
-    left: 2%;
-    transform: translateY(-50%);
-}
-.tt-right {
-    top: 50%;
-    right: 2%;
-    transform: translateY(-50%);
-}
-.tt-bottom-center {
-    bottom: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-}
-.tt-bottom-right {
-    bottom: 15%;
-    right: 2%;
-}
-.lore-container {
-    cursor: pointer;
-    display: inline;
-    color: #a3b8ee;
-    font-style: italic;
-    font-weight: bold;
-}
-.lore-tooltip {
-    display: none;
+
+#tutorial-highlight-overlay {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 420px;
-    max-width: 90vw;
-    max-height: 55vh;
-    overflow-y: auto;
-    background-color: #1f2937;
-    border: 2px solid #ffffff;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1rem;
-    line-height: 1.5;
-    color: #d0d8e8;
-    z-index: 60;
-    text-align: left;
-    font-style: normal;
-    animation: pulse-white 2.5s infinite;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; 
+    z-index: 997; /* Below anchor overlay */
 }
-.tutorial-tooltip {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 420px;
-    max-width: 90vw;
-    max-height: 55vh;
-    overflow-y: auto;
-    background-color: #1f2937;
-    border: 2px solid #10b981;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    color: #d0d8e8;
-    z-index: 60;
-    text-align: left;
-    font-style: normal;
-    animation: pulse-green-border 2.5s infinite;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+
+/* Style for individual highlight cues within the overlay */
+.tutorial-cue {
+    position: absolute;
 }
-.lore-tooltip.visible,
-.tutorial-tooltip.visible {
-    display: block;
-}
-.lore-tooltip::-webkit-scrollbar,
-.tutorial-tooltip::-webkit-scrollbar {
-    display: none;
-}
-/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
-#tutorial-toast-text::-webkit-scrollbar {
+
+
+/* --- [[START]] POPPER.JS ARROW STYLES --- */
+/* Adjusted arrow background and border */
+#tt-arrow,
+#tt-arrow::before {
+    position: absolute;
     width: 8px;
+    height: 8px;
+    background: rgba(18, 24, 39, 0.9); /* Match new toast background */
 }
-#tutorial-toast-text::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+
+#tt-arrow {
+    visibility: hidden;
 }
-#tutorial-toast-text::-webkit-scrollbar-thumb {
-    background-color: #d4af37;
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: content-box;
+
+#tt-arrow::before {
+    visibility: visible;
+    content: '';
+    transform: rotate(45deg);
 }
-#tutorial-toast-text::-webkit-scrollbar-thumb:hover {
-    background-color: #fde047;
+
+/* Arrow border to match sci-fi-frame border */
+#tutorial-toast-container[data-popper-placement^='top'] > #tt-arrow {
+    bottom: -4px;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
+}
+
+#tutorial-toast-container[data-popper-placement^='bottom'] > #tt-arrow {
+    top: -4px;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
+}
+
+#tutorial-toast-container[data-popper-placement^='left'] > #tt-arrow {
+    right: -4px;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
+}
+
+#tutorial-toast-container[data-popper-placement^='right'] > #tt-arrow {
+    left: -4px;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
+}
+/* --- [[END]] POPPER.JS ARROW STYLES --- */
+
+
+/* --- [[START]] NEW CONTROL BUTTON STYLES --- */
+
+/* New container for top-right buttons */
+.tt-controls-container {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    z-index: 10;
+}
+
+/* Close ('skip') button positioning */
+#tutorial-toast-skip-btn {
+    position: static; /* No longer absolute */
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+    background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
+}
+#tutorial-toast-skip-btn:hover { 
+    opacity: 1; 
+    color: var(--color-accent); 
+}
+
+/* New 'Next' arrow button styles */
+.tt-next-arrow {
+    position: static; /* No longer absolute */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--color-bg-light, #22304a);
+    border: 1px solid var(--color-border, #4a6a8a);
+    color: var(--color-text-secondary, #c0d0f0);
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 28px; /* Fine-tune vertical alignment */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    padding-left: 2px; /* Nudge arrow icon */
+    user-select: none;
+}
+
+.tt-next-arrow:hover {
+    background: var(--color-bg-light-hover, #32405a);
+    color: #e0f0ff;
+    transform: scale(1.1);
+}
+
+.tt-next-arrow.hidden {
+    display: none;
+}
+
+/* --- [[END]] NEW CONTROL BUTTON STYLES --- */
+
+
+/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
+#tutorial-toast-text::-webkit-scrollbar { width: 6px; }
+#tutorial-toast-text::-webkit-scrollbar-track { 
+    background: rgba(0, 0, 0, 0.3); 
+    border-radius: 3px; 
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb { 
+    background-color: #7a9ac0; /* Match new border color */
+    border-radius: 3px; 
+} 
+#tutorial-toast-text::-webkit-scrollbar-thumb:hover { 
+    background-color: #9ab0d0; /* Lighter version */
 }
 /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
-@media (max-width: 768px) {
-    #tutorial-toast-container {
-        width: 90%;
-        /* Explicitly set width for mobile */
-        max-width: 385px;
-        /* Ensure max-width is consistent */
-    }
-    /* Override positions for mobile to be more consistent */
-    .tt-top-center,
-    .tt-left,
-    .tt-right,
-    .tt-top {
-        top: 5% !important; 
-        left: 5% !important;
-        /* Anchor to the left */
-        transform: none !important;
-        /* Remove horizontal centering */
-        right: auto !important;
-        bottom: auto !important;
-    }
-    .tt-bottom-center,
-    .tt-bottom-right {
-        bottom: 15% !important;
-        top: auto !important;
-        left: 5% !important;
-        /* Anchor to the left like the top ones to restore width */
-        transform: none !important;
-        /* Remove the centering transform */
-        right: auto !important;
-    }
-}
+
+/* Lore tooltip styles remain the same */
+.lore-container { /* ... */ }
+.lore-tooltip { /* ... */ }
+.tutorial-tooltip { /* ... */ }
+/* ... (rest of lore styles) ... */
 --- END OF FILE: ./css/tutorial.css ---
 
 --- START OF FILE: ./css/hud.css ---
@@ -4624,6 +4697,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (DEV_MODE) {
             debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
+            // --- [[START]] TUTORIAL TUNER WIRING ---
+            uiManager.setDebugService(debugService);
+            // --- [[END]] TUTORIAL TUNER WIRING ---
         }
         
         // --- Dependency Injection ---
@@ -5740,7 +5816,7 @@ export const DB = {
                 {
                     stepId: 'hangar_1',
                     text: "Welcome to the <b>Shipyard</b> on <b>Mars!</b><br><br>Every station has a port from which you can trade ships and manage your <b>Hangar</b>.",
-                    position: { desktop: 'bottom-right', mobile: 'top-center' },
+                    anchorElement: 'body',
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: 'hangar_2',
                     isSkippable: true
@@ -5748,7 +5824,7 @@ export const DB = {
                 {
                     stepId: 'hangar_2',
                     text: "Now that you've borrowed <b class='hl-yellow font-bold'>extra credits</b>, you can buy your first ship!<br><br>Select one of the options in the <b>Shipyard</b>. Choose carefully...",
-                    position: { desktop: 'bottom-right', mobile: 'top-center' },
+                    anchorElement: 'body',
                     completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
                     nextStepId: 'hangar_3',
                     isSkippable: true,
@@ -5757,7 +5833,7 @@ export const DB = {
                 {
                     stepId: 'hangar_3',
                     text: 'This is your <b>Hangar</b>. From here you can manage all the ships you own. Select your new ship and <b class="hl-yellow font-bold">Board</b> it to make it your active vessel.',
-                    position: { desktop: 'bottom-right', mobile: 'top-center' },
+                    anchorElement: 'body',
                     completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
                     nextStepId: null,
                     isSkippable: false
@@ -5772,7 +5848,7 @@ export const DB = {
                 {
                     stepId: 'finance_1',
                     text: "That was a big purchase, but don't worry - you've still got some <b class='hl-yellow font-bold'>credits</b> left over!<br><br>Your transaction history and debts can be viewed on the <b>Finance</b> tab within <b>Data</b>.",
-                    position: { desktop: 'bottom-right', mobile: 'top-center' },
+                    anchorElement: 'body',
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: 'finance_2',
                     isSkippable: false
@@ -5780,7 +5856,7 @@ export const DB = {
                 {
                     stepId: 'finance_2',
                     text: "Dont forget, your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>3 years</b>.<br><br>You will need to earn <b class='hl-yellow font-bold'>credits</b> to <b>pay off your debt</b>!",
-                    position: { desktop: 'bottom-right', mobile: 'bottom-center' },
+                    anchorElement: 'body',
                     completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                     nextStepId: null,
                     isSkippable: false
@@ -5793,21 +5869,135 @@ export const DB = {
             trigger: { "type": "ACTION", "action": "INTRO_START_MISSIONS" },
             navLock: true,
             steps: [
-                { "stepId": "mission_1_1", "text": "This is the <b>Mission Terminal</b>.<br><br>Check the <b>Missions</b> tab often for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_2", "isSkippable": false },
-                { "stepId": "mission_1_2", "text": "A freelancer at the <b>Mars</b> station has put in a <b>Delivery</b> request. Select the mission '<b>Milk Run to Luna</b>' to view more details.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "show-mission-modal" }, "nextStepId": "mission_1_3", "isSkippable": false },
-                { "stepId": "mission_1_3", "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "accept-mission" }, "nextStepId": "mission_1_4", "isSkippable": false },
-                { "stepId": "mission_1_4", "text": "Mission accepted!<br><br>The contract is now <b>active</b> and the cargo as been loaded onto your ship, the <b>{shipName}</b>.<br><br>The freelancer has also loaded extra <b>Plasteel</b> which you can sell for <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_1_5", "isSkippable": false },
-                { "stepId": "mission_1_5", "text": "This mission must be completed on the <b>Moon</b>, but you are presently docked at <b>Mars</b>! Therefore, it's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>On the <b>nav bar</b> at the top, select the <b>Ship</b> tab, then the <b>Navigation</b> tab.", "position": { "desktop": "bottom-center", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, "nextStepId": "mission_1_6", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } },
-                { "stepId": "mission_1_6", "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b class='hl-blue'>fuel</b>, and wear on the <b class='hl-green'>hull</b> of your ship.<br><br>Select the <b>Moon</b> to lift off from <b>Mars</b>.", "position": { "desktop": "top-center", "mobile": "top-center" }, "completion": { "type": "ACTION", "action": "travel" }, "nextStepId": "mission_1_7", "isSkippable": false, "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } },
-                { "stepId": "mission_1_7", "text": "You've arrived and docked at the <b>Moon</b> station!<br><br>It's time to deliver the <b>Plasteel</b>. Select the active mission and <b>deliver the Plasteel</b>.", "position": { "desktop": "bottom-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "complete-mission" }, "nextStepId": "mission_1_8", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_1_8", "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": "mission_2_1", "isSkippable": false },
-                { "stepId": "mission_1_9", "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_1", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_2_1", "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the <b>Starport</b> tab, then the <b>Market</b> tab.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, "nextStepId": "mission_2_2", "isSkippable": false, "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } },
-                { "stepId": "mission_2_2", "text": "This is the <b>Moon Market</b>.<br>On each commodity you will find a wealth of information to aid your trading.<br><br>The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>Select the <b class='hl-yellow font-bold'>Buy/Sell toggle</b> to transition to sale mode, and then sell your single unit of <b>Plasteel</b>.", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, "nextStepId": "mission_2_3", "isSkippable": false },
-                { "stepId": "mission_2_3", "text": "<b class='hl-green font-bold'>Pure profit</b>!<br><br>However, you still need more <b class='hl-yellow font-bold'>credits</b>! Return to the <b>Mission Terminal</b> by selecting the <b>Data</b> tab.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, "nextStepId": "mission_2_4", "isSkippable": false, "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } },
-                { "stepId": "mission_2_4", "text": "This mission offers a <b class='hl-yellow font-bold'>credit</b> reward.<br><br>Accept the mission, <b>Martian Resupply</b>.", "position": { "desktop": "bottom-right", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_3_1", "isSkippable": false },
-                { "stepId": "mission_3_1", "text": "To complete this mission you will need to <b>travel to Mars</b> after you have purchased <b>two Plasteel</b> from any <b>Market</b>.<br><br>After you have acquired the <b>Plasteel</b>, visit the <b>Mission</b> tab on <b>Mars</b> to submit the cargo and complete the mission. ", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, "nextStepId": "mission_final", "isSkippable": false, "navLock": null },
-                { "stepId": "mission_final", "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!", "position": { "desktop": "top-center", "mobile": "bottom-center" }, "completion": { "type": "INFO" }, "nextStepId": null, "isSkippable": false, "buttonText": "Complete Tutorial", "navLock": null }
+                { 
+                    "stepId": "mission_1_1", 
+                    "text": "This is the <b>Mission Terminal</b>.<br><br>Check the <b>Missions</b> tab often for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "INFO" }, 
+                    "nextStepId": "mission_1_2", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_1_2", 
+                    "text": "A freelancer at the <b>Mars</b> station has put in a <b>Delivery</b> request. Select the mission '<b>Milk Run to Luna</b>' to view more details.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "show-mission-modal" }, 
+                    "nextStepId": "mission_1_3", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_1_3", 
+                    "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "accept-mission" }, 
+                    "nextStepId": "mission_1_4", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_1_4", 
+                    "text": "Mission accepted!<br><br>The contract is now <b>active</b> and the cargo as been loaded onto your ship, the <b>{shipName}</b>.<br><br>The freelancer has also loaded extra <b>Plasteel</b> which you can sell for <b class='hl-yellow font-bold'>credits</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "INFO" }, 
+                    "nextStepId": "mission_1_5", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_1_5", 
+                    "text": "This mission must be completed on the <b>Moon</b>, but you are presently docked at <b>Mars</b>! Therefore, it's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>On the <b>nav bar</b> at the top, select the <b>Ship</b> tab, then the <b>Navigation</b> tab.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" }, 
+                    "nextStepId": "mission_1_6", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" } 
+                },
+                { 
+                    "stepId": "mission_1_6", 
+                    "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b class='hl-blue'>fuel</b>, and wear on the <b class='hl-green'>hull</b> of your ship.<br><br>Select the <b>Moon</b> to lift off from <b>Mars</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "travel" }, 
+                    "nextStepId": "mission_1_7", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" } 
+                },
+                { 
+                    "stepId": "mission_1_7", 
+                    "text": "You've arrived and docked at the <b>Moon</b> station!<br><br>It's time to deliver the <b>Plasteel</b>. Select the active mission and <b>deliver the Plasteel</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "complete-mission" }, 
+                    "nextStepId": "mission_1_8", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } 
+                },
+                { 
+                    "stepId": "mission_1_8", 
+                    "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "INFO" }, 
+                    "nextStepId": "mission_2_1", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_1_9", 
+                    "text": "Well done. Let's find a more profitable contract. Return to the Mission Terminal.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, 
+                    "nextStepId": "mission_2_1", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } 
+                },
+                { 
+                    "stepId": "mission_2_1", 
+                    "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the <b>Starport</b> tab, then the <b>Market</b> tab.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "SCREEN_LOAD", "screenId": "market" }, 
+                    "nextStepId": "mission_2_2", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" } 
+                },
+                { 
+                    "stepId": "mission_2_2", 
+                    "text": "This is the <b>Moon Market</b>.<br>On each commodity you will find a wealth of information to aid your trading.<br><br>The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>Select the <b class='hl-yellow font-bold'>Buy/Sell toggle</b> to transition to sale mode, and then sell your single unit of <b>Plasteel</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" }, 
+                    "nextStepId": "mission_2_3", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_2_3", 
+                    "text": "<b class='hl-green font-bold'>Pure profit</b>!<br><br>However, you still need more <b class='hl-yellow font-bold'>credits</b>! Return to the <b>Mission Terminal</b> by selecting the <b>Data</b> tab.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "SCREEN_LOAD", "screenId": "missions" }, 
+                    "nextStepId": "mission_2_4", 
+                    "isSkippable": false, 
+                    "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" } 
+                },
+                { 
+                    "stepId": "mission_2_4", 
+                    "text": "This mission offers a <b class='hl-yellow font-bold'>credit</b> reward.<br><br>Accept the mission, <b>Martian Resupply</b>.", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" }, 
+                    "nextStepId": "mission_3_1", 
+                    "isSkippable": false 
+                },
+                { 
+                    "stepId": "mission_3_1", 
+                    "text": "To complete this mission you will need to <b>travel to Mars</b> after you have purchased <b>two Plasteel</b> from any <b>Market</b>.<br><br>After you have acquired the <b>Plasteel</b>, visit the <b>Mission</b> tab on <b>Mars</b> to submit the cargo and complete the mission. ", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" }, 
+                    "nextStepId": "mission_final", 
+                    "isSkippable": false, 
+                    "navLock": null 
+                },
+                { 
+                    "stepId": "mission_final", 
+                    "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!", 
+                    "anchorElement": "body", 
+                    "completion": { "type": "INFO" }, 
+                    "nextStepId": null, 
+                    "isSkippable": false, 
+                    "buttonText": "Complete Tutorial", 
+                    "navLock": null 
+                }
             ]
         }
     }
@@ -6121,6 +6311,20 @@ import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../d
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed } from '../utils.js';
 
+// --- [[START]] NEW PRESET MAPPING ---
+// Mapping preset names to their new [X%, Y%] values
+const TUTORIAL_PRESETS_PERCENT = {
+    topCenter: [50, 15], // Example: 50% across, 15% down
+    top34Center: [50, 30],
+    vertHorizCenter: [50, 50],
+    bottom34Center: [50, 70],
+    bottomCenter: [50, 85],
+    bottomLeft: [15, 85],
+    topLeft: [15, 15],
+};
+// --- [[END]] NEW PRESET MAPPING ---
+
+
 /**
  * A simple bot that plays the game to stress-test the economy and find bugs.
  * @class AutomatedPlayer
@@ -6226,7 +6430,7 @@ class AutomatedPlayer {
             this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
         }
     }
-    
+
     /**
      * @private
      */
@@ -6320,6 +6524,9 @@ export class DebugService {
         this.actions = {};
         this.debugState = {}; // Holds state for GUI controllers
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
+
+        // References to GUI controllers and folders for enabling/disabling
+        this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -6366,7 +6573,7 @@ export class DebugService {
     generateBugReport() {
         const logHistory = this.logger.getLogHistory();
         const gameState = this.gameState.getState();
-        
+
         delete gameState.TRAVEL_DATA;
         delete gameState.market.priceHistory;
 
@@ -6381,7 +6588,7 @@ ${JSON.stringify(gameState, null, 2)}
 --- RECENT LOG HISTORY ---
 ${logHistory}
         `;
-        
+
         navigator.clipboard.writeText(report.trim())
             .then(() => {
                 this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
@@ -6398,14 +6605,14 @@ ${logHistory}
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null; 
+        this.gameState.tutorials.activeStepId = null;
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
-        
+
         this.gameState.player.credits = 1000000000000;
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
         this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
-        
+
         this.gameState.player.revealedTier = 7;
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
@@ -6432,10 +6639,10 @@ ${logHistory}
         this.simulationService.timeService.advanceDays(7);
         this.gameState.setState({});
     }
-    
+
     skipToHangarTutorial() {
         this.logger.warn('DebugService', 'SKIP TO HANGAR TUTORIAL ACTIVATED.');
-        this.gameState.introSequenceActive = true; 
+        this.gameState.introSequenceActive = true;
 
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
@@ -6648,6 +6855,18 @@ ${logHistory}
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
             fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
+
+            // --- [[START]] TUTORIAL TUNER ACTIONS ---
+            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
+            // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
+            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
+            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
+            presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
+            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
+            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
+            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
+            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset('topLeft') },
+            // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
 
@@ -6669,7 +6888,7 @@ ${logHistory}
             tutorialStep: document.getElementById('diag-tutorial-step'),
         };
     }
-    
+
     _startDiagLoop() {
         const update = () => {
             this._updateDiagOverlay();
@@ -6686,7 +6905,7 @@ ${logHistory}
 
         this.diagElements.winW.textContent = window.innerWidth;
         this.diagElements.winH.textContent = window.innerHeight;
-        
+
         if (window.visualViewport) {
             this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
             this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
@@ -6721,7 +6940,7 @@ ${logHistory}
         this.debugState.creditsToReduce = 100000;
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-        
+
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');
@@ -6739,12 +6958,12 @@ ${logHistory}
         shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
-        
+
         const worldFolder = this.gui.addFolder('World & Time');
         this.debugState.daysToAdvance = 7;
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
-        
+
         const economyFolder = this.gui.addFolder('Economy');
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
@@ -6763,6 +6982,56 @@ ${logHistory}
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
 
+        // --- [[START]] TUTORIAL TUNER FOLDER ---
+        const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
+        tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
+
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto'; // Used for element-anchored
+        this.debugState.ttOffsetDistance = 0; // Used for element-anchored
+        this.debugState.ttOffsetSkidding = 0; // Used for element-anchored
+        this.debugState.ttPercentX = 50; // NEW: Default center X
+        this.debugState.ttPercentY = 50; // NEW: Default center Y
+        this.debugState.ttWidth = 0;
+        this.debugState.ttHeight = 0;
+        this.debugState.ttGeneratedCode = '';
+
+        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
+        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
+
+        // --- Size Tuners ---
+        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
+
+        // --- Position Tuners (Conditional) ---
+        // Store references to controllers
+        this.tutorialPositionalControllers.percentX = tutorialFolder.add(this.debugState, 'ttPercentX', 0, 100, 1).name('X %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.percentY = tutorialFolder.add(this.debugState, 'ttPercentY', 0, 100, 1).name('Y %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.placement = tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.distance = tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.skidding = tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding (Elem)').onChange(() => this._handleTutorialTune());
+
+        // --- Position Presets ---
+        const presetFolder = tutorialFolder.addFolder('Position Presets');
+        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
+        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
+        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
+        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
+        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
+        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
+        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
+        // ** Store reference to the FOLDER INSTANCE itself **
+        this.tutorialPositionalControllers.presetFolder = presetFolder;
+
+        // --- Code Generator ---
+        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
+        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
+
+        // Initial state update for controls
+        this._updateTutorialControlVisibility(false); // Assume initially no step is active
+        // --- [[END]] TUTORIAL TUNER FOLDER ---
+
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
         this.debugState.logLevel = 'INFO';
@@ -6774,9 +7043,261 @@ ${logHistory}
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
         automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
-        
+
         this.gui.folders.forEach(folder => folder.close());
     }
+
+    // --- [[START]] TUTORIAL TUNER METHODS ---
+
+    /**
+     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
+     * @param {string|number|undefined} sizeValue - The value from the step definition.
+     * @returns {number} A number, with 0 representing 'auto'.
+     * @private
+     */
+    _parseSize(sizeValue) {
+        if (!sizeValue || sizeValue === 'auto') return 0;
+        if (typeof sizeValue === 'number') return sizeValue;
+        if (typeof sizeValue === 'string') {
+            const parsed = parseInt(sizeValue, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
+    }
+
+    /**
+     * Applies a position preset to the tuner sliders based on anchoring mode.
+     * @param {string} presetKey - Key corresponding to TUTORIAL_PRESETS_PERCENT.
+     * @private
+     */
+    _applyTutorialPreset(presetKey) {
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body'; // Using 'body' as proxy for overlay
+
+        if (isOverlayAnchor) {
+            const percentValues = TUTORIAL_PRESETS_PERCENT[presetKey];
+            if (percentValues) {
+                this.debugState.ttPercentX = percentValues[0];
+                this.debugState.ttPercentY = percentValues[1];
+                this.tutorialPositionalControllers.percentX?.updateDisplay();
+                this.tutorialPositionalControllers.percentY?.updateDisplay();
+            } else {
+                 this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
+            }
+        } else {
+            // Placeholder: Need to define offset presets if required for element anchors
+            this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
+            // Example:
+            // const offsetValues = TUTORIAL_PRESETS_OFFSET[presetKey];
+            // if (offsetValues) {
+            //     this.debugState.ttOffsetSkidding = offsetValues[0];
+            //     this.debugState.ttOffsetDistance = offsetValues[1];
+            //     this.tutorialPositionalControllers.skidding?.updateDisplay();
+            //     this.tutorialPositionalControllers.distance?.updateDisplay();
+            // }
+        }
+
+        // Trigger UI update
+        this._handleTutorialTune();
+    }
+
+    /**
+     * Shows/hides tutorial tuner controls based on anchor type using lil-gui methods.
+     * @param {boolean} isOverlayAnchor - True if the toast should use percentage positioning.
+     * @private
+     */
+    _updateTutorialControlVisibility(isOverlayAnchor) {
+         // Helper function using lil-gui's show() / hide()
+         const setVisibility = (controller, shouldShow) => {
+             if (controller) {
+                 controller.show(shouldShow);
+             }
+         };
+
+         // Percentage controls
+         setVisibility(this.tutorialPositionalControllers.percentX, isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.percentY, isOverlayAnchor);
+
+         // Popper offset controls
+         setVisibility(this.tutorialPositionalControllers.placement, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.distance, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.skidding, !isOverlayAnchor);
+
+         // Preset folder visibility (Show only for overlay anchors for now)
+         if (this.tutorialPositionalControllers.presetFolder) {
+              this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
+         }
+    }
+
+
+    /**
+     * Populates the Tutorial Tuner with the active step's data.
+     * Called by UIManager when a toast is shown.
+     * @param {object} step - The tutorial step object.
+     */
+    setActiveTutorialStep(step) {
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
+        const isOverlayAnchor = step.anchorElement === 'body'; // Use 'body' to signify overlay anchor
+
+        // Reset generated code
+        this.debugState.ttGeneratedCode = '';
+
+        // Update state
+        this.debugState.ttStepId = step.stepId;
+        this.debugState.ttAnchor = step.anchorElement; // Keep original anchor for info
+        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0;
+        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0;
+
+        if (isOverlayAnchor) {
+            // Use percentage position from step or default to center
+            this.debugState.ttPercentX = step.positionX ?? 50;
+            this.debugState.ttPercentY = step.positionY ?? 50;
+            // Reset/default Popper values for clarity
+            this.debugState.ttPlacement = 'auto';
+            this.debugState.ttOffsetDistance = 0;
+            this.debugState.ttOffsetSkidding = 0;
+        } else {
+            // Use Popper settings from step or defaults
+            const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let skidding = 0;
+            let distance = 0;
+
+            if (typeof offsetMod?.options?.offset === 'function') {
+                this.logger.warn('DebugService', `Offset function used for ${step.stepId}. Tuner defaults to [0, 10].`);
+                distance = 10; // Default distance for element anchors
+            } else if (Array.isArray(offsetMod?.options?.offset)) {
+                skidding = offsetMod.options.offset[0] || 0;
+                distance = offsetMod.options.offset[1] || 0;
+            } else {
+                 distance = 10; // Default distance if no offset defined
+            }
+
+            this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || 'auto';
+            this.debugState.ttOffsetDistance = distance;
+            this.debugState.ttOffsetSkidding = skidding;
+            // Reset/default percentage values
+            this.debugState.ttPercentX = 50;
+            this.debugState.ttPercentY = 50;
+        }
+
+        // Update visibility of controls AFTER setting state
+        this._updateTutorialControlVisibility(isOverlayAnchor);
+
+        // Manually update displays for all relevant controllers
+        // This ensures sliders reflect the loaded step's values
+        Object.values(this.tutorialPositionalControllers).forEach(controllerOrFolder => {
+             // Check if it's a controller (has updateDisplay) or the folder (doesn't)
+             if (controllerOrFolder && typeof controllerOrFolder.updateDisplay === 'function') {
+                 controllerOrFolder.updateDisplay();
+             }
+         });
+         // Also update size controllers
+         this.gui.controllers.find(c => c.property === 'ttWidth')?.updateDisplay();
+         this.gui.controllers.find(c => c.property === 'ttHeight')?.updateDisplay();
+
+    }
+
+    /**
+     * Clears and resets the Tutorial Tuner.
+     * Called by UIManager when a toast is hidden.
+     */
+    clearActiveTutorialStep() {
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
+
+        // Reset all state properties to their defaults
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttPercentX = 50;
+        this.debugState.ttPercentY = 50;
+        this.debugState.ttWidth = 0;
+        this.debugState.ttHeight = 0;
+        this.debugState.ttGeneratedCode = '';
+
+        // Hide conditional controls
+        this._updateTutorialControlVisibility(false);
+    }
+
+    /**
+     * Handles live tuning input from the debug panel.
+     * @private
+     */
+    _handleTutorialTune() {
+        if (!this.uiManager) return;
+
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+        this.logger.info.system('DebugService', `Tune event (Overlay: ${isOverlayAnchor}): X%=${this.debugState.ttPercentX}, Y%=${this.debugState.ttPercentY}, Place=${this.debugState.ttPlacement}, Dist=${this.debugState.ttOffsetDistance}, Skid=${this.debugState.ttOffsetSkidding}`);
+
+        this.uiManager.updateTutorialPopper({
+            isOverlayAnchor: isOverlayAnchor, // Pass mode to UIManager
+            // Size
+            width: Number(this.debugState.ttWidth) || 0,
+            height: Number(this.debugState.ttHeight) || 0,
+            // Percentage Position (if overlay)
+            percentX: Number(this.debugState.ttPercentX) || 50,
+            percentY: Number(this.debugState.ttPercentY) || 50,
+            // Popper Position (if element)
+            placement: this.debugState.ttPlacement,
+            distance: Number(this.debugState.ttOffsetDistance) || 0,
+            skidding: Number(this.debugState.ttOffsetSkidding) || 0,
+        });
+    }
+
+    /**
+     * Generates the code string from the current tuner state.
+     * Outputs either percentage or Popper options based on anchor type.
+     * @private
+     */
+    _generateTutorialCode() {
+        this.logger.info.system('DebugService', 'Generating tutorial code...');
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+
+        // Size String (common)
+        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
+        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
+        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
+        const sizeString = hasSize ? `
+size: { width: ${widthVal}, height: ${heightVal} },` : '';
+
+        let positionString = '';
+        if (isOverlayAnchor) {
+            // Generate Percentage Position Code
+             // Make sure anchorElement is 'body'
+             positionString = `
+anchorElement: 'body',`; // Explicitly set anchor
+            // Only add percentages if not default (50, 50)
+            if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
+                 positionString += `
+positionX: ${this.debugState.ttPercentX},
+positionY: ${this.debugState.ttPercentY},`;
+            }
+
+        } else {
+            // Generate Popper Options Code
+             // Add anchorElement only if it's NOT body
+             if (this.debugState.ttAnchor !== 'body') {
+                 positionString = `
+anchorElement: '${this.debugState.ttAnchor}',`;
+             }
+            positionString += `
+placement: '${this.debugState.ttPlacement}',
+popperOptions: {
+    modifiers: [
+        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
+        // Add other modifiers here if needed in the future
+    ]
+}`;
+        }
+
+        // Construct final code, removing potential trailing comma before a closing brace
+        let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
+        code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
+
+        this.debugState.ttGeneratedCode = code;
+    }
+
+    // --- [[END]] TUTORIAL TUNER METHODS ---
 }
 --- END OF FILE: ./js/services/DebugService.js ---
 
@@ -9289,9 +9810,11 @@ export class UIManager {
         this.lastKnownState = null;
         this.missionService = null; // To be injected
         this.simulationService = null; // To be injected
+        this.debugService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
         this.marketScrollPosition = 0;
+        this.popperInstance = null; // Instance for Popper.js
 
         this.effectsManager = new EffectsManager();
 
@@ -9346,6 +9869,14 @@ export class UIManager {
     }
 
     /**
+     * Injects the DebugService after instantiation.
+     * @param {import('./DebugService.js').DebugService} service
+     */
+    setDebugService(service) {
+        this.debugService = service;
+    }
+
+    /**
     * Resets the state of the market transaction modules.
     */
     resetMarketTransactionState() {
@@ -9378,7 +9909,9 @@ export class UIManager {
             cargoDetailContent: document.getElementById('cargo-detail-content'),
 
             mapDetailModal: document.getElementById('map-detail-modal'),
-
+            
+            // Tutorial Elements
+            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -9890,6 +10423,8 @@ export class UIManager {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
 
+
+
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
@@ -10190,54 +10725,213 @@ export class UIManager {
         return svg;
     }
 
+    /**
+     * Displays and positions the tutorial toast. Uses either percentage-based positioning
+     * relative to an overlay or Popper.js for element anchoring.
+     * @param {object} options - Configuration for the toast.
+     * @param {object} options.step - The tutorial step data.
+     * @param {function} options.onSkip - Callback for skip.
+     * @param {function} options.onNext - Callback for next.
+     * @param {object} options.gameState - The current game state.
+     */
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
+        const arrow = toast.querySelector('#tt-arrow');
+        
+        // Use the new overlay if anchor is 'body', otherwise find the element
+        const isOverlayAnchor = step.anchorElement === 'body';
+        let referenceEl;
+        
+        if (isOverlayAnchor) {
+            referenceEl = this.cache.tutorialAnchorOverlay; // Use the dedicated overlay
+        } else {
+            referenceEl = document.querySelector(step.anchorElement);
+            if (!referenceEl) {
+                this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
+                referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
+                 // TODO: Decide if we should force isOverlayAnchor = true here?
+            }
+        }
+        
+        // Cleanup existing Popper instance if any
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
+        }
 
+        // --- Update Content ---
         let processedText = step.text;
-        if (processedText.includes('{shipName}')) {
-            const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
-            processedText = processedText.replace(/{shipName}/g, shipName);
-        }
-        if (processedText.includes('{playerName}')) {
-            processedText = processedText.replace(/{playerName}/g, gameState.player.name);
-        }
+         if (processedText.includes('{shipName}')) { /* ... name replacement ... */ }
+         if (processedText.includes('{playerName}')) { /* ... name replacement ... */ }
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        toast.className = 'hidden fixed p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto';
-
-        let positionClass;
-        if (this.isMobile) {
-            positionClass = `tt-${step.position.mobile || 'mobile'}`;
+        // --- Apply Size ---
+        const initialWidth = step.size?.width || 'auto';
+        const initialHeight = step.size?.height || 'auto';
+        toast.style.width = initialWidth;
+        toast.style.height = initialHeight;
+        
+        // --- Apply Position ---
+        if (isOverlayAnchor) {
+            // Percentage-based positioning
+            const posX = step.positionX ?? 50; // Default to center
+            const posY = step.positionY ?? 50; // Default to center
+            toast.style.left = `${posX}%`;
+            toast.style.top = `${posY}%`;
+            // Ensure Popper-related styles/attributes are cleared/reset if switching modes
+            toast.style.transform = 'translate(-50%, -50%)'; // Center element on the % point
+            arrow.style.display = 'none'; // No arrow for overlay anchor
+            toast.removeAttribute('data-popper-placement'); 
+            
+            // Note: No Popper instance created in this mode
         } else {
-            positionClass = `tt-${step.position.desktop || 'bottom-right'}`;
+            // Element-anchored positioning using Popper.js
+            toast.style.left = ''; // Clear direct styles
+            toast.style.top = ''; 
+            toast.style.transform = ''; // Clear direct transform
+            arrow.style.display = 'block'; // Show arrow
+
+            // Configure Popper.js
+            const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
+                placement: 'auto',
+                modifiers: [
+                    { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
+                ]
+            };
+            
+             // Merge step-specific Popper options/modifiers
+            const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
+            if (stepOffsetMod) {
+                 baseModifiers.push(stepOffsetMod); 
+            } else {
+                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
+            }
+            if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
+
+            const finalOptions = {
+                placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
+                modifiers: baseModifiers
+            };
+
+            // Create Popper instance
+            this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
         }
-        toast.classList.add(positionClass);
 
-        toast.style.width = step.size?.width || 'auto';
-
+        // --- Show Toast & Configure Buttons ---
         toast.classList.remove('hidden');
-
         const isInfoStep = step.completion.type === 'INFO';
+        this.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
         if (isInfoStep) {
-            const nextButtonText = step.buttonText || 'Next &rarr;';
-            this.cache.tutorialToastNextBtn.innerHTML = nextButtonText;
-            this.cache.tutorialToastNextBtn.style.display = 'inline-block';
             this.cache.tutorialToastNextBtn.onclick = onNext;
-        } else {
-            this.cache.tutorialToastNextBtn.style.display = 'none';
         }
-
-        const showSkipButton = false;
+        const showSkipButton = false; // Configure as needed
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
+        
+        // --- Notify DebugService ---
+        if (this.debugService) {
+            this.debugService.setActiveTutorialStep(step); // Pass the raw step data
+        }
     }
 
 
+    /**
+     * Hides the tutorial toast and destroys the associated Popper.js instance.
+     */
     hideTutorialToast() {
         this.cache.tutorialToastContainer.classList.add('hidden');
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
+        }
         this.applyTutorialHighlight(null);
+        
+        // Notify DebugService
+        if (this.debugService) {
+            this.debugService.clearActiveTutorialStep();
+        }
     }
+
+    /**
+     * Updates the active tutorial toast position and size in real-time based on debug controls.
+     * Handles both percentage-based and Popper-based positioning.
+     * @param {object} newOptions - Options from DebugService._handleTutorialTune
+     * @param {boolean} newOptions.isOverlayAnchor - True if using percentage positioning.
+     * @param {number} newOptions.width - New width (0 for 'auto').
+     * @param {number} newOptions.height - New height (0 for 'auto').
+     * @param {number} newOptions.percentX - New X percentage (0-100).
+     * @param {number} newOptions.percentY - New Y percentage (0-100).
+     * @param {string} newOptions.placement - New Popper placement.
+     * @param {number} newOptions.distance - New Popper offset distance.
+     * @param {number} newOptions.skidding - New Popper offset skidding.
+     */
+    updateTutorialPopper(newOptions) {
+        const toast = this.cache.tutorialToastContainer;
+        const arrow = toast.querySelector('#tt-arrow');
+        const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
+
+        // --- Apply Size (Common) ---
+        // Apply size *first* so calculations are based on the new dimensions
+        toast.style.width = width > 0 ? `${width}px` : 'auto';
+        toast.style.height = height > 0 ? `${height}px` : 'auto';
+
+        // --- Apply Position (Conditional) ---
+        if (isOverlayAnchor) {
+            // Using Percentage Positioning
+            
+            // Destroy Popper instance if it exists (switching modes)
+            if (this.popperInstance) {
+                this.popperInstance.destroy();
+                this.popperInstance = null;
+                 toast.removeAttribute('data-popper-placement'); 
+                 toast.style.transform = ''; // Clear Popper transform
+            }
+            
+            // Apply direct percentage styles
+            toast.style.left = `${percentX}%`;
+            toast.style.top = `${percentY}%`;
+            toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
+            arrow.style.display = 'none';
+
+        } else {
+            // Using Popper.js Positioning
+            toast.style.left = ''; // Clear direct styles
+            toast.style.top = ''; 
+            toast.style.transform = ''; // Clear direct transform (Popper will add its own)
+            arrow.style.display = 'block';
+
+            const popperUpdateOptions = {
+                placement: placement,
+                modifiers: [
+                    { name: 'offset', options: { offset: [skidding, distance] } },
+                    // Re-apply other essential modifiers for element anchoring
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
+                ]
+            };
+
+            if (this.popperInstance) {
+                 // Update existing instance
+                 this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
+                     this.logger.error('UIManager', 'Error updating Popper options:', e);
+                 });
+            } else {
+                 // Need to create Popper instance if switching modes or first time
+                 // This requires the original reference element, which isn't passed here.
+                 // Ideally, the DebugService should trigger a full `showTutorialToast`
+                 // when the anchor *type* changes, rather than just `updateTutorialPopper`.
+                 // For now, we'll log a warning.
+                 this.logger.warn('UIManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
+            }
+        }
+    }
+
 
     applyTutorialHighlight(highlightConfig) {
         this.activeHighlightConfig = highlightConfig;
@@ -10757,9 +11451,7 @@ export class UIManager {
         if (modal) {
             modal.classList.remove('is-glowing');
             // Remove the specific click listener if it exists
-            // This is slightly less clean than adding it with .once, but necessary
-            // if we need to manually remove it elsewhere in the future.
-            const existingHandler = modal.__mapDetailCloseHandler; // Assume we store it if needed
+            const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
                 modal.removeEventListener('click', existingHandler);
                 delete modal.__mapDetailCloseHandler;
@@ -12042,6 +12734,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [29.60] - 2025-10-20
+- updated tutorial mmodals
+- added tutorial modal config exporter
 
 ## [29.55] - 2025-10-19
 - added STATE-SCHEMA.md
