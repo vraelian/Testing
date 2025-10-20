@@ -1,68 +1,54 @@
 /* css/tutorial.css */
-@keyframes shimmer {
-    0% {
-        background-position: -400px 0;
-    }
-    100% {
-        background-position: 400px 0;
-    }
-}
-@keyframes green-pulse {
-    0%, 100% {
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-    }
-    50% {
-        box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
-    }
-    100% {
-        box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-    }
-}
+
+/* --- [[START]] NEW THEMED STYLES --- */
+
 #tutorial-toast-container {
-    background-color: rgba(13, 42, 42, 0.95);
-    color: #f0fff0;
-    /* Removed border and border-image for clip-path */
-    /* animation: shimmer 4s linear infinite, green-pulse 2.5s infinite ease-in-out; */ /* Removed green-pulse for cleaner look */
-    animation: shimmer 4s linear infinite;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%);
-    background-repeat: no-repeat;
-    background-size: 200px 100%;
-    z-index: 999; /* Keep high z-index */
-    width: fit-content; /* Auto-width based on content */
-    min-width: 200px; /* Prevent it from becoming too narrow */
-    max-width: 300px; /* Slightly reduced max-width */
-    /* Removed max-height to allow content to dictate height */
-    padding: 1rem 1.25rem; /* Adjusted padding */
-    clip-path: polygon(
-        10px 0%, /* Top-left start */
-        calc(100% - 10px) 0%, /* Top-right start */
-        100% 10px, /* Top-right end */
-        100% calc(100% - 10px), /* Bottom-right start */
-        calc(100% - 10px) 100%, /* Bottom-right end */
-        10px 100%, /* Bottom-left start */
-        0% calc(100% - 10px), /* Bottom-left end */
-        0% 10px /* Top-left end */
-    );
-    /* Add a subtle border *outside* the clip-path using a pseudo-element */
-    position: fixed; /* Keep fixed for Popper */
-    /* position: relative; */ /* Original had relative, but Popper needs fixed */
+    /* New background: dark, slightly transparent, blurred */
+    background-color: rgba(18, 24, 39, 0.9); /* A color between modal bg and game bg */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    
+    color: var(--color-text-primary, #d0d8e8); /* Default to global text color */
+    
+    /* New border: Apply sci-fi-frame styles */
+    border: 1px solid #2a3a5a;
+    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
+    border-radius: 8px; /* Standard border radius */
+
+    /* Old shimmer/clip-path styles removed */
+
+    z-index: 999; 
+    width: fit-content; 
+    min-width: 200px; 
+    max-width: 300px; 
+    padding: 1rem; /* Simplified padding */
+    position: fixed; 
 }
 
-/* Pseudo-element for border effect */
-#tutorial-toast-container::before {
+/* Pseudo-elements for sci-fi-frame corners */
+#tutorial-toast-container::before,
+#tutorial-toast-container::after {
     content: '';
     position: absolute;
-    top: -2px; left: -2px; right: -2px; bottom: -2px;
-    z-index: -1; /* Place behind the main container */
-    background: linear-gradient(to right, #d4af37, #fde047, #d4af37);
-    /* Apply the same clip-path to the border pseudo-element */
-    clip-path: polygon(
-        10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px),
-        calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px
-    );
-    animation: green-pulse 2.5s infinite ease-in-out; /* Apply pulse to the border */
-    border-radius: inherit; /* Inherit border-radius if clip-path is removed */
+    width: 15px;
+    height: 15px;
+    border-color: #7a9ac0; /* Match default sci-fi-frame color */
+    border-style: solid;
+    transition: border-color 0.3s;
 }
+#tutorial-toast-container::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-top-left-radius: 8px; /* Top-left corner */
+}
+#tutorial-toast-container::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-bottom-right-radius: 8px; /* Bottom-right corner */
+}
+
 
 /* Class for default body-anchored placement - Still needed for centering */
 #tutorial-toast-container.tt-default-placement {
@@ -77,15 +63,17 @@
     display: flex;
     flex-direction: column;
 }
+
 #tutorial-toast-text {
     text-align: left;
     overflow-y: auto;
-    flex-grow: 1; /* Allow stretching if needed, but height is now more flexible */
-    max-height: 150px; /* Limit text height, allowing scroll */
+    flex-grow: 1; 
+    max-height: 150px; 
     padding-right: 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.4;
-    color: var(--color-text-secondary); /* Use CSS variable */
+    font-family: 'Exo 2', sans-serif; /* Update font */
+    font-size: 0.9rem; /* Slightly larger for readability */
+    line-height: 1.5; /* Increased line height */
+    color: var(--color-text-secondary); 
 }
 
 #tutorial-highlight-overlay {
@@ -94,8 +82,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to pass through */
-    z-index: 998; /* Explicitly set below the toast */
+    pointer-events: none; 
+    z-index: 998; 
 }
 
 /* Style for individual highlight cues within the overlay */
@@ -111,7 +99,7 @@
     position: absolute;
     width: 8px;
     height: 8px;
-    background: rgba(13, 42, 42, 0.95); /* Match toast background */
+    background: rgba(18, 24, 39, 0.9); /* Match new toast background */
 }
 
 #tt-arrow {
@@ -124,62 +112,95 @@
     transform: rotate(45deg);
 }
 
-/* Arrow border to match pseudo-element border */
+/* Arrow border to match sci-fi-frame border */
 #tutorial-toast-container[data-popper-placement^='top'] > #tt-arrow {
     bottom: -4px;
-    border-bottom: 1px solid #d4af37; /* Match pseudo-border */
-    border-right: 1px solid #d4af37;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
 }
 
 #tutorial-toast-container[data-popper-placement^='bottom'] > #tt-arrow {
     top: -4px;
-    border-top: 1px solid #d4af37; /* Match pseudo-border */
-    border-left: 1px solid #d4af37;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
 }
 
 #tutorial-toast-container[data-popper-placement^='left'] > #tt-arrow {
     right: -4px;
-    border-top: 1px solid #d4af37; /* Match pseudo-border */
-    border-right: 1px solid #d4af37;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
 }
 
 #tutorial-toast-container[data-popper-placement^='right'] > #tt-arrow {
     left: -4px;
-    border-bottom: 1px solid #d4af37; /* Match pseudo-border */
-    border-left: 1px solid #d4af37;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
 }
 /* --- [[END]] POPPER.JS ARROW STYLES --- */
 
-/* Style for the button container to make it more compact */
+/* Style for the button container */
 #tutorial-toast-controls {
-    margin-top: 0.75rem; /* Adjusted margin */
+    margin-top: 1rem; /* Standardized margin */
      text-align: right;
 }
+
+/* Style 'Next' button like a standard game button */
 #tutorial-toast-next-btn {
-     padding: 0.3rem 0.8rem;
-     font-size: 0.8rem;
+    /* Inherit from .btn */
+    transition: all 0.3s ease;
+    border: 1px solid #4a6a8a;
+    border-radius: 8px;
+    background-color: #22304a;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    color: #c0d0f0;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    
+    /* Apply .btn-sm styles */
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
 }
 
-/* Close button positioning might need slight adjustment due to clip-path */
+#tutorial-toast-next-btn:hover:not(:disabled) {
+    background-color: #32405a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    color: #e0f0ff;
+}
+
+/* Close button positioning */
 #tutorial-toast-skip-btn {
     position: absolute;
-    top: 5px; /* Adjust as needed */
-    right: 12px; /* Adjust as needed */
+    top: 8px; /* Adjusted for new padding/border */
+    right: 10px; /* Adjusted for new padding/border */
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--color-text-secondary);
     opacity: 0.7;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, color 0.2s;
     background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
 }
-#tutorial-toast-skip-btn:hover { opacity: 1; color: var(--color-accent); }
+#tutorial-toast-skip-btn:hover { 
+    opacity: 1; 
+    color: var(--color-accent); 
+}
 
 
 /* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
 #tutorial-toast-text::-webkit-scrollbar { width: 6px; }
-#tutorial-toast-text::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
-#tutorial-toast-text::-webkit-scrollbar-thumb { background-color: #d4af37; border-radius: 3px; } /* Match border color */
-#tutorial-toast-text::-webkit-scrollbar-thumb:hover { background-color: #fde047; }
+#tutorial-toast-text::-webkit-scrollbar-track { 
+    background: rgba(0, 0, 0, 0.3); 
+    border-radius: 3px; 
+}
+#tutorial-toast-text::-webkit-scrollbar-thumb { 
+    background-color: #7a9ac0; /* Match new border color */
+    border-radius: 3px; 
+} 
+#tutorial-toast-text::-webkit-scrollbar-thumb:hover { 
+    background-color: #9ab0d0; /* Lighter version */
+}
 /* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
 
 /* Lore tooltip styles remain the same */
