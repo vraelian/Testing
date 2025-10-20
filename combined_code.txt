@@ -8,12 +8,12 @@
       window.onerror = function(message, source, lineno, colno, error) {
         // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
-        
+
         // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        
+
         // Prevent the browser's default error handling.
         return true;
       };
@@ -21,8 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Orbital Trading 29.50</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Orbital Trading 29.55</title> <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
@@ -49,22 +48,21 @@
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
-          
-    
+
+
             <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
                 <button class="btn btn-header w-full" disabled="">Load Game</button>
                 <button class="btn btn-header w-full" disabled="">Options</button>
             </div>
-    
+
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 29.50</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
+            <p>Version 29.55</p> <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
-    
+
     <div id="save-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-cyan-500/80 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50">Checkpoint Saved</div>
     <div id="garnishment-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50"></div>
     <div id="hull-warning-toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50"></div>
@@ -80,13 +78,13 @@
             </header>
             <div id="sticky-bar"></div>
         </div>
-        
+
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
                 <div id="map-screen" class="screen"></div>
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
-               
+
                 <div id="market-screen" class="screen"></div>
                 <div id="cargo-screen" class="screen"></div>
                 <div id="hangar-screen" class="screen"></div>
@@ -104,7 +102,7 @@
                         <h3 id="mission-modal-title" class="text-xl font-orbitron mb-1"></h3>
                         <p id="mission-modal-type" class="mission-type"></p>
                     </div>
-                    
+
                 </div>
                 <p id="mission-modal-description" class="my-4 text-gray-300"></p>
                 <div id="mission-modal-objectives"></div>
@@ -196,7 +194,7 @@
             <div id="random-event-choices-container" class="mt-6 flex flex-col justify-center gap-4"></div>
         </div>
     </div>
-    
+
     <div id="age-event-modal" class="modal-backdrop hidden age-event-modal">
         <div class="modal-content">
             <h3 id="age-event-title" class="text-2xl font-orbitron mb-2"></h3>
@@ -206,7 +204,7 @@
     </div>
 
     <div id="ship-detail-modal" class="modal-backdrop hidden">
-         <div id="ship-detail-content" class="modal-content">
+        <div id="ship-detail-content" class="modal-content">
             </div>
     </div>
 
@@ -222,7 +220,7 @@
 
     <div id="graph-tooltip"></div>
     <div id="generic-tooltip" class="generic-tooltip"></div>
-    
+
     <div id="orientation-overlay">Please rotate your device to portrait mode.</div>
 
     <div id="diagnostic-overlay" class="hidden">
@@ -240,11 +238,7 @@
             <p><strong>Day:</strong> <span id="diag-day"></span></p>
             <p><strong>Nav/Screen:</strong> <span id="diag-nav-screen"></span></p>
         </div>
-        <div class="diag-section">
-            <p><strong>Tutorial Batch:</strong> <span id="diag-tutorial-batch"></span></p>
-            <p><strong>Tutorial Step:</strong> <span id="diag-tutorial-step"></span></p>
         </div>
-    </div>
 
     <script type="module" src="./js/main.js"></script>
     <script>
@@ -3490,17 +3484,18 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState, simulationService) {
-    const { uiState, player, tutorials } = gameState;
+    // REMOVED tutorials from destructuring
+    const { uiState, player } = gameState;
 
     // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
     const modeClass = isHangarMode ? 'mode-hangar' : 'mode-shipyard';
-    
+
     const shipList = isHangarMode ? player.ownedShipIds : simulationService._getShipyardInventory().map(([id]) => id);
-    
+
     // Use the active index from the UI state for the carousel
-    const activeCarouselIndex = isHangarMode 
-        ? (uiState.hangarActiveIndex || 0) 
+    const activeCarouselIndex = isHangarMode
+        ? (uiState.hangarActiveIndex || 0)
         : (uiState.shipyardActiveIndex || 0);
 
     // Ensure index is not out of bounds if ship list changes
@@ -3585,7 +3580,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         <div class="col-span-2 flex flex-col justify-between">
             ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode /* REMOVED, gameState.tutorials */)}
             </div>
         </div>
     `;
@@ -3603,7 +3598,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
                 ${statusBadgeHtml}
             </div>
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode /* REMOVED, gameState.tutorials */)}
             </div>
         </div>
     `;
@@ -3637,6 +3632,12 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
     const shipClassLower = shipStatic.class.toLowerCase();
 
     if (isHangarMode) {
+         // Check if shipDynamic exists before accessing its properties
+         const health = shipDynamic?.health ?? 0;
+         const fuel = shipDynamic?.fuel ?? 0;
+         const cargo = calculateInventoryUsed(player.inventories[shipId]);
+
+
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div>
@@ -3644,9 +3645,9 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                 </div>
                 <div class="hangar-specs my-4">
-                    ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
-                    ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
-                    ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
+                    ${_renderSpecBar("Hull", health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
+                    ${_renderSpecBar("Fuel", fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
+                    ${_renderSpecBar("Cargo", cargo, shipStatic.cargoCapacity, 'var(--class-s-color)')}
                 </div>
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p class="text-sm text-gray-300">${shipStatic.lore}</p>
@@ -3681,11 +3682,11 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
  * @param {object} shipStatic - The static data for the ship.
  * @param {object} player - The player object.
  * @param {boolean} isHangarMode - True if rendering the hangar view.
- * @param {object} tutorials - The current tutorial state.
  * @returns {string} The HTML for the action buttons.
  * @private
  */
-function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
+ // REMOVED tutorials parameter
+function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
@@ -3703,10 +3704,9 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         `;
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
-        const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
-        const isPurchaseLocked = tutorials.activeBatchId === 'intro_hangar' && !activeStep?.unlockPurchase;
-        const isDisabled = !canAfford || isPurchaseLocked;
-        
+        // REMOVED tutorial checks: activeStep, isPurchaseLocked
+        const isDisabled = !canAfford; // Simplified disabled check
+
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold">PURCHASE</span>
@@ -3749,19 +3749,18 @@ function _renderSpecCard(label, value) {
 // js/ui/components/IntelScreen.js
 /**
  * @fileoverview This file contains the rendering logic for the Intel screen.
- * It provides the player with access to the game's lore.
+ * It provides the player with access to the game's lore. // MODIFIED description
  */
 
 /**
- * Renders the entire Intel screen UI, which includes a button to view game lore.
+ * Renders the entire Intel screen UI, which includes a button to view game lore. // MODIFIED description
  * @returns {string} The HTML content for the Intel screen.
  */
 export function renderIntelScreen() {
     return `
         <div class="intel-scroll-panel">
             <div class="text-center p-8 flex flex-col items-center gap-4">
-                 {/* REMOVED Tutorial Button Container */}
-                <div id="lore-button-container" class="lore-container relative">
+                 <div id="lore-button-container" class="lore-container relative">
                     <button class="btn btn-header">Story So Far...</button>
                     <div class="lore-tooltip">
                         <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p><br><p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p><br><p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p><br><p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
@@ -3788,24 +3787,12 @@ import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
  * @returns {string} The HTML content for the Navigation screen.
  */
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
-    const { navLock } = tutorials;
+    // REMOVED tutorials, navLock
+    const { player, currentLocationId, TRAVEL_DATA } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
+    // REMOVED tutorial lock checks: isNavLocked, enabledElementQuery, enabledLocationId
 
-    // Check if a tutorial is active and has locked navigation.
-    const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
-    const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
-
-    // Efficiently parse the enabled location ID from the query selector string.
-    let enabledLocationId = null;
-    if (enabledElementQuery) {
-        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
-        if (match && match[1]) {
-            enabledLocationId = match[1];
-        }
-    }
-    
     return `
         <div class="scroll-panel navigation-scroll-panel p-1">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -3815,19 +3802,16 @@ export function renderNavigationScreen(gameState) {
                     const isCurrent = location.id === currentLocationId;
                     const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
 
-                    // Determine if this card should be disabled due to a tutorial lock.
-                    const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
-                    const disabledClass = isDisabled ? 'disabled-location' : '';
-                    
+                    // REMOVED isDisabled, disabledClass determination
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
+                    // REMOVED disabledClass and isDisabled attribute from div
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}"
+                                 data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
-                        ${isCurrent 
-                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
+                        ${isCurrent
+                            ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>'
                             : `<div class="flex justify-around items-center text-center">
                                    <div class="flex items-center space-x-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
@@ -4228,18 +4212,17 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials, uiState } = gameState;
+    // REMOVED tutorials
+    const { player, market, currentLocationId, uiState } = gameState;
     const playerItem = player.inventories[player.activeShipId]?.[good.id];
     const price = getItemPrice(gameState, good.id);
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-    
+
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
-    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
+    // REMOVED tutorial step checks: isPlasteelTutStep, isMarketLockedForMission, isLockedForTutorial
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
@@ -4254,8 +4237,9 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         // Correctly set initial mode based on saved state, otherwise default to 'buy'
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
+        // REMOVED isLockedForTutorial check from disabled attribute
         transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}">
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
@@ -4283,14 +4267,14 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
-            
+
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
                 <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
                 <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
-                
+
                 <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-                
+
                 <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
                 ${avgCostHtml}
@@ -4313,7 +4297,7 @@ import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
-// Removed TutorialService import
+// import { TutorialService } from './services/TutorialService.js'; // REMOVED
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
@@ -4343,7 +4327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set the app height on initial load and whenever the viewport changes.
     setAppHeight();
-    
+
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
@@ -4363,7 +4347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
 
     }, { once: true });
-    
+
     debugStartButton.addEventListener('click', () => {
         // Fade out the splash screen and then start the game logic.
         splashScreen.classList.add('splash-screen-hiding');
@@ -4383,22 +4367,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const uiManager = new UIManager(Logger);
         const missionService = new MissionService(gameState, uiManager, Logger);
         const simulationService = new SimulationService(gameState, uiManager, Logger);
-        // Removed TutorialService instantiation
+        // const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger); // REMOVED
         let debugService = null;
 
         if (DEV_MODE) {
             debugService = new DebugService(gameState, simulationService, uiManager, Logger);
             debugService.init();
         }
-        
+
         // --- Dependency Injection ---
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
-        // Removed simulationService.setTutorialService call
+        // simulationService.setTutorialService(tutorialService); // REMOVED
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, Logger); // Removed tutorialService
-        
+        const eventManager = new EventManager(gameState, simulationService, uiManager, /* REMOVED tutorialService */ debugService, Logger); // REMOVED tutorialService
+
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
 
@@ -4417,13 +4401,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Bindings ---
         eventManager.bindEvents();
-        
+
         if (hasSave || isSimpleStart) {
-            uiManager.showGameContainer(); 
+            uiManager.showGameContainer();
             uiManager.render(gameState.getState());
         }
-        
-        // Removed tutorialService.checkState call
+
+        // tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen }); // REMOVED
     }
 });
 --- END OF FILE: ./js/main.js ---
@@ -4881,7 +4865,15 @@ export const ACTION_IDS = Object.freeze({
     SET_HANGAR_PAGE: 'set-hangar-page',
 });
 
-// REMOVED TUTORIAL_ACTION_TYPES
+/** REMOVED
+ * Defines the types of conditions that can trigger or complete a tutorial step.
+ * @enum {string}
+ */
+// export const TUTORIAL_ACTION_TYPES = Object.freeze({
+//     SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
+//     ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
+//     INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
+// });
 
 /**
  * A collection of core game balance numbers and rules.
@@ -4953,7 +4945,7 @@ export const SAVE_KEY = 'orbitalTraderSave_v2';
  * into a single, authoritative source. This improves maintainability and clarity
  * by providing a unified structure for all core game content and configuration.
  */
-import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, ACTION_IDS, NAV_IDS } from './constants.js';
+import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, /* TUTORIAL_ACTION_TYPES, REMOVED */ ACTION_IDS, NAV_IDS } from './constants.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -5051,12 +5043,13 @@ export const DB = {
           `,
           buttonText: 'Submit Application'
         },
-        {
-            id: 'final',
-            title: 'Low On Credits!',
-            description: "Interest on your debt grows every month. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
-            buttonText: 'View Missions'
-        }
+        // REMOVED final step that mentioned tutorial missions
+        // {
+        //     id: 'final',
+        //     title: 'Low On Credits!',
+        //     description: "Interest on your debt grows every month. It's time to make some <b class='hl-yellow font-bold'>credits</b>. Let's view the <b>Mission Terminal</b> here on <b>Mars</b>!",
+        //     buttonText: 'View Missions'
+        // }
       ]
     },
 
@@ -5126,7 +5119,8 @@ export const DB = {
 
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: [
-        {
+        // ... (Events remain the same)
+         {
             id: 'distress_call',
             title: 'Distress Call',
             scenario: 'You pick up a distress signal from a small, damaged ship. They are out of fuel and requesting an emergency transfer to restart their reactor.',
@@ -5226,7 +5220,7 @@ export const DB = {
             id: 'engine_malfunction',
             title: 'Engine Malfunction',
             scenario: 'A sickening shudder runs through the ship. A key plasma injector has failed, destabilizing your engine output.',
-            precondition: (gameState, activeShip, getActiveInventory) => (getActiveInventory()[COMMODITY_IDS.PLASTEEL]?.quantity || 0) >= 5,
+            precondition: (gameState, activeShip, getActiveInventory) => (getActiveInventory()?.[COMMODITY_IDS.PLASTEEL]?.quantity || 0) >= 5, // Added null check
             choices: [
                 {
                     title: 'Quick, Risky Fix (5 Plasteel)',
@@ -5401,7 +5395,7 @@ export const DB = {
         { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [280000000, 800000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
         { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [350000000, 1100000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
     ],
-    
+
     // --- Trading Licenses ---
     LICENSES: {
         't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 25000 },
@@ -5430,8 +5424,9 @@ export const DB = {
 
     // --- Mission Data ---
     MISSIONS: {
-        // REMOVED mission_tutorial_01
-        // REMOVED mission_tutorial_02
+        // REMOVED tutorial missions
+        // 'mission_tutorial_01': { ... },
+        // 'mission_tutorial_02': { ... },
         'mission_license_t3': {
              id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
         },
@@ -5443,8 +5438,8 @@ export const DB = {
         }
     },
 
-    // --- Tutorial System Data ---
-    // REMOVED TUTORIAL_DATA
+    // --- Tutorial System Data --- REMOVED
+    // TUTORIAL_DATA: { ... }
 };
 --- END OF FILE: ./js/data/database.js ---
 
@@ -7600,7 +7595,7 @@ export class IntroService {
         const button = e.target.closest('button');
         if (!button) return;
         const targetId = button.id;
-        
+
         if (targetId === 'intro-next-btn') {
             button.disabled = true;
             this._showNextModal();
@@ -7609,7 +7604,7 @@ export class IntroService {
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
-    
+
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
                     // This callback runs after the "Invalid Signature" modal is closed.
@@ -7622,7 +7617,7 @@ export class IntroService {
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 390;
-    
+
                 this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
                     name: sanitizedPlayerName
@@ -7637,13 +7632,16 @@ export class IntroService {
      * @param {string} completedBatchId - The ID of the tutorial batch that just finished.
      */
     continueAfterTutorial(completedBatchId) {
-        if (completedBatchId === 'intro_hangar') {
-            this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
-        } else if (completedBatchId === 'intro_finance') {
-            this._end();
-        }
+        // This function is now obsolete as tutorials are removed.
+        // We call _end directly after the hangar transition.
+        // if (completedBatchId === 'intro_hangar') {
+        //      this._end();
+        // } else if (completedBatchId === 'intro_finance') {
+        //     this._end();
+        // }
+         this._end(); // Call end unconditionally now
     }
+
 
     /**
      * Displays the next modal in the introduction sequence.
@@ -7651,16 +7649,19 @@ export class IntroService {
      */
     _showNextModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
-        if (!step) {
-            this._end();
+        // Check if step exists AND if introSequence is still active
+        if (!step || !this.gameState.introSequenceActive) {
+            // If no step or intro ended prematurely, ensure cleanup
+            if(this.gameState.introSequenceActive) this._end();
             return;
         }
+
 
         const options = {
             buttonClass: step.buttonClass,
             contentClass: step.contentClass,
         };
-        
+
         if (this.gameState.player.introStep === 0) {
             options.specialClass = 'intro-fade-in';
         }
@@ -7689,8 +7690,16 @@ export class IntroService {
             };
         }
 
-        this.uiManager.queueModal(modalId, step.title, step.description, () => this.gameState.player.introStep++, options);
+        // Increment introStep in the callback *after* showing the current modal
+        this.uiManager.queueModal(modalId, step.title, step.description, () => {
+             // Only increment if it wasn't the signature validation failure case
+             // OR if the intro sequence hasn't already been marked as inactive
+             if ((step.id !== 'signature' || this.gameState.player.name) && this.gameState.introSequenceActive) {
+                 this.gameState.player.introStep++;
+             }
+        }, options);
     }
+
 
     /**
      * Performs custom setup for interactive modals in the intro.
@@ -7705,18 +7714,20 @@ export class IntroService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        button.onclick = (e) => {
-            e.target.disabled = true;
-            closeHandler();
-        };
+        // Don't disable button on click immediately for signature
+        // button.onclick = (e) => {
+        //     e.target.disabled = true;
+        //     closeHandler();
+        // };
         buttonContainer.appendChild(button);
 
         if (step.id === 'signature') {
             const input = modal.querySelector('#signature-input');
-            input.value = '';
+            input.value = ''; // Ensure input is cleared on re-display
             button.id = 'intro-submit-btn';
             button.disabled = true;
-            
+
+            // This onclick now *just* closes the modal. The actual logic is in handleIntroClick.
             button.onclick = closeHandler;
 
             input.oninput = () => {
@@ -7724,8 +7735,13 @@ export class IntroService {
             };
         } else {
             button.id = 'intro-next-btn';
+            button.onclick = (e) => { // Re-add standard click handler for non-signature
+                e.target.disabled = true;
+                closeHandler();
+            };
         }
     }
+
 
     /**
      * Manages the animated sequence for loan processing.
@@ -7738,18 +7754,22 @@ export class IntroService {
             const hangarTransition = (event) => {
                 const button = event.target;
                 if(button) button.disabled = true;
-                
+
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
-                
+
                 this.gameState.player.credits += 25000;
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // *** MODIFIED ***
+                // End the intro sequence here and set the initial game screen.
                 setTimeout(() => {
+                    this._end(); // Mark intro as complete and log
                     this.uiManager.showGameContainer();
-                    this.uiManager.render(this.gameState.getState());
+                    // Set initial screen to Hangar screen in Shipyard mode
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                    this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
-                }, 2000);
+                    this.simulationService.setHangarShipyardMode('shipyard'); // Ensure shipyard mode
+                    this.gameState.setState({}); // Trigger final render
+                }, 1000); // Short delay after floating text
             };
 
             this.uiManager.queueModal('event-modal', title, description, null, {
@@ -7770,7 +7790,7 @@ export class IntroService {
                 }
             });
         };
-        
+
         this.uiManager.showProcessingAnimation(this.gameState.player.name, showApprovalModal);
     }
 
@@ -7779,21 +7799,15 @@ export class IntroService {
      * @private
      */
     _end() {
-        this.gameState.introSequenceActive = false;
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
-        const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
-        const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-        const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-    
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
-    
-        this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
-        }, { buttonText: buttonText });
-        
-        this.uiManager.render(this.gameState.getState());
+        // Only mark as inactive and log if it's currently active
+        if(this.gameState.introSequenceActive) {
+            this.gameState.introSequenceActive = false;
+            this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
+            // No need to show another modal or trigger tutorials
+            this.gameState.setState({introSequenceActive: false}); // Ensure state update if called directly
+        }
     }
+
 }
 --- END OF FILE: ./js/services/game/IntroService.js ---
 
@@ -7827,7 +7841,7 @@ export class SimulationService {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        // this.tutorialService = null; // Removed
+        // this.tutorialService = null; // REMOVED Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
 
         // Instantiate all services
@@ -7841,7 +7855,13 @@ export class SimulationService {
         this.timeService.simulationService = this;
     }
 
-    // REMOVED setTutorialService
+    /** REMOVED
+     * Injects the TutorialService after all services have been instantiated.
+     * @param {import('./TutorialService.js').TutorialService} tutorialService
+     */
+    // setTutorialService(tutorialService) {
+    //     this.tutorialService = tutorialService;
+    // }
 
     /**
      * Injects the MissionService after all services have been instantiated.
@@ -7859,7 +7879,7 @@ export class SimulationService {
     // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
     handleIntroClick(e) { this.introService.handleIntroClick(e); }
-    // Removed _continueIntroSequence as it was only for tutorials
+    // _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); } // REMOVED
 
     // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
@@ -7874,7 +7894,7 @@ export class SimulationService {
     purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); }
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
-    
+
     // TravelService Delegation
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
@@ -7890,12 +7910,15 @@ export class SimulationService {
      */
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
-        this.gameState.setState({ 
-            activeNav: navId, 
+        this.gameState.setState({
+            activeNav: navId,
             activeScreen: screenId,
-            lastActiveScreen: newLastActive 
+            lastActiveScreen: newLastActive
         });
-        // Removed tutorialService.checkState call
+        // REMOVED tutorial check
+        // if (this.tutorialService) {
+        //     this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
+        // }
     }
 
     /**
@@ -7908,7 +7931,7 @@ export class SimulationService {
             this.gameState.setState({});
         }
     }
-    
+
     /**
      * Updates the active index for the hangar or shipyard carousel.
      * @param {number} index
@@ -7931,7 +7954,7 @@ export class SimulationService {
         const { uiState, player } = this.gameState;
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const shipList = isHangarMode ? player.ownedShipIds : this._getShipyardInventory().map(([id]) => id);
-        
+
         if (shipList.length <= 1) return;
 
         let currentIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
@@ -8000,7 +8023,7 @@ export class SimulationService {
         }
         this.gameState.setState({});
     }
-    
+
     _getActiveShip() {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
@@ -8012,21 +8035,21 @@ export class SimulationService {
         if (!this.gameState.player.activeShipId) return null;
         return this.gameState.player.inventories[this.gameState.player.activeShipId];
     }
-    
+
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = DB.SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
+        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; }
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;
         if (healthPct > 15) shipState.hullAlerts.two = false;
     }
 
     _logTransaction(type, amount, description) {
-        this.gameState.player.financeLog.push({ 
+        this.gameState.player.financeLog.push({
             day: this.gameState.day,
-            type: type, 
+            type: type,
             amount: amount,
             balance: this.gameState.player.credits,
             description: description
@@ -8041,7 +8064,7 @@ export class SimulationService {
         const log = this.gameState.player.financeLog;
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
-        const existingEntry = log.find(entry => 
+        const existingEntry = log.find(entry =>
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
@@ -8073,11 +8096,12 @@ export class SimulationService {
     }
 
     _getShipyardInventory() {
-        const { player, currentLocationId, market } = this.gameState; // Removed tutorials
-        // Removed tutorial check
+        // REMOVED intro_hangar tutorial check
+        const { player, currentLocationId, market } = this.gameState;
         const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
         return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
     }
+
 
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
@@ -8090,13 +8114,13 @@ export class SimulationService {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
-                    // this.uiManager.triggerEffect('systemSurge', { theme: 'tan' }); // Effect removed
+                    // this.uiManager.triggerEffect('systemSurge', { theme: 'tan' }); // REMOVED - Effect decommissioned
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }
         });
     }
-    
+
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;
@@ -8230,6 +8254,7 @@ import { MarketEventHandler } from './handlers/MarketEventHandler.js';
 import { HoldEventHandler } from './handlers/HoldEventHandler.js';
 import { CarouselEventHandler } from './handlers/CarouselEventHandler.js';
 import { TooltipHandler } from './handlers/TooltipHandler.js';
+// Removed TutorialService import
 
 /**
  * @class EventManager
@@ -8243,16 +8268,16 @@ export class EventManager {
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, debugService = null, logger) { // Removed tutorialService
+    constructor(gameState, simulationService, uiManager, /* REMOVED tutorialService */ debugService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        // this.tutorialService = tutorialService; // Removed
+        // this.tutorialService = tutorialService; // REMOVED
         this.debugService = debugService;
         this.logger = logger;
 
         // Instantiate all specialized handlers
-        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager); // Removed tutorialService
+        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager /* REMOVED, tutorialService */);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
         this.holdEventHandler = new HoldEventHandler(gameState, simulationService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
@@ -8290,7 +8315,7 @@ export class EventManager {
             }
             startDragOrHold(e);
         }, { passive: false });
-        
+
         const endDragOrHold = () => {
             this.holdEventHandler.handleHoldEnd();
             this.carouselEventHandler.handleDragEnd();
@@ -8299,12 +8324,12 @@ export class EventManager {
         document.body.addEventListener('mouseleave', endDragOrHold);
         document.body.addEventListener('touchend', endDragOrHold);
         document.body.addEventListener('touchcancel', endDragOrHold);
-        
+
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
         document.body.addEventListener('touchmove', (e) => this.carouselEventHandler.handleDragMove(e), { passive: false });
 
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
-        
+
         if (this.uiManager.cache.missionStickyBar) {
             this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
@@ -8326,7 +8351,7 @@ export class EventManager {
 
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
-        
+
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 
@@ -8339,16 +8364,16 @@ export class EventManager {
             }
             this.actionClickHandler.handle(e, actionTarget);
             this.marketEventHandler.handleClick(e, actionTarget);
-            // Removed tutorialService.checkState call
             return;
         }
 
         // --- Fallback Handlers for non-action clicks ---
-        // Removed check for introSequenceActive && !state.tutorials.activeBatchId
+        // Removed intro sequence tutorial check
         if (state.introSequenceActive) {
              this.simulationService.handleIntroClick(e);
              return;
         }
+
         if (state.isGameOver) return;
 
         const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
@@ -8782,9 +8807,12 @@ export class UIManager {
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
-        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
-            return;
+        // Prevent rendering main UI if still in the initial part of the intro
+        if (gameState.introSequenceActive && gameState.player.introStep < DB.INTRO_SEQUENCE_V1.modals.length -1 ) {
+             // Only render if past the signature step (where player name is set)
+             return;
         }
+
 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
@@ -8852,7 +8880,11 @@ export class UIManager {
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
                 </div>`;
+        } else {
+             // Show empty status pod if no ship active
+              statusPodHtml = `<div class="status-pod"></div>`;
         }
+
 
         const navWrapperHtml = `<div class="nav-wrapper">${mainTabsHtml}${statusPodHtml}</div>`;
 
@@ -8862,7 +8894,9 @@ export class UIManager {
             const subNavButtons = Object.keys(screens).map(screenId => {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
-                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                 // *** MODIFIED: Disable Navigation screen if no ships are owned ***
+                 const isDisabledByNoShip = screenId === SCREEN_IDS.NAVIGATION && (!player.ownedShipIds || player.ownedShipIds.length === 0);
+                 const isDisabled = introSequenceActive || isDisabledByTutorial || isDisabledByNoShip;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  let subStyle = '';
                  if (isSubNavActive) {
@@ -8915,7 +8949,10 @@ export class UIManager {
                     previousState.player.activeShipId !== gameState.player.activeShipId ||
                     previousState.uiState.lastTransactionTimestamp !== gameState.uiState.lastTransactionTimestamp ||
                     (previousState && previousState.tutorials.activeBatchId !== gameState.tutorials.activeBatchId) ||
-                    (previousState && previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId);
+                    (previousState && previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId) ||
+                    // Force re-render if number of owned ships changes
+                    (previousState && previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length);
+
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
@@ -9068,12 +9105,15 @@ export class UIManager {
     updateServicesScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
         const { player } = gameState;
+        // Check if player has an active ship before proceeding
+        if (!player.activeShipId) return;
+
         const shipStatic = DB.SHIPS[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
         const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
         const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
-        if (fuelBar && refuelBtn) {
+        if (fuelBar && refuelBtn && shipStatic && shipState) {
             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
@@ -9081,12 +9121,13 @@ export class UIManager {
 
         const repairBar = this.cache.servicesScreen.querySelector('#repair-bar');
         const repairBtn = this.cache.servicesScreen.querySelector('#repair-btn');
-        if (repairBar && repairBtn) {
+        if (repairBar && repairBtn && shipStatic && shipState) {
             const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
             repairBar.style.width = `${healthPct}%`;
             repairBtn.disabled = shipState.health >= shipStatic.maxHealth;
         }
     }
+
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
@@ -9097,13 +9138,14 @@ export class UIManager {
             this.marketScrollPosition = 0;
         }
         this._saveMarketTransactionState();
-        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
+        this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice.bind(this), this.marketTransactionState); // Pass bound getItemPrice
         this._restoreMarketTransactionState();
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
     }
+
 
     _saveMarketTransactionState() {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
@@ -9154,6 +9196,11 @@ export class UIManager {
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+        // Ensure activeShipId exists before proceeding
+        if (!state.player.activeShipId || !state.player.inventories[state.player.activeShipId]) {
+             return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
+        }
+
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -9226,8 +9273,14 @@ export class UIManager {
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.lastKnownState) return;
 
         const state = this.lastKnownState;
+        // Ensure activeShipId exists before proceeding
+         if (!state.player.activeShipId || !state.player.inventories[state.player.activeShipId]) {
+             return; // Or handle the case where there's no active inventory
+         }
+
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
@@ -9267,6 +9320,7 @@ export class UIManager {
             });
         }
     }
+
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
@@ -9452,9 +9506,15 @@ export class UIManager {
         const action = anchorEl.dataset.action;
 
         if (action === ACTION_IDS.SHOW_PRICE_GRAPH) {
-            const goodId = anchorEl.dataset.goodId;
-            const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
-            tooltip.innerHTML = this._renderPriceGraph(goodId, gameState, playerItem);
+             // Ensure activeShipId exists before accessing inventories
+             if (!gameState.player.activeShipId || !gameState.player.inventories[gameState.player.activeShipId]) {
+                 tooltip.innerHTML = `<div class="text-gray-400 text-sm p-4">No active ship inventory!</div>`;
+             } else {
+                const goodId = anchorEl.dataset.goodId;
+                const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
+                tooltip.innerHTML = this._renderPriceGraph(goodId, gameState, playerItem);
+             }
+
         } else if (action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
             tooltip.innerHTML = this._renderFinanceGraph(gameState);
         }
@@ -9462,6 +9522,7 @@ export class UIManager {
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
     }
+
 
     hideGraph() {
         if (this.activeGraphAnchor) {
@@ -9576,10 +9637,14 @@ export class UIManager {
         const toast = this.cache.tutorialToastContainer;
 
         let processedText = step.text;
-        if (processedText.includes('{shipName}')) {
-            const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
-            processedText = processedText.replace(/{shipName}/g, shipName);
-        }
+        // Ensure activeShipId exists before trying to use it
+        if (processedText.includes('{shipName}') && gameState.player.activeShipId) {
+             const shipName = DB.SHIPS[gameState.player.activeShipId]?.name || 'your ship';
+             processedText = processedText.replace(/{shipName}/g, shipName);
+         } else if (processedText.includes('{shipName}')) {
+             processedText = processedText.replace(/{shipName}/g, 'your ship'); // Fallback if no active ship
+         }
+
         if (processedText.includes('{playerName}')) {
             processedText = processedText.replace(/{playerName}/g, gameState.player.name);
         }
@@ -9767,28 +9832,35 @@ export class UIManager {
                     <button class="btn w-full mt-2" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
                 </div>`;
         } else { // context === 'hangar'
-            const shipDynamic = player.shipStates[shipId];
-            const shipInventory = player.inventories[shipId];
-            const cargoUsed = calculateInventoryUsed(shipInventory);
-            const isActive = shipId === player.activeShipId;
-            const canSell = player.ownedShipIds.length > 1 && !isActive;
-            const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-            modalContentHtml = `
-                <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
-                    <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
-                    <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
-                    <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
-                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                        <div><span class="text-gray-500">Hull</span><div class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</div></div>
-                        <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
-                        <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
-                        <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
-                    </div>
-                </div>`;
+             // Ensure activeShipId exists before accessing inventories/states
+             if (!player.activeShipId || !player.shipStates[shipId] || !player.inventories[shipId]) {
+                  modalContentHtml = `<p>Error: Ship data not found.</p>`; // Or a better error message
+             } else {
+                 const shipDynamic = player.shipStates[shipId];
+                 const shipInventory = player.inventories[shipId];
+                 const cargoUsed = calculateInventoryUsed(shipInventory);
+                 const isActive = shipId === player.activeShipId;
+                 const canSell = player.ownedShipIds.length > 1 && !isActive;
+                 const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
+                 modalContentHtml = `
+                     <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
+                         <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
+                         <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
+                         <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
+                         <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
+                             <div><span class="text-gray-500">Hull</span><div class="text-green-400">${Math.floor(shipDynamic.health)}/${shipStatic.maxHealth}</div></div>
+                             <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
+                             <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
+                         </div>
+                         <div class="grid grid-cols-2 gap-2 mt-2">
+                             ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
+                             <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
+                         </div>
+                     </div>`;
+             }
+
         }
+
 
         const modal = this.cache.shipDetailModal;
         const modalContent = modal.querySelector('#ship-detail-content');
@@ -9797,6 +9869,7 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
 
+
     showLaunchModal(locationId) {
         const state = this.lastKnownState;
         if (!state) return;
@@ -9804,9 +9877,17 @@ export class UIManager {
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
 
+         // Ensure activeShipId exists before accessing shipState
+         if (!state.player.activeShipId || !state.player.shipStates[state.player.activeShipId]) {
+              this.logger.warn('UIManager', 'Cannot show launch modal: No active ship state found.');
+              return;
+         }
+
+
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
+
 
         // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
@@ -9854,8 +9935,15 @@ export class UIManager {
     }
 
     showCargoDetailModal(gameState, goodId) {
+         // Ensure activeShipId exists before accessing inventories
+         if (!gameState.player.activeShipId || !gameState.player.inventories[gameState.player.activeShipId]) {
+             this.logger.warn('UIManager', 'Cannot show cargo detail: No active ship inventory.');
+             return;
+         }
+
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
+
 
         if (!good || !item) return;
 
@@ -9866,6 +9954,7 @@ export class UIManager {
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }
+
 
     renderStickyBar(gameState) {
         const stickyBarEl = this.cache.missionStickyBar;
@@ -9882,7 +9971,9 @@ export class UIManager {
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
 
             const objective = mission.objectives[0];
-            const current = progress.objectives[objective.goodId]?.current ?? 0;
+             // Ensure progress data for the specific objective exists before accessing 'current'
+             const current = progress.objectives[objective.goodId]?.current ?? 0;
+
             const target = objective.quantity;
             const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
             const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
@@ -9904,6 +9995,13 @@ export class UIManager {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
+         // Ensure lastKnownState exists before accessing it
+         if (!this.lastKnownState) {
+             this.logger.error('UIManager', 'Cannot show mission modal: lastKnownState is null.');
+             return;
+         }
+
+
         const { missions, currentLocationId } = this.lastKnownState;
         const { activeMissionId, activeMissionObjectivesMet } = missions;
 
@@ -9918,6 +10016,12 @@ export class UIManager {
     }
 
     _showMissionDetailsModal(mission) {
+         // Ensure lastKnownState exists before accessing it
+         if (!this.lastKnownState) {
+             this.logger.error('UIManager', 'Cannot show mission details modal: lastKnownState is null.');
+             return;
+         }
+
         const { missions, tutorials } = this.lastKnownState;
         const isActive = missions.activeMissionId === mission.id;
         const anotherMissionActive = missions.activeMissionId && !isActive;
@@ -9967,6 +10071,7 @@ export class UIManager {
         }
         this.queueModal('mission-modal', mission.name, mission.description, null, options);
     }
+
 
     _showMissionCompletionModal(mission) {
         const options = {
@@ -10134,6 +10239,7 @@ export class UIManager {
         });
     }
 
+
     hideMapDetailModal() {
         const modal = this.cache.mapDetailModal;
         if (modal) {
@@ -10242,11 +10348,12 @@ export class MarketEventHandler {
                     const color = mode === 'buy' ? '#f87171' : '#34d399';
                     this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
 
+                    // REMOVED tutorial check
                     // Check for tutorial completion on relevant actions
-                    if (mode === 'sell') {
-                        const actionData = { type: 'ACTION', action: 'sell-item', goodId };
-                        this.simulationService.tutorialService.checkState(actionData);
-                    }
+                    // if (mode === 'sell') {
+                    //     const actionData = { type: 'ACTION', action: 'sell-item', goodId };
+                    //     this.simulationService.tutorialService.checkState(actionData);
+                    // }
                 }
                 break;
             }
@@ -10482,19 +10589,19 @@ export class HoldEventHandler {
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js'; // Added missing import
 
 export class ActionClickHandler {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
      * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
+    constructor(gameState, simulationService, uiManager /* REMOVED, tutorialService */) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
+        // this.tutorialService = tutorialService; // REMOVED
     }
 
     /**
@@ -10507,7 +10614,7 @@ export class ActionClickHandler {
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; // For the TutorialService
+        // let actionData = null; // REMOVED For the TutorialService
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -10516,7 +10623,7 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 this.simulationService.buyShip(shipId, e);
-                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP }; // REMOVED
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
@@ -10530,7 +10637,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 this.simulationService.setActiveShip(shipId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP }; // REMOVED
                 break;
             }
 
@@ -10588,18 +10695,18 @@ export class ActionClickHandler {
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
-                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId }; // REMOVED
                 break;
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
                 this.simulationService.travelTo(dataset.locationId);
-                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
+                // actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL }; // REMOVED
                 break;
 
             // --- Modals ---
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
-                actionData = { type: 'ACTION', action: 'show-mission-modal' };
+                // actionData = { type: 'ACTION', action: 'show-mission-modal' }; // REMOVED
                 break;
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
@@ -10618,7 +10725,7 @@ export class ActionClickHandler {
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
+                // actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId }; // REMOVED
                 break;
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission();
@@ -10627,7 +10734,7 @@ export class ActionClickHandler {
             case 'complete-mission':
                 this.simulationService.missionService.completeActiveMission();
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'complete-mission' };
+                // actionData = { type: 'ACTION', action: 'complete-mission' }; // REMOVED
                 break;
 
             // --- Finance & Licenses ---
@@ -10653,9 +10760,10 @@ export class ActionClickHandler {
                 break;
         }
 
-        if (actionData) {
-            this.tutorialService.checkState(actionData);
-        }
+        // REMOVED tutorial check
+        // if (actionData) {
+        //     this.tutorialService.checkState(actionData);
+        // }
     }
 
     /**
@@ -10736,7 +10844,7 @@ export class TooltipHandler {
             this.uiManager.hideGenericTooltip();
             this.activeTooltipTarget = null;
         }
-        
+
         // --- Action Handling ---
         if (actionTarget) {
             const { action } = actionTarget.dataset;
@@ -10759,12 +10867,12 @@ export class TooltipHandler {
                     break;
             }
         }
-        
+
         if (this.uiManager.isMobile) {
             this._handleMobileTooltip(e);
         }
 
-        this._handleLoreClick(e); // Renamed from _handleLoreAndTutorialLog
+        // this._handleLoreAndTutorialLog(e); // REMOVED
     }
 
     /**
@@ -10791,11 +10899,6 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Toggles the visibility of a status bar tooltip.
-     * @param {HTMLElement} target The element containing the tooltip.
-     * @private
-     */
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
@@ -10809,11 +10912,6 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Handles tooltip display logic specifically for mobile (tap to show/hide).
-     * @param {Event} e The click event.
-     * @private
-     */
     _handleMobileTooltip(e) {
         const tooltipTarget = e.target.closest('[data-tooltip]');
         if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) {
@@ -10828,25 +10926,10 @@ export class TooltipHandler {
         }
     }
 
-    /**
-     * Handles clicks related to lore tooltips.
-     * @param {Event} e The click event.
-     * @private
-     */
-    _handleLoreClick(e) {
-        const loreTrigger = e.target.closest('.lore-container');
-
-        // Close any visible lore tooltip if clicking outside of it.
-        const visibleTooltip = document.querySelector('.lore-tooltip.visible');
-        if (visibleTooltip && !e.target.closest('.lore-tooltip')) {
-            visibleTooltip.classList.remove('visible');
-        }
-        
-        // Toggle the visibility of the clicked lore tooltip.
-        if (loreTrigger) {
-            loreTrigger.querySelector('.lore-tooltip')?.classList.toggle('visible');
-        }
-    }
+    // REMOVED _handleLoreAndTutorialLog method entirely
+    // _handleLoreAndTutorialLog(e) {
+    //     ...
+    // }
 }
 --- END OF FILE: ./js/services/handlers/TooltipHandler.js ---
 
