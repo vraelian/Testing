@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [29.55] - 2025-10-19
+- added STATE-SCHEMA.md
+- added SERVICES.md
+
 ## [29.50] - 2025-10-17
 - added game over condition for zero credits
 - removed tap-hold link preview on sub-navigation
