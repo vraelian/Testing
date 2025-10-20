@@ -113,7 +113,7 @@ class AutomatedPlayer {
             this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
         }
     }
-    
+
     /**
      * @private
      */
@@ -253,7 +253,7 @@ export class DebugService {
     generateBugReport() {
         const logHistory = this.logger.getLogHistory();
         const gameState = this.gameState.getState();
-        
+
         delete gameState.TRAVEL_DATA;
         delete gameState.market.priceHistory;
 
@@ -268,7 +268,7 @@ ${JSON.stringify(gameState, null, 2)}
 --- RECENT LOG HISTORY ---
 ${logHistory}
         `;
-        
+
         navigator.clipboard.writeText(report.trim())
             .then(() => {
                 this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
@@ -285,14 +285,14 @@ ${logHistory}
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
         this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null; 
+        this.gameState.tutorials.activeStepId = null;
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
-        
+
         this.gameState.player.credits = 1000000000000;
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
         this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
-        
+
         this.gameState.player.revealedTier = 7;
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
@@ -319,10 +319,10 @@ ${logHistory}
         this.simulationService.timeService.advanceDays(7);
         this.gameState.setState({});
     }
-    
+
     skipToHangarTutorial() {
         this.logger.warn('DebugService', 'SKIP TO HANGAR TUTORIAL ACTIVATED.');
-        this.gameState.introSequenceActive = true; 
+        this.gameState.introSequenceActive = true;
 
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
@@ -535,7 +535,7 @@ ${logHistory}
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
             fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
-            
+
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
             generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() }
             // --- [[END]] TUTORIAL TUNER ACTIONS ---
@@ -560,7 +560,7 @@ ${logHistory}
             tutorialStep: document.getElementById('diag-tutorial-step'),
         };
     }
-    
+
     _startDiagLoop() {
         const update = () => {
             this._updateDiagOverlay();
@@ -577,7 +577,7 @@ ${logHistory}
 
         this.diagElements.winW.textContent = window.innerWidth;
         this.diagElements.winH.textContent = window.innerHeight;
-        
+
         if (window.visualViewport) {
             this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
             this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
@@ -612,7 +612,7 @@ ${logHistory}
         this.debugState.creditsToReduce = 100000;
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-        
+
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');
@@ -630,12 +630,12 @@ ${logHistory}
         shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
-        
+
         const worldFolder = this.gui.addFolder('World & Time');
         this.debugState.daysToAdvance = 7;
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
-        
+
         const economyFolder = this.gui.addFolder('Economy');
         economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
@@ -657,7 +657,7 @@ ${logHistory}
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
         tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-        
+
         this.debugState.ttStepId = 'None';
         this.debugState.ttAnchor = 'N/A';
         this.debugState.ttPlacement = 'auto';
@@ -673,7 +673,7 @@ ${logHistory}
         tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding').onChange(() => this._handleTutorialTune());
         tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
         // *** REMOVED .disable() TO ALLOW COPYING ***
-        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen(); 
+        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
         // --- [[END]] TUTORIAL TUNER FOLDER ---
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
@@ -687,22 +687,22 @@ ${logHistory}
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
         automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
-        
+
         this.gui.folders.forEach(folder => folder.close());
     }
 
     // --- [[START]] TUTORIAL TUNER METHODS ---
-    
+
     /**
      * Populates the Tutorial Tuner with the active step's data.
      * Called by UIManager when a toast is shown.
      * @param {object} step - The tutorial step object.
      */
     setActiveTutorialStep(step) {
-        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`); //
 
         // Try to find an offset modifier if one is defined in the step's popperOptions
-        const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+        const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset'); //
         // Extract offset values carefully, handling different ways it might be defined
         let skidding = 0;
         let distance = 0; // Default to 0 for tuner baseline
@@ -710,14 +710,14 @@ ${logHistory}
          if (typeof offsetMod?.options?.offset === 'function') {
              // If offset is a function, we can't easily get initial values for the tuner. Use 0,0.
              // The UIManager's initial positioning will still use the function.
-             this.logger.warn('DebugService', `Offset for step ${step.stepId} is a function. Using [0, 0] for tuner initial values.`);
+             this.logger.warn('DebugService', `Offset for step ${step.stepId} is a function. Using [0, 0] for tuner initial values.`); //
              skidding = 0;
              distance = 0;
          } else if (Array.isArray(offsetMod?.options?.offset)) {
             // If it's an array, use the values from the step definition.
-            skidding = offsetMod.options.offset[0] || 0;
-            distance = offsetMod.options.offset[1] || 0;
-         } else if (step.anchorElement !== 'body') {
+            skidding = offsetMod.options.offset[0] || 0; //
+            distance = offsetMod.options.offset[1] || 0; //
+         } else if (step.anchorElement !== 'body') { //
             // If not body anchor and no offset defined, use Popper's default (usually small distance)
             distance = 10; // A common default Popper distance
          }
@@ -725,12 +725,12 @@ ${logHistory}
 
 
         // Populate the debug state
-        this.debugState.ttStepId = step.stepId;
-        this.debugState.ttAnchor = step.anchorElement;
+        this.debugState.ttStepId = step.stepId; //
+        this.debugState.ttAnchor = step.anchorElement; //
         // Read placement, default depends on anchor type
-        this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || (step.anchorElement === 'body' ? 'bottom' : 'auto');
-        this.debugState.ttOffsetSkidding = skidding;
-        this.debugState.ttOffsetDistance = distance;
+        this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || (step.anchorElement === 'body' ? 'bottom' : 'auto'); //
+        this.debugState.ttOffsetSkidding = skidding; //
+        this.debugState.ttOffsetDistance = distance; //
         this.debugState.ttGeneratedCode = ''; // Clear generated code
     }
 
@@ -739,15 +739,15 @@ ${logHistory}
      * Called by UIManager when a toast is hidden.
      */
     clearActiveTutorialStep() {
-        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
-        
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.'); //
+
         // Reset all state properties to their defaults
-        this.debugState.ttStepId = 'None';
-        this.debugState.ttAnchor = 'N/A';
-        this.debugState.ttPlacement = 'auto';
-        this.debugState.ttOffsetDistance = 0;
-        this.debugState.ttOffsetSkidding = 0;
-        this.debugState.ttGeneratedCode = '';
+        this.debugState.ttStepId = 'None'; //
+        this.debugState.ttAnchor = 'N/A'; //
+        this.debugState.ttPlacement = 'auto'; //
+        this.debugState.ttOffsetDistance = 0; //
+        this.debugState.ttOffsetSkidding = 0; //
+        this.debugState.ttGeneratedCode = ''; //
     }
 
     /**
@@ -756,13 +756,13 @@ ${logHistory}
      */
     _handleTutorialTune() {
         // Debounce or throttle this if performance becomes an issue
-        this.logger.info.system('DebugService', `Tune event: ${this.debugState.ttPlacement}, ${this.debugState.ttOffsetDistance}, ${this.debugState.ttOffsetSkidding}`);
-        
+        this.logger.info.system('DebugService', `Tune event: ${this.debugState.ttPlacement}, ${this.debugState.ttOffsetDistance}, ${this.debugState.ttOffsetSkidding}`); //
+
         if (this.uiManager) {
-            this.uiManager.updateTutorialPopper({
-                placement: this.debugState.ttPlacement,
-                distance: Number(this.debugState.ttOffsetDistance) || 0,
-                skidding: Number(this.debugState.ttOffsetSkidding) || 0
+            this.uiManager.updateTutorialPopper({ //
+                placement: this.debugState.ttPlacement, //
+                distance: Number(this.debugState.ttOffsetDistance) || 0, //
+                skidding: Number(this.debugState.ttOffsetSkidding) || 0 //
             });
         }
     }
@@ -773,18 +773,18 @@ ${logHistory}
      * @private
      */
     _generateTutorialCode() {
-        this.logger.info.system('DebugService', 'Generating tutorial code...');
-        
-        // Construct the code string using template literals
-        // Removed the confusing comment placeholder
-        const code = `placement: '${this.debugState.ttPlacement}',
+        this.logger.info.system('DebugService', 'Generating tutorial code...'); //
+
+        // **MODIFIED:** Include stepId in the comment
+        const code = `// --- ${this.debugState.ttStepId} ---
+placement: '${this.debugState.ttPlacement}',
 popperOptions: {
     modifiers: [
         { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
     ]
-}`;
-        this.debugState.ttGeneratedCode = code;
+}`; //
+        this.debugState.ttGeneratedCode = code; //
     }
-    
+
     // --- [[END]] TUTORIAL TUNER METHODS ---
 }

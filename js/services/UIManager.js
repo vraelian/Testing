@@ -983,7 +983,13 @@ export class UIManager {
 
         // 4. Set base class (styles are primarily in CSS now)
         toast.className = 'fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto'; // Base class needed for Popper/CSS
-        toast.style.width = step.size?.width || 'auto';
+        
+        // **MODIFIED:** Set initial width and height from step
+        const initialWidth = step.size?.width || 'auto';
+        const initialHeight = step.size?.height || 'auto';
+        toast.style.width = initialWidth;
+        toast.style.height = initialHeight;
+
 
         // 5. Configure Popper.js
         let defaultOptions;
@@ -1118,6 +1124,8 @@ export class UIManager {
      * @param {string} newOptions.placement - The new placement string (e.g., 'bottom-start').
      * @param {number} newOptions.distance - The offset distance adjustment from the debug slider.
      * @param {number} newOptions.skidding - The offset skidding adjustment from the debug slider.
+     * @param {number} newOptions.width - The new width (0 for 'auto').
+     * @param {number} newOptions.height - The new height (0 for 'auto').
      */
     updateTutorialPopper(newOptions) {
         if (!this.popperInstance) {
@@ -1125,12 +1133,19 @@ export class UIManager {
             return;
         }
 
-        const { placement: debugPlacement, distance: debugDistance, skidding: debugSkidding } = newOptions;
+        // *** MODIFIED: Destructure width and height ***
+        const { placement: debugPlacement, distance: debugDistance, skidding: debugSkidding, width: debugWidth, height: debugHeight } = newOptions;
 
         // Get the current actual placement and reference element
         const currentState = this.popperInstance.state;
         const referenceEl = currentState.elements?.reference;
         const isDefaultPlacement = (referenceEl === document.body);
+
+        // *** NEW: Apply size styles directly to the toast element ***
+        // This MUST be done *before* setOptions so Popper can calculate position based on the new size.
+        const toast = this.cache.tutorialToastContainer;
+        toast.style.width = debugWidth > 0 ? `${debugWidth}px` : 'auto';
+        toast.style.height = debugHeight > 0 ? `${debugHeight}px` : 'auto';
 
         let finalPlacement = debugPlacement; // Use the placement from the debug panel
         let finalOffset; // This will be the [skidding, distance] array
@@ -1139,10 +1154,14 @@ export class UIManager {
             // *** REVISED LOGIC FOR BODY ANCHOR UPDATE ***
             finalPlacement = 'bottom'; // Keep base placement relative to bottom
 
-            // Recalculate base offset needed to reach near top-center
+            // *** MUST get new bounds *after* style change ***
+            const popperRect = toast.getBoundingClientRect(); 
+            
             const targetY = window.innerHeight * 0.20;
-            const baseDistance = -(window.innerHeight - targetY - currentState.elements.popper.offsetHeight);
-            const baseSkidding = (window.innerWidth / 2) - (currentState.elements.popper.offsetWidth / 2);
+            // Use popperRect.height
+            const baseDistance = -(window.innerHeight - targetY - popperRect.height); 
+            // Use popperRect.width
+            const baseSkidding = (window.innerWidth / 2) - popperRect.width / 2; 
 
             // Apply debug adjustments to the base values
             finalOffset = [baseSkidding + debugSkidding, baseDistance + debugDistance];
