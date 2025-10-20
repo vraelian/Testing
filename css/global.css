@@ -124,9 +124,8 @@ body {
     touch-action: pan-y;
 }
 
-.scroll-panel::-webkit-scrollbar {
-    display: none;
-}
+/* MODIFIED: REMOVED global scrollbar hiding rule */
+/* .scroll-panel::-webkit-scrollbar { display: none; } */
 
 .btn {
     transition: all 0.3s ease;
