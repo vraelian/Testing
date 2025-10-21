@@ -30,16 +30,19 @@
 .central-axis {
     stroke: rgba(255, 255, 255, 0.1);
     stroke-width: 1;
+    will-change: stroke, opacity; /* ADDED */
 }
 
 .leader-line {
     stroke: rgba(255, 255, 255, 0.2);
     stroke-width: 2.5;
     /* Removed drop-shadow */
+    will-change: stroke, opacity; /* ADDED */
 }
 
 .poi-group {
     cursor: pointer;
+    will-change: opacity; /* ADDED */
 }
 
 /* *** MODIFIED: Added stroke to POI shapes and removed filter *** */
@@ -48,18 +51,20 @@
     stroke: #0c101d; /* Outline color */
     stroke-width: 2px; /* Doubled stroke width */
     /* filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); */ /* REMOVED */
+    will-change: fill, stroke; /* ADDED */
 }
 
 .poi-label {
     font-family: 'Orbitron', sans-serif;
+    /* Removed drop shadow, reverted to stroke for contrast */
+    paint-order: stroke; /* RE-ADDED (since removing it did not work) */
     fill: #d0d8e8;
     font-size: 0.9rem;
-    /* Removed drop shadow, reverted to stroke for contrast */
-    paint-order: stroke;
     stroke: #0c101d;
     stroke-width: 3px;
     stroke-linecap: butt;
     stroke-linejoin: miter;
+    will-change: fill, stroke, opacity; /* ADDED */
 }
 
 @keyframes map-modal-glow {
@@ -90,6 +95,7 @@
     border-radius: 12px; /* Match the modal's border-radius */
     border: 2px solid var(--theme-glow-color);
     z-index: -1; /* Place it behind the modal's actual content */
+    will-change: box-shadow, border-color; /* ADDED */
 }
 
 /* New rule to trigger the animation */
@@ -122,4 +128,5 @@
     border-width: 1px;
     border-style: solid;
     margin: 0.25rem;
+    will-change: background-color; /* ADDED */
 }

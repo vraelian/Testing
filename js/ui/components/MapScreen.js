@@ -7,6 +7,21 @@ import { DB } from '../../data/database.js';
 import { LOCATION_IDS } from '../../data/constants.js';
 
 /**
+ * Forces a browser layout reflow.
+ * This is a workaround for mobile WebKit rendering bugs where
+ * dynamic styles (gradients, strokes, fills) are not painted.
+ * @param {HTMLElement} [element] - The specific element to reflow.
+ */
+function forceReflow(element) {
+    requestAnimationFrame(() => {
+        const el = element || document.body;
+        // Reading a layout property forces the browser to recalculate layout
+        // @ts-ignore
+        const _ = el.offsetHeight;
+    });
+}
+
+/**
  * Renders the container for the Map screen UI.
  * @returns {string} The HTML content for the Map screen container.
  */
@@ -155,4 +170,7 @@ export function initMap(uiManager) {
         .attr("text-anchor", (d, i) => i % 2 === 0 ? "end" : "start")
         .attr("dominant-baseline", "middle")
         .text(d => d.name);
+
+    // *** ADDED: Force a reflow after D3 has drawn everything ***
+    forceReflow(container.node());
 }
