@@ -16,6 +16,20 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
+/**
+ * Stores the lore text content.
+ * @private
+ */
+const LORE_CONTENT = {
+    story_so_far: `
+        <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
+        <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
+        <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
+        <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
+    `
+};
+
+
 export class UIManager {
     /**
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
@@ -130,6 +144,10 @@ export class UIManager {
 
             mapDetailModal: document.getElementById('map-detail-modal'),
             
+            // Lore Modal
+            loreModal: document.getElementById('lore-modal'),
+            loreModalContent: document.getElementById('lore-modal-content'),
+
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -145,20 +163,6 @@ export class UIManager {
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
-    }
-
-    /**
-     * Forces a browser layout reflow as a workaround for mobile WebKit rendering bugs.
-     * @param {HTMLElement} [element] - The specific element to reflow.
-     * @private
-     */
-    _forceReflow(element) {
-        requestAnimationFrame(() => {
-            const el = element || document.body;
-            // Reading a layout property forces the browser to recalculate layout
-            // @ts-ignore
-            const _ = el.offsetHeight;
-        });
     }
 
     render(gameState) {
@@ -292,8 +296,6 @@ export class UIManager {
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
-                // *** ADDED: Force a reflow after rendering the cargo screen ***
-                this._forceReflow(this.cache.cargoScreen);
                 break;
             case SCREEN_IDS.HANGAR: {
                 const needsFullRender = !previousState ||
@@ -323,7 +325,7 @@ export class UIManager {
     }
 
     /**
-     * Surgically updates the Hangar screen for smooth transitions withouta full re-render.
+     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
      * @param {object} gameState The current game state.
      * @private
      */
@@ -782,6 +784,43 @@ export class UIManager {
         });
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
+    }
+
+    /**
+     * Displays the new modal for showing lore text.
+     * @param {string} loreId The ID of the lore to display (e.g., 'story_so_far').
+     */
+    showLoreModal(loreId) {
+        const modal = this.cache.loreModal;
+        const contentEl = this.cache.loreModalContent;
+        
+        if (!modal || !contentEl) {
+            this.logger.error('UIManager', 'Lore modal elements not cached or found in DOM.');
+            return;
+        }
+
+        const contentHtml = LORE_CONTENT[loreId];
+        if (!contentHtml) {
+            this.logger.error('UIManager', `No lore content found for ID: ${loreId}`);
+            contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
+        } else {
+            contentEl.innerHTML = contentHtml;
+        }
+        
+        // Ensure scroll position is at the top
+        contentEl.scrollTop = 0;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+
+        // Add a one-time click listener to the backdrop *and* content area to close the modal.
+        const closeHandler = (e) => {
+            if (e.target.closest('#lore-modal-content') || e.target.id === 'lore-modal') {
+                this.hideModal('lore-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
     }
 
     hideModal(modalId) {
@@ -1577,7 +1616,18 @@ export class UIManager {
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
         if (modalBackdrop && modalBackdrop.id && !modalBackdrop.classList.contains('dismiss-disabled') && !e.target.closest('.modal-content')) {
-            return modalBackdrop.id;
+            // Special case: Allow lore-modal to be dismissed by clicking content
+            if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
+                 return modalBackdrop.id;
+            }
+            // Standard dismissal (backdrop click only)
+            if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
+                return modalBackdrop.id;
+            }
+             // Standard dismissal for lore-modal (backdrop click only)
+            if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
+                return modalBackdrop.id;
+            }
         }
         return null;
     }
