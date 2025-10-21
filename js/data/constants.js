@@ -159,6 +159,7 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  * @property {number} DAILY_PRICE_VOLATILITY - The maximum percentage a price can fluctuate daily.
  * @property {number} MEAN_REVERSION_STRENGTH - The strength of the tendency for prices to return to their galactic average.
  * @property {number} MARKET_PRESSURE_DECAY - The weekly decay factor for market pressure (e.g., 0.85 means 15% decay).
+ * @property {number} LOCAL_PRICE_MOD_STRENGTH - The strength of the local import/export price modifier (0-1).
  * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
  * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
  * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
@@ -176,9 +177,10 @@ export const GAME_RULES = Object.freeze({
     RARE_SHIP_CHANCE: 0.3,
     PRICE_HISTORY_LENGTH: 65,
     FINANCE_HISTORY_LENGTH: 25,
-    DAILY_PRICE_VOLATILITY: 0.15,
-    MEAN_REVERSION_STRENGTH: 0.07,
+    DAILY_PRICE_VOLATILITY: 0.25,
+    MEAN_REVERSION_STRENGTH: 0.04,
     MARKET_PRESSURE_DECAY: 0.70,
+    LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
     RANDOM_EVENT_CHANCE: 0.07,

@@ -48,7 +48,18 @@ export class MarketService {
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
-                const baseline = avg;
+
+                // Determine the local baseline price based on import/export modifiers
+                const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
+
+                // (1.0 - modifier) inverts the logic:
+                // Exporter (mod > 1.0) results in a negative offset (lower price)
+                // Importer (mod < 1.0) results in a positive offset (higher price)
+                const targetPriceOffset = (1.0 - modifier) * avg;
+
+                // The new baseline is the galactic average, pulled towards the local target price
+                // by the strength of the modifier.
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
@@ -62,10 +73,10 @@ export class MarketService {
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
                 const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
                 
-                let reversionEffect = (baseline - price) * meanReversion;
+                let reversionEffect = (localBaseline - price) * meanReversion;
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
-                    reversionEffect = (baseline - price) * 0.20;
+                    reversionEffect = (localBaseline - price) * 0.20;
                 } else if (inventoryItem.rivalArbitrage.isActive) {
                     inventoryItem.rivalArbitrage.isActive = false;
                 }
@@ -76,7 +87,7 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                const pressureEffect = baseline * inventoryItem.marketPressure * -1;
+                const pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
@@ -162,7 +173,7 @@ export class MarketService {
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
-    /**
+S    /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
      * @param {object} market - The market object from the database.
      * @param {object} commodity - The commodity object from the database.
