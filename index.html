@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="manifest" href="manifest.json">
@@ -20,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.00</title>
+    <title>Orbital Trading 30.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -60,7 +61,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.00</p>
+            <p>Version 30.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -205,6 +206,12 @@
         </div>
     </div>
 
+    <div id="lore-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <div id="lore-modal-content" class="text-gray-300">
+                </div>
+        </div>
+    </div>
     <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
 
     <div id="tutorial-toast-container" class="hidden fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto">
@@ -265,7 +272,7 @@
         </div>
         <div class="diag-section">
             <p><strong>Tutorial Batch:</strong> <span id="diag-tutorial-batch"></span></p>
-            <p><strong>Tutorial Step:</strong> <span id="diag-tutorial-step"></span></p>
+            <p><strong>Tutorial Step:</strong> <span id="diag-tutorial-step"></span></D></p>
         </div>
     </div>
 

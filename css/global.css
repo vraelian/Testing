@@ -43,8 +43,7 @@ body {
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    position: fixed; /* ADDED */
-    width: 100%; /* ADDED */
+    /* *** MODIFIED: REMOVED position: fixed and width: 100% *** */
 }
 
 *:focus {

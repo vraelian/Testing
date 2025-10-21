@@ -288,7 +288,7 @@
 }
 
 
-/* Tutorial Log Modal */
+/* Tutorial Log Modal (DEPRECATED - was tooltip) */
 #tutorial-log-modal {
     opacity: 0;
     transition: opacity 1s;
@@ -312,6 +312,26 @@
     gap: 0.5rem;
     padding-right: 0.5rem; /* For scrollbar */
 }
+
+/* --- [[START]] LORE MODAL --- */
+#lore-modal .modal-content {
+    width: 600px; /* Wider than default */
+    max-width: 90vw;
+    height: 70vh; /* Taller */
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+#lore-modal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem; /* Space for scrollbar */
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+/* --- [[END]] LORE MODAL --- */
+
 
 /* --- [[START]] GENERIC THEMED GLOW --- */
 @keyframes themed-glow-animation {

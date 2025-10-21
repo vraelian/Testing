@@ -114,12 +114,26 @@ export class EventManager {
         this.tooltipHandler.handleClick(e);
 
         if (actionTarget) {
-            if (actionTarget.dataset.action === ACTION_IDS.DEBUG_SIMPLE_START) {
+            const action = actionTarget.dataset.action;
+
+            if (action === ACTION_IDS.DEBUG_SIMPLE_START) {
                 if (this.debugService) {
                     this.debugService.simpleStart();
                 }
                 return;
             }
+
+            // --- New Lore Modal Action ---
+            if (action === 'show_lore') {
+                e.preventDefault();
+                const loreId = actionTarget.dataset.loreId;
+                if (loreId) {
+                    this.uiManager.showLoreModal(loreId);
+                }
+                return;
+            }
+
+            // Delegate to other handlers
             this.actionClickHandler.handle(e, actionTarget);
             this.marketEventHandler.handleClick(e, actionTarget);
             return;
@@ -132,9 +146,14 @@ export class EventManager {
         }
         if (state.isGameOver) return;
 
+        // Check for modal dismissal clicks
         const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
         if (modalIdToClose) {
-            this.uiManager.hideModal(modalIdToClose);
+            // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
+            // to allow for content-area clicks.
+            if (modalIdToClose !== 'lore-modal') {
+                this.uiManager.hideModal(modalIdToClose);
+            }
         }
     }
 

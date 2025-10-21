@@ -10,3 +10,34 @@
 .intel-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
+
+/* New Lore Modal Theming */
+#lore-modal .modal-content {
+    border-color: var(--theme-border-color, #4a6a8a);
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+}
+
+#lore-modal-content p {
+    margin-bottom: 1rem;
+}
+
+/* Themed scrollbar for lore content */
+#lore-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#lore-modal-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+#lore-modal-content::-webkit-scrollbar-thumb {
+    background-color: var(--theme-border-color, #4a6a8a);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+#lore-modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: var(--theme-border-color, #6b8fb8);
+}
