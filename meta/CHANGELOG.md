@@ -4,6 +4,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [30.10] - 2025-10-21
 - updated intel screen
+- updated map screen modals
+- updated economic behavior for imports/exports
 
 ## [30.00] - 2025-10-20
 - positioned tutorial modals for play

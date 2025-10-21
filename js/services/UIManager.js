@@ -1656,6 +1656,10 @@ export class UIManager {
         });
     }
 
+    /**
+     * Shows the detail modal for a specific location on the map.
+     * @param {string} locationId - The ID of the location to display details for.
+     */
     showMapDetailModal(locationId) {
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
@@ -1694,26 +1698,31 @@ export class UIManager {
             `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
         ).join('');
 
+        // *** MODIFIED HTML Structure to apply theme color ***
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                 <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
             </div>
-            <div class="my-4 p-4 rounded-lg" style="background-color: rgba(0,0,0,0.3);">
-                <h4 class="text-xl font-orbitron text-center mb-2 imprinted-text">Intel Report</h4>
-                <div class="text-center font-roboto-mono space-y-1 imprinted-text">
-                    <p><b>Position:</b> ${location.distance} AU</p>
-                    <p><b>Quirk:</b> ${location.specialty}</p>
-                    <p><b>Services:</b> Fuel @ ${formatCredits(location.fuelPrice, true)}/unit</p>
+
+            <div class="my-4 space-y-3">
+                <div class="map-intel-block">
+                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
+                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${formatCredits(location.fuelPrice, true)}/unit</p>
+                </div>
+                <div class="map-intel-block">
+                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
+                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${location.specialty || 'None reported'}</p>
                 </div>
             </div>
+
             <div class="text-center">
                 <div>
-                    <h5 class="font-bold">Exports:</h5>
+                    <h5 class="font-bold imprinted-text">Exports:</h5>
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                    <h5 class="font-bold">Needs:</h5>
+                    <h5 class="font-bold imprinted-text">Needs:</h5>
                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
@@ -1743,6 +1752,7 @@ export class UIManager {
              modal.addEventListener('click', closeHandler);
         });
     }
+
 
     hideMapDetailModal() {
         const modal = this.cache.mapDetailModal;
