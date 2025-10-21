@@ -1709,11 +1709,11 @@ export class UIManager {
             </div>
             <div class="text-center">
                 <div>
-                    <h5 class="font-bold">Primary Exports:</h5>
+                    <h5 class="font-bold">Exports:</h5>
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                    <h5 class="font-bold">Primary Imports:</h5>
+                    <h5 class="font-bold">Needs:</h5>
                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
