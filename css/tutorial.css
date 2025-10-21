@@ -68,8 +68,8 @@
 
 #tutorial-toast-text {
     text-align: left;
-    /* MODIFIED: Changed to 'scroll' to make track always visible */
-    overflow-y: scroll;
+    /* MODIFIED: Force scrollbar to exist */
+    overflow-y: scroll !important;
     flex-grow: 1;
     max-height: 150px; /* Adjust as needed, maybe based on height slider? */
     /* MODIFIED: Remove padding for deleted skip button */
@@ -78,6 +78,10 @@
     font-size: 0.9rem; /* Slightly larger for readability */
     line-height: 1.5; /* Increased line height */
     color: var(--color-text-secondary);
+
+    /* MODIFIED: Add Firefox scrollbar styles just in case */
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--color-accent-yellow, #f7b731) #332a0e !important;
 }
 
 #tutorial-highlight-overlay {
