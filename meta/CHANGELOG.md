@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [30.00] - 2025-10-20
+- positioned tutorial modals for play
+- name referencing bug fixes
+
 ## [29.60] - 2025-10-20
 - updated tutorial mmodals
 - added tutorial modal config exporter

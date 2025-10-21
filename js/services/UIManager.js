@@ -981,8 +981,20 @@ export class UIManager {
 
         // --- Update Content ---
         let processedText = step.text;
-         if (processedText.includes('{shipName}')) { /* ... name replacement ... */ }
-         if (processedText.includes('{playerName}')) { /* ... name replacement ... */ }
+
+        // b. Fix {shipName} replacement
+        if (processedText.includes('{shipName}')) {
+            const activeShipId = gameState.player.activeShipId;
+            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; // Fallback
+            processedText = processedText.replace(/{shipName}/g, shipName);
+        }
+
+        // c. Fix {playerName} replacement
+        if (processedText.includes('{playerName}')) {
+            const playerName = gameState.player.name || 'Captain'; // Fallback
+            processedText = processedText.replace(/{playerName}/g, playerName);
+        }
+
         this.cache.tutorialToastText.innerHTML = processedText;
 
         // --- Apply Size ---
