@@ -35,9 +35,15 @@ export class HoldEventHandler {
         this.isRefueling = false;
         this.isRepairing = false;
         
-        this.holdInterval = 100; // Milliseconds between service ticks
+        this.holdInterval = 400; // Milliseconds between service ticks
         this.lastTickTime = 0;
         this.animationFrameId = null;
+
+        // MODIFIED: Added timers to manage delayed visual removal
+        this.stopTimers = {
+            fuel: null,
+            repair: null
+        };
 
         this._boundLoop = this._loop.bind(this);
     }
@@ -53,7 +59,7 @@ export class HoldEventHandler {
 
         if (this.refuelBtn) {
             this.refuelBtn.addEventListener('mousedown', this._startRefueling.bind(this));
-            this.refuelBtn.addEventListener('touchstart', this._startRefueling.bind(this), { passive: true });
+            this.refuelBtn.addEventListener('touchstart', this._startRefueling.bind(this), { passive: false }); // passive: false to allow preventDefault
             this.refuelBtn.addEventListener('mouseup', this._stopRefueling.bind(this));
             this.refuelBtn.addEventListener('touchend', this._stopRefueling.bind(this));
             this.refuelBtn.addEventListener('mouseleave', this._stopRefueling.bind(this));
@@ -61,7 +67,7 @@ export class HoldEventHandler {
 
         if (this.repairBtn) {
             this.repairBtn.addEventListener('mousedown', this._startRepairing.bind(this));
-            this.repairBtn.addEventListener('touchstart', this._startRepairing.bind(this), { passive: true });
+            this.repairBtn.addEventListener('touchstart', this._startRepairing.bind(this), { passive: false }); // passive: false to allow preventDefault
             this.repairBtn.addEventListener('mouseup', this._stopRepairing.bind(this));
             this.repairBtn.addEventListener('touchend', this._stopRepairing.bind(this));
             this.repairBtn.addEventListener('mouseleave', this._stopRepairing.bind(this));
@@ -107,6 +113,52 @@ export class HoldEventHandler {
     }
 
     /**
+     * MODIFIED: Applies active visual classes to a service module.
+     * @param {string} type - 'fuel' or 'repair'
+     * @private
+     */
+    _applyVisuals(type) {
+        const btn = type === 'fuel' ? this.refuelBtn : this.repairBtn;
+        const barId = type === 'fuel' ? 'fuel-bar' : 'repair-bar';
+
+        if (btn) {
+            btn.classList.add('holding');
+            const serviceModule = btn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.add('active-service');
+            
+            const progressBarFill = document.getElementById(barId);
+            if (progressBarFill) {
+                progressBarFill.classList.add('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
+            }
+        }
+    }
+
+    /**
+     * MODIFIED: Removes active visual classes from a service module.
+     * @param {string} type - 'fuel' or 'repair'
+     * @private
+     */
+    _removeVisuals(type) {
+        const btn = type === 'fuel' ? this.refuelBtn : this.repairBtn;
+        const barId = type === 'fuel' ? 'fuel-bar' : 'repair-bar';
+
+        if (btn) {
+            btn.classList.remove('holding');
+            const serviceModule = btn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.remove('active-service');
+
+            const progressBarFill = document.getElementById(barId);
+            if (progressBarFill) {
+                progressBarFill.classList.remove('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
+            }
+        }
+    }
+
+    /**
      * Starts the refueling process and visual feedback.
      * @param {Event} e - The mousedown or touchstart event.
      * @private
@@ -115,26 +167,29 @@ export class HoldEventHandler {
         if (this.isRefueling || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
+        // MODIFIED: Clear any pending stop timer to keep visuals active
+        if (this.stopTimers.fuel) {
+            clearTimeout(this.stopTimers.fuel);
+            this.stopTimers.fuel = null;
+        }
+
+        // Perform single tick on tap
+        const cost = this.playerActionService.refuelTick();
+        if (cost > 0) {
+            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
+            // MODIFIED: Apply visuals immediately
+            this._applyVisuals('fuel');
+        } else {
+            return; // Stop if full or no funds, prevents hold visual state
+        }
+
         this.isRefueling = true;
         this.lastTickTime = performance.now();
         if (!this.animationFrameId) {
             this.animationFrameId = requestAnimationFrame(this._boundLoop);
         }
-
-        // --- Add Visual Feedback ---
-        if (this.refuelBtn) {
-            this.refuelBtn.classList.add('holding');
-            const serviceModule = this.refuelBtn.closest('.service-module');
-            if (serviceModule) serviceModule.classList.add('active-service');
-            
-            const progressBarFill = document.getElementById('fuel-bar');
-            if (progressBarFill) {
-                progressBarFill.classList.add('filling');
-                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
-                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
-            }
-        }
-        // --- End Visual Feedback ---
+        
+        // MODIFIED: Visual feedback logic moved to _applyVisuals
     }
 
     /**
@@ -145,20 +200,14 @@ export class HoldEventHandler {
         if (!this.isRefueling) return;
         this.isRefueling = false;
 
-        // --- Remove Visual Feedback ---
-        if (this.refuelBtn) {
-            this.refuelBtn.classList.remove('holding');
-            const serviceModule = this.refuelBtn.closest('.service-module');
-            if (serviceModule) serviceModule.classList.remove('active-service');
-
-            const progressBarFill = document.getElementById('fuel-bar');
-            if (progressBarFill) {
-                progressBarFill.classList.remove('filling');
-                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
-                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
-            }
+        // MODIFIED: Do not remove visuals immediately. Set a timer.
+        if (this.stopTimers.fuel) {
+            clearTimeout(this.stopTimers.fuel);
         }
-        // --- End Visual Feedback ---
+        this.stopTimers.fuel = setTimeout(() => {
+            this._removeVisuals('fuel');
+            this.stopTimers.fuel = null;
+        }, 400); // Keep visuals active for 400ms
     }
 
     /**
@@ -170,26 +219,29 @@ export class HoldEventHandler {
         if (this.isRepairing || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
+        // MODIFIED: Clear any pending stop timer to keep visuals active
+        if (this.stopTimers.repair) {
+            clearTimeout(this.stopTimers.repair);
+            this.stopTimers.repair = null;
+        }
+
+        // Perform single tick on tap
+        const cost = this.playerActionService.repairTick();
+        if (cost > 0) {
+            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
+            // MODIFIED: Apply visuals immediately
+            this._applyVisuals('repair');
+        } else {
+            return; // Stop if full or no funds, prevents hold visual state
+        }
+
         this.isRepairing = true;
         this.lastTickTime = performance.now();
         if (!this.animationFrameId) {
             this.animationFrameId = requestAnimationFrame(this._boundLoop);
         }
 
-        // --- Add Visual Feedback ---
-        if (this.repairBtn) {
-            this.repairBtn.classList.add('holding');
-            const serviceModule = this.repairBtn.closest('.service-module');
-            if (serviceModule) serviceModule.classList.add('active-service');
-            
-            const progressBarFill = document.getElementById('repair-bar');
-            if (progressBarFill) {
-                progressBarFill.classList.add('filling');
-                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
-                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
-            }
-        }
-        // --- End Visual Feedback ---
+        // MODIFIED: Visual feedback logic moved to _applyVisuals
     }
 
     /**
@@ -200,19 +252,13 @@ export class HoldEventHandler {
         if (!this.isRepairing) return;
         this.isRepairing = false;
 
-        // --- Remove Visual Feedback ---
-        if (this.repairBtn) {
-            this.repairBtn.classList.remove('holding');
-            const serviceModule = this.repairBtn.closest('.service-module');
-            if (serviceModule) serviceModule.classList.remove('active-service');
-
-            const progressBarFill = document.getElementById('repair-bar');
-            if (progressBarFill) {
-                progressBarFill.classList.remove('filling');
-                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
-                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
-            }
+        // MODIFIED: Do not remove visuals immediately. Set a timer.
+        if (this.stopTimers.repair) {
+            clearTimeout(this.stopTimers.repair);
         }
-        // --- End Visual Feedback ---
+        this.stopTimers.repair = setTimeout(() => {
+            this._removeVisuals('repair');
+            this.stopTimers.repair = null;
+        }, 400); // Keep visuals active for 400ms
     }
 }

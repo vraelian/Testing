@@ -54,14 +54,14 @@ export function renderServicesScreen(gameState) {
                 style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6;"
               >
                 <div class="bar-housing">
-                  <div class="progress-bar-container w-full p-1.5 rounded-lg border border-gray-800 overflow-hidden relative">
-                    <div class="absolute inset-0 z-10 flex justify-between items-center px-4 text-sm pointer-events-none">
+                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                       <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
                       <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
                         ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
                       </span>
                     </div>
-                    <div id="fuel-bar" class="progress-bar-fill h-20 rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                    <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                   </div>
                   </div>
                 <div class="control-deck flex justify-center items-center gap-4">
@@ -82,14 +82,14 @@ export function renderServicesScreen(gameState) {
                 style="--resource-color-rgb: 34, 197, 94; --resource-color: #22c55e;"
               >
                 <div class="bar-housing">
-                  <div class="progress-bar-container w-full p-1.5 rounded-lg border border-gray-800 overflow-hidden relative">
-                    <div class="absolute inset-0 z-10 flex justify-between items-center px-4 text-sm pointer-events-none">
+                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                       <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #22c55e;">Hull Integrity</span>
-                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #22c55e;">
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #22c5M">
                         ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
                       </span>
                     </div>
-                    <div id="repair-bar" class="progress-bar-fill h-20 rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                    <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                   </div>
                   </div>
                 <div class="control-deck flex justify-center items-center gap-4">

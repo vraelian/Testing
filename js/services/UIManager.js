@@ -49,6 +49,8 @@ export class UIManager {
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
         this.marketScrollPosition = 0;
         this.popperInstance = null; // Instance for Popper.js
+        // MODIFIED: Added property to hold injected EventManager
+        this.eventManager = null; // To be injected
 
         this.effectsManager = new EffectsManager();
 
@@ -108,6 +110,14 @@ export class UIManager {
      */
     setDebugService(service) {
         this.debugService = service;
+    }
+
+    /**
+     * MODIFIED: Injects the EventManager after instantiation.
+     * @param {import('./EventManager.js').EventManager} eventManager
+     */
+    setEventManager(eventManager) {
+        this.eventManager = eventManager;
     }
 
     /**
@@ -290,6 +300,10 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                // MODIFIED: Bind hold events after rendering the services screen
+                if (this.eventManager) {
+                    this.eventManager.holdEventHandler.bindHoldEvents();
+                }
                 break;
             case SCREEN_IDS.MARKET:
                 this.updateMarketScreen(gameState);
@@ -1768,9 +1782,5 @@ export class UIManager {
         this.hideModal('map-detail-modal');
     }
 
-    _bindScreenSpecificEvents(screenId) {
-        if (screenId === SCREEN_IDS.SERVICES) {
-            this.holdEventHandler.bindHoldEvents();
-        }
-    }
+    // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
 }
