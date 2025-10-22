@@ -7,7 +7,7 @@
  *
  * This handler is responsible for:
  * 1. Detecting mousedown/touchstart events on target buttons.
- * 2. Initiating a "hold" state and a requestAnimationFrame loop.
+ * 2. Differentiating between a "tap" (one tick) and a "hold" (looping ticks).
  * 3. Calling the appropriate PlayerActionService function on each "tick" of the loop.
  * 4. Stopping the loop on mouseup/touchend/touchcancel, OR when a touch drags off the element.
  * 5. Managing all visual feedback (CSS classes) associated with the hold state.
@@ -32,17 +32,29 @@ export class HoldEventHandler {
         this.refuelBtn = null;
         this.repairBtn = null;
 
-        this.isRefueling = false;
-        this.isRepairing = false;
+        this.isRefueling = false; // Is true ONLY during a sustained hold loop
+        this.isRepairing = false; // Is true ONLY during a sustained hold loop
         
-        this.holdInterval = 400; // Milliseconds between service ticks
+        /** @type {number} Milliseconds between service ticks */
+        this.holdInterval = 400; 
+        
+        /** @type {number} Milliseconds to wait before a tap becomes a hold */
+        this.holdDelay = 400;
+
         this.lastTickTime = 0;
         this.animationFrameId = null;
 
         /** @type {HTMLElement | null} */
         this.activeElement = null; // Store the element being held
-
-        this.stopTimers = {
+        
+        /** @type {Object<string, number | null>} */
+        this.holdTimers = { // Timers to initiate a hold
+            fuel: null,
+            repair: null
+        };
+        
+        /** @type {Object<string, number | null>} */
+        this.stopTimers = { // Timers to fade out visuals
             fuel: null,
             repair: null
         };
@@ -53,8 +65,6 @@ export class HoldEventHandler {
 
     /**
      * Binds all hold-to-act event listeners to the buttons.
-     * This function is called every time the UI is rendered to ensure
-     * listeners are attached to the new DOM elements.
      */
     bindHoldEvents() {
         this.refuelBtn = document.getElementById('refuel-btn');
@@ -66,7 +76,7 @@ export class HoldEventHandler {
             this.refuelBtn.addEventListener('mouseup', this._stopRefueling.bind(this));
             this.refuelBtn.addEventListener('touchend', this._stopRefueling.bind(this));
             this.refuelBtn.addEventListener('touchcancel', this._stopRefueling.bind(this));
-            // MODIFIED: Removed 'mouseleave' as it's unreliable on touch/simulators
+            // MODIFIED: Removed 'mouseleave' - it causes the "jitter" bug on simulators
         }
 
         if (this.repairBtn) {
@@ -75,7 +85,7 @@ export class HoldEventHandler {
             this.repairBtn.addEventListener('mouseup', this._stopRepairing.bind(this));
             this.repairBtn.addEventListener('touchend', this._stopRepairing.bind(this));
             this.repairBtn.addEventListener('touchcancel', this._stopRepairing.bind(this));
-            // MODIFIED: Removed 'mouseleave' as it's unreliable on touch/simulators
+            // MODIFIED: Removed 'mouseleave'
         }
     }
 
@@ -94,31 +104,27 @@ export class HoldEventHandler {
         // Get the element *currently* under the touch point
         const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
 
-        // If elementUnderTouch is null, it's a "jitter" or off-screen.
-        // In this case, we'll just ignore it and *not* stop the hold.
         if (!elementUnderTouch) {
-            return;
+            return; // Ignore jitter or off-screen moves
         }
 
         // Check if the element is the active button OR a child of the active button
         if (elementUnderTouch === this.activeElement || this.activeElement.contains(elementUnderTouch)) {
-            // Finger is still on the button. Do nothing.
-            return;
+            return; // Finger is still on the button.
         }
 
-        // If we are here, the finger has *definitively* moved off the button.
+        // Finger has definitively moved off the button.
         // Stop the correct service.
-        if (this.isRefueling) {
+        if (this.isRefueling || this.holdTimers.fuel) {
             this._stopRefueling();
         }
-        if (this.isRepairing) {
+        if (this.isRepairing || this.holdTimers.repair) {
             this._stopRepairing();
         }
     }
 
     /**
      * The main game loop for handling hold actions.
-     * This is called by requestAnimationFrame.
      * @param {number} timestamp - The current high-resolution timestamp.
      * @private
      */
@@ -137,7 +143,10 @@ export class HoldEventHandler {
                 if (cost > 0) {
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
                 } else {
-                    this.isRefueling = false; // Stop function, but not visuals
+                    // MODIFIED: Fix for "Stuck On" (Clue A)
+                    // Just stop the loop. Do NOT call _stopRefueling().
+                    // Visuals will fade out on user's release (touchend/mouseup).
+                    this.isRefueling = false;
                 }
             }
 
@@ -146,7 +155,8 @@ export class HoldEventHandler {
                 if (cost > 0) {
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
                 } else {
-                    this.isRepairing = false; // Stop function, but not visuals
+                    // MODIFIED: Fix for "Stuck On" (Clue A)
+                    this.isRepairing = false;
                 }
             }
         }
@@ -160,6 +170,16 @@ export class HoldEventHandler {
      * @private
      */
     _applyVisuals(type) {
+        // Clear any pending *stop* timer to prevent a fade-out from colliding with a new press
+        if (type === 'fuel' && this.stopTimers.fuel) {
+            clearTimeout(this.stopTimers.fuel);
+            this.stopTimers.fuel = null;
+        }
+        if (type === 'repair' && this.stopTimers.repair) {
+            clearTimeout(this.stopTimers.repair);
+            this.stopTimers.repair = null;
+        }
+
         const btn = type === 'fuel' ? this.refuelBtn : this.repairBtn;
         const barId = type ==='fuel' ? 'fuel-bar' : 'repair-bar';
 
@@ -201,132 +221,148 @@ export class HoldEventHandler {
     }
 
     /**
-     * Starts the refueling process and visual feedback.
+     * MODIFIED: Starts the tap/hold process for refueling.
      * @param {Event} e - The mousedown or touchstart event.
      * @private
      */
     _startRefueling(e) {
-        // MODIFIED: Prevent flicker loop. Only start if not already active.
         if (this.activeElement || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
-        this.activeElement = e.currentTarget; // Set active element
-
-        // MODIFIED: Add touchmove listener only for touch events
+        this.activeElement = e.currentTarget;
         if (e.type === 'touchstart') {
             document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
         }
 
-        if (this.stopTimers.fuel) {
-            clearTimeout(this.stopTimers.fuel);
-            this.stopTimers.fuel = null;
-        }
-
-        // Perform single tick on tap
+        // Perform single tick *immediately*
         const cost = this.playerActionService.refuelTick();
-        if (cost > 0) {
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
-            this._applyVisuals('fuel');
-        } else {
-            this._applyVisuals('fuel'); // Still apply visuals on tap, even if full
-            this.isRefueling = false; // But don't start the loop
-            return; // Stop if full or no funds
+
+        // MODIFIED: Fix for "Activates on MAX" (Clue B)
+        if (cost <= 0) {
+            // MAX or no credits. Do nothing. No visuals, no loop.
+            // We must clean up the listeners in case this was a drag-off.
+            document.removeEventListener('touchmove', this._handleTouchMove);
+            this.activeElement = null;
+            return;
         }
 
-        this.isRefueling = true;
-        this.lastTickTime = performance.now();
-        if (!this.animationFrameId) {
-            this.animationFrameId = requestAnimationFrame(this._boundLoop);
-        }
+        // Cost was > 0, so proceed.
+        this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
+        this._applyVisuals('fuel');
+
+        // MODIFIED: Fix for "Sticky Tap" (Clue C)
+        // Set a timer to see if this is a tap or a hold.
+        this.holdTimers.fuel = setTimeout(() => {
+            this.isRefueling = true; // It's a hold!
+            this.lastTickTime = performance.now();
+            if (!this.animationFrameId) {
+                this.animationFrameId = requestAnimationFrame(this._boundLoop);
+            }
+            this.holdTimers.fuel = null;
+        }, this.holdDelay);
     }
 
     /**
-     * Stops the refueling process and removes visual feedback.
+     * MODIFIED: Stops the tap/hold process for refueling.
      * @private
      */
     _stopRefueling() {
-        // MODIFIED: Only stop if this was the active element.
         if (!this.activeElement || this.activeElement.id !== 'refuel-btn') {
             return;
         }
 
-        // MODIFIED: Always clean up listeners
         document.removeEventListener('touchmove', this._handleTouchMove);
-        this.activeElement = null; // Clear active element
-        
-        this.isRefueling = false;
+        this.activeElement = null;
 
+        // MODIFIED: Fix for "Sticky Tap" (Clue C)
+        if (this.holdTimers.fuel) {
+            // User released *before* holdDelay. This was a TAP.
+            clearTimeout(this.holdTimers.fuel);
+            this.holdTimers.fuel = null;
+        }
+
+        // This was a HOLD. Stop the loop.
+        this.isRefueling = false; 
+
+        // MODIFIED: Fix for "Stuck On" (Clue A)
+        // Always set a timer to remove visuals on release.
         if (this.stopTimers.fuel) {
             clearTimeout(this.stopTimers.fuel);
         }
         this.stopTimers.fuel = setTimeout(() => {
             this._removeVisuals('fuel');
             this.stopTimers.fuel = null;
-        }, 400); // Keep visuals active for 400ms
+        }, 400); // 400ms fade-out
     }
 
     /**
-     * Starts the repairing process and visual feedback.
+     * MODIFIED: Starts the tap/hold process for repairing.
      * @param {Event} e - The mousedown or touchstart event.
      * @private
      */
     _startRepairing(e) {
-        // MODIFIED: Prevent flicker loop. Only start if not already active.
         if (this.activeElement || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
-        this.activeElement = e.currentTarget; // Set active element
-
-        // MODIFIED: Add touchmove listener only for touch events
+        this.activeElement = e.currentTarget;
         if (e.type === 'touchstart') {
             document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
         }
 
-        if (this.stopTimers.repair) {
-            clearTimeout(this.stopTimers.repair);
-            this.stopTimers.repair = null;
-        }
-
-        // Perform single tick on tap
+        // Perform single tick *immediately*
         const cost = this.playerActionService.repairTick();
-        if (cost > 0) {
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
-            this._applyVisuals('repair');
-        } else {
-            this._applyVisuals('repair'); // Still apply visuals on tap, even if full
-            this.isRepairing = false; // But don't start the loop
-            return; // Stop if full or no funds
+
+        // MODIFIED: Fix for "Activates on MAX" (Clue B)
+        if (cost <= 0) {
+            document.removeEventListener('touchmove', this._handleTouchMove);
+            this.activeElement = null;
+            return;
         }
 
-        this.isRepairing = true;
-        this.lastTickTime = performance.now();
-        if (!this.animationFrameId) {
-            this.animationFrameId = requestAnimationFrame(this._boundLoop);
-        }
+        // Cost was > 0
+        this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
+        this._applyVisuals('repair');
+
+        // MODIFIED: Fix for "Sticky Tap" (Clue C)
+        this.holdTimers.repair = setTimeout(() => {
+            this.isRepairing = true; // It's a hold!
+            this.lastTickTime = performance.now();
+            if (!this.animationFrameId) {
+                this.animationFrameId = requestAnimationFrame(this._boundLoop);
+            }
+            this.holdTimers.repair = null;
+        }, this.holdDelay);
     }
 
     /**
-     * Stops the repairing process and removes visual feedback.
+     * MODIFIED: Stops the tap/hold process for repairing.
      * @private
      */
     _stopRepairing() {
-        // MODIFIED: Only stop if this was the active element.
         if (!this.activeElement || this.activeElement.id !== 'repair-btn') {
             return;
         }
-        
-        // MODIFIED: Always clean up listeners
+
         document.removeEventListener('touchmove', this._handleTouchMove);
-        this.activeElement = null; // Clear active element
+        this.activeElement = null;
 
-        this.isRepairing = false;
+        // MODIFIED: Fix for "Sticky Tap" (Clue C)
+        if (this.holdTimers.repair) {
+            // This was a TAP.
+            clearTimeout(this.holdTimers.repair);
+            this.holdTimers.repair = null;
+        }
 
+        // This was a HOLD.
+        this.isRepairing = false; 
+
+        // MODIFIED: Fix for "Stuck On" (Clue A)
         if (this.stopTimers.repair) {
             clearTimeout(this.stopTimers.repair);
         }
         this.stopTimers.repair = setTimeout(() => {
             this._removeVisuals('repair');
             this.stopTimers.repair = null;
-        }, 400); // Keep visuals active for 400ms
+        }, 400); // 400ms fade-out
     }
 }

@@ -36,13 +36,10 @@
 /* Base Service Module Styling */
 .service-module {
   border: 1px solid rgba(var(--resource-color-rgb), 0.3);
-  /* MODIFIED: Changed transition properties and duration for smooth fade-out */
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
   padding: 1rem;
-  /* MODIFIED: (e) Removed clip-path to use rounded corners */
-  /* clip-path: polygon(0 15px, 15px 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%); */
-  border-radius: 0.75rem; /* (e) Added rounded corners */
-  /* MODIFIED: (f) Lightened background colors */
+  border-radius: 0.75rem; 
   background-color: #2a2a2a;
   background-image:
     radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -75,15 +72,13 @@
 }
 
 .progress-bar-container {
-   /* Inherits styles from .bar-housing, applies specific overrides */
-   /* padding: 0.375rem; */ /* p-1.5 - REMOVED */
    border-radius: 0.5rem; /* rounded-lg */
    border-width: 1px; /* border */
    overflow: hidden;
    position: relative;
    background: rgba(10, 20, 30, 0.5);
    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-   /* MODIFIED: Added transition for smooth fade-out of pulse-border effect */
+   /* MODIFIED: Added 400ms transition for smooth fade-out */
    transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
@@ -100,18 +95,17 @@
 }
 
 .progress-bar-container.active-pulse {
-   /* MODIFIED: (c) Slowed border pulse */
+   /* MODIFIED: Ensure animation is infinite */
    animation: pulse-border 3s ease-in-out infinite;
 }
 
 /* Progress Bar Fill Styling */
 .progress-bar-fill {
-  /* MODIFIED: Changed filter/box-shadow transition duration to 400ms for smooth fade-out */
-  transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out;
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
+  transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out, opacity 0.4s ease-out;
   box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); /* Base glow using CSS var */
   position: relative;
   overflow: hidden;
-  /* height: 3rem; */ /* h-12 */ /* MODIFIED: Removed to allow HTML class to control height */
   border-radius: 0.375rem; /* rounded-md */
 }
 
@@ -134,9 +128,7 @@
 }
 
 .progress-bar-fill.filling {
-  /* MODIFIED: (d) Replaced static filter/shadow with new pulse animation */
-  /* filter: brightness(1.3); */
-  /* box-shadow: 0 0 20px var(--glow-color), inset 0 0 5px var(--glow-color); */
+  /* MODIFIED: Ensure animation is infinite */
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
@@ -147,9 +139,8 @@
   left: 0;
   width: 20%;
   height: 100%;
-  /* MODIFIED: (d) Brightened spark */
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-  /* MODIFIED: (d) Slowed spark animation */
+  /* MODIFIED: Ensure animation is infinite */
   animation: scan-hotspot 2.5s ease-in-out infinite;
 }
 
@@ -180,11 +171,12 @@
   background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
   border: 1px solid #1f2937;
   border-top-color: #9ca3af;
-  border-left-color: #6b7280;
+  /* MODIFIED: Fixed typo from last response */
+  border-left-color: #6b7280; 
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
   color: #e5e7eb;
   text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
-  /* MODIFIED: Changed transition to handle smooth fade-out of background/shadow */
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
 }
 /* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
