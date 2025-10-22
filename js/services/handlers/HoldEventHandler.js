@@ -9,7 +9,7 @@
  * 1. Detecting mousedown/touchstart events on target buttons.
  * 2. Initiating a "hold" state and a requestAnimationFrame loop.
  * 3. Calling the appropriate PlayerActionService function on each "tick" of the loop.
- * 4. Stopping the loop on mouseup/touchend/mouseleave events.
+ * 4. Stopping the loop on mouseup/touchend/touchcancel, OR when a touch drags off the element.
  * 5. Managing all visual feedback (CSS classes) associated with the hold state.
  */
 
@@ -39,13 +39,16 @@ export class HoldEventHandler {
         this.lastTickTime = 0;
         this.animationFrameId = null;
 
-        // MODIFIED: Added timers to manage delayed visual removal
+        /** @type {HTMLElement | null} */
+        this.activeElement = null; // Store the element being held
+
         this.stopTimers = {
             fuel: null,
             repair: null
         };
 
         this._boundLoop = this._loop.bind(this);
+        this._handleTouchMove = this._handleTouchMove.bind(this); // Bind new move handler
     }
 
     /**
@@ -59,18 +62,57 @@ export class HoldEventHandler {
 
         if (this.refuelBtn) {
             this.refuelBtn.addEventListener('mousedown', this._startRefueling.bind(this));
-            this.refuelBtn.addEventListener('touchstart', this._startRefueling.bind(this), { passive: false }); // passive: false to allow preventDefault
+            this.refuelBtn.addEventListener('touchstart', this._startRefueling.bind(this), { passive: false });
             this.refuelBtn.addEventListener('mouseup', this._stopRefueling.bind(this));
             this.refuelBtn.addEventListener('touchend', this._stopRefueling.bind(this));
-            this.refuelBtn.addEventListener('mouseleave', this._stopRefueling.bind(this));
+            this.refuelBtn.addEventListener('touchcancel', this._stopRefueling.bind(this));
+            // MODIFIED: Removed 'mouseleave' as it's unreliable on touch/simulators
         }
 
         if (this.repairBtn) {
             this.repairBtn.addEventListener('mousedown', this._startRepairing.bind(this));
-            this.repairBtn.addEventListener('touchstart', this._startRepairing.bind(this), { passive: false }); // passive: false to allow preventDefault
+            this.repairBtn.addEventListener('touchstart', this._startRepairing.bind(this), { passive: false });
             this.repairBtn.addEventListener('mouseup', this._stopRepairing.bind(this));
             this.repairBtn.addEventListener('touchend', this._stopRepairing.bind(this));
-            this.repairBtn.addEventListener('mouseleave', this._stopRepairing.bind(this));
+            this.repairBtn.addEventListener('touchcancel', this._stopRepairing.bind(this));
+            // MODIFIED: Removed 'mouseleave' as it's unreliable on touch/simulators
+        }
+    }
+
+    /**
+     * MODIFIED: Handles the touchmove event to robustly detect if the user's
+     * finger has dragged off the active button, preventing "sticky" buttons.
+     * @param {TouchEvent} e - The touchmove event.
+     * @private
+     */
+    _handleTouchMove(e) {
+        if (!this.activeElement) return;
+
+        const touch = e.touches[0];
+        if (!touch) return;
+
+        // Get the element *currently* under the touch point
+        const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        // If elementUnderTouch is null, it's a "jitter" or off-screen.
+        // In this case, we'll just ignore it and *not* stop the hold.
+        if (!elementUnderTouch) {
+            return;
+        }
+
+        // Check if the element is the active button OR a child of the active button
+        if (elementUnderTouch === this.activeElement || this.activeElement.contains(elementUnderTouch)) {
+            // Finger is still on the button. Do nothing.
+            return;
+        }
+
+        // If we are here, the finger has *definitively* moved off the button.
+        // Stop the correct service.
+        if (this.isRefueling) {
+            this._stopRefueling();
+        }
+        if (this.isRepairing) {
+            this._stopRepairing();
         }
     }
 
@@ -95,7 +137,7 @@ export class HoldEventHandler {
                 if (cost > 0) {
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
                 } else {
-                    this._stopRefueling(); // Stop if refuelTick returns 0 (e.g., full or no funds)
+                    this.isRefueling = false; // Stop function, but not visuals
                 }
             }
 
@@ -104,7 +146,7 @@ export class HoldEventHandler {
                 if (cost > 0) {
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
                 } else {
-                    this._stopRepairing(); // Stop if repairTick returns 0 (e.g., full or no funds)
+                    this.isRepairing = false; // Stop function, but not visuals
                 }
             }
         }
@@ -113,13 +155,13 @@ export class HoldEventHandler {
     }
 
     /**
-     * MODIFIED: Applies active visual classes to a service module.
+     * Applies active visual classes to a service module.
      * @param {string} type - 'fuel' or 'repair'
      * @private
      */
     _applyVisuals(type) {
         const btn = type === 'fuel' ? this.refuelBtn : this.repairBtn;
-        const barId = type === 'fuel' ? 'fuel-bar' : 'repair-bar';
+        const barId = type ==='fuel' ? 'fuel-bar' : 'repair-bar';
 
         if (btn) {
             btn.classList.add('holding');
@@ -136,7 +178,7 @@ export class HoldEventHandler {
     }
 
     /**
-     * MODIFIED: Removes active visual classes from a service module.
+     * Removes active visual classes from a service module.
      * @param {string} type - 'fuel' or 'repair'
      * @private
      */
@@ -164,10 +206,17 @@ export class HoldEventHandler {
      * @private
      */
     _startRefueling(e) {
-        if (this.isRefueling || (e.button && e.button !== 0)) return;
+        // MODIFIED: Prevent flicker loop. Only start if not already active.
+        if (this.activeElement || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
-        // MODIFIED: Clear any pending stop timer to keep visuals active
+        this.activeElement = e.currentTarget; // Set active element
+
+        // MODIFIED: Add touchmove listener only for touch events
+        if (e.type === 'touchstart') {
+            document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
+        }
+
         if (this.stopTimers.fuel) {
             clearTimeout(this.stopTimers.fuel);
             this.stopTimers.fuel = null;
@@ -177,10 +226,11 @@ export class HoldEventHandler {
         const cost = this.playerActionService.refuelTick();
         if (cost > 0) {
             this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
-            // MODIFIED: Apply visuals immediately
             this._applyVisuals('fuel');
         } else {
-            return; // Stop if full or no funds, prevents hold visual state
+            this._applyVisuals('fuel'); // Still apply visuals on tap, even if full
+            this.isRefueling = false; // But don't start the loop
+            return; // Stop if full or no funds
         }
 
         this.isRefueling = true;
@@ -188,8 +238,6 @@ export class HoldEventHandler {
         if (!this.animationFrameId) {
             this.animationFrameId = requestAnimationFrame(this._boundLoop);
         }
-        
-        // MODIFIED: Visual feedback logic moved to _applyVisuals
     }
 
     /**
@@ -197,10 +245,17 @@ export class HoldEventHandler {
      * @private
      */
     _stopRefueling() {
-        if (!this.isRefueling) return;
+        // MODIFIED: Only stop if this was the active element.
+        if (!this.activeElement || this.activeElement.id !== 'refuel-btn') {
+            return;
+        }
+
+        // MODIFIED: Always clean up listeners
+        document.removeEventListener('touchmove', this._handleTouchMove);
+        this.activeElement = null; // Clear active element
+        
         this.isRefueling = false;
 
-        // MODIFIED: Do not remove visuals immediately. Set a timer.
         if (this.stopTimers.fuel) {
             clearTimeout(this.stopTimers.fuel);
         }
@@ -216,10 +271,17 @@ export class HoldEventHandler {
      * @private
      */
     _startRepairing(e) {
-        if (this.isRepairing || (e.button && e.button !== 0)) return;
+        // MODIFIED: Prevent flicker loop. Only start if not already active.
+        if (this.activeElement || (e.button && e.button !== 0)) return;
         e.preventDefault();
 
-        // MODIFIED: Clear any pending stop timer to keep visuals active
+        this.activeElement = e.currentTarget; // Set active element
+
+        // MODIFIED: Add touchmove listener only for touch events
+        if (e.type === 'touchstart') {
+            document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
+        }
+
         if (this.stopTimers.repair) {
             clearTimeout(this.stopTimers.repair);
             this.stopTimers.repair = null;
@@ -229,10 +291,11 @@ export class HoldEventHandler {
         const cost = this.playerActionService.repairTick();
         if (cost > 0) {
             this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
-            // MODIFIED: Apply visuals immediately
             this._applyVisuals('repair');
         } else {
-            return; // Stop if full or no funds, prevents hold visual state
+            this._applyVisuals('repair'); // Still apply visuals on tap, even if full
+            this.isRepairing = false; // But don't start the loop
+            return; // Stop if full or no funds
         }
 
         this.isRepairing = true;
@@ -240,8 +303,6 @@ export class HoldEventHandler {
         if (!this.animationFrameId) {
             this.animationFrameId = requestAnimationFrame(this._boundLoop);
         }
-
-        // MODIFIED: Visual feedback logic moved to _applyVisuals
     }
 
     /**
@@ -249,10 +310,17 @@ export class HoldEventHandler {
      * @private
      */
     _stopRepairing() {
-        if (!this.isRepairing) return;
+        // MODIFIED: Only stop if this was the active element.
+        if (!this.activeElement || this.activeElement.id !== 'repair-btn') {
+            return;
+        }
+        
+        // MODIFIED: Always clean up listeners
+        document.removeEventListener('touchmove', this._handleTouchMove);
+        this.activeElement = null; // Clear active element
+
         this.isRepairing = false;
 
-        // MODIFIED: Do not remove visuals immediately. Set a timer.
         if (this.stopTimers.repair) {
             clearTimeout(this.stopTimers.repair);
         }

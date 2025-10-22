@@ -36,7 +36,8 @@
 /* Base Service Module Styling */
 .service-module {
   border: 1px solid rgba(var(--resource-color-rgb), 0.3);
-  transition: all 0.3s ease-in-out;
+  /* MODIFIED: Changed transition properties and duration for smooth fade-out */
+  transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
   padding: 1rem;
   /* MODIFIED: (e) Removed clip-path to use rounded corners */
   /* clip-path: polygon(0 15px, 15px 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%); */
@@ -82,6 +83,8 @@
    position: relative;
    background: rgba(10, 20, 30, 0.5);
    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+   /* MODIFIED: Added transition for smooth fade-out of pulse-border effect */
+   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
 /* Active Border Pulse Animation */
@@ -103,7 +106,8 @@
 
 /* Progress Bar Fill Styling */
 .progress-bar-fill {
-  transition: width 0.25s ease-out, filter 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  /* MODIFIED: Changed filter/box-shadow transition duration to 400ms for smooth fade-out */
+  transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out;
   box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); /* Base glow using CSS var */
   position: relative;
   overflow: hidden;
@@ -180,11 +184,17 @@
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
   color: #e5e7eb;
   text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
-  transition: all 0.1s ease-in-out;
+  /* MODIFIED: Changed transition to handle smooth fade-out of background/shadow */
+  transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
 }
-.industrial-button.holding, .industrial-button:active {
+/* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
+.industrial-button.holding {
   background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+  transform: translateY(1px);
+}
+/* MODIFIED: Added separate :active state for instant visual feedback on tap */
+.industrial-button:active {
   transform: translateY(1px);
 }
 .industrial-button:disabled {
