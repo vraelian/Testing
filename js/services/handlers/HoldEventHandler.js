@@ -1,192 +1,218 @@
 // js/services/handlers/HoldEventHandler.js
 /**
- * @fileoverview Manages "hold-to-act" functionality, for continuous actions like
- * refueling, repairing, and the progressive quantity steppers on the market screen.
+ * @fileoverview This file defines the HoldEventHandler class, which manages
+ * the "hold-to-act" functionality for UI elements like refueling and repairing.
+ * It uses a requestAnimationFrame loop to repeatedly call an action (like
+ * refueling) as long as the button is held down.
+ *
+ * This handler is responsible for:
+ * 1. Detecting mousedown/touchstart events on target buttons.
+ * 2. Initiating a "hold" state and a requestAnimationFrame loop.
+ * 3. Calling the appropriate PlayerActionService function on each "tick" of the loop.
+ * 4. Stopping the loop on mouseup/touchend/mouseleave events.
+ * 5. Managing all visual feedback (CSS classes) associated with the hold state.
  */
-import { formatCredits } from '../../utils.js';
-import { ACTION_IDS } from '../../data/constants.js';
 
+import { formatCredits } from '../../utils.js';
+
+/**
+ * Manages hold-to-act (e.g., refuel, repair) interactions on the UI.
+ * This class adds event listeners for mousedown/touchstart and mouseup/touchend
+ * to specified buttons and executes a callback function repeatedly while held.
+ */
 export class HoldEventHandler {
     /**
-     * @param {import('../GameState.js').GameState} gameState The central game state object.
-     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('../player/PlayerActionService.js').PlayerActionService} playerActionService
+     * @param {import('../UIManager.js').UIManager} uiManager
      */
-    constructor(gameState, simulationService, uiManager) {
-        this.gameState = gameState;
-        this.simulationService = simulationService;
+    constructor(playerActionService, uiManager) {
+        this.playerActionService = playerActionService;
         this.uiManager = uiManager;
 
-        this.refuelInterval = null;
-        this.repairInterval = null;
+        this.refuelBtn = null;
+        this.repairBtn = null;
 
-        // --- New properties for the stepper hold feature ---
-        this.stepperInitialDelay = 1000; // 1-second initial delay
-        this.stepperRepeatRate = 1000 / 7; // ~7 times per second
-
-        this.stepperTimeout = null;
-        this.stepperInterval = null;
-        this.stepperStartTime = null;
-        this.stepperTarget = null; // { input, direction, element }
-        this.isStepperHolding = false; // Flag to distinguish a hold from a click
-    }
-
-    /**
-     * Initiates a hold action based on the event target.
-     * @param {Event} e The mousedown or touchstart event.
-     */
-    handleHoldStart(e) {
-        if (e.target.closest('#refuel-btn')) {
-            this._startRefueling(e.type === 'touchstart');
-        }
-        if (e.target.closest('#repair-btn')) {
-            this._startRepairing(e.type === 'touchstart');
-        }
-
-        const stepperButton = e.target.closest('.qty-up, .qty-down');
-        if (stepperButton) {
-            // Let the click event happen unless a hold is confirmed.
-            this._startStepperHold(stepperButton);
-        }
-    }
-
-    /**
-     * Clears all active hold intervals, stopping any continuous actions.
-     */
-    handleHoldEnd() {
-        this._stopRefueling();
-        this._stopRepairing();
-        this._stopStepperHold();
-    }
-
-    // --- Stepper Hold Logic ---
-
-    /**
-     * Starts the hold-to-increment/decrement sequence for a market quantity stepper.
-     * @param {HTMLElement} button - The stepper button being held (.qty-up or .qty-down).
-     * @private
-     */
-    _startStepperHold(button) {
-        // Clear any existing timers to prevent conflicts
-        this._stopStepperHold();
-        this.isStepperHolding = false;
-
-        const controls = button.closest('.transaction-controls');
-        if (!controls) return;
+        this.isRefueling = false;
+        this.isRepairing = false;
         
-        const qtyStepperEl = button.closest('.qty-stepper');
-        const qtyInput = controls.querySelector('input');
-        const direction = button.classList.contains('qty-up') ? 1 : -1;
-        this.stepperTarget = { input: qtyInput, direction: direction, element: qtyStepperEl };
+        this.holdInterval = 100; // Milliseconds between service ticks
+        this.lastTickTime = 0;
+        this.animationFrameId = null;
 
-        this.stepperTimeout = setTimeout(() => {
-            this.isStepperHolding = true;
-            this.stepperStartTime = Date.now();
-            
-            if (this.stepperTarget && this.stepperTarget.element) {
-                this.stepperTarget.element.classList.add('stepper-active');
-            }
-
-            this._stepperTick(); // Fire the first tick immediately after the delay
-            this.stepperInterval = setInterval(() => this._stepperTick(), this.stepperRepeatRate);
-        }, this.stepperInitialDelay);
+        this._boundLoop = this._loop.bind(this);
     }
 
     /**
-     * Stops the stepper hold sequence and clears all associated timers.
-     * @private
+     * Binds all hold-to-act event listeners to the buttons.
+     * This function is called every time the UI is rendered to ensure
+     * listeners are attached to the new DOM elements.
      */
-    _stopStepperHold() {
-        clearTimeout(this.stepperTimeout);
-        clearInterval(this.stepperInterval);
+    bindHoldEvents() {
+        this.refuelBtn = document.getElementById('refuel-btn');
+        this.repairBtn = document.getElementById('repair-btn');
 
-        if (this.stepperTarget && this.stepperTarget.element) {
-            this.stepperTarget.element.classList.remove('stepper-active');
+        if (this.refuelBtn) {
+            this.refuelBtn.addEventListener('mousedown', this._startRefueling.bind(this));
+            this.refuelBtn.addEventListener('touchstart', this._startRefueling.bind(this), { passive: true });
+            this.refuelBtn.addEventListener('mouseup', this._stopRefueling.bind(this));
+            this.refuelBtn.addEventListener('touchend', this._stopRefueling.bind(this));
+            this.refuelBtn.addEventListener('mouseleave', this._stopRefueling.bind(this));
         }
 
-        this.stepperTimeout = null;
-        this.stepperInterval = null;
-        this.stepperStartTime = null;
-        this.stepperTarget = null;
-        // The isStepperHolding flag is reset on the next hold start.
+        if (this.repairBtn) {
+            this.repairBtn.addEventListener('mousedown', this._startRepairing.bind(this));
+            this.repairBtn.addEventListener('touchstart', this._startRepairing.bind(this), { passive: true });
+            this.repairBtn.addEventListener('mouseup', this._stopRepairing.bind(this));
+            this.repairBtn.addEventListener('touchend', this._stopRepairing.bind(this));
+            this.repairBtn.addEventListener('mouseleave', this._stopRepairing.bind(this));
+        }
     }
 
     /**
-     * Executes a single tick of the quantity stepper, applying progressive acceleration.
+     * The main game loop for handling hold actions.
+     * This is called by requestAnimationFrame.
+     * @param {number} timestamp - The current high-resolution timestamp.
      * @private
      */
-    _stepperTick() {
-        if (!this.stepperTarget) {
-            this._stopStepperHold();
+    _loop(timestamp) {
+        if (!this.isRefueling && !this.isRepairing) {
+            this.animationFrameId = null;
             return;
         }
 
-        const { input, direction } = this.stepperTarget;
-        // The hold duration starts counting *after* the initial 1s delay
-        const holdDuration = (Date.now() - this.stepperStartTime) / 1000;
+        if (timestamp - this.lastTickTime > this.holdInterval) {
+            this.lastTickTime = timestamp;
+            let cost = 0;
 
-        let step = 1; // Base increment
-        if (holdDuration > 5) { // 1s delay + 5s hold = 6s+ total
-            step = 25; // Tier 3 acceleration
-        } else if (holdDuration > 2) { // 1s delay + 2s hold = 3s+ total
-            step = 5; // Tier 2 acceleration
+            if (this.isRefueling) {
+                cost = this.playerActionService.refuelTick();
+                if (cost > 0) {
+                    this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.refuelBtn.getBoundingClientRect().x + (this.refuelBtn.offsetWidth / 2), this.refuelBtn.getBoundingClientRect().y, '#f87171');
+                } else {
+                    this._stopRefueling(); // Stop if refuelTick returns 0 (e.g., full or no funds)
+                }
+            }
+
+            if (this.isRepairing) {
+                cost = this.playerActionService.repairTick();
+                if (cost > 0) {
+                    this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, this.repairBtn.getBoundingClientRect().x + (this.repairBtn.offsetWidth / 2), this.repairBtn.getBoundingClientRect().y, '#f87171');
+                } else {
+                    this._stopRepairing(); // Stop if repairTick returns 0 (e.g., full or no funds)
+                }
+            }
         }
 
-        let currentValue = parseInt(input.value, 10) || 0;
-        currentValue += step * direction;
-
-        input.value = Math.max(0, currentValue); // Ensure value doesn't go below zero
-
-        // Dispatch an 'input' event to trigger the UI update in MarketEventHandler
-        input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        this.animationFrameId = requestAnimationFrame(this._boundLoop);
     }
 
+    /**
+     * Starts the refueling process and visual feedback.
+     * @param {Event} e - The mousedown or touchstart event.
+     * @private
+     */
+    _startRefueling(e) {
+        if (this.isRefueling || (e.button && e.button !== 0)) return;
+        e.preventDefault();
 
-    // --- Refuel & Repair Logic (Improved Rates) ---
+        this.isRefueling = true;
+        this.lastTickTime = performance.now();
+        if (!this.animationFrameId) {
+            this.animationFrameId = requestAnimationFrame(this._boundLoop);
+        }
 
-    _startRefueling(isTouch = false) {
-        if (this.gameState.isGameOver || this.refuelInterval) return;
-        this._refuelTick();
-        this.refuelInterval = setInterval(() => this._refuelTick(), isTouch ? 200 : 100);
+        // --- Add Visual Feedback ---
+        if (this.refuelBtn) {
+            this.refuelBtn.classList.add('holding');
+            const serviceModule = this.refuelBtn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.add('active-service');
+            
+            const progressBarFill = document.getElementById('fuel-bar');
+            if (progressBarFill) {
+                progressBarFill.classList.add('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
+            }
+        }
+        // --- End Visual Feedback ---
     }
 
+    /**
+     * Stops the refueling process and removes visual feedback.
+     * @private
+     */
     _stopRefueling() {
-        clearInterval(this.refuelInterval);
-        this.refuelInterval = null;
-    }
+        if (!this.isRefueling) return;
+        this.isRefueling = false;
 
-    _refuelTick() {
-        const cost = this.simulationService.refuelTick();
-        const button = this.uiManager.cache.servicesScreen?.querySelector('#refuel-btn');
-        if (cost > 0 && button) {
-            const rect = button.getBoundingClientRect();
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
-            this.uiManager.updateServicesScreen(this.gameState.getState());
-        } else {
-            this._stopRefueling();
+        // --- Remove Visual Feedback ---
+        if (this.refuelBtn) {
+            this.refuelBtn.classList.remove('holding');
+            const serviceModule = this.refuelBtn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.remove('active-service');
+
+            const progressBarFill = document.getElementById('fuel-bar');
+            if (progressBarFill) {
+                progressBarFill.classList.remove('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
+            }
         }
+        // --- End Visual Feedback ---
     }
 
-    _startRepairing(isTouch = false) {
-        if (this.gameState.isGameOver || this.repairInterval) return;
-        this._repairTick();
-        this.repairInterval = setInterval(() => this._repairTick(), isTouch ? 200 : 100);
+    /**
+     * Starts the repairing process and visual feedback.
+     * @param {Event} e - The mousedown or touchstart event.
+     * @private
+     */
+    _startRepairing(e) {
+        if (this.isRepairing || (e.button && e.button !== 0)) return;
+        e.preventDefault();
+
+        this.isRepairing = true;
+        this.lastTickTime = performance.now();
+        if (!this.animationFrameId) {
+            this.animationFrameId = requestAnimationFrame(this._boundLoop);
+        }
+
+        // --- Add Visual Feedback ---
+        if (this.repairBtn) {
+            this.repairBtn.classList.add('holding');
+            const serviceModule = this.repairBtn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.add('active-service');
+            
+            const progressBarFill = document.getElementById('repair-bar');
+            if (progressBarFill) {
+                progressBarFill.classList.add('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
+            }
+        }
+        // --- End Visual Feedback ---
     }
 
+    /**
+     * Stops the repairing process and removes visual feedback.
+     * @private
+     */
     _stopRepairing() {
-        clearInterval(this.repairInterval);
-        this.repairInterval = null;
-    }
+        if (!this.isRepairing) return;
+        this.isRepairing = false;
 
-    _repairTick() {
-        const cost = this.simulationService.repairTick();
-        const button = this.uiManager.cache.servicesScreen?.querySelector('#repair-btn');
-        if (cost > 0 && button) {
-            const rect = button.getBoundingClientRect();
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
-            this.uiManager.updateServicesScreen(this.gameState.getState());
-        } else {
-            this._stopRepairing();
+        // --- Remove Visual Feedback ---
+        if (this.repairBtn) {
+            this.repairBtn.classList.remove('holding');
+            const serviceModule = this.repairBtn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.remove('active-service');
+
+            const progressBarFill = document.getElementById('repair-bar');
+            if (progressBarFill) {
+                progressBarFill.classList.remove('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
+            }
         }
+        // --- End Visual Feedback ---
     }
 }

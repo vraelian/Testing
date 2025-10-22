@@ -37,7 +37,7 @@ export class EventManager {
         // Instantiate all specialized handlers
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        this.holdEventHandler = new HoldEventHandler(gameState, simulationService, uiManager);
+        this.holdEventHandler = new HoldEventHandler(simulationService, uiManager); // Pass needed services
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
     }
@@ -62,32 +62,43 @@ export class EventManager {
             }
         }, { passive: false });
 
+        // MODIFIED: Correctly call the public handleHoldStart method
         const startDragOrHold = (e) => {
-            this.holdEventHandler.handleHoldStart(e);
+            this.holdEventHandler.handleHoldStart(e); // Let HoldEventHandler manage internal routing
             this.carouselEventHandler.handleDragStart(e);
         };
+
         document.body.addEventListener('mousedown', startDragOrHold);
         document.body.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn')) {
-                e.preventDefault();
+            // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
+            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.qty-up') || e.target.closest('.qty-down') || e.target.closest('.carousel-container')) {
+                 e.preventDefault();
             }
             startDragOrHold(e);
         }, { passive: false });
-        
+
+        // MODIFIED: Correctly call the public handleHoldEnd method
         const endDragOrHold = () => {
-            this.holdEventHandler.handleHoldEnd();
+            this.holdEventHandler.handleHoldEnd(); // Let HoldEventHandler manage internal cleanup
             this.carouselEventHandler.handleDragEnd();
         };
         document.body.addEventListener('mouseup', endDragOrHold);
         document.body.addEventListener('mouseleave', endDragOrHold);
         document.body.addEventListener('touchend', endDragOrHold);
         document.body.addEventListener('touchcancel', endDragOrHold);
-        
+
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
-        document.body.addEventListener('touchmove', (e) => this.carouselEventHandler.handleDragMove(e), { passive: false });
+        document.body.addEventListener('touchmove', (e) => {
+            // Prevent default touchmove ONLY if dragging the carousel
+             if (this.carouselEventHandler.state.isDragging) {
+                 e.preventDefault();
+             }
+            this.carouselEventHandler.handleDragMove(e);
+        }, { passive: false });
+
 
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
-        
+
         if (this.uiManager.cache.missionStickyBar) {
             this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
@@ -101,15 +112,20 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
-        // Suppress click events that are the result of a drag/swipe on the carousel
-        if (this.carouselEventHandler.wasMoved()) {
+        // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
+        if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
+             // Reset stepper hold flag after suppressing click
+             if (this.holdEventHandler.isStepperHolding) {
+                 this.holdEventHandler.isStepperHolding = false;
+             }
             e.preventDefault();
             return;
         }
 
+
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
-        
+
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 

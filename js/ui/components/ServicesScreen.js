@@ -17,40 +17,93 @@ export function renderServicesScreen(gameState) {
     const { player, currentLocationId } = gameState;
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
-    const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
-    const theme = currentMarket?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
 
-
-    // Calculate fuel price, applying perks if applicable.
-    let fuelPrice = currentMarket.fuelPrice / 2;
+    // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
+    let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    
-    // Calculate repair price per tick, applying perks if applicable.
-    let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
-    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
-    }
+    fuelCostPerTick = Math.round(fuelCostPerTick);
 
+    // --- Calculate Repair Cost (logic mirrored from PlayerActionService.repairTick) ---
+    let repairCostPerTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
+        repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+    }
+    repairCostPerTick = Math.round(repairCostPerTick);
+
+    // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
     const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+
+    // --- Determine UI States ---
+    const isFuelFull = shipState.fuel >= shipStatic.maxFuel;
+    const isHealthFull = shipState.health >= shipStatic.maxHealth;
+
+    const canAffordRefuel = player.credits >= fuelCostPerTick;
+    const canAffordRepair = player.credits >= repairCostPerTick;
+
+    const isDisabledRefuel = isFuelFull || !canAffordRefuel;
+    const isDisabledRepair = isHealthFull || !canAffordRepair;
     
     return `
         <div class="services-scroll-panel">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                    <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-                </div>
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                    <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
-                </div>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-8 max-w-4xl mx-auto mt-8">
+              <div
+                class="service-module w-full max-w-sm"
+                style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6;"
+              >
+                <div class="bar-housing">
+                  <div class="progress-bar-container w-full p-1.5 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center px-4 text-sm pointer-events-none">
+                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
+                        ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
+                      </span>
+                    </div>
+                    <div id="fuel-bar" class="progress-bar-fill h-12 rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                  </div>
+                  </div>
+                <div class="control-deck flex justify-center items-center gap-4">
+                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                    <span class="price-label text-sm engraved-text">COST</span>
+                    <span class="price-digits text-lg ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${fuelCostPerTick.toLocaleString()} C
+                    </span>
+                  </div>
+                  <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
+                      <span class="engraved-text">${isFuelFull ? 'MAX' : 'Refuel'}</span>
+                  </button>
+                  </div>
+              </div>
+
+              <div
+                class="service-module w-full max-w-sm"
+                style="--resource-color-rgb: 34, 197, 94; --resource-color: #22c55e;"
+              >
+                <div class="bar-housing">
+                  <div class="progress-bar-container w-full p-1.5 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center px-4 text-sm pointer-events-none">
+                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #22c55e;">Hull Integrity</span>
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #22c55e;">
+                        ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
+                      </span>
+                    </div>
+                    <div id="repair-bar" class="progress-bar-fill h-12 rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                  </div>
+                  </div>
+                <div class="control-deck flex justify-center items-center gap-4">
+                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                    <span class="price-label text-sm engraved-text">COST</span>
+                    <span class="price-digits text-lg ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${repairCostPerTick.toLocaleString()} C
+                    </span>
+                  </div>
+                  <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
+                      <span class="engraved-text">${isHealthFull ? 'MAX' : 'Repair'}</span>
+                  </button>
+                  </div>
+              </div>
             </div>
         </div>`;
 }
