@@ -108,6 +108,13 @@ export class HoldEventHandler {
             return; // Ignore jitter or off-screen moves
         }
 
+        // *** MODIFICATION ***
+        // Ignore floating text elements, as they can appear under the
+        // finger and incorrectly trigger a "drag off" event.
+        if (elementUnderTouch.classList.contains('floating-text')) {
+            return; 
+        }
+
         // Check if the element is the active button OR a child of the active button
         if (elementUnderTouch === this.activeElement || this.activeElement.contains(elementUnderTouch)) {
             return; // Finger is still on the button.
@@ -254,7 +261,12 @@ export class HoldEventHandler {
         // Set a timer to see if this is a tap or a hold.
         this.holdTimers.fuel = setTimeout(() => {
             this.isRefueling = true; // It's a hold!
-            this.lastTickTime = performance.now();
+            
+            // *** MODIFICATION ***
+            // Set lastTickTime to 0 to force the loop to fire a tick
+            // on its very first frame, matching the "rapid fire" expectation.
+            this.lastTickTime = 0; 
+            
             if (!this.animationFrameId) {
                 this.animationFrameId = requestAnimationFrame(this._boundLoop);
             }
@@ -326,7 +338,11 @@ export class HoldEventHandler {
         // MODIFIED: Fix for "Sticky Tap" (Clue C)
         this.holdTimers.repair = setTimeout(() => {
             this.isRepairing = true; // It's a hold!
-            this.lastTickTime = performance.now();
+
+            // *** MODIFICATION ***
+            // Set lastTickTime to 0 to force an immediate loop tick.
+            this.lastTickTime = 0; 
+
             if (!this.animationFrameId) {
                 this.animationFrameId = requestAnimationFrame(this._boundLoop);
             }
