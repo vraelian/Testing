@@ -61,14 +61,14 @@ export function renderServicesScreen(gameState) {
                         ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
                       </span>
                     </div>
-                    <div id="fuel-bar" class="progress-bar-fill h-12 rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                    <div id="fuel-bar" class="progress-bar-fill h-20 rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                   </div>
                   </div>
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-lg ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
-                        ${fuelCostPerTick.toLocaleString()} C
+                    <span class="price-digits text-base ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(fuelCostPerTick, false)}
                     </span>
                   </div>
                   <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
@@ -89,14 +89,14 @@ export function renderServicesScreen(gameState) {
                         ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
                       </span>
                     </div>
-                    <div id="repair-bar" class="progress-bar-fill h-12 rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                    <div id="repair-bar" class="progress-bar-fill h-20 rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                   </div>
                   </div>
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-lg ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
-                        ${repairCostPerTick.toLocaleString()} C
+                    <span class="price-digits text-base ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(repairCostPerTick, false)}
                     </span>
                   </div>
                   <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>

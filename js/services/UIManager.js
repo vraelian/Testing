@@ -1767,4 +1767,10 @@ export class UIManager {
         }
         this.hideModal('map-detail-modal');
     }
+
+    _bindScreenSpecificEvents(screenId) {
+        if (screenId === SCREEN_IDS.SERVICES) {
+            this.holdEventHandler.bindHoldEvents();
+        }
+    }
 }

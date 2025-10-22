@@ -37,7 +37,8 @@ export class EventManager {
         // Instantiate all specialized handlers
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        this.holdEventHandler = new HoldEventHandler(simulationService, uiManager); // Pass needed services
+        // MODIFIED: Pass the correct service (playerActionService) to the constructor
+        this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
     }
@@ -62,9 +63,8 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // MODIFIED: Correctly call the public handleHoldStart method
+        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldStart
         const startDragOrHold = (e) => {
-            this.holdEventHandler.handleHoldStart(e); // Let HoldEventHandler manage internal routing
             this.carouselEventHandler.handleDragStart(e);
         };
 
@@ -77,9 +77,8 @@ export class EventManager {
             startDragOrHold(e);
         }, { passive: false });
 
-        // MODIFIED: Correctly call the public handleHoldEnd method
+        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
-            this.holdEventHandler.handleHoldEnd(); // Let HoldEventHandler manage internal cleanup
             this.carouselEventHandler.handleDragEnd();
         };
         document.body.addEventListener('mouseup', endDragOrHold);
