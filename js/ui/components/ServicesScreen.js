@@ -15,8 +15,15 @@ import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
  */
 export function renderServicesScreen(gameState) {
     const { player, currentLocationId } = gameState;
+
+    // --- Crash Fix: Check if activeShipId exists and its state data is available ---
+    if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
+        return '<p class="text-center text-gray-500 text-lg mt-8">No active ship available for servicing.</p>';
+    }
+    // --- End Crash Fix ---
+
     const shipStatic = DB.SHIPS[player.activeShipId];
-    const shipState = player.shipStates[player.activeShipId];
+    const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
 
     // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;

@@ -63,8 +63,15 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldStart
+        // MODIFIED: Combined handler for starting drag (carousel) or hold (stepper)
         const startDragOrHold = (e) => {
+            const stepperButton = e.target.closest('.qty-up, .qty-down');
+
+            // --- Stepper Hold Start ---
+            if (stepperButton) {
+                this.holdEventHandler._startStepperHold(stepperButton);
+            }
+            // --- Carousel Drag Start ---
             this.carouselEventHandler.handleDragStart(e);
         };
 
@@ -77,8 +84,11 @@ export class EventManager {
             startDragOrHold(e);
         }, { passive: false });
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
+        // MODIFIED: Combined handler for ending drag (carousel) or hold (stepper)
         const endDragOrHold = () => {
+             // --- Stepper Hold End (will check for tap-vs-hold internally) ---
+             this.holdEventHandler._stopStepperHold(); // Always try to stop stepper hold on release
+             // --- Carousel Drag End ---
             this.carouselEventHandler.handleDragEnd();
         };
         document.body.addEventListener('mouseup', endDragOrHold);
@@ -111,15 +121,20 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
-        // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
-        if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
-             // Reset stepper hold flag after suppressing click
+        // MODIFIED: Suppress click if carousel moved, a hold is active, OR if our new tap logic just fired
+        if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding || this.holdEventHandler.tapFired) {
+             // Reset tapFired flag after suppressing the click
+             if (this.holdEventHandler.tapFired) {
+                 this.holdEventHandler.tapFired = false;
+             }
+             // Reset stepper hold flag just in case
              if (this.holdEventHandler.isStepperHolding) {
                  this.holdEventHandler.isStepperHolding = false;
              }
             e.preventDefault();
             return;
         }
+        // --- END MODIFICATION ---
 
 
         const state = this.gameState.getState();
