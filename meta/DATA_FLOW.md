@@ -11,27 +11,30 @@ The application is built on a strict **unidirectional data flow** model. This en
 
 ---
 
-## Core Logic Loop Flowchart
+## Core Logic Flowchart
+
+The system uses two primary flows: a main flow for most game actions, and a "hot loop" for high-frequency, responsive actions.
 
 ```mermaid
 graph TD
     subgraph Input Layer
-        A[User Interaction e.g., Click] --> B{EventManager};
-        B --> C[Specialized Handler e.g., MarketEventHandler];
+        A[User Interaction e.g., Click/PointerDown] --> B{EventManager / Handlers};
     end
 
     subgraph Logic Layer
-        C --> D[SimulationService Facade];
+        B -- 1a. Main Flow (e.g., Buy Item) --> D[SimulationService Facade];
         D --> E[Specialized Service e.g., PlayerActionService];
+
+        B -- 1b. Hot Loop (e.g., Refuel Tick) --> E;
     end
 
     subgraph State Layer
-        E -- 1. Executes logic & computes new state --> F((GameState));
+        E -- 2. Executes logic & computes new state --> F((GameState));
     end
 
     subgraph Output Layer
-        F -- 2. Notifies subscribers of change --> G[UIManager];
-        G -- 3. Reads new state & re-renders UI --> H[DOM];
+        F -- 3. Notifies subscribers of change --> G[UIManager];
+        G -- 4. Reads new state & re-renders UI --> H[DOM];
     end
 
     H --> A;

@@ -20,7 +20,7 @@
         "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
         "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
         "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
-        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide critical context that a simple description cannot.",
+        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
         "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
       ]
     },
@@ -142,9 +142,13 @@
         "mutates_state": []
     },
     "HoldEventHandler": {
-        "description": "Manages the 'hold-to-act' functionality for continuous actions like refueling and repairing.",
-        "dependencies": ["GameState", "SimulationService", "UIManager"],
-        "key_functions": {"handleHoldStart": "Starts a continuous action.", "handleHoldEnd": "Stops all continuous actions."},
+        "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
+        "dependencies": ["PlayerActionService", "UIManager"],
+        "key_functions": {
+          "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
+          "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
+          "_handleInteractionStop": "Master 'stop' handler that stops any active action."
+        },
         "mutates_state": []
     },
     "CarouselEventHandler": {

@@ -39,3 +39,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
     * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
     * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.
+
+---
+
+### ADR-004: Robust "Hold-to-Act" Event Handling
+
+* **Status**: Accepted (2025-10-22)
+* **Context**: The "hold-to-act" buttons (Refuel, Repair) on the Services screen exhibited "sticky" or "toggle" behavior on the primary test target (iOS Simulator / WKWebView). A `mousedown`/`touchstart` would trigger the action, but the UI re-render (caused by the resulting state change) would destroy the original button element. This prevented the corresponding `mouseup`/`touchend` event from ever being received, leaving the action "stuck" in an active loop.
+* **Decision**: A persistent, delegated, and capture-phase event model was implemented in `HoldEventHandler.js`.
+    1.  **Use Pointer Events**: Switched from separate `mouse` and `touch` events to the modern **Pointer Events API** (`pointerdown`, `pointerup`, `pointercancel`) for unified and more reliable input handling.
+    2.  **Delegated "Start"**: A single, persistent `pointerdown` listener is attached to `document.body`. This listener never gets destroyed and delegates the event to the correct handler based on `e.target`.
+    3.  **Capture-Phase "Stop"**: Single, persistent `pointerup` and `pointercancel` listeners are attached to the `window` object using the **`{ capture: true }`** option. This ensures the "stop" event is intercepted *before* the UI re-render can stop its propagation.
+    4.  **State-Based Logic**: The `_start...` and `_stop...` functions no longer add/remove listeners. They *only* set internal state flags (e.g., `this.activeElementId`), which the persistent global listeners check.
+* **Consequences**:
+    * **Pro**: Creates an extremely robust event handling model that is immune to UI re-renders, permanently fixing the "sticky button" bug.
+    * **Pro**: Simplifies the handler logic by removing the need to manually manage listener lifecycles.
+    * **Pro**: Consolidates mouse and touch logic into a single, cleaner API.

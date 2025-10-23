@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.20</title>
+    <title>Orbital Trading 30.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -62,7 +62,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.20</p>
+            <p>Version 30.30</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2187,7 +2187,6 @@ body {
 --- START OF FILE: ./css/screens/services-screen.css ---
 /* css/screens/services-screen.css */
 .services-scroll-panel {
-    /* height: 75vh; */ /* REMOVED */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
@@ -2196,6 +2195,200 @@ body {
 }
 .services-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* Add New Styles for Overhauled Services Screen */
+
+/* Fonts (ensure these are loaded in index.html) */
+.font-orbitron { font-family: 'Orbitron', sans-serif; }
+.font-electrolize { font-family: 'Electrolize', sans-serif; }
+
+/* Text Outline Effect */
+.text-outline {
+  text-shadow:
+    -1px -1px 1px #000,
+    1px -1px 1px #000,
+    -1px  1px 1px #000,
+    1px  1px 1px #000,
+    0 0 4px #000,
+    0 0 8px var(--glow-color, rgba(0,0,0,0.8));
+}
+
+/* Engraved Text Effect */
+.engraved-text {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.6), 0 -1px 1px rgba(255,255,255,0.1);
+}
+
+/* Base Service Module Styling */
+.service-module {
+  border: 1px solid rgba(var(--resource-color-rgb), 0.3);
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
+  transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background-color: #2a2a2a;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(#3a3a3a, #2a2a2a);
+  background-size: 8px 8px, 100% 100%;
+  box-shadow:
+    0 0 15px -3px rgba(var(--resource-color-rgb), 0.3), /* Subdued resource glow */
+    inset 0 0 0 2px rgba(255,255,255,0.05),
+    inset 0 0 15px rgba(0,0,0,1),
+    0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Active Service Module Glow */
+.service-module.active-service {
+  border-color: rgba(var(--resource-color-rgb), 0.8);
+  box-shadow:
+    0 0 25px -2px rgba(var(--resource-color-rgb), 0.7), /* Brighter active glow */
+    inset 0 0 0 2px rgba(255,255,255,0.05),
+    inset 0 0 15px rgba(0,0,0,1),
+    0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Progress Bar Housing */
+.bar-housing {
+  background-color: rgba(0,0,0,0.4);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+  margin-bottom: 1rem; /* Added margin */
+}
+
+.progress-bar-container {
+   border-radius: 0.5rem; /* rounded-lg */
+   border-width: 1px; /* border */
+   overflow: hidden;
+   position: relative;
+   background: rgba(10, 20, 30, 0.5);
+   box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+   /* MODIFIED: Added 400ms transition for smooth fade-out */
+   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
+}
+
+/* Active Border Pulse Animation */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgba(var(--resource-color-rgb), 0.3);
+    box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.1), inset 0 0 4px rgba(var(--resource-color-rgb), 0.1), inset 0 2px 5px rgba(0,0,0,0.5);
+  }
+  50% {
+    border-color: rgba(var(--resource-color-rgb), 0.8);
+    box-shadow: 0 0 20px rgba(var(--resource-color-rgb), 0.5), inset 0 0 8px rgba(var(--resource-color-rgb), 0.3), inset 0 2px 5px rgba(0,0,0,0.5);
+  }
+}
+
+.progress-bar-container.active-pulse {
+   /* MODIFIED: Ensure animation is infinite */
+   animation: pulse-border 3s ease-in-out infinite;
+}
+
+/* Progress Bar Fill Styling */
+.progress-bar-fill {
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
+  transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out, opacity 0.4s ease-out;
+  box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); /* Base glow using CSS var */
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.375rem; /* rounded-md */
+}
+
+/* Scanning Hotspot Animation */
+@keyframes scan-hotspot {
+  0% { transform: translateX(-100%) skewX(-30deg); }
+  100% { transform: translateX(500%) skewX(-30deg); }
+}
+
+/* MODIFIED: Added new animation for the fill bar itself */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: brightness(1.1);
+    box-shadow: 0 0 15px var(--glow-color), inset 0 0 4px var(--glow-color);
+  }
+  50% {
+    filter: brightness(1.4);
+    box-shadow: 0 0 25px var(--glow-color), inset 0 0 8px var(--glow-color);
+  }
+}
+
+.progress-bar-fill.filling {
+  /* MODIFIED: Ensure animation is infinite */
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.progress-bar-fill.filling::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  /* MODIFIED: Ensure animation is infinite */
+  animation: scan-hotspot 2.5s ease-in-out infinite;
+}
+
+/* Control Deck (Buttons and Price) */
+.control-deck {
+  padding-top: 1rem;
+}
+
+/* Price Display Module */
+.price-display-module {
+  background: linear-gradient(#2a2a2a, #1a1a1a);
+  border-radius: 0.75rem; /* rounded-xl */
+  border: 2px solid #000;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.1);
+  color: #a0a0a0; /* Default text color */
+}
+.price-display-module .price-label {
+  letter-spacing: 0.05em;
+}
+.price-display-module .price-digits {
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 0 0 4px var(--tw-shadow-color), 0 0 8px var(--tw-shadow-color);
+}
+
+/* Industrial Button Styling */
+.industrial-button {
+  border-radius: 0.75rem; /* rounded-xl */
+  background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
+  border: 1px solid #1f2937;
+  border-top-color: #9ca3af;
+  border-left-color: #6b7280; /* Corrected typo */
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
+  color: #e5e7eb;
+  text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
+  /* MODIFIED: Added 400ms transition for smooth fade-out */
+  transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
+}
+
+/* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
+.industrial-button.holding {
+  background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+  transform: translateY(1px); /* Keep the pressed down visual */
+}
+
+/* MODIFIED: Added separate :active state for instant visual feedback on tap */
+.industrial-button:active {
+  transform: translateY(1px); /* Apply press down immediately */
+}
+
+.industrial-button:disabled {
+  background: #374151;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Add styles for stepper active state if needed, though they might already exist */
+.qty-stepper.stepper-active {
+    /* Your existing stepper active styles */
+    /* Example: border-color: var(--active-primary); */
 }
 --- END OF FILE: ./css/screens/services-screen.css ---
 
@@ -4489,40 +4682,93 @@ export function renderServicesScreen(gameState) {
     const { player, currentLocationId } = gameState;
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = player.shipStates[player.activeShipId];
-    const currentMarket = DB.MARKETS.find(m => m.id === currentLocationId);
-    const theme = currentMarket?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
 
-
-    // Calculate fuel price, applying perks if applicable.
-    let fuelPrice = currentMarket.fuelPrice / 2;
+    // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
+    let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    
-    // Calculate repair price per tick, applying perks if applicable.
-    let costPerRepairTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
-    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        costPerRepairTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
-    }
+    fuelCostPerTick = Math.round(fuelCostPerTick);
 
+    // --- Calculate Repair Cost (logic mirrored from PlayerActionService.repairTick) ---
+    let repairCostPerTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
+        repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+    }
+    repairCostPerTick = Math.round(repairCostPerTick);
+
+    // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
     const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+
+    // --- Determine UI States ---
+    const isFuelFull = shipState.fuel >= shipStatic.maxFuel;
+    const isHealthFull = shipState.health >= shipStatic.maxHealth;
+
+    const canAffordRefuel = player.credits >= fuelCostPerTick;
+    const canAffordRepair = player.credits >= repairCostPerTick;
+
+    const isDisabledRefuel = isFuelFull || !canAffordRefuel;
+    const isDisabledRepair = isHealthFull || !canAffordRepair;
     
     return `
         <div class="services-scroll-panel">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8">
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Refueling</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(fuelPrice, false)}</span> / 5 units</p>
-                    <button id="refuel-btn" class="btn w-full py-3" ${shipState.fuel >= shipStatic.maxFuel ? 'disabled' : ''}>Hold to Refuel</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="fuel-bar" style="width: ${fuelPct}%" class="bg-sky-400"></div></div>
-                </div>
-                <div class="p-4 rounded-lg text-center shadow-lg panel-border border" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <h4 class="font-orbitron text-xl mb-2">Ship Maintenance</h4>
-                    <p class="mb-3">Price: <span class="font-bold">⌬ ${formatCredits(costPerRepairTick, false)}</span> / 5% repair</p>
-                    <button id="repair-btn" class="btn w-full py-3" ${shipState.health >= shipStatic.maxHealth ? 'disabled' : ''}>Hold to Repair</button>
-                    <div class="w-full hud-stat-bar mt-2"><div id="repair-bar" style="width: ${healthPct}%" class="bg-green-400"></div></div>
-                </div>
+            <div class="flex flex-col md:flex-row justify-center items-center gap-8 max-w-4xl mx-auto mt-8">
+              <div
+                class="service-module w-full max-w-sm"
+                style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6;"
+              >
+                <div class="bar-housing">
+                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
+                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
+                        ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
+                      </span>
+                    </div>
+                    <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                  </div>
+                  </div>
+                <div class="control-deck flex justify-center items-center gap-4">
+                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                    <span class="price-label text-sm engraved-text">COST</span>
+                    <span class="price-digits text-base ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(fuelCostPerTick, false)}
+                    </span>
+                  </div>
+                  <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
+                      <span class="engraved-text">${isFuelFull ? 'MAX' : 'Refuel'}</span>
+                  </button>
+                  </div>
+              </div>
+
+              <div
+                class="service-module w-full max-w-sm"
+                style="--resource-color-rgb: 34, 197, 94; --resource-color: #22c55e;"
+              >
+                <div class="bar-housing">
+                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
+                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #22c55e;">Hull Integrity</span>
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #22c5M">
+                        ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
+                      </span>
+                    </div>
+                    <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                  </div>
+                  </div>
+                <div class="control-deck flex justify-center items-center gap-4">
+                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                    <span class="price-label text-sm engraved-text">COST</span>
+                    <span class="price-digits text-base ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(repairCostPerTick, false)}
+                    </span>
+                  </div>
+                  <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
+                      <span class="engraved-text">${isHealthFull ? 'MAX' : 'Repair'}</span>
+                  </button>
+                  </div>
+              </div>
             </div>
         </div>`;
 }
@@ -4836,6 +5082,8 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        // MODIFIED: Inject EventManager into UIManager for post-render bindings
+        uiManager.setEventManager(eventManager);
         
         // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
@@ -9351,7 +9599,8 @@ export class EventManager {
         // Instantiate all specialized handlers
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        this.holdEventHandler = new HoldEventHandler(gameState, simulationService, uiManager);
+        // MODIFIED: Pass the correct service (playerActionService) to the constructor
+        this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
     }
@@ -9376,32 +9625,41 @@ export class EventManager {
             }
         }, { passive: false });
 
+        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldStart
         const startDragOrHold = (e) => {
-            this.holdEventHandler.handleHoldStart(e);
             this.carouselEventHandler.handleDragStart(e);
         };
+
         document.body.addEventListener('mousedown', startDragOrHold);
         document.body.addEventListener('touchstart', (e) => {
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn')) {
-                e.preventDefault();
+            // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
+            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.qty-up') || e.target.closest('.qty-down') || e.target.closest('.carousel-container')) {
+                 e.preventDefault();
             }
             startDragOrHold(e);
         }, { passive: false });
-        
+
+        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
-            this.holdEventHandler.handleHoldEnd();
             this.carouselEventHandler.handleDragEnd();
         };
         document.body.addEventListener('mouseup', endDragOrHold);
         document.body.addEventListener('mouseleave', endDragOrHold);
         document.body.addEventListener('touchend', endDragOrHold);
         document.body.addEventListener('touchcancel', endDragOrHold);
-        
+
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
-        document.body.addEventListener('touchmove', (e) => this.carouselEventHandler.handleDragMove(e), { passive: false });
+        document.body.addEventListener('touchmove', (e) => {
+            // Prevent default touchmove ONLY if dragging the carousel
+             if (this.carouselEventHandler.state.isDragging) {
+                 e.preventDefault();
+             }
+            this.carouselEventHandler.handleDragMove(e);
+        }, { passive: false });
+
 
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
-        
+
         if (this.uiManager.cache.missionStickyBar) {
             this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
@@ -9415,15 +9673,20 @@ export class EventManager {
      * @private
      */
     _handleClick(e) {
-        // Suppress click events that are the result of a drag/swipe on the carousel
-        if (this.carouselEventHandler.wasMoved()) {
+        // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
+        if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
+             // Reset stepper hold flag after suppressing click
+             if (this.holdEventHandler.isStepperHolding) {
+                 this.holdEventHandler.isStepperHolding = false;
+             }
             e.preventDefault();
             return;
         }
 
+
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
-        
+
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 
@@ -10046,6 +10309,8 @@ export class UIManager {
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
         this.marketScrollPosition = 0;
         this.popperInstance = null; // Instance for Popper.js
+        // MODIFIED: Added property to hold injected EventManager
+        this.eventManager = null; // To be injected
 
         this.effectsManager = new EffectsManager();
 
@@ -10105,6 +10370,14 @@ export class UIManager {
      */
     setDebugService(service) {
         this.debugService = service;
+    }
+
+    /**
+     * MODIFIED: Injects the EventManager after instantiation.
+     * @param {import('./EventManager.js').EventManager} eventManager
+     */
+    setEventManager(eventManager) {
+        this.eventManager = eventManager;
     }
 
     /**
@@ -10287,6 +10560,10 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                // MODIFIED: Bind hold events after rendering the services screen
+                if (this.eventManager) {
+                    this.eventManager.holdEventHandler.bindHoldEvents();
+                }
                 break;
             case SCREEN_IDS.MARKET:
                 this.updateMarketScreen(gameState);
@@ -11764,6 +12041,8 @@ export class UIManager {
         }
         this.hideModal('map-detail-modal');
     }
+
+    // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -11895,80 +12174,511 @@ export class MarketEventHandler {
 --- START OF FILE: ./js/services/handlers/HoldEventHandler.js ---
 // js/services/handlers/HoldEventHandler.js
 /**
- * @fileoverview Manages "hold-to-act" functionality, for continuous actions like
- * refueling, repairing, and the progressive quantity steppers on the market screen.
+ * @fileoverview This file defines the HoldEventHandler class, which manages
+ * the "hold-to-act" (press and hold) functionality for UI elements.
+ *
+ * This handler is responsible for:
+ * 1. Detecting 'pointerdown' events on target buttons.
+ * 2. Immediately starting a "tick loop" (via requestAnimationFrame) on press.
+ * 3. Calling the appropriate PlayerActionService function on each "tick" of the loop.
+ * 4. Stopping the loop on 'pointerup' or 'pointercancel'.
+ * 5. Managing all visual feedback (CSS classes) associated with the hold state.
+ *
+ * @architecture
+ * This class uses a robust, persistent, and delegated event listener model
+ * to solve "sticky button" / "toggle" bugs caused by UI re-renders (common in
+ * frameworks or when state changes, like on iOS WKWebView).
+ *
+ * 1.  **Pointer Events**: Uses the modern Pointer Events API (`pointerdown`, `pointerup`,
+ * `pointercancel`) for unified handling of mouse and touch.
+ *
+ * 2.  **Delegated "Start"**: A *single*, *persistent* `pointerdown` listener
+ * is attached to `document.body`. This listener never gets destroyed by
+ * re-renders. It checks `e.target` to delegate the event to the
+ * correct function (e.g., `_startRefueling`).
+ *
+ * 3.  **Capture-Phase "Stop"**: *Single*, *persistent* `pointerup` and
+ * `pointercancel` listeners are attached to the `window` object using
+ * `{ capture: true }`.
+ * - **Why window?**: It catches the event even if the pointer is released
+ * outside the original button.
+ * - **Why capture: true?**: This is the crucial part. It ensures this
+ * "stop" listener fires during the *capture* phase (traveling *down*
+ * from window to target), *before* any other listeners. This prevents
+ * the UI re-render from destroying the element and stopping event
+ * propagation, which was the root cause of the "sticky" bug.
+ *
+ * 4.  **State-Based Logic**: The `_start...` and `_stop...` functions DO NOT
+ * add or remove event listeners. They *only* set internal state flags
+ * (e.g., `this.activeElementId`, `this.isRefueling`). The persistent
+ * listeners check this state to decide what to do.
  */
-import { formatCredits } from '../../utils.js';
-import { ACTION_IDS } from '../../data/constants.js';
 
+import { formatCredits } from '../../utils.js';
+
+/**
+ * Manages hold-to-act (e.g., refuel, repair) interactions on the UI.
+ * This class adds event listeners for mousedown/touchstart and mouseup/touchend
+ * to specified buttons and executes a callback function repeatedly while held.
+ */
 export class HoldEventHandler {
     /**
-     * @param {import('../GameState.js').GameState} gameState The central game state object.
-     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
+     * @param {import('../player/PlayerActionService.js').PlayerActionService} playerActionService
+     * @param {import('../UIManager.js').UIManager} uiManager
      */
-    constructor(gameState, simulationService, uiManager) {
-        this.gameState = gameState;
-        this.simulationService = simulationService;
+    constructor(playerActionService, uiManager) {
+        this.playerActionService = playerActionService;
         this.uiManager = uiManager;
 
-        this.refuelInterval = null;
-        this.repairInterval = null;
+        this.refuelBtn = null;
+        this.repairBtn = null;
 
-        // --- New properties for the stepper hold feature ---
-        this.stepperInitialDelay = 1000; // 1-second initial delay
-        this.stepperRepeatRate = 1000 / 7; // ~7 times per second
+        /** @type {boolean} Flag: Is the refueling loop active? */
+        this.isRefueling = false;
+        /** @type {boolean} Flag: Is the repairing loop active? */
+        this.isRepairing = false;
 
+        /** @type {number} Milliseconds between service ticks */
+        this.holdInterval = 400;
+
+        /** @type {number} Timestamp of the last loop tick */
+        this.lastTickTime = 0;
+        /** @type {number | null} ID for the requestAnimationFrame loop */
+        this.animationFrameId = null;
+
+        /** @type {string | null} The ID of the element currently being held */
+        this.activeElementId = null;
+
+        /**
+         * @type {Object<string, number | null>}
+         * Timers for fading out visual effects *after* a hold is released.
+         */
+        this.stopTimers = {
+            fuel: null,
+            repair: null
+        };
+
+        // --- Bind master handlers that will be persistent ---
+        this._boundHandleInteractionStart = this._handleInteractionStart.bind(this);
+        this._boundHandleInteractionStop = this._handleInteractionStop.bind(this);
+        this._boundHandlePointerMove = this._handlePointerMove.bind(this);
+
+        // --- Bind core functions ---
+        this._boundLoop = this._loop.bind(this);
+        this._boundStartRefueling = this._startRefueling.bind(this);
+        this._boundStopRefueling = this._stopRefueling.bind(this);
+        this._boundStartRepairing = this._startRepairing.bind(this);
+        this._boundStopRepairing = this._stopRepairing.bind(this);
+        this._boundStopStepperHold = this._stopStepperHold.bind(this);
+        
+        // --- Stepper logic ---
+        this.isStepperHolding = false;
+        this.stepperInitialDelay = 1000;
+        this.stepperRepeatRate = 1000 / 7;
         this.stepperTimeout = null;
         this.stepperInterval = null;
         this.stepperStartTime = null;
-        this.stepperTarget = null; // { input, direction, element }
-        this.isStepperHolding = false; // Flag to distinguish a hold from a click
+        this.stepperTarget = null;
     }
 
     /**
-     * Initiates a hold action based on the event target.
-     * @param {Event} e The mousedown or touchstart event.
+     * Binds all hold-to-act event listeners using delegation.
+     * This function should be called ONCE when the application initializes.
+     * It adds persistent listeners to the body and window.
+     * @see {@link HoldEventHandler} file-level comment for architecture details.
      */
-    handleHoldStart(e) {
-        if (e.target.closest('#refuel-btn')) {
-            this._startRefueling(e.type === 'touchstart');
-        }
-        if (e.target.closest('#repair-btn')) {
-            this._startRepairing(e.type === 'touchstart');
-        }
+    bindHoldEvents() {
+        // --- Use Pointer Events for unified mouse/touch ---
 
-        const stepperButton = e.target.closest('.qty-up, .qty-down');
-        if (stepperButton) {
-            // Let the click event happen unless a hold is confirmed.
-            this._startStepperHold(stepperButton);
-        }
+        // Add persistent "start" listener to the document body (delegation)
+        document.body.removeEventListener('pointerdown', this._boundHandleInteractionStart);
+        document.body.addEventListener('pointerdown', this._boundHandleInteractionStart);
+        
+        // Add persistent "stop" listeners to the window on the CAPTURE phase
+        window.removeEventListener('pointerup', this._boundHandleInteractionStop, { capture: true });
+        window.addEventListener('pointerup', this._boundHandleInteractionStop, { capture: true });
+        
+        window.removeEventListener('pointercancel', this._boundHandleInteractionStop, { capture: true });
+        window.addEventListener('pointercancel', this._boundHandleInteractionStop, { capture: true });
+        
+        // Add persistent "move" listener to the window
+        window.removeEventListener('pointermove', this._boundHandlePointerMove);
+        window.addEventListener('pointermove', this._boundHandlePointerMove, { passive: false });
+
+        // --- Clean up old mouse/touch listeners (if any) ---
+        document.body.removeEventListener('mousedown', this._boundHandleInteractionStart);
+        document.body.removeEventListener('touchstart', this._boundHandleInteractionStart);
+        window.removeEventListener('mouseup', this._boundHandleInteractionStop, { capture: true });
+        window.removeEventListener('touchend', this._boundHandleInteractionStop, { capture: true });
+        window.removeEventListener('touchcancel', this._boundHandleInteractionStop, { capture: true });
+        window.removeEventListener('touchmove', this._boundHandlePointerMove);
     }
 
     /**
-     * Clears all active hold intervals, stopping any continuous actions.
-     */
-    handleHoldEnd() {
-        this._stopRefueling();
-        this._stopRepairing();
-        this._stopStepperHold();
-    }
-
-    // --- Stepper Hold Logic ---
-
-    /**
-     * Starts the hold-to-increment/decrement sequence for a market quantity stepper.
-     * @param {HTMLElement} button - The stepper button being held (.qty-up or .qty-down).
+     * Master "start" handler for pointerdown, bound to document.body.
+     * Delegates to the correct specific handler based on the event target.
+     * @param {PointerEvent} e - The pointerdown event.
      * @private
      */
-    _startStepperHold(button) {
-        // Clear any existing timers to prevent conflicts
-        this._stopStepperHold();
+    _handleInteractionStart(e) {
+        // Do not start a new action if one is already active
+        if (this.activeElementId || this.stepperTarget) {
+            return;
+        }
+
+        const refuelBtn = e.target.closest('#refuel-btn');
+        if (refuelBtn && !refuelBtn.disabled) {
+            this._startRefueling(e);
+            return;
+        }
+
+        const repairBtn = e.target.closest('#repair-btn');
+        if (repairBtn && !repairBtn.disabled) {
+            this._startRepairing(e);
+            return;
+        }
+
+        const stepperBtn = e.target.closest('.qty-stepper button');
+        if (stepperBtn && !stepperBtn.disabled) {
+            // For steppers, we still use the old logic
+            this._startStepperHold(stepperBtn);
+            return;
+        }
+    }
+
+    /**
+     * Master "stop" handler for pointerup/pointercancel, bound to window.
+     * Delegates to the correct "stop" function based on the active state.
+     * This fires on the CAPTURE phase to prevent re-renders from killing the event.
+     * @param {PointerEvent} e - The pointer event.
+     * @private
+     */
+    _handleInteractionStop(e) {
+        // Delegate to the correct stop function based on what is active
+        if (this.activeElementId === 'refuel-btn') {
+            this._stopRefueling();
+        } else if (this.activeElementId === 'repair-btn') {
+            this._stopRepairing();
+        } else if (this.stepperTarget) {
+            this._stopStepperHold();
+        }
+    }
+
+
+     /**
+     * Master "move" handler for pointermove, bound to window.
+     * Stops the action if the pointer moves off the active button.
+     * This is primarily for 'touch' pointer types.
+     * @param {PointerEvent} e - The pointermove event.
+     * @private
+     */
+    _handlePointerMove(e) {
+        // Only run if a service button is being held
+        if (this.activeElementId !== 'refuel-btn' && this.activeElementId !== 'repair-btn') {
+            return;
+        }
+
+        // We only care about touch-like pointers for move-off-to-cancel
+        if (e.pointerType !== 'touch') {
+            return;
+        }
+
+        const elementUnderTouch = document.elementFromPoint(e.clientX, e.clientY);
+
+        if (!elementUnderTouch) {
+            // Finger likely moved off-screen, treat as release
+            if (this.activeElementId === 'refuel-btn') this._stopRefueling();
+            if (this.activeElementId === 'repair-btn') this._stopRepairing();
+            return;
+        }
+
+        if (elementUnderTouch.classList.contains('floating-text')) {
+            return; // Ignore floating text
+        }
+
+        const currentActiveButton = document.getElementById(this.activeElementId);
+        if (elementUnderTouch === currentActiveButton || (currentActiveButton && currentActiveButton.contains(elementUnderTouch))) {
+            return; // Finger is still on the button.
+        }
+
+        // Finger has definitively moved off the button.
+        if (this.activeElementId === 'refuel-btn') this._stopRefueling();
+        if (this.activeElementId === 'repair-btn') this._stopRepairing();
+    }
+
+    /**
+     * The main game loop for handling hold actions.
+     * Runs via requestAnimationFrame.
+     * @param {number} timestamp - The current high-resolution timestamp.
+     * @private
+     */
+    _loop(timestamp) {
+        // Stop condition: If no service is active, kill the animation frame.
+        if (!this.isRefueling && !this.isRepairing) {
+            this.animationFrameId = null;
+            return;
+        }
+
+        let serviceStillActive = false; // Flag to see if we should continue the loop
+
+        // Check if enough time has passed since the last tick
+        if (timestamp - this.lastTickTime >= this.holdInterval) {
+            this.lastTickTime = timestamp;
+            let cost = 0;
+
+            this.refuelBtn = document.getElementById('refuel-btn');
+            this.repairBtn = document.getElementById('repair-btn');
+
+            if (this.isRefueling) {
+                cost = this.playerActionService.refuelTick();
+                this._applyVisuals('fuel'); 
+                
+                if (cost > 0 && this.refuelBtn) {
+                    const rect = this.refuelBtn.getBoundingClientRect();
+                    this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
+                    serviceStillActive = true;
+                } else {
+                    this.isRefueling = false; // Ran out of money or tank is full
+                }
+            }
+
+            if (this.isRepairing) {
+                cost = this.playerActionService.repairTick();
+                this._applyVisuals('repair');
+                
+                if (cost > 0 && this.repairBtn) {
+                     const rect = this.repairBtn.getBoundingClientRect();
+                    this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
+                    serviceStillActive = true;
+                } else {
+                    this.isRepairing = false; // Ran out of money or hull is full
+                }
+            }
+
+            // If both services stopped (e.g., ran out of money), remove visuals
+            if (!serviceStillActive) {
+                 if (!this.isRefueling && this.activeElementId === 'refuel-btn') this._removeVisualsWithDelay('fuel');
+                 if (!this.isRepairing && this.activeElementId === 'repair-btn') this._removeVisualsWithDelay('repair');
+            }
+        }
+
+        // Continue animation loop ONLY if a service is still set to 'true'
+        // (i.e., hasn't been stopped by a 'stop' event or by running out of money/fuel)
+        if (this.isRefueling || this.isRepairing) {
+            this.animationFrameId = requestAnimationFrame(this._boundLoop);
+        } else {
+            this.animationFrameId = null;
+        }
+    }
+
+
+    /**
+     * Applies active visual classes to a service module.
+     * @param {string} type - 'fuel' or 'repair'
+     * @private
+     */
+    _applyVisuals(type) {
+        if (type === 'fuel' && this.stopTimers.fuel) {
+            clearTimeout(this.stopTimers.fuel);
+            this.stopTimers.fuel = null;
+        }
+        if (type === 'repair' && this.stopTimers.repair) {
+            clearTimeout(this.stopTimers.repair);
+            this.stopTimers.repair = null;
+        }
+
+        const currentRefuelBtn = document.getElementById('refuel-btn');
+        const currentRepairBtn = document.getElementById('repair-btn');
+        const btn = type === 'fuel' ? currentRefuelBtn : currentRepairBtn;
+        const barId = type ==='fuel' ? 'fuel-bar' : 'repair-bar';
+
+        if (btn) {
+            btn.classList.add('holding');
+            const serviceModule = btn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.add('active-service');
+
+            const progressBarFill = document.getElementById(barId);
+            if (progressBarFill) {
+                progressBarFill.classList.add('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.add('active-pulse');
+            }
+        }
+    }
+
+    /**
+     * Removes active visual classes from a service module after a delay.
+     * @param {string} type - 'fuel' or 'repair'
+     * @private
+     */
+    _removeVisualsWithDelay(type) {
+        if (type === 'fuel') {
+            if (this.stopTimers.fuel) clearTimeout(this.stopTimers.fuel);
+            this.stopTimers.fuel = setTimeout(() => {
+                this._removeVisuals('fuel');
+                this.stopTimers.fuel = null;
+            }, 400);
+        } else if (type === 'repair') {
+            if (this.stopTimers.repair) clearTimeout(this.stopTimers.repair);
+             this.stopTimers.repair = setTimeout(() => {
+                this._removeVisuals('repair');
+                this.stopTimers.repair = null;
+            }, 400);
+        }
+    }
+
+    /**
+     * Immediately removes active visual classes (used internally by delayed removal).
+     * @param {string} type - 'fuel' or 'repair'
+     * @private
+     */
+     _removeVisuals(type) {
+        const currentRefuelBtn = document.getElementById('refuel-btn');
+        const currentRepairBtn = document.getElementById('repair-btn');
+        const btn = type === 'fuel' ? currentRefuelBtn : currentRepairBtn;
+        const barId = type === 'fuel' ? 'fuel-bar' : 'repair-bar';
+
+        if (btn) {
+            btn.classList.remove('holding');
+            const serviceModule = btn.closest('.service-module');
+            if (serviceModule) serviceModule.classList.remove('active-service');
+
+            const progressBarFill = document.getElementById(barId);
+            if (progressBarFill) {
+                progressBarFill.classList.remove('filling');
+                const progressBarContainer = progressBarFill.closest('.progress-bar-container');
+                if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
+            }
+        }
+    }
+
+
+    /**
+     * Starts the tap/hold process for refueling.
+     * This function *only* sets state. It does NOT add event listeners.
+     * @param {PointerEvent} e - The pointerdown event.
+     * @private
+     */
+    _startRefueling(e) {
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
+
+        // Prevent default only for touch-like pointers
+        if (e.pointerType === 'touch') {
+            e.preventDefault();
+        }
+
+        this.refuelBtn = e.target.closest('#refuel-btn');
+        if (!this.refuelBtn) return;
+
+        // Explicitly set pointer capture for this element
+        // This helps ensure 'pointerup' fires reliably
+        try {
+            this.refuelBtn.setPointerCapture(e.pointerId);
+        } catch (err) {
+            // This can fail if the element is removed, etc.
+        }
+
+
+        this.activeElementId = this.refuelBtn.id;
+        this.isRefueling = true;
+
+        this._applyVisuals('fuel'); 
+
+        // Set last tick time to the past so the loop fires its first tick IMMEDIATELY
+        this.lastTickTime = performance.now() - this.holdInterval;
+        
+        if (!this.animationFrameId) {
+            this.animationFrameId = requestAnimationFrame(this._boundLoop);
+        }
+    }
+
+    /**
+     * Stops the tap/hold process for refueling.
+     * This function *only* sets state. It does NOT remove event listeners.
+     * @private
+     */
+    _stopRefueling() {
+        if (this.activeElementId !== 'refuel-btn') {
+            return;
+        }
+        
+        // Try to release pointer capture if it exists
+        const btn = document.getElementById(this.activeElementId);
+        if (btn && btn.hasPointerCapture(1)) { // '1' is the primary pointerId for touch/mouse
+             try {
+                // We don't have the original e.pointerId, but this is a best-effort
+             } catch (err) {
+                 // ignore
+             }
+        }
+
+        this.activeElementId = null;
+        this.isRefueling = false; // This will stop the loop
+
+        this._removeVisualsWithDelay('fuel'); // Remove visuals ONCE
+    }
+
+     /**
+     * Starts the tap/hold process for repairing.
+     * This function *only* sets state. It does NOT add event listeners.
+     * @param {PointerEvent} e - The pointerdown event.
+     * @private
+     */
+    _startRepairing(e) {
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
+
+        if (e.pointerType === 'touch') {
+            e.preventDefault();
+        }
+
+        this.repairBtn = e.target.closest('#repair-btn');
+        if (!this.repairBtn) return;
+
+        // Explicitly set pointer capture for this element
+        try {
+            this.repairBtn.setPointerCapture(e.pointerId);
+        } catch (err) {
+            // console.warn("Could not set pointer capture:", err.message);
+        }
+
+
+        this.activeElementId = this.repairBtn.id;
+        this.isRepairing = true;
+
+        this._applyVisuals('repair');
+
+        // Set last tick time to the past so the loop fires its first tick IMMEDIATELY
+        this.lastTickTime = performance.now() - this.holdInterval;
+
+        if (!this.animationFrameId) {
+            this.animationFrameId = requestAnimationFrame(this._boundLoop);
+        }
+    }
+
+    /**
+     * Stops the tap/hold process for repairing.
+     * This function *only* sets state. It does NOT remove event listeners.
+     * @private
+     */
+    _stopRepairing() {
+         if (this.activeElementId !== 'repair-btn') {
+            return;
+        }
+
+        this.activeElementId = null;
+        this.isRepairing = false; // This will stop the loop
+
+        this._removeVisualsWithDelay('repair'); // Remove visuals ONCE
+    }
+
+     // --- Stepper Hold Logic (Unchanged but works with master stop handler) ---
+     _startStepperHold(button) {
+        this._stopStepperHold(); // Clear any previous
         this.isStepperHolding = false;
 
         const controls = button.closest('.transaction-controls');
         if (!controls) return;
-        
+
         const qtyStepperEl = button.closest('.qty-stepper');
         const qtyInput = controls.querySelector('input');
         const direction = button.classList.contains('qty-up') ? 1 : -1;
@@ -11977,21 +12687,20 @@ export class HoldEventHandler {
         this.stepperTimeout = setTimeout(() => {
             this.isStepperHolding = true;
             this.stepperStartTime = Date.now();
-            
+
             if (this.stepperTarget && this.stepperTarget.element) {
                 this.stepperTarget.element.classList.add('stepper-active');
             }
 
-            this._stepperTick(); // Fire the first tick immediately after the delay
+            this._stepperTick();
             this.stepperInterval = setInterval(() => this._stepperTick(), this.stepperRepeatRate);
         }, this.stepperInitialDelay);
     }
 
-    /**
-     * Stops the stepper hold sequence and clears all associated timers.
-     * @private
-     */
     _stopStepperHold() {
+        // This function is now called by the master _handleInteractionStop
+        if (!this.stepperTarget) return;
+
         clearTimeout(this.stepperTimeout);
         clearInterval(this.stepperInterval);
 
@@ -12003,86 +12712,25 @@ export class HoldEventHandler {
         this.stepperInterval = null;
         this.stepperStartTime = null;
         this.stepperTarget = null;
-        // The isStepperHolding flag is reset on the next hold start.
     }
 
-    /**
-     * Executes a single tick of the quantity stepper, applying progressive acceleration.
-     * @private
-     */
-    _stepperTick() {
+     _stepperTick() {
         if (!this.stepperTarget) {
             this._stopStepperHold();
             return;
         }
 
         const { input, direction } = this.stepperTarget;
-        // The hold duration starts counting *after* the initial 1s delay
         const holdDuration = (Date.now() - this.stepperStartTime) / 1000;
-
-        let step = 1; // Base increment
-        if (holdDuration > 5) { // 1s delay + 5s hold = 6s+ total
-            step = 25; // Tier 3 acceleration
-        } else if (holdDuration > 2) { // 1s delay + 2s hold = 3s+ total
-            step = 5; // Tier 2 acceleration
-        }
+        let step = 1;
+        if (holdDuration > 5) step = 25;
+        else if (holdDuration > 2) step = 5;
 
         let currentValue = parseInt(input.value, 10) || 0;
         currentValue += step * direction;
+        input.value = Math.max(0, currentValue);
 
-        input.value = Math.max(0, currentValue); // Ensure value doesn't go below zero
-
-        // Dispatch an 'input' event to trigger the UI update in MarketEventHandler
         input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-    }
-
-
-    // --- Refuel & Repair Logic (Improved Rates) ---
-
-    _startRefueling(isTouch = false) {
-        if (this.gameState.isGameOver || this.refuelInterval) return;
-        this._refuelTick();
-        this.refuelInterval = setInterval(() => this._refuelTick(), isTouch ? 200 : 100);
-    }
-
-    _stopRefueling() {
-        clearInterval(this.refuelInterval);
-        this.refuelInterval = null;
-    }
-
-    _refuelTick() {
-        const cost = this.simulationService.refuelTick();
-        const button = this.uiManager.cache.servicesScreen?.querySelector('#refuel-btn');
-        if (cost > 0 && button) {
-            const rect = button.getBoundingClientRect();
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
-            this.uiManager.updateServicesScreen(this.gameState.getState());
-        } else {
-            this._stopRefueling();
-        }
-    }
-
-    _startRepairing(isTouch = false) {
-        if (this.gameState.isGameOver || this.repairInterval) return;
-        this._repairTick();
-        this.repairInterval = setInterval(() => this._repairTick(), isTouch ? 200 : 100);
-    }
-
-    _stopRepairing() {
-        clearInterval(this.repairInterval);
-        this.repairInterval = null;
-    }
-
-    _repairTick() {
-        const cost = this.simulationService.repairTick();
-        const button = this.uiManager.cache.servicesScreen?.querySelector('#repair-btn');
-        if (cost > 0 && button) {
-            const rect = button.getBoundingClientRect();
-            this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
-            this.uiManager.updateServicesScreen(this.gameState.getState());
-        } else {
-            this._stopRepairing();
-        }
     }
 }
 --- END OF FILE: ./js/services/handlers/HoldEventHandler.js ---
@@ -13299,7 +13947,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
         "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
         "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
-        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide critical context that a simple description cannot.",
+        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
         "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
       ]
     },
@@ -13421,9 +14069,13 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "mutates_state": []
     },
     "HoldEventHandler": {
-        "description": "Manages the 'hold-to-act' functionality for continuous actions like refueling and repairing.",
-        "dependencies": ["GameState", "SimulationService", "UIManager"],
-        "key_functions": {"handleHoldStart": "Starts a continuous action.", "handleHoldEnd": "Stops all continuous actions."},
+        "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
+        "dependencies": ["PlayerActionService", "UIManager"],
+        "key_functions": {
+          "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
+          "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
+          "_handleInteractionStop": "Master 'stop' handler that stops any active action."
+        },
         "mutates_state": []
     },
     "CarouselEventHandler": {
@@ -13661,6 +14313,22 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
     * **Pro**: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
     * **Con**: Temporarily removes a "juice" or "reward" feature from the player experience.
+
+---
+
+### ADR-004: Robust "Hold-to-Act" Event Handling
+
+* **Status**: Accepted (2025-10-22)
+* **Context**: The "hold-to-act" buttons (Refuel, Repair) on the Services screen exhibited "sticky" or "toggle" behavior on the primary test target (iOS Simulator / WKWebView). A `mousedown`/`touchstart` would trigger the action, but the UI re-render (caused by the resulting state change) would destroy the original button element. This prevented the corresponding `mouseup`/`touchend` event from ever being received, leaving the action "stuck" in an active loop.
+* **Decision**: A persistent, delegated, and capture-phase event model was implemented in `HoldEventHandler.js`.
+    1.  **Use Pointer Events**: Switched from separate `mouse` and `touch` events to the modern **Pointer Events API** (`pointerdown`, `pointerup`, `pointercancel`) for unified and more reliable input handling.
+    2.  **Delegated "Start"**: A single, persistent `pointerdown` listener is attached to `document.body`. This listener never gets destroyed and delegates the event to the correct handler based on `e.target`.
+    3.  **Capture-Phase "Stop"**: Single, persistent `pointerup` and `pointercancel` listeners are attached to the `window` object using the **`{ capture: true }`** option. This ensures the "stop" event is intercepted *before* the UI re-render can stop its propagation.
+    4.  **State-Based Logic**: The `_start...` and `_stop...` functions no longer add/remove listeners. They *only* set internal state flags (e.g., `this.activeElementId`), which the persistent global listeners check.
+* **Consequences**:
+    * **Pro**: Creates an extremely robust event handling model that is immune to UI re-renders, permanently fixing the "sticky button" bug.
+    * **Pro**: Simplifies the handler logic by removing the need to manually manage listener lifecycles.
+    * **Pro**: Consolidates mouse and touch logic into a single, cleaner API.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -13677,34 +14345,36 @@ The application is built on a strict **unidirectional data flow** model. This en
 
 ---
 
-## Core Logic Loop Flowchart
+## Core Logic Flowchart
+
+The system uses two primary flows: a main flow for most game actions, and a "hot loop" for high-frequency, responsive actions.
 
 ```mermaid
 graph TD
     subgraph Input Layer
-        A[User Interaction e.g., Click] --> B{EventManager};
-        B --> C[Specialized Handler e.g., MarketEventHandler];
+        A[User Interaction e.g., Click/PointerDown] --> B{EventManager / Handlers};
     end
 
     subgraph Logic Layer
-        C --> D[SimulationService Facade];
+        B -- 1a. Main Flow (e.g., Buy Item) --> D[SimulationService Facade];
         D --> E[Specialized Service e.g., PlayerActionService];
+
+        B -- 1b. Hot Loop (e.g., Refuel Tick) --> E;
     end
 
     subgraph State Layer
-        E -- 1. Executes logic & computes new state --> F((GameState));
+        E -- 2. Executes logic & computes new state --> F((GameState));
     end
 
     subgraph Output Layer
-        F -- 2. Notifies subscribers of change --> G[UIManager];
-        G -- 3. Reads new state & re-renders UI --> H[DOM];
+        F -- 3. Notifies subscribers of change --> G[UIManager];
+        G -- 4. Reads new state & re-renders UI --> H[DOM];
     end
 
     H --> A;
 
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
-
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
