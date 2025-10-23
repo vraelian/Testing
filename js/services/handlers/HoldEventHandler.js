@@ -87,7 +87,6 @@ export class HoldEventHandler {
         this.repairBtn = document.getElementById('repair-btn');
 
         if (this.refuelBtn) {
-            // --- MODIFICATION: Only bind the "start" events to the button ---
             // Remove any old listeners first
             this.refuelBtn.removeEventListener('mousedown', this._boundStartRefueling);
             this.refuelBtn.removeEventListener('touchstart', this._boundStartRefueling);
@@ -98,7 +97,6 @@ export class HoldEventHandler {
         }
 
         if (this.repairBtn) {
-            // --- MODIFICATION: Only bind the "start" events to the button ---
             // Remove any old listeners first
             this.repairBtn.removeEventListener('mousedown', this._boundStartRepairing);
             this.repairBtn.removeEventListener('touchstart', this._boundStartRepairing);
@@ -290,23 +288,37 @@ export class HoldEventHandler {
      * @private
      */
     _startRefueling(e) {
-        if (this.activeElementId || (e.button && e.button !== 0)) return;
-        e.preventDefault();
+        // --- MODIFICATION: Intentional "Toggle Off" / Self-Correction ---
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
+
+        if (this.activeElementId === 'refuel-btn') {
+            // Button is already active (stuck). This tap is an intentional "stop" request.
+            this._stopRefueling();
+            return;
+        }
+        
+        // If we're here, fuel wasn't active.
+        // Stop the other process just in case it's stuck.
+        this._stopRepairing(); 
+        // --- End modification ---
+
+        // Only prevent default for touchstart
+        if (e.type === 'touchstart') {
+            e.preventDefault();
+        }
 
         this.refuelBtn = document.getElementById('refuel-btn');
         if (!this.refuelBtn) return;
 
         this.activeElementId = this.refuelBtn.id;
 
-        // --- MODIFICATION: Add "stop" listeners to the global document ---
-        // This catches "mouseup" or "touchend" events anywhere on the screen
+        // Add "stop" listeners to the global document
         document.addEventListener('mouseup', this._boundStopRefueling);
         document.addEventListener('touchend', this._boundStopRefueling);
         document.addEventListener('touchcancel', this._boundStopRefueling);
         if (e.type === 'touchstart') {
             document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
         }
-        // --- End modification ---
 
         const cost = this.playerActionService.refuelTick();
 
@@ -322,6 +334,15 @@ export class HoldEventHandler {
         this._applyVisuals('fuel'); // Apply visuals ONCE on initial tap
 
         this.holdTimers.fuel = setTimeout(() => {
+            // --- Race condition check ---
+            // If the button was released (and _stopRefueling was called) before
+            // this timer fired, do not start the hold loop.
+            if (this.activeElementId !== 'refuel-btn') {
+                 this.holdTimers.fuel = null;
+                 return;
+            }
+            // --- End check ---
+
             this.isRefueling = true;
             this.lastTickTime = performance.now();
             if (!this.animationFrameId) {
@@ -340,12 +361,11 @@ export class HoldEventHandler {
             return;
         }
 
-        // --- MODIFICATION: Remove global "stop" listeners ---
+        // Remove global "stop" listeners
         document.removeEventListener('mouseup', this._boundStopRefueling);
         document.removeEventListener('touchend', this._boundStopRefueling);
         document.removeEventListener('touchcancel', this._boundStopRefueling);
         document.removeEventListener('touchmove', this._handleTouchMove);
-        // --- End modification ---
 
         this.activeElementId = null;
         this.isRefueling = false; // Stop the loop
@@ -364,22 +384,37 @@ export class HoldEventHandler {
      * @private
      */
     _startRepairing(e) {
-        if (this.activeElementId || (e.button && e.button !== 0)) return;
-        e.preventDefault();
+        // --- MODIFICATION: Intentional "Toggle Off" / Self-Correction ---
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
+
+        if (this.activeElementId === 'repair-btn') {
+            // Button is already active (stuck). This tap is an intentional "stop" request.
+            this._stopRepairing();
+            return;
+        }
+
+        // If we're here, repair wasn't active.
+        // Stop the other process just in case it's stuck.
+        this._stopRefueling();
+        // --- End modification ---
+
+        // Only prevent default for touchstart
+        if (e.type === 'touchstart') {
+            e.preventDefault();
+        }
 
         this.repairBtn = document.getElementById('repair-btn');
         if (!this.repairBtn) return;
 
         this.activeElementId = this.repairBtn.id;
 
-        // --- MODIFICATION: Add "stop" listeners to the global document ---
+        // Add "stop" listeners to the global document
         document.addEventListener('mouseup', this._boundStopRepairing);
         document.addEventListener('touchend', this._boundStopRepairing);
         document.addEventListener('touchcancel', this._boundStopRepairing);
         if (e.type === 'touchstart') {
             document.addEventListener('touchmove', this._handleTouchMove, { passive: false });
         }
-        // --- End modification ---
 
         const cost = this.playerActionService.repairTick();
 
@@ -395,6 +430,13 @@ export class HoldEventHandler {
         this._applyVisuals('repair'); // Apply visuals ONCE on initial tap
 
         this.holdTimers.repair = setTimeout(() => {
+            // --- Race condition check ---
+            if (this.activeElementId !== 'repair-btn') {
+                 this.holdTimers.repair = null;
+                 return;
+            }
+            // --- End check ---
+
             this.isRepairing = true;
             this.lastTickTime = performance.now();
             if (!this.animationFrameId) {
@@ -413,18 +455,17 @@ export class HoldEventHandler {
             return;
         }
 
-        // --- MODIFICATION: Remove global "stop" listeners ---
+        // Remove global "stop" listeners
         document.removeEventListener('mouseup', this._boundStopRepairing);
-        document.removeEventListener('touchend', this._boundStopRepairing);
+        // --- CRASH FIX: Added 'this.' ---
+        document.removeEventListener('touchend', this._boundStopRepairing); 
+        // --- END CRASH FIX ---
         document.removeEventListener('touchcancel', this._boundStopRepairing);
         document.removeEventListener('touchmove', this._handleTouchMove);
-        // --- End modification ---
 
         this.activeElementId = null;
         
-        // --- BUG FIX: Was incorrectly setting isRefueling ---
         this.isRepairing = false; // Stop the loop
-        // --- End bug fix ---
 
         if (this.holdTimers.repair) {
             clearTimeout(this.holdTimers.repair);
