@@ -180,6 +180,17 @@ export class HoldEventHandler {
      * @private
      */
     _handleInteractionStop(e) {
+        // *** MODIFICATION ***
+        // This is the fix for the "catch-22".
+        // If the 'stop' event is a 'pointercancel' (from a scroll)
+        // AND we are holding a stepper, just ignore it and let the
+        // hold timer continue.
+        if (this.stepperTarget && e.type === 'pointercancel') {
+            return;
+        }
+        // *** END MODIFICATION ***
+
+
         // Delegate to the correct stop function based on what is active
         if (this.activeElementId === 'refuel-btn') {
             this._stopRefueling();

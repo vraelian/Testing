@@ -73,11 +73,8 @@ export class EventManager {
             // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
             // *** MODIFICATION ***
             // Removed '.qty-up' and '.qty-down' from this condition.
-            // Calling e.preventDefault() on touchstart for those buttons
-            // was preventing the browser from firing the subsequent 'click' event,
-            // which is necessary for single taps to work. The hold-to-repeat
-            // functionality is handled by HoldEventHandler via 'pointerdown'
-            // and is unaffected by this change.
+            // This allows the browser to fire a 'click' event for taps.
+            // The side-effect (breaking 'hold') will be fixed in HoldEventHandler.
             if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) {
                  e.preventDefault();
             }
