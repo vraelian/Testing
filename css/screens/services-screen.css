@@ -1,5 +1,6 @@
 /* css/screens/services-screen.css */
 .services-scroll-panel {
+    /* height: 75vh; */ /* REMOVED */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
@@ -38,7 +39,7 @@
   /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
   padding: 1rem;
-  border-radius: 0.75rem;
+  border-radius: 0.75rem; 
   background-color: #2a2a2a;
   background-image:
     radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -114,7 +115,7 @@
   100% { transform: translateX(500%) skewX(-30deg); }
 }
 
-/* MODIFIED: Added new animation for the fill bar itself */
+/* MODIFIED: (d) Added new animation for the fill bar itself */
 @keyframes pulse-glow {
   0%, 100% {
     filter: brightness(1.1);
@@ -170,36 +171,28 @@
   background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
   border: 1px solid #1f2937;
   border-top-color: #9ca3af;
-  border-left-color: #6b7280; /* Corrected typo */
+  /* MODIFIED: Fixed typo from last response */
+  border-left-color: #6b7280; 
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
   color: #e5e7eb;
   text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
   /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
 }
-
 /* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
 .industrial-button.holding {
   background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-  transform: translateY(1px); /* Keep the pressed down visual */
+  transform: translateY(1px);
 }
-
 /* MODIFIED: Added separate :active state for instant visual feedback on tap */
 .industrial-button:active {
-  transform: translateY(1px); /* Apply press down immediately */
+  transform: translateY(1px);
 }
-
 .industrial-button:disabled {
   background: #374151;
   opacity: 0.6;
   cursor: not-allowed;
   transform: translateY(0);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Add styles for stepper active state if needed, though they might already exist */
-.qty-stepper.stepper-active {
-    /* Your existing stepper active styles */
-    /* Example: border-color: var(--active-primary); */
 }
