@@ -29,6 +29,8 @@ export class MarketEventHandler {
             const { goodId, mode } = controls.dataset;
             const quantity = parseInt(qtyInput.value, 10) || 0;
             this.uiManager.updateMarketCardDisplay(goodId, quantity, mode);
+
+            this._updateMaxButtonState(controls, quantity, mode, goodId);
         }
     }
 
@@ -70,7 +72,10 @@ export class MarketEventHandler {
             case 'toggle-trade-mode': {
                 const newMode = mode === 'buy' ? 'sell' : 'buy';
                 controls.dataset.mode = newMode;
-                this.uiManager.updateMarketCardDisplay(goodId, parseInt(qtyInput.value) || 0, newMode);
+                const currentQty = parseInt(qtyInput.value) || 0;
+                this.uiManager.updateMarketCardDisplay(goodId, currentQty, newMode);
+
+                this._updateMaxButtonState(controls, currentQty, newMode, goodId);
                 break;
             }
             case 'confirm-trade': {
@@ -107,16 +112,54 @@ export class MarketEventHandler {
                     const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
                     qtyInput.value = Math.max(0, Math.min(space, canAfford, stock));
                 }
-                this.uiManager.updateMarketCardDisplay(goodId, parseInt(qtyInput.value) || 0, mode);
+                
+                const newQuantity = parseInt(qtyInput.value) || 0;
+                this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
+                this._updateMaxButtonState(controls, newQuantity, mode, goodId);
                 break;
             }
             case ACTION_IDS.INCREMENT:
             case ACTION_IDS.DECREMENT: {
                 let val = parseInt(qtyInput.value) || 0;
-                qtyInput.value = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(0, val - 1);
-                this.uiManager.updateMarketCardDisplay(goodId, parseInt(qtyInput.value) || 0, mode);
+                const newQuantity = (action === ACTION_IDS.INCREMENT) ? val + 1 : Math.max(0, val - 1);
+                qtyInput.value = newQuantity;
+                this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
+                this._updateMaxButtonState(controls, newQuantity, mode, goodId);
                 break;
             }
+        }
+    }
+
+    /**
+     * Checks if the current quantity equals the max possible quantity
+     * and updates the 'MAX' button's .pressed state.
+     * @param {HTMLElement} controls - The .transaction-controls element.
+     * @param {number} currentQty - The current quantity from the input field.
+     * @param {string} mode - The current trade mode ('buy' or 'sell').
+     * @param {string} goodId - The ID of the commodity.
+     * @private
+     */
+    _updateMaxButtonState(controls, currentQty, mode, goodId) {
+        const state = this.gameState.getState();
+        const ship = this.simulationService._getActiveShip();
+        const inventory = this.simulationService._getActiveInventory();
+        let maxQty;
+
+        if (mode === 'sell') {
+            maxQty = inventory[goodId]?.quantity || 0;
+        } else { // 'buy'
+            const price = this.uiManager.getItemPrice(state, goodId);
+            const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
+            const canAfford = price > 0 ? Math.floor(state.player.credits / price) : Infinity;
+            const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
+            maxQty = Math.max(0, Math.min(space, canAfford, stock));
+        }
+
+        const maxBtn = controls.querySelector('.max-btn');
+        if (currentQty > 0 && currentQty === maxQty) { // Don't press if max is 0
+            maxBtn.classList.add('pressed');
+        } else {
+            maxBtn.classList.remove('pressed');
         }
     }
 }
