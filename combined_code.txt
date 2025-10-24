@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.40</title>
+    <title>Orbital Trading 30.50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -62,7 +62,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.40</p>
+            <p>Version 30.50</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3786,14 +3786,15 @@ COMPONENT-SPECIFIC STYLING
     touch-action: pan-y; /* Allow vertical scrolling */
 
     /*
-     * ADD THESE LINES:
-     * This creates a 2.5rem buffer on the left and right.
-     * The `box-sizing` ensures this padding is *inside* the
-     * container's bounds, creating the "safe zone" for
-     * the card to expand into without being clipped.
+     * This creates a 1.5rem buffer on the left and right
+     * and maintains the 0.25rem vertical padding.
+     * This is a compromise to prevent clipping on hover
+     * without making the cards "skinnier".
     */
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    padding-left: 1.5rem;  /* Reduced from 3.5rem */
+    padding-right: 1.5rem; /* Reduced from 3.5rem */
     box-sizing: border-box; /* Ensures padding is inset */
 }
 .navigation-scroll-panel::-webkit-scrollbar {
@@ -4515,7 +4516,7 @@ export function renderNavigationScreen(gameState) {
     }
     
     return `
-        <div class="scroll-panel navigation-scroll-panel p-1">
+        <div class="scroll-panel navigation-scroll-panel">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             ${DB.MARKETS
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
@@ -13864,6 +13865,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [30.50] - 2025-10-24
+- adjusted navigation/market containers
+- 
 
 ## [30.40] - 2025-10-23
 - fixed license bug

@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [30.50] - 2025-10-24
+- adjusted navigation/market containers
+- 
+
 ## [30.40] - 2025-10-23
 - fixed license bug
 - overhaul license locked cards
