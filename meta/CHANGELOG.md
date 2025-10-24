@@ -4,6 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [30.40] - 2025-10-23
 - fixed license bug
+- overhaul license locked cards
 
 ## [30.30] - 2025-10-22
 - overhauled services screen

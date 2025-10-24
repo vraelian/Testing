@@ -22,7 +22,8 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
         return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
-    return `<div class="scroll-panel">
+    // MODIFIED: Changed 'scroll-panel' to 'market-scroll-panel' to match CSS file
+    return `<div class="market-scroll-panel">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
             </div>`;
 }
@@ -43,7 +44,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-    
+
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
     const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
@@ -54,16 +55,15 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const isMinimized = uiState.marketCardMinimized[good.id];
 
-    // Use the new centralized utility function to render indicators for the initial view.
-    const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+    let cardContentHtml;
 
-    let transactionControlsHtml;
     if (hasLicense) {
-        // Correctly set initial mode based on saved state, otherwise default to 'buy'
+        // --- This is the STANDARD (unlocked) card content ---
+        const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
+        const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
-        transactionControlsHtml = `
+        const transactionControlsHtml = `
              <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
@@ -79,18 +79,10 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                     <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
                 </div>
             </div>`;
-    } else {
-        transactionControlsHtml = `
-            <div class="transaction-controls absolute inset-0 flex items-center justify-center p-4">
-                <button class="btn w-full h-full text-center" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">Acquire License</button>
-            </div>`;
-    }
 
-    const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
+        const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
-    return `
-    <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+        cardContentHtml = `
             <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
             
             <div class="max-view-content">
@@ -111,6 +103,36 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
                 <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
             </div>
+        `;
+
+    } else {
+        // --- [[START]] MODIFIED (locked) card content ---
+        
+        // Change c: Set text to 'TIER X LICENSE'
+        const lockedText = `TIER ${good.tier} LICENSE`;
+
+        // Add the data-action and data-license-id to the container to make it clickable
+        cardContentHtml = `
+            <div class="license-locked-content" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">
+                <div class="license-locked-tier-watermark">TIER ${good.tier}</div>
+                
+                <div class="sci-fi-lock-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                 <p class="license-required-text">${lockedText}</p>
+            </div>
+        `;
+        // --- [[END]] MODIFIED (locked) card content ---
+    }
+
+    // This outer structure is from your file.
+    // It correctly uses ${good.styleClass}
+    return `
+    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
+        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+            ${cardContentHtml}
         </div>
     </div>`;
 }

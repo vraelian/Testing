@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.30</title>
+    <title>Orbital Trading 30.40</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -62,7 +62,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.30</p>
+            <p>Version 30.40</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2662,7 +2662,7 @@ body {
     border-radius: var(--market-card-border-radius);
     padding: 0;
     transition: height 0.3s ease-in-out;
-    overflow: visible; /* Changed from hidden to allow button to sit outside */
+    overflow: hidden; /* Changed from visible to hidden to contain watermark better */
 }
 
 .item-card-container.minimized > div {
@@ -2670,14 +2670,80 @@ body {
 }
 
 
-.item-card-container.locked > div {
-    filter: grayscale(80%) brightness(0.6);
-    pointer-events: none; /* Disable pointer events on the card itself */
+/* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
+/* The old .locked rules are no longer needed */
+/* ... */
+
+/* Container for the license-locked content */
+.license-locked-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease-out;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.item-card-container.locked .transaction-controls {
-    pointer-events: all; /* Re-enable pointer events for the button container */
+/* Hover effect */
+.license-locked-content:hover {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(0,0,0,0.1);
 }
+
+/* Sideways Tier watermark (Change c) */
+.license-locked-tier-watermark {
+    position: absolute;
+    right: -25px; /* Adjust positioning */
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg); /* Change c: Flipped rotation */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.0rem; /* Change c: Slightly smaller */
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.08); /* Change c: Slightly more visible */
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    z-index: -1;
+    text-shadow: none;
+}
+
+/* Styles for the lock badge */
+.sci-fi-lock-badge {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    transition: all 0.2s ease-out;
+}
+
+/* Hover effect for badge */
+.license-locked-content:hover .sci-fi-lock-badge {
+    opacity: 0.85;
+    transform: scale(1.05);
+}
+
+/* Styles for the "TIER X LICENSE" text (Changes a & b) */
+.license-required-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.62rem; /* Change a: Increased size (0.9rem * 1.8 = 1.62rem) */
+    margin-top: 0.5rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 0 0.5rem;
+    color: #ffffff;
+    /* Change b: Darker shadow + adjusted glow */
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), /* Slightly reduced glow intensity */
+                 0 0 6px rgba(255, 255, 255, 0.4),
+                 1px 1px 5px rgba(0,0,0,0.9); /* Darker, larger shadow */
+}
+/* --- [[END]] MODIFIED LICENSE LOCK STYLES --- */
 
 
 .commodity-name {
@@ -4680,8 +4746,15 @@ import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
  */
 export function renderServicesScreen(gameState) {
     const { player, currentLocationId } = gameState;
+
+    // --- Crash Fix: Check if activeShipId exists and its state data is available ---
+    if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
+        return '<p class="text-center text-gray-500 text-lg mt-8">No active ship available for servicing.</p>';
+    }
+    // --- End Crash Fix ---
+
     const shipStatic = DB.SHIPS[player.activeShipId];
-    const shipState = player.shipStates[player.activeShipId];
+    const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
 
     // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
@@ -4894,7 +4967,8 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
         return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
     }).join('');
 
-    return `<div class="scroll-panel">
+    // MODIFIED: Changed 'scroll-panel' to 'market-scroll-panel' to match CSS file
+    return `<div class="market-scroll-panel">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
             </div>`;
 }
@@ -4915,7 +4989,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const sellPrice = getItemPrice(gameState, good.id, true);
     const galacticAvg = market.galacticAverages[good.id];
     const marketStock = market.inventory[currentLocationId]?.[good.id];
-    
+
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
     const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
@@ -4926,16 +5000,15 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const isMinimized = uiState.marketCardMinimized[good.id];
 
-    // Use the new centralized utility function to render indicators for the initial view.
-    const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-    const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+    let cardContentHtml;
 
-    let transactionControlsHtml;
     if (hasLicense) {
-        // Correctly set initial mode based on saved state, otherwise default to 'buy'
+        // --- This is the STANDARD (unlocked) card content ---
+        const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
+        const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
-        transactionControlsHtml = `
+        const transactionControlsHtml = `
              <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
@@ -4951,18 +5024,10 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                     <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
                 </div>
             </div>`;
-    } else {
-        transactionControlsHtml = `
-            <div class="transaction-controls absolute inset-0 flex items-center justify-center p-4">
-                <button class="btn w-full h-full text-center" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">Acquire License</button>
-            </div>`;
-    }
 
-    const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
+        const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
-    return `
-    <div class="item-card-container ${!hasLicense ? 'locked' : ''} ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+        cardContentHtml = `
             <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
             
             <div class="max-view-content">
@@ -4983,6 +5048,36 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
                 <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
             </div>
+        `;
+
+    } else {
+        // --- [[START]] MODIFIED (locked) card content ---
+        
+        // Change c: Set text to 'TIER X LICENSE'
+        const lockedText = `TIER ${good.tier} LICENSE`;
+
+        // Add the data-action and data-license-id to the container to make it clickable
+        cardContentHtml = `
+            <div class="license-locked-content" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">
+                <div class="license-locked-tier-watermark">TIER ${good.tier}</div>
+                
+                <div class="sci-fi-lock-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                 <p class="license-required-text">${lockedText}</p>
+            </div>
+        `;
+        // --- [[END]] MODIFIED (locked) card content ---
+    }
+
+    // This outer structure is from your file.
+    // It correctly uses ${good.styleClass}
+    return `
+    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
+        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+            ${cardContentHtml}
         </div>
     </div>`;
 }
@@ -9625,18 +9720,29 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldStart
-        const startDragOrHold = (e) => {
+        // --- VIRTUAL WORKBENCH MODIFICATION ---
+        // Renamed 'startDragOrHold' to 'startCarouselDrag' for clarity.
+        // Added a guard clause to prevent starting a carousel drag
+        // when a stepper button is pressed. This allows the HoldEventHandler
+        // to manage stepper holds without conflict.
+        const startCarouselDrag = (e) => {
+            // IGNORE presses on stepper buttons
+            if (e.target.closest('.qty-stepper button')) {
+                return;
+            }
+            // Proceed with carousel drag start for all other elements
             this.carouselEventHandler.handleDragStart(e);
         };
+        // --- END MODIFICATION ---
 
-        document.body.addEventListener('mousedown', startDragOrHold);
+        document.body.addEventListener('mousedown', startCarouselDrag);
         document.body.addEventListener('touchstart', (e) => {
             // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.qty-up') || e.target.closest('.qty-down') || e.target.closest('.carousel-container')) {
+            // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
+            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) {
                  e.preventDefault();
             }
-            startDragOrHold(e);
+            startCarouselDrag(e); // Call the modified start function
         }, { passive: false });
 
         // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
@@ -12278,6 +12384,7 @@ export class HoldEventHandler {
         this.stepperTimeout = null;
         this.stepperInterval = null;
         this.stepperStartTime = null;
+        /** @type {object | null} The state for the active stepper */
         this.stepperTarget = null;
     }
 
@@ -12340,8 +12447,16 @@ export class HoldEventHandler {
 
         const stepperBtn = e.target.closest('.qty-stepper button');
         if (stepperBtn && !stepperBtn.disabled) {
-            // For steppers, we still use the old logic
-            this._startStepperHold(stepperBtn);
+            // --- VIRTUAL WORKBENCH MODIFICATION ---
+            // Prevent default browser actions (like text selection or context menu)
+            // on touch-hold, which would otherwise fire 'pointercancel'
+            // and stop our hold logic before it starts.
+            if (e.pointerType === 'touch') {
+                e.preventDefault();
+            }
+            // Pass the event 'e' to set pointer capture, just like refuel/repair
+            this._startStepperHold(e, stepperBtn);
+            // --- END MODIFICATION ---
             return;
         }
     }
@@ -12671,49 +12786,93 @@ export class HoldEventHandler {
         this._removeVisualsWithDelay('repair'); // Remove visuals ONCE
     }
 
-     // --- Stepper Hold Logic (Unchanged but works with master stop handler) ---
-     _startStepperHold(button) {
+     // --- VIRTUAL WORKBENCH MODIFICATIONS TO STEPPER LOGIC ---
+     
+    /**
+     * Starts the tap/hold process for a market quantity stepper.
+     * @param {PointerEvent} e - The 'pointerdown' event.
+     * @param {HTMLElement} button - The stepper button that was pressed.
+     * @private
+     */
+     _startStepperHold(e, button) {
         this._stopStepperHold(); // Clear any previous
         this.isStepperHolding = false;
 
         const controls = button.closest('.transaction-controls');
         if (!controls) return;
 
+        // Set pointer capture to ensure 'pointerup' fires reliably
+        try {
+            button.setPointerCapture(e.pointerId);
+        } catch (err) {
+            // ignore
+        }
+
         const qtyStepperEl = button.closest('.qty-stepper');
         const qtyInput = controls.querySelector('input');
         const direction = button.classList.contains('qty-up') ? 1 : -1;
-        this.stepperTarget = { input: qtyInput, direction: direction, element: qtyStepperEl };
+        
+        // Store all necessary state for the hold
+        this.stepperTarget = {
+            input: qtyInput,
+            direction: direction,
+            element: qtyStepperEl,
+            button: button,
+            pointerId: e.pointerId
+        };
 
+        // Start the timer for the auto-increment
         this.stepperTimeout = setTimeout(() => {
-            this.isStepperHolding = true;
+            this.isStepperHolding = true; // Flag to suppress click on release
             this.stepperStartTime = Date.now();
 
             if (this.stepperTarget && this.stepperTarget.element) {
                 this.stepperTarget.element.classList.add('stepper-active');
             }
 
-            this._stepperTick();
+            this._stepperTick(); // Fire the first tick immediately
+            // Start the repeating interval
             this.stepperInterval = setInterval(() => this._stepperTick(), this.stepperRepeatRate);
         }, this.stepperInitialDelay);
     }
 
+    /**
+     * Stops the tap/hold process for the market quantity stepper.
+     * @private
+     */
     _stopStepperHold() {
         // This function is now called by the master _handleInteractionStop
         if (!this.stepperTarget) return;
 
+        // Release pointer capture
+        if (this.stepperTarget.button && this.stepperTarget.button.hasPointerCapture(this.stepperTarget.pointerId)) {
+            try {
+                this.stepperTarget.button.releasePointerCapture(this.stepperTarget.pointerId);
+            } catch (err) {
+                // ignore
+            }
+        }
+
+        // Clear all timers
         clearTimeout(this.stepperTimeout);
         clearInterval(this.stepperInterval);
 
-        if (this.stepperTarget && this.stepperTarget.element) {
+        // Remove active visual state
+        if (this.stepperTarget.element) {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
+        // Clear the state
         this.stepperTimeout = null;
         this.stepperInterval = null;
         this.stepperStartTime = null;
         this.stepperTarget = null;
     }
 
+    /**
+     * Executes a single "tick" of the stepper, auto-incrementing the value.
+     * @private
+     */
      _stepperTick() {
         if (!this.stepperTarget) {
             this._stopStepperHold();
@@ -12722,14 +12881,17 @@ export class HoldEventHandler {
 
         const { input, direction } = this.stepperTarget;
         const holdDuration = (Date.now() - this.stepperStartTime) / 1000;
+        
+        // Accelerate the step amount based on hold duration
         let step = 1;
         if (holdDuration > 5) step = 25;
         else if (holdDuration > 2) step = 5;
 
         let currentValue = parseInt(input.value, 10) || 0;
         currentValue += step * direction;
-        input.value = Math.max(0, currentValue);
+        input.value = Math.max(0, currentValue); // Ensure value is not negative
 
+        // Dispatch an 'input' event so the MarketEventHandler updates the UI
         input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
     }
 }
@@ -12745,6 +12907,7 @@ export class HoldEventHandler {
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js';
 
 export class ActionClickHandler {
     /**
@@ -13687,6 +13850,14 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [30.40] - 2025-10-23
+- fixed license bug
+- overhaul license locked cards
+
+## [30.30] - 2025-10-22
+- overhauled services screen
+- bug fixes
 
 ## [30.20] - 2025-10-21
 - updated map screen modals

@@ -104,7 +104,7 @@
     border-radius: var(--market-card-border-radius);
     padding: 0;
     transition: height 0.3s ease-in-out;
-    overflow: visible; /* Changed from hidden to allow button to sit outside */
+    overflow: hidden; /* Changed from visible to hidden to contain watermark better */
 }
 
 .item-card-container.minimized > div {
@@ -112,14 +112,80 @@
 }
 
 
-.item-card-container.locked > div {
-    filter: grayscale(80%) brightness(0.6);
-    pointer-events: none; /* Disable pointer events on the card itself */
+/* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
+/* The old .locked rules are no longer needed */
+/* ... */
+
+/* Container for the license-locked content */
+.license-locked-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease-out;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.item-card-container.locked .transaction-controls {
-    pointer-events: all; /* Re-enable pointer events for the button container */
+/* Hover effect */
+.license-locked-content:hover {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(0,0,0,0.1);
 }
+
+/* Sideways Tier watermark (Change c) */
+.license-locked-tier-watermark {
+    position: absolute;
+    right: -25px; /* Adjust positioning */
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg); /* Change c: Flipped rotation */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.0rem; /* Change c: Slightly smaller */
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.08); /* Change c: Slightly more visible */
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    z-index: -1;
+    text-shadow: none;
+}
+
+/* Styles for the lock badge */
+.sci-fi-lock-badge {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    transition: all 0.2s ease-out;
+}
+
+/* Hover effect for badge */
+.license-locked-content:hover .sci-fi-lock-badge {
+    opacity: 0.85;
+    transform: scale(1.05);
+}
+
+/* Styles for the "TIER X LICENSE" text (Changes a & b) */
+.license-required-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.62rem; /* Change a: Increased size (0.9rem * 1.8 = 1.62rem) */
+    margin-top: 0.5rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 0 0.5rem;
+    color: #ffffff;
+    /* Change b: Darker shadow + adjusted glow */
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), /* Slightly reduced glow intensity */
+                 0 0 6px rgba(255, 255, 255, 0.4),
+                 1px 1px 5px rgba(0,0,0,0.9); /* Darker, larger shadow */
+}
+/* --- [[END]] MODIFIED LICENSE LOCK STYLES --- */
 
 
 .commodity-name {
