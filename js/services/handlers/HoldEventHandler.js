@@ -104,6 +104,7 @@ export class HoldEventHandler {
         this.stepperTimeout = null;
         this.stepperInterval = null;
         this.stepperStartTime = null;
+        /** @type {object | null} The state for the active stepper */
         this.stepperTarget = null;
     }
 
@@ -166,8 +167,16 @@ export class HoldEventHandler {
 
         const stepperBtn = e.target.closest('.qty-stepper button');
         if (stepperBtn && !stepperBtn.disabled) {
-            // For steppers, we still use the old logic
-            this._startStepperHold(stepperBtn);
+            // --- VIRTUAL WORKBENCH MODIFICATION ---
+            // Prevent default browser actions (like text selection or context menu)
+            // on touch-hold, which would otherwise fire 'pointercancel'
+            // and stop our hold logic before it starts.
+            if (e.pointerType === 'touch') {
+                e.preventDefault();
+            }
+            // Pass the event 'e' to set pointer capture, just like refuel/repair
+            this._startStepperHold(e, stepperBtn);
+            // --- END MODIFICATION ---
             return;
         }
     }
@@ -180,17 +189,6 @@ export class HoldEventHandler {
      * @private
      */
     _handleInteractionStop(e) {
-        // *** MODIFICATION ***
-        // This is the fix for the "catch-22".
-        // If the 'stop' event is a 'pointercancel' (from a scroll)
-        // AND we are holding a stepper, just ignore it and let the
-        // hold timer continue.
-        if (this.stepperTarget && e.type === 'pointercancel') {
-            return;
-        }
-        // *** END MODIFICATION ***
-
-
         // Delegate to the correct stop function based on what is active
         if (this.activeElementId === 'refuel-btn') {
             this._stopRefueling();
@@ -508,49 +506,93 @@ export class HoldEventHandler {
         this._removeVisualsWithDelay('repair'); // Remove visuals ONCE
     }
 
-     // --- Stepper Hold Logic (Unchanged but works with master stop handler) ---
-     _startStepperHold(button) {
+     // --- VIRTUAL WORKBENCH MODIFICATIONS TO STEPPER LOGIC ---
+     
+    /**
+     * Starts the tap/hold process for a market quantity stepper.
+     * @param {PointerEvent} e - The 'pointerdown' event.
+     * @param {HTMLElement} button - The stepper button that was pressed.
+     * @private
+     */
+     _startStepperHold(e, button) {
         this._stopStepperHold(); // Clear any previous
         this.isStepperHolding = false;
 
         const controls = button.closest('.transaction-controls');
         if (!controls) return;
 
+        // Set pointer capture to ensure 'pointerup' fires reliably
+        try {
+            button.setPointerCapture(e.pointerId);
+        } catch (err) {
+            // ignore
+        }
+
         const qtyStepperEl = button.closest('.qty-stepper');
         const qtyInput = controls.querySelector('input');
         const direction = button.classList.contains('qty-up') ? 1 : -1;
-        this.stepperTarget = { input: qtyInput, direction: direction, element: qtyStepperEl };
+        
+        // Store all necessary state for the hold
+        this.stepperTarget = {
+            input: qtyInput,
+            direction: direction,
+            element: qtyStepperEl,
+            button: button,
+            pointerId: e.pointerId
+        };
 
+        // Start the timer for the auto-increment
         this.stepperTimeout = setTimeout(() => {
-            this.isStepperHolding = true;
+            this.isStepperHolding = true; // Flag to suppress click on release
             this.stepperStartTime = Date.now();
 
             if (this.stepperTarget && this.stepperTarget.element) {
                 this.stepperTarget.element.classList.add('stepper-active');
             }
 
-            this._stepperTick();
+            this._stepperTick(); // Fire the first tick immediately
+            // Start the repeating interval
             this.stepperInterval = setInterval(() => this._stepperTick(), this.stepperRepeatRate);
         }, this.stepperInitialDelay);
     }
 
+    /**
+     * Stops the tap/hold process for the market quantity stepper.
+     * @private
+     */
     _stopStepperHold() {
         // This function is now called by the master _handleInteractionStop
         if (!this.stepperTarget) return;
 
+        // Release pointer capture
+        if (this.stepperTarget.button && this.stepperTarget.button.hasPointerCapture(this.stepperTarget.pointerId)) {
+            try {
+                this.stepperTarget.button.releasePointerCapture(this.stepperTarget.pointerId);
+            } catch (err) {
+                // ignore
+            }
+        }
+
+        // Clear all timers
         clearTimeout(this.stepperTimeout);
         clearInterval(this.stepperInterval);
 
-        if (this.stepperTarget && this.stepperTarget.element) {
+        // Remove active visual state
+        if (this.stepperTarget.element) {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
+        // Clear the state
         this.stepperTimeout = null;
         this.stepperInterval = null;
         this.stepperStartTime = null;
         this.stepperTarget = null;
     }
 
+    /**
+     * Executes a single "tick" of the stepper, auto-incrementing the value.
+     * @private
+     */
      _stepperTick() {
         if (!this.stepperTarget) {
             this._stopStepperHold();
@@ -559,14 +601,17 @@ export class HoldEventHandler {
 
         const { input, direction } = this.stepperTarget;
         const holdDuration = (Date.now() - this.stepperStartTime) / 1000;
+        
+        // Accelerate the step amount based on hold duration
         let step = 1;
         if (holdDuration > 5) step = 25;
         else if (holdDuration > 2) step = 5;
 
         let currentValue = parseInt(input.value, 10) || 0;
         currentValue += step * direction;
-        input.value = Math.max(0, currentValue);
+        input.value = Math.max(0, currentValue); // Ensure value is not negative
 
+        // Dispatch an 'input' event so the MarketEventHandler updates the UI
         input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
     }
 }

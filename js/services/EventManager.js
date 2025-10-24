@@ -63,22 +63,29 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldStart
-        const startDragOrHold = (e) => {
+        // --- VIRTUAL WORKBENCH MODIFICATION ---
+        // Renamed 'startDragOrHold' to 'startCarouselDrag' for clarity.
+        // Added a guard clause to prevent starting a carousel drag
+        // when a stepper button is pressed. This allows the HoldEventHandler
+        // to manage stepper holds without conflict.
+        const startCarouselDrag = (e) => {
+            // IGNORE presses on stepper buttons
+            if (e.target.closest('.qty-stepper button')) {
+                return;
+            }
+            // Proceed with carousel drag start for all other elements
             this.carouselEventHandler.handleDragStart(e);
         };
+        // --- END MODIFICATION ---
 
-        document.body.addEventListener('mousedown', startDragOrHold);
+        document.body.addEventListener('mousedown', startCarouselDrag);
         document.body.addEventListener('touchstart', (e) => {
             // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
-            // *** MODIFICATION ***
-            // Removed '.qty-up' and '.qty-down' from this condition.
-            // This allows the browser to fire a 'click' event for taps.
-            // The side-effect (breaking 'hold') will be fixed in HoldEventHandler.
+            // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
             if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) {
                  e.preventDefault();
             }
-            startDragOrHold(e);
+            startCarouselDrag(e); // Call the modified start function
         }, { passive: false });
 
         // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
