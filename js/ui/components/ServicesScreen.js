@@ -74,7 +74,7 @@ export function renderServicesScreen(gameState) {
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                    <span class="price-digits text-base ${canAffordRefuel ? 'credit-text' : 'text-red-500 shadow-red-500'}">
                         ${formatCredits(fuelCostPerTick, false)}
                     </span>
                   </div>
@@ -102,7 +102,7 @@ export function renderServicesScreen(gameState) {
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
+                    <span class="price-digits text-base ${canAffordRepair ? 'credit-text' : 'text-red-500 shadow-red-500'}">
                         ${formatCredits(repairCostPerTick, false)}
                     </span>
                   </div>
