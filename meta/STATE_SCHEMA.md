@@ -1,107 +1,133 @@
 # Orbital Trading - GameState Schema
-**Version:** 1.0
-**Source:** `main.js (app.init)` / `js/services/GameState.js`
 
-This document defines the structure of the central `GameState` object. It is the "source of truth" for all data in the application.
+**Version:** 2.0
+**Source:** `js/services/GameState.js` (see `startNewGame` method)
 
----
+This document defines the structure of the central `GameState` object, which is instantiated in `main.js` and managed by `GameState.js`. It is the "source of truth" for all dynamic, mutable data in the application.
 
-- `player`: {object} - Contains all data specific to the player.
-  - `credits`: {number} - Player's current currency.
-  - `currentLocation`: {string} - `systemId` of the player's current star system.
-  - `currentShipId`: {string} - `shipId` of the player's actively controlled ship.
-  - `cargo`: {object} - A map of commodities in the *active* ship's cargo hold.
-    - `[commodityId: string]`: {number} - The quantity of the commodity.
-  - `ships`: {object} - A map of all ships owned by the player.
-    - `[shipId: string]`: {object} - The player ship object.
-      - `id`: {string} - Unique identifier (e.g., "ship_0").
-      - `type`: {string} - The `shipId` from `database.js` (e.g., "StarHopper").
-      - `name`: {string} - The player-given name (e.g., "Serenity").
-      - `cargoCapacity`: {number} - Maximum cargo units for this ship.
-      - `fuel`: {number} - Current fuel units.
-      - `fuelCapacity`: {number} - Maximum fuel units.
-      - `hull`: {number} - Current hull integrity.
-      - `cargo`: {object} - This ship's specific cargo hold.
-        - `[commodityId: string]`: {number} - The quantity.
-  - `transactionHistory`: {Array<object>} - A log of all financial transactions.
-    - `{object}`:
-      - `date`: {string} - ISO 8601 timestamp of the transaction.
-      - `type`: {string} - "buy" or "sell".
-      - `amount`: {number} - Credits value (positive for sell, negative for buy).
-      - `description`: {string} - Human-readable log (e.g., "Bought 10 Water").
-  - `cargoHoldFull`: {boolean} - A derived flag set by `PlayerActionService` for UI warnings.
-  - `log`: {Array<string>} - A general-purpose log for player-facing messages.
+-----
 
-- `market`: {object} - Contains all data related to the galactic economy.
-  - `prices`: {object} - A map of current commodity prices by system.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The current price.
-  - `inventory`: {object} - A map of current commodity inventory by system.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The current available quantity.
-  - `priceHistory`: {object} - A log of prices for charts.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {Array<number>} - An array of the last N prices.
-  - `marketPressure`: {object} - Tracks player impact on local markets.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The pressure value (decays over time).
+  - `day`: {number} - The current in-game day.
 
-- `time`: {object} - Contains global time and date information.
-  - `currentDate`: {string} - ISO 8601 timestamp of the current game date.
-  - `lastUpdate`: {string} - ISO 8601 timestamp of the last simulation tick.
+  - `lastInterestChargeDay`: {number} - The day on which player debt interest was last calculated.
 
-- `navigation`: {object} - Contains player travel and routing data.
-  - `routes`: {Array<object>} - A list of planned warp jumps.
-    - `{object}`:
-      - `systemId`: {string} - The destination system.
-      - `eta`: {string} - ISO 8601 timestamp of arrival.
-  - `currentRoute`: {object | null} - The currently active travel route.
-    - `systemId`: {string} - The destination system.
-    - `eta`: {string} - ISO 8601 timestamp of arrival.
-    - `travelTime`: {number} - Total duration of the trip in seconds.
-    - `startTime`: {number} - `Date.now()` timestamp when travel began.
+  - `lastMarketUpdateDay`: {number} - The day on which market prices and inventories were last updated.
 
-- `missions`: {object} - Tracks mission states.
-  - `active`: {Array<string>} - A list of `missionId`s the player has accepted.
-  - `completed`: {Array<string>} - A list of `missionId`s the player has completed.
-  - `objectives`: {object} - A map of progress for active mission objectives.
-    - `[missionId: string]`: {object}
-      - `[objectiveId: string]`: {object}
-        - `status`: {string} - "incomplete" or "complete".
-        - `progress`: {number} - Current progress (e.g., 5 out of 10).
+  - `currentLocationId`: {string} - The `LOCATION_ID` where the player is currently docked.
 
-- `ui`: {object} - Contains the state of the user interface.
-  - `activeScreen`: {string} - The key of the currently visible screen (e.g., "market", "hangar").
-  - `toastMessages`: {Array<object>} - A queue of active toast notifications.
-    - `{object}`:
-      - `id`: {number} - Unique ID for the toast.
-      - `message`: {string} - The text to display.
-      - `type`: {string} - "success", "error", "info".
-      - `duration`: {number} - Milliseconds to display.
-  - `tutorial`: {object} - State of the tutorial system.
-    - `active`: {boolean} - Is the tutorial system currently running?
-    - `currentStep`: {number} - The index of the active tutorial step.
-    - `completed`: {boolean} - Has the player finished the tutorial?
+  - `activeNav`: {string} - The `NAV_ID` of the currently active main navigation tab (e.g., "ship", "starport").
 
-- `events`: {object} - Tracks dynamic world events.
-  - `activeEvents`: {Array<object>} - A list of currently active global events.
-    - `{object}`:
-      - `id`: {string} - Unique event ID.
-      - `name`: {string} - Player-facing event name.
-      - `description`: {string} - Player-facing description.
-      - `effects`: {object} - The game logic modifiers.
-      - `duration`: {number} - (Optional) Duration in game days.
-      - `startTime`: {string} - (Optional) ISO 8601 timestamp when it started.
-  - `eventHistory`: {Array<object>} - A log of past events.
+  - `activeScreen`: {string} - The `SCREEN_ID` of the currently active screen (e.g., "map", "market").
 
-- `settings`: {object} - Player-configurable settings.
-  - `eventFrequency`: {number} - (Currently unused).
-  - `simulationSpeed`: {number} - (Currently unused).
+  - `isGameOver`: {boolean} - Flag indicating if the game over state has been triggered.
 
-- `debug`: {object} - Contains all values from the debug panel.
-  - `priceVolatility`: {number}
-  - `meanReversion`: {number}
-  - `marketPressureDecay`: {number}
-  - `inventoryReplenishRate`: {number}
-  - `baseEventChance`: {number}
-  - `...`: (and all other CSS variable controls)
+  - `subNavCollapsed`: {boolean} - Flag tracking the UI state of the sub-navigation bar.
+
+  - `introSequenceActive`: {boolean} - Flag indicating if the introductory tutorial/sequence is active.
+
+  - `lastActiveScreen`: {object} - A map storing the last active screen for each main navigation tab.
+
+      - `[NAV_ID: string]`: {string} - The `SCREEN_ID` to return to (e.g., `ship: "map"`).
+
+  - `pendingTravel`: {object | null} - If not null, contains details of the player's active travel.
+
+      - `fromId`: {string} - The `LOCATION_ID` of the departure location.
+      - `toId`: {string} - The `LOCATION_ID` of the destination.
+      - `departureDay`: {number} - The game day on which travel started.
+      - `arrivalDay`: {number} - The game day on which travel will end.
+      - `duration`: {number} - The total number of days for the trip.
+
+  - `player`: {object} - Contains all data specific to the player.
+
+      - `name`: {string} - The player's chosen name.
+      - `playerTitle`: {string} - The player's current title (e.g., "Captain").
+      - `playerAge`: {number} - The player's current age.
+      - `lastBirthdayYear`: {number} - The in-game year of the player's last birthday.
+      - `birthdayProfitBonus`: {number} - A temporary credit bonus awarded on their birthday.
+      - `introStep`: {number} - A counter tracking progress through the intro sequence.
+      - `credits`: {number} - Player's current currency.
+      - `debt`: {number} - Player's outstanding loan amount.
+      - `monthlyInterestAmount`: {number} - The amount of interest added to the debt each cycle.
+      - `loanStartDate`: {number | null} - The `day` on which the loan was taken.
+      - `seenGarnishmentWarning`: {boolean} - Flag tracking if the player has been warned about wage garnishment.
+      - `revealedTier`: {number} - The highest market tier the player has unlocked.
+      - `unlockedLicenseIds`: {Array\<string\>} - A list of `LICENSE_ID`s the player has purchased.
+      - `unlockedLocationIds`: {Array\<string\>} - A list of `LOCATION_ID`s the player is allowed to visit.
+      - `seenCommodityMilestones`: {Array\<string\>} - A log of commodity trade value milestones achieved.
+      - `financeLog`: {Array\<object\>} - A log of all financial transactions.
+          - `{object}`:
+              - `day`: {number} - The day of the transaction.
+              - `type`: {string} - "buy", "sell", "interest", "loan", "payment", "ship", "fee", "bonus".
+              - `amount`: {number} - Credits value (positive for income, negative for expense).
+              - `description`: {string} - Human-readable log (e.g., "Bought 10 Water").
+      - `activePerks`: {object} - (Currently unused) A map of active player perks.
+      - `seenEvents`: {Array\<string\>} - A list of `EVENT_ID`s the player has already encountered.
+      - `activeShipId`: {string} - The `SHIP_ID` of the player's currently active ship.
+      - `ownedShipIds`: {Array\<string\>} - A list of `SHIP_ID`s for all ships the player owns.
+      - `shipStates`: {object} - A map of the dynamic state for each ship the player owns.
+          - `[SHIP_ID: string]`: {object}
+              - `health`: {number} - Current hull integrity.
+              - `fuel`: {number} - Current fuel units.
+              - `hullAlerts`: {object} - Flags for triggering hull damage warnings.
+                  - `one`: {boolean} - Flag for first damage warning.
+                  - `two`: {boolean} - Flag for second (critical) damage warning.
+      - `inventories`: {object} - A map of cargo inventories, keyed by `SHIP_ID`.
+          - `[SHIP_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {object}
+                  - `quantity`: {number} - The quantity of the commodity held.
+                  - `avgCost`: {number} - The average purchase price for the units held, for profit tracking.
+      - `debugEventIndex`: {number} - A developer tool for forcing specific events.
+
+  - `market`: {object} - Contains all data related to the galactic economy.
+
+      - `prices`: {object} - A map of current commodity prices by location.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {number} - The current price.
+      - `inventory`: {object} - A map of current commodity inventory by location.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {object}
+                  - `quantity`: {number} - The current available quantity.
+                  - `marketPressure`: {number} - A value from -1 to 1 tracking player impact on this item.
+                  - `lastPlayerInteractionTimestamp`: {number} - The `day` the player last traded this item here.
+                  - `hoverUntilDay`: {number} - The `day` until which this item's price is artificially modified by an event.
+                  - `rivalArbitrage`: {object} - Tracks AI rival activity.
+                      - `isActive`: {boolean} - Whether a rival is currently targeting this item.
+                      - `endDay`: {number} - The `day` this rival activity will cease.
+      - `galacticAverages`: {object} - A map of the baseline average price for each commodity.
+          - `[COMMODITY_ID: string]`: {number} - The calculated average price.
+      - `priceHistory`: {object} - A log of the last N prices for charts.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {Array\<number\>} - An array of recent prices.
+      - `shipyardStock`: {object} - A map of ships available for sale at each location.
+          - `[LOCATION_ID: string]`: {object}
+              - `day`: {number} - The `day` the stock was last refreshed.
+              - `shipsForSale`: {Array\<string\>} - A list of `SHIP_ID`s available for purchase.
+
+  - `intel`: {object} - Tracks the state of the Intel system.
+
+      - `active`: {object | null} - The currently active intel object being viewed.
+      - `available`: {object} - A map of intel availability by location.
+          - `[LOCATION_ID: string]`: {boolean} - Whether intel is currently available for purchase here.
+
+  - `tutorials`: {object} - State of the Tutorial Toast System (TTS).
+
+      - `activeBatchId`: {string | null} - The ID of the tutorial batch currently being displayed.
+      - `activeStepId`: {string | null} - The ID of the specific tutorial step currently being displayed.
+      - `seenBatchIds`: {Array\<string\>} - A list of tutorial batch IDs the player has already completed.
+      - `skippedTutorialBatches`: {Array\<string\>} - A list of batch IDs the player has explicitly skipped.
+      - `navLock`: {string | null} - If set, locks the UI to a specific `NAV_ID` or `SCREEN_ID` for a tutorial step.
+
+  - `missions`: {object} - Tracks mission states.
+
+      - `activeMissionId`: {string | null} - The `MISSION_ID` of the player's currently accepted mission.
+      - `completedMissionIds`: {Array\<string\>} - A list of `MISSION_ID`s the player has completed.
+      - `missionProgress`: {object} - A map for tracking progress on specific mission objectives.
+      - `activeMissionObjectivesMet`: {boolean} - A flag set to true when all objectives for the active mission are complete.
+
+  - `uiState`: {object} - Contains the transient state of various UI components.
+
+      - `marketCardMinimized`: {object} - A map tracking the minimized state of market cards.
+          - `[COMMODITY_ID: string]`: {boolean} - True if the card is minimized.
+      - `hangarShipyardToggleState`: {string} - The active tab on the Hangar screen ("hangar" or "shipyard").
+      - `hangarActiveIndex`: {number} - The index of the ship carousel slide in "hangar" mode.
+      - `shipyardActiveIndex`: {number} - The index of the ship carousel slide in "shipyard" mode.

@@ -2295,11 +2295,11 @@ body {
   border-radius: 0.375rem; /* rounded-md */
 }
 
-/* Scanning Hotspot Animation */
-@keyframes scan-hotspot {
+/* Scanning Hotspot Animation - REMOVED */
+/* @keyframes scan-hotspot {
   0% { transform: translateX(-100%) skewX(-30deg); }
   100% { transform: translateX(500%) skewX(-30deg); }
-}
+} */
 
 /* MODIFIED: Added new animation for the fill bar itself */
 @keyframes pulse-glow {
@@ -2318,17 +2318,18 @@ body {
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
-.progress-bar-fill.filling::before {
+/* Spark effect pseudo-element - REMOVED */
+/* .progress-bar-fill.filling::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 20%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent); */
   /* MODIFIED: Ensure animation is infinite */
-  animation: scan-hotspot 2.5s ease-in-out infinite;
-}
+  /* animation: scan-hotspot 2.5s ease-in-out infinite; */
+/* } */
 
 /* Control Deck (Buttons and Price) */
 .control-deck {
@@ -9779,14 +9780,21 @@ export class EventManager {
         // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
+        
+        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
+        // The if condition was modified to add an exception for '.action-button'.
+        // This prevents e.preventDefault() from being called on a tap/touch of
+        // an action button, which was blocking the subsequent 'click' event
+        // from firing on touch devices (like the iOS Simulator).
         document.body.addEventListener('touchstart', (e) => {
             // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
             // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) {
+            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || (e.target.closest('.carousel-container') && !e.target.closest('.action-button'))) {
                  e.preventDefault();
             }
             startCarouselDrag(e); // Call the modified start function
         }, { passive: false });
+        // --- END MODIFICATION ---
 
         // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
@@ -9878,7 +9886,7 @@ export class EventManager {
             // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
             // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                this.uiManager.hideModal(modalIdToClose);
+                this.uiManager.hideModal(modalIdTo-close);
             }
         }
     }
@@ -12948,6 +12956,13 @@ export class HoldEventHandler {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
+        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
+        // Added this line to defensively reset the stepper hold flag.
+        // This fixes the bug where the flag would get "stuck" as true,
+        // causing EventManager to suppress the next click after a hold.
+        this.isStepperHolding = false;
+        // --- END MODIFICATION ---
+
         // Clear the state
         this.stepperTimeout = null;
         this.stepperInterval = null;
@@ -13153,7 +13168,7 @@ export class ActionClickHandler {
                 this.simulationService.purchaseIntel(parseInt(dataset.cost));
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                this._handleAcquireLicense(dataset.licenseId);
+                this._handleAcquireLicense(dataset.licenseId, e); // --- MODIFIED: Pass 'e'
                 break;
 
             // --- Market Card Minimization ---
@@ -13173,9 +13188,10 @@ export class ActionClickHandler {
     /**
      * Handles the UI flow for acquiring a trade license.
      * @param {string} licenseId The ID of the license to acquire.
+     * @param {Event} [e] The original click event for positioning floating text.
      * @private
      */
-    _handleAcquireLicense(licenseId) {
+    _handleAcquireLicense(licenseId, e) { // --- MODIFIED: Accept 'e'
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
@@ -13190,7 +13206,14 @@ export class ActionClickHandler {
                     `;
                     modal.querySelector('#confirm-license-purchase').onclick = () => {
                         const result = this.simulationService.purchaseLicense(licenseId);
-                        if (!result.success && result.error === 'INSUFFICIENT_FUNDS') {
+
+                        // --- MODIFIED: Spawn floating text on success ---
+                        if (result.success) {
+                            if (e) { // Use the original click event 'e' for coordinates
+                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                            }
+                        } else if (result.error === 'INSUFFICIENT_FUNDS') {
+                        // --- END MODIFIED ---
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
                         }
                         closeHandler();
@@ -13537,7 +13560,7 @@ export class PlayerActionService {
     buyItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return false;
-        
+
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
             this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
@@ -13550,7 +13573,7 @@ export class PlayerActionService {
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
-        
+
         const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
@@ -13565,13 +13588,13 @@ export class PlayerActionService {
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
         playerInvItem.quantity += quantity;
-        
+
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
         this.timeService._checkMilestones();
         this.missionService.checkTriggers();
-        
+
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
         this.gameState.setState({});
@@ -13588,7 +13611,7 @@ export class PlayerActionService {
     sellItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return 0;
-        
+
         const good = DB.COMMODITIES.find(c=>c.id===goodId);
         if (good.licenseId && !state.player.unlockedLicenseIds.includes(good.licenseId)) {
             this.uiManager.queueModal('event-modal', "License Required", `You do not have the required license to trade ${good.name}.`);
@@ -13604,13 +13627,13 @@ export class PlayerActionService {
 
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
-        
+
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
             totalSaleValue += profit * totalBonus;
         }
-        
+
         totalSaleValue = Math.floor(totalSaleValue);
         this.gameState.player.credits += totalSaleValue;
         item.quantity -= quantity;
@@ -13618,17 +13641,17 @@ export class PlayerActionService {
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity += quantity;
-        
+
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
-        
+
         this.timeService._checkMilestones();
         this.missionService.checkTriggers();
-        
+
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
         this.gameState.setState({});
-        
+
         return totalSaleValue;
     }
 
@@ -13652,7 +13675,7 @@ export class PlayerActionService {
                 this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
                 return null;
             }
-            
+
             this.gameState.player.credits -= ship.price;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
             if (event) {
@@ -13693,7 +13716,7 @@ export class PlayerActionService {
     sellShip(shipId, event) {
         if (this.isTransactionInProgress) return false;
         this.isTransactionInProgress = true;
-    
+
         try {
             const state = this.gameState.getState();
             if (state.player.ownedShipIds.length <= 1) {
@@ -13721,7 +13744,7 @@ export class PlayerActionService {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
             }
             this.simulationService._logTransaction('ship', salePrice, `Sold ${ship.name}`);
-            
+
             const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
             this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
             delete this.gameState.player.shipStates[shipId];
@@ -13736,7 +13759,7 @@ export class PlayerActionService {
             }
 
             this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
-            
+
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
@@ -13757,7 +13780,7 @@ export class PlayerActionService {
     setActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
-        
+
         const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
         if (newIndex !== -1) {
             this.gameState.uiState.hangarActiveIndex = newIndex;
@@ -13794,7 +13817,7 @@ export class PlayerActionService {
         this.timeService._checkMilestones();
         this.gameState.setState({});
     }
-    
+
     /**
      * Allows the player to take out a loan, adding to their debt.
      * @param {object} loanData - Contains amount, fee, and interest for the loan.
@@ -13839,14 +13862,14 @@ export class PlayerActionService {
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
         if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
-        
+
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
-        
+
         this.gameState.setState({});
-        
+
         return { success: true };
     }
 
@@ -13860,7 +13883,7 @@ export class PlayerActionService {
             this.uiManager.queueModal('event-modal', "Insufficient Funds", "You can't afford this intel.");
             return;
         }
-        
+
         player.credits -= cost;
         this.logger.info.player(day, 'INTEL_PURCHASE', `Purchased intel for ${formatCredits(cost)}.`);
         this.simulationService._logTransaction('intel', -cost, 'Purchased market intel');
@@ -13872,14 +13895,14 @@ export class PlayerActionService {
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];
         const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= player.revealedTier);
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
-        
+
         if (commodity) {
-            this.gameState.intel.active = { 
+            this.gameState.intel.active = {
                 targetMarketId: targetMarket.id,
-                commodityId: commodity.id, 
+                commodityId: commodity.id,
                 type: 'demand',
                 startDay: day,
-                endDay: day + 100 
+                endDay: day + 100
             };
         }
         this.gameState.setState({});
@@ -13892,18 +13915,32 @@ export class PlayerActionService {
     refuelTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (ship.fuel >= ship.maxFuel) return 0;
+        if (!ship || ship.fuel >= ship.maxFuel) return 0; // Check if ship exists
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
+        costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+
         if (state.player.credits < costPerTick) return 0;
 
         state.player.credits -= costPerTick;
         state.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, state.player.shipStates[ship.id].fuel + 5);
         this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
-        this.gameState.setState({});
+
+        // --- ADDED: Floating Text ---
+        const refuelBtn = document.getElementById('refuel-btn');
+        if (refuelBtn) {
+            const rect = refuelBtn.getBoundingClientRect();
+            // Calculate center X, top Y for the text origin
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
+        }
+        // --- END ADDED ---
+
+        this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;
     }
 
@@ -13914,19 +13951,35 @@ export class PlayerActionService {
     repairTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (ship.health >= ship.maxHealth) return 0;
-        
-        let costPerTick = (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+        if (!ship || ship.health >= ship.maxHealth) return 0; // Check if ship exists
+
+        const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
+        let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
+
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
+         costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+
         if (state.player.credits < costPerTick) return 0;
-        
+
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + (ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)));
+        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
-        this.gameState.setState({});
+
+        // --- ADDED: Floating Text ---
+        const repairBtn = document.getElementById('repair-btn');
+        if (repairBtn) {
+            const rect = repairBtn.getBoundingClientRect();
+             // Calculate center X, top Y for the text origin
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
+        }
+         // --- END ADDED ---
+
+        this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;
     }
 }
@@ -13940,7 +13993,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 ## [30.50] - 2025-10-24
 - adjusted navigation/market containers
 - bug fix on 'max' button appearance
--
+- added floating texts to more purchases
 
 ## [30.40] - 2025-10-23
 - fixed license bug
@@ -14641,111 +14694,137 @@ graph TD
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
 # Orbital Trading - GameState Schema
-**Version:** 1.0
-**Source:** `main.js (app.init)` / `js/services/GameState.js`
 
-This document defines the structure of the central `GameState` object. It is the "source of truth" for all data in the application.
+**Version:** 2.0
+**Source:** `js/services/GameState.js` (see `startNewGame` method)
 
----
+This document defines the structure of the central `GameState` object, which is instantiated in `main.js` and managed by `GameState.js`. It is the "source of truth" for all dynamic, mutable data in the application.
 
-- `player`: {object} - Contains all data specific to the player.
-  - `credits`: {number} - Player's current currency.
-  - `currentLocation`: {string} - `systemId` of the player's current star system.
-  - `currentShipId`: {string} - `shipId` of the player's actively controlled ship.
-  - `cargo`: {object} - A map of commodities in the *active* ship's cargo hold.
-    - `[commodityId: string]`: {number} - The quantity of the commodity.
-  - `ships`: {object} - A map of all ships owned by the player.
-    - `[shipId: string]`: {object} - The player ship object.
-      - `id`: {string} - Unique identifier (e.g., "ship_0").
-      - `type`: {string} - The `shipId` from `database.js` (e.g., "StarHopper").
-      - `name`: {string} - The player-given name (e.g., "Serenity").
-      - `cargoCapacity`: {number} - Maximum cargo units for this ship.
-      - `fuel`: {number} - Current fuel units.
-      - `fuelCapacity`: {number} - Maximum fuel units.
-      - `hull`: {number} - Current hull integrity.
-      - `cargo`: {object} - This ship's specific cargo hold.
-        - `[commodityId: string]`: {number} - The quantity.
-  - `transactionHistory`: {Array<object>} - A log of all financial transactions.
-    - `{object}`:
-      - `date`: {string} - ISO 8601 timestamp of the transaction.
-      - `type`: {string} - "buy" or "sell".
-      - `amount`: {number} - Credits value (positive for sell, negative for buy).
-      - `description`: {string} - Human-readable log (e.g., "Bought 10 Water").
-  - `cargoHoldFull`: {boolean} - A derived flag set by `PlayerActionService` for UI warnings.
-  - `log`: {Array<string>} - A general-purpose log for player-facing messages.
+-----
 
-- `market`: {object} - Contains all data related to the galactic economy.
-  - `prices`: {object} - A map of current commodity prices by system.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The current price.
-  - `inventory`: {object} - A map of current commodity inventory by system.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The current available quantity.
-  - `priceHistory`: {object} - A log of prices for charts.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {Array<number>} - An array of the last N prices.
-  - `marketPressure`: {object} - Tracks player impact on local markets.
-    - `[systemId: string]`: {object}
-      - `[commodityId: string]`: {number} - The pressure value (decays over time).
+  - `day`: {number} - The current in-game day.
 
-- `time`: {object} - Contains global time and date information.
-  - `currentDate`: {string} - ISO 8601 timestamp of the current game date.
-  - `lastUpdate`: {string} - ISO 8601 timestamp of the last simulation tick.
+  - `lastInterestChargeDay`: {number} - The day on which player debt interest was last calculated.
 
-- `navigation`: {object} - Contains player travel and routing data.
-  - `routes`: {Array<object>} - A list of planned warp jumps.
-    - `{object}`:
-      - `systemId`: {string} - The destination system.
-      - `eta`: {string} - ISO 8601 timestamp of arrival.
-  - `currentRoute`: {object | null} - The currently active travel route.
-    - `systemId`: {string} - The destination system.
-    - `eta`: {string} - ISO 8601 timestamp of arrival.
-    - `travelTime`: {number} - Total duration of the trip in seconds.
-    - `startTime`: {number} - `Date.now()` timestamp when travel began.
+  - `lastMarketUpdateDay`: {number} - The day on which market prices and inventories were last updated.
 
-- `missions`: {object} - Tracks mission states.
-  - `active`: {Array<string>} - A list of `missionId`s the player has accepted.
-  - `completed`: {Array<string>} - A list of `missionId`s the player has completed.
-  - `objectives`: {object} - A map of progress for active mission objectives.
-    - `[missionId: string]`: {object}
-      - `[objectiveId: string]`: {object}
-        - `status`: {string} - "incomplete" or "complete".
-        - `progress`: {number} - Current progress (e.g., 5 out of 10).
+  - `currentLocationId`: {string} - The `LOCATION_ID` where the player is currently docked.
 
-- `ui`: {object} - Contains the state of the user interface.
-  - `activeScreen`: {string} - The key of the currently visible screen (e.g., "market", "hangar").
-  - `toastMessages`: {Array<object>} - A queue of active toast notifications.
-    - `{object}`:
-      - `id`: {number} - Unique ID for the toast.
-      - `message`: {string} - The text to display.
-      - `type`: {string} - "success", "error", "info".
-      - `duration`: {number} - Milliseconds to display.
-  - `tutorial`: {object} - State of the tutorial system.
-    - `active`: {boolean} - Is the tutorial system currently running?
-    - `currentStep`: {number} - The index of the active tutorial step.
-    - `completed`: {boolean} - Has the player finished the tutorial?
+  - `activeNav`: {string} - The `NAV_ID` of the currently active main navigation tab (e.g., "ship", "starport").
 
-- `events`: {object} - Tracks dynamic world events.
-  - `activeEvents`: {Array<object>} - A list of currently active global events.
-    - `{object}`:
-      - `id`: {string} - Unique event ID.
-      - `name`: {string} - Player-facing event name.
-      - `description`: {string} - Player-facing description.
-      - `effects`: {object} - The game logic modifiers.
-      - `duration`: {number} - (Optional) Duration in game days.
-      - `startTime`: {string} - (Optional) ISO 8601 timestamp when it started.
-  - `eventHistory`: {Array<object>} - A log of past events.
+  - `activeScreen`: {string} - The `SCREEN_ID` of the currently active screen (e.g., "map", "market").
 
-- `settings`: {object} - Player-configurable settings.
-  - `eventFrequency`: {number} - (Currently unused).
-  - `simulationSpeed`: {number} - (Currently unused).
+  - `isGameOver`: {boolean} - Flag indicating if the game over state has been triggered.
 
-- `debug`: {object} - Contains all values from the debug panel.
-  - `priceVolatility`: {number}
-  - `meanReversion`: {number}
-  - `marketPressureDecay`: {number}
-  - `inventoryReplenishRate`: {number}
-  - `baseEventChance`: {number}
-  - `...`: (and all other CSS variable controls)
+  - `subNavCollapsed`: {boolean} - Flag tracking the UI state of the sub-navigation bar.
+
+  - `introSequenceActive`: {boolean} - Flag indicating if the introductory tutorial/sequence is active.
+
+  - `lastActiveScreen`: {object} - A map storing the last active screen for each main navigation tab.
+
+      - `[NAV_ID: string]`: {string} - The `SCREEN_ID` to return to (e.g., `ship: "map"`).
+
+  - `pendingTravel`: {object | null} - If not null, contains details of the player's active travel.
+
+      - `fromId`: {string} - The `LOCATION_ID` of the departure location.
+      - `toId`: {string} - The `LOCATION_ID` of the destination.
+      - `departureDay`: {number} - The game day on which travel started.
+      - `arrivalDay`: {number} - The game day on which travel will end.
+      - `duration`: {number} - The total number of days for the trip.
+
+  - `player`: {object} - Contains all data specific to the player.
+
+      - `name`: {string} - The player's chosen name.
+      - `playerTitle`: {string} - The player's current title (e.g., "Captain").
+      - `playerAge`: {number} - The player's current age.
+      - `lastBirthdayYear`: {number} - The in-game year of the player's last birthday.
+      - `birthdayProfitBonus`: {number} - A temporary credit bonus awarded on their birthday.
+      - `introStep`: {number} - A counter tracking progress through the intro sequence.
+      - `credits`: {number} - Player's current currency.
+      - `debt`: {number} - Player's outstanding loan amount.
+      - `monthlyInterestAmount`: {number} - The amount of interest added to the debt each cycle.
+      - `loanStartDate`: {number | null} - The `day` on which the loan was taken.
+      - `seenGarnishmentWarning`: {boolean} - Flag tracking if the player has been warned about wage garnishment.
+      - `revealedTier`: {number} - The highest market tier the player has unlocked.
+      - `unlockedLicenseIds`: {Array\<string\>} - A list of `LICENSE_ID`s the player has purchased.
+      - `unlockedLocationIds`: {Array\<string\>} - A list of `LOCATION_ID`s the player is allowed to visit.
+      - `seenCommodityMilestones`: {Array\<string\>} - A log of commodity trade value milestones achieved.
+      - `financeLog`: {Array\<object\>} - A log of all financial transactions.
+          - `{object}`:
+              - `day`: {number} - The day of the transaction.
+              - `type`: {string} - "buy", "sell", "interest", "loan", "payment", "ship", "fee", "bonus".
+              - `amount`: {number} - Credits value (positive for income, negative for expense).
+              - `description`: {string} - Human-readable log (e.g., "Bought 10 Water").
+      - `activePerks`: {object} - (Currently unused) A map of active player perks.
+      - `seenEvents`: {Array\<string\>} - A list of `EVENT_ID`s the player has already encountered.
+      - `activeShipId`: {string} - The `SHIP_ID` of the player's currently active ship.
+      - `ownedShipIds`: {Array\<string\>} - A list of `SHIP_ID`s for all ships the player owns.
+      - `shipStates`: {object} - A map of the dynamic state for each ship the player owns.
+          - `[SHIP_ID: string]`: {object}
+              - `health`: {number} - Current hull integrity.
+              - `fuel`: {number} - Current fuel units.
+              - `hullAlerts`: {object} - Flags for triggering hull damage warnings.
+                  - `one`: {boolean} - Flag for first damage warning.
+                  - `two`: {boolean} - Flag for second (critical) damage warning.
+      - `inventories`: {object} - A map of cargo inventories, keyed by `SHIP_ID`.
+          - `[SHIP_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {object}
+                  - `quantity`: {number} - The quantity of the commodity held.
+                  - `avgCost`: {number} - The average purchase price for the units held, for profit tracking.
+      - `debugEventIndex`: {number} - A developer tool for forcing specific events.
+
+  - `market`: {object} - Contains all data related to the galactic economy.
+
+      - `prices`: {object} - A map of current commodity prices by location.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {number} - The current price.
+      - `inventory`: {object} - A map of current commodity inventory by location.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {object}
+                  - `quantity`: {number} - The current available quantity.
+                  - `marketPressure`: {number} - A value from -1 to 1 tracking player impact on this item.
+                  - `lastPlayerInteractionTimestamp`: {number} - The `day` the player last traded this item here.
+                  - `hoverUntilDay`: {number} - The `day` until which this item's price is artificially modified by an event.
+                  - `rivalArbitrage`: {object} - Tracks AI rival activity.
+                      - `isActive`: {boolean} - Whether a rival is currently targeting this item.
+                      - `endDay`: {number} - The `day` this rival activity will cease.
+      - `galacticAverages`: {object} - A map of the baseline average price for each commodity.
+          - `[COMMODITY_ID: string]`: {number} - The calculated average price.
+      - `priceHistory`: {object} - A log of the last N prices for charts.
+          - `[LOCATION_ID: string]`: {object}
+              - `[COMMODITY_ID: string]`: {Array\<number\>} - An array of recent prices.
+      - `shipyardStock`: {object} - A map of ships available for sale at each location.
+          - `[LOCATION_ID: string]`: {object}
+              - `day`: {number} - The `day` the stock was last refreshed.
+              - `shipsForSale`: {Array\<string\>} - A list of `SHIP_ID`s available for purchase.
+
+  - `intel`: {object} - Tracks the state of the Intel system.
+
+      - `active`: {object | null} - The currently active intel object being viewed.
+      - `available`: {object} - A map of intel availability by location.
+          - `[LOCATION_ID: string]`: {boolean} - Whether intel is currently available for purchase here.
+
+  - `tutorials`: {object} - State of the Tutorial Toast System (TTS).
+
+      - `activeBatchId`: {string | null} - The ID of the tutorial batch currently being displayed.
+      - `activeStepId`: {string | null} - The ID of the specific tutorial step currently being displayed.
+      - `seenBatchIds`: {Array\<string\>} - A list of tutorial batch IDs the player has already completed.
+      - `skippedTutorialBatches`: {Array\<string\>} - A list of batch IDs the player has explicitly skipped.
+      - `navLock`: {string | null} - If set, locks the UI to a specific `NAV_ID` or `SCREEN_ID` for a tutorial step.
+
+  - `missions`: {object} - Tracks mission states.
+
+      - `activeMissionId`: {string | null} - The `MISSION_ID` of the player's currently accepted mission.
+      - `completedMissionIds`: {Array\<string\>} - A list of `MISSION_ID`s the player has completed.
+      - `missionProgress`: {object} - A map for tracking progress on specific mission objectives.
+      - `activeMissionObjectivesMet`: {boolean} - A flag set to true when all objectives for the active mission are complete.
+
+  - `uiState`: {object} - Contains the transient state of various UI components.
+
+      - `marketCardMinimized`: {object} - A map tracking the minimized state of market cards.
+          - `[COMMODITY_ID: string]`: {boolean} - True if the card is minimized.
+      - `hangarShipyardToggleState`: {string} - The active tab on the Hangar screen ("hangar" or "shipyard").
+      - `hangarActiveIndex`: {number} - The index of the ship carousel slide in "hangar" mode.
+      - `shipyardActiveIndex`: {number} - The index of the ship carousel slide in "shipyard" mode.
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
