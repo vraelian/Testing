@@ -582,6 +582,13 @@ export class HoldEventHandler {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
+        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
+        // Added this line to defensively reset the stepper hold flag.
+        // This fixes the bug where the flag would get "stuck" as true,
+        // causing EventManager to suppress the next click after a hold.
+        this.isStepperHolding = false;
+        // --- END MODIFICATION ---
+
         // Clear the state
         this.stepperTimeout = null;
         this.stepperInterval = null;

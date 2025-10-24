@@ -79,14 +79,21 @@ export class EventManager {
         // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
+        
+        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
+        // The if condition was modified to add an exception for '.action-button'.
+        // This prevents e.preventDefault() from being called on a tap/touch of
+        // an action button, which was blocking the subsequent 'click' event
+        // from firing on touch devices (like the iOS Simulator).
         document.body.addEventListener('touchstart', (e) => {
             // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
             // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) {
+            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || (e.target.closest('.carousel-container') && !e.target.closest('.action-button'))) {
                  e.preventDefault();
             }
             startCarouselDrag(e); // Call the modified start function
         }, { passive: false });
+        // --- END MODIFICATION ---
 
         // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
@@ -178,7 +185,7 @@ export class EventManager {
             // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
             // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                this.uiManager.hideModal(modalIdToClose);
+                this.uiManager.hideModal(modalIdTo-close);
             }
         }
     }
