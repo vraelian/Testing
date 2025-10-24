@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 - adjusted navigation/market containers
 - bug fix on 'max' button appearance
 - added floating texts to more purchases
+- bug fixes
 
 ## [30.40] - 2025-10-23
 - fixed license bug

@@ -79,7 +79,7 @@ export class EventManager {
         // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
-        
+
         // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
         // The if condition was modified to add an exception for '.action-button'.
         // This prevents e.preventDefault() from being called on a tap/touch of
@@ -185,7 +185,9 @@ export class EventManager {
             // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
             // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                this.uiManager.hideModal(modalIdTo-close);
+                // *** VIRTUAL WORKBENCH CORRECTION ***
+                this.uiManager.hideModal(modalIdToClose); // Changed modalIdTo-close to modalIdToClose
+                // *** END CORRECTION ***
             }
         }
     }
