@@ -89,7 +89,7 @@
     --market-card-indicator-neutral-bg: rgb(115, 115, 115);
     --market-card-indicator-positive-color: #ffffff;
     --market-card-indicator-negative-color: #fee2e2;
-    --market-card-indicator-neutral-color: #e5e5e5;
+    --market-card-indicator-neutral-color: #e5e5eS;
 }
 
 .item-card-container {
@@ -104,7 +104,7 @@
     border-radius: var(--market-card-border-radius);
     padding: 0;
     transition: height 0.3s ease-in-out;
-    overflow: hidden; /* Changed from visible to hidden to contain watermark better */
+    overflow: hidden; /* This is what was clipping the button. The button is now outside this div. */
 }
 
 .item-card-container.minimized > div {
@@ -113,7 +113,6 @@
 
 
 /* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
-/* The old .locked rules are no longer needed */
 /* ... */
 
 /* Container for the license-locked content */
@@ -409,8 +408,10 @@
 /* --- [[START]] MIN/MAX VIEW STYLES --- */
 .card-toggle-btn {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    /* VIRTUAL WORKBENCH START: Correct positioning */
+    top: -12px;  /* Half of 24px height */
+    right: -12px; /* Half of 24px width */
+    /* VIRTUAL WORKBENCH END */
     width: 24px;
     height: 24px;
     border-radius: 99px;
@@ -418,7 +419,7 @@
     color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    z-index: 10;
+    z-index: 10; /* This ensures it's on top of the card */
     font-family: 'Roboto Mono', monospace;
     font-size: 1.2rem;
     line-height: 1;
