@@ -167,7 +167,7 @@ export class ActionClickHandler {
                 this.simulationService.purchaseIntel(parseInt(dataset.cost));
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                this._handleAcquireLicense(dataset.licenseId);
+                this._handleAcquireLicense(dataset.licenseId, e); // --- MODIFIED: Pass 'e'
                 break;
 
             // --- Market Card Minimization ---
@@ -187,9 +187,10 @@ export class ActionClickHandler {
     /**
      * Handles the UI flow for acquiring a trade license.
      * @param {string} licenseId The ID of the license to acquire.
+     * @param {Event} [e] The original click event for positioning floating text.
      * @private
      */
-    _handleAcquireLicense(licenseId) {
+    _handleAcquireLicense(licenseId, e) { // --- MODIFIED: Accept 'e'
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
@@ -204,7 +205,14 @@ export class ActionClickHandler {
                     `;
                     modal.querySelector('#confirm-license-purchase').onclick = () => {
                         const result = this.simulationService.purchaseLicense(licenseId);
-                        if (!result.success && result.error === 'INSUFFICIENT_FUNDS') {
+
+                        // --- MODIFIED: Spawn floating text on success ---
+                        if (result.success) {
+                            if (e) { // Use the original click event 'e' for coordinates
+                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                            }
+                        } else if (result.error === 'INSUFFICIENT_FUNDS') {
+                        // --- END MODIFIED ---
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
                         }
                         closeHandler();
