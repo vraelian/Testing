@@ -7,6 +7,7 @@
  */
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { formatCredits } from '../../utils.js';
 
 export class ActionClickHandler {
     /**

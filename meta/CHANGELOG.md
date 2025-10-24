@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [30.40] - 2025-10-23
+- fixed license bug
+
+## [30.30] - 2025-10-22
+- overhauled services screen
+- bug fixes
+
 ## [30.20] - 2025-10-21
 - updated map screen modals
 - updated economic behavior for imports/exports
