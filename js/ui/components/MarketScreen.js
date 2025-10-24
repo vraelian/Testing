@@ -56,7 +56,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const isMinimized = uiState.marketCardMinimized[good.id];
 
     let cardContentHtml;
-    let buttonHtml = ''; // VIRTUAL WORKBENCH: Initialize button HTML
+    let buttonHtml = ''; 
 
     if (hasLicense) {
         // --- This is the STANDARD (unlocked) card content ---
@@ -83,10 +83,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
         const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
-        // VIRTUAL WORKBENCH START: Move button HTML generation to its own variable
         buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
         
-        // VIRTUAL WORKBENCH: Remove button from cardContentHtml
         cardContentHtml = `
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
@@ -107,7 +105,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
             </div>
         `;
-        // VIRTUAL WORKBENCH END
 
     } else {
         // --- [[START]] MODIFIED (locked) card content ---
@@ -131,8 +128,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         // --- [[END]] MODIFIED (locked) card content ---
     }
 
-    // VIRTUAL WORKBENCH START: Insert the buttonHTML *before* the div with overflow:hidden
-    // The button's positioning context is now .item-card-container
     return `
     <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         ${buttonHtml}
@@ -140,5 +135,4 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
             ${cardContentHtml}
         </div>
     </div>`;
-    // VIRTUAL WORKBENCH END
 }

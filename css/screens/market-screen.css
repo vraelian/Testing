@@ -5,7 +5,7 @@
     --market-card-min-height: 40px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
-    
+
     /* Positioning */
     --market-card-info-top: 7px;
     --market-card-info-left: 16px;
@@ -17,7 +17,7 @@
     --market-card-avail-left: 17px;
     --market-card-price-top: 58px;
     --market-card-price-left: 16px;
-    
+
     /* Spacing */
     --market-card-price-indicator-v-gap: 7px;
 
@@ -32,7 +32,7 @@
     --market-card-pinv-own-color: #ffea00;
     --market-card-pinv-own-font-size: 0.85rem;
     --market-card-pinv-text-shadow: 0.40px 0.00px 0 #000000, 0.28px 0.28px 0 #000000, 0.00px 0.40px 0 #000000, -0.28px 0.28px 0 #000000, -0.40px 0.00px 0 #000000, -0.28px -0.28px 0 #000000, 0.00px -0.40px 0 #000000, 0.28px -0.28px 0 #000000, 0px 1.5px 2.5px #616b70;
-    
+
     /* Avail Text */
     --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
@@ -59,7 +59,7 @@
     --market-card-module-button-height: 29px;
     --market-card-module-stepper-arrow-size: 1.4em;
     --font-size: 0.85rem; /* Overriding global for module */
-    
+
     /* Glassy Theme Colors */
     --buy-primary: #146171;
     --sell-primary: #a73535;
@@ -67,7 +67,7 @@
     --buy-secondary-border: 1px solid rgba(255,255,255,0.1);
     --buy-text-light: #c8d8e8;
     --buy-text-dark: #ffffff;
-    
+
     --sell-secondary-bg: linear-gradient(145deg, rgba(30,20,20,0.2), rgba(0,0,0,0.5));
     --sell-secondary-border: 1px solid rgba(255,255,255,0.1);
     --sell-text-light: #e8c8c8;
@@ -623,7 +623,9 @@
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+    padding: 0.25rem; /* Removed horizontal padding */
+    padding-left: 1.5rem; /* Added */
+    padding-right: 1.5rem; /* Added */
     touch-action: pan-y; /* Allow vertical scrolling */
 }
 

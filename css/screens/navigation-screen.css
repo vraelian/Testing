@@ -5,6 +5,17 @@
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     touch-action: pan-y; /* Allow vertical scrolling */
+
+    /*
+     * ADD THESE LINES:
+     * This creates a 2.5rem buffer on the left and right.
+     * The `box-sizing` ensures this padding is *inside* the
+     * container's bounds, creating the "safe zone" for
+     * the card to expand into without being clipped.
+    */
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    box-sizing: border-box; /* Ensures padding is inset */
 }
 .navigation-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */

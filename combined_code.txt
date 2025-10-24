@@ -2563,7 +2563,7 @@ body {
     --market-card-min-height: 40px;
     --market-card-border-radius: 21px;
     --market-card-gradient-angle: 45deg;
-    
+
     /* Positioning */
     --market-card-info-top: 7px;
     --market-card-info-left: 16px;
@@ -2575,7 +2575,7 @@ body {
     --market-card-avail-left: 17px;
     --market-card-price-top: 58px;
     --market-card-price-left: 16px;
-    
+
     /* Spacing */
     --market-card-price-indicator-v-gap: 7px;
 
@@ -2590,7 +2590,7 @@ body {
     --market-card-pinv-own-color: #ffea00;
     --market-card-pinv-own-font-size: 0.85rem;
     --market-card-pinv-text-shadow: 0.40px 0.00px 0 #000000, 0.28px 0.28px 0 #000000, 0.00px 0.40px 0 #000000, -0.28px 0.28px 0 #000000, -0.40px 0.00px 0 #000000, -0.28px -0.28px 0 #000000, 0.00px -0.40px 0 #000000, 0.28px -0.28px 0 #000000, 0px 1.5px 2.5px #616b70;
-    
+
     /* Avail Text */
     --market-card-avail-font-size: 0.8rem;
     --market-card-avail-color: #ffffff;
@@ -2617,7 +2617,7 @@ body {
     --market-card-module-button-height: 29px;
     --market-card-module-stepper-arrow-size: 1.4em;
     --font-size: 0.85rem; /* Overriding global for module */
-    
+
     /* Glassy Theme Colors */
     --buy-primary: #146171;
     --sell-primary: #a73535;
@@ -2625,7 +2625,7 @@ body {
     --buy-secondary-border: 1px solid rgba(255,255,255,0.1);
     --buy-text-light: #c8d8e8;
     --buy-text-dark: #ffffff;
-    
+
     --sell-secondary-bg: linear-gradient(145deg, rgba(30,20,20,0.2), rgba(0,0,0,0.5));
     --sell-secondary-border: 1px solid rgba(255,255,255,0.1);
     --sell-text-light: #e8c8c8;
@@ -2647,7 +2647,7 @@ body {
     --market-card-indicator-neutral-bg: rgb(115, 115, 115);
     --market-card-indicator-positive-color: #ffffff;
     --market-card-indicator-negative-color: #fee2e2;
-    --market-card-indicator-neutral-color: #e5e5e5;
+    --market-card-indicator-neutral-color: #e5e5eS;
 }
 
 .item-card-container {
@@ -2662,7 +2662,7 @@ body {
     border-radius: var(--market-card-border-radius);
     padding: 0;
     transition: height 0.3s ease-in-out;
-    overflow: hidden; /* Changed from visible to hidden to contain watermark better */
+    overflow: hidden; /* This is what was clipping the button. The button is now outside this div. */
 }
 
 .item-card-container.minimized > div {
@@ -2671,7 +2671,6 @@ body {
 
 
 /* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
-/* The old .locked rules are no longer needed */
 /* ... */
 
 /* Container for the license-locked content */
@@ -2967,8 +2966,10 @@ body {
 /* --- [[START]] MIN/MAX VIEW STYLES --- */
 .card-toggle-btn {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    /* VIRTUAL WORKBENCH START: Correct positioning */
+    top: -12px;  /* Half of 24px height */
+    right: -12px; /* Half of 24px width */
+    /* VIRTUAL WORKBENCH END */
     width: 24px;
     height: 24px;
     border-radius: 99px;
@@ -2976,7 +2977,7 @@ body {
     color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    z-index: 10;
+    z-index: 10; /* This ensures it's on top of the card */
     font-family: 'Roboto Mono', monospace;
     font-size: 1.2rem;
     line-height: 1;
@@ -3180,7 +3181,9 @@ body {
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+    padding: 0.25rem; /* Removed horizontal padding */
+    padding-left: 1.5rem; /* Added */
+    padding-right: 1.5rem; /* Added */
     touch-action: pan-y; /* Allow vertical scrolling */
 }
 
@@ -3781,6 +3784,17 @@ COMPONENT-SPECIFIC STYLING
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     touch-action: pan-y; /* Allow vertical scrolling */
+
+    /*
+     * ADD THESE LINES:
+     * This creates a 2.5rem buffer on the left and right.
+     * The `box-sizing` ensures this padding is *inside* the
+     * container's bounds, creating the "safe zone" for
+     * the card to expand into without being clipped.
+    */
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    box-sizing: border-box; /* Ensures padding is inset */
 }
 .navigation-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
@@ -5001,6 +5015,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const isMinimized = uiState.marketCardMinimized[good.id];
 
     let cardContentHtml;
+    let buttonHtml = ''; 
 
     if (hasLicense) {
         // --- This is the STANDARD (unlocked) card content ---
@@ -5027,9 +5042,9 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
         const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
 
+        buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
+        
         cardContentHtml = `
-            <button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>
-            
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
                 <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
@@ -5072,10 +5087,9 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         // --- [[END]] MODIFIED (locked) card content ---
     }
 
-    // This outer structure is from your file.
-    // It correctly uses ${good.styleClass}
     return `
     <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
+        ${buttonHtml}
         <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
             ${cardContentHtml}
         </div>
