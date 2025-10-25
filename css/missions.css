@@ -9,7 +9,7 @@
 }
 .mission-type {
     font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.85rem; /* Increased from 0.7rem */
     color: #9ca3af;
     letter-spacing: 0.1em;
     font-weight: 800;
@@ -32,35 +32,36 @@
 .mission-card .font-bold.text-base {
     font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-weight: 800;
+    font-size: 1.15rem; /* Increased size */
 }
 
 /* Applied to mission modal title */
 #mission-modal #mission-modal-title {
     font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-weight: 800;
+    font-size: 1.4rem; /* Increased size */
 }
 
 
 #mission-modal #mission-modal-description {
-    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif; /* Replaced 'Patrick Hand' */
-    font-size: 1.0rem; /* Adjusted from 1.1rem for new font */
-    font-weight: 800; /* Use the specific bold weight */
+    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif; 
+    font-size: 1.0rem; 
+    font-weight: 500; /* Changed from 800 to 500 (Medium) */
     background: rgba(0, 0, 0, 0.25);
     padding: 1rem;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #4a6a8a; /* Thematic border */
     text-align: left;
-    white-space: pre-wrap; /* Preserve line breaks from description */
+    white-space: pre-wrap; 
     
-    /* Added for scrollable overflow */
-    max-height: 25vh; /* Or any height you prefer */
+    max-height: 36vh; /* Increased 20% (from 30vh) */
     overflow-y: auto;
     touch-action: pan-y;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
-    -ms-overflow-style: none; /* Hide scrollbar for IE */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 }
 
-/* Hide Webkit scrollbar (Chrome, Safari, iOS) to match .scroll-panel style */
+/* Hide Webkit scrollbar (Chrome, Safari, iOS) */
 #mission-modal #mission-modal-description::-webkit-scrollbar {
     display: none;
 }
@@ -75,19 +76,26 @@
 /* Applied to objective description text in modal */
 #mission-modal #mission-modal-objectives .flex-1 {
     font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif;
-    font-weight: 800;
+    font-weight: 500; /* Changed from 800 to 500 (Medium) */
 }
 
 /* Applied to objective progress text (e.g., "1 / 5") in modal */
 #mission-modal #mission-modal-objectives .font-roboto-mono {
     font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-weight: 800;
+    font-weight: 500; /* Changed from 800 to 500 (Medium) */
 }
 
 
 #mission-modal #mission-modal-buttons {
     margin-top: 1.5rem; /* Increased space */
 }
+
+/* Increase scale of modal buttons by 50% */
+#mission-modal #mission-modal-buttons .btn {
+    font-size: 1.2rem; 
+    padding: 0.75rem 1.125rem; 
+}
+
 
 /* Host Themes */
 .host-guild {
