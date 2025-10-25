@@ -8,39 +8,82 @@
     border-color: rgba(96, 165, 250, 0.7);
 }
 .mission-type {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
     font-size: 0.7rem;
     color: #9ca3af;
     letter-spacing: 0.1em;
+    font-weight: 800;
 }
 .mission-host {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
     font-size: 0.7rem;
     color: #d1d5db;
+    font-weight: 800;
 }
 .mission-reward {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-size: 0.9rem;
     color: #facc15;
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
+    font-weight: 800;
 }
 
+/* Applied to mission card title */
+.mission-card .font-bold.text-base {
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
+    font-weight: 800;
+}
+
+/* Applied to mission modal title */
+#mission-modal #mission-modal-title {
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
+    font-weight: 800;
+}
+
+
 #mission-modal #mission-modal-description {
-    font-family: "Patrick Hand", cursive;
-    font-size: 1.1rem; /* Patrick Hand is a bit small, bumping it up */
+    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif; /* Replaced 'Patrick Hand' */
+    font-size: 1.0rem; /* Adjusted from 1.1rem for new font */
+    font-weight: 800; /* Use the specific bold weight */
     background: rgba(0, 0, 0, 0.25);
     padding: 1rem;
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: left;
     white-space: pre-wrap; /* Preserve line breaks from description */
+    
+    /* Added for scrollable overflow */
+    max-height: 25vh; /* Or any height you prefer */
+    overflow-y: auto;
+    touch-action: pan-y;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE */
 }
+
+/* Hide Webkit scrollbar (Chrome, Safari, iOS) to match .scroll-panel style */
+#mission-modal #mission-modal-description::-webkit-scrollbar {
+    display: none;
+}
+
 
 #mission-modal #mission-modal-objectives {
     margin-top: 1.5rem;
     margin-bottom: 1rem; /* Increased space */
     width: 100%; /* Ensure it spans width */
 }
+
+/* Applied to objective description text in modal */
+#mission-modal #mission-modal-objectives .flex-1 {
+    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif;
+    font-weight: 800;
+}
+
+/* Applied to objective progress text (e.g., "1 / 5") in modal */
+#mission-modal #mission-modal-objectives .font-roboto-mono {
+    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
+    font-weight: 800;
+}
+
 
 #mission-modal #mission-modal-buttons {
     margin-top: 1.5rem; /* Increased space */
