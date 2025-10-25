@@ -2,19 +2,15 @@
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Refine hull deterioation
+- Refine ship hull deterioation
 - Refine ship cargo capacity
 - Refine ship fuel capacity
-- Improve ship fueling
 - Improve communication about Station Quirks
 
 ## Planned Ideas
-- Overhaul ship fuel, hull costs and gameplay
+- Balance ship fuel, hull costs and gameplay
 - Improve finance screen, logging
-- Verify consistency in projected journey stats vs actual
 - Design cononical missions, storyline
-- Refine licenses
-- Overhaul intel screen
 
 - News ticker
 - Storyline Timeline Governor (Mission availability, System States, Features)

@@ -360,7 +360,7 @@ body {
 }
 
 .credits-text-pulsing {
-    color: #bae6fd;
+    color: #7dd3fc;
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 

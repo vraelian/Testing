@@ -204,3 +204,12 @@
     /* Your existing stepper active styles */
     /* Example: border-color: var(--active-primary); */
 }
+
+/* Button Text Colors */
+#refuel-btn .engraved-text {
+  color: var(--ot-cyan-base, #08d9d6);
+}
+
+#repair-btn .engraved-text {
+  color: var(--ot-green-accent, #16a34a);
+}

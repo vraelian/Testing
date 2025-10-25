@@ -1459,7 +1459,7 @@ body {
 }
 
 .credits-text-pulsing {
-    color: #bae6fd;
+    color: #7dd3fc;
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 
@@ -2390,6 +2390,15 @@ body {
 .qty-stepper.stepper-active {
     /* Your existing stepper active styles */
     /* Example: border-color: var(--active-primary); */
+}
+
+/* Button Text Colors */
+#refuel-btn .engraved-text {
+  color: var(--ot-cyan-base, #08d9d6);
+}
+
+#repair-btn .engraved-text {
+  color: var(--ot-green-accent, #16a34a);
 }
 --- END OF FILE: ./css/screens/services-screen.css ---
 
@@ -4833,7 +4842,7 @@ export function renderServicesScreen(gameState) {
             <div class="flex flex-col md:flex-row justify-center items-center gap-8 max-w-4xl mx-auto mt-8">
               <div
                 class="service-module w-full max-w-sm"
-                style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6;"
+                style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6; --ot-cyan-base: #08d9d6;"
               >
                 <div class="bar-housing">
                   <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
@@ -4849,40 +4858,40 @@ export function renderServicesScreen(gameState) {
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRefuel ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
-                        ${formatCredits(fuelCostPerTick, false)}
+                    <span class="price-digits text-base ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(fuelCostPerTick, true)}
                     </span>
                   </div>
                   <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
-                      <span class="engraved-text">${isFuelFull ? 'MAX' : 'Refuel'}</span>
+                      <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
                   </button>
                   </div>
               </div>
 
               <div
                 class="service-module w-full max-w-sm"
-                style="--resource-color-rgb: 34, 197, 94; --resource-color: #22c55e;"
+                style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;"
               >
                 <div class="bar-housing">
                   <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
                     <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
-                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #22c55e;">Hull Integrity</span>
-                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #22c5M">
+                      <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
+                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
                         ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
                       </span>
                     </div>
-                    <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: #22c55e; --glow-color: #22c55e; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                    <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                   </div>
                   </div>
                 <div class="control-deck flex justify-center items-center gap-4">
                   <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                     <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRepair ? 'text-amber-400 shadow-amber-400' : 'text-red-500 shadow-red-500'}">
-                        ${formatCredits(repairCostPerTick, false)}
+                    <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                        ${formatCredits(repairCostPerTick, true)}
                     </span>
                   </div>
                   <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
-                      <span class="engraved-text">${isHealthFull ? 'MAX' : 'Repair'}</span>
+                      <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
                   </button>
                   </div>
               </div>
@@ -9780,7 +9789,7 @@ export class EventManager {
         // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
-        
+
         // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
         // The if condition was modified to add an exception for '.action-button'.
         // This prevents e.preventDefault() from being called on a tap/touch of
@@ -9886,7 +9895,9 @@ export class EventManager {
             // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
             // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                this.uiManager.hideModal(modalIdTo-close);
+                // *** VIRTUAL WORKBENCH CORRECTION ***
+                this.uiManager.hideModal(modalIdToClose); // Changed modalIdTo-close to modalIdToClose
+                // *** END CORRECTION ***
             }
         }
     }
@@ -13992,8 +14003,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [30.50] - 2025-10-24
 - adjusted navigation/market containers
-- bug fix on 'max' button appearance
+- services screen polish
 - added floating texts to more purchases
+- bug fixes
 
 ## [30.40] - 2025-10-23
 - fixed license bug
@@ -14496,19 +14508,15 @@ All notable changes to the Orbital Trading project will be documented in this fi
 This document outlines the planned features and high-level goals for the future development of Orbital Trading.
 
 ## Immediate Concerns, Bugs, Issues
-- Refine hull deterioation
+- Refine ship hull deterioation
 - Refine ship cargo capacity
 - Refine ship fuel capacity
-- Improve ship fueling
 - Improve communication about Station Quirks
 
 ## Planned Ideas
-- Overhaul ship fuel, hull costs and gameplay
+- Balance ship fuel, hull costs and gameplay
 - Improve finance screen, logging
-- Verify consistency in projected journey stats vs actual
 - Design cononical missions, storyline
-- Refine licenses
-- Overhaul intel screen
 
 - News ticker
 - Storyline Timeline Governor (Mission availability, System States, Features)

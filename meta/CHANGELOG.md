@@ -4,7 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [30.50] - 2025-10-24
 - adjusted navigation/market containers
-- bug fix on 'max' button appearance
+- services screen polish
 - added floating texts to more purchases
 - bug fixes
 
