@@ -25,18 +25,40 @@
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
 }
 
+#mission-modal #mission-modal-description {
+    font-family: "Patrick Hand", cursive;
+    font-size: 1.1rem; /* Patrick Hand is a bit small, bumping it up */
+    background: rgba(0, 0, 0, 0.25);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    white-space: pre-wrap; /* Preserve line breaks from description */
+}
+
+#mission-modal #mission-modal-objectives {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem; /* Increased space */
+    width: 100%; /* Ensure it spans width */
+}
+
+#mission-modal #mission-modal-buttons {
+    margin-top: 1.5rem; /* Increased space */
+}
+
 /* Host Themes */
 .host-guild {
     background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
     border-color: #FFD700;
 }
 #mission-modal .modal-content.host-guild {
-    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
     border-color: #FFD700;
 }
 #mission-modal .modal-content.host-guild #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #FFD700;
+    /* border-width: 2px; */
+    /* border-color: #FFD700; */
 }
 
 .host-syndicate {
@@ -44,12 +66,13 @@
     border-color: #a855f7;
 }
 #mission-modal .modal-content.host-syndicate {
-    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
     border-color: #a855f7;
 }
 #mission-modal .modal-content.host-syndicate #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #a855f7;
+    /* border-width: 2px; */
+    /* border-color: #a855f7; */
 }
 
 .host-unknown {
@@ -57,12 +80,13 @@
     border-color: #5f616b;
 }
 #mission-modal .modal-content.host-unknown {
-    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
     border-color: #5f616b;
 }
 #mission-modal .modal-content.host-unknown #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #5f616b;
+    /* border-width: 2px; */
+    /* border-color: #5f616b; */
 }
 
 .host-crew {
@@ -70,12 +94,13 @@
     border-color: #c9bfb1;
 }
 #mission-modal .modal-content.host-crew {
-    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
     border-color: #c9bfb1;
 }
 #mission-modal .modal-content.host-crew #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #c9bfb1;
+    /* border-width: 2px; */
+    /* border-color: #c9bfb1; */
 }
 
 .host-tutorial {
@@ -83,12 +108,13 @@
     border-color: #5aa66d;
 }
 #mission-modal .modal-content.host-tutorial {
-    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
     border-color: #5aa66d;
 }
 #mission-modal .modal-content.host-tutorial #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #5aa66d;
+    /* border-width: 2px; */
+    /* border-color: #5aa66d; */
 }
 
 .host-station {
@@ -96,12 +122,13 @@
     border-color: #8f9acc;
 }
 #mission-modal .modal-content.host-station {
-    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
     border-color: #8f9acc;
 }
 #mission-modal .modal-content.host-station #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #8f9acc;
+    /* border-width: 2px; */
+    /* border-color: #8f9acc; */
 }
 
 /* Mission Status Styles */

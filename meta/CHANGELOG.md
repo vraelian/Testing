@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [30.60] - 2025-10-25
+- mission modal polish
+- added css/fonts path
+- added font Oxanium
+
 ## [30.50] - 2025-10-24
 - adjusted navigation/market containers
 - services screen polish

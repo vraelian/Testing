@@ -22,11 +22,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.50</title>
+    <title>Orbital Trading 30.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/modals.css">
@@ -62,7 +64,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.50</p>
+            <p>Version 30.60</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -185,7 +187,7 @@
         <div class="modal-content modal-theme-admin">
             <h3 id="processing-title" class="text-xl font-orbitron mb-4 text-gray-300"></h3>
             <div class="w-full bg-slate-700 rounded-full h-2.5 my-4">
-                <div id="processing-progress-bar" class="bg-white h-2.5 rounded-full" style="width: 0%; transition: width 4s ease-out;"></div>
+                <div id="processing-progress-bar" class"bg-white h-2.5 rounded-full" style="width: 0%; transition: width 4s ease-out;"></div>
             </div>
             <p id="processing-status" class="text-lg text-gray-400 font-roboto-mono h-6"></p>
         </div>
@@ -322,18 +324,40 @@
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
 }
 
+#mission-modal #mission-modal-description {
+    font-family: "Patrick Hand", cursive;
+    font-size: 1.1rem; /* Patrick Hand is a bit small, bumping it up */
+    background: rgba(0, 0, 0, 0.25);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    white-space: pre-wrap; /* Preserve line breaks from description */
+}
+
+#mission-modal #mission-modal-objectives {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem; /* Increased space */
+    width: 100%; /* Ensure it spans width */
+}
+
+#mission-modal #mission-modal-buttons {
+    margin-top: 1.5rem; /* Increased space */
+}
+
 /* Host Themes */
 .host-guild {
     background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
     border-color: #FFD700;
 }
 #mission-modal .modal-content.host-guild {
-    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
     border-color: #FFD700;
 }
 #mission-modal .modal-content.host-guild #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #FFD700;
+    /* border-width: 2px; */
+    /* border-color: #FFD700; */
 }
 
 .host-syndicate {
@@ -341,12 +365,13 @@
     border-color: #a855f7;
 }
 #mission-modal .modal-content.host-syndicate {
-    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
     border-color: #a855f7;
 }
 #mission-modal .modal-content.host-syndicate #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #a855f7;
+    /* border-width: 2px; */
+    /* border-color: #a855f7; */
 }
 
 .host-unknown {
@@ -354,12 +379,13 @@
     border-color: #5f616b;
 }
 #mission-modal .modal-content.host-unknown {
-    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
     border-color: #5f616b;
 }
 #mission-modal .modal-content.host-unknown #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #5f616b;
+    /* border-width: 2px; */
+    /* border-color: #5f616b; */
 }
 
 .host-crew {
@@ -367,12 +393,13 @@
     border-color: #c9bfb1;
 }
 #mission-modal .modal-content.host-crew {
-    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
     border-color: #c9bfb1;
 }
 #mission-modal .modal-content.host-crew #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #c9bfb1;
+    /* border-width: 2px; */
+    /* border-color: #c9bfb1; */
 }
 
 .host-tutorial {
@@ -380,12 +407,13 @@
     border-color: #5aa66d;
 }
 #mission-modal .modal-content.host-tutorial {
-    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
     border-color: #5aa66d;
 }
 #mission-modal .modal-content.host-tutorial #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #5aa66d;
+    /* border-width: 2px; */
+    /* border-color: #5aa66d; */
 }
 
 .host-station {
@@ -393,12 +421,13 @@
     border-color: #8f9acc;
 }
 #mission-modal .modal-content.host-station {
-    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
+    background-color: #0c101d; /* Opaque base */
+    background-image: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
     border-color: #8f9acc;
 }
 #mission-modal .modal-content.host-station #mission-modal-objectives {
-    border-width: 2px;
-    border-color: #8f9acc;
+    /* border-width: 2px; */
+    /* border-color: #8f9acc; */
 }
 
 /* Mission Status Styles */
@@ -14000,6 +14029,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [30.60] - 2025-10-25
+- mission modal polish
+- added css/fonts path
+- added font Oxanium
 
 ## [30.50] - 2025-10-24
 - adjusted navigation/market containers
