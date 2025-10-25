@@ -1,4 +1,12 @@
 /* css/global.css */
+
+@font-face {
+  font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
+  src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
+  font-weight: 800; /* ExtraBold is typically 800 weight */
+  font-style: normal;
+}
+
 :root {
     --app-height: 100%;
     /* Default/fallback height */
