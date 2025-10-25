@@ -44,9 +44,9 @@
 
 
 #mission-modal #mission-modal-description {
-    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif; 
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
     font-size: 1.0rem; 
-    font-weight: 500; /* Changed from 800 to 500 (Medium) */
+    /* font-weight: 500; */ /* Removed, as font file handles this */
     background: rgba(0, 0, 0, 0.25);
     padding: 1rem;
     border-radius: 6px;
@@ -75,14 +75,14 @@
 
 /* Applied to objective description text in modal */
 #mission-modal #mission-modal-objectives .flex-1 {
-    font-family: 'Oxanium ExtraBold', 'Exo 2', sans-serif;
-    font-weight: 500; /* Changed from 800 to 500 (Medium) */
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
+    /* font-weight: 500; */ /* Removed, as font file handles this */
 }
 
 /* Applied to objective progress text (e.g., "1 / 5") in modal */
 #mission-modal #mission-modal-objectives .font-roboto-mono {
-    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-weight: 500; /* Changed from 800 to 500 (Medium) */
+    font-family: 'Oxanium Medium', 'Roboto Mono', monospace; /* Use 'Oxanium Medium' font */
+    /* font-weight: 500; */ /* Removed, as font file handles this */
 }
 
 

@@ -307,33 +307,64 @@
     border-color: rgba(96, 165, 250, 0.7);
 }
 .mission-type {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.7rem;
+    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
+    font-size: 0.85rem; /* Increased from 0.7rem */
     color: #9ca3af;
     letter-spacing: 0.1em;
+    font-weight: 800;
 }
 .mission-host {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
     font-size: 0.7rem;
     color: #d1d5db;
+    font-weight: 800;
 }
 .mission-reward {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-size: 0.9rem;
     color: #facc15;
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
+    font-weight: 800;
 }
 
+/* Applied to mission card title */
+.mission-card .font-bold.text-base {
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem; /* Increased size */
+}
+
+/* Applied to mission modal title */
+#mission-modal #mission-modal-title {
+    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem; /* Increased size */
+}
+
+
 #mission-modal #mission-modal-description {
-    font-family: "Patrick Hand", cursive;
-    font-size: 1.1rem; /* Patrick Hand is a bit small, bumping it up */
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
+    font-size: 1.0rem; 
+    /* font-weight: 500; */ /* Removed, as font file handles this */
     background: rgba(0, 0, 0, 0.25);
     padding: 1rem;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #4a6a8a; /* Thematic border */
     text-align: left;
-    white-space: pre-wrap; /* Preserve line breaks from description */
+    white-space: pre-wrap; 
+    
+    max-height: 36vh; /* Increased 20% (from 30vh) */
+    overflow-y: auto;
+    touch-action: pan-y;
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 }
+
+/* Hide Webkit scrollbar (Chrome, Safari, iOS) */
+#mission-modal #mission-modal-description::-webkit-scrollbar {
+    display: none;
+}
+
 
 #mission-modal #mission-modal-objectives {
     margin-top: 1.5rem;
@@ -341,9 +372,29 @@
     width: 100%; /* Ensure it spans width */
 }
 
+/* Applied to objective description text in modal */
+#mission-modal #mission-modal-objectives .flex-1 {
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
+    /* font-weight: 500; */ /* Removed, as font file handles this */
+}
+
+/* Applied to objective progress text (e.g., "1 / 5") in modal */
+#mission-modal #mission-modal-objectives .font-roboto-mono {
+    font-family: 'Oxanium Medium', 'Roboto Mono', monospace; /* Use 'Oxanium Medium' font */
+    /* font-weight: 500; */ /* Removed, as font file handles this */
+}
+
+
 #mission-modal #mission-modal-buttons {
     margin-top: 1.5rem; /* Increased space */
 }
+
+/* Increase scale of modal buttons by 50% */
+#mission-modal #mission-modal-buttons .btn {
+    font-size: 1.2rem; 
+    padding: 0.75rem 1.125rem; 
+}
+
 
 /* Host Themes */
 .host-guild {
@@ -1127,6 +1178,21 @@
 
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
+
+@font-face {
+  font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
+  src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
+  font-weight: 800; /* ExtraBold is typically 800 weight */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oxanium Medium'; /* Name for the Medium weight */
+  src: url('fonts/Oxanium-Medium.ttf') format('truetype'); /* Path to the Medium font file */
+  font-weight: 500; /* Medium is 500 weight */
+  font-style: normal;
+}
+
 :root {
     --app-height: 100%;
     /* Default/fallback height */
