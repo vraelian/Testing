@@ -14511,31 +14511,36 @@ This document outlines the planned features and high-level goals for the future 
 - Refine ship hull deterioation
 - Refine ship cargo capacity
 - Refine ship fuel capacity
-- Improve communication about Station Quirks
 
 ## Planned Ideas
 - Balance ship fuel, hull costs and gameplay
 - Improve finance screen, logging
-- Design cononical missions, storyline
-
-- News ticker
-- Storyline Timeline Governor (Mission availability, System States, Features)
+- Install tailwind CSS resources locally
+- Ship trading overhaul
+- Ship card transitions
+- Ship perks
+- Station Quirks
 
 ## Long-Term Ideas
-- System states influencing market performance
 - Refine commodities names, identity
+- Reputation system
+- Player age events
+- Player Stations
+- Additional tutorials
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Finalize mobile views
 - Optimize repititive calculations, long-term data accumulation, and re-renders
-- Reputation system
-
-
-
+- Storyline Timeline Governor (Mission availability, System States, Features)
+- Storyline
+- Design cononical missions
+- News ticker
+- System states influencing market performance
+- Tactile feedback
+- Sound design
 
 ## Far-Future Wishlist Ideas ()
 - Purchasable stations
 - Each ship has a unique nav bar
-- Cargo possesses a weight, reducing ship fuel efficiency
 - Desktop version with super ultra wide compatibility
 - Extend gameplay with simple but robust IAP DLC
 --- END OF FILE: ./meta/ROADMAP.md ---
