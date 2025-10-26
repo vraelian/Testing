@@ -14,6 +14,13 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Zorque'; /* Name for the Zorque font */
+  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file */
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
     --app-height: 100%;
     /* Default/fallback height */
