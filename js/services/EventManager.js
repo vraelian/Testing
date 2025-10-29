@@ -41,6 +41,17 @@ export class EventManager {
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
+
+        // --- VIRTUAL WORKBENCH ---
+        // Define the set of actions that should be exclusively handled by the MarketEventHandler.
+        this.marketActions = new Set([
+            'toggle-trade-mode',
+            'confirm-trade',
+            'set-max-trade',
+            ACTION_IDS.INCREMENT,
+            ACTION_IDS.DECREMENT
+        ]);
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -166,10 +177,17 @@ export class EventManager {
                 return;
             }
 
-            // Delegate to other handlers
-            this.actionClickHandler.handle(e, actionTarget);
-            this.marketEventHandler.handleClick(e, actionTarget);
+            // --- VIRTUAL WORKBENCH MODIFICATION ---
+            // Route the event to the correct handler instead of broadcasting to all.
+            // This prevents action misfires, like 'acquire-license' (from ActionClickHandler)
+            // firing on a 'confirm-trade' (from MarketEventHandler) click.
+            if (this.marketActions.has(action)) {
+                this.marketEventHandler.handleClick(e, actionTarget);
+            } else {
+                this.actionClickHandler.handle(e, actionTarget);
+            }
             return;
+            // --- END VIRTUAL WORKBENCH MODIFICATION ---
         }
 
         // --- Fallback Handlers for non-action clicks ---
