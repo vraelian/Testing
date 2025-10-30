@@ -493,7 +493,12 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        
+        // --- [[START]] MODIFICATION ---
+        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
+        const marketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); 
+        // --- [[END]] MODIFICATION ---
+
         if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
         } else {
@@ -502,7 +507,12 @@ export class UIManager {
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
-        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        
+        // --- [[START]] MODIFICATION ---
+        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
+        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel');
+        // --- [[END]] MODIFICATION ---
+
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
