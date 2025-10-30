@@ -208,8 +208,11 @@ export class GameState {
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
                     lastPlayerInteractionTimestamp: 0,
+                    priceLockEndDay: 0, // <-- ADDED
                     hoverUntilDay: 0,
-                    rivalArbitrage: { isActive: false, endDay: 0 }
+                    rivalArbitrage: { isActive: false, endDay: 0 },
+                    isDepleted: false,
+                    depletionDay: 0
                 };
             });
         });

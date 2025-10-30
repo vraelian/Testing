@@ -63,6 +63,11 @@ export class PlayerActionService {
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
 
+        if (inventoryItem.quantity <= 0) {
+            inventoryItem.isDepleted = true;
+            inventoryItem.depletionDay = state.day;
+        }
+
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
         playerInvItem.quantity += quantity;

@@ -75,6 +75,14 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
+                // --- NEW: Variable Reversion Delay (Point e) ---
+                // If the player has traded this item recently, a "price lock" is in effect,
+                // stopping mean reversion. The duration is set randomly on transaction.
+                if (this.gameState.day < inventoryItem.priceLockEndDay) {
+                    reversionEffect = 0;
+                }
+                // --- END CHANGE ---
+
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
                 } else if (inventoryItem.rivalArbitrage.isActive) {
@@ -87,8 +95,40 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                const pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
-                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
+                // Player-driven pressure (from past actions)
+                let pressureEffect = 0;
+                // Add 1-week delay before player's actions impact price
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
+                }
+
+                // --- NEW: Availability-Based Price Pressure ---
+                // Calculate the theoretical target stock
+                const [minAvail, maxAvail] = commodity.canonicalAvailability;
+                const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
+                const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
+                const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+
+                // Calculate scarcity/surplus ratio
+                const availabilityRatio = inventoryItem.quantity / targetStock;
+                
+                // Apply pressure: (1 - ratio)
+                // If ratio < 1 (scarce), result is positive (price up)
+                // If ratio > 1 (surplus), result is negative (price down)
+                const AVAILABILITY_PRESSURE_STRENGTH = 0.10; // Tunable constant for this effect
+                const availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH;
+                // --- End Availability Pressure ---
+
+                // --- NEW: Depletion Price Hike ---
+                let priceHikeMultiplier = 1.0;
+                if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
+                    priceHikeMultiplier = 1.5; // 50% more acceleration
+                    // We check depletionDay + 7, so this effect lasts for the whole week
+                    // We reset the flag *after* it's been used in replenishment
+                }
+                // --- End Depletion Price Hike ---
+
+                let newPrice = price + randomFluctuation + reversionEffect + ((pressureEffect + availabilityEffect) * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -116,24 +156,54 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
-                // Market Memory: Reset if untouched for 60 days.
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 60) {
+                // Market Memory: Reset if untouched for 120 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
+                    inventoryItem.depletionDay = 0; // Clear depletion day on reset
+                    inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
                 } else {
                     // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
                     // Market adaptation: high player selling pressure reduces the target stock.
-                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Pressure reduces target, capped at 50%
+                    let pressureForAdaptation = inventoryItem.marketPressure;
+                    // If pressure is negative (player buying), delay its effect for 1 week
+                    if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                        pressureForAdaptation = 0; // Ignore recouping pressure for the first week
+                    }
+
+                    // --- REMOVED BRICK WALL (Point c) ---
+                    // Only allow negative pressure (player buying) to increase target stock.
+                    // Positive pressure (player selling) no longer decreases it.
+                    if (pressureForAdaptation > 0) {
+                        pressureForAdaptation = 0;
+                    }
+                    // --- END CHANGE ---
+
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
                     // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.15; // Move 15% towards the target each week
-                    inventoryItem.quantity += replenishAmount;
+                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
+                    
+                    // --- NEW: Emergency Stock Boost ---
+                    let emergencyStock = 0;
+                    if (inventoryItem.isDepleted) {
+                        // If item was depleted, add a small emergency boost
+                        emergencyStock = skewedRandom(1, 5);
+                        inventoryItem.isDepleted = false; // Reset depletion flag
+                        // We DO NOT reset depletionDay, as evolveMarketPrices uses it for 7 days
+                    } else if (inventoryItem.quantity <= 0) {
+                        // Also boost if it just happens to be 0
+                        emergencyStock = skewedRandom(1, 5);
+                    }
+                    // --- End Emergency Stock Boost ---
+
+                    inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
                 // Phase 3: Apply Final Visual Fluctuation
@@ -170,10 +240,26 @@ export class MarketService {
             inventoryItem.marketPressure += pressureChange;
         }
 
+        // --- NEW: Set Variable Price Lock Duration ---
+        const dayOfYear = (this.gameState.day - 1) % 365 + 1;
+        let minDuration, maxDuration;
+
+        if (dayOfYear <= 182) { // First half of the year
+            minDuration = 75; // 2.5 months
+            maxDuration = 120; // 4 months
+        } else { // Second half of the year
+            minDuration = 105; // 3.5 months
+            maxDuration = 195; // 6.5 months
+        }
+
+        const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
+        inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+        // --- END CHANGE ---
+
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
-S    /**
+    /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
      * @param {object} market - The market object from the database.
      * @param {object} commodity - The commodity object from the database.
