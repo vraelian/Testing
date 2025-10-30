@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  autotrader update
 -  DebugServive.js refactor
 -  added AutomatedPlayerService.js
+-  economic behavior tuning
 
 ## [30.80] - 2025-10-30
 -  economic behavior update
