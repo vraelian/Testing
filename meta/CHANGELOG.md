@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [30.90] - 2025-10-30
+-  autotrader update
+-  DebugServive.js refactor
+-  added AutomatedPlayerService.js
+
 ## [30.80] - 2025-10-30
 -  economic behavior update
 -  added ECONOMIC_BEHAVIOR.md

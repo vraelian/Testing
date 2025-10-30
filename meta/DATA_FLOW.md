@@ -41,3 +41,73 @@ graph TD
 
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
+}
+````
+
+-----
+
+## Detailed Flow Example: Market Simulation
+
+This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.
+
+```mermaid
+graph TD
+    subgraph Player Action (Instant)
+        A[PlayerActionService.buyItem/sellItem] --> B[Sets inventoryItem.lastPlayerInteractionTimestamp];
+        A --> C[Instantly changes inventoryItem.quantity];
+        A --> D[Sets inventoryItem.marketPressure];
+    end
+
+    subgraph Weekly Tick (Delayed)
+        E(TimeService.advanceDays) --> F[SimulationService.updateMarket];
+        F --> G[MarketService.evolveMarketPrices];
+        F --> H[MarketService.replenishMarketInventory];
+    end
+
+    subgraph Price Logic (evolveMarketPrices)
+        G --> I{Day >= timestamp + 7?};
+        I -- No (Delay Active) --> J[Price change = meanReversion + randomFluctuation];
+        I -- Yes (Delay Over) --> K[Calculate availabilityEffect from quantity];
+        K --> L[Price change = meanReversion + randomFluctuation + availabilityEffect];
+        C -.-> K;
+        B -.-> I;
+    end
+
+    subgraph Stock Logic (replenishMarketInventory)
+        H --> M[Calculate targetStock];
+        M --> N[Calculate 10% replenishment];
+        H --> O[Reset state if untouched > 120 days];
+        D -.-> M;
+    end
+
+    style A fill:#e63946,stroke:#fff
+    style E fill:#457b9d,stroke:#fff
+```
+
+### Explanation of Market Data Flow
+
+This model ensures player actions have a powerful, delayed effect, preventing same-day abuse.
+
+1.  **Instant Player Action**: When a player trades, `PlayerActionService` *immediately* modifies the `GameState`:
+
+      * It changes the item's `quantity` (e.g., increases it on a sale).
+      * It sets `lastPlayerInteractionTimestamp` to the current `day`.
+      * It sets `marketPressure` (this is *only* for stock logic, not price).
+      * It activates the `priceLockEndDay` (this disables `meanReversion`).
+
+2.  **Weekly Price Logic (`evolveMarketPrices`)**: On the weekly tick, `MarketService` runs its price logic:
+
+      * It checks if the 7-day anti-abuse delay has passed (Day \>= timestamp + 7).
+      * **If NO (Delay Active)**: No `availabilityEffect` is calculated. The price is only affected by natural `meanReversion` (which is likely disabled by the Price Lock) and `randomFluctuation`.
+      * **If YES (Delay Over)**: The `availabilityEffect` is calculated *now*, using the `quantity` the player changed days ago. This single effect (tuned to 0.50 strength) creates the large price crash or spike.
+
+3.  **Weekly Stock Logic (`replenishMarketInventory`)**:
+
+      * This system runs separately and is *not* subject to the 7-day price delay.
+      * It uses the `marketPressure` set by the player to dynamically adjust the `targetStock`.
+      * It then moves the `quantity` 10% closer to this `targetStock` every week, creating the "race" for the player as the market's supply (and thus its price) slowly recovers.
+
+<!-- end list -->
+
+```
+```
