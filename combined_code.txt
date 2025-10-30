@@ -8246,8 +8246,11 @@ export class GameState {
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
                     lastPlayerInteractionTimestamp: 0,
+                    priceLockEndDay: 0, // <-- ADDED
                     hoverUntilDay: 0,
-                    rivalArbitrage: { isActive: false, endDay: 0 }
+                    rivalArbitrage: { isActive: false, endDay: 0 },
+                    isDepleted: false,
+                    depletionDay: 0
                 };
             });
         });
@@ -8579,6 +8582,14 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
+                // --- NEW: Variable Reversion Delay (Point e) ---
+                // If the player has traded this item recently, a "price lock" is in effect,
+                // stopping mean reversion. The duration is set randomly on transaction.
+                if (this.gameState.day < inventoryItem.priceLockEndDay) {
+                    reversionEffect = 0;
+                }
+                // --- END CHANGE ---
+
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
                 } else if (inventoryItem.rivalArbitrage.isActive) {
@@ -8591,8 +8602,40 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                const pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
-                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
+                // Player-driven pressure (from past actions)
+                let pressureEffect = 0;
+                // Add 1-week delay before player's actions impact price
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
+                }
+
+                // --- NEW: Availability-Based Price Pressure ---
+                // Calculate the theoretical target stock
+                const [minAvail, maxAvail] = commodity.canonicalAvailability;
+                const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
+                const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
+                const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+
+                // Calculate scarcity/surplus ratio
+                const availabilityRatio = inventoryItem.quantity / targetStock;
+                
+                // Apply pressure: (1 - ratio)
+                // If ratio < 1 (scarce), result is positive (price up)
+                // If ratio > 1 (surplus), result is negative (price down)
+                const AVAILABILITY_PRESSURE_STRENGTH = 0.10; // Tunable constant for this effect
+                const availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH;
+                // --- End Availability Pressure ---
+
+                // --- NEW: Depletion Price Hike ---
+                let priceHikeMultiplier = 1.0;
+                if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
+                    priceHikeMultiplier = 1.5; // 50% more acceleration
+                    // We check depletionDay + 7, so this effect lasts for the whole week
+                    // We reset the flag *after* it's been used in replenishment
+                }
+                // --- End Depletion Price Hike ---
+
+                let newPrice = price + randomFluctuation + reversionEffect + ((pressureEffect + availabilityEffect) * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -8620,24 +8663,54 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
-                // Market Memory: Reset if untouched for 60 days.
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 60) {
+                // Market Memory: Reset if untouched for 120 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
+                    inventoryItem.depletionDay = 0; // Clear depletion day on reset
+                    inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
                 } else {
                     // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
                     // Market adaptation: high player selling pressure reduces the target stock.
-                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Pressure reduces target, capped at 50%
+                    let pressureForAdaptation = inventoryItem.marketPressure;
+                    // If pressure is negative (player buying), delay its effect for 1 week
+                    if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                        pressureForAdaptation = 0; // Ignore recouping pressure for the first week
+                    }
+
+                    // --- REMOVED BRICK WALL (Point c) ---
+                    // Only allow negative pressure (player buying) to increase target stock.
+                    // Positive pressure (player selling) no longer decreases it.
+                    if (pressureForAdaptation > 0) {
+                        pressureForAdaptation = 0;
+                    }
+                    // --- END CHANGE ---
+
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
                     // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.15; // Move 15% towards the target each week
-                    inventoryItem.quantity += replenishAmount;
+                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
+                    
+                    // --- NEW: Emergency Stock Boost ---
+                    let emergencyStock = 0;
+                    if (inventoryItem.isDepleted) {
+                        // If item was depleted, add a small emergency boost
+                        emergencyStock = skewedRandom(1, 5);
+                        inventoryItem.isDepleted = false; // Reset depletion flag
+                        // We DO NOT reset depletionDay, as evolveMarketPrices uses it for 7 days
+                    } else if (inventoryItem.quantity <= 0) {
+                        // Also boost if it just happens to be 0
+                        emergencyStock = skewedRandom(1, 5);
+                    }
+                    // --- End Emergency Stock Boost ---
+
+                    inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
                 // Phase 3: Apply Final Visual Fluctuation
@@ -8674,10 +8747,26 @@ export class MarketService {
             inventoryItem.marketPressure += pressureChange;
         }
 
+        // --- NEW: Set Variable Price Lock Duration ---
+        const dayOfYear = (this.gameState.day - 1) % 365 + 1;
+        let minDuration, maxDuration;
+
+        if (dayOfYear <= 182) { // First half of the year
+            minDuration = 75; // 2.5 months
+            maxDuration = 120; // 4 months
+        } else { // Second half of the year
+            minDuration = 105; // 3.5 months
+            maxDuration = 195; // 6.5 months
+        }
+
+        const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
+        inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+        // --- END CHANGE ---
+
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
-S    /**
+    /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
      * @param {object} market - The market object from the database.
      * @param {object} commodity - The commodity object from the database.
@@ -9902,6 +9991,17 @@ export class EventManager {
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
+
+        // --- VIRTUAL WORKBENCH ---
+        // Define the set of actions that should be exclusively handled by the MarketEventHandler.
+        this.marketActions = new Set([
+            'toggle-trade-mode',
+            'confirm-trade',
+            'set-max-trade',
+            ACTION_IDS.INCREMENT,
+            ACTION_IDS.DECREMENT
+        ]);
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -10027,10 +10127,17 @@ export class EventManager {
                 return;
             }
 
-            // Delegate to other handlers
-            this.actionClickHandler.handle(e, actionTarget);
-            this.marketEventHandler.handleClick(e, actionTarget);
+            // --- VIRTUAL WORKBENCH MODIFICATION ---
+            // Route the event to the correct handler instead of broadcasting to all.
+            // This prevents action misfires, like 'acquire-license' (from ActionClickHandler)
+            // firing on a 'confirm-trade' (from MarketEventHandler) click.
+            if (this.marketActions.has(action)) {
+                this.marketEventHandler.handleClick(e, actionTarget);
+            } else {
+                this.actionClickHandler.handle(e, actionTarget);
+            }
             return;
+            // --- END VIRTUAL WORKBENCH MODIFICATION ---
         }
 
         // --- Fallback Handlers for non-action clicks ---
@@ -11072,7 +11179,12 @@ export class UIManager {
 
     updateMarketScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
-        const marketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        
+        // --- [[START]] MODIFICATION ---
+        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
+        const marketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); 
+        // --- [[END]] MODIFICATION ---
+
         if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
         } else {
@@ -11081,7 +11193,12 @@ export class UIManager {
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
-        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.scroll-panel');
+        
+        // --- [[START]] MODIFICATION ---
+        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
+        const newMarketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel');
+        // --- [[END]] MODIFICATION ---
+
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
         }
@@ -13747,6 +13864,11 @@ export class PlayerActionService {
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         inventoryItem.quantity -= quantity;
 
+        if (inventoryItem.quantity <= 0) {
+            inventoryItem.isDepleted = true;
+            inventoryItem.depletionDay = state.day;
+        }
+
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
         playerInvItem.quantity += quantity;
@@ -14152,12 +14274,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [30.70] - 2025-10-29
-- data refactor of database.js
-- added age_events.js
-- added events.js
-- added missions.js
-- added tutorials.js
+## [30.70] - 2025-10-25
+-  market behavior update
+-  database refactor
+-  added age_events.js
+-  added events.js
+-  added missions.js
+-  added tutorials.js
+-  ship list completed
+-  ship lore completed
+-  bug fixes
 
 ## [30.60] - 2025-10-25
 - mission modal polish
@@ -14498,8 +14624,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
     },
     "TravelService": {
-      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
-      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)"],
+      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
+      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)", "js/data/events.js", "js/services/eventEffectResolver.js"],
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
         "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
@@ -14508,8 +14634,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
       "mutates_state": ["pendingTravel", "player.shipStates.health", "player.shipStates.fuel"]
     },
     "TimeService": {
-      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates.",
-      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)"],
+      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`.",
+      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)", "js/data/age_events.js"],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
       },
@@ -14581,8 +14707,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
         "mutates_state": []
     },
     "MissionService": {
-        "description": "Manages the state, progression, and availability of player missions.",
-        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService"],
+        "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService", "js/data/missions.js"],
         "key_functions": {
             "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
             "acceptMission": "Sets a mission as active and initializes its progress tracking.",
@@ -14590,6 +14716,17 @@ All notable changes to the Orbital Trading project will be documented in this fi
             "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
         },
         "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    },
+     "TutorialService": {
+        "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
+        "dependencies": ["GameState", "UIManager", "SimulationService", "Logger", "js/data/tutorials.js"],
+        "key_functions": {
+            "checkState": "Checks game state/action against triggers/completion conditions.",
+            "triggerBatch": "Starts a specific tutorial batch.",
+            "advanceStep": "Moves to the next step in the current batch.",
+            "skipActiveTutorial": "Skips the current tutorial batch."
+        },
+        "mutates_state": ["tutorials.activeBatchId", "tutorials.activeStepId", "tutorials.seenBatchIds", "tutorials.skippedTutorialBatches", "tutorials.navLock"]
     },
     "TravelAnimationService": {
       "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
@@ -14622,11 +14759,11 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F003": {"path": "./js/main.js", "role": "ENTRY_POINT"},
     "F004": {"path": "./js/utils.js", "role": "UTILITY_LIBRARY"},
     "F005": {"path": "./js/data/constants.js", "role": "DATA_DEFINITION"},
-    "F006": {"path": "./js/data/database.js", "role": "DATA_DEFINITION"},
+    "F006": {"path": "./js/data/database.js", "role": "DATA_AGGREGATOR", "description": "Aggregates and exports static game data imported from other modules."},
     "F009": {"path": "./js/services/GameState.js", "role": "STATE_MANAGER"},
     "F010": {"path": "./js/services/simulation/MarketService.js", "role": "LOGIC_SERVICE"},
     "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_FACADE"},
-    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE"},
+    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE", "dependencies": ["js/data/events.js"]},
     "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
     "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
     "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
@@ -14661,7 +14798,11 @@ All notable changes to the Orbital Trading project will be documented in this fi
     "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
     "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"},
     "F048": {"path": "./meta/STATE_SCHEMA.md", "role": "DOCUMENTATION_STATE_SCHEMA"},
-    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"}
+    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"},
+    "F050": {"path": "./js/data/age_events.js", "role": "DATA_DEFINITION"},
+    "F051": {"path": "./js/data/events.js", "role": "DATA_DEFINITION"},
+    "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
+    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
@@ -14710,56 +14851,66 @@ This document outlines the planned features and high-level goals for the future 
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.0
-**Source:** `js/services/` directory structure
+**Version:** 1.1
+**Source:** `js/services/` directory structure and `js/data/` structure
 
-This document defines the single responsibility of each service in the application.
+This document defines the single responsibility of each service in the application and notes key static data dependencies.
 
 ---
 
 ### Core Services
 
 - **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
-- **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market).
-- **`EventManager.js`**: Provides a global event bus for decoupled communication, allowing services to publish events and register listeners.
+- **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions.
+- **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
 - **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
 - **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
-- **`DebugService.js`**: Manages the debug panel, synchronizing its UI controls with the `GameState.debug` object and applying CSS variable changes.
+- **`DebugService.js`**: Manages the debug panel, synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
 
 ### Game Logic Services
 
 #### Player
-- **`PlayerActionService.js`**: Contains all business logic for player-initiated actions, such as buying, selling, and transferring cargo.
+- **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, use services).
 
 #### World
-- **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.time.currentDate` based on simulation ticks.
-- **`TravelService.js`**: Handles the business logic for player travel, initiating trips, and calculating arrival times.
+- **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates). **Uses:** `js/data/age_events.js`.
+- **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
 - **`MarketService.js`**: Simulates the galactic economy, updating prices and inventory levels for all commodities in all systems based on game time and player actions.
-- **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met.
+- **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
 #### Game
 - **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
-- **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events.
+- **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
 
 ### UI/Event Handlers
 
-- **`ActionClickHandler.js`**: Attaches and manages the primary click event listener for the entire app, delegating actions based on `data-action` attributes.
-- **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen, such as quantity slider logic.
-- **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., market quantity +/-).
-- **`CarouselEventHandler.js`**: Manages the swipe/drag logic for carousel components (e.g., Hangar ship selector).
-- **`TooltipHandler.js`**: Attaches and manages global `mouseover`/`mouseout` listeners to show and hide tooltips based on `data-tooltip` attributes.
-- **`TravelAnimationService.js`**: Controls the visual "travel animation" (fade out/in, starfield) when the player travels.
+- **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes).
+- **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
+- **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
+- **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
+- **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
+- **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
 
 ### Event Effects
-- **`eventEffectResolver.js`**: A central service that applies or removes the game logic effects of a world event.
-- **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event.
-- **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event.
+- **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
+- **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
+- **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
-- **`EffectsManager.js`**: ManTESTS (particle effects, etc).
-- **`BaseEffect.js`**: The base class for all visual effects.
+- **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
+- **`BaseEffect.js`**: The abstract base class for all visual effects.
+
+---
+### Static Data Files (`js/data/`)
+
+- **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
+- **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
+- **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
+- **`events.js`**: Defines static data for random events encountered during travel.
+- **`missions.js`**: Defines static data for all player missions.
+- **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

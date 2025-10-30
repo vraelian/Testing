@@ -2,12 +2,16 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [30.70] - 2025-10-29
-- data refactor of database.js
-- added age_events.js
-- added events.js
-- added missions.js
-- added tutorials.js
+## [30.70] - 2025-10-25
+-  market behavior update
+-  database refactor
+-  added age_events.js
+-  added events.js
+-  added missions.js
+-  added tutorials.js
+-  ship list completed
+-  ship lore completed
+-  bug fixes
 
 ## [30.60] - 2025-10-25
 - mission modal polish

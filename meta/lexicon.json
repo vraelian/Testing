@@ -81,8 +81,8 @@
       "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
     },
     "TravelService": {
-      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit.",
-      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)"],
+      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
+      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)", "js/data/events.js", "js/services/eventEffectResolver.js"],
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
         "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
@@ -91,8 +91,8 @@
       "mutates_state": ["pendingTravel", "player.shipStates.health", "player.shipStates.fuel"]
     },
     "TimeService": {
-      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates.",
-      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)"],
+      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`.",
+      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)", "js/data/age_events.js"],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
       },
@@ -164,8 +164,8 @@
         "mutates_state": []
     },
     "MissionService": {
-        "description": "Manages the state, progression, and availability of player missions.",
-        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService"],
+        "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService", "js/data/missions.js"],
         "key_functions": {
             "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
             "acceptMission": "Sets a mission as active and initializes its progress tracking.",
@@ -173,6 +173,17 @@
             "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
         },
         "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+    },
+     "TutorialService": {
+        "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
+        "dependencies": ["GameState", "UIManager", "SimulationService", "Logger", "js/data/tutorials.js"],
+        "key_functions": {
+            "checkState": "Checks game state/action against triggers/completion conditions.",
+            "triggerBatch": "Starts a specific tutorial batch.",
+            "advanceStep": "Moves to the next step in the current batch.",
+            "skipActiveTutorial": "Skips the current tutorial batch."
+        },
+        "mutates_state": ["tutorials.activeBatchId", "tutorials.activeStepId", "tutorials.seenBatchIds", "tutorials.skippedTutorialBatches", "tutorials.navLock"]
     },
     "TravelAnimationService": {
       "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
@@ -205,11 +216,11 @@
     "F003": {"path": "./js/main.js", "role": "ENTRY_POINT"},
     "F004": {"path": "./js/utils.js", "role": "UTILITY_LIBRARY"},
     "F005": {"path": "./js/data/constants.js", "role": "DATA_DEFINITION"},
-    "F006": {"path": "./js/data/database.js", "role": "DATA_DEFINITION"},
+    "F006": {"path": "./js/data/database.js", "role": "DATA_AGGREGATOR", "description": "Aggregates and exports static game data imported from other modules."},
     "F009": {"path": "./js/services/GameState.js", "role": "STATE_MANAGER"},
     "F010": {"path": "./js/services/simulation/MarketService.js", "role": "LOGIC_SERVICE"},
     "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_FACADE"},
-    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE"},
+    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE", "dependencies": ["js/data/events.js"]},
     "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
     "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
     "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
@@ -244,6 +255,10 @@
     "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
     "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"},
     "F048": {"path": "./meta/STATE_SCHEMA.md", "role": "DOCUMENTATION_STATE_SCHEMA"},
-    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"}
+    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"},
+    "F050": {"path": "./js/data/age_events.js", "role": "DATA_DEFINITION"},
+    "F051": {"path": "./js/data/events.js", "role": "DATA_DEFINITION"},
+    "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
+    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"}
   }
 }
