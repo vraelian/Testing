@@ -95,33 +95,26 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // Player-driven pressure (from past actions)
-                // pressureEffect is no longer used to directly calculate price, only marketPressure is retained for inventory replenishment logic.
-                const pressureEffect = 0; // Removed from price calculation to prevent double-dip.
-                // 7-day delay logic is moved to availabilityEffect.
-
-                // --- NEW: Availability-Based Price Pressure ---
-                let availabilityEffect = 0; // Initialize to 0.
-
-                // Add 1-week delay before player's actions impact price (moved from pressureEffect).
-                // This delays the entire supply/demand calculation, preventing same-day abuse.
+                // [GEMINI] --- MODEL FIX: "DELAYED PRESSURE" ---
+                // This is now the primary, and only, player-driven price force.
+                // It is 0 by default and is only populated by a player trade.
+                let pressureEffect = 0;
+                const PLAYER_PRESSURE_STRENGTH = 0.50; // Tuned strength
+                
+                // Add 1-week delay before player's actions impact price
                 if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    // Calculate the theoretical target stock
-                    const [minAvail, maxAvail] = commodity.canonicalAvailability;
-                    const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
-                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
-                    const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
-
-                    // Calculate scarcity/surplus ratio
-                    const availabilityRatio = inventoryItem.quantity / targetStock;
-                    
-                    // Apply pressure: (1 - ratio)
-                    // If ratio < 1 (scarce), result is positive (price up)
-                    // If ratio > 1 (surplus), result is negative (price down)
-                    const AVAILABILITY_PRESSURE_STRENGTH = 0.50; // [GEMINI] Tuned from 0.10 to 0.50 for impact
-                    availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH; // Calculate effect only if delay is over
+                    // Check if lastPlayerInteractionTimestamp is > 0 to prevent this from running on Day 7 of a new game
+                    if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                         pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                    }
                 }
-                // --- End Availability Pressure ---
+                // [GEMINI] --- END MODEL FIX ---
+
+
+                // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
+                // The availabilityEffect block was removed entirely to fix
+                // the "native crash" bug and the "inverse logic" bug.
+                // --- End Removed Block ---
 
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
@@ -132,8 +125,8 @@ export class MarketService {
                 }
                 // --- End Depletion Price Hike ---
 
-                // [GEMINI] Removed pressureEffect from this calculation
-                let newPrice = price + randomFluctuation + reversionEffect + (availabilityEffect * priceHikeMultiplier);
+                // [GEMINI] Fixed price calculation. Removed availabilityEffect, restored pressureEffect.
+                let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -141,6 +134,7 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
+                // marketPressure still decays, as this is the "timer" for the pressureEffect
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
@@ -188,6 +182,8 @@ export class MarketService {
                     }
                     // --- END CHANGE ---
 
+                    // [GEMINI] Note: This logic is still sound. Player *buying* (negative pressure)
+                    // will correctly increase the targetStock, simulating new demand.
                     const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
@@ -237,6 +233,8 @@ export class MarketService {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        // [GEMINI] This calculation is now the core driver of the price change.
+        // It sets marketPressure, which is used by pressureEffect after 7 days.
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         
         if (transactionType === 'buy') {

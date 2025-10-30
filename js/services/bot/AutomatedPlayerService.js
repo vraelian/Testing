@@ -76,7 +76,7 @@ export class AutomatedPlayer {
      */
     async runSimulation({ daysToRun }, updateCallback) {
         if (this.isRunning) {
-            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
+            this.logger.warn.system('Bot', 'AUTOTRADER-01 is already running.');
             return;
         }
 
@@ -142,19 +142,21 @@ export class AutomatedPlayer {
 
     /**
      * [State: IDLE]
-     * Bot decides what to do. Priority is exploiting known opportunities.
+     * Bot decides what to do. Priority is exploiting self-created opportunities.
      * If none exist, it seeks to create one.
      * @private
      */
     async _evaluateOpportunities() {
-        const exploit = this._findExploitOpportunity();
+        // [GEMINI] FIX: Call the renamed function
+        const exploit = this._findReadySelfExploit();
         if (exploit) {
             this.currentObjective = exploit;
             this.botState = BotState.EXECUTING_EXPLOIT;
-            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `Found exploit: Buy ${exploit.goodId} @ ${exploit.exploitLocationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Found self-created exploit: Buy ${exploit.goodId} @ ${exploit.exploitLocationId}`);
         } else {
+            // [GEMINI] FIX: If no self-exploits, go CREATE one.
             this.botState = BotState.SEEKING_MANIPULATION;
-            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `No exploits. Seeking new market to crash.`);
+            this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `No self-exploits. Seeking new market to crash.`);
         }
     }
 
@@ -206,11 +208,11 @@ export class AutomatedPlayer {
         if (bestCrashPlan) {
             this.currentObjective = bestCrashPlan;
             this.botState = BotState.PREPARING_CRASH;
-            this.logger.info.bot(this.gameState.day, 'PLAN', `New crash plan: Buy ${bestCrashPlan.goodId} @ ${bestCrashPlan.buyFromLocationId}, Crash @ ${bestCrashPlan.crashLocationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `New crash plan: Buy ${bestCrashPlan.goodId} @ ${bestCrashPlan.buyFromLocationId}, Crash @ ${bestCrashPlan.crashLocationId}`);
         } else {
             // No good manipulation routes, just run a simple trade
             this.botState = BotState.TIME_WASTER;
-            this.logger.info.bot(this.gameState.day, 'PLAN', `No good crash plans. Running simple trade.`);
+            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `No good crash plans. Running simple trade.`);
         }
     }
 
@@ -224,7 +226,7 @@ export class AutomatedPlayer {
 
         // 1. Travel to buy location
         if (this.gameState.currentLocationId !== buyFromLocationId) {
-            this.logger.info.bot(this.gameState.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
             this.simulationService.travelService.initiateTravel(buyFromLocationId);
         }
 
@@ -233,11 +235,11 @@ export class AutomatedPlayer {
         const buyQty = this._calculateMaxBuy(goodId, price);
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.bot(this.gameState.day, 'PREP', `Bought ${buyQty}x ${goodId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'PREP', `Bought ${buyQty}x ${goodId}`);
             this.botState = BotState.EXECUTING_CRASH;
         } else {
             // Can't buy. Abort plan.
-            this.logger.warn('AutomatedPlayer', `PREP_FAIL: Arrived at ${buyFromLocationId} but could not buy ${goodId}. Aborting.`);
+            this.logger.warn.system('Bot', `PREP_FAIL: Arrived at ${buyFromLocationId} but could not buy ${goodId}. Aborting.`);
             this.currentObjective = null;
             this.botState = BotState.IDLE;
         }
@@ -253,7 +255,7 @@ export class AutomatedPlayer {
 
         // 1. Travel to crash location
         if (this.gameState.currentLocationId !== crashLocationId) {
-            this.logger.info.bot(this.gameState.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
             this.simulationService.travelService.initiateTravel(crashLocationId);
         }
 
@@ -261,7 +263,7 @@ export class AutomatedPlayer {
         const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
         if (sellQty > 0) {
             this.simulationService.playerActionService.sellItem(goodId, sellQty);
-            this.logger.info.bot(this.gameState.day, 'CRASH', `CRASHED MARKET: Sold ${sellQty}x ${goodId} at ${crashLocationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'CRASH', `CRASHED MARKET: Sold ${sellQty}x ${goodId} at ${crashLocationId}`);
 
             // 3. Add to memory
             const inventoryItem = this.gameState.market.inventory[crashLocationId][goodId];
@@ -276,7 +278,7 @@ export class AutomatedPlayer {
             this.botState = BotState.TIME_WASTER; // Go pass time
         } else {
             // Arrived with no cargo? Abort.
-            this.logger.warn('AutomatedPlayer', `CRASH_FAIL: Arrived at ${crashLocationId} but have no ${goodId} to sell. Aborting.`);
+            this.logger.warn.system('Bot', `CRASH_FAIL: Arrived at ${crashLocationId} but have no ${goodId} to sell. Aborting.`);
             this.currentObjective = null;
             this.botState = BotState.IDLE;
         }
@@ -292,7 +294,7 @@ export class AutomatedPlayer {
 
         // 1. Travel to exploit location
         if (this.gameState.currentLocationId !== exploitLocationId) {
-            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
             this.simulationService.travelService.initiateTravel(exploitLocationId);
         }
 
@@ -302,10 +304,10 @@ export class AutomatedPlayer {
 
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Exploited market: Bought ${buyQty}x ${goodId} at ${exploitLocationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'EXPLOIT', `Exploited market: Bought ${buyQty}x ${goodId} at ${exploitLocationId}`);
         } else {
             // Market may have recovered or stock is 0.
-            this.logger.warn('AutomatedPlayer', `EXPLOIT_FAIL: Arrived at ${exploitLocationId} but could not buy ${goodId}.`);
+            this.logger.warn.system('Bot', `EXPLOIT_FAIL: Arrived at ${exploitLocationId} but could not buy ${goodId}.`);
         }
 
         // 3. Remove from memory (so we don't try again)
@@ -322,7 +324,7 @@ export class AutomatedPlayer {
     async _executeTimeWaster() {
         const simpleTrade = this._findBestSimpleTrade();
         if (simpleTrade) {
-            this.logger.info.bot(this.gameState.day, 'TIME_WASTER', `Running simple trade: ${simpleTrade.goodId} from ${simpleTrade.buyLocationId} to ${simpleTrade.sellLocationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'TIME_WASTER', `Running simple trade: ${simpleTrade.goodId} from ${simpleTrade.buyLocationId} to ${simpleTrade.sellLocationId}`);
 
             // Go to buy location
             if (this.gameState.currentLocationId !== simpleTrade.buyLocationId) {
@@ -351,13 +353,12 @@ export class AutomatedPlayer {
     // --- "BRAIN" HELPER FUNCTIONS ---
 
     /**
-     * Finds markets that are *already* crashed.
-     * Priority 1: Markets the bot crashed itself and are ready (7+ days).
-     * Priority 2: Any other market that is significantly below its baseline.
+     * [GEMINI] RENAMED & SIMPLIFIED FUNCTION
+     * Finds markets that the bot *itself* has crashed and are ready to exploit.
      * @returns {object | null} An exploit objective, or null.
      * @private
      */
-    _findExploitOpportunity() {
+    _findReadySelfExploit() {
         const state = this.gameState.getState();
 
         // 1. Clean memory and find self-created opportunities
@@ -373,30 +374,9 @@ export class AutomatedPlayer {
             }
         }
 
-        // 2. Find "natural" or "other" opportunities
-        let bestNaturalExploit = null;
-        let maxDiscount = 0;
-
-        for (const location of DB.MARKETS) {
-            if (!state.player.unlockedLocationIds.includes(location.id)) continue;
-            for (const good of DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier)) {
-                const avg = state.market.galacticAverages[good.id];
-                const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
-                const targetPriceOffset = (1.0 - modifier) * avg;
-                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
-                const currentPrice = state.market.prices[location.id][good.id];
-                const discount = (localBaseline - currentPrice) / localBaseline; // % discount
-
-                // Is it significantly cheap (e.g., > 30% discount) and has stock?
-                if (discount > 0.30 && state.market.inventory[location.id][good.id].quantity > 10) {
-                    if (discount > maxDiscount) {
-                        maxDiscount = discount;
-                        bestNaturalExploit = { type: 'EXPLOIT', goodId: good.id, exploitLocationId: location.id };
-                    }
-                }
-            }
-        }
-        return bestNaturalExploit;
+        // [GEMINI] FIX: Removed the "natural exploit" finding logic
+        // that was causing the bot to get stuck in a loop.
+        return null;
     }
 
     /**
@@ -505,11 +485,11 @@ export class AutomatedPlayer {
         const healthPct = (this.gameState.player.shipStates[activeShip.id].health / activeShip.maxHealth) * 100;
 
         if (fuelPct < 30) {
-            this.logger.info.bot(this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
+            this.logger.info.system('Bot', this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
             this._botRefuel();
         }
         if (healthPct < 30) {
-            this.logger.info.bot(this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
+            this.logger.info.system('Bot', this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
             this._botRepair();
         }
     }
