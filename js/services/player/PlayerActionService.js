@@ -61,11 +61,33 @@ export class PlayerActionService {
         if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
+        const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
         inventoryItem.quantity -= quantity;
 
+        // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            inventoryItem.isDepleted = true;
-            inventoryItem.depletionDay = state.day;
+            // Calculate target stock to check 8% threshold
+            const market = DB.MARKETS.find(m => m.id === state.currentLocationId);
+            const [minAvail, maxAvail] = good.canonicalAvailability;
+            const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
+            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+            
+            let pressureForAdaptation = inventoryItem.marketPressure;
+            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+            
+            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+            const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+            
+            const depletionThreshold = targetStock * 0.08;
+            const depletionBuyQuantity = stockBeforeBuy; // The amount purchased was the entire stock that was on hand
+
+            // (5a) Check if buy quantity was >= 8% target
+            // (5b) Check if 1 year has passed since last bonus
+            if (depletionBuyQuantity >= depletionThreshold && state.day > (inventoryItem.depletionBonusDay + 365)) {
+                inventoryItem.isDepleted = true; // Set flag for MarketService
+                inventoryItem.depletionDay = state.day;
+                inventoryItem.depletionBonusDay = state.day; // Set cooldown
+            }
         }
 
         const playerInvItem = activeInventory[goodId];

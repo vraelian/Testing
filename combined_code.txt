@@ -7044,6 +7044,7 @@ import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed } from '../utils.js';
+import { AutomatedPlayer } from './bot/AutomatedPlayerService.js'; // [GEMINI] ADDED IMPORT
 
 // --- [[START]] NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -7059,185 +7060,9 @@ const TUTORIAL_PRESETS_PERCENT = {
 // --- [[END]] NEW PRESET MAPPING ---
 
 
-/**
- * A simple bot that plays the game to stress-test the economy and find bugs.
- * @class AutomatedPlayer
- */
-class AutomatedPlayer {
-    /**
-     * @param {import('./GameState.js').GameState} gameState The central game state object.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
-     */
-    constructor(gameState, simulationService, logger) {
-        this.gameState = gameState;
-        this.simulationService = simulationService;
-        this.logger = logger;
-        this.isRunning = false;
-        this.stopRequested = false;
-    }
+// [GEMINI] REMOVED ENTIRE 200+ LINE AutomatedPlayer CLASS
+// The class definition has been moved to js/services/bot/AutomatedPlayerService.js
 
-    /**
-     * Starts the automated play simulation.
-     * @param {object} config - Configuration for the simulation run.
-     * @param {number} config.daysToRun - The number of in-game days to simulate.
-     * @param {function} updateCallback - A function to call with progress updates.
-     */
-    async runSimulation({ daysToRun }, updateCallback) {
-        if (this.isRunning) {
-            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
-            return;
-        }
-
-        this.isRunning = true;
-        this.stopRequested = false;
-        const startDay = this.gameState.day;
-        const endDay = startDay + daysToRun;
-
-        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting simulation for ${daysToRun} days.`);
-
-        while (this.gameState.day < endDay && !this.stopRequested) {
-            const activeShip = this.simulationService._getActiveShip();
-            if (activeShip) {
-                const fuelPct = (this.gameState.player.shipStates[activeShip.id].fuel / activeShip.maxFuel) * 100;
-                const healthPct = (this.gameState.player.shipStates[activeShip.id].health / activeShip.maxHealth) * 100;
-
-                if (fuelPct < 30) {
-                    this.logger.info.system('Bot', this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
-                    this.botRefuel();
-                }
-                if (healthPct < 30) {
-                    this.logger.info.system('Bot', this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
-                    this.botRepair();
-                }
-            }
-
-            const bestTrade = this._findBestTradeRoute();
-
-            if (bestTrade) {
-                this.logger.group(`[Bot] [Day ${this.gameState.day}] Executing Trade Route: ${bestTrade.goodId}`);
-                if (this.gameState.currentLocationId !== bestTrade.buyLocationId) {
-                    this.simulationService.travelService.initiateTravel(bestTrade.buyLocationId);
-                }
-                const buyQty = this._calculateMaxBuy(bestTrade.goodId, bestTrade.buyPrice);
-                if(buyQty > 0) this.simulationService.playerActionService.buyItem(bestTrade.goodId, buyQty);
-
-                if (this.gameState.currentLocationId !== bestTrade.sellLocationId) {
-                    this.simulationService.travelService.initiateTravel(bestTrade.sellLocationId);
-                }
-
-                const sellQty = this.simulationService._getActiveInventory()[bestTrade.goodId]?.quantity || 0;
-                if(sellQty > 0) this.simulationService.playerActionService.sellItem(bestTrade.goodId, sellQty);
-                this.logger.groupEnd();
-            } else {
-                this.simulationService.timeService.advanceDays(1);
-            }
-            updateCallback(this.gameState.day, endDay);
-            await new Promise(resolve => setTimeout(resolve, 10));
-        }
-
-        this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
-        this.isRunning = false;
-    }
-
-    /**
-     * Stops the currently running simulation.
-     */
-    stop() {
-        this.stopRequested = true;
-    }
-
-    /**
-     * @private
-     */
-    botRefuel() {
-        const ship = this.simulationService._getActiveShip();
-        if (!ship) return;
-        const fuelNeeded = ship.maxFuel - this.gameState.player.shipStates[ship.id].fuel;
-        if (fuelNeeded <= 0) return;
-        const currentMarket = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
-        let fuelPrice = currentMarket.fuelPrice / 2;
-        const totalCost = (fuelNeeded / 5) * fuelPrice;
-
-        if (this.gameState.player.credits >= totalCost) {
-            this.gameState.player.credits -= totalCost;
-            this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
-        }
-    }
-
-    /**
-     * @private
-     */
-    botRepair() {
-        const ship = this.simulationService._getActiveShip();
-        if (!ship) return;
-        const healthNeeded = ship.maxHealth - this.gameState.player.shipStates[ship.id].health;
-        if (healthNeeded <= 0) return;
-        const totalCost = healthNeeded * GAME_RULES.REPAIR_COST_PER_HP;
-        if (this.gameState.player.credits >= totalCost) {
-            this.gameState.player.credits -= totalCost;
-            this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
-        }
-    }
-
-    /**
-     * @private
-     */
-    _calculateMaxBuy(goodId, price) {
-        const state = this.gameState.getState();
-        const ship = this.simulationService._getActiveShip();
-        const inventory = this.simulationService._getActiveInventory();
-        const space = ship.cargoCapacity - Object.values(inventory).reduce((acc, item) => acc + item.quantity, 0);
-        const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
-        const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        return Math.max(0, Math.min(space, canAfford, stock));
-    }
-
-    /**
-     * @private
-     */
-    _findBestTradeRoute() {
-        const state = this.gameState.getState();
-        let bestTrade = null;
-        let maxProfitPerDay = 0;
-
-        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
-
-        for (const good of availableCommodities) {
-            for (const buyLocation of DB.MARKETS) {
-                if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
-
-                for (const sellLocation of DB.MARKETS) {
-                    if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
-
-                    const buyPrice = state.market.prices[buyLocation.id][good.id];
-                    const sellPrice = state.market.prices[sellLocation.id][good.id];
-                    const profitPerUnit = sellPrice - buyPrice;
-
-                    if (profitPerUnit > 0) {
-                        const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
-                        const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
-                        const totalTime = travelTimeToBuy + travelTimeToSell + 1; // +1 for transaction time
-                        const profitPerDay = profitPerUnit / totalTime;
-
-                        if (profitPerDay > maxProfitPerDay) {
-                            maxProfitPerDay = profitPerDay;
-                            bestTrade = {
-                                goodId: good.id,
-                                buyLocationId: buyLocation.id,
-                                sellLocationId: sellLocation.id,
-                                buyPrice,
-                                sellPrice,
-                                profitPerUnit
-                            };
-                        }
-                    }
-                }
-            }
-        }
-        return bestTrade;
-    }
-}
 
 export class DebugService {
     /**
@@ -8246,11 +8071,12 @@ export class GameState {
                     quantity: Math.max(0, quantity),
                     marketPressure: 0.0,
                     lastPlayerInteractionTimestamp: 0,
-                    priceLockEndDay: 0, // <-- ADDED
+                    priceLockEndDay: 0,
                     hoverUntilDay: 0,
                     rivalArbitrage: { isActive: false, endDay: 0 },
                     isDepleted: false,
-                    depletionDay: 0
+                    depletionDay: 0,
+                    depletionBonusDay: 0
                 };
             });
         });
@@ -8603,27 +8429,31 @@ export class MarketService {
                 }
 
                 // Player-driven pressure (from past actions)
-                let pressureEffect = 0;
-                // Add 1-week delay before player's actions impact price
-                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
-                }
+                // pressureEffect is no longer used to directly calculate price, only marketPressure is retained for inventory replenishment logic.
+                const pressureEffect = 0; // Removed from price calculation to prevent double-dip.
+                // 7-day delay logic is moved to availabilityEffect.
 
                 // --- NEW: Availability-Based Price Pressure ---
-                // Calculate the theoretical target stock
-                const [minAvail, maxAvail] = commodity.canonicalAvailability;
-                const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
-                const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
-                const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+                let availabilityEffect = 0; // Initialize to 0.
 
-                // Calculate scarcity/surplus ratio
-                const availabilityRatio = inventoryItem.quantity / targetStock;
-                
-                // Apply pressure: (1 - ratio)
-                // If ratio < 1 (scarce), result is positive (price up)
-                // If ratio > 1 (surplus), result is negative (price down)
-                const AVAILABILITY_PRESSURE_STRENGTH = 0.10; // Tunable constant for this effect
-                const availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH;
+                // Add 1-week delay before player's actions impact price (moved from pressureEffect).
+                // This delays the entire supply/demand calculation, preventing same-day abuse.
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    // Calculate the theoretical target stock
+                    const [minAvail, maxAvail] = commodity.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
+                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
+                    const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+
+                    // Calculate scarcity/surplus ratio
+                    const availabilityRatio = inventoryItem.quantity / targetStock;
+                    
+                    // Apply pressure: (1 - ratio)
+                    // If ratio < 1 (scarce), result is positive (price up)
+                    // If ratio > 1 (surplus), result is negative (price down)
+                    const AVAILABILITY_PRESSURE_STRENGTH = 0.50; // [GEMINI] Tuned from 0.10 to 0.50 for impact
+                    availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH; // Calculate effect only if delay is over
+                }
                 // --- End Availability Pressure ---
 
                 // --- NEW: Depletion Price Hike ---
@@ -8635,7 +8465,8 @@ export class MarketService {
                 }
                 // --- End Depletion Price Hike ---
 
-                let newPrice = price + randomFluctuation + reversionEffect + ((pressureEffect + availabilityEffect) * priceHikeMultiplier);
+                // [GEMINI] Removed pressureEffect from this calculation
+                let newPrice = price + randomFluctuation + reversionEffect + (availabilityEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -12482,6 +12313,571 @@ export class UIManager {
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
+--- START OF FILE: ./js/services/bot/AutomatedPlayerService.js ---
+// js/services/bot/AutomatedPlayerService.js
+/**
+ * @fileoverview This file contains the AutomatedPlayer class.
+ * This bot is designed to stress-test the in-game economy by simulating
+ * an advanced player who actively participates in market manipulation.
+ * It operates as a state machine, forming long-term plans to crash
+ * markets and exploit those self-created opportunities.
+ */
+import { DB } from '../../data/database.js';
+import { GAME_RULES } from '../../data/constants.js';
+import { calculateInventoryUsed } from '../../utils.js';
+
+/**
+ * Defines the operational states for the bot's state machine.
+ * @enum {string}
+ */
+const BotState = {
+    IDLE: 'IDLE',                                 // Bot is deciding what to do next.
+    SEEKING_MANIPULATION: 'SEEKING_MANIPULATION', // Bot is actively looking for a new market to crash.
+    PREPARING_CRASH: 'PREPARING_CRASH',           // Bot is traveling and buying goods in preparation for a crash.
+    EXECUTING_CRASH: 'EXECUTING_CRASH',           // Bot is at the target market, selling goods to crash the price.
+    EXECUTING_EXPLOIT: 'EXECUTING_EXPLOIT',       // Bot is exploiting a known crashed market (self-created or found).
+    TIME_WASTER: 'TIME_WASTER',                   // Bot is running a simple A-B trade to pass time.
+};
+
+/**
+ * @class AutomatedPlayer
+ * @description A state-driven bot that plays the game to stress-test the economy.
+ */
+export class AutomatedPlayer {
+    /**
+     * @param {import('../GameState.js').GameState} gameState The central game state object.
+     * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
+     * @param {import('../LoggingService.js').Logger} logger The logging utility.
+     */
+    constructor(gameState, simulationService, logger) {
+        this.gameState = gameState;
+        this.simulationService = simulationService;
+        this.logger = logger;
+
+        this.isRunning = false;
+        this.stopRequested = false;
+        this.botState = BotState.IDLE;
+
+        /**
+         * @type {object | null}
+         * @description Stores the bot's multi-step objective.
+         * Example:
+         * {
+         * type: 'CRASH',
+         * goodId: 'plasteel',
+         * buyFromLocationId: 'moon', // Location B (prep)
+         * crashLocationId: 'mars'  // Location A (crash)
+         * }
+         * {
+         * type: 'EXPLOIT',
+         * goodId: 'plasteel',
+         * exploitLocationId: 'mars' // Location A (exploit)
+         * }
+         */
+        this.currentObjective = null;
+
+        /**
+         * @type {Array<object>}
+         * @description The bot's "memory" of markets it has crashed.
+         * Example: { goodId: 'plasteel', locationId: 'mars', priceLockEndDay: 450 }
+         */
+        this.plannedObjectives = [];
+    }
+
+    /**
+     * Starts the automated play simulation.
+     * @param {object} config - Configuration for the simulation run.
+     * @param {number} config.daysToRun - The number of in-game days to simulate.
+     * @param {function} updateCallback - A function to call with progress updates.
+     */
+    async runSimulation({ daysToRun }, updateCallback) {
+        if (this.isRunning) {
+            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
+            return;
+        }
+
+        this.isRunning = true;
+        this.stopRequested = false;
+        this.botState = BotState.IDLE;
+        const startDay = this.gameState.day;
+        const endDay = startDay + daysToRun;
+
+        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting advanced simulation for ${daysToRun} days.`);
+
+        while (this.gameState.day < endDay && !this.stopRequested) {
+            // --- 1. Handle Maintenance ---
+            this._handleMaintenance();
+
+            // --- 2. Execute State Logic ---
+            await this._decideNextAction();
+
+            // --- 3. Update UI & Pause ---
+            updateCallback(this.gameState.day, endDay);
+            await new Promise(resolve => setTimeout(resolve, 10)); // Tiny pause
+        }
+
+        this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
+        this.isRunning = false;
+    }
+
+    /**
+     * Stops the currently running simulation.
+     */
+    stop() {
+        this.stopRequested = true;
+    }
+
+    // --- STATE MACHINE & CORE LOGIC ---
+
+    /**
+     * The main state machine switch. Directs the bot's actions.
+     * @private
+     */
+    async _decideNextAction() {
+        switch (this.botState) {
+            case BotState.IDLE:
+                await this._evaluateOpportunities();
+                break;
+            case BotState.SEEKING_MANIPULATION:
+                await this._findCrashOpportunity();
+                break;
+            case BotState.PREPARING_CRASH:
+                await this._executePreparation();
+                break;
+            case BotState.EXECUTING_CRASH:
+                await this._executeCrash();
+                break;
+            case BotState.EXECUTING_EXPLOIT:
+                await this._executeExploit();
+                break;
+            case BotState.TIME_WASTER:
+                await this._executeTimeWaster();
+                break;
+        }
+    }
+
+    /**
+     * [State: IDLE]
+     * Bot decides what to do. Priority is exploiting known opportunities.
+     * If none exist, it seeks to create one.
+     * @private
+     */
+    async _evaluateOpportunities() {
+        const exploit = this._findExploitOpportunity();
+        if (exploit) {
+            this.currentObjective = exploit;
+            this.botState = BotState.EXECUTING_EXPLOIT;
+            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `Found exploit: Buy ${exploit.goodId} @ ${exploit.exploitLocationId}`);
+        } else {
+            this.botState = BotState.SEEKING_MANIPULATION;
+            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `No exploits. Seeking new market to crash.`);
+        }
+    }
+
+    /**
+     * [State: SEEKING_MANIPULATION]
+     * Bot scans for the best market to crash (A) and a place to buy goods from (B).
+     * @private
+     */
+    async _findCrashOpportunity() {
+        // This is a complex calculation: find a good, find a cheap place to buy it (B),
+        // and find an *exporter* to sell it at (A) to maximize the crash.
+        // For simplicity, we'll find a good to crash, then find a place to buy it.
+
+        const state = this.gameState.getState();
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier && c.tier > 1); // Ignore T1
+        if (availableCommodities.length === 0) {
+            this.botState = BotState.TIME_WASTER; // No goods to manipulate
+            return;
+        }
+
+        let bestCrashPlan = null;
+        let maxPotential = 0;
+
+        for (const good of availableCommodities) {
+            // Find the best (cheapest) place to buy this good
+            const buyLocation = this._findCheapestMarket(good.id);
+            if (!buyLocation) continue;
+
+            // Find the best (export) location to *crash* this good
+            // This is a market that already has a low price, so we can crash it further.
+            const crashLocation = this._findBestCrashTarget(good.id, buyLocation.id);
+            if (!crashLocation) continue;
+
+            // We found a potential plan. How good is it?
+            // Simple heuristic: Tier of good * (profit from simple trade)
+            // This prioritizes high-tier goods on profitable routes.
+            const potential = good.tier * (crashLocation.price - buyLocation.price);
+            if (potential > maxPotential) {
+                maxPotential = potential;
+                bestCrashPlan = {
+                    type: 'CRASH',
+                    goodId: good.id,
+                    buyFromLocationId: buyLocation.id,
+                    crashLocationId: crashLocation.id,
+                };
+            }
+        }
+
+        if (bestCrashPlan) {
+            this.currentObjective = bestCrashPlan;
+            this.botState = BotState.PREPARING_CRASH;
+            this.logger.info.bot(this.gameState.day, 'PLAN', `New crash plan: Buy ${bestCrashPlan.goodId} @ ${bestCrashPlan.buyFromLocationId}, Crash @ ${bestCrashPlan.crashLocationId}`);
+        } else {
+            // No good manipulation routes, just run a simple trade
+            this.botState = BotState.TIME_WASTER;
+            this.logger.info.bot(this.gameState.day, 'PLAN', `No good crash plans. Running simple trade.`);
+        }
+    }
+
+    /**
+     * [State: PREPARING_CRASH]
+     * Bot travels to buy location (B) and fills cargo.
+     * @private
+     */
+    async _executePreparation() {
+        const { goodId, buyFromLocationId } = this.currentObjective;
+
+        // 1. Travel to buy location
+        if (this.gameState.currentLocationId !== buyFromLocationId) {
+            this.logger.info.bot(this.gameState.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
+            this.simulationService.travelService.initiateTravel(buyFromLocationId);
+        }
+
+        // 2. Buy max cargo
+        const price = this.gameState.market.prices[buyFromLocationId][goodId];
+        const buyQty = this._calculateMaxBuy(goodId, price);
+        if (buyQty > 0) {
+            this.simulationService.playerActionService.buyItem(goodId, buyQty);
+            this.logger.info.bot(this.gameState.day, 'PREP', `Bought ${buyQty}x ${goodId}`);
+            this.botState = BotState.EXECUTING_CRASH;
+        } else {
+            // Can't buy. Abort plan.
+            this.logger.warn('AutomatedPlayer', `PREP_FAIL: Arrived at ${buyFromLocationId} but could not buy ${goodId}. Aborting.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+        }
+    }
+
+    /**
+     * [State: EXECUTING_CRASH]
+     * Bot travels to crash location (A) and sells cargo.
+     * @private
+     */
+    async _executeCrash() {
+        const { goodId, crashLocationId } = this.currentObjective;
+
+        // 1. Travel to crash location
+        if (this.gameState.currentLocationId !== crashLocationId) {
+            this.logger.info.bot(this.gameState.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
+            this.simulationService.travelService.initiateTravel(crashLocationId);
+        }
+
+        // 2. Sell entire cargo
+        const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+        if (sellQty > 0) {
+            this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            this.logger.info.bot(this.gameState.day, 'CRASH', `CRASHED MARKET: Sold ${sellQty}x ${goodId} at ${crashLocationId}`);
+
+            // 3. Add to memory
+            const inventoryItem = this.gameState.market.inventory[crashLocationId][goodId];
+            this.plannedObjectives.push({
+                goodId: goodId,
+                locationId: crashLocationId,
+                priceLockEndDay: inventoryItem.priceLockEndDay,
+                crashedOnDay: this.gameState.day,
+            });
+
+            this.currentObjective = null;
+            this.botState = BotState.TIME_WASTER; // Go pass time
+        } else {
+            // Arrived with no cargo? Abort.
+            this.logger.warn('AutomatedPlayer', `CRASH_FAIL: Arrived at ${crashLocationId} but have no ${goodId} to sell. Aborting.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+        }
+    }
+
+    /**
+     * [State: EXECUTING_EXPLOIT]
+     * Bot travels to a known crashed market and buys the cheap goods.
+     * @private
+     */
+    async _executeExploit() {
+        const { goodId, exploitLocationId } = this.currentObjective;
+
+        // 1. Travel to exploit location
+        if (this.gameState.currentLocationId !== exploitLocationId) {
+            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
+            this.simulationService.travelService.initiateTravel(exploitLocationId);
+        }
+
+        // 2. Buy max cargo
+        const price = this.gameState.market.prices[exploitLocationId][goodId];
+        const buyQty = this._calculateMaxBuy(goodId, price);
+
+        if (buyQty > 0) {
+            this.simulationService.playerActionService.buyItem(goodId, buyQty);
+            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Exploited market: Bought ${buyQty}x ${goodId} at ${exploitLocationId}`);
+        } else {
+            // Market may have recovered or stock is 0.
+            this.logger.warn('AutomatedPlayer', `EXPLOIT_FAIL: Arrived at ${exploitLocationId} but could not buy ${goodId}.`);
+        }
+
+        // 3. Remove from memory (so we don't try again)
+        this.plannedObjectives = this.plannedObjectives.filter(obj => !(obj.goodId === goodId && obj.locationId === exploitLocationId));
+        this.currentObjective = null;
+        this.botState = BotState.IDLE; // Go back to deciding
+    }
+
+    /**
+     * [State: TIME_WASTER]
+     * Bot finds and executes a simple A-B trade to pass time.
+     * @private
+     */
+    async _executeTimeWaster() {
+        const simpleTrade = this._findBestSimpleTrade();
+        if (simpleTrade) {
+            this.logger.info.bot(this.gameState.day, 'TIME_WASTER', `Running simple trade: ${simpleTrade.goodId} from ${simpleTrade.buyLocationId} to ${simpleTrade.sellLocationId}`);
+
+            // Go to buy location
+            if (this.gameState.currentLocationId !== simpleTrade.buyLocationId) {
+                this.simulationService.travelService.initiateTravel(simpleTrade.buyLocationId);
+            }
+            // Buy
+            const buyQty = this._calculateMaxBuy(simpleTrade.goodId, simpleTrade.buyPrice);
+            if (buyQty > 0) this.simulationService.playerActionService.buyItem(simpleTrade.goodId, buyQty);
+
+            // Go to sell location
+            if (this.gameState.currentLocationId !== simpleTrade.sellLocationId) {
+                this.simulationService.travelService.initiateTravel(simpleTrade.sellLocationId);
+            }
+            // Sell
+            const sellQty = this.simulationService._getActiveInventory()[simpleTrade.goodId]?.quantity || 0;
+            if (sellQty > 0) this.simulationService.playerActionService.sellItem(simpleTrade.goodId, sellQty);
+        } else {
+            // No trades, just wait
+            this.simulationService.timeService.advanceDays(1);
+        }
+
+        this.botState = BotState.IDLE; // Re-evaluate opportunities
+    }
+
+
+    // --- "BRAIN" HELPER FUNCTIONS ---
+
+    /**
+     * Finds markets that are *already* crashed.
+     * Priority 1: Markets the bot crashed itself and are ready (7+ days).
+     * Priority 2: Any other market that is significantly below its baseline.
+     * @returns {object | null} An exploit objective, or null.
+     * @private
+     */
+    _findExploitOpportunity() {
+        const state = this.gameState.getState();
+
+        // 1. Clean memory and find self-created opportunities
+        this.plannedObjectives = this.plannedObjectives.filter(obj => obj.priceLockEndDay > state.day); // Clean expired
+        for (const obj of this.plannedObjectives) {
+            // Is it ready to exploit (7-day delay passed)?
+            if (state.day > obj.crashedOnDay + 7) {
+                // Is stock high enough to buy?
+                const stock = state.market.inventory[obj.locationId][obj.goodId].quantity;
+                if (stock > 10) { // Arbitrary "worth it" amount
+                    return { type: 'EXPLOIT', goodId: obj.goodId, exploitLocationId: obj.locationId };
+                }
+            }
+        }
+
+        // 2. Find "natural" or "other" opportunities
+        let bestNaturalExploit = null;
+        let maxDiscount = 0;
+
+        for (const location of DB.MARKETS) {
+            if (!state.player.unlockedLocationIds.includes(location.id)) continue;
+            for (const good of DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier)) {
+                const avg = state.market.galacticAverages[good.id];
+                const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
+                const targetPriceOffset = (1.0 - modifier) * avg;
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                const currentPrice = state.market.prices[location.id][good.id];
+                const discount = (localBaseline - currentPrice) / localBaseline; // % discount
+
+                // Is it significantly cheap (e.g., > 30% discount) and has stock?
+                if (discount > 0.30 && state.market.inventory[location.id][good.id].quantity > 10) {
+                    if (discount > maxDiscount) {
+                        maxDiscount = discount;
+                        bestNaturalExploit = { type: 'EXPLOIT', goodId: good.id, exploitLocationId: location.id };
+                    }
+                }
+            }
+        }
+        return bestNaturalExploit;
+    }
+
+    /**
+     * Finds the absolute cheapest market to buy a specific good.
+     * @private
+     */
+    _findCheapestMarket(goodId) {
+        const state = this.gameState.getState();
+        let bestBuy = null;
+        let minPrice = Infinity;
+
+        for (const location of DB.MARKETS) {
+            if (!state.player.unlockedLocationIds.includes(location.id)) continue;
+            const price = state.market.prices[location.id][goodId];
+            if (price < minPrice && state.market.inventory[location.id][goodId].quantity > 0) {
+                minPrice = price;
+                bestBuy = { id: location.id, price: price };
+            }
+        }
+        return bestBuy;
+    }
+
+    /**
+     * Finds the best market to *sell* a good at *for the purpose of crashing it*.
+     * This means an exporter (low modifier) that isn't the place we're buying from.
+     * @private
+     */
+    _findBestCrashTarget(goodId, buyLocationId) {
+        const state = this.gameState.getState();
+        let bestTarget = null;
+        let bestModifier = Infinity; // We want the lowest (exporter) modifier
+
+        for (const location of DB.MARKETS) {
+            if (location.id === buyLocationId || !state.player.unlockedLocationIds.includes(location.id)) continue;
+
+            const modifier = location.availabilityModifier?.[goodId] ?? 1.0;
+            // We want an exporter (modifier > 1) or neutral (modifier == 1)
+            // But for finding the *best*, we just find the lowest *price* (which modifier causes)
+            const price = state.market.prices[location.id][goodId];
+            if (price < bestModifier) {
+                bestModifier = price;
+                bestTarget = { id: location.id, price: price };
+            }
+        }
+        return bestTarget;
+    }
+
+    /**
+     * Finds the best simple A-B (non-manipulation) trade route.
+     * This is the bot's old logic, now used for "Time Waster" state.
+     * @private
+     */
+    _findBestSimpleTrade() {
+        const state = this.gameState.getState();
+        let bestTrade = null;
+        let maxProfitPerDay = 0;
+
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
+
+        for (const good of availableCommodities) {
+            for (const buyLocation of DB.MARKETS) {
+                if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
+
+                for (const sellLocation of DB.MARKETS) {
+                    if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
+
+                    const buyPrice = state.market.prices[buyLocation.id][good.id];
+                    const sellPrice = state.market.prices[sellLocation.id][good.id];
+                    const profitPerUnit = sellPrice - buyPrice;
+
+                    if (profitPerUnit > 0) {
+                        const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
+                        const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
+                        const totalTime = travelTimeToBuy + travelTimeToSell + 1; // +1 for transaction time
+                        const profitPerDay = profitPerUnit / totalTime;
+
+                        if (profitPerDay > maxProfitPerDay) {
+                            maxProfitPerDay = profitPerDay;
+                            bestTrade = {
+                                goodId: good.id,
+                                buyLocationId: buyLocation.id,
+                                sellLocationId: sellLocation.id,
+                                buyPrice,
+                                sellPrice,
+                                profitPerUnit
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        return bestTrade;
+    }
+
+    // --- UTILITY FUNCTIONS (Moved from DebugService) ---
+
+    /**
+     * Checks fuel and health and repairs/refuels if necessary.
+     * @private
+     */
+    _handleMaintenance() {
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+
+        const fuelPct = (this.gameState.player.shipStates[activeShip.id].fuel / activeShip.maxFuel) * 100;
+        const healthPct = (this.gameState.player.shipStates[activeShip.id].health / activeShip.maxHealth) * 100;
+
+        if (fuelPct < 30) {
+            this.logger.info.bot(this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
+            this._botRefuel();
+        }
+        if (healthPct < 30) {
+            this.logger.info.bot(this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
+            this._botRepair();
+        }
+    }
+
+    /**
+     * @private
+     */
+    _botRefuel() {
+        const ship = this.simulationService._getActiveShip();
+        if (!ship) return;
+        const fuelNeeded = ship.maxFuel - this.gameState.player.shipStates[ship.id].fuel;
+        if (fuelNeeded <= 0) return;
+        const currentMarket = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        let fuelPrice = currentMarket.fuelPrice / 2;
+        const totalCost = (fuelNeeded / 5) * fuelPrice;
+
+        if (this.gameState.player.credits >= totalCost) {
+            this.gameState.player.credits -= totalCost;
+            this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
+        }
+    }
+
+    /**
+     * @private
+     */
+    _botRepair() {
+        const ship = this.simulationService._getActiveShip();
+        if (!ship) return;
+        const healthNeeded = ship.maxHealth - this.gameState.player.shipStates[ship.id].health;
+        if (healthNeeded <= 0) return;
+        const totalCost = healthNeeded * GAME_RULES.REPAIR_COST_PER_HP;
+        if (this.gameState.player.credits >= totalCost) {
+            this.gameState.player.credits -= totalCost;
+            this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
+        }
+    }
+
+    /**
+     * @private
+     */
+    _calculateMaxBuy(goodId, price) {
+        const state = this.gameState.getState();
+        const ship = this.simulationService._getActiveShip();
+        const inventory = this.simulationService._getActiveInventory();
+        const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
+        const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
+        const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        return Math.max(0, Math.min(space, canAfford, stock));
+    }
+}
+--- END OF FILE: ./js/services/bot/AutomatedPlayerService.js ---
+
 --- START OF FILE: ./js/services/handlers/MarketEventHandler.js ---
 // js/services/handlers/MarketEventHandler.js
 /**
@@ -13862,11 +14258,33 @@ export class PlayerActionService {
         if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
+        const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
         inventoryItem.quantity -= quantity;
 
+        // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            inventoryItem.isDepleted = true;
-            inventoryItem.depletionDay = state.day;
+            // Calculate target stock to check 8% threshold
+            const market = DB.MARKETS.find(m => m.id === state.currentLocationId);
+            const [minAvail, maxAvail] = good.canonicalAvailability;
+            const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
+            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+            
+            let pressureForAdaptation = inventoryItem.marketPressure;
+            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+            
+            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+            const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+            
+            const depletionThreshold = targetStock * 0.08;
+            const depletionBuyQuantity = stockBeforeBuy; // The amount purchased was the entire stock that was on hand
+
+            // (5a) Check if buy quantity was >= 8% target
+            // (5b) Check if 1 year has passed since last bonus
+            if (depletionBuyQuantity >= depletionThreshold && state.day > (inventoryItem.depletionBonusDay + 365)) {
+                inventoryItem.isDepleted = true; // Set flag for MarketService
+                inventoryItem.depletionDay = state.day;
+                inventoryItem.depletionBonusDay = state.day; // Set cooldown
+            }
         }
 
         const playerInvItem = activeInventory[goodId];
@@ -14274,7 +14692,12 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [30.70] - 2025-10-25
+## [30.80] - 2025-10-30
+-  economic behavior update
+-  added ECONOMIC_BEHAVIOR.md
+-  updated meta files
+
+## [30.70] - 2025-10-29
 -  market behavior update
 -  database refactor
 -  added age_events.js
@@ -14539,6 +14962,229 @@ All notable changes to the Orbital Trading project will be documented in this fi
 ## [19.04] - 2025-07-XX
 - Major refactor of game logic into distinct services (`GameState`, `SimulationService`, `EventManager`).
 --- END OF FILE: ./meta/CHANGELOG.md ---
+
+--- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
+CURRENT ECONOMIC BEHAVIOR
+Orbital Trading Gameplay Data
+Last Edit: 10/30/25, ver. 30.80
+This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
+
+I. Core Price Mechanics Explained
+These are the foundational rules that establish the baseline price of a commodity before any player actions are taken.
+Galactic Average: This is the foundational, system-wide average price for a commodity. Think of it as the "default" price before any local factors.
+Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
+An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
+An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
+Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This new system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes.
+
+II. Local Price Influences by Location
+This is the full list of price influences for every market.
+Venus
+Exports (Price Reverts Toward a Lower Baseline):
+Cloned Organs
+Neural Processors
+Imports (Price Reverts Toward a Higher Baseline):
+GMO Seed Cultures
+Sentient AI Cores
+Earth
+Exports (Price Reverts Toward a Lower Baseline):
+Hydroponics
+GMO Seed Cultures
+Imports (Price Reverts Toward a Higher Baseline):
+Cloned Organs
+Xeno-Geologicals
+The Moon
+Exports (Price Reverts Toward a Lower Baseline):
+Plasteel
+Refined Propellant
+Imports (Price Reverts Toward a Higher Baseline):
+Water Ice
+Hydroponics
+Mars
+Exports (Price Reverts Toward a Lower Baseline):
+Plasteel
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cryo-Sleep Pods
+Water Ice
+The Belt
+Exports (Price Reverts Toward a Lower Baseline):
+Water Ice
+Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cybernetics
+The Exchange
+Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Jupiter
+Exports (Price Reverts Toward a Lower Baseline):
+Refined Propellant
+Atmo Processors
+Imports (Price Reverts Toward a Higher Baseline):
+Neural Processors
+Saturn
+Imports (Price Reverts Toward a Higher Baseline):
+Cryo-Sleep Pods
+Cloned Organs
+Uranus
+Exports (Price Reverts Toward a Lower Baseline):
+Atmo Processors
+Imports (Price Reverts Toward a Higher Baseline):
+Sentient AI Cores
+Neural Processors
+Neptune
+Imports (Price Reverts Toward a Higher Baseline):
+Plasteel (Note: This is a strong import with a 0.1 modifier, so prices will trend very high)
+Refined Propellant
+Kepler's Eye
+Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Pluto
+Exports (Price Reverts Toward a Lower Baseline):
+Water Ice
+Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cybernetics
+Cloned Organs
+
+III. Player-Driven Market Dynamics & Simulation
+Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
+1. Force: Availability Pressure (The Delayed Market Shock)
+This is the new, unified force that replaces the old "Player Pressure" and "Scarcity Pressure." It is the primary driver of all player-initiated price changes.
+Mechanic: This force directly simulates supply and demand. When a player buys or sells, they immediately change the item's quantity at that market. This change in stock is the only thing that drives the price change.
+Technical Detail: In evolveMarketPrices, the system calculates an availabilityRatio (current quantity / targetStock). This ratio is used to create an availabilityEffect.
+The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game checks if 7 days have passed since the lastPlayerInteractionTimestamp. The availabilityEffect is only calculated after this 7-day window, preventing players from manipulating a price and exploiting it in the same visit.
+The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
+Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to crash by 50% after the 7-day delay.
+Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
+2. Force: Price Lock (The Core Loop)
+This is the system that makes market manipulation viable.
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 4% pull back to the local average) is disabled for a long duration.
+Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
+Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
+Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
+Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade, allowing them to travel and return to exploit the price they created.
+3. Force: Depletion Bonus (The Panic)
+A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
+Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
+Trigger: When a purchase reduces inventoryItem.quantity to <= 0.
+Threshold Check: The game checks if the amount purchased was >= 8% of the item's calculated targetStock.
+Cooldown Check: It then checks if 365 days have passed since the last bonus (depletionBonusDay).
+Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 days, evolveMarketPrices applies a 1.5x priceHikeMultiplier to the availabilityEffect, causing the price to rise 50% faster than normal.
+4. Force: Inventory Replenishment (The Bottleneck)
+The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
+Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
+Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week.
+Effect: This slow 10% rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
+Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
+5. Force: Market Memory (The Reset)
+The passive fail-safe that prevents the universe from being permanently altered.
+Mechanic: This is the "garbage collector" for markets the player abandons.
+Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 120 days.
+Effect: If the player has not traded that specific item at that specific location for 120 days, the item's state is completely reset.
+marketPressure is reset to 0.
+priceLockEndDay is reset to 0, re-enabling Mean Reversion.
+depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
+
+IV. How The Market Behaves (Simple Terms)
+Here is a simple breakdown of those forces with examples.
+Availability Pressure (The Shock): You sell 1,000 "Plasteel" on Mars, doubling its stock.
+For the next 7 days, nothing happens to the price (this prevents you from buying it right back).
+On Day 7, the price crashes by 50%.
+Price Lock (Your Loop): You sell 1,000 "Plasteel" on Mars, crashing the price.
+That price will stay crashed (it won't recover from natural Mean Reversion) for a random 3-6 months.
+This allows you to travel, then return to buy it back at the low price you created.
+Depletion Bonus (The Panic): You buy the entire large stock of "Cybernetics" (e.g., 50 units) on Earth.
+For the next 7 days, the price for "Cybernetics" on Earth will rise 50% faster than normal.
+This won't happen if you just buy the last 2 units, and it can only happen once per year.
+Replenishment (The Bottleneck): A market wants 1,000 "Plasteel" but has 1,200 (a surplus of 200).
+It will not shed 200 units at once.
+It will only shed 10% of the 200-unit gap, losing 20 units per week.
+This is the "race": the price crash from your sale slowly gets weaker each week as the surplus shrinks.
+Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to the outer system and don't come back.
+After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
+
+V. Commodity Behavior
+This is the full spectrum of default economic behaviors for all commodities, based on the definitions in js/data/database.js.
+Section 1: Overview of Core Economic Parameters
+This details the three fundamental parameters that define the economic behavior of a commodity before any local market modifiers (like import/export specialties) or system states are applied.
+Base Price Range: This array [min, max] defines the foundational value of a commodity. The game's MarketService uses this range to establish a "Galactic Average" price, which serves as the baseline from which all local prices are derived.
+Volatility: This decimal number represents the commodity's inherent price instability. A higher volatility value means the commodity's price will experience larger and more frequent fluctuations, making it a riskier but potentially more profitable asset.
+Canonical Availability: This array [min, max] defines the default quantity of a commodity that a "neutral" market (one with no specialty modifiers for this item) will attempt to stock. This represents the item's general abundance or scarcity.
+Section 2: Commodity Economic Behavior by Tier
+The following is the complete breakdown of the default economic profiles for every tradable commodity, organized by tier.
+Tier 1: Basic Materials
+Water Ice
+Base Price Range: [15, 80]
+Volatility: 0.01 (Very Low)
+Canonical Availability: [80, 150] (Abundant)
+Plasteel
+Base Price Range: [100, 280]
+Volatility: 0.015 (Very Low)
+Canonical Availability: [80, 150] (Abundant)
+Tier 2: Industrial & Agricultural Goods
+Hydroponics
+Base Price Range: [850, 2400]
+Volatility: 0.025 (Low)
+Canonical Availability: [40, 70] (Common)
+Cybernetics
+Base Price Range: [1200, 3800]
+Volatility: 0.03 (Low)
+Canonical Availability: [40, 70] (Common)
+Tier 3: Refined & Processed Goods
+Refined Propellant
+Base Price Range: [14000, 38000]
+Volatility: 0.035 (Low-Medium)
+Canonical Availability: [25, 50] (Uncommon)
+Neural Processors
+Base Price Range: [18000, 52000]
+Volatility: 0.045 (Medium)
+Canonical Availability: [25, 50] (Uncommon)
+Tier 4: Advanced & Civilian Goods
+GMO Seed Cultures
+Base Price Range: [190000, 550000]
+Volatility: 0.06 (Medium-High)
+Canonical Availability: [15, 30] (Scarce)
+Cryo-Sleep Pods
+Base Price Range: [250000, 750000]
+Volatility: 0.075 (High)
+Canonical Availability: [15, 30] (Scarce)
+Tier 5: High-Tech & Bio-Engineering
+Atmo Processors
+Base Price Range: [2800000, 8500000]
+Volatility: 0.08 (High)
+Canonical Availability: [10, 20] (Very Scarce)
+Cloned Organs
+Base Price Range: [3500000, 11000000]
+Volatility: 0.09 (Very High)
+Canonical Availability: [10, 20] (Very Scarce)
+Tier 6: Exotic & Restricted Tech
+Xeno-Geologicals
+Base Price Range: [24000000, 70000000]
+Volatility: 0.1 (Extremely High)
+Canonical Availability: [2, 10] (Rare)
+Sentient AI Cores
+Base Price Range: [32000000, 95000000]
+Volatility: 0.125 (Extremely High)
+Canonical Availability: [2, 10] (Rare)
+Tier 7: "Endgame" & Exotic Matter
+Antimatter
+Base Price Range: [280000000, 800000000]
+Volatility: 0.15 (Hyper-Volatile)
+Canonical Availability: [2, 10] (Exotic)
+Folded-Space Drives
+Base Price Range: [350000000, 1100000000]
+Volatility: 0.15 (Hyper-Volatile)
+Canonical Availability: [2, 10] (Exotic)
+Section 3: Observable Patterns & Logic
+Based on this data, a clear "full spectrum" pattern emerges:
+Price & Tier: Commodity prices increase exponentially with each tier, establishing a clear progression of value.
+Volatility & Tier: Volatility directly correlates with tier. Low-tier goods are stable and predictable, while high-tier "luxury" or "exotic" goods are highly volatile, making them high-risk, high-reward speculative assets.
+Availability & Tier: Canonical availability is inversely proportional to tier. Tier 1 goods are abundant, while Tier 6 and 7 goods are exceptionally rare, reinforcing their high value.
+
+
+
+--- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
 {
@@ -14851,7 +15497,7 @@ This document outlines the planned features and high-level goals for the future 
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.1
+**Version:** 1.3
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -14860,57 +15506,68 @@ This document defines the single responsibility of each service in the applicati
 
 ### Core Services
 
-- **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
-- **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions.
-- **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
-- **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
-- **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
-- **`DebugService.js`**: Manages the debug panel, synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
+-   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
+-   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions.
+-   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
+-   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
 
 ### Game Logic Services
 
 #### Player
-- **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, use services).
+
+-   **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, use services).
 
 #### World
-- **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates). **Uses:** `js/data/age_events.js`.
-- **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
+
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates). **Uses:** `js/data/age_events.js`.
+-   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
-- **`MarketService.js`**: Simulates the galactic economy, updating prices and inventory levels for all commodities in all systems based on game time and player actions.
-- **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
+
+-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse.
+-   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
 #### Game
-- **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
-- **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
+
+-   **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
+-   **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
 
 ### UI/Event Handlers
 
-- **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes).
-- **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
-- **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
-- **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
-- **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
-- **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
+-   **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes).
+-   **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
+-   **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
+-   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
+-   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
+-   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
 
 ### Event Effects
-- **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
-- **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
-- **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
+
+-   **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
+-   **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
+-s   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
-- **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
-- **`BaseEffect.js`**: The abstract base class for all visual effects.
+
+-   **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
+-   **`BaseEffect.js`**: The abstract base class for all visual effects.
+
+### Debug & Automation
+
+-   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
+-   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy by simulating an advanced, market-manipulating player.
 
 ---
+
 ### Static Data Files (`js/data/`)
 
-- **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
-- **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
-- **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
-- **`events.js`**: Defines static data for random events encountered during travel.
-- **`missions.js`**: Defines static data for all player missions.
-- **`tutorials.js`**: Defines static data for all tutorial batches and steps.
+-   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
+-   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
+-   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
+-   **`events.js`**: Defines static data for random events encountered during travel.
+-   **`missions.js`**: Defines static data for all player missions.
+-   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -14971,6 +15628,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Creates an extremely robust event handling model that is immune to UI re-renders, permanently fixing the "sticky button" bug.
     * **Pro**: Simplifies the handler logic by removing the need to manually manage listener lifecycles.
     * **Pro**: Consolidates mouse and touch logic into a single, cleaner API.
+
+---
+
+### ADR-005: Economic Model Refactor to "Delayed Supply"
+
+* **Status**: Accepted (2025-10-30)
+* **Context**: The previous economic model used two separate forces to calculate price changes from player trades: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
+* **Decision**: The `pressureEffect` was removed from the price calculation entirely. The `availabilityEffect` (the core supply/demand force) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `availabilityEffect` is now delayed by 7 days, inheriting the delay logic from the old `pressureEffect`. The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
+* **Consequences**:
+    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (supply change -> delayed price change).
+    * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
+    * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
+    * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---

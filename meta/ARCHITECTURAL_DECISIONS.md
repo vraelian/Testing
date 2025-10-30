@@ -55,3 +55,16 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Creates an extremely robust event handling model that is immune to UI re-renders, permanently fixing the "sticky button" bug.
     * **Pro**: Simplifies the handler logic by removing the need to manually manage listener lifecycles.
     * **Pro**: Consolidates mouse and touch logic into a single, cleaner API.
+
+---
+
+### ADR-005: Economic Model Refactor to "Delayed Supply"
+
+* **Status**: Accepted (2025-10-30)
+* **Context**: The previous economic model used two separate forces to calculate price changes from player trades: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
+* **Decision**: The `pressureEffect` was removed from the price calculation entirely. The `availabilityEffect` (the core supply/demand force) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `availabilityEffect` is now delayed by 7 days, inheriting the delay logic from the old `pressureEffect`. The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
+* **Consequences**:
+    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (supply change -> delayed price change).
+    * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
+    * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
+    * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.

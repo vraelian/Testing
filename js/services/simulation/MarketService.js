@@ -96,27 +96,31 @@ export class MarketService {
                 }
 
                 // Player-driven pressure (from past actions)
-                let pressureEffect = 0;
-                // Add 1-week delay before player's actions impact price
-                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    pressureEffect = localBaseline * inventoryItem.marketPressure * -1;
-                }
+                // pressureEffect is no longer used to directly calculate price, only marketPressure is retained for inventory replenishment logic.
+                const pressureEffect = 0; // Removed from price calculation to prevent double-dip.
+                // 7-day delay logic is moved to availabilityEffect.
 
                 // --- NEW: Availability-Based Price Pressure ---
-                // Calculate the theoretical target stock
-                const [minAvail, maxAvail] = commodity.canonicalAvailability;
-                const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
-                const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
-                const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+                let availabilityEffect = 0; // Initialize to 0.
 
-                // Calculate scarcity/surplus ratio
-                const availabilityRatio = inventoryItem.quantity / targetStock;
-                
-                // Apply pressure: (1 - ratio)
-                // If ratio < 1 (scarce), result is positive (price up)
-                // If ratio > 1 (surplus), result is negative (price down)
-                const AVAILABILITY_PRESSURE_STRENGTH = 0.10; // Tunable constant for this effect
-                const availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH;
+                // Add 1-week delay before player's actions impact price (moved from pressureEffect).
+                // This delays the entire supply/demand calculation, preventing same-day abuse.
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    // Calculate the theoretical target stock
+                    const [minAvail, maxAvail] = commodity.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
+                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
+                    const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
+
+                    // Calculate scarcity/surplus ratio
+                    const availabilityRatio = inventoryItem.quantity / targetStock;
+                    
+                    // Apply pressure: (1 - ratio)
+                    // If ratio < 1 (scarce), result is positive (price up)
+                    // If ratio > 1 (surplus), result is negative (price down)
+                    const AVAILABILITY_PRESSURE_STRENGTH = 0.50; // [GEMINI] Tuned from 0.10 to 0.50 for impact
+                    availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH; // Calculate effect only if delay is over
+                }
                 // --- End Availability Pressure ---
 
                 // --- NEW: Depletion Price Hike ---
@@ -128,7 +132,8 @@ export class MarketService {
                 }
                 // --- End Depletion Price Hike ---
 
-                let newPrice = price + randomFluctuation + reversionEffect + ((pressureEffect + availabilityEffect) * priceHikeMultiplier);
+                // [GEMINI] Removed pressureEffect from this calculation
+                let newPrice = price + randomFluctuation + reversionEffect + (availabilityEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
