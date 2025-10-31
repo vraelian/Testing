@@ -8,7 +8,7 @@
  */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, LOCATION_IDS, PERK_IDS } from '../../data/constants.js';
-import { calculateInventoryUsed } from '../../utils.js';
+import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 
 /**
  * Defines the operational states for the bot's state machine.
@@ -75,6 +75,21 @@ export class AutomatedPlayer {
          * Example: { goodId: 'plasteel', locationId: 'mars', priceLockEndDay: 450 }
          */
         this.plannedObjectives = [];
+        
+        /**
+         * @type {object}
+         * @description Tracks performance metrics for the summary report.
+         */
+        this.metrics = {
+            totalTrades: 0,
+            profitableTrades: 0,
+            totalProfit: 0,
+            totalFuelCost: 0,
+            totalRepairCost: 0,
+            daysSimulated: 0
+        };
+        /** @type {number} */
+        this.simulationStartDay = 0;
     }
 
     /**
@@ -94,6 +109,17 @@ export class AutomatedPlayer {
         this.botState = BotState.IDLE;
         const startDay = this.gameState.day;
         const endDay = startDay + daysToRun;
+        
+        // Reset metrics for new run
+        this.simulationStartDay = startDay;
+        this.metrics = {
+            totalTrades: 0,
+            profitableTrades: 0,
+            totalProfit: 0,
+            totalFuelCost: 0,
+            totalRepairCost: 0,
+            daysSimulated: 0
+        };
 
         this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting advanced simulation for ${daysToRun} days.`);
 
@@ -106,6 +132,9 @@ export class AutomatedPlayer {
             await new Promise(resolve => setTimeout(resolve, 10)); // Tiny pause
         }
 
+        // --- 3. Log Summary Report ---
+        this._logSummaryReport();
+        
         this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
         this.isRunning = false;
     }
@@ -255,6 +284,17 @@ export class AutomatedPlayer {
         // --- Priority 1: Handle "Stranded" Refuel Objective ---
         if (this.currentObjective && this.currentObjective.type === 'REFUEL_FOR_TRAVEL') {
             const { needed, nextState, originalObjective } = this.currentObjective;
+
+            // --- BUG FIX ---
+            // Check if the 'needed' fuel is impossible for this ship to hold.
+            // This breaks the infinite loop seen in the log (needed: 10004, max: 600).
+            if (needed > activeShip.maxFuel && shipState.fuel === activeShip.maxFuel) {
+                this.logger.error('Bot', `MAINTENANCE_FAIL: Objective requires ${needed} fuel, but ship max is ${activeShip.maxFuel}. Ship is full. Aborting objective to prevent loop.`);
+                this.currentObjective = null; // Clear the impossible objective
+                this.botState = BotState.IDLE; // Go back to deciding what to do
+                return;
+            }
+            // --- END FIX ---
 
             if (shipState.fuel < needed) {
                 this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', `Executing local refuel to get ${needed} fuel.`);
@@ -430,7 +470,7 @@ export class AutomatedPlayer {
         const buyQty = this._calculateMaxBuy(goodId, price);
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.system('Bot', state.day, 'PREP', `Bought ${buyQty}x ${goodId}`);
+            this.logger.info.system('Bot', state.day, 'PREP_BUY', `Bought ${buyQty}x ${goodId} @ ${formatCredits(price)}`);
             this.botState = BotState.EXECUTING_CRASH;
         } else {
             // Can't buy. Abort plan.
@@ -479,8 +519,14 @@ export class AutomatedPlayer {
         // 2. Sell entire cargo
         const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
         if (sellQty > 0) {
-            this.simulationService.playerActionService.sellItem(goodId, sellQty);
-            this.logger.info.system('Bot', state.day, 'CRASH', `CRASHED MARKET: Sold ${sellQty}x ${goodId} at ${crashLocationId}`);
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+            
+            this.logger.info.system('Bot', state.day, 'CRASH_SELL', `CRASHED: Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
 
             // 3. Add to memory
             const inventoryItem = this.gameState.market.inventory[crashLocationId][goodId];
@@ -548,7 +594,7 @@ export class AutomatedPlayer {
 
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.system('Bot', state.day, 'EXPLOIT', `Exploited market: Bought ${buyQty}x ${goodId} at ${exploitLocationId}`);
+            this.logger.info.system('Bot', state.day, 'EXPLOIT_BUY', `EXPLOITED: Bought ${buyQty}x ${goodId} @ ${formatCredits(price)}`);
             
             // 3. Find a place to sell the goods we just bought
             const sellLocation = this._findBestSellLocation(goodId, exploitLocationId);
@@ -614,8 +660,14 @@ export class AutomatedPlayer {
         // 2. Sell entire cargo
         const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
         if (sellQty > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
             const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
-            this.logger.info.system('Bot', state.day, 'SELL_EXPLOIT', `Sold ${sellQty}x ${goodId} at ${sellToLocationId} for ${saleValue}.`);
+            const profit = saleValue - (avgCost * sellQty);
+
+            this.logger.info.system('Bot', state.day, 'SELL_EXPLOIT_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
         } else {
             this.logger.warn('Bot', `SELL_EXPLOIT_FAIL: Arrived at ${sellToLocationId} but have no ${goodId} to sell.`);
         }
@@ -651,9 +703,13 @@ export class AutomatedPlayer {
                 this.simulationService.travelService.initiateTravel(simpleTrade.buyLocationId);
                 return;
             }
+            
             // Buy
             const buyQty = this._calculateMaxBuy(simpleTrade.goodId, simpleTrade.buyPrice);
-            if (buyQty > 0) this.simulationService.playerActionService.buyItem(simpleTrade.goodId, buyQty);
+            if (buyQty > 0) {
+                this.simulationService.playerActionService.buyItem(simpleTrade.goodId, buyQty);
+                this.logger.info.system('Bot', this.gameState.day, 'TRADE_BUY', `Bought ${buyQty}x ${simpleTrade.goodId} @ ${formatCredits(simpleTrade.buyPrice)}`);
+            }
 
             // Go to sell location
             if (this.gameState.currentLocationId !== simpleTrade.sellLocationId) {
@@ -670,9 +726,19 @@ export class AutomatedPlayer {
                 this.simulationService.travelService.initiateTravel(simpleTrade.sellLocationId);
                 return;
             }
+            
             // Sell
             const sellQty = this.simulationService._getActiveInventory()[simpleTrade.goodId]?.quantity || 0;
-            if (sellQty > 0) this.simulationService.playerActionService.sellItem(simpleTrade.goodId, sellQty);
+            if (sellQty > 0) {
+                const avgCost = this.simulationService._getActiveInventory()[simpleTrade.goodId]?.avgCost || 0;
+                const saleValue = this.simulationService.playerActionService.sellItem(simpleTrade.goodId, sellQty);
+                const profit = saleValue - (avgCost * sellQty);
+                
+                this.logger.info.system('Bot', this.gameState.day, 'TRADE_SELL', `Sold ${sellQty}x ${simpleTrade.goodId}. Profit: ${formatCredits(profit)}`);
+                this.metrics.totalTrades++;
+                this.metrics.totalProfit += profit;
+                if (profit > 0) this.metrics.profitableTrades++;
+            }
         } else {
             // No trades, just wait
             this.simulationService.timeService.advanceDays(1);
@@ -798,7 +864,7 @@ export class AutomatedPlayer {
             return;
         }
 
-        this.logger.info.system('Bot', state.day, 'DEPLETE', `Successfully bought out ${amountToBuy}x ${goodId}. Depletion bonus triggered.`);
+        this.logger.info.system('Bot', state.day, 'DEPLETE_BUY', `Successfully bought out ${amountToBuy}x ${goodId}. Depletion bonus triggered.`);
 
         // 3. Sell the cargo immediately to free up space
         const sellLocation = this._findBestSellLocation(goodId, locationId);
@@ -906,8 +972,15 @@ export class AutomatedPlayer {
         // --- FIX: Check for 0 stock before selling ---
         const hikedStock = state.market.inventory[locationId][goodId].quantity;
         if (sellQty > 0 && hikedStock > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
             const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
-            this.logger.info.system('Bot', state.day, 'HIKE_EXPLOIT', `Sold ${sellQty}x ${goodId} at hiked price for ${saleValue}.`);
+            const profit = saleValue - (avgCost * sellQty);
+
+            this.logger.info.system('Bot', state.day, 'HIKE_EXPLOIT_SELL', `Sold ${sellQty}x ${goodId} at hiked price. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+            
         } else if (sellQty > 0 && hikedStock <= 0) {
             this.logger.warn('Bot', `HIKE_FAIL: Arrived at hiked market ${locationId} but stock is 0. Aborting sale and loop.`);
             this.currentObjective = null;
@@ -1127,6 +1200,39 @@ export class AutomatedPlayer {
         modal.querySelector('button')?.click();
         return true;
     }
+    
+    /**
+     * Logs a summary report of the bot's performance to the console and game log.
+     * @private
+     */
+    _logSummaryReport() {
+        this.metrics.daysSimulated = this.gameState.day - this.simulationStartDay;
+        const { totalTrades, profitableTrades, totalProfit, totalFuelCost, totalRepairCost, daysSimulated } = this.metrics;
+        const profitPct = totalTrades > 0 ? ((profitableTrades / totalTrades) * 100).toFixed(1) : 0;
+
+        const header = '=== AUTO-TRADER PERFORMANCE SUMMARY ===';
+        console.log(header);
+        this.logger.info.system('Bot', this.gameState.day, 'REPORT', header);
+        
+        const summary = [
+            `Days Simulated: ${daysSimulated}`,
+            `Total Trades Completed: ${totalTrades}`,
+            `Profitable Trades: ${profitableTrades} (${profitPct}%)`,
+            `Total Net Profit: ${formatCredits(totalProfit)}`,
+            `Total Fuel Costs: ${formatCredits(totalFuelCost)}`,
+            `Total Repair Costs: ${formatCredits(totalRepairCost)}`,
+            `Final Credit Balance: ${formatCredits(this.gameState.player.credits)}`
+        ];
+
+        for (const line of summary) {
+            console.log(line);
+            this.logger.info.system('Bot', this.gameState.day, 'REPORT', `  ${line}`); // Indent for log clarity
+        }
+        
+        const footer = '=======================================';
+        console.log(footer);
+        this.logger.info.system('Bot', this.gameState.day, 'REPORT', footer);
+    }
 
     // --- UTILITY FUNCTIONS (Moved from DebugService) ---
 
@@ -1175,6 +1281,7 @@ export class AutomatedPlayer {
             this.gameState.player.credits -= totalCost;
             this.gameState.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, this.gameState.player.shipStates[ship.id].fuel + fuelToBuy);
             this.simulationService._logConsolidatedTransaction('fuel', -totalCost, 'Fuel Purchase');
+            this.metrics.totalFuelCost += totalCost;
         } else {
             // Buy as much as possible
             const affordableTicks = Math.floor(this.gameState.player.credits / fuelPrice);
@@ -1183,6 +1290,7 @@ export class AutomatedPlayer {
                 this.gameState.player.credits -= cost;
                 this.gameState.player.shipStates[ship.id].fuel += (affordableTicks * 5);
                 this.simulationService._logConsolidatedTransaction('fuel', -cost, 'Fuel Purchase');
+                this.metrics.totalFuelCost += cost;
             }
         }
     }
@@ -1212,6 +1320,7 @@ export class AutomatedPlayer {
             this.gameState.player.credits -= totalCost;
             this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
             this.simulationService._logConsolidatedTransaction('repair', -totalCost, 'Hull Repairs');
+            this.metrics.totalRepairCost += totalCost;
         } else {
             // Buy as much as possible
             const affordableTicks = Math.floor(this.gameState.player.credits / costPerTick);
@@ -1220,6 +1329,7 @@ export class AutomatedPlayer {
                 this.gameState.player.credits -= cost;
                 this.gameState.player.shipStates[ship.id].health += (affordableTicks * repairAmountPerTick);
                 this.simulationService._logConsolidatedTransaction('repair', -cost, 'Hull Repairs');
+                this.metrics.totalRepairCost += cost;
             }
         }
     }
