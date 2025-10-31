@@ -13,8 +13,8 @@
  */
 
 import { BotAction } from './BotAction.js';
-import { LOCATION_IDS, PERK_IDS } from '../../data/constants.js';
-import { DB } from '../../data/database.js';
+import { LOCATION_IDS, PERK_IDS } from '../../../data/constants.js'; // [GEMINI] FIXED PATH
+import { DB } from '../../../data/database.js'; // [GEMINI] FIXED PATH
 
 export class BotAction_Refuel extends BotAction {
     /**
