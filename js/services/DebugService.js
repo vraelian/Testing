@@ -44,7 +44,34 @@ export class DebugService {
         this.diagActive = false;
         this.diagElements = {};
         this.actions = {};
-        this.debugState = {}; // Holds state for GUI controllers
+        
+        // --- State for GUI controllers ---
+        this.debugState = {
+            creditsToAdd: 100000,
+            creditsToReduce: 100000,
+            selectedLocation: this.gameState.currentLocationId,
+            daysToAdvance: 7,
+            selectedRandomEvent: 0,
+            selectedAgeEvent: DB.AGE_EVENTS[0].id,
+            selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
+            botDaysToRun: 365,
+            botStrategy: 'MIXED', // [GEMINI] ADDED
+            botProgress: 'Idle',
+            logLevel: 'INFO',
+            // Tutorial Tuner State
+            ttStepId: 'None',
+            ttAnchor: 'N/A',
+            ttPlacement: 'auto',
+            ttOffsetDistance: 0,
+            ttOffsetSkidding: 0,
+            ttPercentX: 50,
+            ttPercentY: 50,
+            ttWidth: 0,
+            ttHeight: 0,
+            ttGeneratedCode: ''
+        }; 
+        // --- End State ---
+
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
 
         // References to GUI controllers and folders for enabling/disabling
@@ -361,7 +388,14 @@ ${logHistory}
             }},
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
-                this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
+                
+                // [GEMINI] MODIFIED: Pass strategy from debugState
+                const config = {
+                    daysToRun: this.debugState.botDaysToRun,
+                    strategy: this.debugState.botStrategy 
+                };
+                
+                this.bot.runSimulation(config, (current, end) => {
                     if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
                 });
             }},
@@ -455,19 +489,14 @@ ${logHistory}
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
 
         const playerFolder = this.gui.addFolder('Player');
-        this.debugState.creditsToAdd = 100000;
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
-
-        this.debugState.creditsToReduce = 100000;
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
-        this.debugState.selectedLocation = this.gameState.currentLocationId;
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
         shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
         shipFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
@@ -482,7 +511,6 @@ ${logHistory}
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
         const worldFolder = this.gui.addFolder('World & Time');
-        this.debugState.daysToAdvance = 7;
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
 
@@ -492,32 +520,20 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
-        this.debugState.selectedRandomEvent = 0;
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
         const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-        this.debugState.selectedAgeEvent = DB.AGE_EVENTS[0].id;
         triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
         triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
-        this.debugState.selectedMission = Object.keys(missionOptions)[0];
-        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-        triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        if (this.debugState.selectedMission) {
+             triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+             triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        }
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
         tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-
-        this.debugState.ttStepId = 'None';
-        this.debugState.ttAnchor = 'N/A';
-        this.debugState.ttPlacement = 'auto'; // Used for element-anchored
-        this.debugState.ttOffsetDistance = 0; // Used for element-anchored
-        this.debugState.ttOffsetSkidding = 0; // Used for element-anchored
-        this.debugState.ttPercentX = 50; // NEW: Default center X
-        this.debugState.ttPercentY = 50; // NEW: Default center Y
-        this.debugState.ttWidth = 0;
-        this.debugState.ttHeight = 0;
-        this.debugState.ttGeneratedCode = '';
 
         tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
         tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
@@ -556,11 +572,13 @@ ${logHistory}
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
-        this.debugState.logLevel = 'INFO';
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
-        this.debugState.botDaysToRun = 365;
-        this.debugState.botProgress = 'Idle';
+        
+        // --- [GEMINI] MODIFIED: Added PROSPECTOR strategy ---
+        automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
+        // --- End Modification ---
+        
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
