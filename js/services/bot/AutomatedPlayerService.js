@@ -17,6 +17,7 @@ import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 const BotState = {
     IDLE: 'IDLE',                                 // Bot is deciding what to do next.
     MAINTENANCE: 'MAINTENANCE',                   // Bot is refueling or repairing.
+    SELLING_HELD_CARGO: 'SELLING_HELD_CARGO',     // Bot is selling cargo it's already holding.
     SEEKING_MANIPULATION: 'SEEKING_MANIPULATION', // Bot is actively looking for a new market to crash.
     PREPARING_CRASH: 'PREPARING_CRASH',           // Bot is traveling and buying goods in preparation for a crash.
     EXECUTING_CRASH: 'EXECUTING_CRASH',           // Bot is at the target market, selling goods to crash the price.
@@ -63,6 +64,7 @@ export class AutomatedPlayer {
         this.stopRequested = false;
         this.botState = BotState.IDLE;
         this.activeStrategy = BotStrategy.MIXED; // Default strategy
+        this.MIN_PROFIT_MARGIN = 0.15; // PHASE 2: 15% minimum profit margin
 
         /**
          * @type {object | null}
@@ -203,6 +205,9 @@ export class AutomatedPlayer {
             case BotState.MAINTENANCE:
                 await this._executeMaintenance();
                 break;
+            case BotState.SELLING_HELD_CARGO:
+                await this._executeSellHeldCargo();
+                break;
             case BotState.SEEKING_MANIPULATION:
                 await this._findCrashOpportunity();
                 break;
@@ -244,6 +249,20 @@ export class AutomatedPlayer {
      * @private
      */
     async _evaluateOpportunities() {
+        // --- PHASE 1 REFACTOR: Prioritize selling held cargo ---
+        const heldCargoTrade = this._findBestSellLocationForHeldCargo();
+        if (heldCargoTrade) {
+            this.currentObjective = {
+                type: 'SELL_HELD_CARGO',
+                ...heldCargoTrade
+            };
+            this.botState = BotState.SELLING_HELD_CARGO;
+            this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[HELD CARGO]: Found profitable sale for ${heldCargoTrade.quantity}x ${heldCargoTrade.goodId} @ ${heldCargoTrade.sellLocationId}. Profit: ${formatCredits(heldCargoTrade.estimatedProfit)}.`);
+            this.metrics.objectivesStarted++;
+            return;
+        }
+        // --- END REFACTOR ---
+
         // 1. Check for ready-to-exploit self-crashed markets
         // (Only if strategy allows manipulation)
         if (this.activeStrategy === BotStrategy.MIXED || this.activeStrategy === BotStrategy.MANIPULATOR) {
@@ -314,9 +333,11 @@ export class AutomatedPlayer {
                     this.currentObjective = { ...simpleTrade, type: 'SIMPLE_TRADE', hasGoods: false };
                     this.botState = BotState.TIME_WASTER;
                     this.metrics.objectivesStarted++;
-                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Strategy: PROSPECTOR. Found simple trade: ${simpleTrade.goodId}.`);
+                    // --- PHASE 3 LOGGING ---
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[PROSPECTOR]: Found simple trade. Buy ${simpleTrade.goodId} @ ${simpleTrade.buyLocationId} -> Sell @ ${simpleTrade.sellLocationId}. Margin: ${(simpleTrade.profitPerUnit / simpleTrade.buyPrice * 100).toFixed(1)}%. Est. PPD: ${formatCredits(simpleTrade.estimatedPPD)}.`);
                 } else {
-                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', 'Strategy: PROSPECTOR. No simple trades found. Falling back to manipulation.');
+                    // --- PHASE 3 LOGGING ---
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[PROSPECTOR]: No simple trades found meeting ${this.MIN_PROFIT_MARGIN * 100}% margin. Falling back to manipulation.`);
                     this.botState = BotState.SEEKING_MANIPULATION;
                 }
                 break;
@@ -350,12 +371,36 @@ export class AutomatedPlayer {
         }
         const shipState = this.gameState.player.shipStates[activeShip.id];
 
-        // --- Priority 1: Handle "Stranded" Refuel Objective (REMOVED) ---
-        // This entire block was removed as it was the source of the
-        // "buy expensive local fuel" bug for non-maintenance trips.
-        // Proactive checks now handle this.
+        // --- Priority 1: Handle "Stranded" Refuel Objective ---
+        if (this.currentObjective && this.currentObjective.type === 'REFUEL_FOR_TRAVEL') {
+            const { needed, nextState, originalObjective } = this.currentObjective;
 
-        // --- Handle General Low Resources ---
+            // Check if the 'needed' fuel is impossible for this ship to hold.
+            // This breaks the infinite loop seen in the log (needed: 10004, max: 600).
+            if (needed > activeShip.maxFuel && shipState.fuel === activeShip.maxFuel) {
+                this.logger.error('Bot', `MAINTENANCE_FAIL: Objective requires ${needed} fuel, but ship max is ${activeShip.maxFuel}. Ship is full. Aborting objective to prevent loop.`);
+                this.currentObjective = null; // Clear the impossible objective
+                this.botState = BotState.IDLE; // Go back to deciding what to do
+                this.metrics.objectivesAborted++; // Track failure
+                return;
+            }
+
+            if (shipState.fuel < needed) {
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', `Executing local refuel to get ${needed} fuel.`);
+                // This calls the "stranded" logic: buy expensive local fuel
+                // to meet the specific 'needed' amount.
+                this._botRefuel(needed); 
+                return; // Wait for next tick to re-check
+            } else {
+                // Success! We have enough fuel.
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Local refuel complete. Resuming original objective.');
+                this.currentObjective = originalObjective; // Restore original plan
+                this.botState = nextState; // Go back to the state we were in
+                return;
+            }
+        }
+
+        // --- Priority 2: General Low Resources ---
         const fuelPct = (shipState.fuel / activeShip.maxFuel) * 100;
         const healthPct = (shipState.health / activeShip.maxHealth) * 100;
 
@@ -373,7 +418,6 @@ export class AutomatedPlayer {
                 
                 if (shipState.fuel < fuelToJupiter) {
                     // STRANDED: Buy just enough local fuel to get to Jupiter
-                    // This is the *only* place this logic should run, as a last resort.
                     this.logger.warn('Bot', `Stranded at ${state.currentLocationId}. Buying expensive local fuel just to reach Jupiter.`);
                     this._botRefuel(fuelToJupiter + 5); // Buy just enough + a small buffer
                 } else {
@@ -402,6 +446,66 @@ export class AutomatedPlayer {
         this.botState = BotState.IDLE;
     }
 
+
+    /**
+     * [State: SELLING_HELD_CARGO]
+     * Bot travels to the best sell location and sells its cargo.
+     * @private
+     */
+    async _executeSellHeldCargo() {
+        const { goodId, sellLocationId, quantity } = this.currentObjective;
+        const state = this.gameState.getState();
+        const activeShip = this.simulationService._getActiveShip();
+
+        // 1. Travel to sell location
+        if (state.currentLocationId !== sellLocationId) {
+            // --- PHASE 3 LOGGING ---
+            this.logger.info.system('Bot', state.day, 'SELL_HELD', `Traveling to ${sellLocationId} to sell ${quantity}x ${goodId}`);
+
+            // --- Pre-flight check ---
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `SELL_HELD_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                // We keep the objective, maintenance will just pause it
+                this.botState = BotState.MAINTENANCE; 
+                return;
+            }
+            // --- End Fix ---
+
+            this.simulationService.travelService.initiateTravel(sellLocationId);
+            return;
+        }
+
+        // 2. Sell entire cargo
+        const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+        if (sellQty > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+
+            // --- PHASE 3 LOGGING ---
+            this.logger.info.system('Bot', state.day, 'SELL_HELD_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalNetProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+
+            // Track profit by good
+            if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+            this.metrics.profitByGood[goodId] += profit;
+            
+            this.metrics.objectivesCompleted++;
+        } else {
+             // --- PHASE 3 LOGGING ---
+            this.logger.warn('Bot', `SELL_HELD_FAIL: Arrived at ${sellLocationId} but have no ${goodId} to sell.`);
+             this.metrics.objectivesAborted++;
+        }
+
+        // 3. Loop is complete. Go IDLE to re-evaluate.
+        this.currentObjective = null;
+        this.botState = BotState.IDLE;
+    }
 
     /**
      * [State: SEEKING_MANIPULATION]
@@ -486,15 +590,25 @@ export class AutomatedPlayer {
         if (state.currentLocationId !== buyFromLocationId) {
             this.logger.info.system('Bot', state.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
             
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(buyFromLocationId)) {
-                this.logger.warn('Bot', `PREP_FAIL: Not enough fuel for full trip to ${buyFromLocationId} and back to Jupiter. Forcing maintenance.`);
-                // Go to MAINTENANCE. The currentObjective is preserved.
-                // The bot will return to this state after refueling.
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyFromLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `PREP_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${buyFromLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                // Store the original objective and set temporary maintenance plan
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5, // Add 5 fuel buffer
+                    nextState: BotState.PREPARING_CRASH, // State to return to
+                    originalObjective: originalObjective // The plan to resume
+                };
                 this.botState = BotState.MAINTENANCE;
                 return;
             }
-            // --- End check ---
+            // --- End Fix ---
             
             this.simulationService.travelService.initiateTravel(buyFromLocationId);
             // After travel, the state is new, so we return to let the next tick handle purchase
@@ -530,15 +644,24 @@ export class AutomatedPlayer {
         if (state.currentLocationId !== crashLocationId) {
             this.logger.info.system('Bot', state.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
 
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(crashLocationId)) {
-                this.logger.warn('Bot', `CRASH_FAIL: Not enough fuel for full trip to ${crashLocationId} and back to Jupiter. Forcing maintenance.`);
-                // Go to MAINTENANCE. The currentObjective is preserved.
-                // The bot will return to this state after refueling.
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][crashLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `CRASH_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${crashLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_CRASH, 
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
                 return;
             }
-            // --- End check ---
+            // --- End Fix ---
 
             this.simulationService.travelService.initiateTravel(crashLocationId);
             return; // Let next tick handle sale
@@ -598,15 +721,24 @@ export class AutomatedPlayer {
         if (state.currentLocationId !== exploitLocationId) {
             this.logger.info.system('Bot', state.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
 
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(exploitLocationId)) {
-                this.logger.warn('Bot', `EXPLOIT_FAIL: Not enough fuel for full trip to ${exploitLocationId} and back to Jupiter. Forcing maintenance.`);
-                // Go to MAINTENANCE. The currentObjective is preserved.
-                // The bot will return to this state after refueling.
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][exploitLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `EXPLOIT_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${exploitLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_EXPLOIT, 
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
                 return;
             }
-            // --- End check ---
+            // --- End Fix ---
 
             this.simulationService.travelService.initiateTravel(exploitLocationId);
             return;
@@ -660,15 +792,24 @@ export class AutomatedPlayer {
         if (state.currentLocationId !== sellToLocationId) {
             this.logger.info.system('Bot', state.day, 'SELL_EXPLOIT', `Traveling to ${sellToLocationId} to sell ${goodId}`);
 
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(sellToLocationId)) {
-                this.logger.warn('Bot', `SELL_EXPLOIT_FAIL: Not enough fuel for full trip to ${sellToLocationId} and back to Jupiter. Forcing maintenance.`);
-                // Go to MAINTENANCE. The currentObjective is preserved.
-                // The bot will return to this state after refueling.
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellToLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `SELL_EXPLOIT_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellToLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.SELLING_EXPLOITED_GOODS, 
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
                 return;
             }
-            // --- End check ---
+            // --- End Fix ---
 
             this.simulationService.travelService.initiateTravel(sellToLocationId);
             return;
@@ -716,7 +857,8 @@ export class AutomatedPlayer {
             if (simpleTrade) {
                 this.currentObjective = { ...simpleTrade, type: 'SIMPLE_TRADE', hasGoods: false };
                 this.metrics.objectivesStarted++;
-                this.logger.info.system('Bot', this.gameState.day, 'TIME_WASTER', `New simple trade plan: ${simpleTrade.goodId} from ${simpleTrade.buyLocationId} to ${simpleTrade.sellLocationId}`);
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[TRADE]: New simple trade. Buy ${simpleTrade.goodId} @ ${simpleTrade.buyLocationId} -> Sell @ ${simpleTrade.sellLocationId}. Margin: ${(simpleTrade.profitPerUnit / simpleTrade.buyPrice * 100).toFixed(1)}%. Est. PPD: ${formatCredits(simpleTrade.estimatedPPD)}.`);
             } else {
                 // No trades found. Wait one day and go back to IDLE.
                 this.logger.info.system('Bot', this.gameState.day, 'TIME_WASTER', 'No profitable simple trades found. Waiting 1 day.');
@@ -735,32 +877,45 @@ export class AutomatedPlayer {
         if (!hasGoods) {
             // 2a. Travel to buy location
             if (state.currentLocationId !== buyLocationId) {
+                // --- PHASE 3 LOGGING ---
                 this.logger.info.system('Bot', state.day, 'TRADE_BUY', `Traveling to ${buyLocationId} to buy ${goodId}`);
+                const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyLocationId];
+                const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
                 
-                // --- Pre-flight fuel check ---
-                if (!this._hasSufficientFuelForTrip(buyLocationId)) {
-                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel for full trip. Aborting objective and forcing maintenance.`);
-                    this.currentObjective = null; // Abort this plan
+                if (activeShip.fuel < requiredFuel) {
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel to travel to ${buyLocationId}. Forcing maintenance.`);
+                    this.botState = BotState.MAINTENANCE; // Maintenance will pause this objective
                     this.metrics.objectivesAborted++;
-                    this.botState = BotState.MAINTENANCE;
+                    this.currentObjective = null; // Abort this plan
                     return;
                 }
-                // --- End check ---
-
                 this.simulationService.travelService.initiateTravel(buyLocationId);
                 return;
             }
             
             // 2b. Buy
+            // --- PHASE 1.1 FIX: Re-check quantity on arrival ---
+            const currentStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+            if (currentStock <= 0) {
+                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${buyLocationId} but ${goodId} is now out of stock. Aborting.`);
+                this.currentObjective = null;
+                this.botState = BotState.IDLE;
+                this.metrics.objectivesAborted++;
+                return;
+            }
+            // --- END FIX ---
+            
             const buyQty = this._calculateMaxBuy(goodId, buyPrice);
             if (buyQty > 0) {
                 this.simulationService.playerActionService.buyItem(goodId, buyQty);
+                // --- PHASE 3 LOGGING ---
                 this.logger.info.system('Bot', state.day, 'TRADE_BUY', `Bought ${buyQty}x ${goodId} @ ${formatCredits(buyPrice)}`);
                 this.currentObjective.hasGoods = true; // Mark as having bought goods
                 // Proceed immediately to sell step logic
             } else {
-                // Can't buy (no stock, no space, no money). Abort plan.
-                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${buyLocationId} but could not buy ${goodId}. Aborting.`);
+                // Can't buy (no space, no money). Abort plan.
+                // --- PHASE 3 LOGGING ---
+                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${buyLocationId} but could not buy ${goodId} (Price: ${formatCredits(buyPrice)}, Stock: ${currentStock}). Aborting.`);
                 this.currentObjective = null;
                 this.botState = BotState.IDLE;
                 this.metrics.objectivesAborted++;
@@ -772,18 +927,18 @@ export class AutomatedPlayer {
         if (this.currentObjective.hasGoods) {
              // 2c. Travel to sell location
             if (state.currentLocationId !== sellLocationId) {
+                // --- PHASE 3 LOGGING ---
                 this.logger.info.system('Bot', state.day, 'TRADE_SELL', `Traveling to ${sellLocationId} to sell ${goodId}`);
-                
-                // --- Pre-flight fuel check ---
-                if (!this._hasSufficientFuelForTrip(sellLocationId)) {
-                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel for full trip. Aborting objective and forcing maintenance.`);
-                    this.currentObjective = null; // Abort this plan
-                    this.metrics.objectivesAborted++;
+                const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocationId];
+                const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+
+                if (activeShip.fuel < requiredFuel) {
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel to travel to ${sellLocationId}. Forcing maintenance.`);
                     this.botState = BotState.MAINTENANCE;
+                    this.metrics.objectivesAborted++;
+                    this.currentObjective = null; // Abort this plan
                     return;
                 }
-                // --- End check ---
-
                 this.simulationService.travelService.initiateTravel(sellLocationId);
                 return;
             }
@@ -795,6 +950,7 @@ export class AutomatedPlayer {
                 const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
                 const profit = saleValue - (avgCost * sellQty);
                 
+                // --- PHASE 3 LOGGING ---
                 this.logger.info.system('Bot', state.day, 'TRADE_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
                 this.metrics.totalTrades++;
                 this.metrics.totalNetProfit += profit;
@@ -831,18 +987,10 @@ export class AutomatedPlayer {
         
         const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier && c.tier > 1);
         let top5Plans = [];
-        const MAX_DEPLETION_TRAVEL_TIME = 50; // Max 50-day one-way trip
 
         for (const good of availableCommodities) {
             for (const location of DB.MARKETS) {
                 if (!state.player.unlockedLocationIds.includes(location.id)) continue;
-
-                // --- Travel Time Check ---
-                const travelTime = state.TRAVEL_DATA[state.currentLocationId]?.[location.id]?.time || 999;
-                if (travelTime > MAX_DEPLETION_TRAVEL_TIME) {
-                    continue; // Skip this location, it's too far
-                }
-                // --- End Check ---
 
                 const inventoryItem = state.market.inventory[location.id][good.id];
                 
@@ -875,8 +1023,8 @@ export class AutomatedPlayer {
                         plan: {
                             type: 'DEPLETE',
                             goodId: good.id,
-                            locationId: location.id
-                            // amountToBuy removed - will be calculated on arrival
+                            locationId: location.id,
+                            amountToBuy: stock
                         }
                     });
                 }
@@ -891,7 +1039,7 @@ export class AutomatedPlayer {
             this.currentObjective = chosenPlan;
             this.botState = BotState.EXECUTING_DEPLETION;
             this.metrics.objectivesStarted++;
-            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `New depletion plan (1 of ${bestPlans.length}): Buy out ${chosenPlan.goodId} at ${chosenPlan.locationId}`);
+            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `New depletion plan (1 of ${bestPlans.length}): Buy out ${chosenPlan.amountToBuy}x ${chosenPlan.goodId} at ${chosenPlan.locationId}`);
         } else {
             // No opportunity found
             if (this.activeStrategy === BotStrategy.DEPLETE_ONLY) {
@@ -912,19 +1060,26 @@ export class AutomatedPlayer {
      * @private
      */
     async _executeDepletion() {
-        const { goodId, locationId } = this.currentObjective;
+        const { goodId, locationId, amountToBuy } = this.currentObjective;
         const state = this.gameState.getState();
-        const ship = this.simulationService._getActiveShip();
 
         // 1. Travel to depletion location
         if (state.currentLocationId !== locationId) {
             this.logger.info.system('Bot', state.day, 'DEPLETE', `Traveling to ${locationId} to buy out ${goodId}`);
             
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(locationId)) {
-                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel for full trip. Aborting objective and forcing maintenance.`);
-                this.currentObjective = null; // Abort this plan
-                this.metrics.objectivesAborted++;
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${locationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_DEPLETION,
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
                 return;
             }
@@ -934,51 +1089,27 @@ export class AutomatedPlayer {
             return;
         }
 
-        // 2. Buy out the stock (Resilient Logic)
-        const stock = state.market.inventory[locationId][goodId].quantity;
-        const price = state.market.prices[locationId][goodId];
-
-        // Re-calculate depletion threshold to check if plan is still valid
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const location = DB.MARKETS.find(m => m.id === locationId);
-        const [minAvail, maxAvail] = good.canonicalAvailability;
-        const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
-        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-        let pressureForAdaptation = state.market.inventory[locationId][goodId].marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0;
-        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
-        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
-        const depletionThreshold = targetStock * 0.08;
-
-        if (stock >= depletionThreshold && ship.cargoCapacity >= stock && state.player.credits >= (stock * price)) {
-            // Plan is still valid. Execute the buyout.
-            const boughtQty = this.simulationService.playerActionService.buyItem(goodId, stock);
-            
-            if (!boughtQty || boughtQty < stock) {
-                // This might happen if credits/cargo changed, though unlikely for bot
-                this.logger.warn('Bot', `DEPLETE_FAIL: Failed to buy out ${goodId} at ${locationId} (bought ${boughtQty}/${stock}). Aborting.`);
-                this.currentObjective = null;
-                this.botState = BotState.IDLE;
-                this.metrics.objectivesAborted++;
-                return;
-            }
-            this.logger.info.system('Bot', state.day, 'DEPLETE_BUY', `Successfully bought out ${boughtQty}x ${goodId}. Depletion bonus triggered.`);
-        } else {
-            // Plan is no longer valid (stock too low, not enough money/cargo, etc.)
-            this.logger.warn('Bot', `DEPLETE_FAIL: Arrived at ${locationId} but ${goodId} stock (${stock}) is now below threshold or unaffordable/uncarriable. Aborting.`);
+        // 2. Buy out the stock
+        const boughtQty = this.simulationService.playerActionService.buyItem(goodId, amountToBuy);
+        if (!boughtQty || boughtQty < amountToBuy) {
+            this.logger.warn('Bot', `DEPLETE_FAIL: Failed to buy out ${goodId} at ${locationId}. Aborting.`);
             this.currentObjective = null;
             this.botState = BotState.IDLE;
             this.metrics.objectivesAborted++;
             return;
         }
 
+        this.logger.info.system('Bot', state.day, 'DEPLETE_BUY', `Successfully bought out ${amountToBuy}x ${goodId}. Depletion bonus triggered.`);
 
         // 3. Sell the cargo immediately to free up space
         const sellLocation = this._findBestSellLocation(goodId, locationId);
         if (sellLocation) {
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(sellLocation.id)) {
-                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel to travel to sell location ${sellLocation.id}. Forcing maintenance.`);
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocation.id];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to sell location ${sellLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
                 // Abort depletion, just focus on maintenance. Keep the cargo for now.
                 this.currentObjective = null; 
                 this.botState = BotState.MAINTENANCE;
@@ -1036,9 +1167,12 @@ export class AutomatedPlayer {
         
         // Go to buy location (B)
         if (state.currentLocationId !== buyLocation.id) {
-            // --- Pre-flight fuel check ---
-            if (!this._hasSufficientFuelForTrip(buyLocation.id)) {
-                this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel for full trip. Aborting objective and forcing maintenance.`);
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyLocation.id];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to buy location ${buyLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
                 this.currentObjective = null;
                 this.botState = BotState.MAINTENANCE;
                 this.metrics.objectivesAborted++;
@@ -1055,9 +1189,12 @@ export class AutomatedPlayer {
         
         // Go to hiked location (A)
         if (state.currentLocationId !== locationId) {
-             // --- Pre-flight fuel check ---
-             if (!this._hasSufficientFuelForTrip(locationId)) {
-                 this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel for full trip. Aborting objective and forcing maintenance.`);
+             // --- FIX: Pre-flight check ---
+             const activeShip = this.simulationService._getActiveShip();
+             const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
+             const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+             if (activeShip.fuel < requiredFuel) {
+                 this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to hiked location ${locationId} (needs ${requiredFuel}). Forcing maintenance.`);
                  this.currentObjective = null;
                  this.botState = BotState.MAINTENANCE;
                  this.metrics.objectivesAborted++;
@@ -1160,6 +1297,50 @@ export class AutomatedPlayer {
     }
 
     /**
+     * [BRAIN] Finds the best place to sell any cargo the bot is currently holding.
+     * @returns {object | null} A trade objective, or null if no profitable sale is found.
+     * @private
+     */
+    _findBestSellLocationForHeldCargo() {
+        const state = this.gameState.getState();
+        const inventory = this.simulationService._getActiveInventory();
+        if (!inventory) return null;
+
+        let bestSale = null;
+        let maxProfit = 0;
+
+        for (const goodId in inventory) {
+            const item = inventory[goodId];
+            if (item && item.quantity > 0) {
+                const avgCost = item.avgCost;
+                const quantity = item.quantity;
+                
+                // Find the best market to sell this specific good
+                const sellLocation = this._findBestSellLocation(goodId, state.currentLocationId);
+                
+                if (sellLocation) {
+                    const potentialProfit = (sellLocation.price - avgCost) * quantity;
+                    
+                    if (potentialProfit > maxProfit) {
+                        maxProfit = potentialProfit;
+                        bestSale = {
+                            goodId: goodId,
+                            quantity: quantity,
+                            avgCost: avgCost,
+                            sellLocationId: sellLocation.id,
+                            sellPrice: sellLocation.price,
+                            estimatedProfit: potentialProfit
+                        };
+                    }
+                }
+            }
+        }
+        
+        // Only return if the sale is profitable
+        return (bestSale && bestSale.estimatedProfit > 0) ? bestSale : null;
+    }
+
+    /**
      * Finds the absolute cheapest market to buy a specific good.
      * @private
      */
@@ -1231,45 +1412,6 @@ export class AutomatedPlayer {
     }
 
     /**
-     * Performs a "look-ahead" fuel check to prevent stranding.
-     * Checks for fuel to destination AND fuel from destination to Jupiter.
-     * @param {string} destinationId The ID of the intended destination.
-     * @returns {boolean} True if the full round trip is safe, false otherwise.
-     * @private
-     */
-    _hasSufficientFuelForTrip(destinationId) {
-        const state = this.gameState.getState();
-        const activeShip = this.simulationService._getActiveShip();
-        if (!activeShip) return false;
-
-        const currentLocationId = state.currentLocationId;
-        if (currentLocationId === destinationId) return true; // Already there
-
-        // Check 1: Can we get to the destination?
-        const travelInfoToDest = state.TRAVEL_DATA[currentLocationId][destinationId];
-        const fuelToDest = travelInfoToDest ? (travelInfoToDest.fuelCost || 0) : 9999;
-        
-        if (activeShip.fuel < fuelToDest) {
-            return false; // Can't even make the first leg
-        }
-
-        // Check 2: Can we get to Jupiter *from* the destination?
-        // (Unless the destination is Jupiter itself)
-        if (destinationId === LOCATION_IDS.JUPITER) {
-            return true; // We are going to the fuel station, so we're fine
-        }
-
-        const fuelAfterTrip = activeShip.fuel - fuelToDest;
-        const travelInfoToJupiter = state.TRAVEL_DATA[destinationId][LOCATION_IDS.JUPITER];
-        const fuelToJupiter = travelInfoToJupiter ? (travelInfoToJupiter.fuelCost || 0) : 9999;
-        
-        const FUEL_BUFFER = 5; // Small buffer
-        
-        // Return true only if we have enough fuel for the subsequent Jupiter trip
-        return fuelAfterTrip >= (fuelToJupiter + FUEL_BUFFER);
-    }
-
-    /**
      * Finds the best simple A-B (non-manipulation) trade route.
      * --- [PHASE 2] This logic is now smarter, factoring in cargo size and full round trip time ---
      * @private
@@ -1286,19 +1428,45 @@ export class AutomatedPlayer {
         let maxProfitPerDay = 0;
 
         const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
+        const inventory = this.simulationService._getActiveInventory();
 
         for (const good of availableCommodities) {
+            // --- PHASE 1 REFACTOR: Check if bot is already holding this good ---
+            // If so, simple trade logic should ignore it, as SELLING_HELD_CARGO will handle it.
+            if (inventory[good.id] && inventory[good.id].quantity > 0) {
+                continue;
+            }
+            // --- END REFACTOR ---
+
             for (const buyLocation of DB.MARKETS) {
                 if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
 
+                // --- PHASE 1.1 FIX: Check buy stock quantity ---
+                const buyStock = state.market.inventory[buyLocation.id][good.id].quantity;
+                if (buyStock <= 0) {
+                    continue; // Can't buy if it's out of stock
+                }
+                // --- END FIX ---
+
                 for (const sellLocation of DB.MARKETS) {
                     if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
+
+                    // --- PHASE 1.1 FIX: Check sell stock quantity ---
+                    // We check sell stock > 0 because we can't sell to a market that has 0 *demand* (is depleted)
+                    const sellStock = state.market.inventory[sellLocation.id][good.id].quantity;
+                    if (sellStock <= 0) {
+                        continue;
+                    }
+                    // --- END FIX ---
 
                     const buyPrice = state.market.prices[buyLocation.id][good.id];
                     const sellPrice = state.market.prices[sellLocation.id][good.id];
                     const profitPerUnit = sellPrice - buyPrice;
 
-                    if (profitPerUnit > 0) {
+                    // --- PHASE 2.1 FIX: Check profit margin ---
+                    const profitMargin = (buyPrice > 0) ? (profitPerUnit / buyPrice) : 0;
+
+                    if (profitPerUnit > 0 && profitMargin > this.MIN_PROFIT_MARGIN) {
                         const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
                         const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
                         
@@ -1308,15 +1476,10 @@ export class AutomatedPlayer {
                         // +2 for transaction time (1 day to buy, 1 day to sell)
                         const totalTime = travelTimeToBuy + travelTimeToSell + 2; 
 
-                        // --- Risk-Adjusted Profit ---
-                        // Simulate a 1.5% "risk" or price decay *per unit* per *day of travel*
-                        // This heavily penalizes long, speculative routes for high-tier goods.
-                        const RISK_DISCOUNT_PER_DAY = 0.015; // 1.5% (was 0.005)
-                        const riskDiscount = (profitPerUnit * (totalTime * RISK_DISCOUNT_PER_DAY));
-                        const riskAdjustedProfit = profitPerUnit - riskDiscount;
-                        // --- End Risk-Adjustment ---
-
-                        const totalTripProfit = riskAdjustedProfit * cargoCapacity;
+                        // --- PHASE 1.1 FIX: Base profit calc on actual available stock ---
+                        const buyQty = Math.min(cargoCapacity, buyStock);
+                        const totalTripProfit = profitPerUnit * buyQty;
+                        // --- END FIX ---
                         const profitPerDay = totalTripProfit / totalTime;
 
                         if (profitPerDay > maxProfitPerDay) {
@@ -1332,6 +1495,7 @@ export class AutomatedPlayer {
                             };
                         }
                     }
+                    // --- END FIX ---
                 }
             }
         }
