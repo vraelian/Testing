@@ -16,6 +16,7 @@ export class NewsTickerService {
         this.gameState = gameState;
         this.messageQueue = [];
         this.lastFlavorDay = 0;
+        this.isDirty = true; // Start as true to render on initial load
     }
 
     /**
@@ -25,6 +26,11 @@ export class NewsTickerService {
      * @param {boolean} [isPriority=false] - If true, prepends to the front.
      */
     pushMessage(text, type, isPriority = false) {
+        // Suggestion 4: De-duplication check
+        if (this.messageQueue.some(msg => msg.text === text)) {
+            return; // Don't add duplicate
+        }
+
         const newMessage = {
             id: Date.now() + Math.random(),
             text: text,
@@ -41,6 +47,8 @@ export class NewsTickerService {
         while (this.messageQueue.length > MAX_MESSAGES) {
             this.messageQueue.shift(); // Remove the oldest
         }
+
+        this.isDirty = true; // Suggestion 2: Set dirty flag
     }
 
     /**

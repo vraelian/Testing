@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uiManager = new UIManager(Logger);
         const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
         const missionService = new MissionService(gameState, uiManager, Logger);
-        // MODIFIED: Pass newsTickerService
+        // MODIFIED: Pass newsTickerService to SimulationService
         const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
-        simulationService.timeService.setNewsTickerService(newsTickerService); // INJECT
+        // REMOVED: TimeService injection (now handled by SimService)
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings

@@ -24,17 +24,18 @@ export class SimulationService {
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED: Added newsTickerService
+    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
+        this.newsTickerService = newsTickerService; // ADDED
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
-        // MODIFIED: Pass newsTickerService to TimeService constructor
-        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService);
+        // MODIFIED: Pass newsTickerService
+        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
@@ -86,6 +87,28 @@ export class SimulationService {
     // TravelService Delegation
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
+
+    // ADDED: NewsTickerService Delegation
+    /**
+     * Pushes a new message to the news ticker.
+     * @param {string} text - The message content.
+     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
+     * @param {boolean} [isPriority=false] - If true, prepends to the front.
+     */
+    pushNewsMessage(text, type, isPriority = false) {
+        if (this.newsTickerService) {
+            this.newsTickerService.pushMessage(text, type, isPriority);
+        }
+    }
+
+    /**
+     * Pulses the news ticker for daily updates (e.g., flavor text).
+     */
+    pulseNewsTicker() {
+        if (this.newsTickerService) {
+            this.newsTickerService.pulse();
+        }
+    }
 
     // --- CORE & SHARED METHODS ---
     // These methods remain in the facade because they are either simple state setters

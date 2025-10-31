@@ -50,12 +50,13 @@
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService", "NewsTickerService"],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
         "travelTo": "Facade method that delegates to TravelService.",
-        "buyItem": "Facade method that delegates to PlayerActionService."
+        "buyItem": "Facade method that delegates to PlayerActionService.",
+        "pushNewsMessage": "Facade method to push a message to the NewsTickerService."
       },
       "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
     },
@@ -110,13 +111,24 @@
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
-      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
+      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService", "NewsTickerService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence."
+        "showTravelAnimation": "Initiates the travel animation sequence.",
+        "_renderNewsTicker": "Renders the news ticker content only when its content is dirty."
+      },
+      "mutates_state": []
+    },
+    "NewsTickerService": {
+      "description": "Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily via TimeService/SimulationService facade to add flavor text.",
+      "dependencies": ["GameState", "js/data/news_flavor.js"],
+      "key_functions": {
+        "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
+        "pulse": "Called daily to check if new flavor text should be added.",
+        "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render."
       },
       "mutates_state": []
     },
@@ -259,6 +271,9 @@
     "F050": {"path": "./js/data/age_events.js", "role": "DATA_DEFINITION"},
     "F051": {"path": "./js/data/events.js", "role": "DATA_DEFINITION"},
     "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
-    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"}
+    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"},
+    "F054": {"path": "./js/services/NewsTickerService.js", "role": "UI_SERVICE"},
+    "F055": {"path": "./js/data/news_flavor.js", "role": "DATA_DEFINITION"},
+    "F056": {"path": "./css/news-ticker.css", "role": "STYLESHEET"}
   }
 }

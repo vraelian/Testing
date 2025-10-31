@@ -2308,8 +2308,11 @@ body {
     white-space: nowrap; /* Prevents text from wrapping */
     position: absolute;
     
-    /* Animation setup */
-    animation: scroll-ticker 120s linear infinite;
+    /* MODIFIED: Animation properties separated */
+    animation-name: scroll-ticker;
+    animation-duration: 120s; /* Fallback duration */
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
     
     /* Font styling */
     font-family: 'Oxanium Medium', 'Exo 2', sans-serif;
@@ -5388,7 +5391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uiManager = new UIManager(Logger);
         const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
         const missionService = new MissionService(gameState, uiManager, Logger);
-        // MODIFIED: Pass newsTickerService
+        // MODIFIED: Pass newsTickerService to SimulationService
         const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
@@ -5407,7 +5410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
-        simulationService.timeService.setNewsTickerService(newsTickerService); // INJECT
+        // REMOVED: TimeService injection (now handled by SimService)
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings
@@ -8461,6 +8464,7 @@ export class NewsTickerService {
         this.gameState = gameState;
         this.messageQueue = [];
         this.lastFlavorDay = 0;
+        this.isDirty = true; // Start as true to render on initial load
     }
 
     /**
@@ -8470,6 +8474,11 @@ export class NewsTickerService {
      * @param {boolean} [isPriority=false] - If true, prepends to the front.
      */
     pushMessage(text, type, isPriority = false) {
+        // Suggestion 4: De-duplication check
+        if (this.messageQueue.some(msg => msg.text === text)) {
+            return; // Don't add duplicate
+        }
+
         const newMessage = {
             id: Date.now() + Math.random(),
             text: text,
@@ -8486,6 +8495,8 @@ export class NewsTickerService {
         while (this.messageQueue.length > MAX_MESSAGES) {
             this.messageQueue.shift(); // Remove the oldest
         }
+
+        this.isDirty = true; // Suggestion 2: Set dirty flag
     }
 
     /**
@@ -9152,24 +9163,17 @@ export class TimeService {
      * @param {import('../simulation/MarketService.js').MarketService} marketService
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
-     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
      */
-    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // MODIFIED
+    constructor(gameState, marketService, uiManager, logger) { // MODIFIED: Removed newsTickerService
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.newsTickerService = newsTickerService; // ADDED
+        // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
     }
 
-    /**
-     * Injects the NewsTickerService.
-     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
-     */
-    setNewsTickerService(newsTickerService) {
-        this.newsTickerService = newsTickerService;
-    }
+    // REMOVED: setNewsTickerService method
 
     /**
      * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
@@ -9185,9 +9189,9 @@ export class TimeService {
             }
             this.gameState.day++;
 
-            // ADDED: Pulse the news ticker
-            if (this.newsTickerService) {
-                this.newsTickerService.pulse();
+            // MODIFIED: Call facade method on SimulationService
+            if (this.simulationService) {
+                this.simulationService.pulseNewsTicker();
             }
 
             const dayOfYear = (this.gameState.day - 1) % 365;
@@ -9580,17 +9584,18 @@ export class SimulationService {
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED: Added newsTickerService
+    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
+        this.newsTickerService = newsTickerService; // ADDED
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
-        // MODIFIED: Pass newsTickerService to TimeService constructor
-        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService);
+        // MODIFIED: Pass newsTickerService
+        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
@@ -9642,6 +9647,28 @@ export class SimulationService {
     // TravelService Delegation
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
+
+    // ADDED: NewsTickerService Delegation
+    /**
+     * Pushes a new message to the news ticker.
+     * @param {string} text - The message content.
+     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
+     * @param {boolean} [isPriority=false] - If true, prepends to the front.
+     */
+    pushNewsMessage(text, type, isPriority = false) {
+        if (this.newsTickerService) {
+            this.newsTickerService.pushMessage(text, type, isPriority);
+        }
+    }
+
+    /**
+     * Pulses the news ticker for daily updates (e.g., flavor text).
+     */
+    pulseNewsTicker() {
+        if (this.newsTickerService) {
+            this.newsTickerService.pulse();
+        }
+    }
 
     // --- CORE & SHARED METHODS ---
     // These methods remain in the facade because they are either simple state setters
@@ -10938,12 +10965,36 @@ export class UIManager {
 
     /**
      * Renders the content of the news ticker bar.
+     * Includes "dirty" check for performance and dynamic animation speed.
      * @private
      */
     _renderNewsTicker() {
         if (!this.newsTickerService || !this.cache.newsTickerBar) return;
-        
+    
+        // Phase 2: "Dirty" check for performance.
+        if (!this.newsTickerService.isDirty) return; 
+    
         this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
+        this.newsTickerService.isDirty = false; // Reset flag
+    
+        // Phase 3: Dynamic animation speed
+        const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
+        if (contentElement) {
+            // Measure the actual width of the scrolling text
+            const contentWidth = contentElement.scrollWidth;
+            
+            // Define a scroll speed (e.g., 50 pixels per second)
+            const PIXELS_PER_SECOND = 50; 
+            
+            // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
+            const containerWidth = this.cache.newsTickerBar.offsetWidth;
+            const totalScrollDistance = contentWidth + containerWidth;
+            
+            // Set a minimum duration to prevent extremely fast scrolls on short text
+            const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
+            
+            contentElement.style.animationDuration = `${duration}s`;
+        }
     }
 
     renderNavigation(gameState) {
@@ -16139,6 +16190,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [40.00] - 2025-10-31
+-  implemented news ticker
+-  added NewsTickerService.js
+-  added TimeService.js
+-  added news_flavor.js
+-  added news-ticker.css
+
 ## [30.90] - 2025-10-30
 -  autotrader update
 -  DebugServive.js refactor
@@ -16692,12 +16750,13 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService"],
+      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService", "NewsTickerService"],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
         "travelTo": "Facade method that delegates to TravelService.",
-        "buyItem": "Facade method that delegates to PlayerActionService."
+        "buyItem": "Facade method that delegates to PlayerActionService.",
+        "pushNewsMessage": "Facade method to push a message to the NewsTickerService."
       },
       "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
     },
@@ -16752,13 +16811,24 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
     },
     "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager and travel animations via the TravelAnimationService.",
-      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService"],
+      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
+      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService", "NewsTickerService"],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence."
+        "showTravelAnimation": "Initiates the travel animation sequence.",
+        "_renderNewsTicker": "Renders the news ticker content only when its content is dirty."
+      },
+      "mutates_state": []
+    },
+    "NewsTickerService": {
+      "description": "Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily via TimeService/SimulationService facade to add flavor text.",
+      "dependencies": ["GameState", "js/data/news_flavor.js"],
+      "key_functions": {
+        "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
+        "pulse": "Called daily to check if new flavor text should be added.",
+        "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render."
       },
       "mutates_state": []
     },
@@ -16901,7 +16971,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     "F050": {"path": "./js/data/age_events.js", "role": "DATA_DEFINITION"},
     "F051": {"path": "./js/data/events.js", "role": "DATA_DEFINITION"},
     "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
-    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"}
+    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"},
+    "F054": {"path": "./js/services/NewsTickerService.js", "role": "UI_SERVICE"},
+    "F055": {"path": "./js/data/news_flavor.js", "role": "DATA_DEFINITION"},
+    "F056": {"path": "./css/news-ticker.css", "role": "STYLESHEET"}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
@@ -16950,7 +17023,7 @@ This document outlines the planned features and high-level goals for the future 
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.3
+**Version:** 1.4
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -16960,10 +17033,11 @@ This document defines the single responsibility of each service in the applicati
 ### Core Services
 
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
--   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions.
+-   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
 -   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
+-   **`NewsTickerService.js`**: Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily (via facade) to add flavor text. **Uses:** `js/data/news_flavor.js`.
 
 ### Game Logic Services
 
@@ -16973,7 +17047,7 @@ This document defines the single responsibility of each service in the applicati
 
 #### World
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates). **Uses:** `js/data/age_events.js`.
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. **Uses:** `js/data/age_events.js`.
 -   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
@@ -17021,6 +17095,7 @@ This document defines the single responsibility of each service in the applicati
 -   **`events.js`**: Defines static data for random events encountered during travel.
 -   **`missions.js`**: Defines static data for all player missions.
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
+-   **`news_flavor.js`**: Defines static flavor text strings for the news ticker.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

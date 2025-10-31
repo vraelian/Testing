@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [40.00] - 2025-10-31
+-  implemented news ticker
+-  added NewsTickerService.js
+-  added TimeService.js
+-  added news_flavor.js
+-  added news-ticker.css
+
 ## [30.90] - 2025-10-30
 -  autotrader update
 -  DebugServive.js refactor

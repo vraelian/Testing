@@ -215,12 +215,36 @@ export class UIManager {
 
     /**
      * Renders the content of the news ticker bar.
+     * Includes "dirty" check for performance and dynamic animation speed.
      * @private
      */
     _renderNewsTicker() {
         if (!this.newsTickerService || !this.cache.newsTickerBar) return;
-        
+    
+        // Phase 2: "Dirty" check for performance.
+        if (!this.newsTickerService.isDirty) return; 
+    
         this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
+        this.newsTickerService.isDirty = false; // Reset flag
+    
+        // Phase 3: Dynamic animation speed
+        const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
+        if (contentElement) {
+            // Measure the actual width of the scrolling text
+            const contentWidth = contentElement.scrollWidth;
+            
+            // Define a scroll speed (e.g., 50 pixels per second)
+            const PIXELS_PER_SECOND = 50; 
+            
+            // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
+            const containerWidth = this.cache.newsTickerBar.offsetWidth;
+            const totalScrollDistance = contentWidth + containerWidth;
+            
+            // Set a minimum duration to prevent extremely fast scrolls on short text
+            const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
+            
+            contentElement.style.animationDuration = `${duration}s`;
+        }
     }
 
     renderNavigation(gameState) {

@@ -18,8 +18,11 @@
     white-space: nowrap; /* Prevents text from wrapping */
     position: absolute;
     
-    /* Animation setup */
-    animation: scroll-ticker 120s linear infinite;
+    /* MODIFIED: Animation properties separated */
+    animation-name: scroll-ticker;
+    animation-duration: 120s; /* Fallback duration */
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
     
     /* Font styling */
     font-family: 'Oxanium Medium', 'Exo 2', sans-serif;

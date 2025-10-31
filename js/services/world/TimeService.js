@@ -13,24 +13,17 @@ export class TimeService {
      * @param {import('../simulation/MarketService.js').MarketService} marketService
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
-     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
      */
-    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // MODIFIED
+    constructor(gameState, marketService, uiManager, logger) { // MODIFIED: Removed newsTickerService
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.newsTickerService = newsTickerService; // ADDED
+        // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
     }
 
-    /**
-     * Injects the NewsTickerService.
-     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
-     */
-    setNewsTickerService(newsTickerService) {
-        this.newsTickerService = newsTickerService;
-    }
+    // REMOVED: setNewsTickerService method
 
     /**
      * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
@@ -46,9 +39,9 @@ export class TimeService {
             }
             this.gameState.day++;
 
-            // ADDED: Pulse the news ticker
-            if (this.newsTickerService) {
-                this.newsTickerService.pulse();
+            // MODIFIED: Call facade method on SimulationService
+            if (this.simulationService) {
+                this.simulationService.pulseNewsTicker();
             }
 
             const dayOfYear = (this.gameState.day - 1) % 365;

@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 1.3
+**Version:** 1.4
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -9,10 +9,11 @@ This document defines the single responsibility of each service in the applicati
 ### Core Services
 
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
--   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions.
+-   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
 -   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
+-   **`NewsTickerService.js`**: Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily (via facade) to add flavor text. **Uses:** `js/data/news_flavor.js`.
 
 ### Game Logic Services
 
@@ -22,7 +23,7 @@ This document defines the single responsibility of each service in the applicati
 
 #### World
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates). **Uses:** `js/data/age_events.js`.
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. **Uses:** `js/data/age_events.js`.
 -   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
@@ -70,3 +71,4 @@ This document defines the single responsibility of each service in the applicati
 -   **`events.js`**: Defines static data for random events encountered during travel.
 -   **`missions.js`**: Defines static data for all player missions.
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
+-   **`news_flavor.js`**: Defines static flavor text strings for the news ticker.
