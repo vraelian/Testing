@@ -22,8 +22,9 @@ export class SimulationService {
      * @param {import('./GameState.js').GameState} gameState - The central state object.
      * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger) {
+    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED: Added newsTickerService
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
@@ -32,7 +33,8 @@ export class SimulationService {
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
-        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger);
+        // MODIFIED: Pass newsTickerService to TimeService constructor
+        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService);
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);

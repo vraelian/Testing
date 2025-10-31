@@ -285,16 +285,6 @@ export class AutomatedPlayer {
                 this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Continuing persistent CRASH loop for ${this.currentObjective.goodId}.`);
                 // Note: This is a continuation, not a new objective
                 return;
-            
-            // --- [[START]] GEMINI FIX: RESUME INTERRUPTED OBJECTIVE ---
-            // If returning from MAINTENANCE, a SIMPLE_TRADE objective might
-            // still be present. We must resume it instead of abandoning it.
-            } else if (this.currentObjective.type === 'SIMPLE_TRADE') {
-                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Resuming interrupted SIMPLE_TRADE for ${this.currentObjective.goodId}.`);
-                this.botState = BotState.TIME_WASTER;
-                return;
-            // --- [[END]] GEMINI FIX ---
-
             } else if (this.currentObjective.type !== 'CRASH' && this.currentObjective.type !== 'SIMPLE_TRADE') {
                 // This means we just finished an EXPLOIT or SELL_EXPLOITED
                 // We need to re-validate the original crash plan

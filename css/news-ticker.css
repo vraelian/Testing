@@ -1,0 +1,69 @@
+/* css/news-ticker.css */
+
+#news-ticker-bar {
+    width: 100%;
+    height: 24px; /* Vertically thin, as requested */
+    background-color: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid #2a3a5a;
+    border-bottom: 1px solid #2a3a5a;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    overflow: hidden; /* This is crucial */
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.news-ticker-content {
+    display: block;
+    white-space: nowrap; /* Prevents text from wrapping */
+    position: absolute;
+    
+    /* Animation setup */
+    animation: scroll-ticker 120s linear infinite;
+    
+    /* Font styling */
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--ot-text-primary, #d0d8e8);
+}
+
+.news-ticker-content:hover {
+    animation-play-state: paused; /* Pause scroll on hover */
+}
+
+/*
+ * The scrolling animation. 
+ * Starts at 100% (off-screen right) and moves to -100% (off-screen left).
+ * The animation-duration will determine the speed.
+ */
+@keyframes scroll-ticker {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* --- Message Type Styling --- */
+
+.ticker-separator {
+    color: #555; /* Dark gray for the separator */
+    margin: 0 0.75rem;
+}
+
+.ticker-message {
+    display: inline;
+}
+
+/* Example color-coding for message types */
+.ticker-message[data-type="SYSTEM"] {
+    color: var(--ot-cyan-base, #22d3ee);
+    font-weight: 700;
+}
+
+.ticker-message[data-type="INTEL"] {
+    color: var(--ot-green-accent, #4ade80);
+}
+
+.ticker-message[data-type="FLAVOR"] {
+    color: var(--ot-text-secondary, #9ca3af);
+    font-style: italic;
+}

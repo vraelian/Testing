@@ -44,6 +44,7 @@ export class UIManager {
         this.lastKnownState = null;
         this.missionService = null; // To be injected
         this.simulationService = null; // To be injected
+        this.newsTickerService = null; // ADDED
         this.debugService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
@@ -105,6 +106,14 @@ export class UIManager {
     }
 
     /**
+     * Injects the NewsTickerService after instantiation.
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService
+     */
+    setNewsTickerService(newsTickerService) {
+        this.newsTickerService = newsTickerService;
+    }
+
+    /**
      * Injects the DebugService after instantiation.
      * @param {import('./DebugService.js').DebugService} service
      */
@@ -131,6 +140,7 @@ export class UIManager {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
             navBar: document.getElementById('nav-bar'),
+            newsTickerBar: document.getElementById('news-ticker-bar'), // ADDED
             topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
@@ -196,10 +206,21 @@ export class UIManager {
             }
         }
 
+        this._renderNewsTicker(); // ADDED
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         this.updateStickyBar(gameState);
         this.renderStickyBar(gameState);
+    }
+
+    /**
+     * Renders the content of the news ticker bar.
+     * @private
+     */
+    _renderNewsTicker() {
+        if (!this.newsTickerService || !this.cache.newsTickerBar) return;
+        
+        this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
     }
 
     renderNavigation(gameState) {
@@ -236,7 +257,7 @@ export class UIManager {
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">H</span>
+                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
@@ -263,11 +284,12 @@ export class UIManager {
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
+                 
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -327,7 +349,7 @@ export class UIManager {
                 break;
             }
             case SCREEN_IDS.MISSIONS:
-                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
@@ -504,6 +526,7 @@ export class UIManager {
         } else {
             this.marketScrollPosition = 0;
         }
+    
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
@@ -755,7 +778,7 @@ export class UIManager {
                 button = document.createElement('button');
                 btnContainer.appendChild(button);
             } else {
-                 button = modal.querySelector('button');
+                button = modal.querySelector('button');
             }
             if (button) {
                 button.className = 'btn px-6 py-2';
@@ -1036,7 +1059,6 @@ export class UIManager {
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-        
         // Use the new overlay if anchor is 'body', otherwise find the element
         const isOverlayAnchor = step.anchorElement === 'body';
         let referenceEl;
@@ -1100,6 +1122,7 @@ export class UIManager {
             toast.style.left = ''; // Clear direct styles
             toast.style.top = ''; 
             toast.style.transform = ''; // Clear direct transform
+            
             arrow.style.display = 'block'; // Show arrow
 
             // Configure Popper.js
@@ -1119,7 +1142,7 @@ export class UIManager {
             if (stepOffsetMod) {
                  baseModifiers.push(stepOffsetMod); 
             } else {
-                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
+                 baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
@@ -1513,7 +1536,7 @@ export class UIManager {
             objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
 
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
 
@@ -1553,7 +1576,7 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
@@ -1596,7 +1619,7 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;

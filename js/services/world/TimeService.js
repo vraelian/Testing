@@ -13,13 +13,23 @@ export class TimeService {
      * @param {import('../simulation/MarketService.js').MarketService} marketService
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
+     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
      */
-    constructor(gameState, marketService, uiManager, logger) {
+    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.simulationService = null; // To be injected to avoid circular deps
+        this.newsTickerService = newsTickerService; // ADDED
+        this.simulationService = null; // To be injected
+    }
+
+    /**
+     * Injects the NewsTickerService.
+     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
+     */
+    setNewsTickerService(newsTickerService) {
+        this.newsTickerService = newsTickerService;
     }
 
     /**
@@ -35,6 +45,11 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // ADDED: Pulse the news ticker
+            if (this.newsTickerService) {
+                this.newsTickerService.pulse();
+            }
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);

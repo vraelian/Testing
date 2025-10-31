@@ -7,6 +7,7 @@ import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
+import { NewsTickerService } from './services/NewsTickerService.js'; // IMPORT
 
 // Import the new service shells
 import { IntroService } from './services/game/IntroService.js';
@@ -71,8 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager(Logger);
+        const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
         const missionService = new MissionService(gameState, uiManager, Logger);
-        const simulationService = new SimulationService(gameState, uiManager, Logger);
+        // MODIFIED: Pass newsTickerService
+        const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
@@ -85,10 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // --- Dependency Injection ---
+        uiManager.setNewsTickerService(newsTickerService); // INJECT
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
+        simulationService.timeService.setNewsTickerService(newsTickerService); // INJECT
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings

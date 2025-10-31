@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 30.70</title>
+    <title>Orbital Trading 30.90</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -31,7 +31,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
-    <link rel="stylesheet" href="./css/modals.css">
+    <link rel="stylesheet" href="./css/news-ticker.css"> <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
@@ -64,7 +64,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 30.70</p>
+            <p>Version 30.90</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -80,7 +80,7 @@
         <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
-                <div id="sub-nav-bar"></div>
+                <div id="news-ticker-bar"></div> <div id="sub-nav-bar"></div>
             </header>
             <div id="sticky-bar"></div>
         </div>
@@ -2286,6 +2286,78 @@ body {
     width: 100%;       /* Ensure element spans modal width for centering */
 }
 --- END OF FILE: ./css/modals.css ---
+
+--- START OF FILE: ./css/news-ticker.css ---
+/* css/news-ticker.css */
+
+#news-ticker-bar {
+    width: 100%;
+    height: 24px; /* Vertically thin, as requested */
+    background-color: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid #2a3a5a;
+    border-bottom: 1px solid #2a3a5a;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    overflow: hidden; /* This is crucial */
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.news-ticker-content {
+    display: block;
+    white-space: nowrap; /* Prevents text from wrapping */
+    position: absolute;
+    
+    /* Animation setup */
+    animation: scroll-ticker 120s linear infinite;
+    
+    /* Font styling */
+    font-family: 'Oxanium Medium', 'Exo 2', sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--ot-text-primary, #d0d8e8);
+}
+
+.news-ticker-content:hover {
+    animation-play-state: paused; /* Pause scroll on hover */
+}
+
+/*
+ * The scrolling animation. 
+ * Starts at 100% (off-screen right) and moves to -100% (off-screen left).
+ * The animation-duration will determine the speed.
+ */
+@keyframes scroll-ticker {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* --- Message Type Styling --- */
+
+.ticker-separator {
+    color: #555; /* Dark gray for the separator */
+    margin: 0 0.75rem;
+}
+
+.ticker-message {
+    display: inline;
+}
+
+/* Example color-coding for message types */
+.ticker-message[data-type="SYSTEM"] {
+    color: var(--ot-cyan-base, #22d3ee);
+    font-weight: 700;
+}
+
+.ticker-message[data-type="INTEL"] {
+    color: var(--ot-green-accent, #4ade80);
+}
+
+.ticker-message[data-type="FLAVOR"] {
+    color: var(--ot-text-secondary, #9ca3af);
+    font-style: italic;
+}
+--- END OF FILE: ./css/news-ticker.css ---
 
 --- START OF FILE: ./css/screens/services-screen.css ---
 /* css/screens/services-screen.css */
@@ -5249,6 +5321,7 @@ import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
+import { NewsTickerService } from './services/NewsTickerService.js'; // IMPORT
 
 // Import the new service shells
 import { IntroService } from './services/game/IntroService.js';
@@ -5313,8 +5386,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Service Instantiation ---
         const gameState = new GameState();
         const uiManager = new UIManager(Logger);
+        const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
         const missionService = new MissionService(gameState, uiManager, Logger);
-        const simulationService = new SimulationService(gameState, uiManager, Logger);
+        // MODIFIED: Pass newsTickerService
+        const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
@@ -5327,10 +5402,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // --- Dependency Injection ---
+        uiManager.setNewsTickerService(newsTickerService); // INJECT
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
+        simulationService.timeService.setNewsTickerService(newsTickerService); // INJECT
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings
@@ -6444,6 +6521,23 @@ export const RANDOM_EVENTS = [
 ];
 --- END OF FILE: ./js/data/events.js ---
 
+--- START OF FILE: ./js/data/news_flavor.js ---
+// js/data/news_flavor.js
+/**
+ * @fileoverview Defines all static flavor text messages for the news ticker.
+ */
+
+export const NEWS_FLAVOR = [
+    "[MARS TODAY] Governor announces new terraforming initiative.",
+    "[SOLNET] New shipyard contracts announced for the Aegis line.",
+    "[COMMERCE] Plasteel futures remain steady despite Belt shortages.",
+    "[GOSSIP] That captain from 'The Exchange'... seen flying a new S-Class?",
+    "[SPORTS] Luna Gravel-Rats win the Zero-G Championship!",
+    "[AD] Big discounts on fuel at Jupiter stations this week only!",
+    "[PUBLIC] Remember: All cargo must be declared. Smuggling is a system-wide offense."
+];
+--- END OF FILE: ./js/data/news_flavor.js ---
+
 --- START OF FILE: ./js/data/age_events.js ---
 // js/data/age_events.js
 /**
@@ -7081,7 +7175,34 @@ export class DebugService {
         this.diagActive = false;
         this.diagElements = {};
         this.actions = {};
-        this.debugState = {}; // Holds state for GUI controllers
+        
+        // --- State for GUI controllers ---
+        this.debugState = {
+            creditsToAdd: 100000,
+            creditsToReduce: 100000,
+            selectedLocation: this.gameState.currentLocationId,
+            daysToAdvance: 7,
+            selectedRandomEvent: 0,
+            selectedAgeEvent: DB.AGE_EVENTS[0].id,
+            selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
+            botDaysToRun: 365,
+            botStrategy: 'MIXED', // [GEMINI] ADDED
+            botProgress: 'Idle',
+            logLevel: 'INFO',
+            // Tutorial Tuner State
+            ttStepId: 'None',
+            ttAnchor: 'N/A',
+            ttPlacement: 'auto',
+            ttOffsetDistance: 0,
+            ttOffsetSkidding: 0,
+            ttPercentX: 50,
+            ttPercentY: 50,
+            ttWidth: 0,
+            ttHeight: 0,
+            ttGeneratedCode: ''
+        }; 
+        // --- End State ---
+
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
 
         // References to GUI controllers and folders for enabling/disabling
@@ -7398,7 +7519,14 @@ ${logHistory}
             }},
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
-                this.bot.runSimulation({ daysToRun: this.debugState.botDaysToRun }, (current, end) => {
+                
+                // [GEMINI] MODIFIED: Pass strategy from debugState
+                const config = {
+                    daysToRun: this.debugState.botDaysToRun,
+                    strategy: this.debugState.botStrategy 
+                };
+                
+                this.bot.runSimulation(config, (current, end) => {
                     if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
                 });
             }},
@@ -7492,19 +7620,14 @@ ${logHistory}
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
 
         const playerFolder = this.gui.addFolder('Player');
-        this.debugState.creditsToAdd = 100000;
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
-
-        this.debugState.creditsToReduce = 100000;
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
-        this.debugState.selectedLocation = this.gameState.currentLocationId;
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
         shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
         shipFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
@@ -7519,7 +7642,6 @@ ${logHistory}
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
         const worldFolder = this.gui.addFolder('World & Time');
-        this.debugState.daysToAdvance = 7;
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
 
@@ -7529,32 +7651,20 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
-        this.debugState.selectedRandomEvent = 0;
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
         const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-        this.debugState.selectedAgeEvent = DB.AGE_EVENTS[0].id;
         triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
         triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
-        this.debugState.selectedMission = Object.keys(missionOptions)[0];
-        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-        triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        if (this.debugState.selectedMission) {
+             triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+             triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        }
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
         tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-
-        this.debugState.ttStepId = 'None';
-        this.debugState.ttAnchor = 'N/A';
-        this.debugState.ttPlacement = 'auto'; // Used for element-anchored
-        this.debugState.ttOffsetDistance = 0; // Used for element-anchored
-        this.debugState.ttOffsetSkidding = 0; // Used for element-anchored
-        this.debugState.ttPercentX = 50; // NEW: Default center X
-        this.debugState.ttPercentY = 50; // NEW: Default center Y
-        this.debugState.ttWidth = 0;
-        this.debugState.ttHeight = 0;
-        this.debugState.ttGeneratedCode = '';
 
         tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
         tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
@@ -7593,11 +7703,13 @@ ${logHistory}
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
-        this.debugState.logLevel = 'INFO';
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
-        this.debugState.botDaysToRun = 365;
-        this.debugState.botProgress = 'Idle';
+        
+        // --- [GEMINI] MODIFIED: Added PROSPECTOR strategy ---
+        automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
+        // --- End Modification ---
+        
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
@@ -8330,6 +8442,85 @@ export class MissionService {
 }
 --- END OF FILE: ./js/services/MissionService.js ---
 
+--- START OF FILE: ./js/services/NewsTickerService.js ---
+// js/services/NewsTickerService.js
+/**
+ * @fileoverview Manages the state and content of the news ticker.
+ * It maintains a queue of messages and serves them to the UIManager.
+ */
+import { NEWS_FLAVOR } from '../data/news_flavor.js';
+
+const MAX_MESSAGES = 10; // Max number of messages to show at once
+const FLAVOR_PULSE_RATE = 10; // Add a new flavor text every 10 days
+
+export class NewsTickerService {
+    /**
+     * @param {import('./GameState.js').GameState} gameState 
+     */
+    constructor(gameState) {
+        this.gameState = gameState;
+        this.messageQueue = [];
+        this.lastFlavorDay = 0;
+    }
+
+    /**
+     * Public method for other services to add a message to the ticker.
+     * @param {string} text - The message content.
+     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
+     * @param {boolean} [isPriority=false] - If true, prepends to the front.
+     */
+    pushMessage(text, type, isPriority = false) {
+        const newMessage = {
+            id: Date.now() + Math.random(),
+            text: text,
+            type: type
+        };
+
+        if (isPriority) {
+            this.messageQueue.unshift(newMessage);
+        } else {
+            this.messageQueue.push(newMessage);
+        }
+
+        // Enforce queue limit
+        while (this.messageQueue.length > MAX_MESSAGES) {
+            this.messageQueue.shift(); // Remove the oldest
+        }
+    }
+
+    /**
+     * Called by TimeService each day to pulse flavor text.
+     */
+    pulse() {
+        // Add flavor text periodically
+        if (this.gameState.day - this.lastFlavorDay >= FLAVOR_PULSE_RATE) {
+            const flavorText = NEWS_FLAVOR[Math.floor(Math.random() * NEWS_FLAVOR.length)];
+            this.pushMessage(flavorText, 'FLAVOR');
+            this.lastFlavorDay = this.gameState.day;
+        }
+    }
+
+    /**
+     * Gets the formatted HTML string for all current messages.
+     * @returns {string} The HTML for the .news-ticker-content element.
+     */
+    getTickerContentHtml() {
+        if (this.messageQueue.length === 0) {
+            this.pushMessage("Welcome to Orbital Trading. All systems nominal.", "SYSTEM");
+        }
+
+        const separator = ` <span class="ticker-separator"> // </span> `;
+        
+        const messageHtml = this.messageQueue.map(msg => 
+            `<span class="ticker-message" data-type="${msg.type}">${msg.text}</span>`
+        ).join(separator);
+
+        // We return the inner content, not the container
+        return `<div class="news-ticker-content">${messageHtml}</div>`;
+    }
+}
+--- END OF FILE: ./js/services/NewsTickerService.js ---
+
 --- START OF FILE: ./js/services/simulation/MarketService.js ---
 // js/services/simulation/MarketService.js
 /**
@@ -8428,33 +8619,26 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // Player-driven pressure (from past actions)
-                // pressureEffect is no longer used to directly calculate price, only marketPressure is retained for inventory replenishment logic.
-                const pressureEffect = 0; // Removed from price calculation to prevent double-dip.
-                // 7-day delay logic is moved to availabilityEffect.
-
-                // --- NEW: Availability-Based Price Pressure ---
-                let availabilityEffect = 0; // Initialize to 0.
-
-                // Add 1-week delay before player's actions impact price (moved from pressureEffect).
-                // This delays the entire supply/demand calculation, preventing same-day abuse.
+                // [GEMINI] --- MODEL FIX: "DELAYED PRESSURE" ---
+                // This is now the primary, and only, player-driven price force.
+                // It is 0 by default and is only populated by a player trade.
+                let pressureEffect = 0;
+                const PLAYER_PRESSURE_STRENGTH = 0.50; // Tuned strength
+                
+                // Add 1-week delay before player's actions impact price
                 if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    // Calculate the theoretical target stock
-                    const [minAvail, maxAvail] = commodity.canonicalAvailability;
-                    const baseMeanStock = (minAvail + maxAvail) / 2 * (modifier); // Use same modifier as baseline
-                    const marketAdaptationFactor = 1 - Math.min(0.5, inventoryItem.marketPressure * 0.5); // Use existing market pressure
-                    const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor); // Ensure target is at least 1
-
-                    // Calculate scarcity/surplus ratio
-                    const availabilityRatio = inventoryItem.quantity / targetStock;
-                    
-                    // Apply pressure: (1 - ratio)
-                    // If ratio < 1 (scarce), result is positive (price up)
-                    // If ratio > 1 (surplus), result is negative (price down)
-                    const AVAILABILITY_PRESSURE_STRENGTH = 0.50; // [GEMINI] Tuned from 0.10 to 0.50 for impact
-                    availabilityEffect = (1.0 - availabilityRatio) * localBaseline * AVAILABILITY_PRESSURE_STRENGTH; // Calculate effect only if delay is over
+                    // Check if lastPlayerInteractionTimestamp is > 0 to prevent this from running on Day 7 of a new game
+                    if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                         pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                    }
                 }
-                // --- End Availability Pressure ---
+                // [GEMINI] --- END MODEL FIX ---
+
+
+                // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
+                // The availabilityEffect block was removed entirely to fix
+                // the "native crash" bug and the "inverse logic" bug.
+                // --- End Removed Block ---
 
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
@@ -8465,8 +8649,8 @@ export class MarketService {
                 }
                 // --- End Depletion Price Hike ---
 
-                // [GEMINI] Removed pressureEffect from this calculation
-                let newPrice = price + randomFluctuation + reversionEffect + (availabilityEffect * priceHikeMultiplier);
+                // [GEMINI] Fixed price calculation. Removed availabilityEffect, restored pressureEffect.
+                let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -8474,6 +8658,7 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
+                // marketPressure still decays, as this is the "timer" for the pressureEffect
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
@@ -8521,6 +8706,8 @@ export class MarketService {
                     }
                     // --- END CHANGE ---
 
+                    // [GEMINI] Note: This logic is still sound. Player *buying* (negative pressure)
+                    // will correctly increase the targetStock, simulating new demand.
                     const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
@@ -8570,6 +8757,8 @@ export class MarketService {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        // [GEMINI] This calculation is now the core driver of the price change.
+        // It sets marketPressure, which is used by pressureEffect after 7 days.
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         
         if (transactionType === 'buy') {
@@ -8963,13 +9152,23 @@ export class TimeService {
      * @param {import('../simulation/MarketService.js').MarketService} marketService
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
+     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
      */
-    constructor(gameState, marketService, uiManager, logger) {
+    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.simulationService = null; // To be injected to avoid circular deps
+        this.newsTickerService = newsTickerService; // ADDED
+        this.simulationService = null; // To be injected
+    }
+
+    /**
+     * Injects the NewsTickerService.
+     * @param {import('../NewsTickerService.js').NewsTickerService} newsTickerService
+     */
+    setNewsTickerService(newsTickerService) {
+        this.newsTickerService = newsTickerService;
     }
 
     /**
@@ -8985,6 +9184,11 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // ADDED: Pulse the news ticker
+            if (this.newsTickerService) {
+                this.newsTickerService.pulse();
+            }
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
@@ -9374,8 +9578,9 @@ export class SimulationService {
      * @param {import('./GameState.js').GameState} gameState - The central state object.
      * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger) {
+    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED: Added newsTickerService
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
@@ -9384,7 +9589,8 @@ export class SimulationService {
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
-        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger);
+        // MODIFIED: Pass newsTickerService to TimeService constructor
+        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService);
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
@@ -10561,6 +10767,7 @@ export class UIManager {
         this.lastKnownState = null;
         this.missionService = null; // To be injected
         this.simulationService = null; // To be injected
+        this.newsTickerService = null; // ADDED
         this.debugService = null; // To be injected
         this.marketTransactionState = {}; // To store quantity and mode
         this.activeHighlightConfig = null; // Stores the config for currently visible highlights
@@ -10622,6 +10829,14 @@ export class UIManager {
     }
 
     /**
+     * Injects the NewsTickerService after instantiation.
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService
+     */
+    setNewsTickerService(newsTickerService) {
+        this.newsTickerService = newsTickerService;
+    }
+
+    /**
      * Injects the DebugService after instantiation.
      * @param {import('./DebugService.js').DebugService} service
      */
@@ -10648,6 +10863,7 @@ export class UIManager {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
             navBar: document.getElementById('nav-bar'),
+            newsTickerBar: document.getElementById('news-ticker-bar'), // ADDED
             topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
@@ -10713,10 +10929,21 @@ export class UIManager {
             }
         }
 
+        this._renderNewsTicker(); // ADDED
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         this.updateStickyBar(gameState);
         this.renderStickyBar(gameState);
+    }
+
+    /**
+     * Renders the content of the news ticker bar.
+     * @private
+     */
+    _renderNewsTicker() {
+        if (!this.newsTickerService || !this.cache.newsTickerBar) return;
+        
+        this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
     }
 
     renderNavigation(gameState) {
@@ -10753,7 +10980,7 @@ export class UIManager {
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">H</span>
+                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
@@ -10780,11 +11007,12 @@ export class UIManager {
                  const isSubNavActive = screenId === activeScreen;
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
+                 
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -10844,7 +11072,7 @@ export class UIManager {
                 break;
             }
             case SCREEN_IDS.MISSIONS:
-                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
@@ -11021,6 +11249,7 @@ export class UIManager {
         } else {
             this.marketScrollPosition = 0;
         }
+    
         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
@@ -11272,7 +11501,7 @@ export class UIManager {
                 button = document.createElement('button');
                 btnContainer.appendChild(button);
             } else {
-                 button = modal.querySelector('button');
+                button = modal.querySelector('button');
             }
             if (button) {
                 button.className = 'btn px-6 py-2';
@@ -11553,7 +11782,6 @@ export class UIManager {
     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-        
         // Use the new overlay if anchor is 'body', otherwise find the element
         const isOverlayAnchor = step.anchorElement === 'body';
         let referenceEl;
@@ -11617,6 +11845,7 @@ export class UIManager {
             toast.style.left = ''; // Clear direct styles
             toast.style.top = ''; 
             toast.style.transform = ''; // Clear direct transform
+            
             arrow.style.display = 'block'; // Show arrow
 
             // Configure Popper.js
@@ -11636,7 +11865,7 @@ export class UIManager {
             if (stepOffsetMod) {
                  baseModifiers.push(stepOffsetMod); 
             } else {
-                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
+                 baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
@@ -12030,7 +12259,7 @@ export class UIManager {
             objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
 
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
 
@@ -12070,7 +12299,7 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
@@ -12113,7 +12342,7 @@ export class UIManager {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
@@ -12323,8 +12552,8 @@ export class UIManager {
  * markets and exploit those self-created opportunities.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES } from '../../data/constants.js';
-import { calculateInventoryUsed } from '../../utils.js';
+import { GAME_RULES, LOCATION_IDS, PERK_IDS } from '../../data/constants.js';
+import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 
 /**
  * Defines the operational states for the bot's state machine.
@@ -12332,12 +12561,34 @@ import { calculateInventoryUsed } from '../../utils.js';
  */
 const BotState = {
     IDLE: 'IDLE',                                 // Bot is deciding what to do next.
+    MAINTENANCE: 'MAINTENANCE',                   // Bot is refueling or repairing.
+    SELLING_HELD_CARGO: 'SELLING_HELD_CARGO',     // Bot is selling cargo it's already holding.
     SEEKING_MANIPULATION: 'SEEKING_MANIPULATION', // Bot is actively looking for a new market to crash.
     PREPARING_CRASH: 'PREPARING_CRASH',           // Bot is traveling and buying goods in preparation for a crash.
     EXECUTING_CRASH: 'EXECUTING_CRASH',           // Bot is at the target market, selling goods to crash the price.
     EXECUTING_EXPLOIT: 'EXECUTING_EXPLOIT',       // Bot is exploiting a known crashed market (self-created or found).
+    SELLING_EXPLOITED_GOODS: 'SELLING_EXPLOITED_GOODS', // Bot is selling goods bought at an exploited price.
     TIME_WASTER: 'TIME_WASTER',                   // Bot is running a simple A-B trade to pass time.
+    
+    // Depletion Strategy States
+    SEEKING_DEPLETION: 'SEEKING_DEPLETION',       // Bot is looking for a market to buy out.
+    EXECUTING_DEPLETION: 'EXECUTING_DEPLETION',   // Bot is traveling to and buying out the market.
+    WAITING_FOR_HIKE: 'WAITING_FOR_HIKE',         // Bot is passing time for the price hike to activate.
+    EXPLOITING_HIKE: 'EXPLOITING_HIKE'            // Bot is buying from elsewhere to sell at the hiked price.
 };
+
+/**
+ * Defines the bot's overarching strategy for a simulation run.
+ * @enum {string}
+ */
+const BotStrategy = {
+    MIXED: 'MIXED',               // Default: 75% Crash, 25% Depletion
+    HONEST_TRADER: 'HONEST_TRADER', // Only runs simple A-B trades (TIME_WASTER state)
+    MANIPULATOR: 'MANIPULATOR',   // Only runs the Crash/Exploit loop
+    DEPLETE_ONLY: 'DEPLETE_ONLY',    // Only runs the Depletion/Exploit loop
+    PROSPECTOR: 'PROSPECTOR'      // Tries Honest Trader first, falls back to Manipulator
+};
+
 
 /**
  * @class AutomatedPlayer
@@ -12357,6 +12608,8 @@ export class AutomatedPlayer {
         this.isRunning = false;
         this.stopRequested = false;
         this.botState = BotState.IDLE;
+        this.activeStrategy = BotStrategy.MIXED; // Default strategy
+        this.MIN_PROFIT_MARGIN = 0.15; // PHASE 2: 15% minimum profit margin
 
         /**
          * @type {object | null}
@@ -12369,9 +12622,10 @@ export class AutomatedPlayer {
          * crashLocationId: 'mars'  // Location A (crash)
          * }
          * {
-         * type: 'EXPLOIT',
-         * goodId: 'plasteel',
-         * exploitLocationId: 'mars' // Location A (exploit)
+         * type: 'REFUEL_FOR_TRAVEL',
+         * needed: 350,
+         * nextState: BotState.PREPARING_CRASH,
+         * originalObjective: { ... }
          * }
          */
         this.currentObjective = null;
@@ -12382,40 +12636,78 @@ export class AutomatedPlayer {
          * Example: { goodId: 'plasteel', locationId: 'mars', priceLockEndDay: 450 }
          */
         this.plannedObjectives = [];
+        
+        /**
+         * @type {object}
+         * @description Tracks performance metrics for the summary report.
+         */
+        this.metrics = {
+            totalTrades: 0,
+            profitableTrades: 0,
+            totalNetProfit: 0,
+            totalFuelCost: 0,
+            totalRepairCost: 0,
+            daysSimulated: 0,
+            profitByGood: {},
+            objectivesStarted: 0,
+            objectivesCompleted: 0,
+            objectivesAborted: 0,
+            strategyUsed: BotStrategy.MIXED
+        };
+        /** @type {number} */
+        this.simulationStartDay = 0;
     }
 
     /**
      * Starts the automated play simulation.
      * @param {object} config - Configuration for the simulation run.
      * @param {number} config.daysToRun - The number of in-game days to simulate.
+     * @param {string} [config.strategy] - The strategy for the bot to use.
      * @param {function} updateCallback - A function to call with progress updates.
      */
-    async runSimulation({ daysToRun }, updateCallback) {
+    async runSimulation({ daysToRun, strategy }, updateCallback) {
         if (this.isRunning) {
-            this.logger.warn('AutomatedPlayer', 'AUTOTRADER-01 is already running.');
+            this.logger.warn('Bot', 'AUTOTRADER-01 is already running.');
             return;
         }
 
         this.isRunning = true;
         this.stopRequested = false;
         this.botState = BotState.IDLE;
+        this.activeStrategy = strategy || BotStrategy.MIXED; // Set strategy for this run
         const startDay = this.gameState.day;
         const endDay = startDay + daysToRun;
+        
+        // Reset metrics for new run
+        this.simulationStartDay = startDay;
+        this.metrics = {
+            totalTrades: 0,
+            profitableTrades: 0,
+            totalNetProfit: 0,
+            totalFuelCost: 0,
+            totalRepairCost: 0,
+            daysSimulated: 0,
+            profitByGood: {},
+            objectivesStarted: 0,
+            objectivesCompleted: 0,
+            objectivesAborted: 0,
+            strategyUsed: this.activeStrategy
+        };
 
-        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting advanced simulation for ${daysToRun} days.`);
+        this.logger.info.system('Bot', startDay, 'SIMULATION_START', `Starting advanced simulation for ${daysToRun} days using strategy: ${this.activeStrategy}.`);
 
         while (this.gameState.day < endDay && !this.stopRequested) {
-            // --- 1. Handle Maintenance ---
-            this._handleMaintenance();
-
-            // --- 2. Execute State Logic ---
+            // --- 1. Execute State Logic ---
             await this._decideNextAction();
 
-            // --- 3. Update UI & Pause ---
+            // --- 2. Update UI & Pause ---
             updateCallback(this.gameState.day, endDay);
             await new Promise(resolve => setTimeout(resolve, 10)); // Tiny pause
         }
 
+        // --- 3. Log Summary Report ---
+        this._logSummaryReport();
+        
         this.logger.info.system('Bot', this.gameState.day, 'SIMULATION_END', 'Simulation finished.');
         this.isRunning = false;
     }
@@ -12434,9 +12726,32 @@ export class AutomatedPlayer {
      * @private
      */
     async _decideNextAction() {
+        // --- 0. Handle Popup Modals (like Age Events) ---
+        if (this._handleAgeEventChoice()) {
+            return; // An event was handled, stop this tick
+        }
+
+        // --- 1. Handle Proactive Maintenance ---
+        // This check runs *before* the state switch to interrupt any state
+        // if maintenance becomes necessary.
+        // It does NOT catch "stranded" scenarios, which are handled by pre-flight checks.
+        if (this.botState !== BotState.MAINTENANCE && 
+            (!this.currentObjective || this.currentObjective.type !== 'REFUEL_FOR_TRAVEL') &&
+            this._needsMaintenance()) {
+            this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Low resources detected. Switching to maintenance state.');
+            this.botState = BotState.MAINTENANCE;
+        }
+
+        // --- 2. Execute State Logic ---
         switch (this.botState) {
             case BotState.IDLE:
                 await this._evaluateOpportunities();
+                break;
+            case BotState.MAINTENANCE:
+                await this._executeMaintenance();
+                break;
+            case BotState.SELLING_HELD_CARGO:
+                await this._executeSellHeldCargo();
                 break;
             case BotState.SEEKING_MANIPULATION:
                 await this._findCrashOpportunity();
@@ -12450,83 +12765,367 @@ export class AutomatedPlayer {
             case BotState.EXECUTING_EXPLOIT:
                 await this._executeExploit();
                 break;
+            case BotState.SELLING_EXPLOITED_GOODS:
+                await this._executeSellExploited();
+                break;
             case BotState.TIME_WASTER:
                 await this._executeTimeWaster();
+                break;
+            
+            // Depletion Strategy
+            case BotState.SEEKING_DEPLETION:
+                await this._findDepletionOpportunity();
+                break;
+            case BotState.EXECUTING_DEPLETION:
+                await this._executeDepletion();
+                break;
+            case BotState.WAITING_FOR_HIKE:
+                await this._executeWait();
+                break;
+            case BotState.EXPLOITING_HIKE:
+                await this._executeExploitHike();
                 break;
         }
     }
 
     /**
      * [State: IDLE]
-     * Bot decides what to do. Priority is exploiting known opportunities.
-     * If none exist, it seeks to create one.
+     * Bot decides what to do based on its active strategy.
      * @private
      */
     async _evaluateOpportunities() {
-        const exploit = this._findExploitOpportunity();
-        if (exploit) {
-            this.currentObjective = exploit;
-            this.botState = BotState.EXECUTING_EXPLOIT;
-            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `Found exploit: Buy ${exploit.goodId} @ ${exploit.exploitLocationId}`);
-        } else {
-            this.botState = BotState.SEEKING_MANIPULATION;
-            this.logger.info.bot(this.gameState.day, 'OBJECTIVE', `No exploits. Seeking new market to crash.`);
+        // --- PHASE 1 REFACTOR: Prioritize selling held cargo ---
+        const heldCargoTrade = this._findBestSellLocationForHeldCargo();
+        if (heldCargoTrade) {
+            this.currentObjective = {
+                type: 'SELL_HELD_CARGO',
+                ...heldCargoTrade
+            };
+            this.botState = BotState.SELLING_HELD_CARGO;
+            this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[HELD CARGO]: Found profitable sale for ${heldCargoTrade.quantity}x ${heldCargoTrade.goodId} @ ${heldCargoTrade.sellLocationId}. Profit: ${formatCredits(heldCargoTrade.estimatedProfit)}.`);
+            this.metrics.objectivesStarted++;
+            return;
+        }
+        // --- END REFACTOR ---
+
+        // 1. Check for ready-to-exploit self-crashed markets
+        // (Only if strategy allows manipulation)
+        if (this.activeStrategy === BotStrategy.MIXED || this.activeStrategy === BotStrategy.MANIPULATOR) {
+            const exploit = this._findReadySelfExploit();
+            if (exploit) {
+                this.currentObjective = exploit;
+                this.botState = BotState.EXECUTING_EXPLOIT;
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Found self-created exploit: Buy ${exploit.goodId} @ ${exploit.exploitLocationId}`);
+                this.metrics.objectivesStarted++;
+                return;
+            }
+        }
+
+        // 2. Check for persistent objective
+        if (this.currentObjective) {
+            // Check if the old plan is still valid
+            if (this.currentObjective.type === 'CRASH' && this._isCrashPlanStillValid()) {
+                // Stick to the plan
+                this.botState = BotState.PREPARING_CRASH;
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Continuing persistent CRASH loop for ${this.currentObjective.goodId}.`);
+                // Note: This is a continuation, not a new objective
+                return;
+            } else if (this.currentObjective.type !== 'CRASH' && this.currentObjective.type !== 'SIMPLE_TRADE') {
+                // This means we just finished an EXPLOIT or SELL_EXPLOITED
+                // We need to re-validate the original crash plan
+                const goodIdToRevalidate = this.currentObjective.goodId; // Store goodId
+                
+                // --- PHASE 1 FIX: Check that the returned plan is fully valid ---
+                const validPlan = this._findCrashOpportunity(goodIdToRevalidate);
+                
+                // Check for a complete, valid plan object, not just a truthy value.
+                if (validPlan && validPlan.goodId && validPlan.buyFromLocationId && validPlan.crashLocationId) {
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Re-validating and repeating CRASH loop for ${validPlan.goodId}.`);
+                    this.currentObjective = validPlan;
+                    this.botState = BotState.PREPARING_CRASH;
+                    this.metrics.objectivesStarted++;
+                    return;
+                } else {
+                     this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Failed to re-validate loop for ${goodIdToRevalidate}. Plan is no longer viable.`);
+                     // Do not proceed, fall through to finding a new objective
+                }
+                // --- END FIX ---
+            }
+        }
+        
+        // 3. No exploit and no valid persistent plan, find a new one based on strategy.
+        this.currentObjective = null;
+
+        switch (this.activeStrategy) {
+            case BotStrategy.HONEST_TRADER:
+                this.botState = BotState.TIME_WASTER; // Will find a *new* simple trade
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', 'Strategy: HONEST_TRADER. Seeking simple trade.');
+                break;
+            
+            case BotStrategy.MANIPULATOR:
+                this.botState = BotState.SEEKING_MANIPULATION;
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', 'Strategy: MANIPULATOR. Seeking new market crash opportunity.');
+                break;
+            
+            case BotStrategy.DEPLETE_ONLY:
+                this.botState = BotState.SEEKING_DEPLETION;
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', 'Strategy: DEPLETE_ONLY. Seeking new depletion opportunity.');
+                break;
+            
+            case BotStrategy.PROSPECTOR:
+                const simpleTrade = this._findBestSimpleTrade();
+                if (simpleTrade) {
+                    this.currentObjective = { ...simpleTrade, type: 'SIMPLE_TRADE', hasGoods: false };
+                    this.botState = BotState.TIME_WASTER;
+                    this.metrics.objectivesStarted++;
+                    // --- PHASE 3 LOGGING ---
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[PROSPECTOR]: Found simple trade. Buy ${simpleTrade.goodId} @ ${simpleTrade.buyLocationId} -> Sell @ ${simpleTrade.sellLocationId}. Margin: ${(simpleTrade.profitPerUnit / simpleTrade.buyPrice * 100).toFixed(1)}%. Est. PPD: ${formatCredits(simpleTrade.estimatedPPD)}.`);
+                } else {
+                    // --- PHASE 3 LOGGING ---
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[PROSPECTOR]: No simple trades found meeting ${this.MIN_PROFIT_MARGIN * 100}% margin. Falling back to manipulation.`);
+                    this.botState = BotState.SEEKING_MANIPULATION;
+                }
+                break;
+            
+            case BotStrategy.MIXED:
+            default:
+                // 25% chance to try the Depletion strategy
+                if (Math.random() < 0.25) {
+                    this.botState = BotState.SEEKING_DEPLETION;
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', 'Strategy: MIXED. Seeking new depletion opportunity.');
+                } else {
+                    // 75% chance to try the standard Crash strategy
+                    this.botState = BotState.SEEKING_MANIPULATION;
+                    this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Strategy: MIXED. Seeking new market crash opportunity.`);
+                }
+                break;
         }
     }
 
     /**
-     * [State: SEEKING_MANIPULATION]
-     * Bot scans for the best market to crash (A) and a place to buy goods from (B).
+     * [State: MAINTENANCE]
+     * Bot travels to specific locations to refuel (Jupiter) or repair (Luna).
+     * Handles both general low-resource maintenance and specific "stranded" refueling.
      * @private
      */
-    async _findCrashOpportunity() {
-        // This is a complex calculation: find a good, find a cheap place to buy it (B),
-        // and find an *exporter* to sell it at (A) to maximize the crash.
-        // For simplicity, we'll find a good to crash, then find a place to buy it.
-
-        const state = this.gameState.getState();
-        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier && c.tier > 1); // Ignore T1
-        if (availableCommodities.length === 0) {
-            this.botState = BotState.TIME_WASTER; // No goods to manipulate
+    async _executeMaintenance() {
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) {
+            this.botState = BotState.IDLE; // No ship to maintain
             return;
         }
+        const shipState = this.gameState.player.shipStates[activeShip.id];
 
-        let bestCrashPlan = null;
-        let maxPotential = 0;
+        // --- Priority 1: Handle "Stranded" Refuel Objective ---
+        if (this.currentObjective && this.currentObjective.type === 'REFUEL_FOR_TRAVEL') {
+            const { needed, nextState, originalObjective } = this.currentObjective;
 
-        for (const good of availableCommodities) {
-            // Find the best (cheapest) place to buy this good
-            const buyLocation = this._findCheapestMarket(good.id);
-            if (!buyLocation) continue;
+            // Check if the 'needed' fuel is impossible for this ship to hold.
+            // This breaks the infinite loop seen in the log (needed: 10004, max: 600).
+            if (needed > activeShip.maxFuel && shipState.fuel === activeShip.maxFuel) {
+                this.logger.error('Bot', `MAINTENANCE_FAIL: Objective requires ${needed} fuel, but ship max is ${activeShip.maxFuel}. Ship is full. Aborting objective to prevent loop.`);
+                this.currentObjective = null; // Clear the impossible objective
+                this.botState = BotState.IDLE; // Go back to deciding what to do
+                this.metrics.objectivesAborted++; // Track failure
+                return;
+            }
 
-            // Find the best (export) location to *crash* this good
-            // This is a market that already has a low price, so we can crash it further.
-            const crashLocation = this._findBestCrashTarget(good.id, buyLocation.id);
-            if (!crashLocation) continue;
-
-            // We found a potential plan. How good is it?
-            // Simple heuristic: Tier of good * (profit from simple trade)
-            // This prioritizes high-tier goods on profitable routes.
-            const potential = good.tier * (crashLocation.price - buyLocation.price);
-            if (potential > maxPotential) {
-                maxPotential = potential;
-                bestCrashPlan = {
-                    type: 'CRASH',
-                    goodId: good.id,
-                    buyFromLocationId: buyLocation.id,
-                    crashLocationId: crashLocation.id,
-                };
+            if (shipState.fuel < needed) {
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', `Executing local refuel to get ${needed} fuel.`);
+                // This calls the "stranded" logic: buy expensive local fuel
+                // to meet the specific 'needed' amount.
+                this._botRefuel(needed); 
+                return; // Wait for next tick to re-check
+            } else {
+                // Success! We have enough fuel.
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Local refuel complete. Resuming original objective.');
+                this.currentObjective = originalObjective; // Restore original plan
+                this.botState = nextState; // Go back to the state we were in
+                return;
             }
         }
 
-        if (bestCrashPlan) {
-            this.currentObjective = bestCrashPlan;
-            this.botState = BotState.PREPARING_CRASH;
-            this.logger.info.bot(this.gameState.day, 'PLAN', `New crash plan: Buy ${bestCrashPlan.goodId} @ ${bestCrashPlan.buyFromLocationId}, Crash @ ${bestCrashPlan.crashLocationId}`);
+        // --- Priority 2: General Low Resources ---
+        const fuelPct = (shipState.fuel / activeShip.maxFuel) * 100;
+        const healthPct = (shipState.health / activeShip.maxHealth) * 100;
+
+        // General Low Fuel
+        if (fuelPct < 30) {
+            if (this.gameState.currentLocationId === LOCATION_IDS.JUPITER) {
+                // We are at the cheap spot, fill 'er up
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Arrived at Jupiter. Refueling.');
+                this._botRefuel(activeShip.maxFuel); // Pass maxFuel to ensure a full tank
+            } else {
+                // We are not at Jupiter. Check if we can get there.
+                const state = this.gameState.getState();
+                const travelInfo = state.TRAVEL_DATA[state.currentLocationId][LOCATION_IDS.JUPITER];
+                const fuelToJupiter = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+                
+                if (shipState.fuel < fuelToJupiter) {
+                    // STRANDED: Buy just enough local fuel to get to Jupiter
+                    this.logger.warn('Bot', `Stranded at ${state.currentLocationId}. Buying expensive local fuel just to reach Jupiter.`);
+                    this._botRefuel(fuelToJupiter + 5); // Buy just enough + a small buffer
+                } else {
+                    // We have enough fuel to make the trip.
+                    this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', `Fuel ${fuelPct.toFixed(0)}%. Traveling to Jupiter.`);
+                    this.simulationService.travelService.initiateTravel(LOCATION_IDS.JUPITER);
+                }
+            }
+            return; // Handle one maintenance task at a time
+        }
+
+        // General Low Health
+        if (healthPct < 30) {
+            if (this.gameState.currentLocationId !== LOCATION_IDS.LUNA) {
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', `Hull ${healthPct.toFixed(0)}%. Traveling to Luna.`);
+                this.simulationService.travelService.initiateTravel(LOCATION_IDS.LUNA);
+            } else {
+                this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Arrived at Luna. Repairing.');
+                this._botRepair();
+            }
+            return;
+        }
+
+        // If both are fine, maintenance is done.
+        this.logger.info.system('Bot', this.gameState.day, 'MAINTENANCE', 'Maintenance complete. Resuming operations.');
+        this.botState = BotState.IDLE;
+    }
+
+
+    /**
+     * [State: SELLING_HELD_CARGO]
+     * Bot travels to the best sell location and sells its cargo.
+     * @private
+     */
+    async _executeSellHeldCargo() {
+        const { goodId, sellLocationId, quantity } = this.currentObjective;
+        const state = this.gameState.getState();
+        const activeShip = this.simulationService._getActiveShip();
+
+        // 1. Travel to sell location
+        if (state.currentLocationId !== sellLocationId) {
+            // --- PHASE 3 LOGGING ---
+            this.logger.info.system('Bot', state.day, 'SELL_HELD', `Traveling to ${sellLocationId} to sell ${quantity}x ${goodId}`);
+
+            // --- Pre-flight check ---
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `SELL_HELD_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                // --- FIX: Create a temporary REFUEL objective to break loop ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5, // Add 5 fuel buffer
+                    nextState: BotState.SELLING_HELD_CARGO, // State to return to
+                    originalObjective: originalObjective // The plan to resume
+                };
+                this.botState = BotState.MAINTENANCE; 
+                return;
+            }
+            // --- End Fix ---
+
+            this.simulationService.travelService.initiateTravel(sellLocationId);
+            return;
+        }
+
+        // 2. Sell entire cargo
+        const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+        if (sellQty > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+
+            // --- PHASE 3 LOGGING ---
+            this.logger.info.system('Bot', state.day, 'SELL_HELD_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalNetProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+
+            // Track profit by good
+            if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+            this.metrics.profitByGood[goodId] += profit;
+            
+            this.metrics.objectivesCompleted++;
         } else {
-            // No good manipulation routes, just run a simple trade
-            this.botState = BotState.TIME_WASTER;
-            this.logger.info.bot(this.gameState.day, 'PLAN', `No good crash plans. Running simple trade.`);
+             // --- PHASE 3 LOGGING ---
+            this.logger.warn('Bot', `SELL_HELD_FAIL: Arrived at ${sellLocationId} but have no ${goodId} to sell.`);
+             this.metrics.objectivesAborted++;
+        }
+
+        // 3. Loop is complete. Go IDLE to re-evaluate.
+        this.currentObjective = null;
+        this.botState = BotState.IDLE;
+    }
+
+    /**
+     * [State: SEEKING_MANIPULATION]
+     * Bot scans for the top 5 crash plans and picks one.
+     * @param {string|null} [specificGoodId=null] - If provided, only finds plans for this good.
+     * @returns {object|null} A chosen plan, or null.
+     * @private
+     */
+    async _findCrashOpportunity(specificGoodId = null) {
+        const state = this.gameState.getState();
+        let availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier && c.tier > 1); // Ignore T1
+        
+        if (specificGoodId) {
+            availableCommodities = availableCommodities.filter(c => c.id === specificGoodId);
+        }
+
+        if (availableCommodities.length === 0) {
+            if (!specificGoodId) this.botState = BotState.TIME_WASTER; // No goods to manipulate
+            return null;
+        }
+
+        let top5Plans = [];
+
+        for (const good of availableCommodities) {
+            const buyLocation = this._findCheapestMarket(good.id);
+            if (!buyLocation) continue;
+
+            const crashLocation = this._findBestCrashTarget(good.id, buyLocation.id);
+            if (!crashLocation) continue;
+            
+            const potential = good.tier * (crashLocation.price - buyLocation.price);
+            
+            if (potential > 0) {
+                top5Plans.push({
+                    potential,
+                    plan: {
+                        type: 'CRASH',
+                        goodId: good.id,
+                        buyFromLocationId: buyLocation.id,
+                        crashLocationId: crashLocation.id,
+                    }
+                });
+            }
+        }
+
+        if (top5Plans.length > 0) {
+            // Sort by potential and take top 5
+            top5Plans.sort((a, b) => b.potential - a.potential);
+            const bestPlans = top5Plans.slice(0, 5).map(p => p.plan);
+            
+            // Randomly select one
+            const chosenPlan = bestPlans[Math.floor(Math.random() * bestPlans.length)];
+            
+            if (specificGoodId) {
+                return chosenPlan; // Return the plan for re-validation
+            }
+
+            this.currentObjective = chosenPlan;
+            this.botState = BotState.PREPARING_CRASH;
+            this.metrics.objectivesStarted++;
+            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `New crash plan (1 of ${bestPlans.length}): Buy ${chosenPlan.goodId} @ ${chosenPlan.buyFromLocationId}, Crash @ ${chosenPlan.crashLocationId}`);
+        } else {
+            if (!specificGoodId) {
+                // No good manipulation routes, just run a simple trade
+                this.botState = BotState.TIME_WASTER;
+                this.logger.info.system('Bot', this.gameState.day, 'PLAN', `No good crash plans. Running simple trade.`);
+            }
+            return null;
         }
     }
 
@@ -12537,25 +13136,50 @@ export class AutomatedPlayer {
      */
     async _executePreparation() {
         const { goodId, buyFromLocationId } = this.currentObjective;
+        const state = this.gameState.getState();
 
         // 1. Travel to buy location
-        if (this.gameState.currentLocationId !== buyFromLocationId) {
-            this.logger.info.bot(this.gameState.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
+        if (state.currentLocationId !== buyFromLocationId) {
+            this.logger.info.system('Bot', state.day, 'PREP', `Traveling to ${buyFromLocationId} to buy ${goodId}`);
+            
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyFromLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `PREP_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${buyFromLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                // Store the original objective and set temporary maintenance plan
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5, // Add 5 fuel buffer
+                    nextState: BotState.PREPARING_CRASH, // State to return to
+                    originalObjective: originalObjective // The plan to resume
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+            
             this.simulationService.travelService.initiateTravel(buyFromLocationId);
+            // After travel, the state is new, so we return to let the next tick handle purchase
+            return; 
         }
 
-        // 2. Buy max cargo
-        const price = this.gameState.market.prices[buyFromLocationId][goodId];
+        // 2. Buy max cargo (we are at the buy location)
+        const price = state.market.prices[buyFromLocationId][goodId];
         const buyQty = this._calculateMaxBuy(goodId, price);
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.bot(this.gameState.day, 'PREP', `Bought ${buyQty}x ${goodId}`);
+            this.logger.info.system('Bot', state.day, 'PREP_BUY', `Bought ${buyQty}x ${goodId} @ ${formatCredits(price)}`);
             this.botState = BotState.EXECUTING_CRASH;
         } else {
             // Can't buy. Abort plan.
-            this.logger.warn('AutomatedPlayer', `PREP_FAIL: Arrived at ${buyFromLocationId} but could not buy ${goodId}. Aborting.`);
+            this.logger.warn('Bot', `PREP_FAIL: Arrived at ${buyFromLocationId} but could not buy ${goodId}. Aborting.`);
             this.currentObjective = null;
             this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
         }
     }
 
@@ -12566,18 +13190,50 @@ export class AutomatedPlayer {
      */
     async _executeCrash() {
         const { goodId, crashLocationId } = this.currentObjective;
+        const state = this.gameState.getState();
 
         // 1. Travel to crash location
-        if (this.gameState.currentLocationId !== crashLocationId) {
-            this.logger.info.bot(this.gameState.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
+        if (state.currentLocationId !== crashLocationId) {
+            this.logger.info.system('Bot', state.day, 'CRASH', `Traveling to ${crashLocationId} to crash ${goodId}`);
+
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][crashLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `CRASH_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${crashLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_CRASH, 
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+
             this.simulationService.travelService.initiateTravel(crashLocationId);
+            return; // Let next tick handle sale
         }
 
         // 2. Sell entire cargo
         const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
         if (sellQty > 0) {
-            this.simulationService.playerActionService.sellItem(goodId, sellQty);
-            this.logger.info.bot(this.gameState.day, 'CRASH', `CRASHED MARKET: Sold ${sellQty}x ${goodId} at ${crashLocationId}`);
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+            
+            this.logger.info.system('Bot', state.day, 'CRASH_SELL', `CRASHED: Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalNetProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+            
+            // Track profit by good
+            if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+            this.metrics.profitByGood[goodId] += profit;
 
             // 3. Add to memory
             const inventoryItem = this.gameState.market.inventory[crashLocationId][goodId];
@@ -12588,13 +13244,19 @@ export class AutomatedPlayer {
                 crashedOnDay: this.gameState.day,
             });
 
-            this.currentObjective = null;
-            this.botState = BotState.TIME_WASTER; // Go pass time
+            // 4. Go directly to EXPLOIT state
+            this.currentObjective.type = 'EXPLOIT';
+            this.currentObjective.exploitLocationId = this.currentObjective.crashLocationId;
+            delete this.currentObjective.buyFromLocationId;
+            delete this.currentObjective.crashLocationId;
+
+            this.botState = BotState.EXECUTING_EXPLOIT;
         } else {
             // Arrived with no cargo? Abort.
-            this.logger.warn('AutomatedPlayer', `CRASH_FAIL: Arrived at ${crashLocationId} but have no ${goodId} to sell. Aborting.`);
+            this.logger.warn('Bot', `CRASH_FAIL: Arrived at ${crashLocationId} but have no ${goodId} to sell. Aborting.`);
             this.currentObjective = null;
             this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
         }
     }
 
@@ -12605,75 +13267,599 @@ export class AutomatedPlayer {
      */
     async _executeExploit() {
         const { goodId, exploitLocationId } = this.currentObjective;
+        const state = this.gameState.getState();
 
         // 1. Travel to exploit location
-        if (this.gameState.currentLocationId !== exploitLocationId) {
-            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
+        if (state.currentLocationId !== exploitLocationId) {
+            this.logger.info.system('Bot', state.day, 'EXPLOIT', `Traveling to ${exploitLocationId} to buy cheap ${goodId}`);
+
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][exploitLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `EXPLOIT_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${exploitLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_EXPLOIT, 
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+
             this.simulationService.travelService.initiateTravel(exploitLocationId);
+            return;
         }
 
         // 2. Buy max cargo
-        const price = this.gameState.market.prices[exploitLocationId][goodId];
+        const price = state.market.prices[exploitLocationId][goodId];
         const buyQty = this._calculateMaxBuy(goodId, price);
 
         if (buyQty > 0) {
             this.simulationService.playerActionService.buyItem(goodId, buyQty);
-            this.logger.info.bot(this.gameState.day, 'EXPLOIT', `Exploited market: Bought ${buyQty}x ${goodId} at ${exploitLocationId}`);
+            this.logger.info.system('Bot', state.day, 'EXPLOIT_BUY', `EXPLOITED: Bought ${buyQty}x ${goodId} @ ${formatCredits(price)}`);
+            
+            // 3. Find a place to sell the goods we just bought
+            const sellLocation = this._findBestSellLocation(goodId, exploitLocationId);
+
+            if (sellLocation) {
+                this.logger.info.system('Bot', state.day, 'EXPLOIT_PLAN', `Goods secured. Now traveling to ${sellLocation.id} to sell.`);
+                this.currentObjective.type = 'SELL_EXPLOITED';
+                this.currentObjective.sellToLocationId = sellLocation.id; 
+                this.botState = BotState.SELLING_EXPLOITED_GOODS;
+            } else {
+                this.logger.warn('Bot', `EXPLOIT_FAIL: No market found to sell ${goodId}. Dumping objective.`);
+                this.currentObjective = null;
+                this.botState = BotState.IDLE;
+                this.metrics.objectivesAborted++;
+            }
+
         } else {
             // Market may have recovered or stock is 0.
-            this.logger.warn('AutomatedPlayer', `EXPLOIT_FAIL: Arrived at ${exploitLocationId} but could not buy ${goodId}.`);
+            this.logger.warn('Bot', `EXPLOIT_FAIL: Arrived at ${exploitLocationId} but could not buy ${goodId}.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
         }
 
-        // 3. Remove from memory (so we don't try again)
+        // 4. Remove from memory (so we don't try again immediately)
         this.plannedObjectives = this.plannedObjectives.filter(obj => !(obj.goodId === goodId && obj.locationId === exploitLocationId));
-        this.currentObjective = null;
-        this.botState = BotState.IDLE; // Go back to deciding
     }
+
+    /**
+     * [State: SELLING_EXPLOITED_GOODS]
+     * Bot travels to the best sell location and sells its cargo.
+     * @private
+     */
+    async _executeSellExploited() {
+        const { goodId, sellToLocationId } = this.currentObjective;
+        const state = this.gameState.getState();
+
+        // 1. Travel to sell location
+        if (state.currentLocationId !== sellToLocationId) {
+            this.logger.info.system('Bot', state.day, 'SELL_EXPLOIT', `Traveling to ${sellToLocationId} to sell ${goodId}`);
+
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellToLocationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `SELL_EXPLOIT_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellToLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective; 
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.SELLING_EXPLOITED_GOODS, 
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+
+            this.simulationService.travelService.initiateTravel(sellToLocationId);
+            return;
+        }
+
+        // 2. Sell entire cargo
+        const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+        if (sellQty > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+
+            this.logger.info.system('Bot', state.day, 'SELL_EXPLOIT_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalNetProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+
+            // Track profit by good
+            if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+            this.metrics.profitByGood[goodId] += profit;
+
+        } else {
+            this.logger.warn('Bot', `SELL_EXPLOIT_FAIL: Arrived at ${sellToLocationId} but have no ${goodId} to sell.`);
+        }
+
+        // 3. Loop is complete. Go IDLE to re-evaluate (will pick up persistence).
+        this.botState = BotState.IDLE;
+        this.metrics.objectivesCompleted++;
+    }
+
 
     /**
      * [State: TIME_WASTER]
      * Bot finds and executes a simple A-B trade to pass time.
+     * --- [PHASE 1A] This is now a stateful function that executes a stored plan ---
      * @private
      */
     async _executeTimeWaster() {
-        const simpleTrade = this._findBestSimpleTrade();
-        if (simpleTrade) {
-            this.logger.info.bot(this.gameState.day, 'TIME_WASTER', `Running simple trade: ${simpleTrade.goodId} from ${simpleTrade.buyLocationId} to ${simpleTrade.sellLocationId}`);
+        // If we're in this state, we're either executing a simple trade
+        // or we need to find one (if strategy is HONEST_TRADER).
 
-            // Go to buy location
-            if (this.gameState.currentLocationId !== simpleTrade.buyLocationId) {
-                this.simulationService.travelService.initiateTravel(simpleTrade.buyLocationId);
+        // 1. Find a plan if we don't have one
+        if (!this.currentObjective || this.currentObjective.type !== 'SIMPLE_TRADE') {
+            const simpleTrade = this._findBestSimpleTrade();
+            if (simpleTrade) {
+                this.currentObjective = { ...simpleTrade, type: 'SIMPLE_TRADE', hasGoods: false };
+                this.metrics.objectivesStarted++;
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `[TRADE]: New simple trade. Buy ${simpleTrade.goodId} @ ${simpleTrade.buyLocationId} -> Sell @ ${simpleTrade.sellLocationId}. Margin: ${(simpleTrade.profitPerUnit / simpleTrade.buyPrice * 100).toFixed(1)}%. Est. PPD: ${formatCredits(simpleTrade.estimatedPPD)}.`);
+            } else {
+                // No trades found. Wait one day and go back to IDLE.
+                this.logger.info.system('Bot', this.gameState.day, 'TIME_WASTER', 'No profitable simple trades found. Waiting 1 day.');
+                this.simulationService.timeService.advanceDays(1);
+                this.botState = BotState.IDLE;
+                return;
             }
-            // Buy
-            const buyQty = this._calculateMaxBuy(simpleTrade.goodId, simpleTrade.buyPrice);
-            if (buyQty > 0) this.simulationService.playerActionService.buyItem(simpleTrade.goodId, buyQty);
-
-            // Go to sell location
-            if (this.gameState.currentLocationId !== simpleTrade.sellLocationId) {
-                this.simulationService.travelService.initiateTravel(simpleTrade.sellLocationId);
-            }
-            // Sell
-            const sellQty = this.simulationService._getActiveInventory()[simpleTrade.goodId]?.quantity || 0;
-            if (sellQty > 0) this.simulationService.playerActionService.sellItem(simpleTrade.goodId, sellQty);
-        } else {
-            // No trades, just wait
-            this.simulationService.timeService.advanceDays(1);
         }
 
-        this.botState = BotState.IDLE; // Re-evaluate opportunities
+        // 2. Execute the plan
+        const { goodId, buyLocationId, sellLocationId, buyPrice, hasGoods } = this.currentObjective;
+        const state = this.gameState.getState();
+        const activeShip = this.simulationService._getActiveShip();
+
+        // --- STAGE 1: GO TO BUY LOCATION & BUY ---
+        if (!hasGoods) {
+            // 2a. Travel to buy location
+            if (state.currentLocationId !== buyLocationId) {
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', state.day, 'TRADE_BUY', `Traveling to ${buyLocationId} to buy ${goodId}`);
+                const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyLocationId];
+                const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+                
+                if (activeShip.fuel < requiredFuel) {
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${buyLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                    // --- FIX: Create a temporary REFUEL objective ---
+                    const originalObjective = this.currentObjective;
+                    this.currentObjective = {
+                        type: 'REFUEL_FOR_TRAVEL',
+                        needed: requiredFuel + 5,
+                        nextState: BotState.TIME_WASTER,
+                        originalObjective: originalObjective
+                    };
+                    this.botState = BotState.MAINTENANCE;
+                    return;
+                }
+                this.simulationService.travelService.initiateTravel(buyLocationId);
+                return;
+            }
+            
+            // 2b. Buy
+            // --- PHASE 1.1 FIX: Re-check quantity on arrival ---
+            const currentStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+            if (currentStock <= 0) {
+                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${buyLocationId} but ${goodId} is now out of stock. Aborting.`);
+                this.currentObjective = null;
+                this.botState = BotState.IDLE;
+                this.metrics.objectivesAborted++;
+                return;
+            }
+            // --- END FIX ---
+            
+            const buyQty = this._calculateMaxBuy(goodId, buyPrice);
+            if (buyQty > 0) {
+                this.simulationService.playerActionService.buyItem(goodId, buyQty);
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', state.day, 'TRADE_BUY', `Bought ${buyQty}x ${goodId} @ ${formatCredits(buyPrice)}`);
+                this.currentObjective.hasGoods = true; // Mark as having bought goods
+                // Proceed immediately to sell step logic
+            } else {
+                // Can't buy (no space, no money). Abort plan.
+                // --- PHASE 3 LOGGING ---
+                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${buyLocationId} but could not buy ${goodId} (Price: ${formatCredits(buyPrice)}, Stock: ${currentStock}). Aborting.`);
+                this.currentObjective = null;
+                this.botState = BotState.IDLE;
+                this.metrics.objectivesAborted++;
+                return;
+            }
+        }
+
+        // --- STAGE 2: GO TO SELL LOCATION & SELL ---
+        if (this.currentObjective.hasGoods) {
+             // 2c. Travel to sell location
+            if (state.currentLocationId !== sellLocationId) {
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', state.day, 'TRADE_SELL', `Traveling to ${sellLocationId} to sell ${goodId}`);
+                const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocationId];
+                const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+
+                if (activeShip.fuel < requiredFuel) {
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                    // --- FIX: Create a temporary REFUEL objective ---
+                    const originalObjective = this.currentObjective;
+                    this.currentObjective = {
+                        type: 'REFUEL_FOR_TRAVEL',
+                        needed: requiredFuel + 5,
+                        nextState: BotState.TIME_WASTER,
+                        originalObjective: originalObjective
+                    };
+                    this.botState = BotState.MAINTENANCE;
+                    return;
+                }
+                this.simulationService.travelService.initiateTravel(sellLocationId);
+                return;
+            }
+            
+            // 2d. Sell
+            const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+            if (sellQty > 0) {
+                const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+                const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+                const profit = saleValue - (avgCost * sellQty);
+                
+                // --- PHASE 3 LOGGING ---
+                this.logger.info.system('Bot', state.day, 'TRADE_SELL', `Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
+                this.metrics.totalTrades++;
+                this.metrics.totalNetProfit += profit;
+                if (profit > 0) this.metrics.profitableTrades++;
+
+                // Track profit by good
+                if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+                this.metrics.profitByGood[goodId] += profit;
+
+                this.metrics.objectivesCompleted++;
+            } else {
+                this.logger.warn('Bot', `TIME_WASTER_FAIL: Arrived at ${sellLocationId} but have no ${goodId} to sell.`);
+                this.metrics.objectivesAborted++;
+            }
+
+            // 3. Plan is complete. Go IDLE.
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+        }
+    }
+
+    /**
+     * [State: SEEKING_DEPLETION]
+     * Looks for a market to buy out to trigger the depletion bonus.
+     * @private
+     */
+    async _findDepletionOpportunity() {
+        const state = this.gameState.getState();
+        const ship = this.simulationService._getActiveShip();
+        if (!ship) {
+            this.botState = BotState.IDLE;
+            return;
+        }
+        
+        const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier && c.tier > 1);
+        let top5Plans = [];
+
+        for (const good of availableCommodities) {
+            for (const location of DB.MARKETS) {
+                if (!state.player.unlockedLocationIds.includes(location.id)) continue;
+
+                const inventoryItem = state.market.inventory[location.id][good.id];
+                
+                // Check cooldown
+                if (state.day <= (inventoryItem.depletionBonusDay + 365)) {
+                    continue;
+                }
+
+                // Replicate targetStock logic to find threshold
+                const [minAvail, maxAvail] = good.canonicalAvailability;
+                const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
+                const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+                let pressureForAdaptation = inventoryItem.marketPressure;
+                if (pressureForAdaptation > 0) pressureForAdaptation = 0;
+                const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+                const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+                const depletionThreshold = targetStock * 0.08;
+
+                const stock = inventoryItem.quantity;
+                const price = state.market.prices[location.id][good.id];
+                
+                // Check if stock is above threshold, and we can afford/hold it all
+                if (stock >= depletionThreshold && 
+                    state.player.credits >= (stock * price) &&
+                    ship.cargoCapacity >= stock) {
+                    
+                    // Potential = tier * stock. Prioritize high-tier, high-volume.
+                    top5Plans.push({
+                        potential: good.tier * stock,
+                        plan: {
+                            type: 'DEPLETE',
+                            goodId: good.id,
+                            locationId: location.id,
+                            amountToBuy: stock
+                        }
+                    });
+                }
+            }
+        }
+
+        if (top5Plans.length > 0) {
+            top5Plans.sort((a, b) => b.potential - a.potential);
+            const bestPlans = top5Plans.slice(0, 5).map(p => p.plan);
+            const chosenPlan = bestPlans[Math.floor(Math.random() * bestPlans.length)];
+
+            this.currentObjective = chosenPlan;
+            this.botState = BotState.EXECUTING_DEPLETION;
+            this.metrics.objectivesStarted++;
+            this.logger.info.system('Bot', this.gameState.day, 'PLAN', `New depletion plan (1 of ${bestPlans.length}): Buy out ${chosenPlan.amountToBuy}x ${chosenPlan.goodId} at ${chosenPlan.locationId}`);
+        } else {
+            // No opportunity found
+            if (this.activeStrategy === BotStrategy.DEPLETE_ONLY) {
+                // If this is our only strategy, just wait and try again
+                this.logger.info.system('Bot', this.gameState.day, 'PLAN', 'No depletion opportunities. Waiting 1 day.');
+                this.simulationService.timeService.advanceDays(1);
+                this.botState = BotState.IDLE; // Will re-run this state
+            } else {
+                // Fall back to a crash plan (if MIXED)
+                this.botState = BotState.SEEKING_MANIPULATION;
+            }
+        }
+    }
+
+    /**
+     * [State: EXECUTING_DEPLETION]
+     * Travels to target, buys out stock, sells it, and enters wait state.
+     * @private
+     */
+    async _executeDepletion() {
+        const { goodId, locationId, amountToBuy } = this.currentObjective;
+        const state = this.gameState.getState();
+
+        // 1. Travel to depletion location
+        if (state.currentLocationId !== locationId) {
+            this.logger.info.system('Bot', state.day, 'DEPLETE', `Traveling to ${locationId} to buy out ${goodId}`);
+            
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${locationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_DEPLETION,
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+
+            this.simulationService.travelService.initiateTravel(locationId);
+            return;
+        }
+
+        // 2. Buy out the stock
+        const boughtQty = this.simulationService.playerActionService.buyItem(goodId, amountToBuy);
+        if (!boughtQty || boughtQty < amountToBuy) {
+            this.logger.warn('Bot', `DEPLETE_FAIL: Failed to buy out ${goodId} at ${locationId}. Aborting.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
+            return;
+        }
+
+        this.logger.info.system('Bot', state.day, 'DEPLETE_BUY', `Successfully bought out ${amountToBuy}x ${goodId}. Depletion bonus triggered.`);
+
+        // 3. Sell the cargo immediately to free up space
+        const sellLocation = this._findBestSellLocation(goodId, locationId);
+        if (sellLocation) {
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][sellLocation.id];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to sell location ${sellLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
+                // --- FIX: Create a temporary REFUEL objective ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_DEPLETION, // Return to this state
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+            
+            this.simulationService.travelService.initiateTravel(sellLocation.id);
+            // We must return here to let the travel happen.
+            // The bot will re-enter this state, fail the travel check, and proceed to sell.
+            return;
+        }
+
+        // 4. Enter waiting state (if we couldn't sell, we just wait)
+        this.currentObjective.waitStartDay = this.gameState.day;
+        this.botState = BotState.WAITING_FOR_HIKE;
+    }
+
+    /**
+     * [State: WAITING_FOR_HIKE]
+     * Passes time until the 7-day price hike is active.
+     * @private
+     */
+    async _executeWait() {
+        if (this.gameState.day > this.currentObjective.waitStartDay + 7) {
+            this.logger.info.system('Bot', this.gameState.day, 'DEPLETE', 'Wait complete. Price hike is active. Beginning exploitation.');
+            this.botState = BotState.EXPLOITING_HIKE;
+            this.currentObjective.exploitRuns = 0; // Initialize run counter
+        } else {
+            // --- FIX: Just advance time, don't run a full trade loop ---
+            this.simulationService.timeService.advanceDays(1);
+            this.botState = BotState.WAITING_FOR_HIKE; // Stay in this state
+        }
+    }
+
+    /**
+     * [State: EXPLOITING_HIKE]
+     * Buys goods from a cheap market (B) and sells at the price-hiked market (A).
+     * @private
+     */
+    async _executeExploitHike() {
+        const { goodId, locationId } = this.currentObjective; // locationId is (A)
+        const state = this.gameState.getState();
+
+        // Find cheapest place to buy (B)
+        const buyLocation = this._findCheapestMarket(goodId);
+        if (!buyLocation || buyLocation.id === locationId) {
+            this.logger.warn('Bot', `HIKE_FAIL: No cheap market found to buy ${goodId}. Aborting exploit.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
+            return;
+        }
+        
+        // Go to buy location (B)
+        if (state.currentLocationId !== buyLocation.id) {
+            // --- FIX: Pre-flight check ---
+            const activeShip = this.simulationService._getActiveShip();
+            const travelInfo = state.TRAVEL_DATA[state.currentLocationId][buyLocation.id];
+            const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+            if (activeShip.fuel < requiredFuel) {
+                this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to buy location ${buyLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
+                // --- FIX: Create a temporary REFUEL objective ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXPLOITING_HIKE,
+                    originalObjective: originalObjective
+                };
+                this.botState = BotState.MAINTENANCE;
+                return;
+            }
+            // --- End Fix ---
+            this.simulationService.travelService.initiateTravel(buyLocation.id);
+            return;
+        }
+        
+        // Buy max
+        const buyQty = this._calculateMaxBuy(goodId, buyLocation.price);
+        if (buyQty > 0) this.simulationService.playerActionService.buyItem(goodId, buyQty);
+        
+        // Go to hiked location (A)
+        if (state.currentLocationId !== locationId) {
+             // --- FIX: Pre-flight check ---
+             const activeShip = this.simulationService._getActiveShip();
+             const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
+             const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
+             if (activeShip.fuel < requiredFuel) {
+                 this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to hiked location ${locationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                 // --- FIX: Create a temporary REFUEL objective ---
+                 const originalObjective = this.currentObjective;
+                 this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXPLOITING_HIKE,
+                    originalObjective: originalObjective
+                 };
+                 this.botState = BotState.MAINTENANCE;
+                 return;
+             }
+             // --- End Fix ---
+            this.simulationService.travelService.initiateTravel(locationId);
+            return;
+        }
+
+        // Sell all
+        const sellQty = this.simulationService._getActiveInventory()[goodId]?.quantity || 0;
+        
+        // --- FIX: Check for 0 stock before selling ---
+        const hikedStock = state.market.inventory[locationId][goodId].quantity;
+        if (sellQty > 0 && hikedStock > 0) {
+            const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
+            const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
+            const profit = saleValue - (avgCost * sellQty);
+
+            this.logger.info.system('Bot', state.day, 'HIKE_EXPLOIT_SELL', `Sold ${sellQty}x ${goodId} at hiked price. Profit: ${formatCredits(profit)}`);
+            this.metrics.totalTrades++;
+            this.metrics.totalNetProfit += profit;
+            if (profit > 0) this.metrics.profitableTrades++;
+            
+            // Track profit by good
+            if (!this.metrics.profitByGood[goodId]) { this.metrics.profitByGood[goodId] = 0; }
+            this.metrics.profitByGood[goodId] += profit;
+
+        } else if (sellQty > 0 && hikedStock <= 0) {
+            this.logger.warn('Bot', `HIKE_FAIL: Arrived at hiked market ${locationId} but stock is 0. Aborting sale and loop.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
+            return;
+        }
+        // --- End Fix ---
+
+        // Check if we should loop
+        this.currentObjective.exploitRuns++;
+        const inventoryItem = state.market.inventory[locationId][goodId];
+        if (this.currentObjective.exploitRuns < 2 && state.day < (inventoryItem.depletionDay + 7)) {
+            // Repeat the exploit
+            this.botState = BotState.EXPLOITING_HIKE;
+        } else {
+            // Done
+            this.logger.info.system('Bot', state.day, 'HIKE_COMPLETE', 'Depletion exploit complete.');
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesCompleted++;
+        }
     }
 
 
     // --- "BRAIN" HELPER FUNCTIONS ---
 
     /**
-     * Finds markets that are *already* crashed.
-     * Priority 1: Markets the bot crashed itself and are ready (7+ days).
-     * Priority 2: Any other market that is significantly below its baseline.
+     * Checks if the bot's current `CRASH` objective is still profitable.
+     * @private
+     */
+    _isCrashPlanStillValid() {
+        if (!this.currentObjective || this.currentObjective.type !== 'CRASH') {
+            return false;
+        }
+        const { goodId, buyFromLocationId, crashLocationId } = this.currentObjective;
+        
+        // Handle case where properties might be missing from a bad objective
+        if (!goodId || !buyFromLocationId || !crashLocationId) {
+            return false;
+        }
+
+        const state = this.gameState.getState();
+        const buyPrice = state.market.prices[buyFromLocationId][goodId];
+        const sellPrice = state.market.prices[crashLocationId][goodId];
+        // Simple check: is it still profitable to run this loop?
+        return (sellPrice - buyPrice) > 0;
+    }
+
+    /**
+     * Finds markets that the bot *itself* has crashed and are ready to exploit.
      * @returns {object | null} An exploit objective, or null.
      * @private
      */
-    _findExploitOpportunity() {
+    _findReadySelfExploit() {
         const state = this.gameState.getState();
 
         // 1. Clean memory and find self-created opportunities
@@ -12688,31 +13874,51 @@ export class AutomatedPlayer {
                 }
             }
         }
+        return null;
+    }
 
-        // 2. Find "natural" or "other" opportunities
-        let bestNaturalExploit = null;
-        let maxDiscount = 0;
+    /**
+     * [BRAIN] Finds the best place to sell any cargo the bot is currently holding.
+     * @returns {object | null} A trade objective, or null if no profitable sale is found.
+     * @private
+     */
+    _findBestSellLocationForHeldCargo() {
+        const state = this.gameState.getState();
+        const inventory = this.simulationService._getActiveInventory();
+        if (!inventory) return null;
 
-        for (const location of DB.MARKETS) {
-            if (!state.player.unlockedLocationIds.includes(location.id)) continue;
-            for (const good of DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier)) {
-                const avg = state.market.galacticAverages[good.id];
-                const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
-                const targetPriceOffset = (1.0 - modifier) * avg;
-                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
-                const currentPrice = state.market.prices[location.id][good.id];
-                const discount = (localBaseline - currentPrice) / localBaseline; // % discount
+        let bestSale = null;
+        let maxProfit = 0;
 
-                // Is it significantly cheap (e.g., > 30% discount) and has stock?
-                if (discount > 0.30 && state.market.inventory[location.id][good.id].quantity > 10) {
-                    if (discount > maxDiscount) {
-                        maxDiscount = discount;
-                        bestNaturalExploit = { type: 'EXPLOIT', goodId: good.id, exploitLocationId: location.id };
+        for (const goodId in inventory) {
+            const item = inventory[goodId];
+            if (item && item.quantity > 0) {
+                const avgCost = item.avgCost;
+                const quantity = item.quantity;
+                
+                // Find the best market to sell this specific good
+                const sellLocation = this._findBestSellLocation(goodId, state.currentLocationId);
+                
+                if (sellLocation) {
+                    const potentialProfit = (sellLocation.price - avgCost) * quantity;
+                    
+                    if (potentialProfit > maxProfit) {
+                        maxProfit = potentialProfit;
+                        bestSale = {
+                            goodId: goodId,
+                            quantity: quantity,
+                            avgCost: avgCost,
+                            sellLocationId: sellLocation.id,
+                            sellPrice: sellLocation.price,
+                            estimatedProfit: potentialProfit
+                        };
                     }
                 }
             }
         }
-        return bestNaturalExploit;
+        
+        // Only return if the sale is profitable
+        return (bestSale && bestSale.estimatedProfit > 0) ? bestSale : null;
     }
 
     /**
@@ -12734,6 +13940,32 @@ export class AutomatedPlayer {
         }
         return bestBuy;
     }
+
+    /**
+     * Finds the best market to *sell* a good at.
+     * This means the highest price, excluding the current location.
+     * @private
+     */
+    _findBestSellLocation(goodId, currentLocationId) {
+        const state = this.gameState.getState();
+        let bestSell = null;
+        let maxPrice = -Infinity;
+
+        for (const location of DB.MARKETS) {
+            if (location.id === currentLocationId || !state.player.unlockedLocationIds.includes(location.id)) continue;
+            
+            // --- FIX: Check for stock > 0 ---
+            const stock = state.market.inventory[location.id][goodId].quantity;
+            const price = state.market.prices[location.id][goodId];
+            if (price > maxPrice && stock > 0) {
+                maxPrice = price;
+                bestSell = { id: location.id, price: price };
+            }
+            // --- End Fix ---
+        }
+        return bestSell;
+    }
+
 
     /**
      * Finds the best market to *sell* a good at *for the purpose of crashing it*.
@@ -12762,32 +13994,74 @@ export class AutomatedPlayer {
 
     /**
      * Finds the best simple A-B (non-manipulation) trade route.
-     * This is the bot's old logic, now used for "Time Waster" state.
+     * --- [PHASE 2] This logic is now smarter, factoring in cargo size and full round trip time ---
      * @private
      */
     _findBestSimpleTrade() {
         const state = this.gameState.getState();
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return null; // No ship, no trades
+        
+        const cargoCapacity = activeShip.cargoCapacity;
+        if (cargoCapacity <= 0) return null; // No cargo, no trades
+
         let bestTrade = null;
         let maxProfitPerDay = 0;
 
         const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= state.player.revealedTier);
+        const inventory = this.simulationService._getActiveInventory();
 
         for (const good of availableCommodities) {
+            // --- PHASE 1 REFACTOR: Check if bot is already holding this good ---
+            // If so, simple trade logic should ignore it, as SELLING_HELD_CARGO will handle it.
+            if (inventory[good.id] && inventory[good.id].quantity > 0) {
+                continue;
+            }
+            // --- END REFACTOR ---
+
             for (const buyLocation of DB.MARKETS) {
                 if (!state.player.unlockedLocationIds.includes(buyLocation.id)) continue;
 
+                // --- PHASE 1.1 FIX: Check buy stock quantity ---
+                const buyStock = state.market.inventory[buyLocation.id][good.id].quantity;
+                if (buyStock <= 0) {
+                    continue; // Can't buy if it's out of stock
+                }
+                // --- END FIX ---
+
                 for (const sellLocation of DB.MARKETS) {
                     if (buyLocation.id === sellLocation.id || !state.player.unlockedLocationIds.includes(sellLocation.id)) continue;
+
+                    // --- PHASE 1.1 FIX: Check sell stock quantity ---
+                    // We check sell stock > 0 because we can't sell to a market that has 0 *demand* (is depleted)
+                    const sellStock = state.market.inventory[sellLocation.id][good.id].quantity;
+                    if (sellStock <= 0) {
+                        continue;
+                    }
+                    // --- END FIX ---
 
                     const buyPrice = state.market.prices[buyLocation.id][good.id];
                     const sellPrice = state.market.prices[sellLocation.id][good.id];
                     const profitPerUnit = sellPrice - buyPrice;
 
-                    if (profitPerUnit > 0) {
+                    // --- PHASE 2.1 FIX: Check profit margin ---
+                    const profitMargin = (buyPrice > 0) ? (profitPerUnit / buyPrice) : 0;
+
+                    if (profitPerUnit > 0 && profitMargin > this.MIN_PROFIT_MARGIN) {
                         const travelTimeToBuy = state.TRAVEL_DATA[state.currentLocationId]?.[buyLocation.id]?.time || 0;
                         const travelTimeToSell = state.TRAVEL_DATA[buyLocation.id]?.[sellLocation.id]?.time || 0;
-                        const totalTime = travelTimeToBuy + travelTimeToSell + 1; // +1 for transaction time
-                        const profitPerDay = profitPerUnit / totalTime;
+                        
+                        // Skip if no travel data
+                        if (travelTimeToSell === 0) continue; 
+                        
+                        // +2 for transaction time (1 day to buy, 1 day to sell)
+                        const totalTime = travelTimeToBuy + travelTimeToSell + 2; 
+
+                        // --- PHASE 1.1 FIX: Base profit calc on actual available stock ---
+                        const buyQty = Math.min(cargoCapacity, buyStock);
+                        const totalTripProfit = profitPerUnit * buyQty;
+                        // --- END FIX ---
+                        const profitPerDay = totalTripProfit / totalTime;
 
                         if (profitPerDay > maxProfitPerDay) {
                             maxProfitPerDay = profitPerDay;
@@ -12797,54 +14071,200 @@ export class AutomatedPlayer {
                                 sellLocationId: sellLocation.id,
                                 buyPrice,
                                 sellPrice,
-                                profitPerUnit
+                                profitPerUnit,
+                                estimatedPPD: profitPerDay
                             };
                         }
                     }
+                    // --- END FIX ---
                 }
             }
         }
         return bestTrade;
     }
 
+    /**
+     * Handles pop-up modals, specifically Age Events.
+     * --- [PHASE 1B] This is now a generic, future-proof handler ---
+     * @returns {boolean} True if a modal was handled, false otherwise.
+     * @private
+     */
+    _handleAgeEventChoice() {
+        const modal = document.getElementById('age-event-modal');
+        if (!modal || modal.classList.contains('hidden')) {
+            return false; // No event is active
+        }
+
+        const title = document.getElementById('age-event-title').textContent;
+        this.logger.info.system('Bot', this.gameState.day, 'EVENT_CHOICE', `Handling age event: ${title}`);
+
+        const buttons = Array.from(modal.querySelectorAll('button'));
+        if (buttons.length === 0) {
+            return false; // No buttons to click
+        }
+
+        // Keywords for "best" choices, in order of priority
+        const profitKeywords = ['trademaster', 'merchant\'s guild', 'free ship', 'credits', 'profit'];
+        // Keywords for "neutral" choices
+        const neutralKeywords = ['continue', 'ignore', 'dismiss', 'accept'];
+        
+        let chosenButton = null;
+
+        // 1. Try to find a profit-based choice
+        for (const btn of buttons) {
+            const btnText = btn.textContent.toLowerCase();
+            if (profitKeywords.some(kw => btnText.includes(kw))) {
+                chosenButton = btn;
+                break;
+            }
+        }
+
+        // 2. If no profit choice, try to find a neutral/continue choice
+        if (!chosenButton) {
+             for (const btn of buttons) {
+                const btnText = btn.textContent.toLowerCase();
+                if (neutralKeywords.some(kw => btnText.includes(kw))) {
+                    chosenButton = btn;
+                    break;
+                }
+            }
+        }
+        
+        // 3. If still no match, just click the first button to not get stuck
+        if (!chosenButton) {
+            this.logger.warn('Bot', `EVENT_CHOICE: No preferred keyword found for "${title}". Clicking first available button.`);
+            chosenButton = buttons[0];
+        }
+        
+        chosenButton.click();
+        return true;
+    }
+    
+    /**
+     * Logs a summary report of the bot's performance to the console and game log.
+     * --- [PHASE 2] Now includes Profit Per Day ---
+     * @private
+     */
+    _logSummaryReport() {
+        this.metrics.daysSimulated = this.gameState.day - this.simulationStartDay;
+        const { 
+            totalTrades, profitableTrades, totalNetProfit, totalFuelCost, 
+            totalRepairCost, daysSimulated, strategyUsed, objectivesStarted,
+            objectivesCompleted, objectivesAborted, profitByGood
+        } = this.metrics;
+        
+        const profitPct = totalTrades > 0 ? ((profitableTrades / totalTrades) * 100).toFixed(1) : 0;
+        const profitPerDay = daysSimulated > 0 ? (totalNetProfit / daysSimulated) : 0;
+
+        const header = '=== AUTO-TRADER PERFORMANCE SUMMARY ===';
+        console.log(header);
+        this.logger.info.system('Bot', this.gameState.day, 'REPORT', header);
+        
+        const summary = [
+            `Strategy Run: ${strategyUsed}`,
+            `Days Simulated: ${daysSimulated}`,
+            `Final Credit Balance: ${formatCredits(this.gameState.player.credits)}`,
+            ``,
+            `--- Performance ---`,
+            `Total Net Profit: ${formatCredits(totalNetProfit)}`,
+            `Profit Per Day: ${formatCredits(profitPerDay)}`,
+            `Objectives (Started/Completed/Aborted): ${objectivesStarted} / ${objectivesCompleted} / ${objectivesAborted}`,
+            `Total Trades Completed: ${totalTrades}`,
+            `Profitable Trades: ${profitableTrades} (${profitPct}%)`,
+            ``,
+            `--- Costs ---`,
+            `Total Fuel Costs: ${formatCredits(totalFuelCost)}`,
+            `Total Repair Costs: ${formatCredits(totalRepairCost)}`,
+        ];
+
+        for (const line of summary) {
+            console.log(line);
+            this.logger.info.system('Bot', this.gameState.day, 'REPORT', `  ${line}`); // Indent for log clarity
+        }
+
+        // --- Profit by Good ---
+        const profitHeader = `--- Profit Breakdown by Commodity ---`;
+        console.log(profitHeader);
+        this.logger.info.system('Bot', this.gameState.day, 'REPORT', `  ${profitHeader}`);
+        
+        const sortedGoods = Object.keys(profitByGood).sort((a, b) => profitByGood[b] - profitByGood[a]);
+        if (sortedGoods.length === 0) {
+             const noData = `No commodity trades recorded.`;
+             console.log(noData);
+             this.logger.info.system('Bot', this.gameState.day, 'REPORT', `    ${noData}`);
+        } else {
+            for (const goodId of sortedGoods) {
+                const profit = profitByGood[goodId];
+                const commodityName = DB.COMMODITIES.find(c => c.id === goodId)?.name || goodId;
+                const line = `${commodityName}: ${formatCredits(profit)}`;
+                console.log(line);
+                this.logger.info.system('Bot', this.gameState.day, 'REPORT', `    ${line}`);
+            }
+        }
+        
+        const footer = '=======================================';
+        console.log(footer);
+        this.logger.info.system('Bot', this.gameState.day, 'REPORT', footer);
+    }
+
     // --- UTILITY FUNCTIONS (Moved from DebugService) ---
 
     /**
-     * Checks fuel and health and repairs/refuels if necessary.
+     * Checks if fuel or health are low (general threshold).
+     * @returns {boolean} True if maintenance is needed.
      * @private
      */
-    _handleMaintenance() {
+    _needsMaintenance() {
         const activeShip = this.simulationService._getActiveShip();
-        if (!activeShip) return;
+        if (!activeShip) return false;
 
         const fuelPct = (this.gameState.player.shipStates[activeShip.id].fuel / activeShip.maxFuel) * 100;
         const healthPct = (this.gameState.player.shipStates[activeShip.id].health / activeShip.maxHealth) * 100;
 
-        if (fuelPct < 30) {
-            this.logger.info.bot(this.gameState.day, 'REFUEL', `Low fuel (${fuelPct.toFixed(1)}%). Refueling.`);
-            this._botRefuel();
-        }
-        if (healthPct < 30) {
-            this.logger.info.bot(this.gameState.day, 'REPAIR', `Low hull integrity (${healthPct.toFixed(1)}%). Repairing.`);
-            this._botRepair();
-        }
+        return fuelPct < 30 || healthPct < 30;
     }
 
     /**
+     * @param {number | null} targetFuelAmount - The amount of fuel to buy. If null, fills the tank.
      * @private
      */
-    _botRefuel() {
+    _botRefuel(targetFuelAmount = null) {
         const ship = this.simulationService._getActiveShip();
         if (!ship) return;
-        const fuelNeeded = ship.maxFuel - this.gameState.player.shipStates[ship.id].fuel;
+        
+        const finalTargetFuel = targetFuelAmount === null ? ship.maxFuel : Math.min(ship.maxFuel, targetFuelAmount);
+        const fuelNeeded = finalTargetFuel - this.gameState.player.shipStates[ship.id].fuel;
+        
         if (fuelNeeded <= 0) return;
+        
         const currentMarket = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
-        let fuelPrice = currentMarket.fuelPrice / 2;
-        const totalCost = (fuelNeeded / 5) * fuelPrice;
+        let fuelPrice = currentMarket.fuelPrice / 2; // Base cost
+        
+        // Apply Venetian Syndicate discount
+        if (this.gameState.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && this.gameState.currentLocationId === LOCATION_IDS.VENUS) {
+             fuelPrice *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        }
+        fuelPrice = Math.max(1, Math.round(fuelPrice));
+
+        const ticksNeeded = Math.ceil(fuelNeeded / 5); // 5 fuel per tick
+        const totalCost = ticksNeeded * fuelPrice;
+        const fuelToBuy = ticksNeeded * 5;
 
         if (this.gameState.player.credits >= totalCost) {
             this.gameState.player.credits -= totalCost;
-            this.gameState.player.shipStates[ship.id].fuel = ship.maxFuel;
+            this.gameState.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, this.gameState.player.shipStates[ship.id].fuel + fuelToBuy);
+            this.simulationService._logConsolidatedTransaction('fuel', -totalCost, 'Fuel Purchase');
+            this.metrics.totalFuelCost += totalCost;
+        } else {
+            // Buy as much as possible
+            const affordableTicks = Math.floor(this.gameState.player.credits / fuelPrice);
+            if (affordableTicks > 0) {
+                const cost = affordableTicks * fuelPrice;
+                this.gameState.player.credits -= cost;
+                this.gameState.player.shipStates[ship.id].fuel += (affordableTicks * 5);
+                this.simulationService._logConsolidatedTransaction('fuel', -cost, 'Fuel Purchase');
+                this.metrics.totalFuelCost += cost;
+            }
         }
     }
 
@@ -12856,22 +14276,49 @@ export class AutomatedPlayer {
         if (!ship) return;
         const healthNeeded = ship.maxHealth - this.gameState.player.shipStates[ship.id].health;
         if (healthNeeded <= 0) return;
-        const totalCost = healthNeeded * GAME_RULES.REPAIR_COST_PER_HP;
+        
+        const repairAmountPerTick = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
+        let costPerTick = repairAmountPerTick * GAME_RULES.REPAIR_COST_PER_HP;
+        
+        // Apply Venetian Syndicate discount
+        if (this.gameState.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && this.gameState.currentLocationId === LOCATION_IDS.VENUS) {
+             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+        }
+        costPerTick = Math.max(1, Math.round(costPerTick));
+
+        const ticksNeeded = Math.ceil(healthNeeded / repairAmountPerTick);
+        const totalCost = ticksNeeded * costPerTick;
+
         if (this.gameState.player.credits >= totalCost) {
             this.gameState.player.credits -= totalCost;
             this.gameState.player.shipStates[ship.id].health = ship.maxHealth;
+            this.simulationService._logConsolidatedTransaction('repair', -totalCost, 'Hull Repairs');
+            this.metrics.totalRepairCost += totalCost;
+        } else {
+            // Buy as much as possible
+            const affordableTicks = Math.floor(this.gameState.player.credits / costPerTick);
+            if (affordableTicks > 0) {
+                const cost = affordableTicks * costPerTick;
+                this.gameState.player.credits -= cost;
+                this.gameState.player.shipStates[ship.id].health += (affordableTicks * repairAmountPerTick);
+                this.simulationService._logConsolidatedTransaction('repair', -cost, 'Hull Repairs');
+                this.metrics.totalRepairCost += cost;
+            }
         }
     }
 
     /**
      * @private
+     * --- [PHASE 2] Hardened to handle price <= 0 ---
      */
     _calculateMaxBuy(goodId, price) {
         const state = this.gameState.getState();
         const ship = this.simulationService._getActiveShip();
         const inventory = this.simulationService._getActiveInventory();
+        if (!ship || !inventory) return 0; // Bot has no ship
+        
         const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
-        const canAfford = price > 0 ? Math.floor(state.player.credits / price) : space;
+        const canAfford = (price > 0) ? Math.floor(state.player.credits / price) : Infinity;
         const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
         return Math.max(0, Math.min(space, canAfford, stock));
     }
@@ -14696,6 +16143,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  autotrader update
 -  DebugServive.js refactor
 -  added AutomatedPlayerService.js
+-  economic behavior tuning
 
 ## [30.80] - 2025-10-30
 -  economic behavior update
