@@ -285,6 +285,16 @@ export class AutomatedPlayer {
                 this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Continuing persistent CRASH loop for ${this.currentObjective.goodId}.`);
                 // Note: This is a continuation, not a new objective
                 return;
+            
+            // --- [[START]] GEMINI FIX: RESUME INTERRUPTED OBJECTIVE ---
+            // If returning from MAINTENANCE, a SIMPLE_TRADE objective might
+            // still be present. We must resume it instead of abandoning it.
+            } else if (this.currentObjective.type === 'SIMPLE_TRADE') {
+                this.logger.info.system('Bot', this.gameState.day, 'OBJECTIVE', `Resuming interrupted SIMPLE_TRADE for ${this.currentObjective.goodId}.`);
+                this.botState = BotState.TIME_WASTER;
+                return;
+            // --- [[END]] GEMINI FIX ---
+
             } else if (this.currentObjective.type !== 'CRASH' && this.currentObjective.type !== 'SIMPLE_TRADE') {
                 // This means we just finished an EXPLOIT or SELL_EXPLOITED
                 // We need to re-validate the original crash plan
@@ -468,7 +478,14 @@ export class AutomatedPlayer {
             
             if (activeShip.fuel < requiredFuel) {
                 this.logger.warn('Bot', `SELL_HELD_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
-                // We keep the objective, maintenance will just pause it
+                // --- FIX: Create a temporary REFUEL objective to break loop ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5, // Add 5 fuel buffer
+                    nextState: BotState.SELLING_HELD_CARGO, // State to return to
+                    originalObjective: originalObjective // The plan to resume
+                };
                 this.botState = BotState.MAINTENANCE; 
                 return;
             }
@@ -883,10 +900,16 @@ export class AutomatedPlayer {
                 const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
                 
                 if (activeShip.fuel < requiredFuel) {
-                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel to travel to ${buyLocationId}. Forcing maintenance.`);
-                    this.botState = BotState.MAINTENANCE; // Maintenance will pause this objective
-                    this.metrics.objectivesAborted++;
-                    this.currentObjective = null; // Abort this plan
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${buyLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                    // --- FIX: Create a temporary REFUEL objective ---
+                    const originalObjective = this.currentObjective;
+                    this.currentObjective = {
+                        type: 'REFUEL_FOR_TRAVEL',
+                        needed: requiredFuel + 5,
+                        nextState: BotState.TIME_WASTER,
+                        originalObjective: originalObjective
+                    };
+                    this.botState = BotState.MAINTENANCE;
                     return;
                 }
                 this.simulationService.travelService.initiateTravel(buyLocationId);
@@ -933,10 +956,16 @@ export class AutomatedPlayer {
                 const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
 
                 if (activeShip.fuel < requiredFuel) {
-                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel to travel to ${sellLocationId}. Forcing maintenance.`);
+                    this.logger.warn('Bot', `TIME_WASTER_FAIL: Not enough fuel (${activeShip.fuel}) to travel to ${sellLocationId} (needs ${requiredFuel}). Forcing maintenance.`);
+                    // --- FIX: Create a temporary REFUEL objective ---
+                    const originalObjective = this.currentObjective;
+                    this.currentObjective = {
+                        type: 'REFUEL_FOR_TRAVEL',
+                        needed: requiredFuel + 5,
+                        nextState: BotState.TIME_WASTER,
+                        originalObjective: originalObjective
+                    };
                     this.botState = BotState.MAINTENANCE;
-                    this.metrics.objectivesAborted++;
-                    this.currentObjective = null; // Abort this plan
                     return;
                 }
                 this.simulationService.travelService.initiateTravel(sellLocationId);
@@ -1110,10 +1139,15 @@ export class AutomatedPlayer {
             const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
             if (activeShip.fuel < requiredFuel) {
                 this.logger.warn('Bot', `DEPLETE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to sell location ${sellLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
-                // Abort depletion, just focus on maintenance. Keep the cargo for now.
-                this.currentObjective = null; 
+                // --- FIX: Create a temporary REFUEL objective ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXECUTING_DEPLETION, // Return to this state
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
-                this.metrics.objectivesAborted++; // Aborting the depletion part
                 return;
             }
             // --- End Fix ---
@@ -1173,9 +1207,15 @@ export class AutomatedPlayer {
             const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
             if (activeShip.fuel < requiredFuel) {
                 this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to buy location ${buyLocation.id} (needs ${requiredFuel}). Forcing maintenance.`);
-                this.currentObjective = null;
+                // --- FIX: Create a temporary REFUEL objective ---
+                const originalObjective = this.currentObjective;
+                this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXPLOITING_HIKE,
+                    originalObjective: originalObjective
+                };
                 this.botState = BotState.MAINTENANCE;
-                this.metrics.objectivesAborted++;
                 return;
             }
             // --- End Fix ---
@@ -1195,9 +1235,15 @@ export class AutomatedPlayer {
              const requiredFuel = travelInfo ? (travelInfo.fuelCost || 0) : 9999;
              if (activeShip.fuel < requiredFuel) {
                  this.logger.warn('Bot', `HIKE_FAIL: Not enough fuel (${activeShip.fuel}) to travel to hiked location ${locationId} (needs ${requiredFuel}). Forcing maintenance.`);
-                 this.currentObjective = null;
+                 // --- FIX: Create a temporary REFUEL objective ---
+                 const originalObjective = this.currentObjective;
+                 this.currentObjective = {
+                    type: 'REFUEL_FOR_TRAVEL',
+                    needed: requiredFuel + 5,
+                    nextState: BotState.EXPLOITING_HIKE,
+                    originalObjective: originalObjective
+                 };
                  this.botState = BotState.MAINTENANCE;
-                 this.metrics.objectivesAborted++;
                  return;
              }
              // --- End Fix ---

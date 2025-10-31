@@ -7,7 +7,7 @@ import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed } from '../utils.js';
-import { AutomatedPlayer } from './bot/AutomatedPlayerService.js'; // [GEMINI] ADDED IMPORT
+import { BotService } from './bot/BotService.js'; // [GEMINI] UPDATED IMPORT
 
 // --- [[START]] NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -55,7 +55,7 @@ export class DebugService {
             selectedAgeEvent: DB.AGE_EVENTS[0].id,
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
-            botStrategy: 'MIXED', // [GEMINI] ADDED
+            botPersonaId: 'PROSPECTOR', // [GEMINI] CHANGED from botStrategy
             botProgress: 'Idle',
             logLevel: 'INFO',
             // Tutorial Tuner State
@@ -72,7 +72,8 @@ export class DebugService {
         }; 
         // --- End State ---
 
-        this.bot = new AutomatedPlayer(gameState, simulationService, logger);
+        // [GEMINI] UPDATED: Instantiate the new BotService
+        this.bot = new BotService(gameState, simulationService, logger);
 
         // References to GUI controllers and folders for enabling/disabling
         this.tutorialPositionalControllers = {};
@@ -386,20 +387,22 @@ ${logHistory}
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
                 }
             }},
-            startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
+            // [GEMINI] UPDATED startBot HANDLER
+            startBot: { name: 'Start Bot Simulation', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
-                // [GEMINI] MODIFIED: Pass strategy from debugState
+                // Pass config to the new BotService
                 const config = {
                     daysToRun: this.debugState.botDaysToRun,
-                    strategy: this.debugState.botStrategy 
+                    personaId: this.debugState.botPersonaId // Use new personaId
                 };
                 
                 this.bot.runSimulation(config, (current, end) => {
                     if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
                 });
             }},
-            stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
+            // [GEMINI] UPDATED stopBot HANDLER
+            stopBot: { name: 'Stop Bot Simulation', type: 'button', handler: () => this.bot.stop() },
 
             // NEW & MOVED SHIP ACTIONS
             fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
@@ -575,8 +578,17 @@ ${logHistory}
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
-        // --- [GEMINI] MODIFIED: Added PROSPECTOR strategy ---
-        automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
+        // --- [GEMINI] MODIFIED: Add new personas to the list ---
+        automationFolder.add(this.debugState, 'botPersonaId', 
+            [
+                'HUMAN_TRADER',     // New: Imperfect info
+                'HONEST_TRADER',    // New: Perfect info
+                'PROSPECTOR',       // Legacy
+                'MIXED',            // Legacy
+                'MANIPULATOR',      // Legacy
+                'DEPLETE_ONLY'      // Legacy
+            ]
+        ).name('Bot Persona');
         // --- End Modification ---
         
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
