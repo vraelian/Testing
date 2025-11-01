@@ -8,6 +8,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added TimeService.js
 -  added news_flavor.js
 -  added news-ticker.css
+-  updated meta files
 
 ## [30.90] - 2025-10-30
 -  autotrader update
