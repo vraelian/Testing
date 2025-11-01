@@ -201,9 +201,41 @@ export class UIManager {
             this.cache.gameContainer.className = `game-container ${location.bg}`;
             if (location.navTheme && location.navTheme.borderColor) {
                 document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
+
+                // --- [[START]] MODIFICATION ---
+                // Apply theme to the news ticker bar
+                if (this.cache.newsTickerBar) {
+                    this.cache.newsTickerBar.style.backgroundImage = location.navTheme.gradient;
+                    this.cache.newsTickerBar.style.borderTopColor = location.navTheme.borderColor;
+                    this.cache.newsTickerBar.style.borderBottomColor = location.navTheme.borderColor;
+                    // Also remove the default background color to let the gradient show
+                    this.cache.newsTickerBar.style.backgroundColor = 'transparent';
+                }
+                // --- [[END]] MODIFICATION ---
+
             } else {
                 document.documentElement.style.removeProperty('--theme-border-color');
+
+                // --- [[START]] MODIFICATION (Reset) ---
+                // Reset theme on the news ticker bar if no theme exists
+                if (this.cache.newsTickerBar) {
+                    this.cache.newsTickerBar.style.backgroundImage = '';
+                    this.cache.newsTickerBar.style.borderTopColor = ''; // Will revert to CSS default
+                    this.cache.newsTickerBar.style.borderBottomColor = ''; // Will revert to CSS default
+                    this.cache.newsTickerBar.style.backgroundColor = ''; // Will revert to CSS default
+                }
+                // --- [[END]] MODIFICATION (Reset) ---
             }
+        } else {
+            // --- [[START]] MODIFICATION (Reset) ---
+            // Handle case where there is no location (e.g., in transit)
+            if (this.cache.newsTickerBar) {
+                this.cache.newsTickerBar.style.backgroundImage = '';
+                this.cache.newsTickerBar.style.borderTopColor = '';
+                this.cache.newsTickerBar.style.borderBottomColor = '';
+                this.cache.newsTickerBar.style.backgroundColor = '';
+            }
+            // --- [[END]] MODIFICATION (Reset) ---
         }
 
         this._renderNewsTicker(); // ADDED
@@ -233,10 +265,8 @@ export class UIManager {
             // Measure the actual width of the scrolling text
             const contentWidth = contentElement.scrollWidth;
             
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            // Increased speed by 10% (50 * 1.10 = 55)
+            // Define a scroll speed (e.g., 50 pixels per second)
             const PIXELS_PER_SECOND = 50; 
-            // --- END MODIFICATION ---
             
             // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
             const containerWidth = this.cache.newsTickerBar.offsetWidth;
