@@ -3,7 +3,7 @@
  * keyed by location ID, based on Sec 4 of the 'News Ticker Update V2' report.
  */
 
-const FLAVOR_ADS = {
+export const FLAVOR_ADS = {
     "loc_venus": [
         "Breathe easy in the floating cities of Venus.",
         "Great minds meet here... and whisper.",

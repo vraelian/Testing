@@ -7,7 +7,7 @@
  * Messages for free, present-location intel, tiered by discount percentage.
  * @type {Object<string, string[]>}
  */
-const FREE_INTEL_MESSAGES = {
+export const FREE_INTEL_MESSAGES = {
     // Tier 0: No significant discount
     "tier0": [
         "Market conditions nominal."
@@ -77,7 +77,7 @@ const FREE_INTEL_MESSAGES = {
  * Applies to deals 30% or more below galactic average.
  * @type {string[]}
  */
-const PURCHASED_INTEL_MESSAGES = [
+export const PURCHASED_INTEL_MESSAGES = [
     "Prime buying opportunity for {Commodity Name} at {Location Name}!",
     "{Location Name} reports massive discounts on {Commodity Name}!",
     "{Commodity Name} is a steal at {Location Name} right now!",

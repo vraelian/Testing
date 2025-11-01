@@ -9,6 +9,8 @@ import { GameState } from './GameState.js';
 import { MarketService } from './simulation/MarketService.js';
 import { subscribe, publish } from './EventManager.js';
 import { formatNumber, getRandomElement, shuffleArray } from '../utils.js';
+import { FREE_INTEL_MESSAGES, PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
+import { FLAVOR_ADS } from '../data/flavorAds.js';
 
 export class NewsTickerService {
     /**
