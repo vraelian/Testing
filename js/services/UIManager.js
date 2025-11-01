@@ -233,8 +233,10 @@ export class UIManager {
             // Measure the actual width of the scrolling text
             const contentWidth = contentElement.scrollWidth;
             
-            // Define a scroll speed (e.g., 50 pixels per second)
+            // --- VIRTUAL WORKBENCH MODIFICATION ---
+            // Increased speed by 10% (50 * 1.10 = 55)
             const PIXELS_PER_SECOND = 50; 
+            // --- END MODIFICATION ---
             
             // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
             const containerWidth = this.cache.newsTickerBar.offsetWidth;

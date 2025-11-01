@@ -41,7 +41,11 @@
  * The animation-duration will determine the speed.
  */
 @keyframes scroll-ticker {
-    0%   { transform: translateX(100%); }
+    /* --- VIRTUAL WORKBENCH MODIFICATION --- */
+    /* Changed 100% (relative to container) to 100vw (relative to viewport) */
+    /* This ensures the animation always starts fully off-screen, fixing the "pop-in" on loop. */
+    0%   { transform: translateX(100vw); }
+    /* --- END MODIFICATION --- */
     100% { transform: translateX(-100%); }
 }
 
