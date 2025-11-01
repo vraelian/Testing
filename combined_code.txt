@@ -263,7 +263,7 @@
             <p><strong>Viewport:</strong> <span id="diag-window-w"></span>x<span id="diag-window-h"></span></p>
             <p><strong>Visual VP:</strong> <span id="diag-visual-vp-w"></span>x<span id="diag-visual-vp-h"></span></p>
             <p><strong>Game Cont:</strong> <span id="diag-game-container-w"></span>x<span id="diag-game-container-h"></span></p>
-            <p><strong>Body:</strong> <span id="diag-body-w"></span>x<sppan id="diag-body-h"></span></p>
+            <p><strong>Body:</strong> <span id="diag-body-w"></span>x<span id="diag-body-h"></span></p>
         </div>
         <div class="diag-section">
             <p><strong>Pixel Ratio:</strong> <span id="diag-pixel-ratio"></span></p>
@@ -280,8 +280,6 @@
     </div>
 
     <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="js/data/intelMessages.js"></script>
-    <script src="js/data/flavorAds.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -2339,7 +2337,7 @@ body {
     100% { transform: translateX(-100%); }
 }
 
-/* --- Message Type Styling (V2) --- */
+/* --- Message Type Styling --- */
 
 .ticker-separator {
     color: #555; /* Dark gray for the separator */
@@ -2350,42 +2348,21 @@ body {
     display: inline;
 }
 
-/* News Ticker V2 Message Types */
-.ticker-message.type-system {
-  font-weight: bold;
-  color: var(--color-white);
+/* Example color-coding for message types */
+.ticker-message[data-type="SYSTEM"] {
+    color: var(--ot-cyan-base, #22d3ee);
+    font-weight: 700;
 }
 
-.ticker-message.type-intel {
-  color: var(--color-credit-blue);
+.ticker-message[data-type="INTEL"] {
+    color: var(--ot-green-accent, #4ade80);
 }
 
-/* FLAVOR type color is applied dynamically via JS */
-.ticker-message.type-flavor {
-    /* Base styling can go here if needed, but color is dynamic */
+.ticker-message[data-type="FLAVOR"] {
+    color: var(--ot-text-secondary, #9ca3af);
+    font-style: italic;
 }
 
-.ticker-message.type-alert {
-  color: var(--color-red);
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.ticker-message.type-story {
-  color: var(--color-golden-yellow);
-  font-weight: bold;
-  font-style: italic;
-}
-
-.ticker-message.type-status {
-  color: var(--color-green);
-  text-transform: uppercase;
-}
-
-/* DEFAULT type will have no extra styling */
-.ticker-message.type-default {
-    /* Inherits default .news-ticker-content color */
-}
 --- END OF FILE: ./css/news-ticker.css ---
 
 --- START OF FILE: ./css/screens/services-screen.css ---
@@ -6599,356 +6576,6 @@ export const AGE_EVENTS = [
 ];
 --- END OF FILE: ./js/data/age_events.js ---
 
---- START OF FILE: ./js/data/intelMessages.js ---
-/**
- * @file Contains message templates for the NewsTickerService,
- * specifically for dynamically generated intel.
- */
-
-/**
- * Messages for free, present-location intel, tiered by discount percentage.
- * @type {Object<string, string[]>}
- */
-const FREE_INTEL_MESSAGES = {
-    // Tier 0: No significant discount
-    "tier0": [
-        "Market conditions nominal."
-    ],
-    // Tier 1: 5-10% Below Average
-    "tier1": [
-        "Minor price drop for {Commodity Name}.",
-        "Low prices reported for {Commodity Name}.",
-        "{Commodity Name} trending below average.",
-        "{Commodity Name}: Favorable pricing reported.",
-        "Good time to buy {Commodity Name}.",
-        "It's a buyer's market for {Commodity Name}."
-    ],
-    // Tier 2: 11-20% Below Average
-    "tier2": [
-        "{Commodity Name} prices are looking good.",
-        "{Commodity Name} is on sale.",
-        "Exceptional pricing available for {Commodity Name}.",
-        "Act now for the best price on {Commodity Name}.",
-        "Get your cheap {Commodity Name} now!",
-        "{Commodity Name} is trading far below average.",
-        "Get {Commodity Name} for cheap while you can.",
-        "Traders are eyeing cheap {Commodity Name}.",
-        "Now is the time to acquire {Commodity Name}.",
-        "Capitalize on falling {Commodity Name} prices.",
-        "Solid discount on {Commodity Name}."
-    ],
-    // Tier 3: 21-30% Below Average
-    "tier3": [
-        "Don't miss out: {Commodity Name} is a bargain.",
-        "Prime buying opportunity for {Commodity Name}.",
-        "{Commodity Name}: Prices slashed!",
-        "{Commodity Name} is a 'hot buy' right now.",
-        "{Commodity Name} is a steal at this price.",
-        "Significant price drop for {Commodity Name}.",
-        "Traders report massive discounts on {Commodity Name}.",
-        "Unbeatable deals on {Commodity Name} right now.",
-        "Deep discounts on {Commodity Name}!",
-        "{Commodity Name} value has dropped significantly.",
-        "{Commodity Name} prices are tumbling."
-    ],
-    // Tier 4: 31-50% Below Average
-    "tier4": [
-        "{Commodity Name} prices are nosediving.",
-        "{Commodity Name} prices have plummeted!",
-        "Major price correction for {Commodity Name}.",
-        "Fire sale! Get your {Commodity Name} while it lasts.",
-        "{Commodity Name} prices are getting crushed.",
-        "{Commodity Name} is practically a giveaway."
-    ],
-    // Tier 5: 51%+ Below Average
-    "tier5": [
-        "{Commodity Name}: Prices have never been lower.",
-        "Historic lows for {Commodity Name}.",
-        "{Commodity Name} prices hit rock-bottom!",
-        "{Commodity Name} prices are in freefall.",
-        "Price crash reported for {Commodity Name}.",
-        "Market update: {Commodity Name} valuation has collapsed.",
-        "{Commodity Name} is being sold for scrap prices.",
-        "{Commodity Name}: Total market collapse!",
-        "{Commodity Name} is virtually worthless."
-    ]
-};
-
-/**
- * Messages for purchased, solar-system-wide intel.
- * Applies to deals 30% or more below galactic average.
- * @type {string[]}
- */
-const PURCHASED_INTEL_MESSAGES = [
-    "Prime buying opportunity for {Commodity Name} at {Location Name}!",
-    "{Location Name} reports massive discounts on {Commodity Name}!",
-    "{Commodity Name} is a steal at {Location Name} right now!",
-    "Don't miss out: {Commodity Name} is a bargain at {Location Name}!",
-    "{Location Name}: Prices slashed on {Commodity Name}!",
-    "Head to {Location Name} for deep discounts on {Commodity Name}!",
-    "Traders flocking to {Location Name} for cheap {Commodity Name}!",
-    "Significant price drops for {Commodity Name} at {Location Name}!",
-    "{Location Name} is the hot spot to buy {Commodity Name}!",
-    "Unbeatable deals on {Commodity Name} available at {Location Name}!",
-    "{Location Name} is dumping its {Commodity Name} stock!",
-    "Get to {Location Name}! {Commodity Name} prices are nosediving!",
-    "{Commodity Name} prices have plummeted at {Location Name}!",
-    "{Location Name} is practically giving away {Commodity Name}!",
-    "Fire sale on {Commodity Name} at {Location Name}!",
-    "{Commodity Name} prices are getting crushed at {Location Name}!",
-    "{Commodity Name} market is in a freefall at {Location Name}!",
-    "Rumor: A major holder just dumped {Commodity Name} at {Location Name}!",
-    "{Commodity Name} selling for practically nothing at {Location Name}!",
-    "Price crash! {Commodity Name} is worthless at {Location Name}!",
-    "The {Commodity Name} market has collapsed at {Location Name}!",
-    "Historic lows for {Commodity Name} reported at {Location Name}!",
-    "{Location Name}: {Commodity Name} prices have hit rock-bottom!",
-    "Total market failure for {Commodity Name} at {Location Name}!",
-    "{Location Name} can't get rid of its {Commodity Name}!",
-    "{Commodity Name}: Prices have never been lower at {Location Name}!",
-    "{Commodity Name} is being sold for scrap prices at {Location Name}!",
-    "{Location Name}'s {Commodity Name} valuation has evaporated!"
-];
---- END OF FILE: ./js/data/intelMessages.js ---
-
---- START OF FILE: ./js/data/flavorAds.js ---
-/**
- * @file Contains all flavor text and advertisements for the NewsTickerService,
- * keyed by location ID, based on Sec 4 of the 'News Ticker Update V2' report.
- */
-
-const FLAVOR_ADS = {
-    "loc_venus": [
-        "Breathe easy in the floating cities of Venus.",
-        "Great minds meet here... and whisper.",
-        "Got a problem? The Venetian Syndicate has a solution... for a price.",
-        "Enjoy the view from the opulent circles of Aphrodite Prime.",
-        "Venusian atmospheric processors are working at 110% capacity today.",
-        "Pressure-shielding inspections are mandatory for all surface-level maintenance crews.",
-        "\"What's said on Venus, stays on Venus.\" - Unofficial motto.",
-        "Our labs are patenting the future; are you investing?",
-        "Trade in secrets, not just cargo. You're on Venus, after all.",
-        "Don't let the clouds fool you; the opportunities are clear.",
-        "Acid-proof your hull today at a local dry-dock.",
-        "Need information? Ask the right people in the City of Whispers.",
-        "You're at the system's premier destination for high-tech research.",
-        "Corporate espionage is just \"competitive intelligence\" here.",
-        "See the beauty of the acidic storms from our secure viewports.",
-        "The price of knowledge is high, but the profits are higher.",
-        "You're among the elite. You've made it to Venus.",
-        "Our floating cities: A miracle of engineering above a crushing hell.",
-        "Venusian science leads the system in processor and bio-ware."
-    ],
-    "loc_earth": [
-        "The blue jewel of the system welcomes you home.",
-        "Breathe real, unfiltered air. Enjoy your stay on Earth.",
-        "The Terran Alliance ensures peace and prosperity for all.",
-        "While you're here, visit the cradle of civilization.",
-        "\"A ship from Earth is a ship that lasts.\" - Terran Shipyards.",
-        "Our orbital traffic is busy, but our markets are busier.",
-        "Earth: The system's standard for quality and luxury.",
-        "Why settle for synthetic? Get real Terran-grown food while you're here.",
-        "The Terran Alliance reminds you: clean trade is good trade.",
-        "See the rebuilt wonders of the 21st century!",
-        "Welcome to Earth, the hub of power, wealth, and influence.",
-        "Don't miss Old Chicago, New Beijing, and Neo-Alexandria!",
-        "Earth sets the economic and cultural pace for the system.",
-        "Our deep-thought computation centers are the system's finest.",
-        "Terran markets pay top credit for exotic materials."
-    ],
-    "loc_luna": [
-        "Luna: The industrial heart of the Terran sphere.",
-        "Got hull damage? Lunar dry-docks offer the system's best repair rates.",
-        "Our Plasteel is forged in vacuum, and it shows.",
-        "Need Propellant? We refine it right here, 24/7.",
-        "\"We scar the dust so you can fly.\" - Lunar Mining Co.",
-        "Check out the Sea of Tranquility Industrial Park.",
-        "Lunar-built ships are building the future.",
-        "The Helium-3 rush may be over, but the work never stops.",
-        "Enjoy the Earthrise from a dusty viewport on the surface.",
-        "Get your ship serviced while you enjoy low-G comforts.",
-        "Lunar manufacturing: Simple, reliable, and affordable.",
-        "Stop by a dry-dock for a quick patch-up; our crews are waiting.",
-        "You're on the grey frontier, where fortunes are still made.",
-        "Dust warnings in effect for sectors 4 through 9.",
-        "Need raw materials? You're in the right place.",
-        "The Moon: Earth's loyal, hardworking partner.",
-        "Our mass-drivers fire tons of Plasteel into orbit every hour.",
-        "Don't forget to clean your filters; the dust gets everywhere.",
-        "\"If it's not from Luna, is it even built to last?\""
-    ],
-    "loc_mars": [
-        "Mars needs you! And your cargo, of course.",
-        "Help build the future; your deliveries build Mars.",
-        "You're on the \"Red Frontier,\" watching a new world in the making.",
-        "Terraforming is a thirsty business; Hydroponics wanted!",
-        "Dust storm warnings are in effect for the Hellas Basin.",
-        "You're standing on the first corporate state, the first in freedom!",
-        "We're expanding! Many commodities are in high demand.",
-        "See the great Olympus Mons, the system's largest mountain.",
-        "\"Our independence was built on commerce.\" - Mars Gov.",
-        "New colonial supply contracts are regularly posted at the terminal.",
-        "We're not just building a colony, we're building a nation.",
-        "Ship your Cryo-Pods here; help grow our population.",
-        "The Martian dream is alive and well.",
-        "Enjoy the red skies, red dust, and golden opportunities.",
-        "Our fledgling biodomes are always hungry for more expansion.",
-        "Watch your step; construction is everywhere.",
-        "The thin air is tough, but so are our people.",
-        "Here on Mars, corporate policy is the only law.",
-        "Invest in a terraforming project today!",
-        "Need a solid ship? Martian shipyards build the toughest vessels."
-    ],
-    "loc_belt": [
-        "You're in the Belt: Find your fortune, or find your end.",
-        "\"Rock-rich and law-poor.\" - A Belter's motto.",
-        "Water Ice is cheap, but life is cheaper.",
-        "Need a ship? Our local scrap-yards hide many gems.",
-        "Prospectors wanted: high risk, high reward.",
-        "Watch your navigation; these rocks are unforgiving.",
-        "Out here, a good sensor array is your best friend..",
-        "Ice-haulers needed in sector 14-B.",
-        "Don't ask where the cargo came from.",
-        "A thousand hidden outposts, a million opportunities.",
-        "In the Belt, you can keep your transponder on... or off.",
-        "The Belt is no place for the faint of heart.",
-        "Countless rocks tumble in a silent, chaotic dance.",
-        "Need a scrappy craft? We build them tough enough for the Belt.",
-        "Raw materials, raw ambition. That's the Belt."
-    ],
-    "loc_exchange": [
-        "The Exchange: All goods, no questions.",
-        "Welcome to The Exchange. Check your morals at the airlock.",
-        "Need to move... sensitive cargo? We're your partners.",
-        "Comms are jammed for everyone's privacy.",
-        "Heed the security drones and yield to patrols.",
-        "High stakes, high rewards. Welcome to The Exchange.",
-        "At The Exchange, every credit is clean.",
-        "Don't ask, don't tell, just trade.",
-        "Prices are high, but discretion is absolute.",
-        "Find your next ship at The Exchange shipyards.",
-        "We trade in anything the corporations forbid.",
-        "The only law here is the law of supply and demand.",
-        "Fuel is a premium, but freedom is priceless.",
-        "You've arrived at the legendary black market. ",
-        "A hollow asteroid, a universe of opportunity.",
-        "We deal in rumors and secrets at The Exchange."
-    ],
-    "loc_jupiter": [
-        "The cheapest fuel in the system, guaranteed.",
-        "Enjoy the view from our orbital refineries.",
-        "\"We skim the giant so you can fly.\" - Jovian Fuel Co.",
-        "Automated refineries are working constantly to keep you fueled.",
-        "You're at the essential pit-stop for all outer-system routes.",
-        "Don't get caught empty; top off while you're here.",
-        "Our fuel prices can't be beat!",
-        "The colossal sphere of Jupiter dominates every view.",
-        "Planning a long haul? Start with a full tank.",
-        "We specialize in one thing: cheap, high-grade Propellant.",
-        "Our exploration ships are built for the deep void.",
-        "The Great Red Spot: A baleful eye, a beautiful sight.",
-        "Need Atmo Processors? We build them big right here.",
-        "Gravity is high, but our prices are low.",
-        "The giant that fuels the whole system.",
-        "Radiation warnings in effect. Dock quickly.",
-        "Our automated systems mean fast, efficient refueling.",
-        "\"A full tank from Jupiter is a full wallet tomorrow.\"",
-        "Come for the fuel, stay for the view."
-    ],
-    "loc_saturn": [
-        "Enjoy the majestic rings of Saturn.",
-        "You've arrived at the system's premier luxury destination.",
-        "Visit the opulent stations of the Ring-Dwellers.",
-        "Got luxury goods? Our markets pay top credit!",
-        "Bio-tech are in high demand on Saturn.",
-        "Relax in opulent zero-G luxury on your favorite ring today!",
-        "\"Give a ring, on a ring, with a view to remember.\" - Saturn Tourism Board.",
-        "Our casinos are open always.",
-        "Experience the shadow of the rings.",
-        "Home of the best personal transport. Travel in style.",
-        "Bring us your exotic bio-wares, leave with a fortune.",
-        "You're at the jewel of the outer system.",
-        "Ice-harvesting rigs and luxury hotels, side-by-side.",
-        "This is where the wealthy come to play.",
-        "Forget the dust of the Belt; experience true opulence.",
-        "Our markets crave the finest things in life.",
-        "Corporate retreats and high-stakes tourism."
-    ],
-    "loc_uranus": [
-        "Uranus: Pushing the boundaries of science.",
-        "Need a boost? Our R&D labs offer component overclocking.",
-        "The pale, featureless orb holds deep secrets.",
-        "Report: Quantum phenomena studies are yielding strange results.",
-        "We build the system's largest craft. Reserve yours today.",
-        "Research outposts glitter like ice in the eternal twilight.",
-        "You're at the system's hub for theoretical physics.",
-        "Our ships are built for self-sufficiency.",
-        "Don't mind the strange sensor readings; it's just the science.",
-        "Welcome to the Tilted Planet at the edge of the known.",
-        "A silent, ice-cold world of opportunity.",
-        "We're hiring long-haul traders. Discretion is a must.",
-        "\"What is reality? We're working on it.\" - Uranus R&D.",
-        "The coldest, quietest, and strangest port in the system.",
-        "Our scientists are unlocking the secrets of the void."
-    ],
-    "loc_neptune": [
-        "You are in military-controlled space. Transponder required.",
-        "Supersonic winds and high-security stations.",
-        "Check out the military surplus shipyard. All sales final.",
-        "\"Monitor your engine wake when in port.\" - Neptune Patrol.",
-        "Heavily armed patrols are for your protection.",
-        "The dark, stormy edge of the system.",
-        "Decommissioned frigates regularly for sale.",
-        "Have your clearance codes ready.",
-        "Welcome to the Dark Blue Pearl - beautiful, but dangerous.",
-        "Neptune's shipyards build for war, not for comfort.",
-        "Need a ship that can take a punch? Buy military surplus.",
-        "This is a restricted zone. Authorized traders only.",
-        "The winds here are fast, but our patrol ships are faster.",
-        "Shielded orbital stations offer refuge from the storm.",
-        "\"Obey the patrols, and you'll be fine.\"",
-        "Neptune: The armored fist of the outer system.",
-        "Our surplus sales are legendary. Get a frigate for cheap.",
-        "The last, stormy bastion of corporate law."
-    ],
-    "loc_kepler": [
-        "Kepler's Eye: We are watching the void.",
-        "Our Markets are astronomical.",
-        "You're looking at the single largest lens in human history.",
-        "\"We look for answers in the dark.\" - Kepler R&D.",
-        "\"Staring into the infinite, always.\" - Kepler R&D.",
-        "Our observatory consumes more power than a small city.",
-        "The furthest point of scientific ambition.",
-        "\"What's out there? Let's find out.\" - Kepler R&D",
-        "Our delicate sensor arrays are always expanding.",
-        "A colossal lens, a universe of data.",
-        "Kepler's Eye: The system's lonely sentinel.",
-        "Your cargo deliveries help fuel discovery.",
-        "Dock carefully; our sensor lattice is fragile.",
-        "The quietest station in the system.",
-        "See the system as you've never seen it before.",
-        "Kepler's Eye: What do the stars see when they look back?"
-    ],
-    "loc_pluto": [
-        "Pluto: The last stop.",
-        "Welcome to the fringe. Don't cause trouble.",
-        "\"We care not for your past, but your business.\"",
-        "You're at the haven for outcasts, at the system's cold, dark edge.",
-        "Forbidden tech? We call it unregulated.",
-        "Our stations are carved from a mountains of nitrogen-ice.",
-        "Smugglers, outcasts, and pioneers are all welcome here.",
-        "Pluto: The furthest outpost from corporate law.",
-        "The light is dim, but the opportunities are bright.",
-        "Need supplies? We've got the strangest.",
-        "Pluto's tiny, frozen heart is a whisper in the dark.",
-        "\"It's cold, it's dark, and it's home.\" - Pluto Tourism Board",
-        "Need a place to lay low? You found it.",
-        "\"We have what the core worlds don't.\"",
-        "System jurisdiction ends here, but your stay doesn't have to."
-    ]
-};
---- END OF FILE: ./js/data/flavorAds.js ---
-
 --- START OF FILE: ./js/data/tutorials.js ---
 // js/data/tutorials.js
 /**
@@ -8822,424 +8449,88 @@ export class MissionService {
 --- END OF FILE: ./js/services/MissionService.js ---
 
 --- START OF FILE: ./js/services/NewsTickerService.js ---
+// js/services/NewsTickerService.js
 /**
- * @file NewsTickerService.js
- * @description Manages the scrolling news ticker, including message generation,
- * queueing, dynamic insertions, and styling for various message types.
- * This is the V2 implementation.
+ * @fileoverview Manages the state and content of the news ticker.
+ * It maintains a queue of messages and serves them to the UIManager.
  */
+import { NEWS_FLAVOR } from '../data/news_flavor.js';
 
-import { GameState } from './GameState.js';
-import { MarketService } from './simulation/MarketService.js';
-import { subscribe, publish } from './EventManager.js';
-import { formatNumber, getRandomElement, shuffleArray } from '../utils.js';
+const MAX_MESSAGES = 10; // Max number of messages to show at once
+const FLAVOR_PULSE_RATE = 10; // Add a new flavor text every 10 days
 
 export class NewsTickerService {
     /**
-     * Creates an instance of NewsTickerService.
+     * @param {import('./GameState.js').GameState} gameState 
      */
-    constructor() {
-        this.tickerBar = document.getElementById('news-ticker-bar');
-        this.tickerContent = null; // Will be created
+    constructor(gameState) {
+        this.gameState = gameState;
         this.messageQueue = [];
-        this.currentMessageIndex = 0;
-        this.welcomeMessagePlayed = false;
-        this.isCycling = false;
+        this.lastFlavorDay = 0;
+        this.isDirty = true; // Start as true to render on initial load
+    }
 
-        // For V2 queue logic
-        this.locationFlavorMessages = [];
-        this.purchasedIntelMessage = null; // Stores the active purchased intel object
+    /**
+     * Public method for other services to add a message to the ticker.
+     * @param {string} text - The message content.
+     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
+     * @param {boolean} [isPriority=false] - If true, prepends to the front.
+     */
+    pushMessage(text, type, isPriority = false) {
+        // Suggestion 4: De-duplication check
+        if (this.messageQueue.some(msg => msg.text === text)) {
+            return; // Don't add duplicate
+        }
 
-        /**
-         * Map of location IDs to their corresponding CSS theme color variables.
-         * Used for styling FLAVOR messages.
-         * @type {Object<string, string>}
-         */
-        this.locationColorMap = {
-            "loc_mercury": "var(--color-theme-mercury)", // Example, if added
-            "loc_venus": "var(--color-theme-venus)",
-            "loc_earth": "var(--color-theme-earth)",
-            "loc_luna": "var(--color-theme-luna)",
-            "loc_mars": "var(--color-theme-mars)",
-            "loc_belt": "var(--color-theme-belt)",
-            "loc_exchange": "var(--color-theme-exchange)",
-            "loc_jupiter": "var(--color-theme-jupiter)",
-            "loc_saturn": "var(--color-theme-saturn)",
-            "loc_uranus": "var(--color-theme-uranus)",
-            "loc_neptune": "var(--color-theme-neptune)",
-            "loc_pluto": "var(--color-theme-pluto)",
-            "loc_kepler": "var(--color-theme-kepler)"
+        const newMessage = {
+            id: Date.now() + Math.random(),
+            text: text,
+            type: type
         };
-    }
 
-    /**
-     * Initializes the news ticker service.
-     * Creates the ticker content element and starts the message cycling.
-     */
-    init() {
-        if (!this.tickerBar) {
-            console.error("News ticker bar element not found!");
-            return;
-        }
-
-        this.tickerContent = document.createElement('div');
-        this.tickerContent.className = 'news-ticker-content';
-        this.tickerBar.appendChild(this.tickerContent);
-
-        // Stop animation on hover
-        this.tickerContent.addEventListener('mouseenter', () => this.pause());
-        this.tickerContent.addEventListener('mouseleave', () => this.resume());
-
-        // Rebuild queue on location change
-        subscribe('locationChanged', () => this.buildDefaultQueue());
-        
-        // Build initial queue
-        this.buildDefaultQueue();
-
-        // Show welcome message once
-        if (!this.welcomeMessagePlayed) {
-            this.showWelcomeMessage();
-        }
-    }
-
-    /**
-     * Builds the default rotating message queue for the current location.
-     * This is called on location arrival.
-     * Queue Order: Free Intel, Flavor #1, Purchased Intel (if active), Flavor #2, Status
-     * @private
-     */
-    buildDefaultQueue() {
-        this.stop(); // Stop current cycle
-        this.messageQueue = []; // Clear existing queue
-
-        // 1. Generate Free Intel for the current location
-        const freeIntelMessage = this.generateFreeIntelMessage();
-        this.messageQueue.push(freeIntelMessage);
-
-        // 2. Select two unique flavor messages for this location
-        this.locationFlavorMessages = this.selectFlavorMessages();
-        if (this.locationFlavorMessages.length > 0) {
-            this.messageQueue.push(this.locationFlavorMessages[0]);
-        }
-
-        // 3. Add active purchased intel, if it exists
-        if (this.purchasedIntelMessage) {
-            // TODO: Add expiration logic check here
-            this.messageQueue.push(this.purchasedIntelMessage);
-        }
-
-        // 4. Add the second flavor message
-        if (this.locationFlavorMessages.length > 1) {
-            this.messageQueue.push(this.locationFlavorMessages[1]);
-        }
-
-        // 5. Add the dynamic Status message
-        this.messageQueue.push({
-            text: "STATUS_PLACEHOLDER", // Text will be generated live
-            type: "STATUS",
-            requiresLiveData: true
-        });
-
-        this.currentMessageIndex = 0;
-        this.start(); // Start cycling the new queue
-    }
-
-    /**
-     * Generates the free intel message for the current location.
-     * Finds the commodity with the best discount > 5%.
-     * @returns {object} The intel message object.
-     * @private
-     */
-    generateFreeIntelMessage() {
-        const currentLocationId = GameState.player.location;
-        const marketData = MarketService.getMarketData(currentLocationId);
-        if (!marketData || !marketData.commodities) {
-            return { text: "Market data unavailable.", type: "SYSTEM" };
-        }
-
-        let bestDeal = { commodity: null, margin: 0, discountPercent: 0 };
-
-        for (const commodityId in marketData.commodities) {
-            const item = marketData.commodities[commodityId];
-            const average = MarketService.getGalacticAverage(commodityId);
-            const margin = average - item.price;
-            
-            // We only care about favorable margins (discounts)
-            if (margin > bestDeal.margin) {
-                bestDeal = {
-                    commodityId: commodityId,
-                    commodityName: MarketService.getCommodityName(commodityId),
-                    margin: margin,
-                    discountPercent: (1 - item.price / average)
-                };
-            }
-        }
-
-        // Check if the best deal meets the 5% threshold
-        if (bestDeal.commodityId && bestDeal.discountPercent >= 0.05) {
-            let tier;
-            const perc = bestDeal.discountPercent * 100;
-
-            if (perc >= 51) tier = 'tier5';
-            else if (perc >= 31) tier = 'tier4';
-            else if (perc >= 21) tier = 'tier3';
-            else if (perc >= 11) tier = 'tier2';
-            else tier = 'tier1'; // 5-10%
-
-            const messageTemplate = getRandomElement(FREE_INTEL_MESSAGES[tier]);
-            const text = messageTemplate.replace(/{Commodity Name}/g, bestDeal.commodityName);
-            
-            return { text: text, type: "INTEL" };
+        if (isPriority) {
+            this.messageQueue.unshift(newMessage);
         } else {
-            // Tier 0: No significant deals
-            return { text: getRandomElement(FREE_INTEL_MESSAGES['tier0']), type: "INTEL" };
+            this.messageQueue.push(newMessage);
+        }
+
+        // Enforce queue limit
+        while (this.messageQueue.length > MAX_MESSAGES) {
+            this.messageQueue.shift(); // Remove the oldest
+        }
+
+        this.isDirty = true; // Suggestion 2: Set dirty flag
+    }
+
+    /**
+     * Called by TimeService each day to pulse flavor text.
+     */
+    pulse() {
+        // Add flavor text periodically
+        if (this.gameState.day - this.lastFlavorDay >= FLAVOR_PULSE_RATE) {
+            const flavorText = NEWS_FLAVOR[Math.floor(Math.random() * NEWS_FLAVOR.length)];
+            this.pushMessage(flavorText, 'FLAVOR');
+            this.lastFlavorDay = this.gameState.day;
         }
     }
 
     /**
-     * Selects two unique flavor messages for the current location.
-     * @returns {object[]} An array of two flavor message objects.
-     * @private
+     * Gets the formatted HTML string for all current messages.
+     * @returns {string} The HTML for the .news-ticker-content element.
      */
-    selectFlavorMessages() {
-        const currentLocationId = GameState.player.location;
-        const adsPool = FLAVOR_ADS[currentLocationId];
-
-        if (!adsPool || adsPool.length === 0) {
-            return [{ text: "No local broadcasts detected.", type: "FLAVOR" }];
+    getTickerContentHtml() {
+        if (this.messageQueue.length === 0) {
+            this.pushMessage("Welcome to Orbital Trading. All systems nominal.", "SYSTEM");
         }
 
-        // Shuffle and pick the first two
-        const shuffledAds = shuffleArray([...adsPool]);
-        const selectedMessages = [];
-
-        if (shuffledAds.length > 0) {
-            selectedMessages.push({
-                text: shuffledAds[0],
-                type: "FLAVOR"
-            });
-        }
+        const separator = ` <span class="ticker-separator"> // </span> `;
         
-        if (shuffledAds.length > 1) {
-             selectedMessages.push({
-                text: shuffledAds[1],
-                type: "FLAVOR"
-            });
-        } else if (shuffledAds.length > 0) {
-            // If only one ad exists, duplicate it
-             selectedMessages.push({
-                text: shuffledAds[0],
-                type: "FLAVOR"
-            });
-        }
+        const messageHtml = this.messageQueue.map(msg => 
+            `<span class="ticker-message" data-type="${msg.type}">${msg.text}</span>`
+        ).join(separator);
 
-        return selectedMessages;
-    }
-
-    /**
-     * Generates the ship status message with live data.
-     * @returns {string} The formatted status message.
-     * @private
-     */
-    generateStatusMessage() {
-        const ship = GameState.player.ship;
-        if (!ship) return "NO SHIP DATA";
-
-        const shipName = ship.shipName || "Vagabond";
-        const fuelPercent = Math.round((ship.fuel / ship.fuelCapacity) * 100);
-        const cargoUsed = ship.cargo.reduce((acc, item) => acc + item.quantity, 0);
-        const cargoMax = ship.cargoMax;
-        const hullPercent = Math.round((ship.hull / ship.hullMax) * 100);
-
-        return `${shipName}: FUEL: ${fuelPercent}% | CARGO: ${cargoUsed}/${cargoMax} | HULL: ${hullPercent}%`;
-    }
-
-    /**
-     * Starts the message cycling.
-     */
-    start() {
-        if (this.isCycling || this.messageQueue.length === 0) return;
-        this.isCycling = true;
-        this.cycleMessage();
-    }
-
-    /**
-     * Stops the message cycling.
-     */
-    stop() {
-        this.isCycling = false;
-        if (this.tickerContent) {
-            this.tickerContent.style.animation = 'none';
-        }
-    }
-
-    /**
-     * Pauses the ticker animation.
-     */
-    pause() {
-        if (this.tickerContent) {
-            this.tickerContent.style.animationPlayState = 'paused';
-        }
-    }
-
-    /**
-     * Resumes the ticker animation.
-     */
-    resume() {
-        if (this.tickerContent) {
-            this.tickerContent.style.animationPlayState = 'running';
-        }
-    }
-
-    /**
-     * Core logic for cycling to the next message.
-     * @private
-     */
-    cycleMessage() {
-        if (!this.isCycling || this.messageQueue.length === 0) {
-            this.isCycling = false;
-            return;
-        }
-
-        // Get the next message
-        const message = this.messageQueue[this.currentMessageIndex];
-        
-        // Display it
-        this.displayMessage(message);
-
-        // Calculate animation duration based on text length
-        // Aprox 25 chars/sec
-        const minDuration = 10; // seconds
-        const charCount = this.tickerContent.textContent.length;
-        const duration = Math.max(minDuration, charCount / 20); // Adjust '20' to control speed
-        
-        this.tickerContent.style.animation = 'none'; // Reset animation
-        void this.tickerContent.offsetWidth; // Trigger reflow
-        this.tickerContent.style.animation = `scroll-ticker ${duration}s linear`;
-
-        // Set timeout to cycle to the next message when this one finishes
-        setTimeout(() => {
-            if (this.isCycling) {
-                // Advance index and loop
-                this.currentMessageIndex = (this.currentMessageIndex + 1) % this.messageQueue.length;
-                this.cycleMessage();
-            }
-        }, duration * 1000); // Wait for the animation to complete
-    }
-
-    /**
-     * Renders a specific message object to the ticker.
-     * @param {object} messageObj The message object to display.
-     * @private
-     */
-    displayMessage(messageObj) {
-        if (!this.tickerContent) return;
-
-        let text = messageObj.text;
-        
-        // If message requires live data, generate it now
-        if (messageObj.requiresLiveData) {
-            text = this.generateStatusMessage();
-        }
-        
-        const type = messageObj.type ? messageObj.type.toLowerCase() : 'default';
-
-        // Build the message span
-        const messageSpan = document.createElement('span');
-        messageSpan.className = `ticker-message type-${type}`;
-        messageSpan.textContent = text;
-
-        // Apply dynamic color for FLAVOR
-        if (messageObj.type === "FLAVOR") {
-            const locationColor = this.locationColorMap[GameState.player.location] || 'var(--ot-text-primary)';
-            messageSpan.style.color = locationColor;
-        }
-
-        // Clear previous content and add the new message
-        this.tickerContent.innerHTML = ''; // Clear
-        this.tickerContent.appendChild(messageSpan);
-        
-        // Add separator for visual spacing
-        const separator = document.createElement('span');
-        separator.className = 'ticker-separator';
-        separator.textContent = ' // ';
-        this.tickerContent.appendChild(separator);
-    }
-
-    /**
-     * Inserts a high-priority message to play next.
-     * Used for SYSTEM, ALERT, and STORY types.
-     * @param {string} text The message text.
-     * @param {string} type The message type (e.g., "ALERT", "SYSTEM", "STORY").
-     * @param {object} [options] Optional parameters.
-     * @param {number} [options.duration] How long the message should stay in the queue (in ms).
-     */
-    addDynamicMessage(text, type, options = {}) {
-        const messageObj = {
-            text: text,
-            type: type.toUpperCase(),
-            isDynamic: true,
-            expiration: options.duration ? Date.now() + options.duration : null
-        };
-
-        // Insert after the currently playing message
-        const insertIndex = (this.currentMessageIndex + 1) % this.messageQueue.length;
-        this.messageQueue.splice(insertIndex, 0, messageObj);
-
-        // If this is the only message, start the cycle
-        if (!this.isCycling && this.messageQueue.length === 1) {
-            this.currentMessageIndex = 0;
-            this.start();
-        }
-
-        // TODO: Add logic to remove expired dynamic messages
-    }
-
-    /**
-     * Adds a purchased intel message to its standard slot in the queue.
-     * This does NOT interrupt the current message.
-     * @param {string} commodityId The ID of the commodity.
-     * @param {string} locationId The ID of the location.
-     */
-    addPurchasedIntel(commodityId, locationId) {
-        // Find commodity and location names
-        const commodityName = MarketService.getCommodityName(commodityId) || "Goods";
-        const locationName = MarketService.getLocationName(locationId) || "a station";
-
-        // Select a random message template
-        const messageTemplate = getRandomElement(PURCHASED_INTEL_MESSAGES);
-
-        // Format the text
-        const text = messageTemplate
-            .replace(/{Commodity Name}/g, commodityName)
-            .replace(/{Location Name}/g, locationName);
-
-        const messageObj = {
-            text: text,
-            type: "INTEL",
-            isDynamic: false,
-            expiration: Date.now() + (1000 * 60 * 60 * 24 * 7) // Example: 7-day expiry
-        };
-
-        // Store it as the active purchased intel
-        this.purchasedIntelMessage = messageObj;
-
-        // Rebuild the queue to include it
-        this.buildDefaultQueue();
-    }
-
-    /**
-     * Shows the one-time welcome message.
-     * @private
-     */
-    showWelcomeMessage() {
-        if (this.welcomeMessagePlayed) return;
-        
-        this.addDynamicMessage(
-            "Welcome to Orbital Trading",
-            "SYSTEM"
-        );
-        this.welcomeMessagePlayed = true;
+        // We return the inner content, not the container
+        return `<div class="news-ticker-content">${messageHtml}</div>`;
     }
 }
 --- END OF FILE: ./js/services/NewsTickerService.js ---

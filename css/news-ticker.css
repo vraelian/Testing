@@ -47,7 +47,7 @@
     100% { transform: translateX(-100%); }
 }
 
-/* --- Message Type Styling (V2) --- */
+/* --- Message Type Styling --- */
 
 .ticker-separator {
     color: #555; /* Dark gray for the separator */
@@ -58,39 +58,17 @@
     display: inline;
 }
 
-/* News Ticker V2 Message Types */
-.ticker-message.type-system {
-  font-weight: bold;
-  color: var(--color-white);
+/* Example color-coding for message types */
+.ticker-message[data-type="SYSTEM"] {
+    color: var(--ot-cyan-base, #22d3ee);
+    font-weight: 700;
 }
 
-.ticker-message.type-intel {
-  color: var(--color-credit-blue);
+.ticker-message[data-type="INTEL"] {
+    color: var(--ot-green-accent, #4ade80);
 }
 
-/* FLAVOR type color is applied dynamically via JS */
-.ticker-message.type-flavor {
-    /* Base styling can go here if needed, but color is dynamic */
-}
-
-.ticker-message.type-alert {
-  color: var(--color-red);
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.ticker-message.type-story {
-  color: var(--color-golden-yellow);
-  font-weight: bold;
-  font-style: italic;
-}
-
-.ticker-message.type-status {
-  color: var(--color-green);
-  text-transform: uppercase;
-}
-
-/* DEFAULT type will have no extra styling */
-.ticker-message.type-default {
-    /* Inherits default .news-ticker-content color */
+.ticker-message[data-type="FLAVOR"] {
+    color: var(--ot-text-secondary, #9ca3af);
+    font-style: italic;
 }
