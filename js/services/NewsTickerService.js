@@ -69,7 +69,7 @@ export class NewsTickerService {
      */
     getTickerContentHtml() {
         if (this.messageQueue.length === 0) {
-            this.pushMessage("Welcome to Orbital Trading. All systems nominal.", "SYSTEM");
+            this.pushMessage("Welcome to Orbital Trading.", "SYSTEM");
         }
 
         const separator = ` <span class="ticker-separator"> // </span> `;
