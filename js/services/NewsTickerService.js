@@ -150,10 +150,9 @@ export class NewsTickerService {
      * @returns {string} The HTML for the .news-ticker-content element.
      */
     getTickerContentHtml() {
-        if (this.messageQueue.length === 0 && this.welcomeMessagePlayed) {
-            // Fallback in case queue is empty but game is running
-            this.onLocationChange();
-        } else if (this.messageQueue.length === 0 && !this.welcomeMessagePlayed) {
+        // MODIFIED: Removed fallback call to onLocationChange()
+        // This was causing the ticker to reset when switching tabs.
+        if (this.messageQueue.length === 0 && !this.welcomeMessagePlayed) {
             // Initial game load
             this.generateWelcomeMessage();
         }
@@ -314,7 +313,8 @@ export class NewsTickerService {
             
             const cargoMax = shipData.cargoCapacity;
 
-            return `${shipData.name}: FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax} | HULL: ${hull}%`;
+            // MODIFIED: Re-ordered as requested
+            return `${shipData.name}: HULL: ${hull}% | FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax}`;
         } catch (e) {
             console.error("NewsTickerService Error generating status:", e);
             return "STATUS: ERROR"; // Safeguard

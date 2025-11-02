@@ -23,6 +23,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 const LORE_CONTENT = {
     story_so_far: `
         <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
+    
         <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
         <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
         <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
@@ -253,30 +254,43 @@ export class UIManager {
     _renderNewsTicker() {
         if (!this.newsTickerService || !this.cache.newsTickerBar) return;
     
-        // Phase 2: "Dirty" check for performance.
+        // Only re-render if content has changed
         if (!this.newsTickerService.isDirty) return; 
     
-        this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
-        this.newsTickerService.isDirty = false; // Reset flag
-    
-        // Phase 3: Dynamic animation speed
+        // 1. Get the content DIV string from the service
+        const tickerHtml = this.newsTickerService.getTickerContentHtml();
+        if (!tickerHtml) {
+            this.cache.newsTickerBar.innerHTML = '';
+            this.newsTickerService.isDirty = false;
+            return;
+        }
+
+        // 2. Set it to measure the *single* width
+        this.cache.newsTickerBar.innerHTML = tickerHtml;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
+        
         if (contentElement) {
-            // Measure the actual width of the scrolling text
-            const contentWidth = contentElement.scrollWidth;
+            const innerHtml = contentElement.innerHTML;
             
-            // Define a scroll speed (e.g., 50 pixels per second)
-            const PIXELS_PER_SECOND = 50; 
+            // 3. Measure the width of the single block of content
+            // We do this *before* duplicating
+            const singleContentWidth = contentElement.scrollWidth;
+
+            // 4. **Duplicate the inner HTML** for the seamless loop
+            contentElement.innerHTML = innerHtml + innerHtml;
             
-            // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
-            const containerWidth = this.cache.newsTickerBar.offsetWidth;
-            const totalScrollDistance = contentWidth + containerWidth;
+            // 5. Calculate duration based on the *single* width
+            const PIXELS_PER_SECOND = 50;
+            // The distance to scroll is one "block" of content
+            const totalScrollDistance = singleContentWidth;
             
             // Set a minimum duration to prevent extremely fast scrolls on short text
             const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
             
             contentElement.style.animationDuration = `${duration}s`;
         }
+        
+        this.newsTickerService.isDirty = false; // Reset flag
     }
 
     renderNavigation(gameState) {
@@ -300,7 +314,8 @@ export class UIManager {
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
+ style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -323,7 +338,7 @@ export class UIManager {
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">C</span>
+                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -401,6 +416,7 @@ export class UIManager {
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
+                
                 this._updateHangarScreen(gameState);
                 break;
             }
@@ -915,7 +931,6 @@ export class UIManager {
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-
         // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#lore-modal-content') || e.target.id === 'lore-modal') {
@@ -1138,7 +1153,6 @@ export class UIManager {
 
         // --- Update Content ---
         let processedText = step.text;
-
         // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
             const activeShipId = gameState.player.activeShipId;
@@ -1200,6 +1214,7 @@ export class UIManager {
             } else {
                  baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
+     
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
             const finalOptions = {
@@ -1259,6 +1274,7 @@ export class UIManager {
      * @param {string} newOptions.placement - New Popper placement.
      * @param {number} newOptions.distance - New Popper offset distance.
      * @param {number} newOptions.skidding - New Popper offset skidding.
+     }
      */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;

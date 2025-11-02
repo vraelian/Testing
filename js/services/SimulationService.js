@@ -132,13 +132,10 @@ export class SimulationService {
             lastActiveScreen: newLastActive 
         });
 
-        // --- [NEW V2 CHANGE] ---
-        // As per V2 spec, the queue is rebuilt on every location change.
-        // The 'navigation' screen is the primary hub screen upon arrival.
-        if (screenId === 'navigation') {
-            this.newsTickerService.onLocationChange();
-        }
-        // --- [END NEW V2 CHANGE] ---
+        // --- [MODIFICATION] ---
+        // Removed the onLocationChange() call.
+        // It is now correctly handled *only* by TravelService upon arrival.
+        // --- [END MODIFICATION] ---
 
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });

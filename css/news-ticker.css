@@ -39,12 +39,12 @@
 
 /*
  * The scrolling animation. 
- * Starts at 100% (off-screen right) and moves to -100% (off-screen left).
- * The animation-duration will determine the speed.
+ * MODIFIED: Starts at 0 and moves left by 50% of its (now duplicated) width
+ * to create a seamless loop.
  */
 @keyframes scroll-ticker {
-    0%   { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 /* --- Message Type Styling --- */
