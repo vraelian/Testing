@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 31.00</title>
+    <title>Orbital Trading 31.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -64,7 +64,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 31.00</p>
+            <p>Version 31.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2329,12 +2329,12 @@ body {
 
 /*
  * The scrolling animation. 
- * Starts at 100% (off-screen right) and moves to -100% (off-screen left).
- * The animation-duration will determine the speed.
+ * MODIFIED: Starts at 0 and moves left by 50% of its (now duplicated) width
+ * to create a seamless loop.
  */
 @keyframes scroll-ticker {
-    0%   { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 /* --- Message Type Styling --- */
@@ -5476,6 +5476,10 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.showGameContainer(); 
             uiManager.render(gameState.getState());
         }
+        
+        // MODIFICATION: Populate the news ticker for the starting/loaded location
+        // after the state is initialized and rendered.
+        newsTickerService.onLocationChange();
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
@@ -8934,7 +8938,10 @@ export class NewsTickerService {
      */
     onLocationChange() {
         const state = this.gameState.getState();
-        const newLocationId = state.player.currentLocationId;
+        // ---
+        // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // ---
+        const newLocationId = state.currentLocationId;
 
         // Start with a fresh queue
         this.messageQueue = [];
@@ -8972,10 +8979,9 @@ export class NewsTickerService {
      * @returns {string} The HTML for the .news-ticker-content element.
      */
     getTickerContentHtml() {
-        if (this.messageQueue.length === 0 && this.welcomeMessagePlayed) {
-            // Fallback in case queue is empty but game is running
-            this.onLocationChange();
-        } else if (this.messageQueue.length === 0 && !this.welcomeMessagePlayed) {
+        // MODIFIED: Removed fallback call to onLocationChange()
+        // This was causing the ticker to reset when switching tabs.
+        if (this.messageQueue.length === 0 && !this.welcomeMessagePlayed) {
             // Initial game load
             this.generateWelcomeMessage();
         }
@@ -9149,7 +9155,10 @@ export class NewsTickerService {
      * @private
      */
     getLocationColor() {
-        const locationId = this.gameState.getState().player.currentLocationId;
+        // ---
+        // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // ---
+        const locationId = this.gameState.getState().currentLocationId;
         return locationColorMap[locationId] || 'var(--color-text-primary)'; // Fallback
     }
 }
@@ -9628,6 +9637,9 @@ export class TravelService {
         if (this.gameState.isGameOver) return;
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
+
+        // MODIFICATION: Call onLocationChange() here, now that the location is officially updated.
+        this.simulationService.newsTickerService.onLocationChange();
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -10316,11 +10328,8 @@ export class SimulationService {
         });
 
         // --- [NEW V2 CHANGE] ---
-        // As per V2 spec, the queue is rebuilt on every location change.
-        // The 'navigation' screen is the primary hub screen upon arrival.
-        if (screenId === 'navigation') {
-            this.newsTickerService.onLocationChange();
-        }
+        // MODIFICATION: Removed the onLocationChange() call from this function.
+        // It will now be called by TravelService when the location *actually* changes.
         // --- [END NEW V2 CHANGE] ---
 
         if (this.tutorialService) {
@@ -11410,6 +11419,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 const LORE_CONTENT = {
     story_so_far: `
         <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
+    
         <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
         <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
         <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
@@ -11640,30 +11650,43 @@ export class UIManager {
     _renderNewsTicker() {
         if (!this.newsTickerService || !this.cache.newsTickerBar) return;
     
-        // Phase 2: "Dirty" check for performance.
+        // Only re-render if content has changed
         if (!this.newsTickerService.isDirty) return; 
     
-        this.cache.newsTickerBar.innerHTML = this.newsTickerService.getTickerContentHtml();
-        this.newsTickerService.isDirty = false; // Reset flag
-    
-        // Phase 3: Dynamic animation speed
+        // 1. Get the content DIV string from the service
+        const tickerHtml = this.newsTickerService.getTickerContentHtml();
+        if (!tickerHtml) {
+            this.cache.newsTickerBar.innerHTML = '';
+            this.newsTickerService.isDirty = false;
+            return;
+        }
+
+        // 2. Set it to measure the *single* width
+        this.cache.newsTickerBar.innerHTML = tickerHtml;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
+        
         if (contentElement) {
-            // Measure the actual width of the scrolling text
-            const contentWidth = contentElement.scrollWidth;
+            const innerHtml = contentElement.innerHTML;
             
-            // Define a scroll speed (e.g., 50 pixels per second)
-            const PIXELS_PER_SECOND = 50; 
+            // 3. Measure the width of the single block of content
+            // We do this *before* duplicating
+            const singleContentWidth = contentElement.scrollWidth;
+
+            // 4. **Duplicate the inner HTML** for the seamless loop
+            contentElement.innerHTML = innerHtml + innerHtml;
             
-            // Calculate duration. Add the container's width to ensure it scrolls fully off-screen.
-            const containerWidth = this.cache.newsTickerBar.offsetWidth;
-            const totalScrollDistance = contentWidth + containerWidth;
+            // 5. Calculate duration based on the *single* width
+            const PIXELS_PER_SECOND = 50;
+            // The distance to scroll is one "block" of content
+            const totalScrollDistance = singleContentWidth;
             
             // Set a minimum duration to prevent extremely fast scrolls on short text
             const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
             
             contentElement.style.animationDuration = `${duration}s`;
         }
+        
+        this.newsTickerService.isDirty = false; // Reset flag
     }
 
     renderNavigation(gameState) {
@@ -11687,7 +11710,8 @@ export class UIManager {
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
+ style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -11710,7 +11734,7 @@ export class UIManager {
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">C</span>
+                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -11788,6 +11812,7 @@ export class UIManager {
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
+                
                 this._updateHangarScreen(gameState);
                 break;
             }
@@ -12302,7 +12327,6 @@ export class UIManager {
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-
         // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#lore-modal-content') || e.target.id === 'lore-modal') {
@@ -12525,7 +12549,6 @@ export class UIManager {
 
         // --- Update Content ---
         let processedText = step.text;
-
         // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
             const activeShipId = gameState.player.activeShipId;
@@ -12587,6 +12610,7 @@ export class UIManager {
             } else {
                  baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
+     
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
             const finalOptions = {
@@ -12646,6 +12670,7 @@ export class UIManager {
      * @param {string} newOptions.placement - New Popper placement.
      * @param {number} newOptions.distance - New Popper offset distance.
      * @param {number} newOptions.skidding - New Popper offset skidding.
+     }
      */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;
@@ -16859,6 +16884,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.10] - 2025-11-1
+-  news ticker update V2
+-  added databases for news ticker messaging
+-  added news ticker themes
+
 ## [31.00] - 2025-10-31
 -  implemented news ticker
 -  added NewsTickerService.js
@@ -17379,7 +17409,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "debt_management",
       "wealth_milestones"
     ],
-    "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
+    "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
   },
   "ai_collaboration_guidelines": {
     "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
@@ -17493,12 +17523,14 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "mutates_state": []
     },
     "NewsTickerService": {
-      "description": "Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily via TimeService/SimulationService facade to add flavor text.",
-      "dependencies": ["GameState", "js/data/news_flavor.js"],
+      "description": "Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources.",
+      "dependencies": ["GameState", "js/data/flavorAds.js", "js/data/intelMessages.js", "js/data/database.js"],
       "key_functions": {
         "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
-        "pulse": "Called daily to check if new flavor text should be added.",
-        "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render."
+        "pulse": "Called daily by TimeService; currently stubbed, logic moved to `onLocationChange`.",
+        "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render, generating live data (like STATUS) on the fly.",
+        "onLocationChange": "Rebuilds the entire default message queue (welcome, intel, ads, status) when the player arrives at a new location.",
+        "setServices": "Injects MarketService and SimulationService for generating dynamic intel and status messages."
       },
       "mutates_state": []
     },
@@ -17643,29 +17675,27 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
     "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"},
     "F054": {"path": "./js/services/NewsTickerService.js", "role": "UI_SERVICE"},
-    "F055": {"path": "./js/data/news_flavor.js", "role": "DATA_DEFINITION"},
-    "F056": {"path": "./css/news-ticker.css", "role": "STYLESHEET"}
+    "F055": {"path": "./js/data/flavorAds.js", "role": "DATA_DEFINITION", "description": "Defines location-specific flavor text for the news ticker."},
+    "F056": {"path": "./css/news-ticker.css", "role": "STYLESHEET"},
+    "F057": {"path": "./js/data/intelMessages.js", "role": "DATA_DEFINITION", "description": "Defines templates for market intel messages for the news ticker."}
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
 
 --- START OF FILE: ./meta/ROADMAP.md ---
-# Orbital Trading - Development Roadmap
-This document outlines the planned features and high-level goals for the future development of Orbital Trading.
-
 ## Immediate Concerns, Bugs, Issues
-- Refine ship hull deterioation
-- Refine ship cargo capacity
-- Refine ship fuel capacity
+- Nav bar needs an outline
 
 ## Planned Ideas
-- Balance ship fuel, hull costs and gameplay
+- Intel overhaul
+- System states influencing market performance
 - Improve finance screen, logging
-- Install tailwind CSS resources locally
 - Ship trading overhaul
 - Ship card transitions
-- Ship perks
+- Implement ship list
+- implement ship lore
 - Station Quirks
+- Install tailwind CSS resources locally
 
 ## Long-Term Ideas
 - Refine commodities names, identity
@@ -17675,13 +17705,12 @@ This document outlines the planned features and high-level goals for the future 
 - Additional tutorials
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Finalize mobile views
-- Optimize repititive calculations, long-term data accumulation, and re-renders
-- Storyline Timeline Governor (Mission availability, System States, Features)
+- Optimize repetitive calculations, long-term data accumulation, and re-renders
 - Storyline
+- Storyline Timeline Governor (Mission availability, System States, Features)
 - Design cononical missions
-- News ticker
-- System states influencing market performance
 - Tactile feedback
+- Art design
 - Sound design
 
 ## Far-Future Wishlist Ideas ()
@@ -17689,11 +17718,12 @@ This document outlines the planned features and high-level goals for the future 
 - Each ship has a unique nav bar
 - Desktop version with super ultra wide compatibility
 - Extend gameplay with simple but robust IAP DLC
+
 --- END OF FILE: ./meta/ROADMAP.md ---
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.4
+**Version:** 1.5
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -17707,7 +17737,7 @@ This document defines the single responsibility of each service in the applicati
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
 -   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily (via facade) to add flavor text. **Uses:** `js/data/news_flavor.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -17743,7 +17773,7 @@ This document defines the single responsibility of each service in the applicati
 
 -   **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
 -   **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
--s   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
+-   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
 
@@ -17765,7 +17795,8 @@ This document defines the single responsibility of each service in the applicati
 -   **`events.js`**: Defines static data for random events encountered during travel.
 -   **`missions.js`**: Defines static data for all player missions.
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
--   **`news_flavor.js`**: Defines static flavor text strings for the news ticker.
+-   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
+-   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

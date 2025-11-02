@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 1.4
+**Version:** 1.5
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -13,7 +13,7 @@ This document defines the single responsibility of each service in the applicati
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
 -   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the message queue, formatting, and prioritization for the scrolling news ticker. Pulses daily (via facade) to add flavor text. **Uses:** `js/data/news_flavor.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -49,7 +49,7 @@ This document defines the single responsibility of each service in the applicati
 
 -   **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
 -   **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
--s   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
+-   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
 
@@ -71,4 +71,5 @@ This document defines the single responsibility of each service in the applicati
 -   **`events.js`**: Defines static data for random events encountered during travel.
 -   **`missions.js`**: Defines static data for all player missions.
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
--   **`news_flavor.js`**: Defines static flavor text strings for the news ticker.
+-   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
+-   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.

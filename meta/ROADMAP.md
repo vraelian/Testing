@@ -1,19 +1,16 @@
-# Orbital Trading - Development Roadmap
-This document outlines the planned features and high-level goals for the future development of Orbital Trading.
-
 ## Immediate Concerns, Bugs, Issues
-- Refine ship hull deterioation
-- Refine ship cargo capacity
-- Refine ship fuel capacity
+- Nav bar needs an outline
 
 ## Planned Ideas
-- Balance ship fuel, hull costs and gameplay
+- Intel overhaul
+- System states influencing market performance
 - Improve finance screen, logging
-- Install tailwind CSS resources locally
 - Ship trading overhaul
 - Ship card transitions
-- Ship perks
+- Implement ship list
+- implement ship lore
 - Station Quirks
+- Install tailwind CSS resources locally
 
 ## Long-Term Ideas
 - Refine commodities names, identity
@@ -23,13 +20,12 @@ This document outlines the planned features and high-level goals for the future 
 - Additional tutorials
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Finalize mobile views
-- Optimize repititive calculations, long-term data accumulation, and re-renders
-- Storyline Timeline Governor (Mission availability, System States, Features)
+- Optimize repetitive calculations, long-term data accumulation, and re-renders
 - Storyline
+- Storyline Timeline Governor (Mission availability, System States, Features)
 - Design cononical missions
-- News ticker
-- System states influencing market performance
 - Tactile feedback
+- Art design
 - Sound design
 
 ## Far-Future Wishlist Ideas ()
