@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.10] - 2025-11-1
+-  news ticker update V2
+-  added databases for news ticker messaging
+-  added news ticker themes
+
 ## [31.00] - 2025-10-31
 -  implemented news ticker
 -  added NewsTickerService.js

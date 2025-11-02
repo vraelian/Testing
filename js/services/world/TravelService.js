@@ -130,12 +130,8 @@ export class TravelService {
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
 
-        // --- [MODIFICATION] ---
-        // Call onLocationChange *after* arrival and state update,
-        // but *before* the animation modal. This populates the queue
-        // so it's ready the moment the player docks.
+        // MODIFICATION: Call onLocationChange() here, now that the location is officially updated.
         this.simulationService.newsTickerService.onLocationChange();
-        // --- [END MODIFICATION] ---
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);

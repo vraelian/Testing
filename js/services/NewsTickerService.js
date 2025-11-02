@@ -112,7 +112,10 @@ export class NewsTickerService {
      */
     onLocationChange() {
         const state = this.gameState.getState();
-        const newLocationId = state.player.currentLocationId;
+        // ---
+        // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // ---
+        const newLocationId = state.currentLocationId;
 
         // Start with a fresh queue
         this.messageQueue = [];
@@ -313,8 +316,7 @@ export class NewsTickerService {
             
             const cargoMax = shipData.cargoCapacity;
 
-            // MODIFIED: Re-ordered as requested
-            return `${shipData.name}: HULL: ${hull}% | FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax}`;
+            return `${shipData.name}: FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax} | HULL: ${hull}%`;
         } catch (e) {
             console.error("NewsTickerService Error generating status:", e);
             return "STATUS: ERROR"; // Safeguard
@@ -327,7 +329,10 @@ export class NewsTickerService {
      * @private
      */
     getLocationColor() {
-        const locationId = this.gameState.getState().player.currentLocationId;
+        // ---
+        // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // ---
+        const locationId = this.gameState.getState().currentLocationId;
         return locationColorMap[locationId] || 'var(--color-text-primary)'; // Fallback
     }
 }

@@ -132,10 +132,10 @@ export class SimulationService {
             lastActiveScreen: newLastActive 
         });
 
-        // --- [MODIFICATION] ---
-        // Removed the onLocationChange() call.
-        // It is now correctly handled *only* by TravelService upon arrival.
-        // --- [END MODIFICATION] ---
+        // --- [NEW V2 CHANGE] ---
+        // MODIFICATION: Removed the onLocationChange() call from this function.
+        // It will now be called by TravelService when the location *actually* changes.
+        // --- [END NEW V2 CHANGE] ---
 
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
