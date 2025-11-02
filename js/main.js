@@ -62,7 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
             splashScreen.style.display = 'none';
             startGame(true); // Pass flag for simple start
         }, { once: true });
-    });
+    // *** VIRTUAL WORKBENCH FIX ***
+    // Added { once: true } to prevent multiple initializations
+    // This was the root cause of the "increment by 2" bug.
+    }, { once: true });
 
     /**
      * Instantiates all core game services, establishes their dependencies,
@@ -89,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Dependency Injection ---
         uiManager.setNewsTickerService(newsTickerService); // INJECT
+        
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
