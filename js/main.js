@@ -19,11 +19,15 @@ import { TravelService } from './services/world/TravelService.js';
  * Sets the --app-height CSS variable to the actual window inner height.
  * This is the definitive fix for the mobile viewport height bug on iOS.
  */
+/* // MODIFIED: This function actively prevents viewport-fit=cover from working correctly
+   // by setting the height to the safe-area height, not the full screen height.
+   // The CSS 'env(safe-area-inset-top)' variable is the correct way to handle the notch.
 const setAppHeight = () => {
     // Use the visualViewport height if available, as it's more reliable on mobile.
     const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.documentElement.style.setProperty('--app-height', `${height}px`);
 };
+*/
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -33,15 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEV_MODE = true; // Guard for development features.
 
     // Set the app height on initial load and whenever the viewport changes.
-    setAppHeight();
+    // setAppHeight(); // MODIFIED: Disabled
     
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
+    /* // MODIFIED: Disabled
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
         window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
+    */
 
 
     // Set up the main start button to initialize and begin the game.
