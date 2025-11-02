@@ -16,7 +16,12 @@
 }
 
 .news-ticker-content {
-    display: block;
+    /* * MODIFIED: Changed from 'block' to 'inline-block'.
+     * This forces the browser to calculate the element's width from its
+     * content (respecting 'white-space: nowrap') instead of constraining
+     * it to the parent's width, which fixed the stacking bug in Chrome.
+     */
+    display: inline-block; 
     white-space: nowrap; /* Prevents text from wrapping */
     position: absolute;
     
