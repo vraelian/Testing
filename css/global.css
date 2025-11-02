@@ -48,12 +48,14 @@
 html {
     padding: 0;
     margin: 0;
+    height: 100%; /* ADDED: Ensure HTML fills the viewport */
 }
 
 body {
-    height: 100vh;
+    /* height: 100vh; */ /* REMOVED */
     /* Fallback */
-    height: var(--app-height);
+    /* height: var(--app-height); */ /* REMOVED: This was the problem */
+    height: 100%; /* ADDED: Make body fill 100% of html */
     overflow: hidden;
     margin: 0;
     display: flex;
