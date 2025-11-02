@@ -76,12 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const missionService = new MissionService(gameState, uiManager, Logger);
         // MODIFIED: Pass newsTickerService to SimulationService
         const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
-        
-        // --- [[ THIS IS THE FIX ]] ---
-        // Inject SimulationService into NewsTickerService to resolve circular dependency
-        newsTickerService.setSimulationService(simulationService);
-        // --- [[ END FIX ]] ---
-
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
         let debugService = null;
 
