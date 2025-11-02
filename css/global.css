@@ -1,18 +1,4 @@
-/* --- ORBITAL TRADING (GEMINI) --- */
-/* This is now the *only* CSS file to be manually edited.
- * It loads Tailwind's base, components, and utilities.
- * All custom, project-wide styles (like :root variables and 
- * @font-face rules) live in this file.
- *
- * DO NOT EDIT other/old CSS files (e.g., navigation.css, hud.css, etc.)
- * They are deprecated and no longer included in the build.
- * New styling should be done with Tailwind utility classes in JS,
- * or by adding new custom rules *only* to this file.
- */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-/* --- END GEMINI LOADER --- */
+/* css/global.css */
 
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */

@@ -2,12 +2,6 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [31.20] - 2025-11-2
--  updated build tooling
--  added tailwind.config.js to builder
--  updated ARCHITECTURAL_DECISIONS for tailwind
--  updated global.css to contain all styles
-
 ## [31.10] - 2025-11-1
 -  news ticker update V2
 -  added databases for news ticker messaging

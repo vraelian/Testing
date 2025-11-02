@@ -68,22 +68,3 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
     * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
-
----
-
-### ADR-006: CSS Workflow Consolidation with Tailwind
-
-* **Status**: Accepted (2025-11-02)
-* **Context**: The previous CSS architecture consisted of over 16 individual `.css` files (e.g., `global.css`, `navigation.css`, `hud.css`, `news-ticker.css`, etc.). The manual `build.js` script attempted to bundle these, but was fragile and error-prone, requiring manual updates for any new CSS file (which was forgotten, breaking the news ticker on production builds).
-* **Decision**: The CSS workflow has been completely consolidated:
-    1.  **Tailwind CSS**: The `tailwindcss` library has been fully integrated into the build process.
-    2.  **Single Source File**: `css/global.css` is now the **one and only** CSS source file. It loads the Tailwind directives (`@tailwind base`, etc.) and contains all custom, project-wide styles (e.g., `:root` variables, `@font-face` rules, custom animations).
-    3.  **Build Process**: The `build.js` script now *only* processes `css/global.css`, runs it through `tailwindcss` and `autoprefixer`, and generates a single, highly-optimized `dist/style.css` file.
-    4.  **Deprecated Files**: All other CSS files in `css/` and `css/screens/` are **deprecated**. They are no longer loaded, processed, or included in the build.
-* **Consequences**:
-    * **Pro**: **(Gemini Workflow)** Future styling changes must be made in one of two ways:
-        1.  By adding Tailwind utility classes (e.g., `text-white`, `p-4`) directly to elements in the JavaScript UI component files.
-        2.  By adding new *custom global rules* or *variables* to `css/global.css`.
-    * **Pro**: Fixes the "missing CSS" bug by automating style discovery via Tailwind's content scanning.
-    * **Pro**: Drastically simplifies the CSS architecture and build script, making it robust and easy to maintain.
-    * **Con**: All old, non-global CSS files are now obsolete and can be safely deleted.
