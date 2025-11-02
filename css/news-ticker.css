@@ -50,25 +50,60 @@
 /* --- Message Type Styling --- */
 
 .ticker-separator {
-    color: #555; /* Dark gray for the separator */
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    white-space: nowrap;
     margin: 0 0.75rem;
 }
 
 .ticker-message {
     display: inline;
+    white-space: nowrap;
+    padding: 0 1rem;
+    /* Fallback color */
+    color: var(--color-text-primary);
 }
 
-/* Example color-coding for message types */
+/* --- UPDATED & NEW V2 STYLES --- */
+
+/* SYSTEM: bold white */
 .ticker-message[data-type="SYSTEM"] {
-    color: var(--ot-cyan-base, #22d3ee);
-    font-weight: 700;
+    color: var(--color-white);
+    font-weight: bold;
+    font-style: normal; /* Override old style */
 }
 
+/* INTEL: credit-blue */
 .ticker-message[data-type="INTEL"] {
-    color: var(--ot-green-accent, #4ade80);
+    color: var(--color-credit-blue);
+    font-style: normal; /* Override old style */
 }
 
+/* FLAVOR: Default color, italics removed. */
+/* Color is now applied dynamically via inline style in NewsTickerService.js */
 .ticker-message[data-type="FLAVOR"] {
-    color: var(--ot-text-secondary, #9ca3af);
+    color: var(--color-text-primary); /* Base color, will be overridden */
+    font-style: normal; /* Override old style */
+}
+
+/* ALERT: red, all caps, bold */
+.ticker-message[data-type="ALERT"] {
+    color: var(--color-red);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-style: normal;
+}
+
+/* STORY: golden yellow, bold, italicized */
+.ticker-message[data-type="STORY"] {
+    color: var(--color-golden-yellow);
+    font-weight: bold;
     font-style: italic;
+}
+
+/* STATUS: green, all caps */
+.ticker-message[data-type="STATUS"] {
+    color: var(--color-green);
+    text-transform: uppercase;
+    font-style: normal;
 }

@@ -42,6 +42,11 @@ export class SimulationService {
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
+        
+        // --- [NEW V2 CHANGE] ---
+        // Inject services required by NewsTickerService for dynamic content.
+        this.newsTickerService.setServices(this, this.marketService);
+        // --- [END NEW V2 CHANGE] ---
     }
 
     /**
@@ -126,6 +131,15 @@ export class SimulationService {
             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
+
+        // --- [NEW V2 CHANGE] ---
+        // As per V2 spec, the queue is rebuilt on every location change.
+        // The 'navigation' screen is the primary hub screen upon arrival.
+        if (screenId === 'navigation') {
+            this.newsTickerService.onLocationChange();
+        }
+        // --- [END NEW V2 CHANGE] ---
+
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
