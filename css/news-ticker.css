@@ -58,17 +58,51 @@
     display: inline;
 }
 
-/* Example color-coding for message types */
-.ticker-message[data-type="SYSTEM"] {
-    color: var(--ot-cyan-base, #22d3ee);
-    font-weight: 700;
+/* --- Message Type Styling (V2) --- */
+/* Based on Spec Sec 1 */
+
+/* 1. SYSTEM: Bold white */
+.ticker-message.type-system {
+    font-weight: bold;
+    color: var(--color-white);
 }
 
-.ticker-message[data-type="INTEL"] {
-    color: var(--ot-green-accent, #4ade80);
+/* 2. INTEL: Credit-blue */
+.ticker-message.type-intel {
+    color: var(--color-credit-blue);
 }
 
-.ticker-message[data-type="FLAVOR"] {
-    color: var(--ot-text-secondary, #9ca3af);
+/* 3. FLAVOR: Location-themed (color applied by JS) */
+.ticker-message.type-flavor {
+    /* Color is set dynamically by NewsTickerService */
+    /* We just add italics for a different feel */
     font-style: italic;
+    /* Using inherit to allow JS to override easily */
+    color: inherit;
+}
+
+/* 4. ALERT: Red, all caps, bold */
+.ticker-message.type-alert {
+    color: var(--color-red);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* 5. STORY (New): Golden yellow, bold, italic */
+.ticker-message.type-story {
+    color: var(--color-golden-yellow);
+    font-weight: bold;
+    font-style: italic;
+}
+
+/* 6. STATUS (New): Green, all caps */
+.ticker-message.type-status {
+    color: var(--color-green);
+    text-transform: uppercase;
+}
+
+/* 7. DEFAULT: Fallback */
+.ticker-message.type-default {
+    /* Uses the default .news-ticker-content color */
+    color: inherit;
 }
