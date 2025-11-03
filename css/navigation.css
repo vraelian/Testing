@@ -2,10 +2,6 @@
 
 /* ================================================================================
 BULKHEAD NAVIGATION STYLES
-- Uses an overlapping clip-path strategy for a clean, interlocking look.
-- A negative margin on each tab pulls it over the previous one.
-- The :first-child selector creates a clean starting edge.
-- The .active selector uses z-index to bring the selected tab to the front.
 ================================================================================ */
 .nav-wrapper {
     background-color: #383838;
@@ -67,7 +63,8 @@ BULKHEAD NAVIGATION STYLES
 }
 
 #sub-nav-bar {
-    border-radius: 0 0 15px 15px; /* Round the bottom corners */
+    /* * FIXED: Bottom radius is 14px (15px container - 1px border) to nest inside. */
+    border-radius: 0 0 14px 14px;
     overflow: hidden;
 }
 
