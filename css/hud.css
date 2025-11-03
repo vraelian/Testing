@@ -7,31 +7,27 @@
     /* Main container radius (55px top, 15px bottom) */
     border-radius: 55px 55px 15px 15px;
     
-    /* * FIXED: Background-color REMOVED.
-     * This element now only provides the blur, shadow, and shape.
-     * The background is moved to the content elements inside.
-     */
+    /* Background-color is REMOVED. It lives in the content elements. */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
     /* 'overflow: hidden;' remains REMOVED */
 }
 
-/* This ::after element creates the single, unified 1px border.
- * - Its radius (55px/15px) matches the parent container perfectly.
- * - z-index: 1 places it behind the content.
+/* * FIXED: This is the border.
+ * 1. Its radius is 1px LARGER (56px/16px) than the content (55px/15px).
+ * 2. It sits ON TOP of the content (z-index: 4).
+ * 3. pointer-events: none lets clicks pass through.
  */
 #top-bar-container::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 55px 55px 15px 15px;
+    top: 0; left: 0; right: 0; bottom: 0;
     border: 1px solid #000;
-    z-index: 1; /* Sit BEHIND the container's content (z-index 2+) */
-    pointer-events: none;
+    /* This radius is 1px larger than the content's to wrap it */
+    border-radius: 30px 30px 16px 16px; 
+    z-index: 4; /* Sit ON TOP of all content */
+    pointer-events: none; /* Allow clicks to pass through */
 }
 
 .context-bar {
@@ -44,12 +40,13 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     transition: background 0.5s ease-out, color 0.5s ease-out;
 
-    /* * FIXED:
-     * 1. Background-color ADDED here (moved from parent).
-     * 2. Top radius is 54px (55px container - 1px border) to nest inside.
+    /* * This content has the 55px radius.
+     * The border (at 56px) will now wrap it perfectly.
      */
     background-color: rgba(12, 16, 29, 0.85);
-    border-radius: 54px 54px 0 0;
+    border-radius: 55px 55px 0 0;
+    position: relative;
+    z-index: 2;
 }
 
 .credit-text {
@@ -65,7 +62,8 @@
     gap: 8px;
     transform: translateX(-5%); /* Nudged status bars left */
     position: relative; /* Added for z-index */
-    z-index: 3; /* Added to lift pod above active tab (z-index: 2) */
+    /* z-index: 3 sits above the context-bar (2) and active tab (3), but *below* the border (4) */
+    z-index: 3; 
 }
 
 .status-bar-group {
