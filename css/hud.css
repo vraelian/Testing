@@ -4,15 +4,36 @@
     top: 0;
     z-index: 10;
     width: 100%;
-    border-radius: 55px;
+    /* Updated radius: 55px top, 15px bottom */
+    border-radius: 55px 55px 15px 15px;
     background-color: rgba(12, 16, 29, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden; /* Added to clip child corners */
+}
+
+/* New overlay pseudo-element for the border.
+  - Positioned absolutely to cover the parent.
+  - z-index: 11 puts it "in front of" the parent's content (which is z-index: 10).
+  - pointer-events: none allows clicks to pass through to the nav elements underneath.
+*/
+#top-bar-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Updated radius to match parent */
+    border-radius: 55px 55px 15px 15px;
+    border: 1px solid #000;
+    z-index: 11; /* Sit on top of the container's content */
+    pointer-events: none; /* Allow clicks to pass through */
 }
 
 .context-bar {
-    padding: 6px 12px;
+    padding: 6px 40px; /* Manually updated horizontal padding */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -34,6 +55,9 @@
     justify-content: flex-end;
     align-items: center;
     gap: 8px;
+    transform: translateX(-5%); /* Nudged status bars left */
+    position: relative; /* Added for z-index */
+    z-index: 3; /* Added to lift pod above active tab (z-index: 2) */
 }
 
 .status-bar-group {
@@ -69,10 +93,10 @@
 
 .status-tooltip {
     position: absolute;
-    top: 100%;
-    margin-top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%; /* Position vertically centered */
+    left: 0; /* Position at the left edge of the parent */
+    transform: translateY(-50%) translateX(-100%); /* Center vertically, move left */
+    margin-right: 5px; /* Add gap between tooltip and bar */
     background-color: #111;
     color: #fff;
     padding: 4px 8px;
@@ -88,14 +112,7 @@
     visibility: hidden;
 }
 
-.fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 51px));
-}
-
-.cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 102px));
-}
-
+/* Removed rules for .fuel-group .status-tooltip and .cargo-group .status-tooltip */
 
 .status-tooltip.visible {
     opacity: 1;
