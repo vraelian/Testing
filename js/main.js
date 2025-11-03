@@ -126,12 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
+            
+            // --- [[START]] MODIFICATION ---
+            // Populate the news ticker *before* the first render.
+            // This prevents the "first tap" re-render bug.
+            newsTickerService.onLocationChange();
+            // --- [[END]] MODIFICATION ---
+
             uiManager.render(gameState.getState());
         }
         
-        // MODIFICATION: Populate the news ticker for the starting/loaded location
-        // after the state is initialized and rendered.
-        newsTickerService.onLocationChange();
+        // --- [[START]] MODIFICATION ---
+        // MOVED: The call to onLocationChange() was moved up to before the first render.
+        // --- [[END]] MODIFICATION ---
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }

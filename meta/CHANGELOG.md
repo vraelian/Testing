@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.30] - 2025-11-3
+-  navigation bar polish
+-  news ticker polish
+
 ## [31.20] - 2025-11-2
 -  build tooling update V2
 

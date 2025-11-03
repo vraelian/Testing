@@ -128,10 +128,16 @@ export class TravelService {
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
-        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
-
-        // MODIFICATION: Call onLocationChange() here, now that the location is officially updated.
+        // --- [[START]] MODIFICATION ---
+        // Call onLocationChange() *before* setState.
+        // This ensures the news ticker data is populated *before* the setState
+        // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange();
+        
+        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
+        // --- [[END]] MODIFICATION ---
+
+        // MOVED: onLocationChange() was moved up.
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
