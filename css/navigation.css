@@ -45,7 +45,7 @@ BULKHEAD NAVIGATION STYLES
 /* Straighten the left edge of the very first tab and remove its negative margin */
 .tab:first-child {
     clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
-    margin-left: 0;
+    margin-left: -8px;
 }
 
 .tab.disabled {
