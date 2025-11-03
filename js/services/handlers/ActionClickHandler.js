@@ -106,16 +106,25 @@ export class ActionClickHandler {
             }
 
             // --- Navigation & Screen Changes ---
-            case ACTION_IDS.SET_SCREEN:
-                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV') {
+            case ACTION_IDS.SET_SCREEN: {
+                // This is the "smarter" logic you described.
+                // We check if the *actual* click target (e.target) was a sub-nav button.
+                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
+                const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
+
+                if (dataset.navId === state.activeNav && !isSubNavClick) {
+                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
+                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
+                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
                 actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
+            }
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
                 this.simulationService.travelTo(dataset.locationId);
@@ -167,7 +176,7 @@ export class ActionClickHandler {
                 this.simulationService.purchaseIntel(parseInt(dataset.cost));
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                this._handleAcquireLicense(dataset.licenseId, e); // --- MODIFIED: Pass 'e'
+                this._handleAcquireLicense(dataset.licenseId, e);
                 break;
 
             // --- Market Card Minimization ---
@@ -190,7 +199,7 @@ export class ActionClickHandler {
      * @param {Event} [e] The original click event for positioning floating text.
      * @private
      */
-    _handleAcquireLicense(licenseId, e) { // --- MODIFIED: Accept 'e'
+    _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
@@ -206,13 +215,11 @@ export class ActionClickHandler {
                     modal.querySelector('#confirm-license-purchase').onclick = () => {
                         const result = this.simulationService.purchaseLicense(licenseId);
 
-                        // --- MODIFIED: Spawn floating text on success ---
                         if (result.success) {
-                            if (e) { // Use the original click event 'e' for coordinates
+                            if (e) {
                                 this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
                             }
                         } else if (result.error === 'INSUFFICIENT_FUNDS') {
-                        // --- END MODIFIED ---
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
                         }
                         closeHandler();
