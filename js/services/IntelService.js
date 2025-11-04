@@ -57,9 +57,9 @@ export class IntelService {
             }
 
             // GDD: Apply randomization to decide if a location gets new intel
-            // Using 70% chance as specified in GDD [cite: 123, 444]
+            // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
-                const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets [cite: 124, 446]
+                const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
                     const newPacket = this._createPacket(locationId);
                     if (newPacket) {
@@ -81,7 +81,7 @@ export class IntelService {
      */
     _createPacket(locationId) {
         const state = this.gameState.getState();
-        // GDD: Picks from unlockedCommodities [cite: 127, 452]
+        // GDD: Picks from unlockedCommodities
         const unlockedCommodities = state.player.unlockedCommodities; 
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
@@ -90,10 +90,10 @@ export class IntelService {
         }
 
         const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
-        const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50% [cite: 128, 453]
-        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days [cite: 129, 454]
+        const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         
-        // GDD: Higher value deal = higher multiplier [cite: 130, 455]
+        // GDD: Higher value deal = higher multiplier
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
         const messageKeys = Object.keys(INTEL_CONTENT);
@@ -101,7 +101,7 @@ export class IntelService {
              this.logger.warn('IntelService', 'Cannot create packet: INTEL_CONTENT is empty.');
              return null;
         }
-        const messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)]; // [cite: 131, 456]
+        const messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)]; //
 
         const packet = {
             id: `pkt_${locationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 999)}`,
@@ -127,13 +127,13 @@ export class IntelService {
     calculateIntelPrice(packet) {
         const playerCredits = this.gameState.getState().player.credits;
         
-        // GDD: Finds 10-20% of player's wallet [cite: 137, 463]
+        // GDD: Finds 10-20% of player's wallet
         const base = playerCredits * (0.10 + Math.random() * 0.10); 
         
-        // GDD: Apply value scaling [cite: 138, 464]
+        // GDD: Apply value scaling
         const finalPrice = base * packet.valueMultiplier;
         
-        // GDD: Rounds down to the nearest hundredth [cite: 139, 465]
+        // GDD: Rounds down to the nearest hundredth
         return Math.floor(finalPrice / 100) * 100;
     }
 
@@ -149,7 +149,7 @@ export class IntelService {
     purchaseIntel(packetId, locationId, calculatedPrice) {
         const state = this.gameState.getState();
         
-        // GDD Guard Clause: Aborts if a deal is already active [cite: 143, 470]
+        // GDD Guard Clause: Aborts if a deal is already active
         if (state.activeIntelDeal !== null) {
             this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
             return null;
@@ -168,14 +168,14 @@ export class IntelService {
             return null;
         }
 
-        // 1. Deduct credits [cite: 145, 472]
+        // 1. Deduct credits
         this.gameState.player.credits -= calculatedPrice;
         this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
 
-        // 2. Set packet as purchased [cite: 146, 473]
+        // 2. Set packet as purchased
         packet.isPurchased = true;
 
-        // 3. Create the Active Intel Deal [cite: 147, 474-476]
+        // 3. Create the Active Intel Deal
         const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
         const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
@@ -188,7 +188,7 @@ export class IntelService {
             sourcePacketId: packet.id // Track source for reference
         };
 
-        // 4. Push message to NewsTicker [cite: 149, 478]
+        // 4. Push message to NewsTicker
         try {
             const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
             const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'a local market';
@@ -199,7 +199,7 @@ export class IntelService {
             this.logger.error('IntelService', 'Failed to push news ticker message.', e);
         }
 
-        // 5. Set the active deal in GameState, which locks the market [cite: 148, 477]
+        // 5. Set the active deal in GameState, which locks the market
         this.gameState.updateState({ 
             activeIntelDeal: newActiveDeal,
             intelMarket: intelMarket // Ensure the mutated intelMarket object is saved
