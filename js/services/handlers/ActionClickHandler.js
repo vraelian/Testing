@@ -131,6 +131,21 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
+            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
+            case 'set-intel-tab':
+                this.uiManager.handleSetIntelTab(actionTarget);
+                break;
+            case 'show_intel_offer':
+                this.uiManager.handleShowIntelOffer(actionTarget);
+                break;
+            case 'buy_intel':
+                this.uiManager.handleBuyIntel(actionTarget);
+                break;
+            case 'show_intel_details':
+                this.uiManager.handleShowIntelDetails(actionTarget);
+                break;
+            // --- END VIRTUAL WORKBENCH ---
+
             // --- Modals ---
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
@@ -173,7 +188,9 @@ export class ActionClickHandler {
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails));
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
-                this.simulationService.purchaseIntel(parseInt(dataset.cost));
+                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
+                // The new flow is show_intel_offer -> buy_intel
+                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);

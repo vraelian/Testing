@@ -21,6 +21,11 @@ export class TimeService {
         this.logger = logger;
         // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
+        
+        // --- VIRTUAL WORKBENCH ---
+        /** @type {import('../IntelService.js').IntelService | null} */
+        this.intelService = null; // To be injected by SimulationService
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     // REMOVED: setNewsTickerService method
@@ -64,10 +69,27 @@ export class TimeService {
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            if (this.gameState.intel.active && this.gameState.day > this.gameState.intel.active.endDay) {
-                this.logger.info.system('Intel', this.gameState.day, 'EXPIRED', 'Active intel has expired.');
-                this.gameState.intel.active = null;
+            // --- VIRTUAL WORKBENCH: ADD INTEL SYSTEM LOGIC & FIX BUG ---
+            
+            // Get state once for daily checks
+            const state = this.gameState.getState();
+            // BUG FIX: The day is at the root of the state, not in 'gameTime'
+            const day = state.day;
+
+            // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
+            if (state.activeIntelDeal && day > state.activeIntelDeal.expiryDay) {
+                this.gameState.updateState({ activeIntelDeal: null });
+                this.logger.info.system('IntelService', day, 'EXPIRED', 'Active intel deal has expired.');
             }
+
+            // --- NEW LOGIC: CHECK INTEL REFRESH ---
+            // (Runs at the start of day 1, 121, 241, etc.)
+            if (this.intelService && (day % 120 === 1)) {
+                this.intelService.generateIntelRefresh();
+            }
+            
+            // Removed obsolete intel check
+            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
@@ -159,5 +181,15 @@ export class TimeService {
                 this.logger.warn('Finance', `Loan delinquent. Garnishment of ${GAME_RULES.LOAN_GARNISHMENT_PERCENT * 100}% initiated.`);
             }
         }
+    }
+
+    /**
+     * Gets the current game day.
+     * @returns {number} The current day.
+     * @JSDoc
+     */
+    getCurrentDay() {
+        // This helper is used by IntelService
+        return this.gameState.day;
     }
 }

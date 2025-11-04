@@ -12,6 +12,9 @@ import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
+// --- VIRTUAL WORKBENCH: IMPORT ---
+import { IntelService } from './IntelService.js';
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * @class SimulationService
@@ -31,6 +34,10 @@ export class SimulationService {
         this.newsTickerService = newsTickerService; // ADDED
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
+        
+        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE ---
+        this.intelService = null; // Will be instantiated below
+        // --- END VIRTUAL WORKBENCH ---
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
@@ -39,6 +46,15 @@ export class SimulationService {
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
+
+        // --- VIRTUAL WORKBENCH: INSTANTIATE AND INJECT INTEL SERVICE ---
+        // Must be after dependencies (time, market, news) are created
+        this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
+        
+        // Inject intelService into services that depend on it
+        this.timeService.intelService = this.intelService;
+        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
+        // --- END VIRTUAL WORKBENCH ---
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
@@ -85,7 +101,11 @@ export class SimulationService {
     payOffDebt() { this.playerActionService.payOffDebt(); }
     takeLoan(loanData) { this.playerActionService.takeLoan(loanData); }
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
-    purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); }
+    
+    // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
+    // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
+    // --- END VIRTUAL WORKBENCH ---
+
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
     

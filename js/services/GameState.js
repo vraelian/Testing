@@ -165,7 +165,14 @@ export class GameState {
                 debugEventIndex: 0
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
-            intel: { active: null, available: {} },
+            
+            // --- VIRTUAL WORKBENCH ---
+            // Removed obsolete `intel` property
+            // Added new GDD properties
+            intelMarket: {},
+            activeIntelDeal: null,
+            // --- END VIRTUAL WORKBENCH ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,
@@ -190,9 +197,20 @@ export class GameState {
         initialState.player.inventories[SHIP_IDS.WANDERER] = {};
         DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
 
+        // --- VIRTUAL WORKBENCH ---
+        // Initialize new intelMarket property
+        initialState.intelMarket = {};
+        // --- END VIRTUAL WORKBENCH ---
+
         DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
-            initialState.intel.available[m.id] = (Math.random() < 0.3);
+            
+            // --- VIRTUAL WORKBENCH ---
+            // Removed obsolete intel.available line
+            // Added intelMarket initialization per GDD
+            initialState.intelMarket[m.id] = [];
+            // --- END VIRTUAL WORKBENCH ---
+
             initialState.market.inventory[m.id] = {};
             initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] };
             DB.COMMODITIES.forEach(c => {

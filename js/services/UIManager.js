@@ -16,6 +16,11 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
+// --- VIRTUAL WORKBENCH: IMPORTS ---
+import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
+import { INTEL_CONTENT } from '../data/intelContent.js';
+// --- END VIRTUAL WORKBENCH ---
+
 /**
  * Stores the lore text content.
  * @private
@@ -54,6 +59,13 @@ export class UIManager {
         // MODIFIED: Added property to hold injected EventManager
         this.eventManager = null; // To be injected
 
+        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
+        /** @type {import('./IntelService.js').IntelService | null} */
+        this.intelService = null; // To be injected
+        /** @type {IntelMarketRenderer | null} */
+        this.intelMarketRenderer = null; // To be instantiated
+        // --- END VIRTUAL WORKBENCH ---
+
         this.effectsManager = new EffectsManager();
 
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
@@ -65,6 +77,10 @@ export class UIManager {
         };
 
         this._cacheDOM();
+
+        // --- VIRTUAL WORKBENCH: BIND 'this' CONTEXT ---
+        this.getItemPrice = this.getItemPrice.bind(this);
+        // --- END VIRTUAL WORKBENCH ---
 
         // This remains the correct way to handle orientation changes or desktop resizing.
         window.addEventListener('resize', this._setAppHeight);
@@ -121,6 +137,18 @@ export class UIManager {
     setDebugService(service) {
         this.debugService = service;
     }
+
+    // --- VIRTUAL WORKBENCH: ADD INTELSERVICE SETTER ---
+    /**
+     * Injects the IntelService and instantiates the IntelMarketRenderer.
+     * @param {import('./IntelService.js').IntelService} intelService
+     * @JSDoc
+     */
+    setIntelService(intelService) {
+        this.intelService = intelService;
+        this.intelMarketRenderer = new IntelMarketRenderer(this.gameState, intelService);
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * MODIFIED: Injects the EventManager after instantiation.
@@ -356,11 +384,18 @@ export class UIManager {
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  
+                 // --- VIRTUAL WORKBENCH: BUG FIX ---
+                 // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
+                 // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
+                 const action = ACTION_IDS.SET_SCREEN;
+                 // --- END VIRTUAL WORKBENCH ---
+
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -427,7 +462,18 @@ export class UIManager {
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
+                // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
                 this.cache.intelScreen.innerHTML = renderIntelScreen();
+                // After rendering the shell, immediately populate the (default) active tab
+                // The renderer will handle showing the correct content (Codex or Market)
+                if (this.intelMarketRenderer) {
+                    // Find the container for the market tab content
+                    const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
+                    if (marketContentEl) {
+                        this.intelMarketRenderer.render(marketContentEl);
+                    }
+                }
+                // --- END VIRTUAL WORKBENCH ---
                 break;
         }
     }
@@ -647,16 +693,20 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        let price = gameState.market.prices[gameState.currentLocationId][goodId];
-        const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
-        if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
-            price *= market.specialDemand[goodId].bonus;
+        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
+        // Use the simulationService (which now points to MarketService's getPrice)
+        // to ensure intel overrides are checked.
+        if (!this.simulationService || !this.simulationService.marketService) {
+            // Fallback for early load
+            return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
-        const intel = gameState.intel.active;
-        if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
-            price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
-        }
-        return Math.max(1, Math.round(price));
+        
+        // Note: The isSelling logic for specialDemand is handled inside the
+        // UIManager's _calculateSaleDetails, not here.
+        // This function just needs to get the *base* price, which
+        // MarketService.getPrice() now does (checking for intel overrides).
+        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     _calculateSaleDetails(goodId, quantity) {
@@ -665,7 +715,12 @@ export class UIManager {
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        
+        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
+        // Pass `true` for isSelling to get the correct base price
         const basePrice = this.getItemPrice(state, goodId, true);
+        // --- END VIRTUAL WORKBENCH ---
+
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
 
@@ -748,7 +803,9 @@ export class UIManager {
 
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
+                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: this.getItemPrice(state, goodId, true),
+                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -769,7 +826,9 @@ export class UIManager {
 
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
+                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
+                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -804,6 +863,20 @@ export class UIManager {
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
         }
+        
+        // --- VIRTUAL WORKBENCH: GDD MODAL THEMING ---
+        // Apply theme data attribute for CSS-based theming (e.g., glowing borders)
+        if (options.theme) {
+            modal.dataset.theme = options.theme;
+        } else {
+            // Remove old theme to avoid stale borders
+            delete modal.dataset.theme;
+        }
+        
+        // GDD: Control dismissal behavior
+        modal.dataset.dismissInside = options.dismissInside || 'false';
+        modal.dataset.dismissOutside = options.dismissOutside || 'false';
+        // --- END VIRTUAL WORKBENCH ---
 
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
@@ -845,19 +918,43 @@ export class UIManager {
         } else {
             const btnContainer = modal.querySelector('#' + modalId.replace('-modal', '-button-container'));
             let button;
-            if (btnContainer) {
-                btnContainer.innerHTML = '';
-                button = document.createElement('button');
-                btnContainer.appendChild(button);
+            
+            // --- VIRTUAL WORKBENCH: GDD FOOTER LOGIC ---
+            if (options.footer) {
+                // If a custom footer is provided, inject it and attach handlers
+                if (btnContainer) {
+                    btnContainer.innerHTML = options.footer;
+                    // Find any buttons *inside* the new footer and attach close/callback logic
+                    btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            // Let the main EventManager handle the action first
+                            // But also ensure the modal closes
+                            closeHandler();
+                        });
+                    });
+                }
+            } else if (options.footer === null) {
+                // GDD: Explicitly no footer/buttons
+                if (btnContainer) btnContainer.innerHTML = '';
             } else {
-                button = modal.querySelector('button');
+            // --- END VIRTUAL WORKBENCH ---
+                // Original default button logic
+                if (btnContainer) {
+                    btnContainer.innerHTML = '';
+                    button = document.createElement('button');
+                    btnContainer.appendChild(button);
+                } else {
+                    button = modal.querySelector('button');
+                }
+                if (button) {
+                    button.className = 'btn px-6 py-2';
+                    if (options.buttonClass) button.classList.add(options.buttonClass);
+                    button.innerHTML = options.buttonText || 'Understood';
+                    button.onclick = closeHandler;
+                }
+            // --- VIRTUAL WORKBENCH ---
             }
-            if (button) {
-                button.className = 'btn px-6 py-2';
-                if (options.buttonClass) button.classList.add(options.buttonClass);
-                button.innerHTML = options.buttonText || 'Understood';
-                button.onclick = closeHandler;
-            }
+            // --- END VIRTUAL WORKBENCH ---
         }
 
         modal.classList.remove('hidden');
@@ -948,6 +1045,13 @@ export class UIManager {
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
+                
+                // --- VIRTUAL WORKBENCH: CLEANUP GDD ATTRIBUTES ---
+                delete modal.dataset.theme;
+                delete modal.dataset.dismissInside;
+                delete modal.dataset.dismissOutside;
+                // --- END VIRTUAL WORKBENCH ---
+
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }
@@ -1734,8 +1838,19 @@ export class UIManager {
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !modalBackdrop.classList.contains('dismiss-disabled') && !e.target.closest('.modal-content')) {
-            // Special case: Allow lore-modal to be dismissed by clicking content
+        if (!modalBackdrop || !modalBackdrop.id || modalBackdrop.classList.contains('dismiss-disabled')) {
+            return null;
+        }
+
+        // --- VIRTUAL WORKBENCH: GDD DISMISSAL LOGIC ---
+        const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
+        const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
+        
+        const isBackdropClick = !e.target.closest('.modal-content');
+        const isContentClick = e.target.closest('.modal-content');
+
+        if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
+             // Special case: Allow lore-modal to be dismissed by clicking content
             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
@@ -1747,7 +1862,12 @@ export class UIManager {
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
+
+            // GDD-compliant dismissal
+            return modalBackdrop.id;
         }
+        // --- END VIRTUAL WORKBENCH ---
+
         return null;
     }
 
@@ -1791,6 +1911,10 @@ export class UIManager {
         // Apply theme styles
         modalContent.style.background = theme.gradient;
         modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
+        // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
+        // Use the data-theme attribute for CSS-based glowing borders
+        modal.dataset.theme = locationId;
+        // --- END VIRTUAL WORKBENCH ---
 
 
         const imports = [];
@@ -1877,6 +2001,9 @@ export class UIManager {
         const modal = this.cache.mapDetailModal;
         if (modal) {
             modal.classList.remove('is-glowing');
+            // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
+            delete modal.dataset.theme; // Clear theme on close
+            // --- END VIRTUAL WORKBENCH ---
             // Remove the specific click listener if it exists
             const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
@@ -1886,6 +2013,188 @@ export class UIManager {
         }
         this.hideModal('map-detail-modal');
     }
+
+    // --- VIRTUAL WORKBENCH: ADD INTEL HANDLERS ---
+
+    /**
+     * Handles switching tabs on the Intel screen.
+     * @param {HTMLElement} element - The clicked tab button.
+     * @JSDoc
+     */
+    handleSetIntelTab(element) {
+        const targetId = element.dataset.target;
+        if (!targetId) return;
+
+        const screen = element.closest('.active-screen');
+        if (!screen) return;
+
+        // Deactivate all tabs and content
+        screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
+        screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
+
+        // Activate the clicked tab and corresponding content
+        element.classList.add('active');
+        const targetContent = screen.querySelector(`#${targetId}`);
+        if (targetContent) {
+            targetContent.classList.add('active');
+            
+            // If we are switching to the market tab, re-render its contents
+            if (targetId === 'intel-market-content' && this.intelMarketRenderer) {
+                this.intelMarketRenderer.render(targetContent);
+            }
+        }
+    }
+
+    /**
+     * Finds the specified intel packet from the game state.
+     * @param {string} packetId 
+     * @param {string} locationId 
+     * @returns {object | null} The packet object or null if not found.
+     * @private
+     */
+    _findIntelPacket(packetId, locationId) {
+        const state = this.gameState.getState();
+        if (!state.intelMarket[locationId]) {
+            this.logger.error('UIManager', `_findIntelPacket: No intelMarket for location ${locationId}`);
+            return null;
+        }
+        const packet = state.intelMarket[locationId].find(p => p.id === packetId);
+        if (!packet) {
+            this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} at ${locationId}`);
+            return null;
+        }
+        return packet;
+    }
+
+    /**
+     * Formats an intel "details" string, replacing all GDD placeholders.
+     * @param {string} template - The template string from INTEL_CONTENT.
+     * @param {object} packet - The intelPacket object.
+     * @param {number} price - The calculated price.
+     * @returns {string} The formatted, player-facing string.
+     * @private
+     * @JSDoc
+     */
+    _formatIntelDetails(template, packet, price) {
+        const locationName = DB.MARKETS.find(m => m.id === packet.locationId)?.name || 'an unknown location';
+        const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
+        const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
+        const priceStr = `${price.toLocaleString()} ⌬`;
+
+        return template
+            .replace(/\[location name\]/g, locationName)
+            .replace(/\[commodity name\]/g, commodityName)
+            .replace(/\[discount amount %\]/g, discountStr)
+            .replace(/\[durationDays\]/g, packet.durationDays)
+            .replace(/\[⌬ credit price\]/g, priceStr);
+    }
+
+    /**
+     * Shows the "Sample" modal (the offer) for an intel packet.
+     * @param {HTMLElement} element - The clicked button element.
+     * @JSDoc
+     */
+    handleShowIntelOffer(element) {
+        const { packetId, locationId, price } = element.dataset;
+        const packet = this._findIntelPacket(packetId, locationId);
+        if (!packet) return;
+
+        const locationName = DB.MARKETS.find(m => m.id === locationId)?.name || 'this location';
+        const vagueText = (INTEL_CONTENT[packet.messageKey]?.sample || "Intel available at [location name].")
+            .replace('[location name]', locationName);
+        
+        const priceNum = parseInt(price, 10);
+        const purchaseButtonHTML = `
+            <button class="btn btn-intel-buy" 
+                    data-action="buy_intel" 
+                    data-packet-id="${packet.id}" 
+                    data-location-id="${locationId}" 
+                    data-price="${priceNum}">
+                Purchase Intel (${priceNum.toLocaleString()} ⌬)
+            </button>`;
+
+        this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
+            theme: locationId, // GDD: Apply location-specific theme
+            dismissOutside: true, // GDD: Allow dismissing outside
+            footer: purchaseButtonHTML // GDD: Use custom footer
+        });
+    }
+
+    /**
+     * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
+     * @param {HTMLElement} element - The clicked "Purchase Intel" button.
+     * @JSDoc
+     */
+    handleBuyIntel(element) {
+        const { packetId, locationId, price } = element.dataset;
+        const priceNum = parseInt(price, 10);
+
+        // Call the service to perform the transaction
+        const purchasedPacket = this.intelService.purchaseIntel(packetId, locationId, priceNum);
+
+        if (purchasedPacket) {
+            // GDD: On success, immediately close "Sample" modal and open "Details" modal
+            this.hideModal('event-modal'); // Close the sample modal
+            
+            // Re-find the packet from the *new* state to ensure we have the purchased copy
+            const updatedPacket = this._findIntelPacket(packetId, locationId);
+            if (updatedPacket) {
+                this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
+            }
+
+            // GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
+            const intelScreen = document.getElementById('intel-screen');
+            const marketContentEl = intelScreen?.querySelector('#intel-market-content');
+            if (marketContentEl && this.intelMarketRenderer) {
+                this.intelMarketRenderer.render(marketContentEl);
+            }
+        } else {
+            // Purchase failed (e.g., already active deal, not enough credits)
+            // The service will log the error. We can optionally show a UI error here.
+            this.hideModal('event-modal');
+            this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
+        }
+    }
+
+    /**
+     * Shows the "Details" modal for a purchased packet.
+     * @param {HTMLElement} element - The clicked "View Intel" button.
+     * @JSDoc
+     */
+    handleShowIntelDetails(element) {
+        const { packetId, locationId } = element.dataset;
+        const packet = this._findIntelPacket(packetId, locationId);
+        if (!packet) return;
+
+        // Price wasn't passed, but we need it for the text. Re-calculate it.
+        // This is okay, as it's just for display and not for a transaction.
+        const price = this.intelService.calculateIntelPrice(packet);
+
+        this._showIntelDetailsModal(packet, price, locationId);
+    }
+
+    /**
+     * Private helper to show the "Details" modal.
+     * @param {object} packet - The intelPacket object.
+     * @param {number} price - The price (either from purchase or re-calculated).
+     * @param {string} locationId - The locationId for theming.
+     * @private
+     * @JSDoc
+     */
+    _showIntelDetailsModal(packet, price, locationId) {
+        const detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
+        const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price);
+
+        this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
+            theme: locationId, // GDD: Apply location-specific theme
+            dismissInside: true, // GDD: Dismiss on *any* click
+            dismissOutside: true,
+            footer: null, // GDD: No buttons
+            contentClass: 'text-left' // GDD: Details are paragraphs
+        });
+    }
+
+    // --- END VIRTUAL WORKBENCH ---
 
     // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
 }

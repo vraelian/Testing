@@ -23,6 +23,45 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
+    // --- VIRTUAL WORKBENCH: ADD NEW METHODS ---
+
+    /**
+     * Gets the effective price for a commodity at a location, checking for
+     * active intel deal overrides first.
+     * @param {string} locationId The ID of the location.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The effective price (either override or market price).
+     * @JSDoc
+     */
+    getPrice(locationId, commodityId) {
+        const deal = this.gameState.getState().activeIntelDeal;
+
+        // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
+        if (deal &&
+            deal.locationId === locationId &&
+            deal.commodityId === commodityId) {
+            
+            return deal.overridePrice; // Return the locked-in deal price
+        }
+        // --- END NEW LOGIC ---
+
+        // ... existing price simulation logic ...
+        // Fallback to the standard market price
+        return this.gameState.market.prices[locationId]?.[commodityId] || 0;
+    }
+
+    /**
+     * Retrieves the pre-calculated galactic average price for a commodity.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The galactic average price.
+     * @JSDoc
+     */
+    getGalacticAverage(commodityId) {
+        return this.gameState.market.galacticAverages[commodityId] || 0;
+    }
+
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
      */
