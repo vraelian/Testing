@@ -14,11 +14,9 @@ import { formatCredits } from '../../utils.js';
  */
 export class IntelMarketRenderer {
     /**
-     * @param {import('../services/GameState.js').GameState} gameState
      * @param {import('../services/IntelService.js').IntelService} intelService
      */
-    constructor(gameState, intelService) {
-        this.gameState = gameState;
+    constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
     }
@@ -26,10 +24,11 @@ export class IntelMarketRenderer {
     /**
      * Renders the intel packet buttons into the provided container.
      * @param {HTMLElement} containerElement - The div#intel-market-content element.
+     * @param {object} gameState - The current raw game state object.
      * @JSDoc
      */
-    render(containerElement) {
-        const state = this.gameState.getState();
+    render(containerElement, gameState) {
+        const state = gameState;
         const { currentLocationId, activeIntelDeal, intelMarket } = state;
         
         const shopInventory = intelMarket[currentLocationId] || [];

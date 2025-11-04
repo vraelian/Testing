@@ -146,7 +146,7 @@ export class UIManager {
      */
     setIntelService(intelService) {
         this.intelService = intelService;
-        this.intelMarketRenderer = new IntelMarketRenderer(this.gameState, intelService);
+        this.intelMarketRenderer = new IntelMarketRenderer(intelService);
     }
     // --- END VIRTUAL WORKBENCH ---
 
@@ -470,7 +470,7 @@ export class UIManager {
                     // Find the container for the market tab content
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
-                        this.intelMarketRenderer.render(marketContentEl);
+                        this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
                 // --- END VIRTUAL WORKBENCH ---
@@ -1378,7 +1378,6 @@ export class UIManager {
      * @param {string} newOptions.placement - New Popper placement.
      * @param {number} newOptions.distance - New Popper offset distance.
      * @param {number} newOptions.skidding - New Popper offset skidding.
-     }
      */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;
@@ -2040,7 +2039,7 @@ export class UIManager {
             
             // If we are switching to the market tab, re-render its contents
             if (targetId === 'intel-market-content' && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(targetContent);
+                this.intelMarketRenderer.render(targetContent, this.lastKnownState);
             }
         }
     }
@@ -2053,7 +2052,7 @@ export class UIManager {
      * @private
      */
     _findIntelPacket(packetId, locationId) {
-        const state = this.gameState.getState();
+        const state = this.lastKnownState;
         if (!state.intelMarket[locationId]) {
             this.logger.error('UIManager', `_findIntelPacket: No intelMarket for location ${locationId}`);
             return null;
@@ -2146,7 +2145,7 @@ export class UIManager {
             const intelScreen = document.getElementById('intel-screen');
             const marketContentEl = intelScreen?.querySelector('#intel-market-content');
             if (marketContentEl && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(marketContentEl);
+                this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
             }
         } else {
             // Purchase failed (e.g., already active deal, not enough credits)
