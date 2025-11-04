@@ -46,6 +46,56 @@ graph TD
 
 -----
 
+## Detailed Flow Example: Intel Market (Local Data Broker)
+
+This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the `activeIntelDeal` affecting market prices.
+
+```mermaid
+graph TD
+    subgraph Player Action (UI)
+        A[Player clicks 'Intel Market' tab] --> B[UIManager calls IntelMarketRenderer];
+        B --> C{Reads gameState.intelMarket[loc_id]};
+        C --> D[IntelService.calculateIntelPrice(packet)];
+        D --> E[Renders 'Purchase Intel' button];
+        E -- Click --> F[UIManager.handleBuyIntel];
+    end
+
+    subgraph Logic Layer (Services)
+        F --> G[IntelService.purchaseIntel(packetId)];
+        G -- 1. --> H[Deducts player.credits];
+        G -- 2. --> I[Sets packet.isPurchased = true];
+        G -- 3. --> J[Creates 'activeIntelDeal' object];
+        G -- 4. --> K[NewsTickerService.pushMessage];
+    end
+
+    subgraph State Layer
+        H & I & J -- 5. Update --> L((GameState));
+    end
+
+    subgraph Downstream Effects
+        L -- 6. On next Market render --> M[MarketService.getPrice(loc, comm)];
+        M --> N{activeIntelDeal exists?};
+        N -- Yes --> O[Return deal.overridePrice];
+        N -- No --> P[...normal price logic...];
+        
+        L -- 7. On daily tick --> Q[TimeService.pulse];
+        Q --> R{activeIntelDeal expired?};
+        R -- Yes --> S[Set activeIntelDeal = null];
+    end
+
+    style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
+```
+
+### Explanation of Intel Market Data Flow
+
+1.  **UI Render:** When the 'Intel Market' tab is clicked, `IntelMarketRenderer` is called. [cite\_start]It reads `gameState.intelMarket` for the current location and calls `IntelService.calculateIntelPrice` for each packet to get a dynamic price based on player credits [cite: 32, 35-36, 134, 216].
+2.  **Player Purchase:** Player clicks 'Purchase'. [cite\_start]`UIManager` calls `IntelService.purchaseIntel`[cite: 52, 141, 231].
+3.  **Transaction Logic:** `IntelService` validates the purchase, deducts `player.credits`, sets the packet's `isPurchased` flag, and (most importantly) creates the `gameState.activeIntelDeal` object. [cite\_start]This object "locks" the market [cite: 54, 143-148].
+4.  **Market Override:** The `MarketService.getPrice` function is modified to *first* check for an `activeIntelDeal`. [cite\_start]If a deal matches the location and commodity, it returns the `deal.overridePrice`, bypassing all normal simulation logic [cite: 151, 156-161].
+5.  **Expiration:** The `TimeService.pulse` function checks daily if the `activeIntelDeal` has expired. [cite\_start]If it has, it sets `activeIntelDeal` back to `null`, "unlocking" the Intel Market [cite: 166, 174-175].
+
+-----
+
 ## Detailed Flow Example: Market Simulation
 
 This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.

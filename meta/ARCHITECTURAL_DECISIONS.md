@@ -68,3 +68,17 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
     * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
+
+---
+
+### ADR-006: Intel System Refactor to "Local Data Broker"
+
+* **Status**: Accepted (2025-11-04)
+* [cite_start]**Context**: The original `IntelScreen.js` was a static, non-interactive lore repository[cite: 3882]. [cite_start]A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel[cite: 3609, 3885].
+* [cite_start]**Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay)[cite: 3611]. [cite_start]A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'[cite: 3674, 3971]. [cite_start]A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell [cite: 3677, 3975-3977]. [cite_start]This implements the 'Local Data Broker' feature[cite: 3608].
+* **Consequences**:
+    * [cite_start]**Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component [cite: 3990-3991].
+    * [cite_start]**Pro**: Creates a systemic, scalable, and recyclable gameplay loop [cite: 3617-3618, 3895].
+    * [cite_start]**Pro**: Provides a scalable, dynamic credit-sink based on player wealth [cite: 3623, 3905-3907].
+    * [cite_start]**Pro**: Creates a strong, non-arbitrary incentive for player travel[cite: 3620, 3901].
+    * [cite_start]**Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService` [cite: 3679-3680].

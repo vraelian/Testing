@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 1.5
+**Version:** 1.6
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -11,9 +11,9 @@ This document defines the single responsibility of each service in the applicati
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. [cite_start]New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow[cite: 3681, 3985].
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. [cite_start]Is a primary driver for the Intel system[cite: 3609]. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -23,12 +23,13 @@ This document defines the single responsibility of each service in the applicati
 
 #### World
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. **Uses:** `js/data/age_events.js`.
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. [cite_start]Will be updated to call `IntelService.generateIntelRefresh()` and to check for `activeIntelDeal` expiration[cite: 3679, 3981]. **Uses:** `js/data/age_events.js`.
 -   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
 
--   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse.
+-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. [cite_start]Will be updated to check for an `activeIntelDeal` override before calculating its normal prices[cite: 3680, 3982].
+-   **`IntelService.js`**: The "brain" of the Intel Market system. [cite_start]Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic[cite: 3674, 3971]. **Uses:** `js/data/intelContent.js`.
 -   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
 #### Game
@@ -44,6 +45,10 @@ This document defines the single responsibility of each service in the applicati
 -   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
 -   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
 -   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
+
+### UI/Renderers
+
+-   **`IntelMarketRenderer.js`**: A new, dedicated renderer. [cite_start]Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab [cite: 3677, 3976-3977].
 
 ### Event Effects
 
@@ -73,3 +78,4 @@ This document defines the single responsibility of each service in the applicati
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 -   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
 -   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
+-   [cite_start]**`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market[cite: 3678, 3979].

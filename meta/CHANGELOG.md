@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.40] - 2025-11-4
+-  intel system overhaul V2
+-  added intel-screen.css
+-  added intelMessages.js
+-  added IntelService.js
+-  added IntelMarketRenderer.js
+
 ## [31.30] - 2025-11-3
 -  navigation bar polish
 -  news ticker polish

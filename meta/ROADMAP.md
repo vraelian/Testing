@@ -1,8 +1,7 @@
 ## Immediate Concerns, Bugs, Issues
-- Nav bar needs an outline
+- Intel System V2 bugs
 
 ## Planned Ideas
-- Intel overhaul
 - System states influencing market performance
 - Improve finance screen, logging
 - Ship trading overhaul
