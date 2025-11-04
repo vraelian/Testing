@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 31.10</title>
+    <title>Orbital Trading 31.40</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -64,7 +64,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 31.10</p>
+            <p>Version 31.40</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -990,23 +990,49 @@
     top: 0;
     z-index: 10;
     width: 100%;
-    border-radius: 55px;
-    background-color: rgba(12, 16, 29, 0.85);
+    /* Main container radius (55px top, 15px bottom) */
+    border-radius: 55px 55px 15px 15px;
+    
+    /* Background-color is REMOVED. It lives in the content elements. */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    /* 'overflow: hidden;' remains REMOVED */
+}
+
+/* * FIXED: This is the border.
+ * 1. Its radius is 1px LARGER (56px/16px) than the content (55px/15px).
+ * 2. It sits ON TOP of the content (z-index: 4).
+ * 3. pointer-events: none lets clicks pass through.
+ */
+#top-bar-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid #000;
+    /* This radius is 1px larger than the content's to wrap it */
+    border-radius: 30px 30px 16px 16px; 
+    z-index: 4; /* Sit ON TOP of all content */
+    pointer-events: none; /* Allow clicks to pass through */
 }
 
 .context-bar {
-    padding: 6px 12px;
+    padding: 6px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
     font-family: 'Share Tech Mono', monospace;
-    /* border-bottom has been removed to allow for the bevel effect */
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Increased shadow for readability */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     transition: background 0.5s ease-out, color 0.5s ease-out;
+
+    /* * This content has the 55px radius.
+     * The border (at 56px) will now wrap it perfectly.
+     */
+    background-color: rgba(12, 16, 29, 0.85);
+    border-radius: 55px 55px 0 0;
+    position: relative;
+    z-index: 2;
 }
 
 .credit-text {
@@ -1020,6 +1046,10 @@
     justify-content: flex-end;
     align-items: center;
     gap: 8px;
+    transform: translateX(-5%); /* Nudged status bars left */
+    position: relative; /* Added for z-index */
+    /* z-index: 3 sits above the context-bar (2) and active tab (3), but *below* the border (4) */
+    z-index: 3; 
 }
 
 .status-bar-group {
@@ -1055,10 +1085,10 @@
 
 .status-tooltip {
     position: absolute;
-    top: 100%;
-    margin-top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%; /* Position vertically centered */
+    left: 0; /* Position at the left edge of the parent */
+    transform: translateY(-50%) translateX(-100%); /* Center vertically, move left */
+    margin-right: 5px; /* Add gap between tooltip and bar */
     background-color: #111;
     color: #fff;
     padding: 4px 8px;
@@ -1074,14 +1104,7 @@
     visibility: hidden;
 }
 
-.fuel-group .status-tooltip {
-    transform: translateX(calc(-50% - 51px));
-}
-
-.cargo-group .status-tooltip {
-    transform: translateX(calc(-50% - 102px));
-}
-
+/* Removed rules for .fuel-group .status-tooltip and .cargo-group .status-tooltip */
 
 .status-tooltip.visible {
     opacity: 1;
@@ -1227,17 +1250,20 @@
 html {
     padding: 0;
     margin: 0;
+    height: 100%; /* MODIFIED: Ensure HTML fills the viewport */
 }
 
 body {
-    height: 100vh;
+    /* height: 100vh; */ /* REMOVED */
     /* Fallback */
-    height: var(--app-height);
+    /* height: var(--app-height); */ /* REMOVED: This was the JS override */
+    height: 100%; /* MODIFIED: Make body fill 100% of html */
     overflow: hidden;
     margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    /* MODIFIED: Removed flex properties that were causing the layout bug */
+    /* display: flex; */
+    /* justify-content: center; */
+    /* align-items: center; */
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1278,7 +1304,7 @@ body {
     max-width: 1200px;
     width: 100%;
     height: 100%;
-    margin: 0;
+    margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
     border: 2px solid #3a4a6a;
     border-radius: 55px;
     transition: background 0.5s ease-out, opacity 1s ease-in-out;
@@ -2303,6 +2329,9 @@ body {
     align-items: center;
     /* Added transition for smooth theme changes */
     transition: background-image 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
+    /* Added rounded bottom corners */
+    border-bottom-left-radius: 17px;
+    border-bottom-right-radius: 17px;
 }
 
 .news-ticker-content {
@@ -3452,8 +3481,10 @@ body {
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+    padding: 0; /* Padding is now on the content divs */
     touch-action: pan-y; /* Allow vertical scrolling */
+    flex-grow: 1; /* Ensure it fills space */
+    /* VIRTUAL WORKBENCH: Removed display:flex to fix scrolling/layout */
 }
 .intel-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
@@ -3489,6 +3520,117 @@ body {
 #lore-modal-content::-webkit-scrollbar-thumb:hover {
     background-color: var(--theme-border-color, #6b8fb8);
 }
+
+/* --- VIRTUAL WORKBENCH: ADD NEW INTEL STYLES --- */
+
+/* Tab Content Styling */
+.intel-tab-content {
+    display: none; /* Hidden by default */
+    width: 100%;
+    /* flex-grow: 1; */ /* No longer needed, parent isn't flex */
+}
+.intel-tab-content.active {
+    display: block; /* Shown when active */
+}
+
+/* Intel Market Button Styling */
+.btn-intel {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    background-color: #1e293b; /* slate-800 */
+    border: 1px solid #334155; /* slate-700 */
+    color: #cbd5e1; /* slate-300 */
+    padding: 0.75rem 1rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-intel:hover:not(:disabled) {
+    background-color: #334155; /* slate-700 */
+    border-color: #475569; /* slate-600 */
+    color: #f1f5f9; /* slate-100 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Intel "Buy" Button in Modal */
+.btn-intel-buy {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    background-color: var(--ot-green-accent, #4ade80);
+    border: 1px solid #86efac; /* green-300 */
+    color: #064e3b; /* green-900 */
+    padding: 0.75rem 1rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    font-weight: bold;
+}
+
+.btn-intel-buy:hover:not(:disabled) {
+    background-color: #86efac; /* green-300 */
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+}
+
+/* Disabled state for locked intel buttons */
+.btn-intel:disabled {
+    background-color: #0f172a; /* slate-900 */
+    border-color: #1e293b; /* slate-800 */
+    color: #334155; /* slate-700 */
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* --- VIRTUAL WORKBENCH: ADDED MISSING INTEL TAB STYLES --- */
+
+/*
+ This is the sub-navigation bar *inside* the Intel screen.
+ It is a sibling to the main sub-nav, not a replacement.
+*/
+#intel-screen .sub-nav-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #0f172a; /* slate-900 */
+    border-bottom: 1px solid var(--theme-border-color, #334155);
+    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+    width: 100%;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+#intel-screen .sub-nav-button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.875rem; /* 14px */
+    color: #94a3b8; /* slate-400 */
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.25rem; /* 4px */
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+#intel-screen .sub-nav-button:hover {
+    color: #e2e8f0; /* slate-200 */
+    background-color: #1e293b; /* slate-800 */
+}
+
+#intel-screen .sub-nav-button.active {
+    color: var(--theme-text-color, #f0f0f0);
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    border-color: var(--theme-border-color, #334155);
+    font-weight: 700;
+    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+}
+
+/* --- END VIRTUAL WORKBENCH --- */
 --- END OF FILE: ./css/screens/intel-screen.css ---
 
 --- START OF FILE: ./css/screens/cargo-screen.css ---
@@ -4093,10 +4235,6 @@ COMPONENT-SPECIFIC STYLING
 
 /* ================================================================================
 BULKHEAD NAVIGATION STYLES
-- Uses an overlapping clip-path strategy for a clean, interlocking look.
-- A negative margin on each tab pulls it over the previous one.
-- The :first-child selector creates a clean starting edge.
-- The .active selector uses z-index to bring the selected tab to the front.
 ================================================================================ */
 .nav-wrapper {
     background-color: #383838;
@@ -4140,7 +4278,7 @@ BULKHEAD NAVIGATION STYLES
 /* Straighten the left edge of the very first tab and remove its negative margin */
 .tab:first-child {
     clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
-    margin-left: 0;
+    margin-left: -8px;
 }
 
 .tab.disabled {
@@ -4158,7 +4296,8 @@ BULKHEAD NAVIGATION STYLES
 }
 
 #sub-nav-bar {
-    border-radius: 0 0 15px 15px; /* Round the bottom corners */
+    /* * FIXED: Bottom radius is 14px (15px container - 1px border) to nest inside. */
+    border-radius: 0 0 14px 14px;
     overflow: hidden;
 }
 
@@ -4272,6 +4411,107 @@ BULKHEAD NAVIGATION STYLES
     }
 }
 --- END OF FILE: ./css/orientation.css ---
+
+--- START OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
+// js/ui/renderers/IntelMarketRenderer.js
+/**
+ * @fileoverview This file contains the IntelMarketRenderer class.
+ * Its sole responsibility is to dynamically render the content for the
+ * "Intel Market" tab based on the player's current location and game state.
+ */
+
+import { DB } from '../../data/database.js';
+import { formatCredits } from '../../utils.js';
+
+/**
+ * @class IntelMarketRenderer
+ * @description Renders the dynamic content of the "Intel Market" tab.
+ */
+export class IntelMarketRenderer {
+    /**
+     * @param {import('../services/IntelService.js').IntelService} intelService
+     */
+    constructor(intelService) {
+        this.intelService = intelService;
+        this.db = DB;
+    }
+
+    /**
+     * Renders the intel packet buttons into the provided container.
+     * @param {HTMLElement} containerElement - The div#intel-market-content element.
+     * @param {object} gameState - The current raw game state object.
+     * @JSDoc
+     */
+    render(containerElement, gameState) {
+        const state = gameState;
+        const { currentLocationId, activeIntelDeal, intelMarket } = state;
+        
+        const shopInventory = intelMarket[currentLocationId] || [];
+        const isLocked = activeIntelDeal !== null;
+
+        if (shopInventory.length === 0) {
+            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+            return;
+        }
+
+        const html = shopInventory.map(packet => {
+            if (packet.isPurchased) {
+                return this._renderPurchasedButton(packet);
+            } else {
+                // Price is calculated at render time
+                const price = this.intelService.calculateIntelPrice(packet);
+                return this._renderOfferButton(packet, price, isLocked);
+            }
+        }).join('');
+
+        containerElement.innerHTML = `<div class="w-full max-w-md mx-auto flex flex-col gap-4">${html}</div>`;
+    }
+
+    /**
+     * Renders a button for a previously purchased intel packet.
+     * @param {object} packet - The intelPacket object.
+     * @returns {string} HTML for the "View Intel" button.
+     * @private
+     * @JSDoc
+     */
+    _renderPurchasedButton(packet) {
+        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        return `
+            <button class="btn btn-intel" 
+                    data-action="show_intel_details" 
+                    data-packet-id="${packet.id}" 
+                    data-location-id="${packet.locationId}">
+                ${locationName} - View Intel
+            </button>`;
+    }
+
+    /**
+     * Renders a button for a purchasable intel packet.
+     * @param {object} packet - The intelPacket object.
+     * @param {number} price - The dynamically calculated price.
+     * @param {boolean} isLocked - Whether the Intel Market is locked by an active deal.
+     * @returns {string} HTML for the "Purchase" button.
+     * @private
+     * @JSDoc
+     */
+    _renderOfferButton(packet, price, isLocked) {
+        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        const disabledAttr = isLocked ? 'disabled' : '';
+        const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel from ${locationName}`;
+        
+        return `
+            <button class="btn btn-intel" 
+                    data-action="show_intel_offer" 
+                    data-packet-id="${packet.id}" 
+                    data-location-id="${packet.locationId}" 
+                    data-price="${price}" 
+                    title="${title}"
+                    ${disabledAttr}>
+                ${locationName} ⌬ ${price.toLocaleString()}
+            </button>`;
+    }
+}
+--- END OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
 
 --- START OF FILE: ./js/ui/components/MapScreen.js ---
 // js/ui/components/MapScreen.js
@@ -4710,27 +4950,35 @@ function _renderSpecCard(label, value) {
 // js/ui/components/IntelScreen.js
 /**
  * @fileoverview This file contains the rendering logic for the Intel screen.
- * It provides the player with access to the game's lore.
+ * It renders the static "shell" for the tabbed "Codex" (lore) and
+ * "Intel Market" (data broker) views.
  */
 
 /**
- * Renders the entire Intel screen UI, which includes buttons to view game lore.
+ * Renders the entire Intel screen UI, which includes the sub-nav tabs
+ * and the content containers for "Codex" and "Intel Market".
  * @returns {string} The HTML content for the Intel screen.
  */
 export function renderIntelScreen() {
     return `
+        <div class="sub-nav-bar">
+            <button class="sub-nav-button active" data-action="set-intel-tab" data-target="intel-codex-content">Codex</button>
+            <button class="sub-nav-button" data-action="set-intel-tab" data-target="intel-market-content">Intel Market</button>
+        </div>
+
         <div class="intel-scroll-panel">
-            <div class="text-center p-8 flex flex-col items-center gap-4">
-                
-                <div id="lore-button-container" class="lore-container w-full max-w-md flex flex-col gap-4">
+            <div id="intel-codex-content" class="intel-tab-content active">
+                <div id="lore-button-container" class="lore-container w-full max-w-md flex flex-col gap-4 p-4">
                     <button class="btn btn-header" data-action="show_lore" data-lore-id="story_so_far">
                         Story So Far...
                     </button>
-                    
                     </div>
-
             </div>
-        </div>`;
+
+            <div id="intel-market-content" class="intel-tab-content p-4">
+                </div>
+        </div>
+    `;
 }
 --- END OF FILE: ./js/ui/components/IntelScreen.js ---
 
@@ -5373,11 +5621,15 @@ import { TravelService } from './services/world/TravelService.js';
  * Sets the --app-height CSS variable to the actual window inner height.
  * This is the definitive fix for the mobile viewport height bug on iOS.
  */
+/* // MODIFIED: This function actively prevents viewport-fit=cover from working correctly
+   // by setting the height to the safe-area height, not the full screen height.
+   // The CSS 'env(safe-area-inset-top)' variable is the correct way to handle the notch.
 const setAppHeight = () => {
     // Use the visualViewport height if available, as it's more reliable on mobile.
     const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.documentElement.style.setProperty('--app-height', `${height}px`);
 };
+*/
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -5387,15 +5639,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const DEV_MODE = true; // Guard for development features.
 
     // Set the app height on initial load and whenever the viewport changes.
-    setAppHeight();
+    // setAppHeight(); // MODIFIED: Disabled
     
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
+    /* // MODIFIED: Disabled
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
         window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
+    */
 
 
     // Set up the main start button to initialize and begin the game.
@@ -5474,12 +5728,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
+            
+            // --- [[START]] MODIFICATION ---
+            // Populate the news ticker *before* the first render.
+            // This prevents the "first tap" re-render bug.
+            newsTickerService.onLocationChange();
+            // --- [[END]] MODIFICATION ---
+
             uiManager.render(gameState.getState());
         }
         
-        // MODIFICATION: Populate the news ticker for the starting/loaded location
-        // after the state is initialized and rendered.
-        newsTickerService.onLocationChange();
+        // --- [[START]] MODIFICATION ---
+        // MOVED: The call to onLocationChange() was moved up to before the first render.
+        // --- [[END]] MODIFICATION ---
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
     }
@@ -6710,6 +6971,33 @@ export const PURCHASED_INTEL_MESSAGES = [
     "{Location Name}'s {Commodity Name} valuation has evaporated!"
 ];
 --- END OF FILE: ./js/data/intelMessages.js ---
+
+--- START OF FILE: ./js/data/intelContent.js ---
+// js/data/intelContent.js
+/**
+ * @fileoverview Defines the static "sample" and "details" message pairs
+ * for the Local Data Broker (Intel Market) system.
+ *
+ * Placeholders:
+ * - [location name]
+ * - [commodity name]
+ * - [discount amount %]
+ * - [durationDays]
+ * - [⌬ credit price]
+ */
+
+export const INTEL_CONTENT = {
+    "CORPORATE_LIQUIDATION": {
+        "sample": "We have confirmed actionable intelligence at [location name]. The data points to a significant, short-term market inefficiency.",
+        "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]."
+    },
+    "SUPPLY_CHAIN_DISRUPTION": {
+        "sample": "A reliable node reports a supply chain disruption affecting [location name]. This packet identifies a specific commodity now available at a statistical discount.",
+        "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]."
+    },
+    // ... Additional 28 entries can be added here following the same structure
+};
+--- END OF FILE: ./js/data/intelContent.js ---
 
 --- START OF FILE: ./js/data/flavorAds.js ---
 // js/data/flavorAds.js
@@ -8521,7 +8809,14 @@ export class GameState {
                 debugEventIndex: 0
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
-            intel: { active: null, available: {} },
+            
+            // --- VIRTUAL WORKBENCH ---
+            // Removed obsolete `intel` property
+            // Added new GDD properties
+            intelMarket: {},
+            activeIntelDeal: null,
+            // --- END VIRTUAL WORKBENCH ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,
@@ -8546,9 +8841,20 @@ export class GameState {
         initialState.player.inventories[SHIP_IDS.WANDERER] = {};
         DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
 
+        // --- VIRTUAL WORKBENCH ---
+        // Initialize new intelMarket property
+        initialState.intelMarket = {};
+        // --- END VIRTUAL WORKBENCH ---
+
         DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
-            initialState.intel.available[m.id] = (Math.random() < 0.3);
+            
+            // --- VIRTUAL WORKBENCH ---
+            // Removed obsolete intel.available line
+            // Added intelMarket initialization per GDD
+            initialState.intelMarket[m.id] = [];
+            // --- END VIRTUAL WORKBENCH ---
+
             initialState.market.inventory[m.id] = {};
             initialState.market.shipyardStock[m.id] = { day: 0, shipsForSale: [] };
             DB.COMMODITIES.forEach(c => {
@@ -9190,6 +9496,45 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
+    // --- VIRTUAL WORKBENCH: ADD NEW METHODS ---
+
+    /**
+     * Gets the effective price for a commodity at a location, checking for
+     * active intel deal overrides first.
+     * @param {string} locationId The ID of the location.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The effective price (either override or market price).
+     * @JSDoc
+     */
+    getPrice(locationId, commodityId) {
+        const deal = this.gameState.getState().activeIntelDeal;
+
+        // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
+        if (deal &&
+            deal.locationId === locationId &&
+            deal.commodityId === commodityId) {
+            
+            return deal.overridePrice; // Return the locked-in deal price
+        }
+        // --- END NEW LOGIC ---
+
+        // ... existing price simulation logic ...
+        // Fallback to the standard market price
+        return this.gameState.market.prices[locationId]?.[commodityId] || 0;
+    }
+
+    /**
+     * Retrieves the pre-calculated galactic average price for a commodity.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The galactic average price.
+     * @JSDoc
+     */
+    getGalacticAverage(commodityId) {
+        return this.gameState.market.galacticAverages[commodityId] || 0;
+    }
+
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
      */
@@ -9636,10 +9981,16 @@ export class TravelService {
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
-        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
-
-        // MODIFICATION: Call onLocationChange() here, now that the location is officially updated.
+        // --- [[START]] MODIFICATION ---
+        // Call onLocationChange() *before* setState.
+        // This ensures the news ticker data is populated *before* the setState
+        // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange();
+        
+        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
+        // --- [[END]] MODIFICATION ---
+
+        // MOVED: onLocationChange() was moved up.
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -9806,6 +10157,11 @@ export class TimeService {
         this.logger = logger;
         // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
+        
+        // --- VIRTUAL WORKBENCH ---
+        /** @type {import('../IntelService.js').IntelService | null} */
+        this.intelService = null; // To be injected by SimulationService
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     // REMOVED: setNewsTickerService method
@@ -9849,10 +10205,27 @@ export class TimeService {
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            if (this.gameState.intel.active && this.gameState.day > this.gameState.intel.active.endDay) {
-                this.logger.info.system('Intel', this.gameState.day, 'EXPIRED', 'Active intel has expired.');
-                this.gameState.intel.active = null;
+            // --- VIRTUAL WORKBENCH: ADD INTEL SYSTEM LOGIC & FIX BUG ---
+            
+            // Get state once for daily checks
+            const state = this.gameState.getState();
+            // BUG FIX: The day is at the root of the state, not in 'gameTime'
+            const day = state.day;
+
+            // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
+            if (state.activeIntelDeal && day > state.activeIntelDeal.expiryDay) {
+                this.gameState.updateState({ activeIntelDeal: null });
+                this.logger.info.system('IntelService', day, 'EXPIRED', 'Active intel deal has expired.');
             }
+
+            // --- NEW LOGIC: CHECK INTEL REFRESH ---
+            // (Runs at the start of day 1, 121, 241, etc.)
+            if (this.intelService && (day % 120 === 1)) {
+                this.intelService.generateIntelRefresh();
+            }
+            
+            // Removed obsolete intel check
+            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
@@ -9944,6 +10317,16 @@ export class TimeService {
                 this.logger.warn('Finance', `Loan delinquent. Garnishment of ${GAME_RULES.LOAN_GARNISHMENT_PERCENT * 100}% initiated.`);
             }
         }
+    }
+
+    /**
+     * Gets the current game day.
+     * @returns {number} The current day.
+     * @JSDoc
+     */
+    getCurrentDay() {
+        // This helper is used by IntelService
+        return this.gameState.day;
     }
 }
 --- END OF FILE: ./js/services/world/TimeService.js ---
@@ -10207,6 +10590,9 @@ import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
+// --- VIRTUAL WORKBENCH: IMPORT ---
+import { IntelService } from './IntelService.js';
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * @class SimulationService
@@ -10226,6 +10612,10 @@ export class SimulationService {
         this.newsTickerService = newsTickerService; // ADDED
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
+        
+        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE ---
+        this.intelService = null; // Will be instantiated below
+        // --- END VIRTUAL WORKBENCH ---
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
@@ -10234,6 +10624,15 @@ export class SimulationService {
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
+
+        // --- VIRTUAL WORKBENCH: INSTANTIATE AND INJECT INTEL SERVICE ---
+        // Must be after dependencies (time, market, news) are created
+        this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
+        
+        // Inject intelService into services that depend on it
+        this.timeService.intelService = this.intelService;
+        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
+        // --- END VIRTUAL WORKBENCH ---
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
@@ -10280,7 +10679,11 @@ export class SimulationService {
     payOffDebt() { this.playerActionService.payOffDebt(); }
     takeLoan(loanData) { this.playerActionService.takeLoan(loanData); }
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
-    purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); }
+    
+    // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
+    // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
+    // --- END VIRTUAL WORKBENCH ---
+
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
     
@@ -11412,6 +11815,11 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
+// --- VIRTUAL WORKBENCH: IMPORTS ---
+import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
+import { INTEL_CONTENT } from '../data/intelContent.js';
+// --- END VIRTUAL WORKBENCH ---
+
 /**
  * Stores the lore text content.
  * @private
@@ -11450,6 +11858,13 @@ export class UIManager {
         // MODIFIED: Added property to hold injected EventManager
         this.eventManager = null; // To be injected
 
+        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
+        /** @type {import('./IntelService.js').IntelService | null} */
+        this.intelService = null; // To be injected
+        /** @type {IntelMarketRenderer | null} */
+        this.intelMarketRenderer = null; // To be instantiated
+        // --- END VIRTUAL WORKBENCH ---
+
         this.effectsManager = new EffectsManager();
 
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
@@ -11461,6 +11876,10 @@ export class UIManager {
         };
 
         this._cacheDOM();
+
+        // --- VIRTUAL WORKBENCH: BIND 'this' CONTEXT ---
+        this.getItemPrice = this.getItemPrice.bind(this);
+        // --- END VIRTUAL WORKBENCH ---
 
         // This remains the correct way to handle orientation changes or desktop resizing.
         window.addEventListener('resize', this._setAppHeight);
@@ -11517,6 +11936,18 @@ export class UIManager {
     setDebugService(service) {
         this.debugService = service;
     }
+
+    // --- VIRTUAL WORKBENCH: ADD INTELSERVICE SETTER ---
+    /**
+     * Injects the IntelService and instantiates the IntelMarketRenderer.
+     * @param {import('./IntelService.js').IntelService} intelService
+     * @JSDoc
+     */
+    setIntelService(intelService) {
+        this.intelService = intelService;
+        this.intelMarketRenderer = new IntelMarketRenderer(intelService);
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * MODIFIED: Injects the EventManager after instantiation.
@@ -11752,11 +12183,18 @@ export class UIManager {
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  
+                 // --- VIRTUAL WORKBENCH: BUG FIX ---
+                 // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
+                 // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
+                 const action = ACTION_IDS.SET_SCREEN;
+                 // --- END VIRTUAL WORKBENCH ---
+
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -11823,7 +12261,18 @@ export class UIManager {
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
+                // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
                 this.cache.intelScreen.innerHTML = renderIntelScreen();
+                // After rendering the shell, immediately populate the (default) active tab
+                // The renderer will handle showing the correct content (Codex or Market)
+                if (this.intelMarketRenderer) {
+                    // Find the container for the market tab content
+                    const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
+                    if (marketContentEl) {
+                        this.intelMarketRenderer.render(marketContentEl, gameState);
+                    }
+                }
+                // --- END VIRTUAL WORKBENCH ---
                 break;
         }
     }
@@ -12043,16 +12492,20 @@ export class UIManager {
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        let price = gameState.market.prices[gameState.currentLocationId][goodId];
-        const market = DB.MARKETS.find(m => m.id === gameState.currentLocationId);
-        if (isSelling && market.specialDemand && market.specialDemand[goodId]) {
-            price *= market.specialDemand[goodId].bonus;
+        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
+        // Use the simulationService (which now points to MarketService's getPrice)
+        // to ensure intel overrides are checked.
+        if (!this.simulationService || !this.simulationService.marketService) {
+            // Fallback for early load
+            return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
-        const intel = gameState.intel.active;
-        if (intel && intel.targetMarketId === gameState.currentLocationId && intel.commodityId === goodId) {
-            price *= (intel.type === 'demand') ? DB.CONFIG.INTEL_DEMAND_MOD : DB.CONFIG.INTEL_DEPRESSION_MOD;
-        }
-        return Math.max(1, Math.round(price));
+        
+        // Note: The isSelling logic for specialDemand is handled inside the
+        // UIManager's _calculateSaleDetails, not here.
+        // This function just needs to get the *base* price, which
+        // MarketService.getPrice() now does (checking for intel overrides).
+        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     _calculateSaleDetails(goodId, quantity) {
@@ -12061,7 +12514,12 @@ export class UIManager {
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
+        
+        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
+        // Pass `true` for isSelling to get the correct base price
         const basePrice = this.getItemPrice(state, goodId, true);
+        // --- END VIRTUAL WORKBENCH ---
+
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
 
@@ -12144,7 +12602,9 @@ export class UIManager {
 
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
+                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: this.getItemPrice(state, goodId, true),
+                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -12165,7 +12625,9 @@ export class UIManager {
 
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
+                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
+                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -12200,6 +12662,20 @@ export class UIManager {
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
         }
+        
+        // --- VIRTUAL WORKBENCH: GDD MODAL THEMING ---
+        // Apply theme data attribute for CSS-based theming (e.g., glowing borders)
+        if (options.theme) {
+            modal.dataset.theme = options.theme;
+        } else {
+            // Remove old theme to avoid stale borders
+            delete modal.dataset.theme;
+        }
+        
+        // GDD: Control dismissal behavior
+        modal.dataset.dismissInside = options.dismissInside || 'false';
+        modal.dataset.dismissOutside = options.dismissOutside || 'false';
+        // --- END VIRTUAL WORKBENCH ---
 
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
@@ -12241,19 +12717,43 @@ export class UIManager {
         } else {
             const btnContainer = modal.querySelector('#' + modalId.replace('-modal', '-button-container'));
             let button;
-            if (btnContainer) {
-                btnContainer.innerHTML = '';
-                button = document.createElement('button');
-                btnContainer.appendChild(button);
+            
+            // --- VIRTUAL WORKBENCH: GDD FOOTER LOGIC ---
+            if (options.footer) {
+                // If a custom footer is provided, inject it and attach handlers
+                if (btnContainer) {
+                    btnContainer.innerHTML = options.footer;
+                    // Find any buttons *inside* the new footer and attach close/callback logic
+                    btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            // Let the main EventManager handle the action first
+                            // But also ensure the modal closes
+                            closeHandler();
+                        });
+                    });
+                }
+            } else if (options.footer === null) {
+                // GDD: Explicitly no footer/buttons
+                if (btnContainer) btnContainer.innerHTML = '';
             } else {
-                button = modal.querySelector('button');
+            // --- END VIRTUAL WORKBENCH ---
+                // Original default button logic
+                if (btnContainer) {
+                    btnContainer.innerHTML = '';
+                    button = document.createElement('button');
+                    btnContainer.appendChild(button);
+                } else {
+                    button = modal.querySelector('button');
+                }
+                if (button) {
+                    button.className = 'btn px-6 py-2';
+                    if (options.buttonClass) button.classList.add(options.buttonClass);
+                    button.innerHTML = options.buttonText || 'Understood';
+                    button.onclick = closeHandler;
+                }
+            // --- VIRTUAL WORKBENCH ---
             }
-            if (button) {
-                button.className = 'btn px-6 py-2';
-                if (options.buttonClass) button.classList.add(options.buttonClass);
-                button.innerHTML = options.buttonText || 'Understood';
-                button.onclick = closeHandler;
-            }
+            // --- END VIRTUAL WORKBENCH ---
         }
 
         modal.classList.remove('hidden');
@@ -12344,6 +12844,13 @@ export class UIManager {
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
+                
+                // --- VIRTUAL WORKBENCH: CLEANUP GDD ATTRIBUTES ---
+                delete modal.dataset.theme;
+                delete modal.dataset.dismissInside;
+                delete modal.dataset.dismissOutside;
+                // --- END VIRTUAL WORKBENCH ---
+
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
                 }
@@ -12670,7 +13177,6 @@ export class UIManager {
      * @param {string} newOptions.placement - New Popper placement.
      * @param {number} newOptions.distance - New Popper offset distance.
      * @param {number} newOptions.skidding - New Popper offset skidding.
-     }
      */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;
@@ -13130,8 +13636,19 @@ export class UIManager {
     // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
-        if (modalBackdrop && modalBackdrop.id && !modalBackdrop.classList.contains('dismiss-disabled') && !e.target.closest('.modal-content')) {
-            // Special case: Allow lore-modal to be dismissed by clicking content
+        if (!modalBackdrop || !modalBackdrop.id || modalBackdrop.classList.contains('dismiss-disabled')) {
+            return null;
+        }
+
+        // --- VIRTUAL WORKBENCH: GDD DISMISSAL LOGIC ---
+        const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
+        const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
+        
+        const isBackdropClick = !e.target.closest('.modal-content');
+        const isContentClick = e.target.closest('.modal-content');
+
+        if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
+             // Special case: Allow lore-modal to be dismissed by clicking content
             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
@@ -13143,7 +13660,12 @@ export class UIManager {
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
+
+            // GDD-compliant dismissal
+            return modalBackdrop.id;
         }
+        // --- END VIRTUAL WORKBENCH ---
+
         return null;
     }
 
@@ -13187,6 +13709,10 @@ export class UIManager {
         // Apply theme styles
         modalContent.style.background = theme.gradient;
         modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
+        // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
+        // Use the data-theme attribute for CSS-based glowing borders
+        modal.dataset.theme = locationId;
+        // --- END VIRTUAL WORKBENCH ---
 
 
         const imports = [];
@@ -13273,6 +13799,9 @@ export class UIManager {
         const modal = this.cache.mapDetailModal;
         if (modal) {
             modal.classList.remove('is-glowing');
+            // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
+            delete modal.dataset.theme; // Clear theme on close
+            // --- END VIRTUAL WORKBENCH ---
             // Remove the specific click listener if it exists
             const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
@@ -13282,6 +13811,188 @@ export class UIManager {
         }
         this.hideModal('map-detail-modal');
     }
+
+    // --- VIRTUAL WORKBENCH: ADD INTEL HANDLERS ---
+
+    /**
+     * Handles switching tabs on the Intel screen.
+     * @param {HTMLElement} element - The clicked tab button.
+     * @JSDoc
+     */
+    handleSetIntelTab(element) {
+        const targetId = element.dataset.target;
+        if (!targetId) return;
+
+        const screen = element.closest('.active-screen');
+        if (!screen) return;
+
+        // Deactivate all tabs and content
+        screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
+        screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
+
+        // Activate the clicked tab and corresponding content
+        element.classList.add('active');
+        const targetContent = screen.querySelector(`#${targetId}`);
+        if (targetContent) {
+            targetContent.classList.add('active');
+            
+            // If we are switching to the market tab, re-render its contents
+            if (targetId === 'intel-market-content' && this.intelMarketRenderer) {
+                this.intelMarketRenderer.render(targetContent, this.lastKnownState);
+            }
+        }
+    }
+
+    /**
+     * Finds the specified intel packet from the game state.
+     * @param {string} packetId 
+     * @param {string} locationId 
+     * @returns {object | null} The packet object or null if not found.
+     * @private
+     */
+    _findIntelPacket(packetId, locationId) {
+        const state = this.lastKnownState;
+        if (!state.intelMarket[locationId]) {
+            this.logger.error('UIManager', `_findIntelPacket: No intelMarket for location ${locationId}`);
+            return null;
+        }
+        const packet = state.intelMarket[locationId].find(p => p.id === packetId);
+        if (!packet) {
+            this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} at ${locationId}`);
+            return null;
+        }
+        return packet;
+    }
+
+    /**
+     * Formats an intel "details" string, replacing all GDD placeholders.
+     * @param {string} template - The template string from INTEL_CONTENT.
+     * @param {object} packet - The intelPacket object.
+     * @param {number} price - The calculated price.
+     * @returns {string} The formatted, player-facing string.
+     * @private
+     * @JSDoc
+     */
+    _formatIntelDetails(template, packet, price) {
+        const locationName = DB.MARKETS.find(m => m.id === packet.locationId)?.name || 'an unknown location';
+        const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
+        const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
+        const priceStr = `${price.toLocaleString()} ⌬`;
+
+        return template
+            .replace(/\[location name\]/g, locationName)
+            .replace(/\[commodity name\]/g, commodityName)
+            .replace(/\[discount amount %\]/g, discountStr)
+            .replace(/\[durationDays\]/g, packet.durationDays)
+            .replace(/\[⌬ credit price\]/g, priceStr);
+    }
+
+    /**
+     * Shows the "Sample" modal (the offer) for an intel packet.
+     * @param {HTMLElement} element - The clicked button element.
+     * @JSDoc
+     */
+    handleShowIntelOffer(element) {
+        const { packetId, locationId, price } = element.dataset;
+        const packet = this._findIntelPacket(packetId, locationId);
+        if (!packet) return;
+
+        const locationName = DB.MARKETS.find(m => m.id === locationId)?.name || 'this location';
+        const vagueText = (INTEL_CONTENT[packet.messageKey]?.sample || "Intel available at [location name].")
+            .replace('[location name]', locationName);
+        
+        const priceNum = parseInt(price, 10);
+        const purchaseButtonHTML = `
+            <button class="btn btn-intel-buy" 
+                    data-action="buy_intel" 
+                    data-packet-id="${packet.id}" 
+                    data-location-id="${locationId}" 
+                    data-price="${priceNum}">
+                Purchase Intel (${priceNum.toLocaleString()} ⌬)
+            </button>`;
+
+        this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
+            theme: locationId, // GDD: Apply location-specific theme
+            dismissOutside: true, // GDD: Allow dismissing outside
+            footer: purchaseButtonHTML // GDD: Use custom footer
+        });
+    }
+
+    /**
+     * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
+     * @param {HTMLElement} element - The clicked "Purchase Intel" button.
+     * @JSDoc
+     */
+    handleBuyIntel(element) {
+        const { packetId, locationId, price } = element.dataset;
+        const priceNum = parseInt(price, 10);
+
+        // Call the service to perform the transaction
+        const purchasedPacket = this.intelService.purchaseIntel(packetId, locationId, priceNum);
+
+        if (purchasedPacket) {
+            // GDD: On success, immediately close "Sample" modal and open "Details" modal
+            this.hideModal('event-modal'); // Close the sample modal
+            
+            // Re-find the packet from the *new* state to ensure we have the purchased copy
+            const updatedPacket = this._findIntelPacket(packetId, locationId);
+            if (updatedPacket) {
+                this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
+            }
+
+            // GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
+            const intelScreen = document.getElementById('intel-screen');
+            const marketContentEl = intelScreen?.querySelector('#intel-market-content');
+            if (marketContentEl && this.intelMarketRenderer) {
+                this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
+            }
+        } else {
+            // Purchase failed (e.g., already active deal, not enough credits)
+            // The service will log the error. We can optionally show a UI error here.
+            this.hideModal('event-modal');
+            this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
+        }
+    }
+
+    /**
+     * Shows the "Details" modal for a purchased packet.
+     * @param {HTMLElement} element - The clicked "View Intel" button.
+     * @JSDoc
+     */
+    handleShowIntelDetails(element) {
+        const { packetId, locationId } = element.dataset;
+        const packet = this._findIntelPacket(packetId, locationId);
+        if (!packet) return;
+
+        // Price wasn't passed, but we need it for the text. Re-calculate it.
+        // This is okay, as it's just for display and not for a transaction.
+        const price = this.intelService.calculateIntelPrice(packet);
+
+        this._showIntelDetailsModal(packet, price, locationId);
+    }
+
+    /**
+     * Private helper to show the "Details" modal.
+     * @param {object} packet - The intelPacket object.
+     * @param {number} price - The price (either from purchase or re-calculated).
+     * @param {string} locationId - The locationId for theming.
+     * @private
+     * @JSDoc
+     */
+    _showIntelDetailsModal(packet, price, locationId) {
+        const detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
+        const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price);
+
+        this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
+            theme: locationId, // GDD: Apply location-specific theme
+            dismissInside: true, // GDD: Dismiss on *any* click
+            dismissOutside: true,
+            footer: null, // GDD: No buttons
+            contentClass: 'text-left' // GDD: Details are paragraphs
+        });
+    }
+
+    // --- END VIRTUAL WORKBENCH ---
 
     // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
 }
@@ -15070,6 +15781,239 @@ export class AutomatedPlayer {
 }
 --- END OF FILE: ./js/services/bot/AutomatedPlayerService.js ---
 
+--- START OF FILE: ./js/services/IntelService.js ---
+// js/services/IntelService.js
+/**
+ * @fileoverview This file contains the IntelService class, which manages
+ * the entire lifecycle of the Local Data Broker system. It handles the
+ * procedural generation of intel packets, dynamic pricing, and purchase logic.
+ */
+
+import { DB } from '../data/database.js';
+import { INTEL_CONTENT } from '../data/intelContent.js';
+import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
+import { formatCredits } from '../utils.js';
+
+/**
+ * @class IntelService
+ * @description The "brain" of the Intel System. Manages generation,
+ * persistence, pricing, and purchase logic for intel packets.
+ */
+export class IntelService {
+    /**
+     * @param {import('./GameState.js').GameState} gameState
+     * @param {import('./world/TimeService.js').TimeService} timeService
+     * @param {import('./simulation/MarketService.js').MarketService} marketService
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService
+     * @param {import('./LoggingService.js').Logger} logger
+     */
+    constructor(gameState, timeService, marketService, newsTickerService, logger) {
+        this.gameState = gameState;
+        this.timeService = timeService;
+        this.marketService = marketService;
+        this.newsTickerService = newsTickerService;
+        this.logger = logger;
+        this.db = DB; // For accessing static data
+    }
+
+    /**
+     * Generates new intel packets for all locations.
+     * Triggered by TimeService every 120 game days.
+     * This method removes old, unpurchased intel and adds 1-3 new packets.
+     * @JSDoc
+     */
+    generateIntelRefresh() {
+        this.logger.info.system('IntelService', this.gameState.day, 'REFRESH', 'Generating intel refresh for all markets.');
+        const state = this.gameState.getState();
+        const newIntelMarket = { ...state.intelMarket };
+
+        for (const locationId of Object.keys(newIntelMarket)) {
+            // Filter out (remove) any packets that were NOT purchased
+            const purchasedPackets = newIntelMarket[locationId].filter(packet => packet.isPurchased);
+            newIntelMarket[locationId] = purchasedPackets;
+        }
+
+        // Iterate through all markets to generate new intel
+        for (const location of this.db.MARKETS) {
+            const locationId = location.id;
+            if (!newIntelMarket[locationId]) {
+                newIntelMarket[locationId] = [];
+            }
+
+            // GDD: Apply randomization to decide if a location gets new intel
+            // Using 70% chance as specified in GDD
+            if (Math.random() < 0.7) {
+                const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
+                for (let i = 0; i < numPackets; i++) {
+                    const newPacket = this._createPacket(locationId);
+                    if (newPacket) {
+                        newIntelMarket[locationId].push(newPacket);
+                    }
+                }
+            }
+        }
+
+        this.gameState.updateState({ intelMarket: newIntelMarket });
+    }
+
+    /**
+     * Private helper to create a single intelPacket object.
+     * @param {string} locationId - The location to generate a packet for.
+     * @returns {object | null} A new intelPacket object, or null if generation fails.
+     * @private
+     * @JSDoc
+     */
+    _createPacket(locationId) {
+        const state = this.gameState.getState();
+        // GDD: Picks from unlockedCommodities
+        const unlockedCommodities = state.player.unlockedCommodities; 
+
+        if (!unlockedCommodities || unlockedCommodities.length === 0) {
+            this.logger.warn('IntelService', 'Cannot create packet: No unlocked commodities available.');
+            return null;
+        }
+
+        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
+        const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
+        
+        // GDD: Higher value deal = higher multiplier
+        const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
+        
+        const messageKeys = Object.keys(INTEL_CONTENT);
+        if (messageKeys.length === 0) {
+             this.logger.warn('IntelService', 'Cannot create packet: INTEL_CONTENT is empty.');
+             return null;
+        }
+        const messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)]; //
+
+        const packet = {
+            id: `pkt_${locationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 999)}`,
+            locationId: locationId,
+            commodityId: commodityId,
+            discountPercent: parseFloat(discountPercent.toFixed(2)),
+            durationDays: durationDays,
+            valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
+            messageKey: messageKey,
+            isPurchased: false,
+        };
+
+        return packet;
+    }
+
+    /**
+     * Calculates the dynamic price for an intel packet at render time.
+     * Price is 10-20% of player's current credits, scaled by the deal's value.
+     * @param {object} packet - The intelPacket object.
+     * @returns {number} The calculated price, rounded to the nearest 100.
+     * @JSDoc
+     */
+    calculateIntelPrice(packet) {
+        const playerCredits = this.gameState.getState().player.credits;
+        
+        // GDD: Finds 10-20% of player's wallet
+        const base = playerCredits * (0.10 + Math.random() * 0.10); 
+        
+        // GDD: Apply value scaling
+        const finalPrice = base * packet.valueMultiplier;
+        
+        // GDD: Rounds down to the nearest hundredth
+        return Math.floor(finalPrice / 100) * 100;
+    }
+
+    /**
+     * Executes the purchase of an intel packet.
+     * This is the core transaction logic that locks the deal.
+     * @param {string} packetId - The ID of the packet to purchase.
+     * @param {string} locationId - The location ID where the purchase is happening.
+     * @param {number} calculatedPrice - The price shown to the user (and to be charged).
+     * @returns {object | null} The purchased intelPacket object on success, or null on failure.
+     * @JSDoc
+     */
+    purchaseIntel(packetId, locationId, calculatedPrice) {
+        const state = this.gameState.getState();
+        
+        // GDD Guard Clause: Aborts if a deal is already active
+        if (state.activeIntelDeal !== null) {
+            this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
+            return null;
+        }
+
+        const intelMarket = this.gameState.intelMarket; // Direct reference for mutation
+        const packet = intelMarket[locationId]?.find(p => p.id === packetId);
+
+        if (!packet) {
+            this.logger.error('IntelService', `Purchase failed: Could not find packetId ${packetId} at ${locationId}.`);
+            return null;
+        }
+
+        if (state.player.credits < calculatedPrice) {
+            this.logger.warn('IntelService', 'Purchase aborted: Insufficient credits.');
+            return null;
+        }
+
+        // 1. Deduct credits
+        this.gameState.player.credits -= calculatedPrice;
+        this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
+
+        // 2. Set packet as purchased
+        packet.isPurchased = true;
+
+        // 3. Create the Active Intel Deal
+        const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
+        const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
+        const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
+
+        const newActiveDeal = {
+            locationId: packet.locationId,
+            commodityId: packet.commodityId,
+            overridePrice: overridePrice,
+            expiryDay: expiryDay,
+            sourcePacketId: packet.id // Track source for reference
+        };
+
+        // 4. Push message to NewsTicker
+        try {
+            const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
+            const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'a local market';
+            let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
+            let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
+            this.newsTickerService.pushMessage(message, 'INTEL', true); // Push as priority
+        } catch (e) {
+            this.logger.error('IntelService', 'Failed to push news ticker message.', e);
+        }
+
+        // 5. Set the active deal in GameState, which locks the market
+        this.gameState.updateState({ 
+            activeIntelDeal: newActiveDeal,
+            intelMarket: intelMarket // Ensure the mutated intelMarket object is saved
+        });
+        
+        return packet;
+    }
+
+    /**
+     * Gets the galactic average price for a commodity.
+     * @param {string} commodityId - The ID of the commodity.
+     * @returns {number} The galactic average price.
+     * @JSDoc
+     */
+    getGalacticAverage(commodityId) {
+        // This is a passthrough to the MarketService method
+        return this.marketService.getGalacticAverage(commodityId);
+    }
+
+    /**
+     * Gets the current game day from the TimeService.
+     * @returns {number} The current day.
+     * @JSDoc
+     */
+    getCurrentDay() {
+        return this.timeService.getCurrentDay();
+    }
+}
+--- END OF FILE: ./js/services/IntelService.js ---
+
 --- START OF FILE: ./js/services/handlers/MarketEventHandler.js ---
 // js/services/handlers/MarketEventHandler.js
 /**
@@ -15974,21 +16918,45 @@ export class ActionClickHandler {
             }
 
             // --- Navigation & Screen Changes ---
-            case ACTION_IDS.SET_SCREEN:
-                if (dataset.navId === state.activeNav && actionTarget.tagName === 'DIV') {
+            case ACTION_IDS.SET_SCREEN: {
+                // This is the "smarter" logic you described.
+                // We check if the *actual* click target (e.target) was a sub-nav button.
+                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
+                const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
+
+                if (dataset.navId === state.activeNav && !isSubNavClick) {
+                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
+                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
+                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
                 actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
+            }
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
                 this.simulationService.travelTo(dataset.locationId);
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
+
+            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
+            case 'set-intel-tab':
+                this.uiManager.handleSetIntelTab(actionTarget);
+                break;
+            case 'show_intel_offer':
+                this.uiManager.handleShowIntelOffer(actionTarget);
+                break;
+            case 'buy_intel':
+                this.uiManager.handleBuyIntel(actionTarget);
+                break;
+            case 'show_intel_details':
+                this.uiManager.handleShowIntelDetails(actionTarget);
+                break;
+            // --- END VIRTUAL WORKBENCH ---
 
             // --- Modals ---
             case 'show-mission-modal':
@@ -16032,10 +17000,12 @@ export class ActionClickHandler {
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails));
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
-                this.simulationService.purchaseIntel(parseInt(dataset.cost));
+                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
+                // The new flow is show_intel_offer -> buy_intel
+                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
-                this._handleAcquireLicense(dataset.licenseId, e); // --- MODIFIED: Pass 'e'
+                this._handleAcquireLicense(dataset.licenseId, e);
                 break;
 
             // --- Market Card Minimization ---
@@ -16058,7 +17028,7 @@ export class ActionClickHandler {
      * @param {Event} [e] The original click event for positioning floating text.
      * @private
      */
-    _handleAcquireLicense(licenseId, e) { // --- MODIFIED: Accept 'e'
+    _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
@@ -16074,13 +17044,11 @@ export class ActionClickHandler {
                     modal.querySelector('#confirm-license-purchase').onclick = () => {
                         const result = this.simulationService.purchaseLicense(licenseId);
 
-                        // --- MODIFIED: Spawn floating text on success ---
                         if (result.success) {
-                            if (e) { // Use the original click event 'e' for coordinates
+                            if (e) {
                                 this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
                             }
                         } else if (result.error === 'INSUFFICIENT_FUNDS') {
-                        // --- END MODIFIED ---
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
                         }
                         closeHandler();
@@ -16884,6 +17852,20 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.40] - 2025-11-4
+-  intel system overhaul V2
+-  added intel-screen.css
+-  added intelMessages.js
+-  added IntelService.js
+-  added IntelMarketRenderer.js
+
+## [31.30] - 2025-11-3
+-  navigation bar polish
+-  news ticker polish
+
+## [31.20] - 2025-11-2
+-  build tooling update V2
+
 ## [31.10] - 2025-11-1
 -  news ticker update V2
 -  added databases for news ticker messaging
@@ -17407,7 +18389,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "ship_progression",
       "procedural_events",
       "debt_management",
-      "wealth_milestones"
+      "wealth_milestones",
+      "deal-on-demand intel"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
   },
@@ -17434,7 +18417,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
-    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards."
+    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
+    "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets[cite: 3608, 3891].",
+    "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off) [cite: 3614-3615, 3892].",
+    "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice[cite: 3621, 3902]."
   },
   "service_summaries": {
     "GameState": {
@@ -17446,11 +18432,35 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "startNewGame": "Initializes the entire game state for a new session.",
         "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
       },
-      "mutates_state": ["day", "currentLocationId", "player", "market", "missions", "tutorials", "introSequenceActive", "uiState"]
+      "mutates_state": [
+        "day",
+        "currentLocationId",
+        "player",
+        "market",
+        "missions",
+        "tutorials",
+        "introSequenceActive",
+        "uiState",
+        "intelMarket",
+        "activeIntelDeal"
+      ]
     },
     "SimulationService": {
       "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": ["GameState", "UIManager", "Logger", "MarketService", "TimeService", "TravelService", "IntroService", "PlayerActionService", "TutorialService", "MissionService", "NewsTickerService"],
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "Logger",
+        "MarketService",
+        "TimeService",
+        "TravelService",
+        "IntroService",
+        "PlayerActionService",
+        "TutorialService",
+        "MissionService",
+        "NewsTickerService",
+        "IntelService"
+      ],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
         "setScreen": "Sets the active navigation tab and screen.",
@@ -17458,73 +18468,190 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "buyItem": "Facade method that delegates to PlayerActionService.",
         "pushNewsMessage": "Facade method to push a message to the NewsTickerService."
       },
-      "mutates_state": ["activeNav", "activeScreen", "isGameOver", "uiState"]
+      "mutates_state": [
+        "activeNav",
+        "activeScreen",
+        "isGameOver",
+        "uiState"
+      ]
     },
     "IntroService": {
       "description": "Manages the entire new game introduction sequence, from the initial lore modals to the final tutorial kickoff.",
-      "dependencies": ["GameState", "UIManager", "Logger", "SimulationService (Facade)"],
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "Logger",
+        "SimulationService (Facade)"
+      ],
       "key_functions": {
         "start": "Begins the intro sequence.",
         "handleIntroClick": "Handles clicks on intro-specific buttons.",
         "continueAfterTutorial": "Resumes the intro sequence after a tutorial batch is completed."
       },
-      "mutates_state": ["player.introStep", "player.name", "player.debt", "introSequenceActive"]
+      "mutates_state": [
+        "player.introStep",
+        "player.name",
+        "player.debt",
+        "introSequenceActive"
+      ]
     },
     "PlayerActionService": {
       "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
-      "dependencies": ["GameState", "UIManager", "MissionService", "MarketService", "TimeService", "Logger", "SimulationService (Facade)"],
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "MissionService",
+        "MarketService",
+        "TimeService",
+        "Logger",
+        "SimulationService (Facade)"
+      ],
       "key_functions": {
         "buyItem": "Handles the logic for purchasing a commodity.",
         "sellItem": "Handles the logic for selling a commodity.",
         "buyShip": "Manages the purchase of a new ship.",
         "refuelTick": "Processes one 'tick' of refueling."
       },
-      "mutates_state": ["player.credits", "player.debt", "player.inventories", "player.shipStates", "player.ownedShipIds", "market.inventory"]
+      "mutates_state": [
+        "player.credits",
+        "player.debt",
+        "player.inventories",
+        "player.shipStates",
+        "player.ownedShipIds",
+        "market.inventory"
+      ]
     },
     "TravelService": {
       "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
-      "dependencies": ["GameState", "UIManager", "TimeService", "Logger", "SimulationService (Facade)", "js/data/events.js", "js/services/eventEffectResolver.js"],
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "TimeService",
+        "Logger",
+        "SimulationService (Facade)",
+        "js/data/events.js",
+        "js/services/eventEffectResolver.js"
+      ],
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
         "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
         "resumeTravel": "Continues a pending travel action after an event."
       },
-      "mutates_state": ["pendingTravel", "player.shipStates.health", "player.shipStates.fuel"]
+      "mutates_state": [
+        "pendingTravel",
+        "player.shipStates.health",
+        "player.shipStates.fuel"
+      ]
     },
     "TimeService": {
-      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`.",
-      "dependencies": ["GameState", "MarketService", "UIManager", "Logger", "SimulationService (Facade)", "js/data/age_events.js"],
+      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`. Also checks for `activeIntelDeal` expiration and triggers the `IntelService` refresh[cite: 3679, 3981].",
+      "dependencies": [
+        "GameState",
+        "MarketService",
+        "UIManager",
+        "Logger",
+        "SimulationService (Facade)",
+        "js/data/age_events.js",
+        "IntelService"
+      ],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
       },
-      "mutates_state": ["day", "player.playerAge", "player.debt", "player.shipStates.health", "market.prices", "market.inventory"]
+      "mutates_state": [
+        "day",
+        "player.playerAge",
+        "player.debt",
+        "player.shipStates.health",
+        "market.prices",
+        "market.inventory",
+        "activeIntelDeal"
+      ]
     },
     "MarketService": {
-      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades.",
-      "dependencies": ["GameState"],
+      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides[cite: 3680, 3983].",
+      "dependencies": [
+        "GameState",
+        "IntelService"
+      ],
       "key_functions": {
-          "evolveMarketPrices": "Simulates daily price changes for all commodities.",
-          "replenishMarketInventory": "Handles the weekly restocking of all markets.",
-          "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
-          "_updateShipyardStock": "Updates the available ships for sale at each location."
+        "evolveMarketPrices": "Simulates daily price changes for all commodities.",
+        "replenishMarketInventory": "Handles the weekly restocking of all markets.",
+        "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
+        "_updateShipyardStock": "Updates the available ships for sale at each location.",
+        "getPrice": "Gets the price, checking for Intel overrides first[cite: 3757]."
       },
-      "mutates_state": ["market.prices", "market.inventory", "market.shipyardStock"]
+      "mutates_state": [
+        "market.prices",
+        "market.inventory",
+        "market.shipyardStock"
+      ]
+    },
+    "IntelService": {
+      "description": "The 'brain' of the Intel system. Manages the lifecycle of intel: generation, persistence, dynamic pricing logic, and the purchase transaction[cite: 3674, 3971].",
+      "dependencies": [
+        "GameState",
+        "TimeService",
+        "MarketService",
+        "NewsTickerService",
+        "js/data/intelContent.js",
+        "DB"
+      ],
+      "key_functions": {
+        "generateIntelRefresh": "Called by TimeService to repopulate intel markets[cite: 3720].",
+        "calculateIntelPrice": "Dynamically calculates intel price based on player credits and deal value[cite: 3736, 4061].",
+        "purchaseIntel": "Validates and executes the purchase, creating an 'activeIntelDeal'[cite: 3743, 4069]."
+      },
+      "mutates_state": [
+        "intelMarket",
+        "activeIntelDeal",
+        "player.credits"
+      ]
     },
     "UIManager": {
       "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
-      "dependencies": ["Logger", "EffectsManager", "TravelAnimationService", "MissionService", "SimulationService", "NewsTickerService"],
+      "dependencies": [
+        "Logger",
+        "EffectsManager",
+        "TravelAnimationService",
+        "MissionService",
+        "SimulationService",
+        "NewsTickerService",
+        "IntelService",
+        "IntelMarketRenderer"
+      ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
         "queueModal": "Manages a queue for displaying modals to prevent overlap.",
         "triggerEffect": "Initiates a visual effect through the EffectsManager.",
         "showTravelAnimation": "Initiates the travel animation sequence.",
-        "_renderNewsTicker": "Renders the news ticker content only when its content is dirty."
+        "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
+        "handleShowIntelOffer": "New handler for Intel Market[cite: 3827].",
+        "handleBuyIntel": "New handler for Intel Market[cite: 3833].",
+        "handleShowIntelDetails": "New handler for Intel Market[cite: 3841]."
+      },
+      "mutates_state": []
+    },
+    "IntelMarketRenderer": {
+      "description": "A dedicated renderer class. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the 'Intel Market' tab [cite: 3677, 3976-3977].",
+      "dependencies": [
+        "UIManager",
+        "GameState",
+        "IntelService",
+        "DB"
+      ],
+      "key_functions": {
+        "render": "Builds and injects the HTML for the Intel Market[cite: 3809, 4144]."
       },
       "mutates_state": []
     },
     "NewsTickerService": {
-      "description": "Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources.",
-      "dependencies": ["GameState", "js/data/flavorAds.js", "js/data/intelMessages.js", "js/data/database.js"],
+      "description": "Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system[cite: 3609].",
+      "dependencies": [
+        "GameState",
+        "js/data/flavorAds.js",
+        "js/data/intelMessages.js",
+        "js/data/database.js"
+      ],
       "key_functions": {
         "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
         "pulse": "Called daily by TimeService; currently stubbed, logic moved to `onLocationChange`.",
@@ -17536,7 +18663,14 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     },
     "EventManager": {
       "description": "The universal input layer. Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.",
-      "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService", "DebugService", "Logger"],
+      "dependencies": [
+        "GameState",
+        "SimulationService",
+        "UIManager",
+        "TutorialService",
+        "DebugService",
+        "Logger"
+      ],
       "key_functions": {
         "bindEvents": "Sets up all global event listeners for the application.",
         "_handleClick": "The central delegated click handler that routes events to the appropriate handler module."
@@ -17544,60 +18678,115 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "mutates_state": []
     },
     "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes.",
-        "dependencies": ["GameState", "SimulationService", "UIManager", "TutorialService"],
-        "key_functions": {"handle": "Processes a click event on an element with a `data-action` attribute."},
-        "mutates_state": []
+      "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions like 'show_intel_offer'[cite: 3827].",
+      "dependencies": [
+        "GameState",
+        "SimulationService",
+        "UIManager",
+        "TutorialService"
+      ],
+      "key_functions": {
+        "handle": "Processes a click event on an element with a `data-action` attribute."
+      },
+      "mutates_state": []
     },
     "MarketEventHandler": {
-        "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
-        "dependencies": ["GameState", "SimulationService", "UIManager"],
-        "key_functions": {"handleClick": "Handles clicks on market card controls.", "handleInput": "Handles direct input into the quantity field."},
-        "mutates_state": []
+      "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
+      "dependencies": [
+        "GameState",
+        "SimulationService",
+        "UIManager"
+      ],
+      "key_functions": {
+        "handleClick": "Handles clicks on market card controls.",
+        "handleInput": "Handles direct input into the quantity field."
+      },
+      "mutates_state": []
     },
     "HoldEventHandler": {
-        "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
-        "dependencies": ["PlayerActionService", "UIManager"],
-        "key_functions": {
-          "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
-          "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
-          "_handleInteractionStop": "Master 'stop' handler that stops any active action."
-        },
-        "mutates_state": []
+      "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
+      "dependencies": [
+        "PlayerActionService",
+        "UIManager"
+      ],
+      "key_functions": {
+        "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
+        "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
+        "_handleInteractionStop": "Master 'stop' handler that stops any active action."
+      },
+      "mutates_state": []
     },
     "CarouselEventHandler": {
-        "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
-        "dependencies": ["GameState", "SimulationService"],
-        "key_functions": {"handleDragStart": "Initiates a drag sequence.", "handleDragMove": "Updates the carousel during a drag.", "handleDragEnd": "Concludes a drag sequence and snaps to a page.", "handleWheel": "Handles mouse wheel scrolling."},
-        "mutates_state": []
+      "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
+      "dependencies": [
+        "GameState",
+        "SimulationService"
+      ],
+      "key_functions": {
+        "handleDragStart": "Initiates a drag sequence.",
+        "handleDragMove": "Updates the carousel during a drag.",
+        "handleDragEnd": "Concludes a drag sequence and snaps to a page.",
+        "handleWheel": "Handles mouse wheel scrolling."
+      },
+      "mutates_state": []
     },
     "TooltipHandler": {
-        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
-        "dependencies": ["GameState", "UIManager"],
-        "key_functions": {"handleClick": "Manages tooltip visibility on click.", "handleMouseOver": "Shows tooltips on hover.", "handleMouseOut": "Hides tooltips on hover out."},
-        "mutates_state": []
+      "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
+      "dependencies": [
+        "GameState",
+        "UIManager"
+      ],
+      "key_functions": {
+        "handleClick": "Manages tooltip visibility on click.",
+        "handleMouseOver": "Shows tooltips on hover.",
+        "handleMouseOut": "Hides tooltips on hover out."
+      },
+      "mutates_state": []
     },
     "MissionService": {
-        "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
-        "dependencies": ["GameState", "UIManager", "Logger", "SimulationService", "js/data/missions.js"],
-        "key_functions": {
-            "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
-            "acceptMission": "Sets a mission as active and initializes its progress tracking.",
-            "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
-            "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
-        },
-        "mutates_state": ["missions.activeMissionId", "missions.completedMissionIds", "missions.missionProgress", "missions.activeMissionObjectivesMet"]
+      "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "Logger",
+        "SimulationService",
+        "js/data/missions.js"
+      ],
+      "key_functions": {
+        "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
+        "acceptMission": "Sets a mission as active and initializes its progress tracking.",
+        "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
+        "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
+      },
+      "mutates_state": [
+        "missions.activeMissionId",
+        "missions.completedMissionIds",
+        "missions.missionProgress",
+        "missions.activeMissionObjectivesMet"
+      ]
     },
-     "TutorialService": {
-        "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
-        "dependencies": ["GameState", "UIManager", "SimulationService", "Logger", "js/data/tutorials.js"],
-        "key_functions": {
-            "checkState": "Checks game state/action against triggers/completion conditions.",
-            "triggerBatch": "Starts a specific tutorial batch.",
-            "advanceStep": "Moves to the next step in the current batch.",
-            "skipActiveTutorial": "Skips the current tutorial batch."
-        },
-        "mutates_state": ["tutorials.activeBatchId", "tutorials.activeStepId", "tutorials.seenBatchIds", "tutorials.skippedTutorialBatches", "tutorials.navLock"]
+    "TutorialService": {
+      "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "SimulationService",
+        "Logger",
+        "js/data/tutorials.js"
+      ],
+      "key_functions": {
+        "checkState": "Checks game state/action against triggers/completion conditions.",
+        "triggerBatch": "Starts a specific tutorial batch.",
+        "advanceStep": "Moves to the next step in the current batch.",
+        "skipActiveTutorial": "Skips the current tutorial batch."
+      },
+      "mutates_state": [
+        "tutorials.activeBatchId",
+        "tutorials.activeStepId",
+        "tutorials.seenBatchIds",
+        "tutorials.skippedTutorialBatches",
+        "tutorials.navLock"
+      ]
     },
     "TravelAnimationService": {
       "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
@@ -17608,86 +18797,277 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "mutates_state": []
     },
     "MapScreen": {
-        "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
-        "dependencies": ["UIManager"],
-        "key_functions": {
-            "renderMapScreen": "Renders the initial container for the map.",
-            "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
-        },
-        "mutates_state": []
+      "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
+      "dependencies": [
+        "UIManager"
+      ],
+      "key_functions": {
+        "renderMapScreen": "Renders the initial container for the map.",
+        "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
+      },
+      "mutates_state": []
     },
     "ViewController": {
-        "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
-        "dependencies": ["WKWebView"],
-        "key_functions": {
-            "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
-        },
-        "mutates_state": []
+      "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
+      "dependencies": [
+        "WKWebView"
+      ],
+      "key_functions": {
+        "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
+      },
+      "mutates_state": []
     }
   },
   "asset_index": {
-    "F001": {"path": "./index.html", "role": "DOCUMENT_ROOT"},
-    "F003": {"path": "./js/main.js", "role": "ENTRY_POINT"},
-    "F004": {"path": "./js/utils.js", "role": "UTILITY_LIBRARY"},
-    "F005": {"path": "./js/data/constants.js", "role": "DATA_DEFINITION"},
-    "F006": {"path": "./js/data/database.js", "role": "DATA_AGGREGATOR", "description": "Aggregates and exports static game data imported from other modules."},
-    "F009": {"path": "./js/services/GameState.js", "role": "STATE_MANAGER"},
-    "F010": {"path": "./js/services/simulation/MarketService.js", "role": "LOGIC_SERVICE"},
-    "F011": {"path": "./js/services/SimulationService.js", "role": "LOGIC_FACADE"},
-    "F014": {"path": "./js/services/eventEffectResolver.js", "role": "LOGIC_SERVICE", "dependencies": ["js/data/events.js"]},
-    "F015": {"path": "./js/services/EventManager.js", "role": "EVENT_HANDLER"},
-    "F016": {"path": "./js/services/TutorialService.js", "role": "LOGIC_SERVICE"},
-    "F017": {"path": "./js/services/UIManager.js", "role": "UI_RENDERER"},
-    "F018": {"path": "./js/services/MissionService.js", "role": "LOGIC_SERVICE"},
-    "F019": {"path": "./js/ui/components/CargoScreen.js", "role": "UI_COMPONENT"},
-    "F020": {"path": "./js/ui/components/FinanceScreen.js", "role": "UI_COMPONENT"},
-    "F021": {"path": "./js/ui/components/HangarScreen.js", "role": "UI_COMPONENT"},
-    "F022": {"path": "./js/ui/components/IntelScreen.js", "role": "UI_COMPONENT"},
-    "F023": {"path": "./js/ui/components/MarketScreen.js", "role": "UI_COMPONENT"},
-    "F024": {"path": "./js/ui/components/MissionsScreen.js", "role": "UI_COMPONENT"},
-    "F025": {"path": "./js/ui/components/NavigationScreen.js", "role": "UI_COMPONENT"},
-    "F026": {"path": "./js/ui/components/ServicesScreen.js", "role": "UI_COMPONENT"},
-    "F027": {"path": "./js/ui/components/StatusScreen.js", "role": "UI_COMPONENT", "status": "deprecated"},
-    "F028": {"path": "./js/ui/components/MapScreen.js", "role": "UI_COMPONENT"},
-    "F029": {"path": "./js/services/DebugService.js", "role": "DEBUG_TOOL"},
-    "F030": {"path": "./js/services/LoggingService.js", "role": "DEBUG_TOOL"},
-    "F031": {"path": "./js/effects/BaseEffect.js", "role": "LOGIC_MODULE"},
-    "F032": {"path": "./js/effects/EffectsManager.js", "role": "LOGIC_SERVICE"},
-    "F033": {"path": "./js/effects/SystemSurgeEffect.js", "role": "LOGIC_MODULE", "status": "deprecated"},
-    "F034": {"path": "./js/services/game/IntroService.js", "role": "LOGIC_SERVICE"},
-    "F035": {"path": "./js/services/player/PlayerActionService.js", "role": "LOGIC_SERVICE"},
-    "F036": {"path": "./js/services/world/TimeService.js", "role": "LOGIC_SERVICE"},
-    "F037": {"path": "./js/services/world/TravelService.js", "role": "LOGIC_SERVICE"},
-    "F038": {"path": "./meta/ROADMAP.md", "role": "DOCUMENTATION"},
-    "F039": {"path": "./meta/ARCHITECTURAL_DECISIONS.md", "role": "DOCUMENTATION"},
-    "F040": {"path": "./js/services/handlers/ActionClickHandler.js", "role": "EVENT_HANDLER"},
-    "F041": {"path": "./js/services/handlers/MarketEventHandler.js", "role": "EVENT_HANDLER"},
-    "F042": {"path": "./js/services/handlers/HoldEventHandler.js", "role": "EVENT_HANDLER"},
-    "F043": {"path": "./js/services/handlers/CarouselEventHandler.js", "role": "EVENT_HANDLER"},
-    "F044": {"path": "./js/services/handlers/TooltipHandler.js", "role": "EVENT_HANDLER"},
-    "F045": {"path": "./js/services/ui/TravelAnimationService.js", "role": "UI_SERVICE"},
-    "F046": {"path": "./css/orientation.css", "role": "STYLESHEET"},
-    "F047": {"path": "ViewController.swift", "role": "NATIVE_IOS_WRAPPER"},
-    "F048": {"path": "./meta/STATE_SCHEMA.md", "role": "DOCUMENTATION_STATE_SCHEMA"},
-    "F049": {"path": "./meta/SERVICES.md", "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"},
-    "F050": {"path": "./js/data/age_events.js", "role": "DATA_DEFINITION"},
-    "F051": {"path": "./js/data/events.js", "role": "DATA_DEFINITION"},
-    "F052": {"path": "./js/data/missions.js", "role": "DATA_DEFINITION"},
-    "F053": {"path": "./js/data/tutorials.js", "role": "DATA_DEFINITION"},
-    "F054": {"path": "./js/services/NewsTickerService.js", "role": "UI_SERVICE"},
-    "F055": {"path": "./js/data/flavorAds.js", "role": "DATA_DEFINITION", "description": "Defines location-specific flavor text for the news ticker."},
-    "F056": {"path": "./css/news-ticker.css", "role": "STYLESHEET"},
-    "F057": {"path": "./js/data/intelMessages.js", "role": "DATA_DEFINITION", "description": "Defines templates for market intel messages for the news ticker."}
+    "F001": {
+      "path": "./index.html",
+      "role": "DOCUMENT_ROOT"
+    },
+    "F003": {
+      "path": "./js/main.js",
+      "role": "ENTRY_POINT"
+    },
+    "F004": {
+      "path": "./js/utils.js",
+      "role": "UTILITY_LIBRARY"
+    },
+    "F005": {
+      "path": "./js/data/constants.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F006": {
+      "path": "./js/data/database.js",
+      "role": "DATA_AGGREGATOR",
+      "description": "Aggregates and exports static game data imported from other modules."
+    },
+    "F009": {
+      "path": "./js/services/GameState.js",
+      "role": "STATE_MANAGER"
+    },
+    "F010": {
+      "path": "./js/services/simulation/MarketService.js",
+      "role": "LOGIC_SERVICE",
+      "dependencies": [
+        "js/services/IntelService.js"
+      ]
+    },
+    "F011": {
+      "path": "./js/services/SimulationService.js",
+      "role": "LOGIC_FACADE"
+    },
+    "F014": {
+      "path": "./js/services/eventEffectResolver.js",
+      "role": "LOGIC_SERVICE",
+      "dependencies": [
+        "js/data/events.js"
+      ]
+    },
+    "F015": {
+      "path": "./js/services/EventManager.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F016": {
+      "path": "./js/services/TutorialService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F017": {
+      "path": "./js/services/UIManager.js",
+      "role": "UI_RENDERER",
+      "dependencies": [
+        "js/services/IntelService.js",
+        "js/ui/renderers/IntelMarketRenderer.js"
+      ]
+    },
+    "F018": {
+      "path": "./js/services/MissionService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F019": {
+      "path": "./js/ui/components/CargoScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F020": {
+      "path": "./js/ui/components/FinanceScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F021": {
+      "path": "./js/ui/components/HangarScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F022": {
+      "path": "./js/ui/components/IntelScreen.js",
+      "role": "UI_COMPONENT",
+      "description": "Renders the static shell for the Intel screen (Codex and Intel Market tabs)[cite: 3675, 3973]."
+    },
+    "F023": {
+      "path": "./js/ui/components/MarketScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F024": {
+      "path": "./js/ui/components/MissionsScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F025": {
+      "path": "./js/ui/components/NavigationScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F026": {
+      "path": "./js/ui/components/ServicesScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F027": {
+      "path": "./js/ui/components/StatusScreen.js",
+      "role": "UI_COMPONENT",
+      "status": "deprecated"
+    },
+    "F028": {
+      "path": "./js/ui/components/MapScreen.js",
+      "role": "UI_COMPONENT"
+    },
+    "F029": {
+      "path": "./js/services/DebugService.js",
+      "role": "DEBUG_TOOL"
+    },
+    "F030": {
+      "path": "./js/services/LoggingService.js",
+      "role": "DEBUG_TOOL"
+    },
+    "F031": {
+      "path": "./js/effects/BaseEffect.js",
+      "role": "LOGIC_MODULE"
+    },
+    "F032": {
+      "path": "./js/effects/EffectsManager.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F033": {
+      "path": "./js/effects/SystemSurgeEffect.js",
+      "role": "LOGIC_MODULE",
+      "status": "deprecated"
+    },
+    "F034": {
+      "path": "./js/services/game/IntroService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F035": {
+      "path": "./js/services/player/PlayerActionService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F036": {
+      "path": "./js/services/world/TimeService.js",
+      "role": "LOGIC_SERVICE",
+      "dependencies": [
+        "js/services/IntelService.js"
+      ]
+    },
+    "F037": {
+      "path": "./js/services/world/TravelService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F038": {
+      "path": "./meta/ROADMAP.md",
+      "role": "DOCUMENTATION"
+    },
+    "F039": {
+      "path": "./meta/ARCHITECTURAL_DECISIONS.md",
+      "role": "DOCUMENTATION"
+    },
+    "F040": {
+      "path": "./js/services/handlers/ActionClickHandler.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F041": {
+      "path": "./js/services/handlers/MarketEventHandler.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F042": {
+      "path": "./js/services/handlers/HoldEventHandler.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F043": {
+      "path": "./js/services/handlers/CarouselEventHandler.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F044": {
+      "path": "./js/services/handlers/TooltipHandler.js",
+      "role": "EVENT_HANDLER"
+    },
+    "F045": {
+      "path": "./js/services/ui/TravelAnimationService.js",
+      "role": "UI_SERVICE"
+    },
+    "F046": {
+      "path": "./css/orientation.css",
+      "role": "STYLESHEET"
+    },
+    "F047": {
+      "path": "ViewController.swift",
+      "role": "NATIVE_IOS_WRAPPER"
+    },
+    "F048": {
+      "path": "./meta/STATE_SCHEMA.md",
+      "role": "DOCUMENTATION_STATE_SCHEMA"
+    },
+    "F049": {
+      "path": "./meta/SERVICES.md",
+      "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"
+    },
+    "F050": {
+      "path": "./js/data/age_events.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F051": {
+      "path": "./js/data/events.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F052": {
+      "path": "./js/data/missions.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F053": {
+      "path": "./js/data/tutorials.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F054": {
+      "path": "./js/services/NewsTickerService.js",
+      "role": "UI_SERVICE"
+    },
+    "F055": {
+      "path": "./js/data/flavorAds.js",
+      "role": "DATA_DEFINITION",
+      "description": "Defines location-specific flavor text for the news ticker."
+    },
+    "F056": {
+      "path": "./css/news-ticker.css",
+      "role": "STYLESHEET"
+    },
+    "F057": {
+      "path": "./js/data/intelMessages.js",
+      "role": "DATA_DEFINITION",
+      "description": "Defines templates for market intel messages for the news ticker."
+    },
+    "F058": {
+      "path": "./js/services/IntelService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F059": {
+      "path": "./js/ui/renderers/IntelMarketRenderer.js",
+      "role": "UI_RENDERER"
+    },
+    "F060": {
+      "path": "./js/data/intelContent.js",
+      "role": "DATA_DEFINITION",
+      "description": "Defines sample/detail text for the Intel Market."
+    }
   }
 }
 --- END OF FILE: ./meta/lexicon.json ---
 
 --- START OF FILE: ./meta/ROADMAP.md ---
 ## Immediate Concerns, Bugs, Issues
-- Nav bar needs an outline
+- Intel System V2 bugs
 
 ## Planned Ideas
-- Intel overhaul
 - System states influencing market performance
 - Improve finance screen, logging
 - Ship trading overhaul
@@ -17723,7 +19103,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.5
+**Version:** 1.6
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -17735,9 +19115,9 @@ This document defines the single responsibility of each service in the applicati
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. [cite_start]New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow[cite: 3681, 3985].
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. [cite_start]Is a primary driver for the Intel system[cite: 3609]. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -17747,12 +19127,13 @@ This document defines the single responsibility of each service in the applicati
 
 #### World
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. **Uses:** `js/data/age_events.js`.
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. [cite_start]Will be updated to call `IntelService.generateIntelRefresh()` and to check for `activeIntelDeal` expiration[cite: 3679, 3981]. **Uses:** `js/data/age_events.js`.
 -   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
 
--   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse.
+-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. [cite_start]Will be updated to check for an `activeIntelDeal` override before calculating its normal prices[cite: 3680, 3982].
+-   **`IntelService.js`**: The "brain" of the Intel Market system. [cite_start]Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic[cite: 3674, 3971]. **Uses:** `js/data/intelContent.js`.
 -   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
 #### Game
@@ -17768,6 +19149,10 @@ This document defines the single responsibility of each service in the applicati
 -   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
 -   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
 -   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
+
+### UI/Renderers
+
+-   **`IntelMarketRenderer.js`**: A new, dedicated renderer. [cite_start]Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab [cite: 3677, 3976-3977].
 
 ### Event Effects
 
@@ -17797,6 +19182,7 @@ This document defines the single responsibility of each service in the applicati
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 -   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
 -   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
+-   [cite_start]**`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market[cite: 3678, 3979].
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -17870,6 +19256,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
     * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
+
+---
+
+### ADR-006: Intel System Refactor to "Local Data Broker"
+
+* **Status**: Accepted (2025-11-04)
+* [cite_start]**Context**: The original `IntelScreen.js` was a static, non-interactive lore repository[cite: 3882]. [cite_start]A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel[cite: 3609, 3885].
+* [cite_start]**Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay)[cite: 3611]. [cite_start]A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'[cite: 3674, 3971]. [cite_start]A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell [cite: 3677, 3975-3977]. [cite_start]This implements the 'Local Data Broker' feature[cite: 3608].
+* **Consequences**:
+    * [cite_start]**Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component [cite: 3990-3991].
+    * [cite_start]**Pro**: Creates a systemic, scalable, and recyclable gameplay loop [cite: 3617-3618, 3895].
+    * [cite_start]**Pro**: Provides a scalable, dynamic credit-sink based on player wealth [cite: 3623, 3905-3907].
+    * [cite_start]**Pro**: Creates a strong, non-arbitrary incentive for player travel[cite: 3620, 3901].
+    * [cite_start]**Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService` [cite: 3679-3680].
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -17918,6 +19318,56 @@ graph TD
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
 }
 ````
+
+-----
+
+## Detailed Flow Example: Intel Market (Local Data Broker)
+
+This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the `activeIntelDeal` affecting market prices.
+
+```mermaid
+graph TD
+    subgraph Player Action (UI)
+        A[Player clicks 'Intel Market' tab] --> B[UIManager calls IntelMarketRenderer];
+        B --> C{Reads gameState.intelMarket[loc_id]};
+        C --> D[IntelService.calculateIntelPrice(packet)];
+        D --> E[Renders 'Purchase Intel' button];
+        E -- Click --> F[UIManager.handleBuyIntel];
+    end
+
+    subgraph Logic Layer (Services)
+        F --> G[IntelService.purchaseIntel(packetId)];
+        G -- 1. --> H[Deducts player.credits];
+        G -- 2. --> I[Sets packet.isPurchased = true];
+        G -- 3. --> J[Creates 'activeIntelDeal' object];
+        G -- 4. --> K[NewsTickerService.pushMessage];
+    end
+
+    subgraph State Layer
+        H & I & J -- 5. Update --> L((GameState));
+    end
+
+    subgraph Downstream Effects
+        L -- 6. On next Market render --> M[MarketService.getPrice(loc, comm)];
+        M --> N{activeIntelDeal exists?};
+        N -- Yes --> O[Return deal.overridePrice];
+        N -- No --> P[...normal price logic...];
+        
+        L -- 7. On daily tick --> Q[TimeService.pulse];
+        Q --> R{activeIntelDeal expired?};
+        R -- Yes --> S[Set activeIntelDeal = null];
+    end
+
+    style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
+```
+
+### Explanation of Intel Market Data Flow
+
+1.  **UI Render:** When the 'Intel Market' tab is clicked, `IntelMarketRenderer` is called. [cite\_start]It reads `gameState.intelMarket` for the current location and calls `IntelService.calculateIntelPrice` for each packet to get a dynamic price based on player credits [cite: 32, 35-36, 134, 216].
+2.  **Player Purchase:** Player clicks 'Purchase'. [cite\_start]`UIManager` calls `IntelService.purchaseIntel`[cite: 52, 141, 231].
+3.  **Transaction Logic:** `IntelService` validates the purchase, deducts `player.credits`, sets the packet's `isPurchased` flag, and (most importantly) creates the `gameState.activeIntelDeal` object. [cite\_start]This object "locks" the market [cite: 54, 143-148].
+4.  **Market Override:** The `MarketService.getPrice` function is modified to *first* check for an `activeIntelDeal`. [cite\_start]If a deal matches the location and commodity, it returns the `deal.overridePrice`, bypassing all normal simulation logic [cite: 151, 156-161].
+5.  **Expiration:** The `TimeService.pulse` function checks daily if the `activeIntelDeal` has expired. [cite\_start]If it has, it sets `activeIntelDeal` back to `null`, "unlocking" the Intel Market [cite: 166, 174-175].
 
 -----
 
@@ -17990,7 +19440,7 @@ This model ensures player actions have a powerful, delayed effect, preventing sa
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
 Orbital Trading - GameState Schema
-Version: 2.1 Source: js/services/GameState.js (see startNewGame method)
+Version: 2.2 Source: js/services/GameState.js (see startNewGame method)
 
 This document defines the structure of the central GameState object, which is instantiated in main.js and managed by GameState.js. It is the "source of truth" for all dynamic, mutable data in the application.
 
@@ -18160,13 +19610,26 @@ day: {number} - The day the stock was last refreshed.
 
 shipsForSale: {Array<string>} - A list of SHIP_IDs available for purchase.
 
-intel: {object} - Tracks the state of the Intel system.
+[cite_start]intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId[cite: 3685, 3995].
 
-active: {object | null} - The currently active intel object being viewed.
+[cite_start][LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location[cite: 3691, 4003].
 
-available: {object} - A map of intel availability by location.
+{intelPacket}:
+[cite_start]id: {string} - Unique packet ID[cite: 3708, 4024].
+[cite_start]locationId: {string} - The location of the deal[cite: 3709, 4025].
+[cite_start]commodityId: {string} - The commodity of the deal[cite: 3710, 4026].
+[cite_start]discountPercent: {float} - The hidden discount (e.g., 0.40)[cite: 3711, 4027].
+[cite_start]durationDays: {integer} - The hidden duration[cite: 3712, 4028].
+[cite_start]valueMultiplier: {float} - Scaling factor for price calculation[cite: 3713, 4029].
+[cite_start]messageKey: {string} - Key to look up text in `intelContent.js`[cite: 3714, 4031].
+[cite_start]isPurchased: {boolean} - State flag, `false` by default[cite: 3715, 4032].
 
-[LOCATION_ID: string]: {boolean} - Whether intel is currently available for purchase here.
+activeIntelDeal: {object | null} - Stores the single active, purchased deal. [cite_start]If `null`, the Intel Market is "unlocked" [cite: 3695-3697, 4009-4011].
+
+[cite_start]locationId: {string} - The location where the deal is active[cite: 3701, 4017].
+[cite_start]commodityId: {string} - The commodity affected by the deal[cite: 3702, 4018].
+[cite_start]overridePrice: {number} - The pre-calculated, locked-in price for the commodity[cite: 3703, 4019].
+[cite_start]expiryDay: {number} - The game-day this deal expires[cite: 3704, 4020].
 
 tutorials: {object} - State of the Tutorial Toast System (TTS).
 
