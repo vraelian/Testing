@@ -162,6 +162,22 @@ export class SimulationService {
         }
     }
 
+    // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
+    /**
+     * Sets the active tab on the Intel screen.
+     * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
+     * @JSDoc
+     */
+    setIntelTab(tabId) {
+        if (this.gameState.uiState.activeIntelTab !== tabId) {
+            this.gameState.uiState.activeIntelTab = tabId;
+            this.gameState.setState({ 
+                uiState: this.gameState.uiState 
+            });
+        }
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Sets the hangar/shipyard toggle state.
      * @param {string} mode - 'hangar' or 'shipyard'.
