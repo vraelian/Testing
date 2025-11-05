@@ -234,12 +234,12 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // Apply the 2.8x multiplier
+        // Apply the 1.9x multiplier
         const newDurationDays = Math.ceil(travelTime * 1.9);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
         // Log the new dynamic calculation
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 1.9). Expires on Day ${expiryDay}.`);
 
         // --- END MODIFICATION ---
 
