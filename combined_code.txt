@@ -3583,52 +3583,122 @@ body {
 /* --- END VIRTUAL WORKBENCH --- */
 
 
-/* --- VIRTUAL WORKBENCH: ADDED MISSING INTEL TAB STYLES --- */
+/* --- VIRTUAL WORKBENCH: REFINED INTEL TAB STYLES (SLIDING, THEMED, RESIZED) --- */
 
-/*
- This is the sub-navigation bar *inside* the Intel screen.
- It is a sibling to the main sub-nav, not a replacement.
-*/
 #intel-screen .sub-nav-bar {
+    position: relative; /* For the sliding pseudo-element */
     display: flex;
     flex-direction: row;
     justify-content: center;
-    align-items: center;
-    background-color: #0f172a; /* slate-900 */
+    align-items: stretch; /* Make buttons fill height */
+    
+    /* Recessed panel look */
+    background-color: #0D1117; /* bg-[#0D1117] */
     border-bottom: 1px solid var(--theme-border-color, #334155);
-    padding: 0.25rem 0.5rem;
-    gap: 0.5rem;
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.125rem; /* p-0.5, reduced by ~30% */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); /* shadow-inner */
+    
+    gap: 0; /* Buttons are joined */
     width: 100%;
     flex-shrink: 0; /* Prevent shrinking */
+    
+    /* Reduced skew */
+    --intel-skew: 8px; 
 }
 
+/*
+  This is the "gliding highlight" pseudo-element.
+  It lives on the bar and moves behind the buttons.
+*/
+#intel-screen .sub-nav-bar::after {
+    content: '';
+    position: absolute;
+    top: 0.125rem;
+    bottom: 0.125rem;
+    left: 0.125rem;
+    width: calc(50% - 0.125rem); /* Half width, minus padding */
+    z-index: 5; /* Sits behind text, above bar bg */
+    
+    /* THEME: Use location gradient and shadow */
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+    
+    /* Default clip-path for "Codex" (left side) */
+    clip-path: polygon(0% 0%, 100% 0%, calc(100% - var(--intel-skew)) 100%, 0% 100%);
+    
+    /* ANIMATION: Enable sliding transition */
+    transition: transform 0.3s ease-in-out, clip-path 0.3s ease-in-out;
+}
+
+/*
+  This class is added by UIManager.js to slide the highlight.
+*/
+#intel-screen .sub-nav-bar.market-active::after {
+    /* Move slider to the right */
+    transform: translateX(100%);
+    
+    /* New clip-path for "Intel Market" (right side) */
+    clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+
+/*
+  Base button styles.
+  The button itself is transparent; only the text is visible.
+*/
 #intel-screen .sub-nav-button {
+    position: relative; 
+    z-index: 10; /* Text is on top of the slider */
+    flex: 1 1 0; /* flex-1 */
+
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.875rem; /* 14px */
-    color: #94a3b8; /* slate-400 */
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 0.25rem; /* 4px */
-    padding: 0.5rem 1rem;
+    font-size: 0.75rem; /* text-xs, reduced */
+    
+    /* THEME: Use dim color for inactive text */
+    color: #94a3b8; /* text-slate-400 */
+    background: transparent; /* Button is see-through */
+    border: none;
+    
+    /* RESIZE: Reduced vertical padding */
+    padding: 0.375rem 1rem; /* py-1.5, reduced by ~30% */
+    
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: color 0.3s ease-in-out;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.05em; /* tracking-wider */
     font-weight: 500;
 }
 
-#intel-screen .sub-nav-button:hover {
-    color: #e2e8f0; /* slate-200 */
-    background-color: #1e293b; /* slate-800 */
+/* Apply angled clip-path and padding compensation */
+#intel-screen .sub-nav-button[data-target="intel-codex-content"] {
+    clip-path: polygon(0% 0%, 100% 0%, calc(100% - var(--intel-skew)) 100%, 0% 100%);
+    padding-right: var(--intel-skew); /* Compensate for clip */
+    text-align: center;
 }
 
-#intel-screen .sub-nav-button.active {
-    color: var(--theme-text-color, #f0f0f0);
-    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
-    border-color: var(--theme-border-color, #334155);
-    font-weight: 700;
-    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+#intel-screen .sub-nav-button[data-target="intel-market-content"] {
+    clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
+    margin-left: calc(-1 * var(--intel-skew)); /* Overlap buttons */
+    padding-left: var(--intel-skew); /* Compensate for clip */
+    text-align: center;
 }
+
+
+/* Hover state for *inactive* buttons */
+#intel-screen .sub-nav-button:not(.active):hover {
+    /* THEME: Use bright theme color on hover */
+    color: var(--theme-text-color, #f0f0f0);
+    opacity: 0.8;
+}
+
+/* Active state *text* color */
+#intel-screen .sub-nav-button.active {
+    /* THEME: Use bright theme color for active text */
+    color: var(--theme-text-color, #f0f0f0);
+    font-weight: 700;
+}
+
 
 /* --- END VIRTUAL WORKBENCH --- */
 --- END OF FILE: ./css/screens/intel-screen.css ---
@@ -4960,14 +5030,18 @@ function _renderSpecCard(label, value) {
  * @returns {string} The HTML content for the Intel screen.
  */
 export function renderIntelScreen() {
+    // --- VIRTUAL WORKBENCH (A) ---
+    // Removed 'active' class from button and content.
+    // UIManager will now apply 'active' based on gameState.uiState.activeIntelTab
+    // --- END VIRTUAL WORKBENCH ---
     return `
         <div class="sub-nav-bar">
-            <button class="sub-nav-button active" data-action="set-intel-tab" data-target="intel-codex-content">Codex</button>
+            <button class="sub-nav-button" data-action="set-intel-tab" data-target="intel-codex-content">Codex</button>
             <button class="sub-nav-button" data-action="set-intel-tab" data-target="intel-market-content">Intel Market</button>
         </div>
 
         <div class="intel-scroll-panel">
-            <div id="intel-codex-content" class="intel-tab-content active">
+            <div id="intel-codex-content" class="intel-tab-content">
                 <div id="lore-button-container" class="lore-container w-full max-w-md flex flex-col gap-4 p-4">
                     <button class="btn btn-header" data-action="show_lore" data-lore-id="story_so_far">
                         Story So Far...
@@ -8834,7 +8908,11 @@ export class GameState {
                 marketCardMinimized: {},
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
-                shipyardActiveIndex: 0
+                shipyardActiveIndex: 0,
+                // --- VIRTUAL WORKBENCH (A) ---
+                // Add state to track the active intel tab
+                activeIntelTab: 'codex' // 'codex' or 'market'
+                // --- END VIRTUAL WORKBENCH ---
             }
         };
 
@@ -10740,6 +10818,22 @@ export class SimulationService {
         }
     }
 
+    // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
+    /**
+     * Sets the active tab on the Intel screen.
+     * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
+     * @JSDoc
+     */
+    setIntelTab(tabId) {
+        if (this.gameState.uiState.activeIntelTab !== tabId) {
+            this.gameState.uiState.activeIntelTab = tabId;
+            this.gameState.setState({ 
+                uiState: this.gameState.uiState 
+            });
+        }
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Sets the hangar/shipyard toggle state.
      * @param {string} mode - 'hangar' or 'shipyard'.
@@ -12029,6 +12123,11 @@ export class UIManager {
             this.cache.gameContainer.className = `game-container ${location.bg}`;
             if (location.navTheme && location.navTheme.borderColor) {
                 document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
+                // --- VIRTUAL WORKBENCH: THEME VARIABLES ---
+                // Set all theme variables for CSS to use
+                document.documentElement.style.setProperty('--theme-gradient', location.navTheme.gradient);
+                document.documentElement.style.setProperty('--theme-text-color', location.navTheme.textColor);
+                // --- END VIRTUAL WORKBENCH ---
 
                 // --- [[START]] MODIFICATION ---
                 // Apply theme to the news ticker bar
@@ -12043,6 +12142,11 @@ export class UIManager {
 
             } else {
                 document.documentElement.style.removeProperty('--theme-border-color');
+                // --- VIRTUAL WORKBENCH: THEME VARIABLES ---
+                // Clear theme variables
+                document.documentElement.style.removeProperty('--theme-gradient');
+                document.documentElement.style.removeProperty('--theme-text-color');
+                // --- END VIRTUAL WORKBENCH ---
 
                 // --- [[START]] MODIFICATION (Reset) ---
                 // Reset theme on the news ticker bar if no theme exists
@@ -12262,9 +12366,28 @@ export class UIManager {
                 break;
             case SCREEN_IDS.INTEL:
                 // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
-                this.cache.intelScreen.innerHTML = renderIntelScreen();
-                // After rendering the shell, immediately populate the (default) active tab
-                // The renderer will handle showing the correct content (Codex or Market)
+
+                // --- VIRTUAL WORKBENCH (A) ---
+                // Check if a full render is needed (e.g., first time visiting screen)
+                const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.INTEL;
+                
+                /**
+                 * Only render the static shell of the Intel screen if it's the first time
+                 * navigating to it. This prevents state updates (like purchasing intel)
+                 * from destroying the DOM and resetting the active tab.
+                 */
+                if (needsFullRender) {
+                    this.cache.intelScreen.innerHTML = renderIntelScreen();
+                }
+                // --- END VIRTUAL WORKBENCH (A) ---
+                
+                /**
+                 * This block runs on *every* render for the INTEL screen.
+                 * If the shell was just built, it populates the content.
+                 * If a state change occurred (like a purchase), it *surgically
+                 * re-renders* the market content, updating button states
+                 * without resetting the active tab.
+                 */
                 if (this.intelMarketRenderer) {
                     // Find the container for the market tab content
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
@@ -12272,7 +12395,12 @@ export class UIManager {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
-                // --- END VIRTUAL WORKBENCH ---
+                
+                // --- VIRTUAL WORKBENCH (B) ---
+                // Always call updateIntelTab to ensure the *correct* tab
+                // (Codex or Market) is shown based on the game state.
+                this.updateIntelTab(gameState.uiState.activeIntelTab);
+                // --- END VIRTUAL WORKBENCH (B) ---
                 break;
         }
     }
@@ -12723,11 +12851,23 @@ export class UIManager {
                 // If a custom footer is provided, inject it and attach handlers
                 if (btnContainer) {
                     btnContainer.innerHTML = options.footer;
-                    // Find any buttons *inside* the new footer and attach close/callback logic
+                    // Find any buttons *inside* the new footer and attach handlers
                     btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
+                            // --- VIRTUAL WORKBENCH (C) ---
+                            /**
+                             * Check if the action is 'buy_intel'.
+                             * If it is, we *don't* call closeHandler() here.
+                             * We let ActionClickHandler -> UIManager.handleBuyIntel
+                             * manage the modal closing and chaining, preventing a race condition.
+                             */
+                            if (btn.dataset.action === 'buy_intel') {
+                                return; // Let the specific handler do the work
+                            }
+                            // --- END VIRTUAL WORKBENCH (C) ---
+
                             // Let the main EventManager handle the action first
-                            // But also ensure the modal closes
+                            // But also ensure the modal closes for all *other* actions.
                             closeHandler();
                         });
                     });
@@ -13202,7 +13342,7 @@ export class UIManager {
             
             // Apply direct percentage styles
             toast.style.left = `${percentX}%`;
-            toast.style.top = `${percentY}%`;
+            toast.style.top = `${posY}%`;
             toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
             arrow.style.display = 'none';
 
@@ -13823,25 +13963,66 @@ export class UIManager {
         const targetId = element.dataset.target;
         if (!targetId) return;
 
-        const screen = element.closest('.active-screen');
-        if (!screen) return;
+        // --- VIRTUAL WORKBENCH: REFACTOR FOR SLIDING ANIMATION ---
+        // This function now just updates the state.
+        // The actual DOM manipulation is handled by `updateIntelTab`.
+        if (this.simulationService) {
+            // --- VIRTUAL WORKBENCH: TYPO FIX ---
+            // Corrected `setlntelTab` to `setIntelTab`
+            this.simulationService.setIntelTab(targetId);
+            // --- END VIRTUAL WORKBENCH ---
+        }
+        // --- END VIRTUAL WORKBENCH ---
+    }
 
-        // Deactivate all tabs and content
+    /**
+     * Surgically updates the Intel screen tabs to reflect the current state.
+     * This is called on *every* render of the Intel screen to ensure
+     * the visual state matches the game state, and to apply the
+     * sliding animation class.
+     * @param {string} activeTabId The ID of the active tab (e.g., 'intel-codex-content').
+     * @JSDoc
+     */
+    updateIntelTab(activeTabId) {
+        const screen = this.cache.intelScreen;
+        if (!screen) return;
+        
+        const subNavBar = screen.querySelector('.sub-nav-bar');
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Add guard clause to prevent error if subNavBar isn't rendered yet.
+        if (!subNavBar) {
+            // This can happen if the render loop runs before renderIntelScreen()
+            // has populated the innerHTML.
+            return; 
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
 
-        // Activate the clicked tab and corresponding content
-        element.classList.add('active');
-        const targetContent = screen.querySelector(`#${targetId}`);
-        if (targetContent) {
-            targetContent.classList.add('active');
-            
-            // If we are switching to the market tab, re-render its contents
-            if (targetId === 'intel-market-content' && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(targetContent, this.lastKnownState);
-            }
+        // Activate the target tab and content
+        const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
+        const activeContent = screen.querySelector(`#${activeTabId}`);
+
+        if (activeTabButton) {
+            activeTabButton.classList.add('active');
         }
+        if (activeContent) {
+            activeContent.classList.add('active');
+        }
+
+        // --- VIRTUAL WORKBENCH: SLIDING ANIMATION ---
+        // Apply class to the bar itself for the CSS transition
+        if (activeTabId === 'intel-market-content') {
+            subNavBar.classList.add('market-active');
+        } else {
+            subNavBar.classList.remove('market-active');
+        }
+        // --- END VIRTUAL WORKBENCH ---
     }
+
 
     /**
      * Finds the specified intel packet from the game state.
@@ -13874,7 +14055,11 @@ export class UIManager {
      * @JSDoc
      */
     _formatIntelDetails(template, packet, price) {
-        const locationName = DB.MARKETS.find(m => m.id === packet.locationId)?.name || 'an unknown location';
+        // --- VIRTUAL WORKBENCH (C) ---
+        // FIX: The "details" modal must show the DEAL location, not the SALE location.
+        // `packet.locationId` is where it's sold. `packet.dealLocationId` is where the deal is.
+        const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
+        // --- END VIRTUAL WORKBENCH ---
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         const priceStr = `${price.toLocaleString()} ⌬`;
@@ -13896,8 +14081,13 @@ export class UIManager {
         const { packetId, locationId, price } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
-
-        const locationName = DB.MARKETS.find(m => m.id === locationId)?.name || 'this location';
+        
+        // --- VIRTUAL WORKBENCH (C) ---
+        // The "sample" text should refer to the DEAL location, so the player
+        // knows where the deal is before they buy.
+        const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a distant market';
+        // --- END VIRTUAL WORKBENCH ---
+        
         const vagueText = (INTEL_CONTENT[packet.messageKey]?.sample || "Intel available at [location name].")
             .replace('[location name]', locationName);
         
@@ -13940,12 +14130,20 @@ export class UIManager {
                 this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
             }
 
-            // GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
-            const intelScreen = document.getElementById('intel-screen');
-            const marketContentEl = intelScreen?.querySelector('#intel-market-content');
-            if (marketContentEl && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
-            }
+            // --- VIRTUAL WORKBENCH (B) ---
+            /**
+             * GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
+             * This manual render call is no longer needed. The setState() in
+             * IntelService.js now triggers renderActiveScreen (via the main
+             * UIManager.render() subscription), which surgically updates 
+             * the market content without a full page reset.
+             */
+            // const intelScreen = document.getElementById('intel-screen');
+            // const marketContentEl = intelScreen?.querySelector('#intel-market-content');
+            // if (marketContentEl && this.intelMarketRenderer) {
+            //     this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
+            // }
+            // --- END VIRTUAL WORKBENCH (B) ---
         } else {
             // Purchase failed (e.g., already active deal, not enough credits)
             // The service will log the error. We can optionally show a UI error here.
@@ -15835,7 +16033,7 @@ export class IntelService {
 
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
-            const locationId = location.id;
+            const locationId = location.id; // This is the SALE location
             if (!newIntelMarket[locationId]) {
                 newIntelMarket[locationId] = [];
             }
@@ -15843,53 +16041,94 @@ export class IntelService {
             // GDD: Apply randomization to decide if a location gets new intel
             // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
+                // --- VIRTUAL WORKBENCH (A) ---
+                // Get keys already in use by purchased packets at this location
+                const existingKeys = newIntelMarket[locationId].map(p => p.messageKey);
+                // Track keys used in this specific batch
+                const newKeysInBatch = new Set();
+                // --- END VIRTUAL WORKBENCH ---
+
                 const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
-                    const newPacket = this._createPacket(locationId);
+                    // --- VIRTUAL WORKBENCH (A) ---
+                    // Combine persistent keys and new-batch keys
+                    const unavailableKeys = [...existingKeys, ...newKeysInBatch];
+                    // Pass the sale location ID and unavailable keys
+                    const newPacket = this._createPacket(locationId, unavailableKeys);
+                    // --- END VIRTUAL WORKBENCH ---
+
                     if (newPacket) {
                         newIntelMarket[locationId].push(newPacket);
+                        newKeysInBatch.add(newPacket.messageKey); // (A)
                     }
                 }
             }
         }
 
-        this.gameState.updateState({ intelMarket: newIntelMarket });
+        this.gameState.setState({ intelMarket: newIntelMarket });
     }
 
     /**
      * Private helper to create a single intelPacket object.
-     * @param {string} locationId - The location to generate a packet for.
+     * @param {string} saleLocationId - The location where this packet will be SOLD.
+     * @param {string[]} unavailableKeys - An array of messageKey strings already in use at this location.
      * @returns {object | null} A new intelPacket object, or null if generation fails.
      * @private
      * @JSDoc
      */
-    _createPacket(locationId) {
+    _createPacket(saleLocationId, unavailableKeys = []) {
         const state = this.gameState.getState();
-        // GDD: Picks from unlockedCommodities
-        const unlockedCommodities = state.player.unlockedCommodities; 
+        
+        const revealedTier = state.player.revealedTier;
+        const unlockedCommodities = this.db.COMMODITIES
+            .filter(c => c.tier <= revealedTier)
+            .map(c => c.id);
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
-            this.logger.warn('IntelService', 'Cannot create packet: No unlocked commodities available.');
+            this.logger.warn('IntelService', 'Cannot create packet: No unlocked commodities available for player\'s tier.');
             return null;
         }
+
+        // --- VIRTUAL WORKBENCH (C) ---
+        // Ensure the DEAL location is different from the SALE location.
+        const allLocationIds = this.db.MARKETS.map(m => m.id);
+        const possibleDealLocations = allLocationIds.filter(id => id !== saleLocationId);
+        if (possibleDealLocations.length === 0) {
+             this.logger.warn('IntelService', 'Cannot create packet: No other locations available for a deal.');
+             return null; // Should not happen in normal gameplay
+        }
+        const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+        // --- END VIRTUAL WORKBENCH ---
 
         const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
         const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
         const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         
-        // GDD: Higher value deal = higher multiplier
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
+        // --- VIRTUAL WORKBENCH (A) ---
+        // Logic to prevent duplicate message keys
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
              this.logger.warn('IntelService', 'Cannot create packet: INTEL_CONTENT is empty.');
              return null;
         }
-        const messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)]; //
+        
+        const availableKeys = messageKeys.filter(key => !unavailableKeys.includes(key));
+        let messageKey;
+
+        if (availableKeys.length === 0) {
+            this.logger.warn('IntelService', `All message keys for ${saleLocationId} are in use. Reusing a key to generate packet.`);
+            messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)];
+        } else {
+            messageKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         const packet = {
-            id: `pkt_${locationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 999)}`,
-            locationId: locationId,
+            id: `pkt_${saleLocationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 999)}`,
+            locationId: saleLocationId, // (C) Where the packet is SOLD
+            dealLocationId: dealLocationId, // (C) Where the DEAL is
             commodityId: commodityId,
             discountPercent: parseFloat(discountPercent.toFixed(2)),
             durationDays: durationDays,
@@ -15911,21 +16150,16 @@ export class IntelService {
     calculateIntelPrice(packet) {
         const playerCredits = this.gameState.getState().player.credits;
         
-        // GDD: Finds 10-20% of player's wallet
         const base = playerCredits * (0.10 + Math.random() * 0.10); 
-        
-        // GDD: Apply value scaling
         const finalPrice = base * packet.valueMultiplier;
         
-        // GDD: Rounds down to the nearest hundredth
         return Math.floor(finalPrice / 100) * 100;
     }
 
     /**
      * Executes the purchase of an intel packet.
-     * This is the core transaction logic that locks the deal.
      * @param {string} packetId - The ID of the packet to purchase.
-     * @param {string} locationId - The location ID where the purchase is happening.
+     * @param {string} locationId - The location ID where the purchase is happening (sale location).
      * @param {number} calculatedPrice - The price shown to the user (and to be charged).
      * @returns {object | null} The purchased intelPacket object on success, or null on failure.
      * @JSDoc
@@ -15933,13 +16167,12 @@ export class IntelService {
     purchaseIntel(packetId, locationId, calculatedPrice) {
         const state = this.gameState.getState();
         
-        // GDD Guard Clause: Aborts if a deal is already active
         if (state.activeIntelDeal !== null) {
             this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
             return null;
         }
 
-        const intelMarket = this.gameState.intelMarket; // Direct reference for mutation
+        const intelMarket = this.gameState.intelMarket; 
         const packet = intelMarket[locationId]?.find(p => p.id === packetId);
 
         if (!packet) {
@@ -15965,28 +16198,34 @@ export class IntelService {
         const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
 
         const newActiveDeal = {
-            locationId: packet.locationId,
+            // --- VIRTUAL WORKBENCH (C) ---
+            // The active deal's location is the DEAL location, not the sale location.
+            locationId: packet.dealLocationId, 
+            // --- END VIRTUAL WORKBENCH ---
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
             expiryDay: expiryDay,
-            sourcePacketId: packet.id // Track source for reference
+            sourcePacketId: packet.id 
         };
 
         // 4. Push message to NewsTicker
         try {
             const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
-            const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'a local market';
+            // --- VIRTUAL WORKBENCH (C) ---
+            // The message must use the DEAL location name
+            const locationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a local market';
+            // --- END VIRTUAL WORKBENCH ---
             let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
             let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
-            this.newsTickerService.pushMessage(message, 'INTEL', true); // Push as priority
+            this.newsTickerService.pushMessage(message, 'INTEL', true); 
         } catch (e) {
             this.logger.error('IntelService', 'Failed to push news ticker message.', e);
         }
 
-        // 5. Set the active deal in GameState, which locks the market
-        this.gameState.updateState({ 
+        // 5. Set the active deal in GameState
+        this.gameState.setState({ 
             activeIntelDeal: newActiveDeal,
-            intelMarket: intelMarket // Ensure the mutated intelMarket object is saved
+            intelMarket: intelMarket 
         });
         
         return packet;
@@ -15999,7 +16238,6 @@ export class IntelService {
      * @JSDoc
      */
     getGalacticAverage(commodityId) {
-        // This is a passthrough to the MarketService method
         return this.marketService.getGalacticAverage(commodityId);
     }
 
