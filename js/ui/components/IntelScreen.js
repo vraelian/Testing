@@ -11,14 +11,18 @@
  * @returns {string} The HTML content for the Intel screen.
  */
 export function renderIntelScreen() {
+    // --- VIRTUAL WORKBENCH (A) ---
+    // Removed 'active' class from button and content.
+    // UIManager will now apply 'active' based on gameState.uiState.activeIntelTab
+    // --- END VIRTUAL WORKBENCH ---
     return `
         <div class="sub-nav-bar">
-            <button class="sub-nav-button active" data-action="set-intel-tab" data-target="intel-codex-content">Codex</button>
+            <button class="sub-nav-button" data-action="set-intel-tab" data-target="intel-codex-content">Codex</button>
             <button class="sub-nav-button" data-action="set-intel-tab" data-target="intel-market-content">Intel Market</button>
         </div>
 
         <div class="intel-scroll-panel">
-            <div id="intel-codex-content" class="intel-tab-content active">
+            <div id="intel-codex-content" class="intel-tab-content">
                 <div id="lore-button-container" class="lore-container w-full max-w-md flex flex-col gap-4 p-4">
                     <button class="btn btn-header" data-action="show_lore" data-lore-id="story_so_far">
                         Story So Far...

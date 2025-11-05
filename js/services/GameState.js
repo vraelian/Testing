@@ -190,7 +190,11 @@ export class GameState {
                 marketCardMinimized: {},
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
-                shipyardActiveIndex: 0
+                shipyardActiveIndex: 0,
+                // --- VIRTUAL WORKBENCH (A) ---
+                // Add state to track the active intel tab
+                activeIntelTab: 'codex' // 'codex' or 'market'
+                // --- END VIRTUAL WORKBENCH ---
             }
         };
 
