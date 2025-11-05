@@ -230,6 +230,11 @@ export class UIManager {
             this.cache.gameContainer.className = `game-container ${location.bg}`;
             if (location.navTheme && location.navTheme.borderColor) {
                 document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
+                // --- VIRTUAL WORKBENCH: THEME VARIABLES ---
+                // Set all theme variables for CSS to use
+                document.documentElement.style.setProperty('--theme-gradient', location.navTheme.gradient);
+                document.documentElement.style.setProperty('--theme-text-color', location.navTheme.textColor);
+                // --- END VIRTUAL WORKBENCH ---
 
                 // --- [[START]] MODIFICATION ---
                 // Apply theme to the news ticker bar
@@ -244,6 +249,11 @@ export class UIManager {
 
             } else {
                 document.documentElement.style.removeProperty('--theme-border-color');
+                // --- VIRTUAL WORKBENCH: THEME VARIABLES ---
+                // Clear theme variables
+                document.documentElement.style.removeProperty('--theme-gradient');
+                document.documentElement.style.removeProperty('--theme-text-color');
+                // --- END VIRTUAL WORKBENCH ---
 
                 // --- [[START]] MODIFICATION (Reset) ---
                 // Reset theme on the news ticker bar if no theme exists
@@ -492,7 +502,12 @@ export class UIManager {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
-                // --- END VIRTUAL WORKBENCH ---
+                
+                // --- VIRTUAL WORKBENCH (B) ---
+                // Always call updateIntelTab to ensure the *correct* tab
+                // (Codex or Market) is shown based on the game state.
+                this.updateIntelTab(gameState.uiState.activeIntelTab);
+                // --- END VIRTUAL WORKBENCH (B) ---
                 break;
         }
     }
@@ -943,7 +958,7 @@ export class UIManager {
                 // If a custom footer is provided, inject it and attach handlers
                 if (btnContainer) {
                     btnContainer.innerHTML = options.footer;
-                    // Find any buttons *inside* the new footer and attach close/callback logic
+                    // Find any buttons *inside* the new footer and attach handlers
                     btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                             // --- VIRTUAL WORKBENCH (C) ---
@@ -1434,7 +1449,7 @@ export class UIManager {
             
             // Apply direct percentage styles
             toast.style.left = `${percentX}%`;
-            toast.style.top = `${percentY}%`;
+            toast.style.top = `${posY}%`;
             toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
             arrow.style.display = 'none';
 
@@ -2055,25 +2070,66 @@ export class UIManager {
         const targetId = element.dataset.target;
         if (!targetId) return;
 
-        const screen = element.closest('.active-screen');
-        if (!screen) return;
+        // --- VIRTUAL WORKBENCH: REFACTOR FOR SLIDING ANIMATION ---
+        // This function now just updates the state.
+        // The actual DOM manipulation is handled by `updateIntelTab`.
+        if (this.simulationService) {
+            // --- VIRTUAL WORKBENCH: TYPO FIX ---
+            // Corrected `setlntelTab` to `setIntelTab`
+            this.simulationService.setIntelTab(targetId);
+            // --- END VIRTUAL WORKBENCH ---
+        }
+        // --- END VIRTUAL WORKBENCH ---
+    }
 
-        // Deactivate all tabs and content
+    /**
+     * Surgically updates the Intel screen tabs to reflect the current state.
+     * This is called on *every* render of the Intel screen to ensure
+     * the visual state matches the game state, and to apply the
+     * sliding animation class.
+     * @param {string} activeTabId The ID of the active tab (e.g., 'intel-codex-content').
+     * @JSDoc
+     */
+    updateIntelTab(activeTabId) {
+        const screen = this.cache.intelScreen;
+        if (!screen) return;
+        
+        const subNavBar = screen.querySelector('.sub-nav-bar');
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Add guard clause to prevent error if subNavBar isn't rendered yet.
+        if (!subNavBar) {
+            // This can happen if the render loop runs before renderIntelScreen()
+            // has populated the innerHTML.
+            return; 
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
 
-        // Activate the clicked tab and corresponding content
-        element.classList.add('active');
-        const targetContent = screen.querySelector(`#${targetId}`);
-        if (targetContent) {
-            targetContent.classList.add('active');
-            
-            // If we are switching to the market tab, re-render its contents
-            if (targetId === 'intel-market-content' && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(targetContent, this.lastKnownState);
-            }
+        // Activate the target tab and content
+        const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
+        const activeContent = screen.querySelector(`#${activeTabId}`);
+
+        if (activeTabButton) {
+            activeTabButton.classList.add('active');
         }
+        if (activeContent) {
+            activeContent.classList.add('active');
+        }
+
+        // --- VIRTUAL WORKBENCH: SLIDING ANIMATION ---
+        // Apply class to the bar itself for the CSS transition
+        if (activeTabId === 'intel-market-content') {
+            subNavBar.classList.add('market-active');
+        } else {
+            subNavBar.classList.remove('market-active');
+        }
+        // --- END VIRTUAL WORKBENCH ---
     }
+
 
     /**
      * Finds the specified intel packet from the game state.
