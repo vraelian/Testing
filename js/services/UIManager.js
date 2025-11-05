@@ -2075,7 +2075,11 @@ export class UIManager {
      * @JSDoc
      */
     _formatIntelDetails(template, packet, price) {
-        const locationName = DB.MARKETS.find(m => m.id === packet.locationId)?.name || 'an unknown location';
+        // --- VIRTUAL WORKBENCH (C) ---
+        // FIX: The "details" modal must show the DEAL location, not the SALE location.
+        // `packet.locationId` is where it's sold. `packet.dealLocationId` is where the deal is.
+        const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
+        // --- END VIRTUAL WORKBENCH ---
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         const priceStr = `${price.toLocaleString()} ⌬`;
@@ -2097,8 +2101,13 @@ export class UIManager {
         const { packetId, locationId, price } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
-
-        const locationName = DB.MARKETS.find(m => m.id === locationId)?.name || 'this location';
+        
+        // --- VIRTUAL WORKBENCH (C) ---
+        // The "sample" text should refer to the DEAL location, so the player
+        // knows where the deal is before they buy.
+        const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a distant market';
+        // --- END VIRTUAL WORKBENCH ---
+        
         const vagueText = (INTEL_CONTENT[packet.messageKey]?.sample || "Intel available at [location name].")
             .replace('[location name]', locationName);
         
