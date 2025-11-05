@@ -367,7 +367,7 @@ export class UIManager {
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
-                         <span class="status-bar-label">H</span>
+                        <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
@@ -1906,7 +1906,7 @@ export class UIManager {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
-            if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
+             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
 
@@ -2171,7 +2171,11 @@ export class UIManager {
         // --- END VIRTUAL WORKBENCH ---
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
-        const priceStr = `${price.toLocaleString()} ⌬`;
+        
+        // --- VIRTUAL WORKBENCH (C) ---
+        // Re-format price string to include span for styling, per user request.
+        const priceStr = `<span class="credits-text-pulsing">⌬ ${price.toLocaleString()}</span>`;
+        // --- END VIRTUAL WORKBENCH ---
 
         // --- VIRTUAL WORKBENCH (PHASE 4 FIX) ---
         const currentDay = this.intelService.getCurrentDay();
@@ -2192,8 +2196,10 @@ export class UIManager {
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr)
-            // This regex now correctly replaces the placeholder AND the static word "days"
-            .replace(/\[durationDays\]\s*days/g, durationStr)
+            // --- VIRTUAL WORKBENCH: BUG FIX ---
+            // The regex now correctly replaces the standalone placeholder.
+            .replace(/\[durationDays\]/g, durationStr)
+            // --- END VIRTUAL WORKBENCH ---
             .replace(/\[⌬ credit price\]/g, priceStr);
     }
 
