@@ -463,9 +463,28 @@ export class UIManager {
                 break;
             case SCREEN_IDS.INTEL:
                 // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
-                this.cache.intelScreen.innerHTML = renderIntelScreen();
-                // After rendering the shell, immediately populate the (default) active tab
-                // The renderer will handle showing the correct content (Codex or Market)
+
+                // --- VIRTUAL WORKBENCH (A) ---
+                // Check if a full render is needed (e.g., first time visiting screen)
+                const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.INTEL;
+                
+                /**
+                 * Only render the static shell of the Intel screen if it's the first time
+                 * navigating to it. This prevents state updates (like purchasing intel)
+                 * from destroying the DOM and resetting the active tab.
+                 */
+                if (needsFullRender) {
+                    this.cache.intelScreen.innerHTML = renderIntelScreen();
+                }
+                // --- END VIRTUAL WORKBENCH (A) ---
+                
+                /**
+                 * This block runs on *every* render for the INTEL screen.
+                 * If the shell was just built, it populates the content.
+                 * If a state change occurred (like a purchase), it *surgically
+                 * re-renders* the market content, updating button states
+                 * without resetting the active tab.
+                 */
                 if (this.intelMarketRenderer) {
                     // Find the container for the market tab content
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
@@ -927,8 +946,20 @@ export class UIManager {
                     // Find any buttons *inside* the new footer and attach close/callback logic
                     btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
+                            // --- VIRTUAL WORKBENCH (C) ---
+                            /**
+                             * Check if the action is 'buy_intel'.
+                             * If it is, we *don't* call closeHandler() here.
+                             * We let ActionClickHandler -> UIManager.handleBuyIntel
+                             * manage the modal closing and chaining, preventing a race condition.
+                             */
+                            if (btn.dataset.action === 'buy_intel') {
+                                return; // Let the specific handler do the work
+                            }
+                            // --- END VIRTUAL WORKBENCH (C) ---
+
                             // Let the main EventManager handle the action first
-                            // But also ensure the modal closes
+                            // But also ensure the modal closes for all *other* actions.
                             closeHandler();
                         });
                     });
@@ -2150,12 +2181,20 @@ export class UIManager {
                 this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
             }
 
-            // GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
-            const intelScreen = document.getElementById('intel-screen');
-            const marketContentEl = intelScreen?.querySelector('#intel-market-content');
-            if (marketContentEl && this.intelMarketRenderer) {
-                this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
-            }
+            // --- VIRTUAL WORKBENCH (B) ---
+            /**
+             * GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
+             * This manual render call is no longer needed. The setState() in
+             * IntelService.js now triggers renderActiveScreen (via the main
+             * UIManager.render() subscription), which surgically updates 
+             * the market content without a full page reset.
+             */
+            // const intelScreen = document.getElementById('intel-screen');
+            // const marketContentEl = intelScreen?.querySelector('#intel-market-content');
+            // if (marketContentEl && this.intelMarketRenderer) {
+            //     this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
+            // }
+            // --- END VIRTUAL WORKBENCH (B) ---
         } else {
             // Purchase failed (e.g., already active deal, not enough credits)
             // The service will log the error. We can optionally show a UI error here.
