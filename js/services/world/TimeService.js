@@ -18,8 +18,7 @@ export class TimeService {
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
-        this.logger = 
-logger;
+        this.logger = logger;
         // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
         
@@ -32,7 +31,7 @@ logger;
     // REMOVED: setNewsTickerService method
 
     /**
-   * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
+     * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
      * @param {number} days - The integer number of days to advance.
      */
     advanceDays(days) {
@@ -40,7 +39,7 @@ logger;
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
                 this.logger.warn('TimeService', 'Advance days aborted: Game is over.');
-this.logger.groupEnd();
+                this.logger.groupEnd();
                 return;
             }
             this.gameState.day++;
@@ -54,7 +53,7 @@ this.logger.groupEnd();
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
 
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
-       this.gameState.player.playerAge++;
+                this.gameState.player.playerAge++;
                 this.gameState.player.birthdayProfitBonus += 0.01;
                 this.gameState.player.lastBirthdayYear = currentYear;
                 this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
@@ -70,38 +69,44 @@ this.logger.groupEnd();
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-           
- // --- VIRTUAL WORKBENCH: ADD INTEL SYSTEM LOGIC & FIX BUG ---
             
-            // Get state once for daily checks
-            const state = this.gameState.getState();
-            // BUG FIX: The day is at the root of the state, not in 'gameTime'
-            const day = state.day;
-
+            // --- VIRTUAL WORKBENCH (PHASE 3) ---
+            
             // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
-        if (state.activeIntelDeal && day > state.activeIntelDeal.expiryDay) {
-                // --- BUG FIX (B): Use setState instead of updateState ---
-                this.gameState.setState({ activeIntelDeal: null });
-                // --- END BUG FIX ---
-                this.logger.info.system('IntelService', day, 'EXPIRED', 'Active intel deal has expired.');
+            const activeDeal = this.gameState.activeIntelDeal; // Check the live state, not a snapshot
+            if (activeDeal && this.gameState.day > activeDeal.expiryDay) {
+                const expiredDeal = activeDeal; // Store for cleanup
+                
+                // 1. Clear the active deal
+                this.gameState.activeIntelDeal = null;
+                this.logger.info.system('IntelService', this.gameState.day, 'EXPIRED', 'Active intel deal has expired.');
+
+                // 2. Find and remove the source packet from the intelMarket list
+                if (expiredDeal.sourceSaleLocationId && expiredDeal.sourcePacketId) {
+                    const saleLocationMarket = this.gameState.intelMarket[expiredDeal.sourceSaleLocationId];
+                    if (saleLocationMarket) {
+                        this.gameState.intelMarket[expiredDeal.sourceSaleLocationId] = saleLocationMarket.filter(
+                            packet => packet.id !== expiredDeal.sourcePacketId
+                        );
+                        this.logger.info.system('IntelService', this.gameState.day, 'PACKET_CLEANUP', `Removed expired packet ${expiredDeal.sourcePacketId} from ${expiredDeal.sourceSaleLocationId}.`);
+                    }
+                }
             }
 
             // --- NEW LOGIC: CHECK INTEL REFRESH ---
             // (Runs at the start of day 1, 121, 241, etc.)
-            if (this.intelService && (day 
-% 120 === 1)) {
+            if (this.intelService && (this.gameState.day % 120 === 1)) {
                 this.intelService.generateIntelRefresh();
             }
             
-            // Removed obsolete intel check
             // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
-         if (shipId !== this.gameState.player.activeShipId) {
+                if (shipId !== this.gameState.player.activeShipId) {
                     const ship = DB.SHIPS[shipId];
                     const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
-   }
+                }
             });
 
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
@@ -115,7 +120,7 @@ this.logger.groupEnd();
             // Apply garnishment must be called daily
             this._applyGarnishment();
         }
-     
+        
         this.logger.groupEnd();
         this.gameState.setState({});
     }
@@ -128,7 +133,7 @@ this.logger.groupEnd();
         DB.AGE_EVENTS.forEach(event => {
             if (this.gameState.player.seenEvents.includes(event.id)) return;
             if ((event.trigger.day && this.gameState.day >= event.trigger.day) || (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
-            this.gameState.player.seenEvents.push(event.id);
+                this.gameState.player.seenEvents.push(event.id);
                 this.logger.info.state(this.gameState.day, 'AGE_EVENT', `Triggered age event: ${event.title}`);
                 this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
             }
@@ -137,7 +142,7 @@ this.logger.groupEnd();
 
     /**
      * Checks if the player's wealth has reached a new milestone, revealing the next tier of commodities.
-* @private
+     * @private
      */
     _checkMilestones() {
         const { credits, revealedTier } = this.gameState.player;
@@ -153,7 +158,7 @@ this.logger.groupEnd();
         }
 
         if (this.gameState.player.revealedTier !== revealedTier) {
-    this.gameState.setState({});
+            this.gameState.setState({});
         }
     }
 
@@ -165,8 +170,7 @@ this.logger.groupEnd();
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             
-            // Garnishment only happens on the 30-day 
-interval
+            // Garnishment only happens on the 30-day interval
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) {
                 return;
             }
@@ -177,7 +181,7 @@ interval
                 this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
                 
                 // This is the single, non-performative place to check for game over
-           this.simulationService._checkGameOverConditions(); 
+                this.simulationService._checkGameOverConditions(); 
             }
 
             if (!player.seenGarnishmentWarning) {
@@ -189,7 +193,7 @@ interval
         }
     }
 
-   /**
+    /**
      * Gets the current game day.
      * @returns {number} The current day.
      * @JSDoc

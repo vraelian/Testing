@@ -84,6 +84,20 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
+                // --- VIRTUAL WORKBENCH (PHASE 2) ---
+                // Enforce Intel Price Lock
+                const activeDeal = this.gameState.activeIntelDeal;
+                if (activeDeal &&
+                    activeDeal.locationId === location.id &&
+                    activeDeal.commodityId === commodity.id)
+                {
+                    // Force the price to the locked-in deal price
+                    this.gameState.market.prices[location.id][commodity.id] = activeDeal.overridePrice;
+                    // Skip all other evolution logic for this item
+                    return; // *** CORRECTED: Use 'return' instead of 'continue' for forEach ***
+                }
+                // --- END VIRTUAL WORKBENCH ---
+
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
@@ -148,6 +162,7 @@ export class MarketService {
                     }
                 }
                 // [GEMINI] --- END MODEL FIX ---
+
 
 
                 // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
@@ -246,6 +261,7 @@ export class MarketService {
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
+                
                 // Phase 3: Apply Final Visual Fluctuation
                 const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;

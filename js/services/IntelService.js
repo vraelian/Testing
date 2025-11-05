@@ -49,6 +49,7 @@ export class IntelService {
             newIntelMarket[locationId] = purchasedPackets;
         }
 
+        
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
@@ -215,24 +216,25 @@ export class IntelService {
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
         const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
 
+        // --- VIRTUAL WORKBENCH (PHASE 1) ---
+        packet.expiryDay = expiryDay; // Store expiry on the packet itself
+
         const newActiveDeal = {
-            // --- VIRTUAL WORKBENCH (C) ---
             // The active deal's location is the DEAL location, not the sale location.
             locationId: packet.dealLocationId, 
-            // --- END VIRTUAL WORKBENCH ---
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
             expiryDay: expiryDay,
-            sourcePacketId: packet.id 
+            sourcePacketId: packet.id,
+            sourceSaleLocationId: locationId // Store where it was bought from
         };
+        // --- END VIRTUAL WORKBENCH ---
 
         // 4. Push message to NewsTicker
         try {
             const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
-            // --- VIRTUAL WORKBENCH (C) ---
             // The message must use the DEAL location name
             const locationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a local market';
-            // --- END VIRTUAL WORKBENCH ---
             let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
             let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
             this.newsTickerService.pushMessage(message, 'INTEL', true); 

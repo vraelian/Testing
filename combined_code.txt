@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 31.40</title>
+    <title>Orbital Trading 31.50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -64,7 +64,7 @@
         </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 31.40</p>
+            <p>Version 31.50</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3500,7 +3500,8 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Themed scrollbar for lore content */
+/* Themed scrollbar 
+for lore content */
 #lore-modal-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -3556,7 +3557,7 @@ body {
 /* Intel "Buy" Button in Modal */
 .btn-intel-buy {
     font-family: 'Orbitron', sans-serif;
-    letter-spacing: 1px;
+letter-spacing: 1px;
     background-color: var(--ot-green-accent, #4ade80);
     border: 1px solid #86efac; /* green-300 */
     color: #064e3b; /* green-900 */
@@ -3580,6 +3581,31 @@ body {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+/* --- VIRTUAL WORKBENCH: THEMED PURCHASED BUTTON (REQUEST A) --- */
+/* New style for purchased, themed intel buttons */
+.btn-intel-purchased {
+    /* Apply theme variables provided by the renderer */
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    border-color: var(--theme-border-color, #7a9ac0);
+    color: var(--theme-text-color, #f0f0ff);
+    
+    /* Use the border color for the glow animation */
+    --theme-glow-color: var(--theme-border-color, #7a9ac0);
+    
+    /* Re-use the existing themed-glow-animation from global.css */
+    animation: themed-glow-animation 3s infinite;
+}
+
+.btn-intel-purchased:hover:not(:disabled) {
+    /* On hover, revert to a standard non-animated style for consistency */
+    background: #334155; /* slate-700 */
+    border-color: #475569; /* slate-600 */
+    color: #f1f5f9; /* slate-100 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    animation: none; /* Stop glowing on hover */
+}
 /* --- END VIRTUAL WORKBENCH --- */
 
 
@@ -3597,7 +3623,8 @@ body {
     border-bottom: 1px solid var(--theme-border-color, #334155);
     border-radius: 0.375rem; /* rounded-md */
     padding: 0.125rem; /* p-0.5, reduced by ~30% */
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); /* shadow-inner */
+    box-shadow: inset 0 1px 3px 
+rgba(0,0,0,0.4); /* shadow-inner */
     
     gap: 0; /* Buttons are joined */
     width: 100%;
@@ -3618,7 +3645,8 @@ body {
     bottom: 0.125rem;
     left: 0.125rem;
     width: calc(50% - 0.125rem); /* Half width, minus padding */
-    z-index: 5; /* Sits behind text, above bar bg */
+    z-index: 5; /* Sits behind text, above 
+bar bg */
     
     /* THEME: Use location gradient and shadow */
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
@@ -3636,7 +3664,8 @@ body {
 */
 #intel-screen .sub-nav-bar.market-active::after {
     /* Move slider to the right */
-    transform: translateX(100%);
+    
+transform: translateX(100%);
     
     /* New clip-path for "Intel Market" (right side) */
     clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
@@ -3656,7 +3685,8 @@ body {
     font-size: 0.75rem; /* text-xs, reduced */
     
     /* THEME: Use dim color for inactive text */
-    color: #94a3b8; /* text-slate-400 */
+    color: 
+#94a3b8; /* text-slate-400 */
     background: transparent; /* Button is see-through */
     border: none;
     
@@ -3677,7 +3707,8 @@ body {
     text-align: center;
 }
 
-#intel-screen .sub-nav-button[data-target="intel-market-content"] {
+#intel-screen 
+.sub-nav-button[data-target="intel-market-content"] {
     clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
     margin-left: calc(-1 * var(--intel-skew)); /* Overlap buttons */
     padding-left: var(--intel-skew); /* Compensate for clip */
@@ -3700,7 +3731,8 @@ body {
 }
 
 
-/* --- END VIRTUAL WORKBENCH --- */
+/* --- END VIRTUAL 
+WORKBENCH --- */
 --- END OF FILE: ./css/screens/intel-screen.css ---
 
 --- START OF FILE: ./css/screens/cargo-screen.css ---
@@ -4504,7 +4536,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
-    }
+}
 
     /**
      * Renders the intel packet buttons into the provided container.
@@ -4516,20 +4548,41 @@ export class IntelMarketRenderer {
         const state = gameState;
         const { currentLocationId, activeIntelDeal, intelMarket } = state;
         
-        const shopInventory = intelMarket[currentLocationId] || [];
+        // --- VIRTUAL WORKBENCH: MODIFICATION (REQUEST A) ---
+        // 1. Get the *single* active purchased packet, if it exists
+        const globalPurchasedPackets = [];
+        if (activeIntelDeal) {
+            const purchasedPacket = Object.values(intelMarket)
+                .flat()
+                .find(packet => packet.isPurchased && packet.id === activeIntelDeal.sourcePacketId);
+            
+            if (purchasedPacket) {
+                globalPurchasedPackets.push(purchasedPacket);
+            }
+        }
+
+        // 2. Get unpurchased packets *only* from the current location
+        const localUnpurchasedPackets = (intelMarket[currentLocationId] || [])
+            .filter(packet => !packet.isPurchased);
+
+        // 3. Combine lists, with purchased intel always at the top
+        const combinedList = [...globalPurchasedPackets, ...localUnpurchasedPackets];
+        // --- END MODIFICATION ---
+
         const isLocked = activeIntelDeal !== null;
 
-        if (shopInventory.length === 0) {
-            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+        if (combinedList.length === 0) {
+            containerElement.innerHTML 
+= `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
             return;
         }
 
-        const html = shopInventory.map(packet => {
+        const html = combinedList.map(packet => {
             if (packet.isPurchased) {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-                const price = this.intelService.calculateIntelPrice(packet);
+          const price = this.intelService.calculateIntelPrice(packet);
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');
@@ -4541,17 +4594,32 @@ export class IntelMarketRenderer {
      * Renders a button for a previously purchased intel packet.
      * @param {object} packet - The intelPacket object.
      * @returns {string} HTML for the "View Intel" button.
-     * @private
+* @private
      * @JSDoc
      */
     _renderPurchasedButton(packet) {
-        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        // --- VIRTUAL WORKBENCH: MODIFICATION (THEMING - REQUEST A) ---
+        const dealLocation = this.db.MARKETS.find(m => m.id === packet.dealLocationId);
+        const dealLocationName = dealLocation?.name || 'Unknown Location';
+        
+        // Get theme from the DEAL location
+        const theme = dealLocation?.navTheme || {
+            gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', // Default gradient
+            borderColor: '#7a9ac0', // Default border
+            textColor: '#f0f0ff' // Default text
+        };
+
+        const style = `
+            --theme-gradient: ${theme.gradient};
+            --theme-border-color: ${theme.borderColor};
+            --theme-text-color: ${theme.textColor};
+        `;
+        // --- END MODIFICATION ---
+        
         return `
-            <button class="btn btn-intel" 
-                    data-action="show_intel_details" 
+            <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
-                    data-location-id="${packet.locationId}">
-                ${locationName} - View Intel
+             data-location-id="${packet.locationId}"> ${dealLocationName} - View Intel
             </button>`;
     }
 
@@ -4560,24 +4628,28 @@ export class IntelMarketRenderer {
      * @param {object} packet - The intelPacket object.
      * @param {number} price - The dynamically calculated price.
      * @param {boolean} isLocked - Whether the Intel Market is locked by an active deal.
-     * @returns {string} HTML for the "Purchase" button.
+     * @returns {string} HTML 
+for the "Purchase" button.
      * @private
      * @JSDoc
      */
     _renderOfferButton(packet, price, isLocked) {
-        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        // --- VIRTUAL WORKBENCH: MODIFICATION ---
+        // Display the DEAL location name, not the SALE location name.
+        const dealLocationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'Unknown Location';
+        // --- END MODIFICATION ---
+
         const disabledAttr = isLocked ? 'disabled' : '';
-        const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel from ${locationName}`;
+        const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel for a deal at ${dealLocationName}`;
         
         return `
             <button class="btn btn-intel" 
-                    data-action="show_intel_offer" 
+   data-action="show_intel_offer" 
                     data-packet-id="${packet.id}" 
-                    data-location-id="${packet.locationId}" 
-                    data-price="${price}" 
+                    data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
-                    ${disabledAttr}>
-                ${locationName} ⌬ ${price.toLocaleString()}
+        ${disabledAttr}>
+                ${dealLocationName} ⌬ ${price.toLocaleString()}
             </button>`;
     }
 }
@@ -9635,6 +9707,20 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
+                // --- VIRTUAL WORKBENCH (PHASE 2) ---
+                // Enforce Intel Price Lock
+                const activeDeal = this.gameState.activeIntelDeal;
+                if (activeDeal &&
+                    activeDeal.locationId === location.id &&
+                    activeDeal.commodityId === commodity.id)
+                {
+                    // Force the price to the locked-in deal price
+                    this.gameState.market.prices[location.id][commodity.id] = activeDeal.overridePrice;
+                    // Skip all other evolution logic for this item
+                    return; // *** CORRECTED: Use 'return' instead of 'continue' for forEach ***
+                }
+                // --- END VIRTUAL WORKBENCH ---
+
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
@@ -9699,6 +9785,7 @@ export class MarketService {
                     }
                 }
                 // [GEMINI] --- END MODEL FIX ---
+
 
 
                 // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
@@ -9797,6 +9884,7 @@ export class MarketService {
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
+                
                 // Phase 3: Apply Final Visual Fluctuation
                 const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
@@ -10283,26 +10371,36 @@ export class TimeService {
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            // --- VIRTUAL WORKBENCH: ADD INTEL SYSTEM LOGIC & FIX BUG ---
             
-            // Get state once for daily checks
-            const state = this.gameState.getState();
-            // BUG FIX: The day is at the root of the state, not in 'gameTime'
-            const day = state.day;
-
+            // --- VIRTUAL WORKBENCH (PHASE 3) ---
+            
             // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
-            if (state.activeIntelDeal && day > state.activeIntelDeal.expiryDay) {
-                this.gameState.updateState({ activeIntelDeal: null });
-                this.logger.info.system('IntelService', day, 'EXPIRED', 'Active intel deal has expired.');
+            const activeDeal = this.gameState.activeIntelDeal; // Check the live state, not a snapshot
+            if (activeDeal && this.gameState.day > activeDeal.expiryDay) {
+                const expiredDeal = activeDeal; // Store for cleanup
+                
+                // 1. Clear the active deal
+                this.gameState.activeIntelDeal = null;
+                this.logger.info.system('IntelService', this.gameState.day, 'EXPIRED', 'Active intel deal has expired.');
+
+                // 2. Find and remove the source packet from the intelMarket list
+                if (expiredDeal.sourceSaleLocationId && expiredDeal.sourcePacketId) {
+                    const saleLocationMarket = this.gameState.intelMarket[expiredDeal.sourceSaleLocationId];
+                    if (saleLocationMarket) {
+                        this.gameState.intelMarket[expiredDeal.sourceSaleLocationId] = saleLocationMarket.filter(
+                            packet => packet.id !== expiredDeal.sourcePacketId
+                        );
+                        this.logger.info.system('IntelService', this.gameState.day, 'PACKET_CLEANUP', `Removed expired packet ${expiredDeal.sourcePacketId} from ${expiredDeal.sourceSaleLocationId}.`);
+                    }
+                }
             }
 
             // --- NEW LOGIC: CHECK INTEL REFRESH ---
             // (Runs at the start of day 1, 121, 241, etc.)
-            if (this.intelService && (day % 120 === 1)) {
+            if (this.intelService && (this.gameState.day % 120 === 1)) {
                 this.intelService.generateIntelRefresh();
             }
             
-            // Removed obsolete intel check
             // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
@@ -12090,6 +12188,7 @@ export class UIManager {
             loreModal: document.getElementById('lore-modal'),
             loreModalContent: document.getElementById('lore-modal-content'),
 
+
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -12269,7 +12368,7 @@ export class UIManager {
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                         <span class="status-bar-label">C</span>
+                          <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -12297,6 +12396,7 @@ export class UIManager {
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
+                 
                  // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
@@ -13793,7 +13893,7 @@ export class UIManager {
                  return modalBackdrop.id;
             }
             // Standard dismissal (backdrop click only)
-            if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
+             if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -14064,11 +14164,27 @@ export class UIManager {
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         const priceStr = `${price.toLocaleString()} ⌬`;
 
+        // --- VIRTUAL WORKBENCH (PHASE 4 FIX) ---
+        const currentDay = this.intelService.getCurrentDay();
+        // Use packet.expiryDay (added in Phase 1)
+        const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
+        
+        let durationStr;
+        if (remainingDays === 0) {
+            durationStr = "less than a day";
+        } else if (remainingDays === 1) {
+            durationStr = "1 day";
+        } else {
+            durationStr = `${remainingDays} days`;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         return template
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr)
-            .replace(/\[durationDays\]/g, packet.durationDays)
+            // This regex now correctly replaces the placeholder AND the static word "days"
+            .replace(/\[durationDays\]\s*days/g, durationStr)
             .replace(/\[⌬ credit price\]/g, priceStr);
     }
 
@@ -16031,6 +16147,7 @@ export class IntelService {
             newIntelMarket[locationId] = purchasedPackets;
         }
 
+        
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
@@ -16197,24 +16314,25 @@ export class IntelService {
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
         const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
 
+        // --- VIRTUAL WORKBENCH (PHASE 1) ---
+        packet.expiryDay = expiryDay; // Store expiry on the packet itself
+
         const newActiveDeal = {
-            // --- VIRTUAL WORKBENCH (C) ---
             // The active deal's location is the DEAL location, not the sale location.
             locationId: packet.dealLocationId, 
-            // --- END VIRTUAL WORKBENCH ---
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
             expiryDay: expiryDay,
-            sourcePacketId: packet.id 
+            sourcePacketId: packet.id,
+            sourceSaleLocationId: locationId // Store where it was bought from
         };
+        // --- END VIRTUAL WORKBENCH ---
 
         // 4. Push message to NewsTicker
         try {
             const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
-            // --- VIRTUAL WORKBENCH (C) ---
             // The message must use the DEAL location name
             const locationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a local market';
-            // --- END VIRTUAL WORKBENCH ---
             let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
             let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
             this.newsTickerService.pushMessage(message, 'INTEL', true); 
@@ -18090,6 +18208,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.50] - 2025-11-5
+-  intel system polish
+-  time dependencies polish
+
 ## [31.40] - 2025-11-4
 -  intel system overhaul V2
 -  added intel-screen.css
@@ -19303,7 +19425,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 
 --- START OF FILE: ./meta/ROADMAP.md ---
 ## Immediate Concerns, Bugs, Issues
-- Intel System V2 bugs
+- 
 
 ## Planned Ideas
 - System states influencing market performance

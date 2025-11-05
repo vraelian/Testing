@@ -197,6 +197,7 @@ export class UIManager {
             loreModal: document.getElementById('lore-modal'),
             loreModalContent: document.getElementById('lore-modal-content'),
 
+
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -376,7 +377,7 @@ export class UIManager {
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                         <span class="status-bar-label">C</span>
+                          <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -404,6 +405,7 @@ export class UIManager {
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
+                 
                  // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
@@ -1900,7 +1902,7 @@ export class UIManager {
                  return modalBackdrop.id;
             }
             // Standard dismissal (backdrop click only)
-            if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
+             if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -2171,11 +2173,27 @@ export class UIManager {
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         const priceStr = `${price.toLocaleString()} ⌬`;
 
+        // --- VIRTUAL WORKBENCH (PHASE 4 FIX) ---
+        const currentDay = this.intelService.getCurrentDay();
+        // Use packet.expiryDay (added in Phase 1)
+        const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
+        
+        let durationStr;
+        if (remainingDays === 0) {
+            durationStr = "less than a day";
+        } else if (remainingDays === 1) {
+            durationStr = "1 day";
+        } else {
+            durationStr = `${remainingDays} days`;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         return template
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr)
-            .replace(/\[durationDays\]/g, packet.durationDays)
+            // This regex now correctly replaces the placeholder AND the static word "days"
+            .replace(/\[durationDays\]\s*days/g, durationStr)
             .replace(/\[⌬ credit price\]/g, priceStr);
     }
 

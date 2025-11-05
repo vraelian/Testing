@@ -1,5 +1,5 @@
 ## Immediate Concerns, Bugs, Issues
-- Intel System V2 bugs
+- 
 
 ## Planned Ideas
 - System states influencing market performance
