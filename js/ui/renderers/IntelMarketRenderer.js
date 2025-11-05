@@ -19,7 +19,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
-    }
+}
 
     /**
      * Renders the intel packet buttons into the provided container.
@@ -31,20 +31,41 @@ export class IntelMarketRenderer {
         const state = gameState;
         const { currentLocationId, activeIntelDeal, intelMarket } = state;
         
-        const shopInventory = intelMarket[currentLocationId] || [];
+        // --- VIRTUAL WORKBENCH: MODIFICATION (REQUEST A) ---
+        // 1. Get the *single* active purchased packet, if it exists
+        const globalPurchasedPackets = [];
+        if (activeIntelDeal) {
+            const purchasedPacket = Object.values(intelMarket)
+                .flat()
+                .find(packet => packet.isPurchased && packet.id === activeIntelDeal.sourcePacketId);
+            
+            if (purchasedPacket) {
+                globalPurchasedPackets.push(purchasedPacket);
+            }
+        }
+
+        // 2. Get unpurchased packets *only* from the current location
+        const localUnpurchasedPackets = (intelMarket[currentLocationId] || [])
+            .filter(packet => !packet.isPurchased);
+
+        // 3. Combine lists, with purchased intel always at the top
+        const combinedList = [...globalPurchasedPackets, ...localUnpurchasedPackets];
+        // --- END MODIFICATION ---
+
         const isLocked = activeIntelDeal !== null;
 
-        if (shopInventory.length === 0) {
-            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+        if (combinedList.length === 0) {
+            containerElement.innerHTML 
+= `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
             return;
         }
 
-        const html = shopInventory.map(packet => {
+        const html = combinedList.map(packet => {
             if (packet.isPurchased) {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-                const price = this.intelService.calculateIntelPrice(packet);
+          const price = this.intelService.calculateIntelPrice(packet);
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');
@@ -56,17 +77,32 @@ export class IntelMarketRenderer {
      * Renders a button for a previously purchased intel packet.
      * @param {object} packet - The intelPacket object.
      * @returns {string} HTML for the "View Intel" button.
-     * @private
+* @private
      * @JSDoc
      */
     _renderPurchasedButton(packet) {
-        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        // --- VIRTUAL WORKBENCH: MODIFICATION (THEMING - REQUEST A) ---
+        const dealLocation = this.db.MARKETS.find(m => m.id === packet.dealLocationId);
+        const dealLocationName = dealLocation?.name || 'Unknown Location';
+        
+        // Get theme from the DEAL location
+        const theme = dealLocation?.navTheme || {
+            gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', // Default gradient
+            borderColor: '#7a9ac0', // Default border
+            textColor: '#f0f0ff' // Default text
+        };
+
+        const style = `
+            --theme-gradient: ${theme.gradient};
+            --theme-border-color: ${theme.borderColor};
+            --theme-text-color: ${theme.textColor};
+        `;
+        // --- END MODIFICATION ---
+        
         return `
-            <button class="btn btn-intel" 
-                    data-action="show_intel_details" 
+            <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
-                    data-location-id="${packet.locationId}">
-                ${locationName} - View Intel
+             data-location-id="${packet.locationId}"> ${dealLocationName} - View Intel
             </button>`;
     }
 
@@ -75,24 +111,28 @@ export class IntelMarketRenderer {
      * @param {object} packet - The intelPacket object.
      * @param {number} price - The dynamically calculated price.
      * @param {boolean} isLocked - Whether the Intel Market is locked by an active deal.
-     * @returns {string} HTML for the "Purchase" button.
+     * @returns {string} HTML 
+for the "Purchase" button.
      * @private
      * @JSDoc
      */
     _renderOfferButton(packet, price, isLocked) {
-        const locationName = this.db.MARKETS.find(m => m.id === packet.locationId)?.name || 'Unknown';
+        // --- VIRTUAL WORKBENCH: MODIFICATION ---
+        // Display the DEAL location name, not the SALE location name.
+        const dealLocationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'Unknown Location';
+        // --- END MODIFICATION ---
+
         const disabledAttr = isLocked ? 'disabled' : '';
-        const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel from ${locationName}`;
+        const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel for a deal at ${dealLocationName}`;
         
         return `
             <button class="btn btn-intel" 
-                    data-action="show_intel_offer" 
+   data-action="show_intel_offer" 
                     data-packet-id="${packet.id}" 
-                    data-location-id="${packet.locationId}" 
-                    data-price="${price}" 
+                    data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
-                    ${disabledAttr}>
-                ${locationName} ⌬ ${price.toLocaleString()}
+        ${disabledAttr}>
+                ${dealLocationName} ⌬ ${price.toLocaleString()}
             </button>`;
     }
 }
