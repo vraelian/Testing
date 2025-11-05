@@ -9,6 +9,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
+// VIRTUAL WORKBENCH: Added PERK_IDS import
+import { PERK_IDS } from '../data/constants.js';
 
 /**
  * @class IntelService
@@ -54,7 +56,7 @@ export class IntelService {
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
             if (!newIntelMarket[locationId]) {
-                newIntelMarket[locationId] = [];
+                 newIntelMarket[locationId] = [];
             }
 
             // GDD: Apply randomization to decide if a location gets new intel
@@ -150,7 +152,7 @@ export class IntelService {
             dealLocationId: dealLocationId, // (C) Where the DEAL is
             commodityId: commodityId,
             discountPercent: parseFloat(discountPercent.toFixed(2)),
-            durationDays: durationDays,
+            durationDays: durationDays, // Note: This is now just a base for pricing, not for expiration.
             valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
             messageKey: messageKey,
             isPurchased: false,
@@ -184,6 +186,7 @@ export class IntelService {
      * @JSDoc
      */
     purchaseIntel(packetId, locationId, calculatedPrice) {
+        
         const state = this.gameState.getState();
         
         if (state.activeIntelDeal !== null) {
@@ -214,7 +217,31 @@ export class IntelService {
         // 3. Create the Active Intel Deal
         const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
-        const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
+
+        // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
+        // Calculate dynamic duration based on travel time instead of using packet.durationDays
+
+        // Get player's current location (where they are buying the intel)
+        const currentLocationId = state.currentLocationId;
+        // Get the location of the deal
+        const dealLocationId = packet.dealLocationId;
+
+        // Get base travel time from the global travel data
+        let travelTime = this.gameState.TRAVEL_DATA[currentLocationId][dealLocationId].time;
+
+        // Check for Navigator perk and apply discount
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+        
+        // Apply the 2.8x multiplier
+        const newDurationDays = Math.ceil(travelTime * 1.9);
+        const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
+        
+        // Log the new dynamic calculation
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
+
+        // --- END MODIFICATION ---
 
         // --- VIRTUAL WORKBENCH (PHASE 1) ---
         packet.expiryDay = expiryDay; // Store expiry on the packet itself
@@ -224,7 +251,7 @@ export class IntelService {
             locationId: packet.dealLocationId, 
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
-            expiryDay: expiryDay,
+            expiryDay: expiryDay, // Use the new dynamic expiryDay
             sourcePacketId: packet.id,
             sourceSaleLocationId: locationId // Store where it was bought from
         };

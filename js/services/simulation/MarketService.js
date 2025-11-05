@@ -41,7 +41,13 @@ export class MarketService {
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             
-            return deal.overridePrice; // Return the locked-in deal price
+            // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
+            // If a deal is active, the price is *read* from the current
+            // market prices, which are being fluctuated daily by evolveMarketPrices.
+            // We no longer return the static deal.overridePrice here, as that
+            // would bypass the daily fluctuation.
+            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            // --- END MODIFICATION ---
         }
         // --- END NEW LOGIC ---
 
@@ -84,17 +90,28 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
-                // --- VIRTUAL WORKBENCH (PHASE 2) ---
+                // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
                 // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
-                    activeDeal.locationId === location.id &&
-                    activeDeal.commodityId === commodity.id)
+                     activeDeal.locationId === location.id &&
+                     activeDeal.commodityId === commodity.id)
                 {
-                    // Force the price to the locked-in deal price
-                    this.gameState.market.prices[location.id][commodity.id] = activeDeal.overridePrice;
+                    // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
+                    const basePrice = activeDeal.overridePrice;
+                    const fluctuation = 0.03; // 3%
+                    const minPrice = basePrice * (1 - fluctuation);
+                    const maxPrice = basePrice * (1 + fluctuation);
+                    
+                    // Generate a random price within the [minPrice, maxPrice] range
+                    const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
+                    
+                    // Set the new price, ensuring it's at least 1
+                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    // --- END MODIFICATION ---
+
                     // Skip all other evolution logic for this item
-                    return; // *** CORRECTED: Use 'return' instead of 'continue' for forEach ***
+                    return; 
                 }
                 // --- END VIRTUAL WORKBENCH ---
 
@@ -143,7 +160,7 @@ export class MarketService {
                 }
 
                 if (inventoryItem.hoverUntilDay > this.gameState.day) {
-                    reversionEffect *= 0.1;
+                     reversionEffect *= 0.1;
                 } else if (inventoryItem.hoverUntilDay > 0) {
                     inventoryItem.hoverUntilDay = 0;
                 }
@@ -183,7 +200,7 @@ export class MarketService {
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
-                    newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
+                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
@@ -262,6 +279,7 @@ export class MarketService {
                 }
 
                 
+
                 // Phase 3: Apply Final Visual Fluctuation
                 const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;

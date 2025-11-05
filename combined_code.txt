@@ -9664,7 +9664,13 @@ export class MarketService {
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             
-            return deal.overridePrice; // Return the locked-in deal price
+            // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
+            // If a deal is active, the price is *read* from the current
+            // market prices, which are being fluctuated daily by evolveMarketPrices.
+            // We no longer return the static deal.overridePrice here, as that
+            // would bypass the daily fluctuation.
+            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            // --- END MODIFICATION ---
         }
         // --- END NEW LOGIC ---
 
@@ -9707,17 +9713,28 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
-                // --- VIRTUAL WORKBENCH (PHASE 2) ---
+                // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
                 // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
-                    activeDeal.locationId === location.id &&
-                    activeDeal.commodityId === commodity.id)
+                     activeDeal.locationId === location.id &&
+                     activeDeal.commodityId === commodity.id)
                 {
-                    // Force the price to the locked-in deal price
-                    this.gameState.market.prices[location.id][commodity.id] = activeDeal.overridePrice;
+                    // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
+                    const basePrice = activeDeal.overridePrice;
+                    const fluctuation = 0.03; // 3%
+                    const minPrice = basePrice * (1 - fluctuation);
+                    const maxPrice = basePrice * (1 + fluctuation);
+                    
+                    // Generate a random price within the [minPrice, maxPrice] range
+                    const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
+                    
+                    // Set the new price, ensuring it's at least 1
+                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    // --- END MODIFICATION ---
+
                     // Skip all other evolution logic for this item
-                    return; // *** CORRECTED: Use 'return' instead of 'continue' for forEach ***
+                    return; 
                 }
                 // --- END VIRTUAL WORKBENCH ---
 
@@ -9766,7 +9783,7 @@ export class MarketService {
                 }
 
                 if (inventoryItem.hoverUntilDay > this.gameState.day) {
-                    reversionEffect *= 0.1;
+                     reversionEffect *= 0.1;
                 } else if (inventoryItem.hoverUntilDay > 0) {
                     inventoryItem.hoverUntilDay = 0;
                 }
@@ -9806,7 +9823,7 @@ export class MarketService {
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
-                    newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
+                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
                 }
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
@@ -9885,6 +9902,7 @@ export class MarketService {
                 }
 
                 
+
                 // Phase 3: Apply Final Visual Fluctuation
                 const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
@@ -16107,6 +16125,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
+// VIRTUAL WORKBENCH: Added PERK_IDS import
+import { PERK_IDS } from '../data/constants.js';
 
 /**
  * @class IntelService
@@ -16152,7 +16172,7 @@ export class IntelService {
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
             if (!newIntelMarket[locationId]) {
-                newIntelMarket[locationId] = [];
+                 newIntelMarket[locationId] = [];
             }
 
             // GDD: Apply randomization to decide if a location gets new intel
@@ -16248,7 +16268,7 @@ export class IntelService {
             dealLocationId: dealLocationId, // (C) Where the DEAL is
             commodityId: commodityId,
             discountPercent: parseFloat(discountPercent.toFixed(2)),
-            durationDays: durationDays,
+            durationDays: durationDays, // Note: This is now just a base for pricing, not for expiration.
             valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
             messageKey: messageKey,
             isPurchased: false,
@@ -16282,6 +16302,7 @@ export class IntelService {
      * @JSDoc
      */
     purchaseIntel(packetId, locationId, calculatedPrice) {
+        
         const state = this.gameState.getState();
         
         if (state.activeIntelDeal !== null) {
@@ -16312,7 +16333,31 @@ export class IntelService {
         // 3. Create the Active Intel Deal
         const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
-        const expiryDay = this.timeService.getCurrentDay() + packet.durationDays;
+
+        // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
+        // Calculate dynamic duration based on travel time instead of using packet.durationDays
+
+        // Get player's current location (where they are buying the intel)
+        const currentLocationId = state.currentLocationId;
+        // Get the location of the deal
+        const dealLocationId = packet.dealLocationId;
+
+        // Get base travel time from the global travel data
+        let travelTime = this.gameState.TRAVEL_DATA[currentLocationId][dealLocationId].time;
+
+        // Check for Navigator perk and apply discount
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+        
+        // Apply the 2.8x multiplier
+        const newDurationDays = Math.ceil(travelTime * 1.9);
+        const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
+        
+        // Log the new dynamic calculation
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
+
+        // --- END MODIFICATION ---
 
         // --- VIRTUAL WORKBENCH (PHASE 1) ---
         packet.expiryDay = expiryDay; // Store expiry on the packet itself
@@ -16322,7 +16367,7 @@ export class IntelService {
             locationId: packet.dealLocationId, 
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
-            expiryDay: expiryDay,
+            expiryDay: expiryDay, // Use the new dynamic expiryDay
             sourcePacketId: packet.id,
             sourceSaleLocationId: locationId // Store where it was bought from
         };
