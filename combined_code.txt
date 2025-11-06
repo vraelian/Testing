@@ -20180,13 +20180,13 @@ This document records the key architectural decisions made during the developmen
 ### ADR-005: Economic Model Refactor to "Delayed Supply"
 
 * **Status**: Accepted (2025-10-30)
-* **Context**: The previous economic model used two separate forces to calculate price changes from player trades: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
-* **Decision**: The immediate `availabilityEffect` (the force based on stock levels) was removed from the price calculation entirely. The `pressureEffect` (the force derived from `marketPressure` set by player trades) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `pressureEffect` is now delayed by 7 days (inheriting the delay logic from the old `availabilityEffect`). The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
+* **Context**: The previous economic model used two separate forces: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
+* **Decision**: The model was unified into a single force. The old `pressureEffect` and immediate `availabilityEffect` were removed from the price calculation. The *new* model uses a single **`availabilityEffect`** (derived from the `availabilityRatio` of current stock vs. target stock) as the sole driver of player-initiated price changes. To prevent same-day abuse, this new `availabilityEffect` is now **delayed by 7 days** (inheriting the delay logic from the old system). The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
 * **Consequences**:
     * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (trade -> delayed price change).
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
-    * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
+    * **Pro**: The `marketPressure` variable is retained, but as correctly noted in `ECONOMIC_BEHAVIOR.md`, it is now used *exclusively* for its non-price-related logic (influencing `targetStock` in replenishment), not for price calculation.
 
 ---
 
