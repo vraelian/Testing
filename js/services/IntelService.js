@@ -42,53 +42,51 @@ export class IntelService {
      */
     generateIntelRefresh() {
         this.logger.info.system('IntelService', this.gameState.day, 'REFRESH', 'Generating intel refresh for all markets.');
+        // Get the LIVE state object.
         const state = this.gameState.getState();
-        const newIntelMarket = { ...state.intelMarket };
+        const intelMarket = state.intelMarket;
 
-        for (const locationId of Object.keys(newIntelMarket)) {
+        for (const locationId of Object.keys(intelMarket)) {
             // Filter out (remove) any packets that were NOT purchased
-            const purchasedPackets = newIntelMarket[locationId].filter(packet => packet.isPurchased);
-            newIntelMarket[locationId] = purchasedPackets;
+            const purchasedPackets = intelMarket[locationId].filter(packet => packet.isPurchased);
+            // Mutate the intelMarket object directly, as per app architecture.
+            intelMarket[locationId] = purchasedPackets;
         }
 
         
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
-            if (!newIntelMarket[locationId]) {
-                 newIntelMarket[locationId] = [];
+            if (!intelMarket[locationId]) {
+                 intelMarket[locationId] = [];
             }
 
             // GDD: Apply randomization to decide if a location gets new intel
             // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
-                // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
                 // Get keys already in use by purchased packets at this location
-                const existingKeys = newIntelMarket[locationId].map(p => p.messageKey).filter(Boolean);
+                const existingKeys = intelMarket[locationId].map(p => p.messageKey).filter(Boolean);
                 // Track keys used in this specific batch
                 const newKeysInBatch = new Set();
-                // --- END VIRTUAL WORKBENCH ---
 
                 const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
-                    // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
                     // Combine persistent keys and new-batch keys
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
                     // Pass the sale location ID and unavailable keys
                     const newPacket = this._createPacket(locationId, unavailableKeys);
-                    // --- END VIRTUAL WORKBENCH ---
 
                     if (newPacket) {
-                        newIntelMarket[locationId].push(newPacket);
-                        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
+                        // Mutate the intelMarket array directly.
+                        intelMarket[locationId].push(newPacket);
                         newKeysInBatch.add(newPacket.messageKey);
-                        // --- END VIRTUAL WORKBENCH ---
                     }
                 }
             }
         }
-
-        this.gameState.setState({ intelMarket: newIntelMarket });
+        
+        // Call setState to trigger a render of the mutated state.
+        this.gameState.setState({ intelMarket: intelMarket });
     }
 
     /**
@@ -112,7 +110,6 @@ export class IntelService {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH (Phase 2 Refactor - Unlocked Location Check) ---
         // Get the locations the player has actually visited and unlocked.
         const playerUnlockedLocations = state.player.unlockedLocationIds || [];
         
@@ -128,7 +125,6 @@ export class IntelService {
              return null;
         }
         const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
-        // --- END VIRTUAL WORKBENCH ---
 
         const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
         const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
@@ -136,7 +132,6 @@ export class IntelService {
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
         // Logic to prevent duplicate message keys
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
@@ -153,7 +148,6 @@ export class IntelService {
         } else {
             messageKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const packet = {
             id: `pkt_${saleLocationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 999)}`,
@@ -196,19 +190,15 @@ export class IntelService {
      */
     purchaseIntel(packetId, locationId, calculatedPrice) {
         
+        // --- VIRTUAL WORKBENCH REFACTOR (ADHERING TO MUTABLE ARCHITECTURE) ---
+        
+        // 1. Read the *current* state ONCE. This is a shallow copy.
         const state = this.gameState.getState();
         
+        // 2. Perform all failure checks on this state.
         if (state.activeIntelDeal !== null) {
             this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
-            return null;
-        }
-
-        const intelMarket = this.gameState.intelMarket; 
-        const packet = intelMarket[locationId]?.find(p => p.id === packetId);
-
-        if (!packet) {
-            this.logger.error('IntelService', `Purchase failed: Could not find packetId ${packetId} at ${locationId}.`);
-            return null;
+            return null; // This is what's failing in debug.
         }
 
         if (state.player.credits < calculatedPrice) {
@@ -216,60 +206,60 @@ export class IntelService {
             return null;
         }
 
-        // 1. Deduct credits
-        this.gameState.player.credits -= calculatedPrice;
-        this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
+        // 3. Get the *live* intelMarket object from the state.
+        // We will mutate this object directly, as per the app's architecture.
+        const intelMarket = state.intelMarket;
 
-        // 2. Set packet as purchased
+        // 4. Find the *live* packet object.
+        const packet = intelMarket[locationId]?.find(p => p.id === packetId);
+
+        if (!packet) {
+            this.logger.error('IntelService', `Purchase failed: Could not find packetId ${packetId} in live market at ${locationId}.`);
+            return null; // This was the other potential failure point.
+        }
+        
+        // 5. Mutate the live packet object.
         packet.isPurchased = true;
 
-        // 3. Create the Active Intel Deal
+        this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
+
+        // 6. Create a *new* player object for the state update.
+        const newPlayerState = { ...state.player };
+        newPlayerState.credits -= calculatedPrice;
+
+        // 7. Create the Active Intel Deal
         const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
 
-        // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
-        // Calculate dynamic duration based on travel time instead of using packet.durationDays
-
-        // Get player's current location (where they are buying the intel)
+        // Calculate dynamic duration
         const currentLocationId = state.currentLocationId;
-        // Get the location of the deal
         const dealLocationId = packet.dealLocationId;
-
-        // Get base travel time from the global travel data
         let travelTime = this.gameState.TRAVEL_DATA[currentLocationId][dealLocationId].time;
 
-        // Check for Navigator perk and apply discount
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // Apply the 2.8x multiplier
         const newDurationDays = Math.ceil(travelTime * 1.9);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
-        // Log the new dynamic calculation
         this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
 
-        // --- END MODIFICATION ---
-
-        // --- VIRTUAL WORKBENCH (PHASE 1) ---
-        packet.expiryDay = expiryDay; // Store expiry on the packet itself
+        // 8. Mutate the live packet object again.
+        packet.expiryDay = expiryDay; 
 
         const newActiveDeal = {
-            // The active deal's location is the DEAL location, not the sale location.
             locationId: packet.dealLocationId, 
             commodityId: packet.commodityId,
             overridePrice: overridePrice,
-            expiryDay: expiryDay, // Use the new dynamic expiryDay
+            expiryDay: expiryDay,
             sourcePacketId: packet.id,
-            sourceSaleLocationId: locationId // Store where it was bought from
+            sourceSaleLocationId: locationId
         };
-        // --- END VIRTUAL WORKBENCH ---
 
-        // 4. Push message to NewsTicker
+        // 9. Push message to NewsTicker
         try {
             const commodityName = this.db.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'goods';
-            // The message must use the DEAL location name
             const locationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a local market';
             let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
             let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
@@ -278,13 +268,17 @@ export class IntelService {
             this.logger.error('IntelService', 'Failed to push news ticker message.', e);
         }
 
-        // 5. Set the active deal in GameState
+        // 10. Set the new state *once*.
+        // We pass the *mutated* intelMarket and the *new* player/activeDeal.
         this.gameState.setState({ 
+            player: newPlayerState,
             activeIntelDeal: newActiveDeal,
-            intelMarket: intelMarket 
+            intelMarket: intelMarket // Pass the mutated object to trigger render
         });
         
+        // Return the mutated packet
         return packet;
+        // --- END REFACTOR ---
     }
 
     /**
@@ -305,4 +299,82 @@ export class IntelService {
     getCurrentDay() {
         return this.timeService.getCurrentDay();
     }
+
+    // --- VIRTUAL WORKBENCH ADDITION ---
+    /**
+     * DEBUG METHOD: Populates the current location's intel market
+     * with all 30 possible intel packets.
+     * @JSDoc
+     */
+    debug_AddAllIntelPackets() {
+        this.logger.warn('IntelService', 'DEBUG: Adding all intel packets to current market.');
+        // Get the LIVE state object.
+        const state = this.gameState.getState();
+        const saleLocationId = state.currentLocationId;
+        // Get the LIVE intelMarket reference.
+        const intelMarket = state.intelMarket;
+
+        // 1. Get all possible deal locations (unlocked, not current)
+        const playerUnlockedLocations = state.player.unlockedLocationIds || [];
+        const possibleDealLocations = playerUnlockedLocations.filter(id => id !== saleLocationId);
+
+        if (possibleDealLocations.length === 0) {
+            this.logger.error('IntelService', 'Debug failed: No other unlocked locations to use as deal locations.');
+            return;
+        }
+
+        // 2. Get all commodities (bypassing tier)
+        const allCommodities = this.db.COMMODITIES.map(c => c.id);
+        if (allCommodities.length === 0) {
+            this.logger.error('IntelService', 'Debug failed: No commodities in DB.');
+            return;
+        }
+
+        // 3. Get all message keys
+        const allMessageKeys = Object.keys(INTEL_CONTENT);
+        if (allMessageKeys.length === 0) {
+            this.logger.error('IntelService', 'Debug failed: INTEL_CONTENT is empty.');
+            return;
+        }
+
+        // 4. Mutate the live intelMarket object.
+        intelMarket[saleLocationId] = [];
+
+        // 5. Loop through all message keys and create a packet for each
+        for (const messageKey of allMessageKeys) {
+            // Pick random deal location and commodity for this packet
+            const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+            const commodityId = allCommodities[Math.floor(Math.random() * allCommodities.length)];
+            
+            // Use fixed values for easy testing
+            const discountPercent = 0.30;
+            const durationDays = 999;
+            const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90); // Use standard formula
+
+            const packet = {
+                id: `pkt_DEBUG_${saleLocationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 9999)}`,
+                locationId: saleLocationId,
+                dealLocationId: dealLocationId,
+                commodityId: commodityId,
+                discountPercent: discountPercent,
+                durationDays: durationDays,
+                valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
+                messageKey: messageKey,
+                isPurchased: false,
+            };
+            
+            // Mutate the live intelMarket array.
+            intelMarket[saleLocationId].push(packet);
+        }
+
+        // 6. Update state
+        // Pass the mutated intelMarket and set activeIntelDeal to null.
+        this.gameState.setState({ 
+            intelMarket: intelMarket,
+            activeIntelDeal: null 
+        });
+        
+        this.logger.warn('IntelService', `DEBUG: Generated ${allMessageKeys.length} intel packets for ${saleLocationId}.`);
+    }
+    // --- END ADDITION ---
 }

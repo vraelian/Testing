@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [31.60] - 2025-11-6
+-  intel messaging rewrites
+-  intel debug features added
+
 ## [31.50] - 2025-11-5
 -  intel system polish
 -  time dependencies polish
