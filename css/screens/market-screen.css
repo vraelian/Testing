@@ -651,7 +651,7 @@
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem; /* Removed horizontal padding */
+    /* VIRTUAL WORKBENCH FIX: Removed redundant padding: 0.25rem */
     padding-left: 1.5rem; /* Added */
     padding-right: 1.5rem; /* Added */
     touch-action: pan-y; /* Allow vertical scrolling */

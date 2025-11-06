@@ -206,7 +206,6 @@ export class NewsTickerService {
         const state = this.gameState.getState();
         const locationPrices = state.market.prices[locationId];
         if (!locationPrices) return;
-
         // CORRECTED: Access DB.COMMODITIES (an array)
         const commodities = DB.COMMODITIES;
         let bestDeal = { commodityId: null, discount: 0 };
@@ -214,7 +213,13 @@ export class NewsTickerService {
         for (const commodityId in locationPrices) {
             // CORRECTED: Use .find() to get static data from the array
             const staticData = commodities.find(c => c.id === commodityId);
-            if (!staticData || !staticData.basePriceRange) continue; // Use a field to check if it's a real commodity
+            
+            // --- VIRTUAL WORKBENCH FIX ---
+            // Add check for player's revealed tier
+            if (!staticData || !staticData.basePriceRange || staticData.tier > state.player.revealedTier) {
+                continue; // Skip if it's not a real commodity OR player hasn't unlocked this tier
+            }
+            // --- END FIX ---
 
             // Calculate galacticAverage from basePriceRange
             const galacticAverage = (staticData.basePriceRange[0] + staticData.basePriceRange[1]) / 2;
@@ -265,7 +270,7 @@ export class NewsTickerService {
         //
         //     let text = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
         //     text = text.replace('{Commodity Name}', commodityName)
-        //                .replace('{Location Name}', locationName);
+        //                 .replace('{Location Name}', locationName);
         //     this.pushMessage(text, 'INTEL');
         // }
     }
