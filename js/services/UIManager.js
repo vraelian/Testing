@@ -2188,7 +2188,12 @@ export class UIManager {
         // --- VIRTUAL WORKBENCH (Revert Logic) ---
         // The price for the placeholder is the *price paid*, not a recalculation.
         // This is passed as `price`.
-        const priceStr = `${price.toLocaleString()} ⌬`;
+        // === MODIFICATION FOR REQUEST B ===
+        // Original:
+        // const priceStr = `${price.toLocaleString()} ⌬`;
+        // New:
+        const priceStr = `${price.toLocaleString()}`; // Just the number
+        // === END MODIFICATION ===
         // --- END VIRTUAL WORKBENCH ---
 
 
@@ -2210,7 +2215,12 @@ export class UIManager {
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr)
-            .replace(/\[⌬ credit price\]/g, priceStr);
+        // === MODIFICATION FOR REQUEST B ===
+        // Original:
+        // .replace(/\[⌬ credit price\]/g, priceStr);
+        // New:
+           .replace(/\[credit price\]/g, priceStr);
+        // === END MODIFICATION ===
 
         // --- VIRTUAL WORKBENCH (Revert Logic) ---
         // This logic handles both old save-game packets ("... [durationDays] days")
