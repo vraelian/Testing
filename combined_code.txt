@@ -9552,29 +9552,28 @@ export class NewsTickerService {
         // Start with a fresh queue
         this.messageQueue = [];
 
+        // --- VIRTUAL WORKBENCH: REQUEST A (RE-ORDER) ---
+
         // 1. Add 'Welcome' message (once per game)
         this.generateWelcomeMessage();
 
-        // 2. Add Free Intel message
+        // 2. Add Purchased Intel (if active)
+        this.generatePurchasedIntelMessage();
+
+        // 3. Add Free Intel message
         this.generateFreeIntelMessage(newLocationId);
 
-        // 3. Add Flavor Ad #1
+        // 4. Add ONE random Flavor Ad
         const flavorAds = this.selectLocationFlavorAds(newLocationId);
         if (flavorAds[0]) {
             this.pushMessage(flavorAds[0], 'FLAVOR');
         }
 
-        // 3. Add Purchased Intel (if active)
-        this.generatePurchasedIntelMessage();
-
-        // 4. Add Flavor Ad #2
-        if (flavorAds[1]) {
-            this.pushMessage(flavorAds[1], 'FLAVOR');
-        }
-
         // 5. Add Ship Status message
         // We push an empty object with the live data flag.
         this.pushMessage('', 'STATUS', false, true);
+
+        // --- END VIRTUAL WORKBENCH ---
 
         // Mark as dirty to force UIManager to re-render
         this.isDirty = true;
@@ -9611,7 +9610,12 @@ export class NewsTickerService {
             return `<span class="ticker-message" data-type="${msg.type}" ${style}>${text}</span>`;
         }).join(separator);
 
-        return `<div class="news-ticker-content">${messageHtml}</div>`;
+        // --- VIRTUAL WORKBENCH: REQUEST B & C (STUTTER/SEPARATOR FIX) ---
+        // Append one final separator to the end of the content.
+        // This will be duplicated by UIManager, seamlessly connecting the
+        // end of the loop ([STATUS]) to the start of the next ([INTEL]).
+        return `<div class="news-ticker-content">${messageHtml}${separator}</div>`;
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     // --- PRIVATE HELPER METHODS ---
