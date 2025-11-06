@@ -206,34 +206,37 @@ export class NewsTickerService {
         const state = this.gameState.getState();
         const locationPrices = state.market.prices[locationId];
         if (!locationPrices) return;
-        // CORRECTED: Access DB.COMMODITIES (an array)
-        const commodities = DB.COMMODITIES;
+        
+        const commodities = DB.COMMODITIES; // O(N) array of static data
         let bestDeal = { commodityId: null, discount: 0 };
 
-        for (const commodityId in locationPrices) {
-            // CORRECTED: Use .find() to get static data from the array
-            const staticData = commodities.find(c => c.id === commodityId);
-            
-            // --- VIRTUAL WORKBENCH FIX ---
-            // Add check for player's revealed tier
+        // --- VIRTUAL WORKBENCH: OPTIMIZED LOOP ---
+        // Iterate the static commodity DB (O(N))
+        for (const staticData of commodities) {
+            // Skip if player can't see this tier
             if (!staticData || !staticData.basePriceRange || staticData.tier > state.player.revealedTier) {
-                continue; // Skip if it's not a real commodity OR player hasn't unlocked this tier
+                continue;
             }
-            // --- END FIX ---
+
+            // Get price from the price map (O(1) lookup)
+            const price = locationPrices[staticData.id];
+            if (price === undefined) {
+                continue; // This commodity isn't sold here or has no price
+            }
 
             // Calculate galacticAverage from basePriceRange
             const galacticAverage = (staticData.basePriceRange[0] + staticData.basePriceRange[1]) / 2;
-            const price = locationPrices[commodityId];
             const discount = (galacticAverage - price) / galacticAverage;
 
             if (discount > bestDeal.discount) {
-                bestDeal = { commodityId, discount };
+                bestDeal = { commodityId: staticData.id, discount };
             }
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         // Check if the best deal meets the 5% threshold
         if (bestDeal.discount >= 0.05) {
-            // CORRECTED: Use .find() to get the name
+            // Get the name *after* the loop
             const commodityName = commodities.find(c => c.id === bestDeal.commodityId).name;
             let tier;
 

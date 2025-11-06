@@ -4673,27 +4673,57 @@ export function renderMapScreen() {
 }
 
 /**
- * Initializes and renders the D3 map within the #map-container element.
+ * Initializes the D3 map. It checks the container width. If 0, it uses a
+ * ResizeObserver to wait for the browser to finalize layout before drawing.
  * @param {import('../../services/UIManager.js').UIManager} uiManager - The UIManager instance, passed for modal interactivity.
+ * @JSDoc
  */
 export function initMap(uiManager) {
     const container = d3.select("#map-container");
-    if (!container.node() || !container.select("svg").empty()) {
-        console.warn("Map container not found or map already initialized.");
+
+    if (!container.node()) {
+        console.warn("Map container not found.");
         return;
     }
-    
-    // Check if clientWidth is available, otherwise wait briefly
+    if (!container.select("svg").empty()) {
+        console.warn("Map already initialized.");
+        return;
+    }
+
     let containerWidth = container.node().clientWidth;
-    if (containerWidth <= 0) {
-        console.warn("Map container width not available yet. Retrying initialization shortly.");
-        // If width isn't ready (e.g., due to CSS loading or layout shifts),
-        // try again after a short delay. Avoid infinite loops.
-        setTimeout(() => initMap(uiManager), 100); 
-        return;
+
+    if (containerWidth > 0) {
+        // Width is already available, draw immediately.
+        _drawMap(container, containerWidth, uiManager);
+    } else {
+        // Width is 0, setup ResizeObserver to wait for layout.
+        console.warn("Map container width is 0. Using ResizeObserver to wait for layout.");
+        const observer = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.contentRect.width > 0) {
+                    // We have a valid width, draw the map.
+                    _drawMap(container, entry.contentRect.width, uiManager);
+                    // Stop observing, we're done.
+                    observer.disconnect();
+                }
+            }
+        });
+
+        // Start observing the container.
+        observer.observe(container.node());
     }
+}
 
-
+/**
+ * Contains the actual D3.js logic to draw the map.
+ * This is called by initMap() either immediately or by the ResizeObserver callback.
+ * @param {d3.Selection} container - The d3-selected #map-container.
+ * @param {number} containerWidth - The finalized width of the container.
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
+ * @private
+ * @JSDoc
+ */
+function _drawMap(container, containerWidth, uiManager) {
     const svg = container.append("svg")
         .attr("id", "map-svg")
         .attr("width", "100%"); 
@@ -9608,34 +9638,37 @@ export class NewsTickerService {
         const state = this.gameState.getState();
         const locationPrices = state.market.prices[locationId];
         if (!locationPrices) return;
-        // CORRECTED: Access DB.COMMODITIES (an array)
-        const commodities = DB.COMMODITIES;
+        
+        const commodities = DB.COMMODITIES; // O(N) array of static data
         let bestDeal = { commodityId: null, discount: 0 };
 
-        for (const commodityId in locationPrices) {
-            // CORRECTED: Use .find() to get static data from the array
-            const staticData = commodities.find(c => c.id === commodityId);
-            
-            // --- VIRTUAL WORKBENCH FIX ---
-            // Add check for player's revealed tier
+        // --- VIRTUAL WORKBENCH: OPTIMIZED LOOP ---
+        // Iterate the static commodity DB (O(N))
+        for (const staticData of commodities) {
+            // Skip if player can't see this tier
             if (!staticData || !staticData.basePriceRange || staticData.tier > state.player.revealedTier) {
-                continue; // Skip if it's not a real commodity OR player hasn't unlocked this tier
+                continue;
             }
-            // --- END FIX ---
+
+            // Get price from the price map (O(1) lookup)
+            const price = locationPrices[staticData.id];
+            if (price === undefined) {
+                continue; // This commodity isn't sold here or has no price
+            }
 
             // Calculate galacticAverage from basePriceRange
             const galacticAverage = (staticData.basePriceRange[0] + staticData.basePriceRange[1]) / 2;
-            const price = locationPrices[commodityId];
             const discount = (galacticAverage - price) / galacticAverage;
 
             if (discount > bestDeal.discount) {
-                bestDeal = { commodityId, discount };
+                bestDeal = { commodityId: staticData.id, discount };
             }
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         // Check if the best deal meets the 5% threshold
         if (bestDeal.discount >= 0.05) {
-            // CORRECTED: Use .find() to get the name
+            // Get the name *after* the loop
             const commodityName = commodities.find(c => c.id === bestDeal.commodityId).name;
             let tier;
 
@@ -10082,6 +10115,44 @@ export class MarketService {
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
+
+    // --- VIRTUAL WORKBENCH: NEW METHOD ---
+    /**
+     * Checks if a purchase triggers a market depletion event.
+     * This logic is called by PlayerActionService when a good's stock reaches <= 0.
+     * @param {object} good - The static commodity data (from DB).
+     * @param {object} inventoryItem - The dynamic inventory item from gameState.
+     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
+     * @param {number} currentDay - The current game day.
+     * @JSDoc
+     */
+    checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+        // Calculate target stock to check 8% threshold
+        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        const [minAvail, maxAvail] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
+        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+        
+        let pressureForAdaptation = inventoryItem.marketPressure;
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+        
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+        
+        const depletionThreshold = targetStock * 0.08;
+        
+        // The amount purchased was the entire stock that was on hand
+        const depletionBuyQuantity = stockBeforeBuy; 
+
+        // (5a) Check if buy quantity was >= 8% target
+        // (5b) Check if 1 year has passed since last bonus
+        if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
+            inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
+            inventoryItem.depletionDay = currentDay;
+            inventoryItem.depletionBonusDay = currentDay; // Set cooldown
+        }
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
@@ -18031,31 +18102,13 @@ export class PlayerActionService {
         const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
         inventoryItem.quantity -= quantity;
 
+        // --- VIRTUAL WORKBENCH: REFACTOR ---
         // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            // Calculate target stock to check 8% threshold
-            const market = DB.MARKETS.find(m => m.id === state.currentLocationId);
-            const [minAvail, maxAvail] = good.canonicalAvailability;
-            const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
-            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-            
-            let pressureForAdaptation = inventoryItem.marketPressure;
-            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
-            
-            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
-            const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
-            
-            const depletionThreshold = targetStock * 0.08;
-            const depletionBuyQuantity = stockBeforeBuy; // The amount purchased was the entire stock that was on hand
-
-            // (5a) Check if buy quantity was >= 8% target
-            // (5b) Check if 1 year has passed since last bonus
-            if (depletionBuyQuantity >= depletionThreshold && state.day > (inventoryItem.depletionBonusDay + 365)) {
-                inventoryItem.isDepleted = true; // Set flag for MarketService
-                inventoryItem.depletionDay = state.day;
-                inventoryItem.depletionBonusDay = state.day; // Set cooldown
-            }
+            // Delegate depletion check to MarketService
+            this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
@@ -19868,9 +19921,9 @@ This document records the key architectural decisions made during the developmen
 
 * **Status**: Accepted (2025-10-30)
 * **Context**: The previous economic model used two separate forces to calculate price changes from player trades: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
-* **Decision**: The `pressureEffect` was removed from the price calculation entirely. The `availabilityEffect` (the core supply/demand force) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `availabilityEffect` is now delayed by 7 days, inheriting the delay logic from the old `pressureEffect`. The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
+* **Decision**: The immediate `availabilityEffect` (the force based on stock levels) was removed from the price calculation entirely. The `pressureEffect` (the force derived from `marketPressure` set by player trades) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `pressureEffect` is now delayed by 7 days (inheriting the delay logic from the old `availabilityEffect`). The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
 * **Consequences**:
-    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (supply change -> delayed price change).
+    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (trade -> delayed price change).
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
     * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
@@ -19880,14 +19933,14 @@ This document records the key architectural decisions made during the developmen
 ### ADR-006: Intel System Refactor to "Local Data Broker"
 
 * **Status**: Accepted (2025-11-04)
-* [cite_start]**Context**: The original `IntelScreen.js` was a static, non-interactive lore repository[cite: 3882]. [cite_start]A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel[cite: 3609, 3885].
-* [cite_start]**Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay)[cite: 3611]. [cite_start]A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'[cite: 3674, 3971]. [cite_start]A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell [cite: 3677, 3975-3977]. [cite_start]This implements the 'Local Data Broker' feature[cite: 3608].
+* **Context**: The original `IntelScreen.js` was a static, non-interactive lore repository. A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel.
+* **Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay). A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'. A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell. This implements the 'Local Data Broker' feature.
 * **Consequences**:
-    * [cite_start]**Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component [cite: 3990-3991].
-    * [cite_start]**Pro**: Creates a systemic, scalable, and recyclable gameplay loop [cite: 3617-3618, 3895].
-    * [cite_start]**Pro**: Provides a scalable, dynamic credit-sink based on player wealth [cite: 3623, 3905-3907].
-    * [cite_start]**Pro**: Creates a strong, non-arbitrary incentive for player travel[cite: 3620, 3901].
-    * [cite_start]**Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService` [cite: 3679-3680].
+    * **Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component.
+    * **Pro**: Creates a systemic, scalable, and recyclable gameplay loop.
+    * **Pro**: Provides a scalable, dynamic credit-sink based on player wealth.
+    * **Pro**: Creates a strong, non-arbitrary incentive for player travel.
+    * **Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService`.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -20228,26 +20281,27 @@ day: {number} - The day the stock was last refreshed.
 
 shipsForSale: {Array<string>} - A list of SHIP_IDs available for purchase.
 
-[cite_start]intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId[cite: 3685, 3995].
+intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId.
 
-[cite_start][LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location[cite: 3691, 4003].
+[LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location.
 
 {intelPacket}:
-[cite_start]id: {string} - Unique packet ID[cite: 3708, 4024].
-[cite_start]locationId: {string} - The location of the deal[cite: 3709, 4025].
-[cite_start]commodityId: {string} - The commodity of the deal[cite: 3710, 4026].
-[cite_start]discountPercent: {float} - The hidden discount (e.g., 0.40)[cite: 3711, 4027].
-[cite_start]durationDays: {integer} - The hidden duration[cite: 3712, 4028].
-[cite_start]valueMultiplier: {float} - Scaling factor for price calculation[cite: 3713, 4029].
-[cite_start]messageKey: {string} - Key to look up text in `intelContent.js`[cite: 3714, 4031].
-[cite_start]isPurchased: {boolean} - State flag, `false` by default[cite: 3715, 4032].
+id: {string} - Unique packet ID.
+locationId: {string} - The location of the deal.
+commodityId: {string} - The commodity of the deal.
+discountPercent: {float} - The hidden discount (e.g., 0.40).
+durationDays: {integer} - The hidden duration.
+valueMultiplier: {float} - Scaling factor for price calculation.
+messageKey: {string} - Key to look up text in `intelContent.js`.
+isPurchased: {boolean} - State flag, `false` by default.
 
-activeIntelDeal: {object | null} - Stores the single active, purchased deal. [cite_start]If `null`, the Intel Market is "unlocked" [cite: 3695-3697, 4009-4011].
+activeIntelDeal: {object | null} - Stores the single active, purchased deal. If `null`, the Intel Market is "unlocked".
 
-[cite_start]locationId: {string} - The location where the deal is active[cite: 3701, 4017].
-[cite_start]commodityId: {string} - The commodity affected by the deal[cite: 3702, 4018].
-[cite_start]overridePrice: {number} - The pre-calculated, locked-in price for the commodity[cite: 3703, 4019].
-[cite_start]expiryDay: {number} - The game-day this deal expires[cite: 3704, 4020].
+locationId: {string} - The location where the deal is active.
+commodityId: {string} - The commodity affected by the deal.
+overridePrice: {number} - The pre-calculated, locked-in price for the commodity.
+expiryDay: {number} - The game-day this deal expires.
+sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was sold.
 
 tutorials: {object} - State of the Tutorial Toast System (TTS).
 

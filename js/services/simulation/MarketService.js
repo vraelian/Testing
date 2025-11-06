@@ -335,6 +335,44 @@ export class MarketService {
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
+    // --- VIRTUAL WORKBENCH: NEW METHOD ---
+    /**
+     * Checks if a purchase triggers a market depletion event.
+     * This logic is called by PlayerActionService when a good's stock reaches <= 0.
+     * @param {object} good - The static commodity data (from DB).
+     * @param {object} inventoryItem - The dynamic inventory item from gameState.
+     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
+     * @param {number} currentDay - The current game day.
+     * @JSDoc
+     */
+    checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+        // Calculate target stock to check 8% threshold
+        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        const [minAvail, maxAvail] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
+        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+        
+        let pressureForAdaptation = inventoryItem.marketPressure;
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+        
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+        
+        const depletionThreshold = targetStock * 0.08;
+        
+        // The amount purchased was the entire stock that was on hand
+        const depletionBuyQuantity = stockBeforeBuy; 
+
+        // (5a) Check if buy quantity was >= 8% target
+        // (5b) Check if 1 year has passed since last bonus
+        if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
+            inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
+            inventoryItem.depletionDay = currentDay;
+            inventoryItem.depletionBonusDay = currentDay; // Set cooldown
+        }
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
      * @param {object} market - The market object from the database.

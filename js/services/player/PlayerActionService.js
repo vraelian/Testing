@@ -64,31 +64,13 @@ export class PlayerActionService {
         const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
         inventoryItem.quantity -= quantity;
 
+        // --- VIRTUAL WORKBENCH: REFACTOR ---
         // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            // Calculate target stock to check 8% threshold
-            const market = DB.MARKETS.find(m => m.id === state.currentLocationId);
-            const [minAvail, maxAvail] = good.canonicalAvailability;
-            const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
-            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-            
-            let pressureForAdaptation = inventoryItem.marketPressure;
-            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
-            
-            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
-            const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
-            
-            const depletionThreshold = targetStock * 0.08;
-            const depletionBuyQuantity = stockBeforeBuy; // The amount purchased was the entire stock that was on hand
-
-            // (5a) Check if buy quantity was >= 8% target
-            // (5b) Check if 1 year has passed since last bonus
-            if (depletionBuyQuantity >= depletionThreshold && state.day > (inventoryItem.depletionBonusDay + 365)) {
-                inventoryItem.isDepleted = true; // Set flag for MarketService
-                inventoryItem.depletionDay = state.day;
-                inventoryItem.depletionBonusDay = state.day; // Set cooldown
-            }
+            // Delegate depletion check to MarketService
+            this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         const playerInvItem = activeInventory[goodId];
         playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);

@@ -169,26 +169,27 @@ day: {number} - The day the stock was last refreshed.
 
 shipsForSale: {Array<string>} - A list of SHIP_IDs available for purchase.
 
-[cite_start]intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId[cite: 3685, 3995].
+intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId.
 
-[cite_start][LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location[cite: 3691, 4003].
+[LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location.
 
 {intelPacket}:
-[cite_start]id: {string} - Unique packet ID[cite: 3708, 4024].
-[cite_start]locationId: {string} - The location of the deal[cite: 3709, 4025].
-[cite_start]commodityId: {string} - The commodity of the deal[cite: 3710, 4026].
-[cite_start]discountPercent: {float} - The hidden discount (e.g., 0.40)[cite: 3711, 4027].
-[cite_start]durationDays: {integer} - The hidden duration[cite: 3712, 4028].
-[cite_start]valueMultiplier: {float} - Scaling factor for price calculation[cite: 3713, 4029].
-[cite_start]messageKey: {string} - Key to look up text in `intelContent.js`[cite: 3714, 4031].
-[cite_start]isPurchased: {boolean} - State flag, `false` by default[cite: 3715, 4032].
+id: {string} - Unique packet ID.
+locationId: {string} - The location of the deal.
+commodityId: {string} - The commodity of the deal.
+discountPercent: {float} - The hidden discount (e.g., 0.40).
+durationDays: {integer} - The hidden duration.
+valueMultiplier: {float} - Scaling factor for price calculation.
+messageKey: {string} - Key to look up text in `intelContent.js`.
+isPurchased: {boolean} - State flag, `false` by default.
 
-activeIntelDeal: {object | null} - Stores the single active, purchased deal. [cite_start]If `null`, the Intel Market is "unlocked" [cite: 3695-3697, 4009-4011].
+activeIntelDeal: {object | null} - Stores the single active, purchased deal. If `null`, the Intel Market is "unlocked".
 
-[cite_start]locationId: {string} - The location where the deal is active[cite: 3701, 4017].
-[cite_start]commodityId: {string} - The commodity affected by the deal[cite: 3702, 4018].
-[cite_start]overridePrice: {number} - The pre-calculated, locked-in price for the commodity[cite: 3703, 4019].
-[cite_start]expiryDay: {number} - The game-day this deal expires[cite: 3704, 4020].
+locationId: {string} - The location where the deal is active.
+commodityId: {string} - The commodity affected by the deal.
+overridePrice: {number} - The pre-calculated, locked-in price for the commodity.
+expiryDay: {number} - The game-day this deal expires.
+sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was sold.
 
 tutorials: {object} - State of the Tutorial Toast System (TTS).
 

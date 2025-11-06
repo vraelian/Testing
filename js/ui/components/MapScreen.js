@@ -15,27 +15,57 @@ export function renderMapScreen() {
 }
 
 /**
- * Initializes and renders the D3 map within the #map-container element.
+ * Initializes the D3 map. It checks the container width. If 0, it uses a
+ * ResizeObserver to wait for the browser to finalize layout before drawing.
  * @param {import('../../services/UIManager.js').UIManager} uiManager - The UIManager instance, passed for modal interactivity.
+ * @JSDoc
  */
 export function initMap(uiManager) {
     const container = d3.select("#map-container");
-    if (!container.node() || !container.select("svg").empty()) {
-        console.warn("Map container not found or map already initialized.");
+
+    if (!container.node()) {
+        console.warn("Map container not found.");
         return;
     }
-    
-    // Check if clientWidth is available, otherwise wait briefly
+    if (!container.select("svg").empty()) {
+        console.warn("Map already initialized.");
+        return;
+    }
+
     let containerWidth = container.node().clientWidth;
-    if (containerWidth <= 0) {
-        console.warn("Map container width not available yet. Retrying initialization shortly.");
-        // If width isn't ready (e.g., due to CSS loading or layout shifts),
-        // try again after a short delay. Avoid infinite loops.
-        setTimeout(() => initMap(uiManager), 100); 
-        return;
+
+    if (containerWidth > 0) {
+        // Width is already available, draw immediately.
+        _drawMap(container, containerWidth, uiManager);
+    } else {
+        // Width is 0, setup ResizeObserver to wait for layout.
+        console.warn("Map container width is 0. Using ResizeObserver to wait for layout.");
+        const observer = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.contentRect.width > 0) {
+                    // We have a valid width, draw the map.
+                    _drawMap(container, entry.contentRect.width, uiManager);
+                    // Stop observing, we're done.
+                    observer.disconnect();
+                }
+            }
+        });
+
+        // Start observing the container.
+        observer.observe(container.node());
     }
+}
 
-
+/**
+ * Contains the actual D3.js logic to draw the map.
+ * This is called by initMap() either immediately or by the ResizeObserver callback.
+ * @param {d3.Selection} container - The d3-selected #map-container.
+ * @param {number} containerWidth - The finalized width of the container.
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
+ * @private
+ * @JSDoc
+ */
+function _drawMap(container, containerWidth, uiManager) {
     const svg = container.append("svg")
         .attr("id", "map-svg")
         .attr("width", "100%"); 

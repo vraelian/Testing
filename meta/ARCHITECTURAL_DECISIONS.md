@@ -62,9 +62,9 @@ This document records the key architectural decisions made during the developmen
 
 * **Status**: Accepted (2025-10-30)
 * **Context**: The previous economic model used two separate forces to calculate price changes from player trades: an immediate `availabilityEffect` (from stock changes) and a delayed `pressureEffect` (a direct player penalty). This created a "double-dip," was logically redundant, and hard to tune.
-* **Decision**: The `pressureEffect` was removed from the price calculation entirely. The `availabilityEffect` (the core supply/demand force) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `availabilityEffect` is now delayed by 7 days, inheriting the delay logic from the old `pressureEffect`. The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
+* **Decision**: The immediate `availabilityEffect` (the force based on stock levels) was removed from the price calculation entirely. The `pressureEffect` (the force derived from `marketPressure` set by player trades) is now the *sole* driver of player-initiated price changes. To prevent same-day abuse, this `pressureEffect` is now delayed by 7 days (inheriting the delay logic from the old `availabilityEffect`). The strength of this effect was also tuned to `0.50` to make it a viable core gameplay loop.
 * **Consequences**:
-    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (supply change -> delayed price change).
+    * **Pro**: Simplifies the economic model to a single, clean cause-and-effect (trade -> delayed price change).
     * **Pro**: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
     * **Pro**: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
     * **Pro**: The `marketPressure` variable is retained for its non-price-related logic (influencing `targetStock` in replenishment), maintaining system integrity.
@@ -74,11 +74,11 @@ This document records the key architectural decisions made during the developmen
 ### ADR-006: Intel System Refactor to "Local Data Broker"
 
 * **Status**: Accepted (2025-11-04)
-* [cite_start]**Context**: The original `IntelScreen.js` was a static, non-interactive lore repository[cite: 3882]. [cite_start]A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel[cite: 3609, 3885].
-* [cite_start]**Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay)[cite: 3611]. [cite_start]A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'[cite: 3674, 3971]. [cite_start]A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell [cite: 3677, 3975-3977]. [cite_start]This implements the 'Local Data Broker' feature[cite: 3608].
+* **Context**: The original `IntelScreen.js` was a static, non-interactive lore repository. A new, recyclable gameplay loop and credit-sink was needed to drive player engagement and travel.
+* **Decision**: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay). A new `IntelService` was created to procedurally generate, price, and manage 'Intel Packets'. A dedicated `IntelMarketRenderer` was created to dynamically build the 'shop' UI, separating dynamic content from the static `IntelScreen` shell. This implements the 'Local Data Broker' feature.
 * **Consequences**:
-    * [cite_start]**Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component [cite: 3990-3991].
-    * [cite_start]**Pro**: Creates a systemic, scalable, and recyclable gameplay loop [cite: 3617-3618, 3895].
-    * [cite_start]**Pro**: Provides a scalable, dynamic credit-sink based on player wealth [cite: 3623, 3905-3907].
-    * [cite_start]**Pro**: Creates a strong, non-arbitrary incentive for player travel[cite: 3620, 3901].
-    * [cite_start]**Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService` [cite: 3679-3680].
+    * **Pro**: Separates logic (`IntelService`) from static presentation (`IntelScreen`) and dynamic presentation (`IntelMarketRenderer`), avoiding a monolithic component.
+    * **Pro**: Creates a systemic, scalable, and recyclable gameplay loop.
+    * **Pro**: Provides a scalable, dynamic credit-sink based on player wealth.
+    * **Pro**: Creates a strong, non-arbitrary incentive for player travel.
+    * **Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService`.
