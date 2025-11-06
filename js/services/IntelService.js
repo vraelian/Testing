@@ -62,16 +62,16 @@ export class IntelService {
             // GDD: Apply randomization to decide if a location gets new intel
             // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
-                // --- VIRTUAL WORKBENCH (A) ---
+                // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
                 // Get keys already in use by purchased packets at this location
-                const existingKeys = newIntelMarket[locationId].map(p => p.messageKey);
+                const existingKeys = newIntelMarket[locationId].map(p => p.messageKey).filter(Boolean);
                 // Track keys used in this specific batch
                 const newKeysInBatch = new Set();
                 // --- END VIRTUAL WORKBENCH ---
 
                 const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
-                    // --- VIRTUAL WORKBENCH (A) ---
+                    // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
                     // Combine persistent keys and new-batch keys
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
                     // Pass the sale location ID and unavailable keys
@@ -80,7 +80,9 @@ export class IntelService {
 
                     if (newPacket) {
                         newIntelMarket[locationId].push(newPacket);
-                        newKeysInBatch.add(newPacket.messageKey); // (A)
+                        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
+                        newKeysInBatch.add(newPacket.messageKey);
+                        // --- END VIRTUAL WORKBENCH ---
                     }
                 }
             }
@@ -110,13 +112,20 @@ export class IntelService {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH (C) ---
-        // Ensure the DEAL location is different from the SALE location.
+        // --- VIRTUAL WORKBENCH (Phase 2 Refactor - Unlocked Location Check) ---
+        // Get the locations the player has actually visited and unlocked.
+        const playerUnlockedLocations = state.player.unlockedLocationIds || [];
+        
+        // Ensure the DEAL location is different from the SALE location
+        // AND the player has unlocked the DEAL location.
         const allLocationIds = this.db.MARKETS.map(m => m.id);
-        const possibleDealLocations = allLocationIds.filter(id => id !== saleLocationId);
+        const possibleDealLocations = allLocationIds.filter(id => 
+            id !== saleLocationId && playerUnlockedLocations.includes(id)
+        );
+        
         if (possibleDealLocations.length === 0) {
-             this.logger.warn('IntelService', 'Cannot create packet: No other locations available for a deal.');
-             return null; // Should not happen in normal gameplay
+             this.logger.info.system('IntelService', `Cannot create packet: No *unlocked* deal locations available (excluding ${saleLocationId}).`);
+             return null;
         }
         const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
         // --- END VIRTUAL WORKBENCH ---
@@ -127,7 +136,7 @@ export class IntelService {
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
-        // --- VIRTUAL WORKBENCH (A) ---
+        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
         // Logic to prevent duplicate message keys
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
@@ -154,7 +163,7 @@ export class IntelService {
             discountPercent: parseFloat(discountPercent.toFixed(2)),
             durationDays: durationDays, // Note: This is now just a base for pricing, not for expiration.
             valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
-            messageKey: messageKey,
+            messageKey: messageKey, // Reverted from messageIndex
             isPurchased: false,
         };
 
@@ -234,12 +243,12 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // Apply the 1.9x multiplier
+        // Apply the 2.8x multiplier
         const newDurationDays = Math.ceil(travelTime * 1.9);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
         // Log the new dynamic calculation
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 1.9). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
 
         // --- END MODIFICATION ---
 

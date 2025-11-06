@@ -367,7 +367,7 @@ export class UIManager {
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
-                        <span class="status-bar-label">H</span>
+                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
@@ -1906,7 +1906,7 @@ export class UIManager {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
-             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
 
@@ -2142,16 +2142,28 @@ export class UIManager {
      */
     _findIntelPacket(packetId, locationId) {
         const state = this.lastKnownState;
-        if (!state.intelMarket[locationId]) {
-            this.logger.error('UIManager', `_findIntelPacket: No intelMarket for location ${locationId}`);
-            return null;
+        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
+        // A purchased packet might not be at the current locationId.
+        // We must search all locations if it's a 'show_intel_details' call.
+        if (state.intelMarket[locationId]) {
+            const packet = state.intelMarket[locationId].find(p => p.id === packetId);
+            if (packet) return packet;
         }
-        const packet = state.intelMarket[locationId].find(p => p.id === packetId);
-        if (!packet) {
-            this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} at ${locationId}`);
-            return null;
+
+        // Fallback: Search all locations for the packet.
+        // This is crucial for 'show_intel_details' of a purchased packet
+        // when viewed from a different location.
+        for (const locId of Object.keys(state.intelMarket)) {
+            const packet = state.intelMarket[locId].find(p => p.id === packetId);
+            if (packet) {
+                // this.logger.info('UIManager', `_findIntelPacket: Found packet ${packetId} at fallback location ${locId}`);
+                return packet;
+            }
         }
-        return packet;
+        // --- END VIRTUAL WORKBENCH ---
+
+        this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} anywhere.`);
+        return null;
     }
 
     /**
@@ -2159,11 +2171,12 @@ export class UIManager {
      * @param {string} template - The template string from INTEL_CONTENT.
      * @param {object} packet - The intelPacket object.
      * @param {number} price - The calculated price.
+     * @param {boolean} isNewFormat - Flag to determine which duration placeholder to use.
      * @returns {string} The formatted, player-facing string.
      * @private
      * @JSDoc
      */
-    _formatIntelDetails(template, packet, price) {
+    _formatIntelDetails(template, packet, price, isNewFormat) {
         // --- VIRTUAL WORKBENCH (C) ---
         // FIX: The "details" modal must show the DEAL location, not the SALE location.
         // `packet.locationId` is where it's sold. `packet.dealLocationId` is where the deal is.
@@ -2172,14 +2185,16 @@ export class UIManager {
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         
-        // --- VIRTUAL WORKBENCH (C) ---
-        // Re-format price string to include span for styling, per user request.
-        const priceStr = `<span class="credits-text-pulsing">⌬ ${price.toLocaleString()}</span>`;
+        // --- VIRTUAL WORKBENCH (Revert Logic) ---
+        // The price for the placeholder is the *price paid*, not a recalculation.
+        // This is passed as `price`.
+        const priceStr = `${price.toLocaleString()} ⌬`;
         // --- END VIRTUAL WORKBENCH ---
 
-        // --- VIRTUAL WORKBENCH (PHASE 4 FIX) ---
-        const currentDay = this.intelService.getCurrentDay();
+
+        // --- VIRTUAL WORKBENCH (Phase 4/5 Refactor) ---
         // Use packet.expiryDay (added in Phase 1)
+        const currentDay = this.intelService.getCurrentDay();
         const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
         
         let durationStr;
@@ -2190,17 +2205,21 @@ export class UIManager {
         } else {
             durationStr = `${remainingDays} days`;
         }
-        // --- END VIRTUAL WORKBENCH ---
-
-        return template
+        
+        let result = template
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr)
-            // --- VIRTUAL WORKBENCH: BUG FIX ---
-            // The regex now correctly replaces the standalone placeholder.
-            .replace(/\[durationDays\]/g, durationStr)
-            // --- END VIRTUAL WORKBENCH ---
             .replace(/\[⌬ credit price\]/g, priceStr);
+
+        // --- VIRTUAL WORKBENCH (Revert Logic) ---
+        // This logic handles both old save-game packets ("... [durationDays] days")
+        // and new packets ("... in [durationDays].")
+        result = result.replace(/\[durationDays\]\s*days/g, durationStr); // Handles old format
+        result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
+        // --- END VIRTUAL WORKBENCH ---
+        
+        return result;
     }
 
     /**
@@ -2219,8 +2238,30 @@ export class UIManager {
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a distant market';
         // --- END VIRTUAL WORKBENCH ---
         
-        const vagueText = (INTEL_CONTENT[packet.messageKey]?.sample || "Intel available at [location name].")
-            .replace('[location name]', locationName);
+
+        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
+        // Add save-game compatibility for old messageKey packets
+        let msg;
+        if (packet.messageKey) {
+            // New universal system: Use messageKey
+            msg = INTEL_CONTENT[packet.messageKey];
+        } else if (packet.messageIndex !== undefined) {
+            // Old location-based system: Use messageIndex (Save Game Compat)
+            let msgArray = INTEL_CONTENT[packet.locationId]; // Use SALE location for message
+            if (packet.fallbackMsg) { // Handle fallback packet
+                msgArray = INTEL_CONTENT[packet.fallbackMsgSource];
+            }
+            if (!msgArray) {
+                this.logger.warn('UIManager', `SaveCompat: No message array for ${packet.locationId}, using fallback.`);
+                // This will likely fail as INTEL_CONTENT is no longer an array, but it's the best we can do.
+                msgArray = INTEL_CONTENT["CORP_FAILURE_01"]; 
+            }
+            msg = msgArray ? msgArray[packet.messageIndex] : null;
+        }
+
+        const vagueText = (msg?.sample || "Intel available at [location name].")
+            .replace('[location name]', locationName); // Always replace with DEAL location
+        // --- END VIRTUAL WORKBENCH ---
         
         const priceNum = parseInt(price, 10);
         const purchaseButtonHTML = `
@@ -2258,7 +2299,10 @@ export class UIManager {
             // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
+                // --- VIRTUAL WORKBENCH (Revert) ---
+                // Pass the price *paid* (priceNum) to the details modal
                 this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
+                // --- END VIRTUAL WORKBENCH ---
             }
 
             // --- VIRTUAL WORKBENCH (B) ---
@@ -2297,7 +2341,10 @@ export class UIManager {
         // This is okay, as it's just for display and not for a transaction.
         const price = this.intelService.calculateIntelPrice(packet);
 
+        // --- VIRTUAL WORKBENCH (Revert) ---
+        // Pass the re-calculated price, as the price paid isn't stored on the button.
         this._showIntelDetailsModal(packet, price, locationId);
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -2309,8 +2356,32 @@ export class UIManager {
      * @JSDoc
      */
     _showIntelDetailsModal(packet, price, locationId) {
-        const detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
-        const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price);
+        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
+        // Add save-game compatibility logic
+        let detailsTemplate;
+        let isNewFormat = false; // Flag for durationDays logic
+
+        if (packet.messageKey) {
+            // New universal system: Use messageKey
+            detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
+            isNewFormat = true; // New packets use the new duration placeholder
+        } else if (packet.messageIndex !== undefined) {
+            // Old location-based system: Use messageIndex (Save Game Compat)
+            this.logger.warn('UIManager', `SaveCompat: Found old packet with messageIndex ${packet.messageIndex}`);
+            // This packet is from a save file that used the location-based array.
+            // We can't recover it, so show a generic message.
+            detailsTemplate = "Details for this expired intel packet are no longer available in the new system.";
+        } else {
+            // This handles the *original* 2-message system, if a save is that old.
+            const originalContent = {
+                "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
+                "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
+            };
+            detailsTemplate = originalContent[packet.messageKey]?.details || "Packet is corrupted. No message data found.";
+        }
+
+        const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price, isNewFormat);
+        // --- END VIRTUAL WORKBENCH ---
 
         this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
             theme: locationId, // GDD: Apply location-specific theme
