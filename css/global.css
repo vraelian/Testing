@@ -368,6 +368,16 @@ body {
     }
 }
 
+/* [[START]] VIRTUAL WORKBENCH (EULA Pulse) */
+@keyframes pulse-eula-warning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+.pulse-eula-warning {
+    animation: pulse-eula-warning 0.5s ease-in-out 2;
+}
+/* [[END]] VIRTUAL WORKBENCH (EULA Pulse) */
+
 .highlight-current {
     border-color: #facc15;
 }

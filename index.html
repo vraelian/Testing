@@ -3,7 +3,6 @@
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
         // This function will catch any uncaught JavaScript error.
@@ -11,10 +10,10 @@
         
         // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
+     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        // This game has been developed and designed by Devon P. Casey in the year 2025. I have worked hard on this design, do not steal my work. I will studiously persue litigation and justice in the event of IP theft. There are no rights granted by the usage of this software, and I reserve all rights and IP protections. You MAY NOT reproduce this work, copy this work, or alter this work for any reason, commercial or otherwise. I DO NOT give permission in any capacity to do anyting with this software other than to 'play it'. Enjoy. 
-
+        
         // Prevent the browser's default error handling.
         return true;
       };
@@ -22,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 31.60</title>
+    <title>Orbital Trading 31.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -61,10 +60,16 @@
                 <button class="btn btn-header w-full" disabled="">Options</button>
             </div>
     
-        </div>
+            <div id="eula-container" class="mt-8 text-center text-gray-400">
+                <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
+                <label for="eula-checkbox" class="ml-2 align-middle">
+                    I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
+                </label>
+            </div>
+            </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 31.60</p>
+            <p>Version 31.70</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -80,6 +85,7 @@
         <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
+    
                 <div id="news-ticker-bar"></div> <div id="sub-nav-bar"></div>
             </header>
             <div id="sticky-bar"></div>
@@ -88,6 +94,7 @@
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
                 <div id="map-screen" class="screen"></div>
+  
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
                
@@ -120,6 +127,7 @@
              <div class="modal-content">
                 <div id="map-modal-content-container">
                 </div>
+     
              </div>
         </div>
     </main>
@@ -214,6 +222,13 @@
             <div id="lore-modal-content" class="text-gray-300">
                 </div>
         </div>
+    </div>
+
+    <div id="eula-modal" class="modal-backdrop hidden">
+       <div class="modal-content">
+           <div id="eula-modal-content" class="text-gray-300">
+               </div>
+       </div>
     </div>
     <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
 

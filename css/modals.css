@@ -332,6 +332,25 @@
 }
 /* --- [[END]] LORE MODAL --- */
 
+/* --- [[START]] VIRTUAL WORKBENCH (EULA Modal) --- */
+#eula-modal .modal-content {
+    width: 600px; /* Wider than default */
+    max-width: 90vw;
+    height: 70vh; /* Taller */
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+#eula-modal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem; /* Space for scrollbar */
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+/* --- [[END]] VIRTUAL WORKBENCH (EULA Modal) --- */
+
 
 /* --- [[START]] GENERIC THEMED GLOW --- */
 @keyframes themed-glow-animation {

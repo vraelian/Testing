@@ -163,6 +163,13 @@ export class ActionClickHandler {
             case 'close-map-modal':
                 this.uiManager.hideMapDetailModal();
                 break;
+            
+            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
+            case 'show_eula_modal':
+                e.preventDefault();
+                this.uiManager.showEulaModal();
+                break;
+            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
             // --- Mission Actions ---
             case 'accept-mission':

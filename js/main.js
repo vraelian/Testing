@@ -36,6 +36,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; // Guard for development features.
 
+    // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+    
+    // 1. Instantiate UI Manager and Logger early
+    // These are needed to show the EULA modal *before* the game starts.
+    const uiManager = new UIManager(Logger);
+
+    const eulaCheckbox = document.getElementById('eula-checkbox');
+    const eulaContainer = document.getElementById('eula-container');
+
+    // 2. Add standalone listener for EULA link on splash screen
+    if (splashScreen) {
+        splashScreen.addEventListener('click', (e) => {
+            const actionTarget = e.target.closest('[data-action]');
+            if (actionTarget) {
+                const action = actionTarget.dataset.action;
+                if (action === 'show_eula_modal') {
+                    e.preventDefault();
+                    uiManager.showEulaModal();
+                }
+            }
+        });
+    }
+
+    // 3. Add cleanup listener for the pulse animation
+    if (eulaContainer) {
+        eulaContainer.addEventListener('animationend', () => {
+            eulaContainer.classList.remove('pulse-eula-warning');
+        });
+    }
+
+    // 4. Create check function that wraps the start logic
+    const checkEulaAndStart = (startFn) => {
+        if (!eulaCheckbox || !eulaContainer) {
+            console.error("EULA elements not found!");
+            return;
+        }
+
+        if (!eulaCheckbox.checked) {
+            // Trigger pulse animation
+            eulaContainer.classList.remove('pulse-eula-warning');
+            // Timeout ensures the class removal is processed, allowing the animation to re-trigger
+            setTimeout(() => {
+                eulaContainer.classList.add('pulse-eula-warning');
+            }, 10);
+            
+            return; // Stop the function
+        }
+
+        // EULA is checked, proceed with game start
+        splashScreen.classList.add('splash-screen-hiding');
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+            startFn();
+        }, { once: true });
+    };
+    // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+
     // Set the app height on initial load and whenever the viewport changes.
     // setAppHeight(); // MODIFIED: Disabled
     
@@ -52,41 +109,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
-        // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('splash-screen-hiding');
-        splashScreen.addEventListener('animationend', () => {
-            splashScreen.style.display = 'none';
-            startGame();
-        }, { once: true });
-
-    }, { once: true });
+        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+        // 5. Pass the original startGame function as a callback, along with pre-built uiManager
+        checkEulaAndStart(() => startGame(false, uiManager, Logger));
+        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+    }, { once: false }); // Set once to false to allow re-checking
     
     debugStartButton.addEventListener('click', () => {
-        // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('splash-screen-hiding');
-        splashScreen.addEventListener('animationend', () => {
-            splashScreen.style.display = 'none';
-            startGame(true); // Pass flag for simple start
-        }, { once: true });
-    });
+        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+        // 5. Pass the debug start function as a callback, along with pre-built uiManager
+        checkEulaAndStart(() => startGame(true, uiManager, Logger));
+        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+    }, { once: false }); // Set once to false to allow re-checking
 
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
+     * @param {boolean} isSimpleStart
+     * @param {UIManager} uiManager - The pre-instantiated UIManager.
+     * @param {Logger} logger - The Logger instance.
      */
-    function startGame(isSimpleStart = false) {
+    function startGame(isSimpleStart = false, uiManager, logger) {
         // --- Service Instantiation ---
         const gameState = new GameState();
-        const uiManager = new UIManager(Logger);
+        // uiManager and logger are now passed in, no need to instantiate.
         const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
-        const missionService = new MissionService(gameState, uiManager, Logger);
+        const missionService = new MissionService(gameState, uiManager, logger);
         // MODIFIED: Pass newsTickerService to SimulationService
-        const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
+        const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
+        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, logger);
         let debugService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
+            debugService = new DebugService(gameState, simulationService, uiManager, logger);
             debugService.init();
             // --- [[START]] TUTORIAL TUNER WIRING ---
             uiManager.setDebugService(debugService);
@@ -101,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setMissionService(missionService);
         // REMOVED: TimeService injection (now handled by SimService)
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings
         uiManager.setEventManager(eventManager);
         

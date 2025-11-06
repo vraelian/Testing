@@ -4,7 +4,6 @@
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
         // This function will catch any uncaught JavaScript error.
@@ -12,6 +11,7 @@
         
         // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
+     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
         
@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 31.60</title>
+    <title>Orbital Trading 31.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -61,10 +61,16 @@
                 <button class="btn btn-header w-full" disabled="">Options</button>
             </div>
     
-        </div>
+            <div id="eula-container" class="mt-8 text-center text-gray-400">
+                <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
+                <label for="eula-checkbox" class="ml-2 align-middle">
+                    I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
+                </label>
+            </div>
+            </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 31.60</p>
+            <p>Version 31.70</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -80,6 +86,7 @@
         <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
+    
                 <div id="news-ticker-bar"></div> <div id="sub-nav-bar"></div>
             </header>
             <div id="sticky-bar"></div>
@@ -88,6 +95,7 @@
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
                 <div id="map-screen" class="screen"></div>
+  
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
                
@@ -120,6 +128,7 @@
              <div class="modal-content">
                 <div id="map-modal-content-container">
                 </div>
+     
              </div>
         </div>
     </main>
@@ -214,6 +223,13 @@
             <div id="lore-modal-content" class="text-gray-300">
                 </div>
         </div>
+    </div>
+
+    <div id="eula-modal" class="modal-backdrop hidden">
+       <div class="modal-content">
+           <div id="eula-modal-content" class="text-gray-300">
+               </div>
+       </div>
     </div>
     <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
 
@@ -1570,6 +1586,16 @@ body {
     }
 }
 
+/* [[START]] VIRTUAL WORKBENCH (EULA Pulse) */
+@keyframes pulse-eula-warning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+.pulse-eula-warning {
+    animation: pulse-eula-warning 0.5s ease-in-out 2;
+}
+/* [[END]] VIRTUAL WORKBENCH (EULA Pulse) */
+
 .highlight-current {
     border-color: #facc15;
 }
@@ -2215,6 +2241,25 @@ body {
     line-height: 1.6;
 }
 /* --- [[END]] LORE MODAL --- */
+
+/* --- [[START]] VIRTUAL WORKBENCH (EULA Modal) --- */
+#eula-modal .modal-content {
+    width: 600px; /* Wider than default */
+    max-width: 90vw;
+    height: 70vh; /* Taller */
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+#eula-modal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem; /* Space for scrollbar */
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+/* --- [[END]] VIRTUAL WORKBENCH (EULA Modal) --- */
 
 
 /* --- [[START]] GENERIC THEMED GLOW --- */
@@ -5814,6 +5859,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; // Guard for development features.
 
+    // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+    
+    // 1. Instantiate UI Manager and Logger early
+    // These are needed to show the EULA modal *before* the game starts.
+    const uiManager = new UIManager(Logger);
+
+    const eulaCheckbox = document.getElementById('eula-checkbox');
+    const eulaContainer = document.getElementById('eula-container');
+
+    // 2. Add standalone listener for EULA link on splash screen
+    if (splashScreen) {
+        splashScreen.addEventListener('click', (e) => {
+            const actionTarget = e.target.closest('[data-action]');
+            if (actionTarget) {
+                const action = actionTarget.dataset.action;
+                if (action === 'show_eula_modal') {
+                    e.preventDefault();
+                    uiManager.showEulaModal();
+                }
+            }
+        });
+    }
+
+    // 3. Add cleanup listener for the pulse animation
+    if (eulaContainer) {
+        eulaContainer.addEventListener('animationend', () => {
+            eulaContainer.classList.remove('pulse-eula-warning');
+        });
+    }
+
+    // 4. Create check function that wraps the start logic
+    const checkEulaAndStart = (startFn) => {
+        if (!eulaCheckbox || !eulaContainer) {
+            console.error("EULA elements not found!");
+            return;
+        }
+
+        if (!eulaCheckbox.checked) {
+            // Trigger pulse animation
+            eulaContainer.classList.remove('pulse-eula-warning');
+            // Timeout ensures the class removal is processed, allowing the animation to re-trigger
+            setTimeout(() => {
+                eulaContainer.classList.add('pulse-eula-warning');
+            }, 10);
+            
+            return; // Stop the function
+        }
+
+        // EULA is checked, proceed with game start
+        splashScreen.classList.add('splash-screen-hiding');
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+            startFn();
+        }, { once: true });
+    };
+    // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+
     // Set the app height on initial load and whenever the viewport changes.
     // setAppHeight(); // MODIFIED: Disabled
     
@@ -5830,41 +5932,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {
-        // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('splash-screen-hiding');
-        splashScreen.addEventListener('animationend', () => {
-            splashScreen.style.display = 'none';
-            startGame();
-        }, { once: true });
-
-    }, { once: true });
+        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+        // 5. Pass the original startGame function as a callback, along with pre-built uiManager
+        checkEulaAndStart(() => startGame(false, uiManager, Logger));
+        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+    }, { once: false }); // Set once to false to allow re-checking
     
     debugStartButton.addEventListener('click', () => {
-        // Fade out the splash screen and then start the game logic.
-        splashScreen.classList.add('splash-screen-hiding');
-        splashScreen.addEventListener('animationend', () => {
-            splashScreen.style.display = 'none';
-            startGame(true); // Pass flag for simple start
-        }, { once: true });
-    });
+        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
+        // 5. Pass the debug start function as a callback, along with pre-built uiManager
+        checkEulaAndStart(() => startGame(true, uiManager, Logger));
+        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
+    }, { once: false }); // Set once to false to allow re-checking
 
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
+     * @param {boolean} isSimpleStart
+     * @param {UIManager} uiManager - The pre-instantiated UIManager.
+     * @param {Logger} logger - The Logger instance.
      */
-    function startGame(isSimpleStart = false) {
+    function startGame(isSimpleStart = false, uiManager, logger) {
         // --- Service Instantiation ---
         const gameState = new GameState();
-        const uiManager = new UIManager(Logger);
+        // uiManager and logger are now passed in, no need to instantiate.
         const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
-        const missionService = new MissionService(gameState, uiManager, Logger);
+        const missionService = new MissionService(gameState, uiManager, logger);
         // MODIFIED: Pass newsTickerService to SimulationService
-        const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, Logger);
+        const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
+        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, logger);
         let debugService = null;
 
         if (DEV_MODE) {
-            debugService = new DebugService(gameState, simulationService, uiManager, Logger);
+            debugService = new DebugService(gameState, simulationService, uiManager, logger);
             debugService.init();
             // --- [[START]] TUTORIAL TUNER WIRING ---
             uiManager.setDebugService(debugService);
@@ -5879,7 +5979,7 @@ document.addEventListener('DOMContentLoaded', () => {
         simulationService.setMissionService(missionService);
         // REMOVED: TimeService injection (now handled by SimService)
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, Logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
         // MODIFIED: Inject EventManager into UIManager for post-render bindings
         uiManager.setEventManager(eventManager);
         
@@ -7162,129 +7262,129 @@ export const PURCHASED_INTEL_MESSAGES = [
  * - [commodity name]
  * - [discount amount %]
  * - [durationDays]
- * - [⌬ credit price]
+ * - [credit price]
  */
 
 export const INTEL_CONTENT = {
     "CORP_FAILURE_01": {
         "sample": "We've flagged a minor subsidiary going into receivership.",
-        "details": "A parent corp is cutting its losses and dissolving a failed venture. They are dumping all assets to avoid Guild fees.<br><br>This has created a temporary surplus of [commodity name] at [location name] for [discount amount %] off market value.<br><br>The liquidation is scheduled to be finalized by creditors in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A parent corp is cutting its losses and dissolving a failed venture that was flagged for going into receivership. They are dumping all assets to avoid Guild fees.<br><br>This has created a temporary surplus of [commodity name] at [location name] for [discount amount %] off market value.<br><br>The liquidation is scheduled to be finalized by creditors in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "CORP_FAILURE_02": {
         "sample": "A corporate partner's trade charter has just been revoked.",
-        "details": "The corporate state has seized their assets and is holding a no-notice auction to pay their local debts.<br><br>We've secured a manifest: [commodity name] is available at [location name] for [discount amount %] below its valuation.<br><br>This is a one-time, unlisted auction ending in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "Following a trade charter revocation, the corporate state has seized a partner's assets and is holding a no-notice auction to pay their local debts.<br><br>We've secured a manifest: [commodity name] is available at [location name] for [discount amount %] below its valuation.<br><br>This is a one-time, unlisted auction ending in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "CORP_FAILURE_03": {
         "sample": "Our analysts project a high-profile bankruptcy announcement is imminent.",
-        "details": "The firm is in a death spiral and has begun a shadow liquidation to pay its key investors before the public announcement.<br><br>This means a large cache of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The firm's assets will be frozen by the Guild in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A firm our analysts flagged for imminent bankruptcy is in a death spiral and has begun a shadow liquidation to pay its key investors before the public announcement.<br><br>This means a large cache of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The firm's assets will be frozen by the Guild in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "CORP_FAILURE_04": {
         "sample": "A corporate buyout we were tracking has just turned hostile.",
-        "details": "The losing entity is being stripped by the new owners. All non-essential inventories are being sold off immediately.<br><br>They are clearing out all [commodity name] at [location name] for [discount amount %] below market price.<br><br>This fire sale will be over once the transition is complete in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A corporate buyout has turned hostile, and the losing entity is being stripped by the new owners. All non-essential inventories are being sold off immediately.<br><br>They are clearing out all [commodity name] at [location name] for [discount amount %] below market price.<br><br>This fire sale will be over once the transition is complete in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "CORP_FAILURE_05": {
         "sample": "We've confirmed a local governor has seized a corporation's assets.",
-        "details": "The governor is using a legal loophole to auction all seized goods for a public works fund, and they need it done fast.<br><br>This has resulted in a surplus of [commodity name] at [location name], now available for [discount amount %] off.<br><br>This asset seizure auction will close in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A local governor has seized a corporation's assets and is using a legal loophole to auction all seized goods for a public works fund, and they need it done fast.<br><br>This has resulted in a surplus of [commodity name] at [location name], now available for [discount amount %] off.<br><br>This asset seizure auction will close in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "LOGISTICS_FAILURE_01": {
         "sample": "Tracking a freighter captain who just paid a massive Guild fine.",
-        "details": "The captain was caught with an improper manifest and is now selling cargo at a loss to cover the fine and port fees.<br><br>Their entire hold of [commodity name] is being sold at [location name] for [discount amount %] off.<br><br>The ship is scheduled to be released and will depart in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A freighter captain, having just paid a massive Guild fine for an improper manifest, is now selling cargo at a loss to cover port fees.<br><br>Their entire hold of [commodity name] is being sold at [location name] for [discount amount %] off.<br><br>The ship is scheduled to be released and will depart in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "LOGISTICS_FAILURE_02": {
         "sample": "We've confirmed a long-haul freighter has suffered critical damage.",
-        "details": "The ship is too damaged to complete its journey. The captain is dumping their entire cargo hold to pay for emergency repairs.<br><br>This has created a buyer's market for [commodity name] at [location name], with goods going for [discount amount %] off.<br><br>The repairs are estimated to be complete in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "We've confirmed a long-haul freighter is too damaged to complete its journey. The captain is dumping their entire cargo hold to pay for emergency repairs.<br><br>This has created a buyer's market for [commodity name] at [location name], with goods going for [discount amount %] off.<br><br>The repairs are estimated to be complete in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "LOGISTICS_FAILURE_03": {
         "sample": "A major port is experiencing a catastrophic logistics backlog.",
-        "details": "A system failure has left dozens of ships unable to dock. Captains are panic-selling cargo at a discount to any ship that can take it.<br><br>A significant surplus of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The port authority expects to have the system back online in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A major port is experiencing a catastrophic logistics backlog due to a system failure, leaving dozens of ships unable to dock. Captains are panic-selling cargo at a discount.<br><br>A significant surplus of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The port authority expects to have the system back online in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "LOGISTICS_FAILURE_04": {
         "sample": "A high-priority supply contract was just canceled mid-transport.",
-        "details": "A freighter is now stuck with a full hold of bespoke goods and no buyer. The captain is selling the entire shipment for pennies on the credit.<br><br>Their cargo of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The captain will dump the cargo as scrap if not sold in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A high-priority supply contract was canceled mid-transport, leaving a freighter stuck with a full hold of bespoke goods and no buyer. The captain is selling the entire shipment for pennies.<br><br>Their cargo of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The captain will dump the cargo as scrap if not sold in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "LOGISTICS_FAILURE_05": {
         "sample": "Pirate activity has forced a freighter miles off-route.",
-        "details": "The ship survived the encounter but burned too much fuel to reach its original destination. They are selling valuable cargo to afford the refuel.<br><br>A stock of [commodity name] is being sold at [location name] for [discount amount %] below value.<br><br>The ship will refuel and depart in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A freighter, forced miles off-route by pirate activity, survived the encounter but burned too much fuel. They are selling valuable cargo to afford the refuel.<br><br>A stock of [commodity name] is being sold at [location name] for [discount amount %] below value.<br><br>The ship will refuel and depart in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "PRODUCTION_ERROR_01": {
         "sample": "An automated factory's quarterly quota was massively miscalculated.",
-        "details": "A logistical AI put a decimal in the wrong place. The factory has a 100x surplus and is dumping it before auditors arrive.<br><br>They are quietly liquidating [commodity name] at [location name] for [discount amount %] off.<br><br>The audit is scheduled for [durationDays], at which point this deal vanishes.<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A logistical AI at an automated factory put a decimal in the wrong place, resulting in a 100x surplus. The factory is dumping it before auditors arrive.<br><br>They are quietly liquidating [commodity name] at [location name] for [discount amount %] off.<br><br>The audit is scheduled for [durationDays], at which point this deal vanishes.<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "PRODUCTION_ERROR_02": {
         "sample": "A major manufacturing line is retooling for a new-gen product.",
-        "details": "All old-generation materials are being cleared out to make room for the new assembly line. It's all considered scrap to them.<br><br>This means all [commodity name] stock is available at [location name] for [discount amount %] off.<br><br>The retooling will be complete in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A major manufacturing line is retooling for a new-gen product, and all old-generation materials are being cleared out to make room. It's all considered scrap to them.<br><br>This means all [commodity name] stock is available at [location name] for [discount amount %] off.<br><br>The retooling will be complete in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "PRODUCTION_ERROR_03": {
         "sample": "A recent batch of high-spec goods failed its final QA check.",
-        "details": "The shipment failed to meet its 99.9% purity standard. The corporation is selling this sub-par but still excellent stock at a loss.<br><br>This entire batch of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The shipment will be disposed of if not sold in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A shipment of high-spec goods failed its 99.9% purity standard. The corporation is selling this sub-par but still excellent stock at a loss.<br><br>This entire batch of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The shipment will be disposed of if not sold in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "PRODUCTION_ERROR_04": {
         "sample": "We're tracking an industrial AI experiencing... anomalies.",
-        "details": "The factory's management AI has been ordering triple the required raw materials for weeks, and the local warehouse is now overflowing.<br><br>They are selling excess [commodity name] at [location name] for [discount amount %] off to clear space.<br><br>A diagnostic and reset is scheduled for [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "An industrial AI has been experiencing anomalies, ordering triple the required raw materials for weeks, and the local warehouse is now overflowing.<br><br>They are selling excess [commodity name] at [location name] for [discount amount %] off to clear space.<br><br>A diagnostic and reset is scheduled for [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "PRODUCTION_ERROR_05": {
         "sample": "A new, experimental production line has... unexpected byproducts.",
-        "details": "A test run of a new manufacturing process has, ironically, created a massive surplus of a key component. The R&D lab is selling it off-book.<br><br>This surplus of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The test run concludes and the line is shut down in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A test run of a new, experimental manufacturing process has, ironically, created a massive surplus of a key component. The R&D lab is selling it off-book.<br><br>This surplus of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The test run concludes and the line is shut down in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "REGULATORY_ERROR_01": {
         "sample": "A new interstellar tariff is being announced in 48 hours.",
-        "details": "We've seen the memo. Suppliers are desperately dumping all pre-tariff stock to avoid the new, massive tax.<br><br>This panic-sell means [commodity name] is available at [location name] for [discount amount %] off.<br><br>This regulatory loophole will snap shut in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "We've seen the memo for a new interstellar tariff being announced in 48 hours. Suppliers are desperately dumping all pre-tariff stock to avoid the new, massive tax.<br><br>This panic-sell means [commodity name] is available at [location name] for [discount amount %] off.<br><br>This regulatory loophole will snap shut in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "REGULATORY_ERROR_02": {
         "sample": "A Guild auditor just made a surprise visit to a local port.",
-        "details": "The port authority is in a panic and is auctioning all unclaimed and improperly manifested cargo immediately. No questions asked.<br><br>A large lot of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The audit will be complete and the auction closed in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A Guild auditor's surprise visit has a local port authority in a panic. They are auctioning all unclaimed and improperly manifested cargo immediately. No questions asked.<br><br>A large lot of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The audit will be complete and the auction closed in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "REGULATORY_ERROR_03": {
         "sample": "We've flagged a shipment seized for manifest violations.",
-        "details": "The cargo was declared contraband on a technicality. The local authorities are now selling it at a disposal auction.<br><br>This seized shipment of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The auction is unlisted and ends in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A shipment was seized for manifest violations, declared contraband on a technicality. The local authorities are now selling it at a disposal auction.<br><br>This seized shipment of [commodity name] is available at [location name] for [discount amount %] off.<br><br>The auction is unlisted and ends in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "REGULATORY_ERROR_04": {
         "sample": "A local trade license has been unexpectedly revoked.",
-        "details": "The company has been barred from trading by the corporate state. Their entire inventory is being sold off by Guild-appointed receivers.<br><br>This has created a one-time surplus of [commodity name] at [location name], available for [discount amount %] off.<br><br>The receivers' sale will end in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A company's local trade license has been unexpectedly revoked, barring them from trading. Their entire inventory is being sold off by Guild-appointed receivers.<br><br>This has created a one-time surplus of [commodity name] at [location name], available for [discount amount %] off.<br><br>The receivers' sale will end in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "REGULATORY_ERROR_05": {
         "sample": "A health inspector has quarantined a station's cargo bay.",
-        "details": "A (likely faked) health scare has forced the liquidation of all perishable goods. The corporation is writing it off as a total loss.<br><br>This means all [commodity name] in the bay is being sold at [location name] for [discount amount %] off.<br><br>The bay will be 'sterilized' and the remaining stock destroyed in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A (likely faked) health scare from an inspector has forced the liquidation of all perishable goods in a quarantined cargo bay. The corporation is writing it off as a total loss.<br><br>This means all [commodity name] in the bay is being sold at [location name] for [discount amount %] off.<br><br>The bay will be 'sterilized' and the remaining stock destroyed in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "INSIDER_INTEL_01": {
         "sample": "A high-level corporate executive is about to be retired.",
-        "details": "The exec knows they are being forced out and is panic-selling all their personal and corporate assets before they are frozen.<br><br>This includes a private stash of [commodity name], available at [location name] for [discount amount %] off.<br><br>The exec's accounts will be seized in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A high-level corporate exec knows they are being forced out and is panic-selling all their personal and corporate assets before they are frozen.<br><br>This includes a private stash of [commodity name], available at [location name] for [discount amount %] off.<br><br>The exec's accounts will be seized in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "INSIDER_INTEL_02": {
         "sample": "We've identified a shell corporation that is being dissolved.",
-        "details": "This corporation was a front for a smuggling operation. Its 'legitimate' assets are being rapidly absorbed into the public market.<br><br>This has created a shadow surplus of [commodity name] at [location name] for [discount amount %] off.<br><br>The assets will be fully liquidated in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A shell corporation we identified as a smuggling front is being dissolved. Its 'legitimate' assets are being rapidly absorbed into the public market.<br><br>This has created a shadow surplus of [commodity name] at [location name] for [discount amount %] off.<br><br>The assets will be fully liquidated in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "INSIDER_INTEL_03": {
         "sample": "A rival corporation is initiating a hostile price war.",
-        "details": "They are intentionally flooding the market to bankrupt a competitor. This has temporarily, and artificially, crashed the price.<br><br>This means [commodity name] is available at [location name] for [discount amount %] below its actual value.<br><br>We project the smaller firm will fold and prices will stabilize in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A rival corporation is intentionally flooding the market to bankrupt a competitor. This has temporarily, and artificially, crashed the price.<br><br>This means [commodity name] is available at [location name] for [discount amount %] below its actual value.<br><br>We project the smaller firm will fold and prices will stabilize in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "INSIDER_INTEL_04": {
         "sample": "We have a tip from a disgruntled corporate officer.",
-        "details": "They are about to blow the whistle on a major product line failure and are dumping their personal stock before the news breaks.<br><br>This fire sale on [commodity name] is happening at [location name] for [discount amount %] off.<br><br>The announcement is expected in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A disgruntled corporate officer is about to blow the whistle on a major product line failure and is dumping their personal stock before the news breaks.<br><br>This fire sale on [commodity name] is happening at [location name] for [discount amount %] off.<br><br>The announcement is expected in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "INSIDER_INTEL_05": {
         "sample": "An info-broker is dumping physical assets for liquid credits.",
-        "details": "A rival broker is restructuring and needs cash, fast. They are selling their entire non-data inventory at a loss.<br><br>Their holdings of [commodity name] are available at [location name] for [discount amount %] off.<br><br>This is a one-time offer, ending in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A rival info-broker is restructuring and needs cash, fast. They are selling their entire non-data inventory at a loss.<br><br>Their holdings of [commodity name] are available at [location name] for [discount amount %] off.<br><br>This is a one-time offer, ending in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "DEMAND_SPIKE_01": {
         "sample": "A critical supply freighter has just been declared lost with all hands.",
-        "details": "This has created a critical, system-wide shortage of a key material. Buyers are paying a massive premium.<br><br>The market for [commodity name] at [location name] is buying at [discount amount %] over galactic average.<br><br>This bubble will pop when replacement shipments arrive in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A critical supply freighter has been declared lost with all hands, creating a system-wide shortage of a key material. Buyers are paying a massive premium.<br><br>The market for [commodity name] at [location name] is buying at [discount amount %] over galactic average.<br><br>This bubble will pop when replacement shipments arrive in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "DEMAND_SPIKE_02": {
         "sample": "A major factory just suffered a catastrophic failure.",
-        "details": "That factory was the system's primary supplier of a key component. The supply chain has collapsed.<br><br>Demand for [commodity name] at [location name] has skyrocketed, with prices at [discount amount %] above normal.<br><br>This shortage is expected to last [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A major factory just suffered a catastrophic failure. As the system's primary supplier of a key component, the supply chain has collapsed.<br><br>Demand for [commodity name] at [location name] has skyrocketed, with prices at [discount amount %] above normal.<br><br>This shortage is expected to last [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "DEMAND_SPIKE_03": {
         "sample": "We've intercepted a project's emergency supply request.",
-        "details": "A major terraforming project has a massive, miscalculated shortfall. They are paying any price to get the materials they need, now.<br><br>They are buying [commodity name] at [location name] for [discount amount %] over market value.<br><br>Their emergency charter is expected to be filled in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "We've intercepted an emergency supply request from a major terraforming project that has a massive, miscalculated shortfall. They are paying any price.<br><br>They are buying [commodity name] at [location name] for [discount amount %] over market value.<br><br>Their emergency charter is expected to be filled in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "DEMAND_SPIKE_04": {
         "sample": "A local warehouse was just breached by... something.",
-        "details": "The entire local stock of a commodity was destroyed. This has created a sudden, desperate demand from local industries.<br><br>The local market for [commodity name] at [location name] is paying [discount amount %] above average.<br><br>This localized shortage will be resolved in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "The entire local stock of a commodity was destroyed after a warehouse breach. This has created a sudden, desperate demand from local industries.<br><br>The local market for [commodity name] at [location name] is paying [discount amount %] above average.<br><br>This localized shortage will be resolved in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     },
     "DEMAND_SPIKE_05": {
         "sample": "A new, unexpected corporate construction charter was just approved.",
-        "details": "A corporation is rushing to build a new station and is paying a premium to bypass normal supply channels.<br><br>Their project managers are buying [commodity name] at [location name] for [discount amount %] above the average price.<br><br>This buy-order will be filled in [durationDays].<br><br>You paid [⌬ credit price] for this intel."
+        "details": "A new, unexpected corporate construction charter was just approved. The corporation is rushing to build and is paying a premium to bypass normal supply channels.<br><br>Their project managers are buying [commodity name] at [location name] for [discount amount %] above the average price.<br><br>This buy-order will be filled in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
     }
 };
 --- END OF FILE: ./js/data/intelContent.js ---
@@ -12244,6 +12344,92 @@ const LORE_CONTENT = {
     `
 };
 
+// [[START]] VIRTUAL WORKBENCH (EULA Content)
+/**
+ * Stores the EULA text content.
+ * @private
+ */
+const EULA_CONTENT = `
+    <h3 class="text-2xl font-orbitron mb-4 text-center">End-User License Agreement (EULA) for Orbital Trading</h3>
+    <p class="text-sm text-center text-gray-400 mb-4">Last Updated: November 6, 2025</p>
+    <p>This End-User License Agreement ("EULA" or "Agreement") is a binding legal contract between you (either an individual or a single entity, hereafter "You," "Your," or "Licensee") and Devon P. Casey (hereafter "Licensor," "Developer," "We," "Us," or "Our") for the software application known as Orbital Trading, including any and all associated media, printed materials, and "online" or electronic documentation (collectively, the "Software").</p>
+    <p>BY INSTALLING, COPYING, DOWNLOADING, OR OTHERWISE USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THIS EULA.</p>
+    <p>IF YOU DO NOT AGREE TO THE TERMS OF THIS EULA, DO NOT INSTALL OR USE THE SOFTWARE. YOU MUST PROMPTLY DELETE ALL COPIES OF THE SOFTWARE IN YOUR POSSESSION.</p>
+    <p>IF YOU ARE A MINOR (BELOW THE AGE OF LEGAL MAJORITY IN YOUR JURISDICTION), YOUR PARENT OR LEGAL GUARDIAN MUST READ AND AGREE TO THIS EULA ON YOUR BEHALF.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">1. GRANT OF LICENSE</h4>
+    <p>Subject to your strict and ongoing compliance with all terms and conditions of this Agreement, Licensor grants You a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to install and use one (1) copy of the Software solely for Your own personal, non-commercial entertainment use on a single device (e.g., computer or mobile device) that You own or control.</p>
+    <p>This Software is licensed, not sold. This license confers no title or ownership in the Software and should not be construed as a sale of any rights in the Software.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">2. LICENSE RESTRICTIONS</h4>
+    <p>Your right to use the Software is limited to the grant above, and You may not, under any circumstances, do any of the following:</p>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a. Copy, modify, adapt, translate, or create derivative works based on the Software, in whole or in part;</li>
+        <li>b. Sell, rent, lease, sublicense, distribute, publicly display, publicly perform, or otherwise transfer or commercially exploit the Software or any of its components;</li>
+        <li>c. Reverse engineer, decompile, disassemble, or otherwise attempt to derive or discover the source code of the Software, except and only to the extent that such activity is expressly permitted by applicable law notwithstanding this limitation;</li>
+        <li>d. Use the Software for any commercial purpose (including, but not limited to, use at a cyber cafe, in a commercial arcade, or for any paid service) without the prior written consent of Licensor;</li>
+        <li>e. Remove, alter, or obscure any copyright, trademark, or other proprietary rights notices on or in the Software;</li>
+        <li>f. Use any cheats, exploits, automation software (bots), hacks, mods, or any unauthorized third-party software designed to modify or interfere with the Software experience;</li>
+        <li>g. Use the Software to violate any applicable law, rule, or regulation;</li>
+        <li>h. Scrape, data mine, or otherwise extract any data from the Software or its underlying servers or databases;</li>
+        <li>i. Interfere with or disrupt the Software or any server or network used to support or provide the Software, including any hacking or "denial of service" attacks.</li>
+    </ul>
+    <p>Any use of the Software in violation of these License Restrictions is a material breach of this Agreement and may result in the immediate termination of your license and subject You to civil and/or criminal liability.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">3. OWNERSHIP AND INTELLECTUAL PROPERTY</h4>
+    <p>You agree and acknowledge that all title, ownership rights, and intellectual property (IP) rights in and to the Software (including, but not limited to, all code, computer graphics, visual elements, audio, music, sound effects, themes, characters, character names, stories, dialogue, locations, and artwork) are and shall remain the exclusive property of Devon P. Casey.</p>
+    <p>Copyright (c) 2025 Devon P. Casey. All Rights Reserved.</p>
+    <p>All rights not expressly granted to You in this EULA are reserved by Licensor.</p>
+    <p>This Agreement grants You no title, ownership, or other IP interest in the Software.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">4. VIRTUAL GOODS AND IN-GAME CURRENCY</h4>
+    <p>The Software may include virtual in-game currency, items, commodities, ships, or other virtual content ("Virtual Goods").</p>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a.  License, Not Ownership:  You acknowledge that Virtual Goods are licensed to You as part of the Software and are not sold. You have no ownership right or property interest in any Virtual Goods, regardless of whether they were "earned" through gameplay or "purchased" with real money.</li>
+        <li>b.  No Real-World Value:  Virtual Goods have no monetary value, are not real currency, and cannot be redeemed, sold, transferred, or exchanged for real-world money or any item of monetary value.</li>
+        <li>c.  Licensor's Rights:  Licensor has the absolute right to manage, regulate, control, modify, and/or eliminate Virtual Goods at any time, in its sole discretion, with or without notice. Licensor shall have no liability to You or any third party for the exercise of such rights.</li>
+        <li>d.  No Refunds:  All purchases of Virtual Goods are final and non-refundable, except as required by applicable law.</li>
+    </ul>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">5. FEEDBACK AND SUGGESTIONS</h4>
+    <p>If You provide Licensor with any ideas, suggestions, bug reports, or other feedback regarding the Software ("Feedback"), You hereby grant Licensor a perpetual, irrevocable, worldwide, non-exclusive, royalty-free, fully paid-up, transferable, and sublicensable license to use, reproduce, modify, distribute, and otherwise exploit such Feedback for any purpose whatsoever (including for commercial purposes) without any obligation to provide compensation, credit, or attribution to You.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">6. CODE OF CONDUCT</h4>
+    <p>While using the Software, You agree to comply with all applicable laws and to not:</p>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a. Harass, threaten, bully, defame, or otherwise abuse another user or Licensor's staff;</li>
+        <li>b. Transmit or post any content that is hateful, abusive, racially or ethnically offensive, obscene, or illegal;</li>
+        <li>c. Impersonate any person, including any employee or representative of Licensor;</li>
+        <li>d. Disrupt the normal flow of gameplay or dialogue, or otherwise act in a manner that negatively affects other users' experience.</li>
+    </ul>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">7. UPDATES AND MODIFICATIONS</h4>
+    <p>Licensor may, from time to time, provide updates, patches, or other modifications to the Software. You agree that Licensor may deploy and install these modifications remotely. You may be required to install such updates to continue using the Software. Licensor reserves the right to modify, suspend, or discontinue the Software, or any feature or part thereof, at any time with or without notice to You. Licensor shall not be liable to You or any third party for any such modification, suspension, or discontinuance.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">8. TERMINATION</h4>
+    <p>This EULA is effective until terminated.</p>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a.  Termination by You:  You may terminate this EULA at any time by permanently deleting, destroying, and uninstalling all copies of the Software in Your possession or control.</li>
+        <li>b.  Termination by Licensor:  Licensor may terminate this EULA immediately and without prior notice if You fail to comply with any term or condition of this Agreement.</li>
+        <li>c.  Effect of Termination:  Upon termination for any reason, all licenses granted to You herein shall immediately cease. You must immediately and permanently delete all copies of the Software. All provisions of this EULA that by their nature should survive termination shall survive, including, without limitation, Sections 2, 3, 4, 5, 8(c), 9, 10, 11, 12, and 13. NO REFUNDS WILL BE GRANTED UPON TERMINATION.</li>
+    </ul>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">9. DISCLAIMER OF WARRANTIES</h4>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT, AND NON-INFRINGEMENT OF THIRD-PARTY RIGHTS. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL MEET YOUR REQUIREMENTS, THAT ITS OPERATION WILL BE UNINTERRUPTED OR ERROR-FREE, THAT DEFECTS WILL BE CORRECTED, OR THAT THE SOFTWARE IS FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">10. LIMITATION OF LIABILITY</h4>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR (DEVON P. CASEY) OR HIS AFFILIATES BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, CONSEQUENTIAL, OR PUNITIVE DAMAGES WHATSOEVER (INCLUDING, BUT NOT LIMITED TO, DAMAGES FOR LOSS OF PROFITS, LOSS OF DATA, BUSINESS INTERRUPTION, PERSONAL INJURY, OR LOSS OF PRIVACY) ARISING OUT OF OR IN ANY WAY RELATED TO THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+    <p>IN NO EVENT SHALL THE TOTAL LIABILITY OF LICENSOR TO YOU FOR ALL DAMAGES (EXCEPT AS MAY BE REQUIRED BY APPLICABLE LAW IN CASES OF PERSONAL INJURY) EXCEED THE AMOUNT ACTUALLY PAID BY YOU FOR THE SOFTWARE OR ONE UNITED STATES DOLLAR (USD $1.00), WHICHEVER IS GREATER.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">11. INDEMNIFICATION</h4>
+    <p>You agree to indemnify, defend, and hold harmless Licensor (Devon P. Casey) and his employees, agents, and affiliates from and against any and all claims, losses, damages, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to Your breach of this EULA or Your misuse of the Software.</p>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">12. GOVERNING LAW AND DISPUTE RESOLUTION</h4>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a.  Governing Law:  This EULA shall be governed by and construed in accordance with the laws of the State of California, USA, without regard to its conflict of law principles.</li>
+        <li>b.  Informal Negotiation:  To expedite resolution and control the cost of any dispute, You and Licensor agree to first attempt to negotiate any dispute informally for at least thirty (30) days before initiating any arbitration or court proceeding. Such informal negotiations commence upon written notice from one party to the other.</li>
+        <li>c.  Binding Arbitration:  If a dispute cannot be resolved through informal negotiations, any claim, dispute, or controversy (excluding claims for injunctive or other equitable relief) shall be resolved by binding arbitration conducted by a single neutral arbitrator from the American Arbitration Association (AAA) under its Commercial Arbitration Rules. The arbitration shall take place in Santa Clara County, California. The arbitrator's decision shall be final and binding and may be entered as a judgment in any court of competent jurisdiction.</li>
+        <li>d.  CLASS ACTION AND JURY TRIAL WAIVER:  YOU AND LICENSOR AGREE THAT ANY PROCEEDINGS TO RESOLVE OR LITIGATE ANY DISPUTE WILL BE CONDUCTED SOLELY ON AN INDIVIDUAL BASIS. NEITHER YOU NOR LICENSOR WILL SEEK TO HAVE ANY DISPUTE HEARD AS A CLASS ACTION, PRIVATE ATTORNEY GENERAL ACTION, OR IN ANY OTHER PROCEEDING IN WHICH EITHER PARTY ACTS OR PROPOSES TO ACT IN A REPRESENTATIVE CAPACITY. YOU AND LICENSOR BOTH EXPRESSLY WAIVE ANY RIGHT TO A TRIAL BY JURY.</li>
+    </ul>
+    <h4 class="text-xl font-orbitron mt-4 mb-2">13. GENERAL PROVISIONS</h4>
+    <ul class="list-disc list-outside ml-6 space-y-2">
+        <li>a.  Severability:  If any provision of this EULA is held to be invalid, illegal, or unenforceable, the validity, legality, and enforceability of the remaining provisions shall not be affected or impaired.</li>
+        <li>b.  Entire Agreement:  This EULA constitutes the entire agreement between You and Licensor regarding the Software and supersedes all prior or contemporaneous understandings, agreements, or representations, whether written or oral.</li>
+        <li>c.  Amendment:  Licensor reserves the right, at its sole discretion, to amend this EULA at any time. If We amend this EULA, We will post the amended EULA within the Software or on our website. Your continued use of the Software after such posting shall constitute Your acceptance of the amended EULA.</li>
+        <li>d.  No Waiver:  The failure of Licensor to exercise or enforce any right or provision of this EULA shall not constitute a waiver of such right or provision.</li>
+        <li>e.  Contact:  If You have any questions concerning this EULA, please contact Licensor at: devon_casey@outlook.com .</li>
+    </ul>
+`;
+// [[END]] VIRTUAL WORKBENCH (EULA Content)
+
 
 export class UIManager {
     /**
@@ -12406,6 +12592,10 @@ export class UIManager {
             loreModal: document.getElementById('lore-modal'),
             loreModalContent: document.getElementById('lore-modal-content'),
 
+            // [[START]] VIRTUAL WORKBENCH (Cache EULA Modal)
+            eulaModal: document.getElementById('eula-modal'),
+            eulaModalContent: document.getElementById('eula-modal-content'),
+            // [[END]] VIRTUAL WORKBENCH (Cache EULA Modal)
 
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
@@ -12474,6 +12664,7 @@ export class UIManager {
                     this.cache.newsTickerBar.style.backgroundColor = ''; // Will revert to CSS default
                 }
                 // --- [[END]] MODIFICATION (Reset) ---
+
             }
         } else {
             // --- [[START]] MODIFICATION (Reset) ---
@@ -12618,6 +12809,7 @@ export class UIManager {
                  // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
+            
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
 
@@ -13295,6 +13487,44 @@ export class UIManager {
         modal.addEventListener('click', closeHandler);
     }
 
+    // [[START]] VIRTUAL WORKBENCH (showEulaModal)
+    /**
+     * Displays the new modal for showing the EULA.
+     * Modeled after showLoreModal for scrollability and dismissal.
+     */
+    showEulaModal() {
+        const modal = this.cache.eulaModal;
+        const contentEl = this.cache.eulaModalContent;
+        
+        if (!modal || !contentEl) {
+            this.logger.error('UIManager', 'EULA modal elements not cached or found in DOM.');
+            return;
+        }
+
+        if (!EULA_CONTENT) {
+            this.logger.error('UIManager', 'EULA_CONTENT is not defined or empty.');
+            contentEl.innerHTML = '<p>Error: EULA content not found.</p>';
+        } else {
+            contentEl.innerHTML = EULA_CONTENT;
+        }
+        
+        // Ensure scroll position is at the top
+        contentEl.scrollTop = 0;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+        
+        // Add a one-time click listener to the backdrop *and* content area to close the modal.
+        const closeHandler = (e) => {
+            if (e.target.closest('#eula-modal-content') || e.target.id === 'eula-modal') {
+                this.hideModal('eula-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
+    }
+    // [[END]] VIRTUAL WORKBENCH (showEulaModal)
+
     hideModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
@@ -13551,7 +13781,7 @@ export class UIManager {
         } else {
             // Element-anchored positioning using Popper.js
             toast.style.left = ''; // Clear direct styles
-            toast.style.top = ''; 
+            toast.style.top = '';
             toast.style.transform = ''; // Clear direct transform
             
             arrow.style.display = 'block'; // Show arrow
@@ -13838,7 +14068,7 @@ export class UIManager {
                     </div>
                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                        <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
+                         <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
@@ -13861,7 +14091,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                     <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
@@ -14110,14 +14340,27 @@ export class UIManager {
             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
+            // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
+            // Special case: Allow eula-modal to be dismissed by clicking content
+            if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) {
+                return modalBackdrop.id;
+            }
+            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
+
             // Standard dismissal (backdrop click only)
-             if (modalBackdrop.id !== 'lore-modal' && !e.target.closest('.modal-content')) {
+             if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
+                 return modalBackdrop.id;
+            }
+            // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
+            // Standard dismissal for eula-modal (backdrop click only)
+            if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
+            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
             // GDD-compliant dismissal
             return modalBackdrop.id;
@@ -17660,6 +17903,13 @@ export class ActionClickHandler {
             case 'close-map-modal':
                 this.uiManager.hideMapDetailModal();
                 break;
+            
+            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
+            case 'show_eula_modal':
+                e.preventDefault();
+                this.uiManager.showEulaModal();
+                break;
+            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
             // --- Mission Actions ---
             case 'accept-mission':
@@ -18518,6 +18768,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [31.70] - 2025-11-7
+-  news ticker polish
+-  added EULA
+-  added EULA gate to title screen
+-  intel polish
 
 ## [31.60] - 2025-11-6
 -  intel messaging rewrites
