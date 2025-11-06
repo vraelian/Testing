@@ -366,16 +366,9 @@ ${logHistory}
                 this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            addAllIntel: { name: 'Add All Intel (30)', type: 'button', handler: () => {
-                const intelService = this.simulationService.intelService;
-                if (intelService) {
-                    intelService.debug_AddAllIntelPackets();
-                    // REMOVED: Redundant render call. GameState.setState() already handles rendering.
-                    // this.simulationService.uiManager.render(this.simulationService.gameState.getState());
-                }
-            }},
-            // --- END MODIFICATION ---
+            // --- VIRTUAL WORKBENCH REMOVAL ---
+            // 'addAllIntel' action removed
+            // --- END REMOVAL ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
                 const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                 if (dest) {
@@ -527,7 +520,9 @@ ${logHistory}
         this.economyFolder = this.gui.addFolder('Economy'); // [GEMINI] Stored ref
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
-        this.economyFolder.add(this.actions.addAllIntel, 'handler').name(this.actions.addAllIntel.name);
+        // --- VIRTUAL WORKBENCH REMOVAL ---
+        // The 'addAllIntel' button has been removed from this folder.
+        // --- END REMOVAL ---
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});

@@ -8426,16 +8426,9 @@ ${logHistory}
                 this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            addAllIntel: { name: 'Add All Intel (30)', type: 'button', handler: () => {
-                const intelService = this.simulationService.intelService;
-                if (intelService) {
-                    intelService.debug_AddAllIntelPackets();
-                    // REMOVED: Redundant render call. GameState.setState() already handles rendering.
-                    // this.simulationService.uiManager.render(this.simulationService.gameState.getState());
-                }
-            }},
-            // --- END MODIFICATION ---
+            // --- VIRTUAL WORKBENCH REMOVAL ---
+            // 'addAllIntel' action removed
+            // --- END REMOVAL ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
                 const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                 if (dest) {
@@ -8587,7 +8580,9 @@ ${logHistory}
         this.economyFolder = this.gui.addFolder('Economy'); // [GEMINI] Stored ref
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
-        this.economyFolder.add(this.actions.addAllIntel, 'handler').name(this.actions.addAllIntel.name);
+        // --- VIRTUAL WORKBENCH REMOVAL ---
+        // The 'addAllIntel' button has been removed from this folder.
+        // --- END REMOVAL ---
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
@@ -16618,83 +16613,9 @@ export class IntelService {
         return this.timeService.getCurrentDay();
     }
 
-    // --- VIRTUAL WORKBENCH ADDITION ---
-    /**
-     * DEBUG METHOD: Populates the current location's intel market
-     * with all 30 possible intel packets.
-     * @JSDoc
-     */
-    debug_AddAllIntelPackets() {
-        this.logger.warn('IntelService', 'DEBUG: Adding all intel packets to current market.');
-        // Get the LIVE state object.
-        const state = this.gameState.getState();
-        const saleLocationId = state.currentLocationId;
-        // Get the LIVE intelMarket reference.
-        const intelMarket = state.intelMarket;
-
-        // 1. Get all possible deal locations (unlocked, not current)
-        const playerUnlockedLocations = state.player.unlockedLocationIds || [];
-        const possibleDealLocations = playerUnlockedLocations.filter(id => id !== saleLocationId);
-
-        if (possibleDealLocations.length === 0) {
-            this.logger.error('IntelService', 'Debug failed: No other unlocked locations to use as deal locations.');
-            return;
-        }
-
-        // 2. Get all commodities (bypassing tier)
-        const allCommodities = this.db.COMMODITIES.map(c => c.id);
-        if (allCommodities.length === 0) {
-            this.logger.error('IntelService', 'Debug failed: No commodities in DB.');
-            return;
-        }
-
-        // 3. Get all message keys
-        const allMessageKeys = Object.keys(INTEL_CONTENT);
-        if (allMessageKeys.length === 0) {
-            this.logger.error('IntelService', 'Debug failed: INTEL_CONTENT is empty.');
-            return;
-        }
-
-        // 4. Mutate the live intelMarket object.
-        intelMarket[saleLocationId] = [];
-
-        // 5. Loop through all message keys and create a packet for each
-        for (const messageKey of allMessageKeys) {
-            // Pick random deal location and commodity for this packet
-            const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
-            const commodityId = allCommodities[Math.floor(Math.random() * allCommodities.length)];
-            
-            // Use fixed values for easy testing
-            const discountPercent = 0.30;
-            const durationDays = 999;
-            const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90); // Use standard formula
-
-            const packet = {
-                id: `pkt_DEBUG_${saleLocationId.replace('loc_', '')}_${this.timeService.getCurrentDay()}_${Math.floor(Math.random() * 9999)}`,
-                locationId: saleLocationId,
-                dealLocationId: dealLocationId,
-                commodityId: commodityId,
-                discountPercent: discountPercent,
-                durationDays: durationDays,
-                valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
-                messageKey: messageKey,
-                isPurchased: false,
-            };
-            
-            // Mutate the live intelMarket array.
-            intelMarket[saleLocationId].push(packet);
-        }
-
-        // 6. Update state
-        // Pass the mutated intelMarket and set activeIntelDeal to null.
-        this.gameState.setState({ 
-            intelMarket: intelMarket,
-            activeIntelDeal: null 
-        });
-        
-        this.logger.warn('IntelService', `DEBUG: Generated ${allMessageKeys.length} intel packets for ${saleLocationId}.`);
-    }
-    // --- END ADDITION ---
+    // --- VIRTUAL WORKBENCH REMOVAL ---
+    // The entire 'debug_AddAllIntelPackets' method has been removed.
+    // --- END REMOVAL ---
 }
 --- END OF FILE: ./js/services/IntelService.js ---
 
