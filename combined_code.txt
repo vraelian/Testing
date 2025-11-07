@@ -3508,9 +3508,11 @@ body {
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    /* VIRTUAL WORKBENCH FIX: Removed redundant padding: 0.25rem */
-    padding-left: 1.5rem; /* Added */
-    padding-right: 1.5rem; /* Added */
+    /* * VIRTUAL WORKBENCH: 
+     * Setting vertical padding (1.5rem) to fix button clipping.
+     * Setting horizontal padding (0.5rem) to widen cards.
+     */
+    padding: 1.5rem 0.5rem; /* 1.5rem top/bottom, 0.5rem left/right */
     touch-action: pan-y; /* Allow vertical scrolling */
 }
 
