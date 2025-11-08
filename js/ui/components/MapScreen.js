@@ -2,87 +2,105 @@
 /**
  * @fileoverview This file contains the rendering logic for the new Map screen.
  * It uses D3.js to render a stylized, interactive map of the solar system.
+ *
+ * ARCHITECTURE: "Hybrid Layering"
+ * This component renders two layers:
+ * 1. Substrate (SVG): A D3-drawn SVG background (#map-svg-substrate) for static
+ * visuals like the central axis and leader lines.
+ * 2. Interface (HTML): D3-generated, absolutely-positioned HTML <div>s
+ * (#map-html-interface) for all interactive POIs (including the Sun) and labels.
+ *
+ * This hybrid approach avoids WKWebView rendering bugs related to SVG filters
+ * by moving all interactive elements to standard HTML, which can be reliably
+ * styled with pseudo-elements and CSS animations. Both layers are driven by a
+ * single, unified data source to ensure perfect alignment.
  */
 import { DB } from '../../data/database.js';
 import { LOCATION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the container for the Map screen UI.
+ * Renders the two-layer container for the Map screen UI.
  * @returns {string} The HTML content for the Map screen container.
  */
 export function renderMapScreen() {
-    return `<div id="map-container" class="w-full h-full overflow-y-auto"></div>`;
+    // #map-container is the scrolling parent
+    // #map-svg-substrate holds the D3-drawn static background (z-index 1)
+    // #map-html-interface holds the D3-bound HTML POIs (z-index 10)
+    return `
+        <div id="map-container" class="w-full h-full overflow-y-auto">
+            <svg id="map-svg-substrate"></svg>
+            <div id="map-html-interface"></div>
+        </div>
+    `;
 }
 
 /**
- * Initializes the D3 map. It checks the container width. If 0, it uses a
- * ResizeObserver to wait for the browser to finalize layout before drawing.
- * @param {import('../../services/UIManager.js').UIManager} uiManager - The UIManager instance, passed for modal interactivity.
- * @JSDoc
+ * Initializes the D3 map, calculating data and drawing both layers.
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
  */
 export function initMap(uiManager) {
     const container = d3.select("#map-container");
+    const svgLayer = d3.select("#map-svg-substrate");
+    const htmlLayer = d3.select("#map-html-interface");
 
-    if (!container.node()) {
-        console.warn("Map container not found.");
-        return;
-    }
-    if (!container.select("svg").empty()) {
-        console.warn("Map already initialized.");
-        return;
-    }
-
-    let containerWidth = container.node().clientWidth;
-
-    if (containerWidth > 0) {
-        // Width is already available, draw immediately.
-        _drawMap(container, containerWidth, uiManager);
-    } else {
-        // Width is 0, setup ResizeObserver to wait for layout.
-        console.warn("Map container width is 0. Using ResizeObserver to wait for layout.");
+    if (container.node().clientWidth === 0) {
+        console.warn("Map container width is 0. Using ResizeObserver.");
         const observer = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                if (entry.contentRect.width > 0) {
-                    // We have a valid width, draw the map.
-                    _drawMap(container, entry.contentRect.width, uiManager);
-                    // Stop observing, we're done.
-                    observer.disconnect();
-                }
+            if (entries[0].contentRect.width > 0) {
+                _drawMap(container, svgLayer, htmlLayer, uiManager);
+                observer.disconnect();
             }
         });
-
-        // Start observing the container.
         observer.observe(container.node());
+    } else {
+        _drawMap(container, svgLayer, htmlLayer, uiManager);
     }
 }
 
 /**
- * Contains the actual D3.js logic to draw the map.
- * This is called by initMap() either immediately or by the ResizeObserver callback.
- * @param {d3.Selection} container - The d3-selected #map-container.
- * @param {number} containerWidth - The finalized width of the container.
+ * Master drawing function. Calculates data and delegates to layer-specific
+ * drawing functions.
+ * @param {d3.Selection} container
+ * @param {d3.Selection} svgLayer
+ * @param {d3.Selection} htmlLayer
  * @param {import('../../services/UIManager.js').UIManager} uiManager
  * @private
- * @JSDoc
  */
-function _drawMap(container, containerWidth, uiManager) {
-    const svg = container.append("svg")
-        .attr("id", "map-svg")
-        .attr("width", "100%"); 
+function _drawMap(container, svgLayer, htmlLayer, uiManager) {
+    // Clear any previous map elements (for live-reload dev)
+    svgLayer.selectAll("*").remove();
+    htmlLayer.selectAll("*").remove();
 
-    const defs = svg.append("defs");
-    const radialGradient = defs.append("radialGradient")
-        .attr("id", "sun-gradient");
-    radialGradient.append("stop").attr("offset", "0%").attr("stop-color", "#fef08a");
-    radialGradient.append("stop").attr("offset", "100%").attr("stop-color", "#fde047");
+    const containerWidth = container.node().clientWidth;
+    const centerX = containerWidth / 2;
 
-    svg.append("circle")
-        .attr("class", "sun")
-        .attr("cx", "50%")
-        .attr("cy", -195)
-        .attr("r", 225)
-        .attr("fill", "url(#sun-gradient)");
+    // 1. Calculate the unified POI data array
+    const { poiData, totalHeight } = _calculatePOIData(containerWidth, uiManager, centerX);
 
+    // 2. Set the total height on the containers to enable scrolling
+    container.style("height", "100%"); // Ensure container has a defined height
+    svgLayer.attr("height", totalHeight);
+    htmlLayer.style("height", `${totalHeight}px`);
+
+    // 3. Draw the static SVG background
+    _drawSubstrate(svgLayer, poiData, centerX, totalHeight);
+
+    // 4. Draw the interactive HTML POIs
+    _drawInterface(htmlLayer, poiData, uiManager, centerX);
+
+    // 5. Apply the "you are here" highlight
+    _updateCurrentLocationHighlight(uiManager);
+}
+
+/**
+ * The "Brain" of the map. Calculates the unified data array used by both layers.
+ * @param {number} containerWidth
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
+ * @param {number} centerX
+ * @returns {{poiData: Array<object>, totalHeight: number}}
+ * @private
+ */
+function _calculatePOIData(containerWidth, uiManager, centerX) {
     const sizeModifiers = {
         [LOCATION_IDS.VENUS]: 1.035,
         [LOCATION_IDS.EARTH]: 1.035,
@@ -90,99 +108,178 @@ function _drawMap(container, containerWidth, uiManager) {
         [LOCATION_IDS.MARS]: 0.9775,
         [LOCATION_IDS.BELT]: 0.805,
         [LOCATION_IDS.EXCHANGE]: 0.805,
-        [LOCATION_IDS.JUPITER]: 1.564,   // 1.84 * 0.85
-        [LOCATION_IDS.SATURN]: 1.46625, // 1.725 * 0.85
-        [LOCATION_IDS.URANUS]: 1.27075, // 1.495 * 0.85
-        [LOCATION_IDS.NEPTUNE]: 1.27075, // 1.495 * 0.85
+        [LOCATION_IDS.JUPITER]: 1.564,
+        [LOCATION_IDS.SATURN]: 1.46625,
+        [LOCATION_IDS.URANUS]: 1.27075,
+        [LOCATION_IDS.NEPTUNE]: 1.27075,
         [LOCATION_IDS.KEPLER]: 0.8625,
         [LOCATION_IDS.PLUTO]: 0.92,
     };
-    
+
     const allPoiData = DB.MARKETS
         .filter(loc => uiManager.lastKnownState.player.unlockedLocationIds.includes(loc.id))
         .map(loc => {
-            const baseRadius = loc.parent ? 12 : 16; 
-            const finalRadius = baseRadius * (sizeModifiers[loc.id] || 1);
             let effectiveDistance = loc.distance;
-
             if (loc.parent) {
                 const parent = DB.MARKETS.find(p => p.id === loc.parent);
-                if (parent) {
-                    effectiveDistance = parent.distance + 0.1; // Ensure moon appears after parent
-                }
+                if (parent) effectiveDistance = parent.distance + 0.1;
             }
-            return { ...loc, effectiveDistance, finalRadius };
+            return { ...loc, effectiveDistance };
         })
         .sort((a, b) => a.effectiveDistance - b.effectiveDistance);
 
-    const verticalSpacing = 130; // pixels
+    const verticalSpacing = 130;
     const topPadding = 110;
     const bottomPadding = 30;
-
     const totalHeight = topPadding + ((allPoiData.length - 1) * verticalSpacing) + bottomPadding;
-    svg.attr("height", totalHeight);
 
-    const yPositions = new Map();
-    allPoiData.forEach((d, i) => {
-        yPositions.set(d.id, topPadding + (i * verticalSpacing));
+    // Create the final data array with all calculated pixel coordinates
+    const poiData = allPoiData.map((d, i) => {
+        const y = topPadding + (i * verticalSpacing);
+        const x = centerX + (i % 2 === 0 ? -50 : 50); // POI x-position
+        const labelX = centerX + (i % 2 === 0 ? -56 : 56); // Label x-position
+        const labelAnchor = (i % 2 === 0 ? "end" : "start");
+        const radius = (d.parent ? 12 : 16) * (sizeModifiers[d.id] || 1);
+
+        return {
+            ...d,
+            y,
+            poiX: centerX, // X coord of the icon on the central axis
+            labelX,
+            labelAnchor,
+            leaderLineX: x, // X coord for the end of the leader line
+            radius
+        };
     });
 
-    svg.append("line")
+    return { poiData, totalHeight };
+}
+
+/**
+ * Draws the static, non-interactive SVG background layer.
+ * @param {d3.Selection} svgLayer
+ * @param {Array<object>} poiData
+ * @param {number} centerX
+ * @param {number} totalHeight
+ * @private
+ */
+function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
+    // --- VIRTUAL WORKBENCH: Removed Sun and Gradient definitions ---
+
+    svgLayer.append("line")
         .attr("class", "central-axis")
-        .attr("x1", "50%")
+        .attr("x1", centerX)
         .attr("y1", 0)
-        .attr("x2", "50%")
+        .attr("x2", centerX)
         .attr("y2", totalHeight);
 
-    const centerX = containerWidth / 2;
-
-    const poiGroups = svg.selectAll(".poi-group")
-        .data(allPoiData)
+    // Bind data to draw the leader lines
+    svgLayer.selectAll(".leader-line")
+        .data(poiData)
         .enter()
-        .append("g")
-        .attr("class", "poi-group")
+        .append("line")
+        .attr("class", "leader-line")
+        .attr("x1", centerX)
+        .attr("y1", d => d.y)
+        .attr("x2", d => d.leaderLineX)
+        .attr("y2", d => d.y);
+}
+
+/**
+ * Draws the interactive HTML interface layer.
+ * @param {d3.Selection} htmlLayer
+ * @param {Array<object>} poiData
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
+ * @param {number} centerX
+ * @private
+ */
+function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
+    // --- VIRTUAL WORKBENCH: Add the Sun as an HTML element ---
+    const sunRadius = 225;
+    htmlLayer.append("div")
+        .attr("id", "map-sun-poi")
+        .style("position", "absolute")
+        .style("top", "-195px") // Original cy
+        .style("left", `${centerX}px`) // Original cx
+        .style("width", `${sunRadius * 2}px`)
+        .style("height", `${sunRadius * 2}px`);
+    // --- END VIRTUAL WORKBENCH ---
+
+    // Bind data to create HTML <div>s
+    const groups = htmlLayer.selectAll(".poi-marker-group")
+        .data(poiData)
+        .enter()
+        .append("div")
+        .attr("class", "poi-marker-group")
         .attr("data-location-id", d => d.id)
+        .style("position", "absolute")
+        .style("top", d => `${d.y}px`)
         .on("click", (event, d) => {
-             // Check if the click was directly on the POI shape or its label
-            const targetElement = event.target;
-            const groupElement = targetElement.closest('.poi-group');
-            if (groupElement && (targetElement.tagName === 'circle' || targetElement.tagName === 'path' || targetElement.tagName === 'text')) {
-                uiManager.showMapDetailModal(d.id);
-            }
+            uiManager.showMapDetailModal(d.id);
         });
 
-    // *** MODIFIED: Draw leader lines FIRST ***
-    poiGroups.append("line")
-        .attr("class", "leader-line")
-        .attr("x1", "50%")
-        .attr("y1", d => yPositions.get(d.id))
-        .attr("x2", (d, i) => centerX + (i % 2 === 0 ? -50 : 50))
-        .attr("y2", d => yPositions.get(d.id));
+    // POI Icons (on the central axis)
+    groups.append("div")
+        .attr("class", d => d.id === LOCATION_IDS.BELT ? "poi-icon belt" : "poi-icon planet")
+        .style("position", "absolute")
+        .style("left", d => `${d.poiX}px`) // Centered on axis
+        .style("width", d => `${d.radius * 2}px`)
+        .style("height", d => `${d.radius * 2}px`)
+        .style("background-color", d => d.navTheme.borderColor);
 
-    // *** MODIFIED: Draw POI shapes SECOND ***
-    poiGroups.filter(d => d.id !== LOCATION_IDS.BELT)
-        .append("circle")
-        .attr("cx", "50%")
-        .attr("cy", d => yPositions.get(d.id))
-        .attr("r", d => d.finalRadius)
-        .attr("fill", d => d.navTheme.borderColor);
-
-    // *** MODIFIED: Draw Belt shape SECOND ***
-    const beltGroup = poiGroups.filter(d => d.id === LOCATION_IDS.BELT);
-    if (!beltGroup.empty()) {
-        const beltRadius = beltGroup.datum().finalRadius;
-        beltGroup.append("path")
-            .attr("d", `M 0,${-beltRadius} L ${beltRadius},0 L 0,${beltRadius} L ${-beltRadius},0 Z`)
-            .attr("transform", d => `translate(${centerX}, ${yPositions.get(d.id)})`)
-            .attr("fill", d => d.navTheme.borderColor);
-    }
-        
-    // *** MODIFIED: Draw labels THIRD ***
-    poiGroups.append("text")
+    // POI Labels (alternating sides)
+    groups.append("div")
         .attr("class", "poi-label")
-        .attr("x", (d, i) => centerX + (i % 2 === 0 ? -56 : 56  ))
-        .attr("y", d => yPositions.get(d.id))
-        .attr("text-anchor", (d, i) => i % 2 === 0 ? "end" : "start")
-        .attr("dominant-baseline", "middle")
+        .style("position", "absolute")
+        .style("left", d => `${d.labelX}px`)
+        .style("text-anchor", d => d.labelAnchor)
         .text(d => d.name);
+}
+
+/**
+ * Updates the HTML interface to apply the .current-location class
+ * AND auto-scrolls the container to center the POI.
+ * This is called every time the map is viewed.
+ * @param {import('../../services/UIManager.js').UIManager} uiManager
+ * @private
+ */
+function _updateCurrentLocationHighlight(uiManager) {
+    const container = d3.select("#map-container");
+    if (container.empty()) return;
+
+    const currentLocationId = uiManager.lastKnownState.currentLocationId;
+    const locationData = DB.MARKETS.find(loc => loc.id === currentLocationId);
+    if (!locationData) return;
+
+    // 1. Set the global theme color on the root container
+    container.style("--theme-glow-color", locationData.navTheme.borderColor);
+
+    // 2. Remove the class from the old POI (if any)
+    container.select(".poi-marker-group.current-location")
+        .classed("current-location", false);
+
+    // 3. Add the class to the new, current POI
+    const currentPOIGroup = container.select(`.poi-marker-group[data-location-id="${currentLocationId}"]`);
+    currentPOIGroup.classed("current-location", true);
+
+    // Auto-scroll logic
+    const containerNode = container.node();
+    const poiNode = currentPOIGroup.node();
+
+    if (containerNode && poiNode) {
+        // Handle Pluto edge case: scroll to bottom
+        if (currentLocationId === LOCATION_IDS.PLUTO) {
+            containerNode.scrollTop = containerNode.scrollHeight;
+        } else {
+            // Main case: center the POI
+            const containerHeight = containerNode.clientHeight;
+            const poiTop = poiNode.offsetTop; // POI's Y position
+            
+            // Calculate the scroll position to center the POI
+            const newScrollTop = poiTop - (containerHeight / 2);
+            
+            // Set the scroll position
+            containerNode.scrollTop = newScrollTop;
+        }
+    }
 }

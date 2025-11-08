@@ -2,7 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [31.70] - 2025-11-7
+## [31.80] - 2025-11-7
+-  map screen rebuild
+-  added player location to map screen
+-  
+
+## [31.70] - 2025-11-6
 -  news ticker polish
 -  added EULA
 -  added EULA gate to title screen

@@ -1,67 +1,206 @@
 /* css/screens/map-screen.css */
+/* --- VIRTUAL WORKBENCH --- */
+/* This file is a complete rewrite for the new Hybrid Layering architecture. */
+
 #map-container {
     width: 100%;
     height: 100%;
     position: relative;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    /* --- VIRTUAL WORKBENCH: REMOVED overflow: hidden to fix scrolling --- */
 
-    /* *** MODIFIED: Hide scrollbar *** */
+    /* Hide scrollbar */
     scrollbar-width: none; /* For Firefox */
 }
 
-/* *** MODIFIED: Hide scrollbar for Webkit browsers *** */
 #map-container::-webkit-scrollbar {
-    display: none;
+    display: none; /* For Webkit browsers */
 }
 
-#map-svg {
+/* --- 1. LAYER SCAFFOLDING --- */
+
+/* The SVG "Substrate" layer (bottom) */
+#map-svg-substrate {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    /* height is set dynamically by initMap */
+    /* height is set dynamically by JS */
+    z-index: 1;
+    pointer-events: none; /* Pass clicks through */
 }
 
-.sun {
-    filter: drop-shadow(0 0 20px #fde047);
+/* The HTML "Interface" layer (top) */
+#map-html-interface {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* height is set dynamically by JS */
+    z-index: 10;
+    pointer-events: none; /* Pass clicks through by default */
+    /* --- VIRTUAL WORKBENCH: MOVED overflow: hidden here to clip the Sun --- */
+    overflow: hidden;
 }
 
-.central-axis {
+/* --- 2. SVG SUBSTRATE STYLES --- */
+
+/* --- VIRTUAL WORKBENCH: Removed #map-svg-substrate .sun rule --- */
+
+#map-svg-substrate .central-axis {
     stroke: rgba(255, 255, 255, 0.1);
     stroke-width: 1;
 }
 
-.leader-line {
+#map-svg-substrate .leader-line {
     stroke: rgba(255, 255, 255, 0.2);
     stroke-width: 2.5;
-    /* Removed drop-shadow */
 }
 
-.poi-group {
+/* --- 3. HTML INTERFACE STYLES --- */
+
+/* --- VIRTUAL WORKBENCH: New rules for the HTML Sun --- */
+#map-sun-poi {
+    position: absolute;
+    z-index: 2; /* Above substrate, below POIs */
+    border-radius: 50%;
+    /* Mimic the old SVG gradient */
+    background: radial-gradient(circle, #fef08a 0%, #fde047 100%);
+    /* Center on its coordinates */
+    transform: translate(-50%, -50%);
+}
+
+/* Static, filter-less glow for the HTML Sun */
+#map-sun-poi::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    /* Reliable radial-gradient glow */
+    background: radial-gradient(circle, #fde047 20%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    /* Static (non-animated) glow */
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* The parent <div> for a POI, positioned at the (Y) coordinate */
+.poi-marker-group {
+    /* pointer-events are re-enabled on the clickable groups */
+    pointer-events: auto;
     cursor: pointer;
+    /* This empty transform is a hint for hardware acceleration */
+    transform: translateZ(0);
 }
 
-/* *** MODIFIED: Added stroke to POI shapes and removed filter *** */
-.poi-group circle,
-.poi-group path {
-    stroke: #0c101d; /* Outline color */
-    stroke-width: 2px; /* Doubled stroke width */
-    /* filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); */ /* REMOVED */
+/* The POI icon (planet/station) */
+.poi-icon {
+    position: absolute; /* Relative to its group */
+    border: 2px solid #0c101d; /* Mimics old SVG stroke */
+    /* Nudge to center it on the (X, Y) coordinate */
+    transform: translate(-50%, -50%);
+    z-index: 12;
+}
+.poi-icon.planet {
+    border-radius: 50%;
+}
+.poi-icon.belt {
+    /* Recreate the diamond shape */
+    border-radius: 0;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
+/* The POI text label */
 .poi-label {
+    position: absolute; /* Relative to its group */
     font-family: 'Orbitron', sans-serif;
-    fill: #d0d8e8;
+    color: #d0d8e8;
     font-size: 0.9rem;
-    /* Removed drop shadow, reverted to stroke for contrast */
-    paint-order: stroke;
-    stroke: #0c101d;
-    stroke-width: 3px;
-    stroke-linecap: butt;
-    stroke-linejoin: miter;
+    /* Mimic the SVG stroke with text-shadow */
+    text-shadow: 
+        0 0 3px #0c101d,
+        0 0 3px #0c101d,
+        0 0 3px #0c101d;
+    
+    /* Nudge to center it vertically */
+    transform: translateY(-50%);
+    white-space: nowrap;
+    z-index: 11;
+}
+/* Apply D3-calculated text-anchor */
+.poi-label[style*="text-anchor: end"] {
+    transform: translate(-100%, -50%);
 }
 
+/* --- 4. "FILTER-LESS" GLOW ANIMATIONS --- */
+/* This is the new, reliable glow system */
+
+/* Keyframes for the text glow */
+@keyframes pulse-text-glow {
+    0%, 100% {
+        /* --theme-glow-color is set on #map-container by JS */
+        text-shadow: 0 0 4px var(--theme-glow-color), 0 0 3px #0c101d;
+    }
+    50% {
+        /* --- VIRTUAL WORKBENCH: Doubled radius from 12px to 24px --- */
+        text-shadow: 0 0 24px var(--theme-glow-color), 0 0 3px #0c101d;
+    }
+}
+
+/* Keyframes for the icon glow (pulsing a pseudo-element) */
+@keyframes pulse-html-glow {
+    0%, 100% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        /* --- VIRTUAL WORKBENCH: Doubled radius from scale(1.6) to scale(2.2) --- */
+        transform: translate(-50%, -50%) scale(2.2);
+    }
+}
+
+/* Create the pseudo-element for the icon glow */
+.poi-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    /* Create the glow with a radial gradient (no filters!) */
+    background: radial-gradient(circle, var(--theme-glow-color) 20%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.poi-icon.belt::before {
+    border-radius: 0; /* Match belt shape */
+}
+
+/* --- 5. APPLY ANIMATIONS TO CURRENT LOCATION --- */
+
+/* Apply the text glow */
+.poi-marker-group.current-location .poi-label {
+    /* --- VIRTUAL WORKBENCH: Increased speed from 2.5s to 2.1s --- */
+    animation: pulse-text-glow 2.1s infinite;
+}
+
+/* Apply the icon glow */
+.poi-marker-group.current-location .poi-icon::before {
+    /* --- VIRTUAL WORKBENCH: Increased speed from 2.5s to 2.1s --- */
+    animation: pulse-html-glow 2.1s infinite;
+}
+
+/* --- 6. LEGACY MODAL STYLES (Unchanged) --- */
 @keyframes map-modal-glow {
     0%, 100% {
         box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
@@ -74,12 +213,11 @@
 }
 
 #map-detail-modal .modal-content {
-    background: transparent; /* Make default background see-through */
-    border: none; /* Border is now on the pseudo-element */
-    position: relative; /* Needed for pseudo-element positioning */
+    background: transparent;
+    border: none;
+    position: relative;
 }
 
-/* Create a pseudo-element to handle the border and the infinite glow animation */
 #map-detail-modal .modal-content::before {
     content: '';
     position: absolute;
@@ -87,16 +225,14 @@
     left: 0;
     right: 0;
     bottom: 0;
-    border-radius: 12px; /* Match the modal's border-radius */
+    border-radius: 12px;
     border: 2px solid var(--theme-glow-color);
-    z-index: -1; /* Place it behind the modal's actual content */
+    z-index: -1;
 }
 
-/* New rule to trigger the animation */
 #map-detail-modal.is-glowing .modal-content::before {
     animation: map-modal-glow 3s infinite;
 }
-
 
 #map-detail-modal.modal-visible .modal-content {
     animation: fadeIn 0.3s ease-out forwards;
@@ -107,40 +243,35 @@
     text-shadow: 0 -1px 1px rgba(0,0,0,0.5);
 }
 
-/* New styles for the redesigned intel blocks */
 .map-intel-block {
     text-align: center;
-    background-color: rgba(0,0,0,0.3); /* Main block background */
-    border-radius: 0.5rem; /* 8px */
-    padding: 0.75rem; /* 12px */
+    background-color: rgba(0,0,0,0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
 }
 
 .map-intel-block h5 {
-    /* 'imprinted-text' class is already applied in HTML */
-    font-size: 0.875rem; /* 14px */
-    line-height: 1.25rem; /* 20px */
+    font-size: 0.875rem;
+    line-height: 1.25rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #9ca3af; /* gray-400 */
-    margin-bottom: 0.5rem; /* 8px */
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
 }
 
 .imprinted-text-embedded {
-    /* This creates the "embedded" look */
     background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 0.375rem; /* 6px */
-    padding: 0.5rem 0.75rem; /* 8px 12px */
-    color: #e5e7eb; /* gray-200 */
-    font-size: 0.875rem; /* 14px */
-    line-height: 1.25rem; /* 20px */
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
     box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
-    min-height: 40px; /* Ensure blocks have a consistent height */
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* The 'font-roboto-mono' is applied in HTML */
 }
-
 
 .market-profile-grid {
     display: grid;
