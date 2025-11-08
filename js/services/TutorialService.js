@@ -1,411 +1,239 @@
-// js/services/TutorialService.js
+// ./js/services/TutorialService.js
 /**
- * @fileoverview
- * This service manages the state and flow of all interactive tutorials.
- * It checks game state against triggers, advances steps, and manages
- * tutorial completion state. It delegates all UI rendering to the
- * TutorialRenderer.
+ * @fileoverview This file contains the TutorialService class, which manages the state
+ * and flow of all interactive tutorials in the game. It checks for trigger conditions,
+ * displays tutorial steps, and locks UI navigation to guide the player.
  */
-
 import { DB } from '../data/database.js';
-import { ACTION_IDS, SCREEN_IDS } from '../data/constants.js';
+import { TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from '../data/constants.js';
 
-// --- VIRTUAL WORKBENCH: IMPORT TutorialRenderer ---
-import { TutorialRenderer } from '../ui/TutorialRenderer.js';
-// --- END VIRTUAL WORKBENCH ---
-
+/**
+ * @class TutorialService
+ * @description Manages the state and flow of interactive tutorials.
+ */
 export class TutorialService {
     /**
-     * @param {import('./GameState.js').GameState} gameState
-     * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {import('./LoggingService.js').Logger} logger
-     * @param {import('./DebugService.js').DebugService} debugService
+     * @param {import('./GameState.js').GameState} gameState The game's central state object.
+     * @param {import('./UIManager.js').UIManager} uiManager The UI manager for rendering updates.
+     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic simulator.
+     * @param {object} navStructure The navigation structure from UIManager, used to map screens to nav tabs.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, logger, debugService) {
+    constructor(gameState, uiManager, simulationService, navStructure, logger) {
         this.gameState = gameState;
+        this.uiManager = uiManager;
         this.simulationService = simulationService;
         this.logger = logger;
-        // --- VIRTUAL WORKBENCH: REMOVE UIMANAGER, ADD DEBUGSERVICE & RENDERER ---
-        this.debugService = debugService;
+        this.activeBatchId = null;
+        this.activeStepId = null;
 
-        /**
-         * The dedicated renderer for all tutorial UI components.
-         * @type {TutorialRenderer}
-         */
-        this.tutorialRenderer = new TutorialRenderer(this.logger, this.debugService);
-        // --- END VIRTUAL WORKBENCH ---
-
-        this.activeStep = null;
-        this.activeBatch = null;
-
-        // Bind 'this' context for callbacks
-        this.skipActiveTutorial = this.skipActiveTutorial.bind(this);
-        this.advanceStep = this.advanceStep.bind(this);
-        this.replayTutorial = this.replayTutorial.bind(this);
-    }
-
-    /**
-     * Checks the current game state or action against the active tutorial's triggers.
-     * This is the main pulse function called by EventManager and SimulationService.
-     * @param {string} type - The type of check ('action', 'nav', 'state', 'input').
-     * @param {object} [data] - The data associated with the check (e.g., actionId, screenId, gameState).
-     */
-    checkState(type, data) {
-        if (!this.activeStep) return; // No active tutorial step
-
-        const { completion } = this.activeStep;
-        if (!completion) return;
-
-        let conditionMet = false;
-
-        switch (type) {
-            case 'action':
-                if (completion.type === 'action' && completion.actionId === data.actionId) {
-                    // Check if the element query matches, if one is provided
-                    if (completion.elementQuery) {
-                        conditionMet = data.target.matches(completion.elementQuery);
-                    } else {
-                        conditionMet = true;
-                    }
-                }
-                break;
-            case 'nav':
-                if (completion.type === 'nav') {
-                    if (completion.navId && completion.navId === data.navId) {
-                        conditionMet = true;
-                    }
-                    if (completion.screenId && completion.screenId === data.screenId) {
-                        conditionMet = true;
-                    }
-                }
-                break;
-            case 'state':
-                // This is for more complex state changes, e.g., 'player.credits > 1000'
-                // Currently simplified; full implementation would need a state evaluation engine.
-                if (completion.type === 'state' && this._evaluateStateCondition(completion.condition, data.gameState)) {
-                    conditionMet = true;
-                }
-                break;
-            case 'input':
-                if (completion.type === 'input' && data.target.id === completion.elementId) {
-                    if (completion.value === 'any') {
-                        conditionMet = data.target.value.trim() !== '';
-                    } else {
-                        conditionMet = data.target.value === completion.value;
-                    }
-                }
-                break;
-        }
-
-        if (conditionMet) {
-            this.logger.log('TutorialService', `Step '${this.activeStep.stepId}' condition met. Advancing.`);
-            this.advanceStep();
-        }
-    }
-
-    /**
-     * Determines if an action is blocked by the active tutorial.
-     * @param {string} action - The action ID being attempted.
-     * @param {HTMLElement} target - The element being interacted with.
-     * @returns {boolean} - True if the action is blocked, false otherwise.
-     */
-    isBlocked(action, target) {
-        if (!this.activeStep) return false; // No active tutorial, nothing blocked
-
-        const { completion, allowProgression } = this.activeStep;
-        if (allowProgression) return false; // Step allows any action
-
-        if (completion.type === 'action') {
-            // If a specific element is required, block all other actions
-            if (completion.elementQuery) {
-                return !target.matches(completion.elementQuery);
-            }
-            // If a specific action ID is required, block all others
-            if (completion.actionId) {
-                return action !== completion.actionId;
-            }
-        } else if (completion.type === 'nav') {
-            // Block if it's a nav action but not the correct one
-            if (action === ACTION_IDS.SET_SCREEN) {
-                const { navId, screenId } = target.dataset;
-                if (completion.navId && completion.navId !== navId) return true;
-                if (completion.screenId && completion.screenId !== screenId) return true;
-            }
-        } else if (completion.type === 'input') {
-            if (target.id !== completion.elementId) {
-                return true; // Block input on any other element
-            }
-        }
-        // Add more block logic for other types as needed
-        return false; // Default: not blocked
-    }
-
-    /**
-     * Triggers a visual "hint" (e.g., shake) on the correct tutorial element
-     * when the user clicks the wrong thing.
-     * @param {HTMLElement} wrongTarget - The element the user incorrectly clicked.
-     */
-    triggerHint(wrongTarget) {
-        if (!this.activeStep) return;
-
-        let query = null;
-        const { completion } = this.activeStep;
-
-        if (completion.type === 'action' && completion.elementQuery) {
-            query = completion.elementQuery;
-        } else if (completion.type === 'nav') {
-            if (completion.screenId) {
-                query = `[data-action="${ACTION_IDS.SET_SCREEN}"][data-screen-id="${completion.screenId}"]`;
-            } else if (completion.navId) {
-                query = `[data-action="${ACTION_IDS.SET_SCREEN}"][data-nav-id="${completion.navId}"]`;
-            }
-        } else if (completion.type === 'input' && completion.elementId) {
-            query = `#${completion.elementId}`;
-        }
-
-        if (query) {
-            const correctElement = document.querySelector(query);
-            if (correctElement) {
-                correctElement.classList.add('tutorial-hint');
-                setTimeout(() => {
-                    correctElement.classList.remove('tutorial-hint');
-                }, 500); // Duration of the shake animation
+        // Create a map of screenId -> navId for easy lookup when tutorials need to force navigation.
+        this.screenToNavMap = {};
+        for (const navId in navStructure) {
+            for (const screenId in navStructure[navId].screens) {
+                this.screenToNavMap[screenId] = navId;
             }
         }
     }
 
     /**
-     * Starts a new tutorial batch.
-     * @param {string} batchId - The ID of the tutorial batch to start.
+     * Checks the current game action or state against tutorial triggers and step completion conditions.
+     * This is the main entry point for the tutorial system, called after player actions or screen loads.
+     * @param {object} [actionData=null] Data about the action that just occurred (e.g., { type: 'ACTION', action: 'buy-ship' }).
      */
-    triggerBatch(batchId) {
-        const state = this.gameState.getState();
-        if (state.tutorials.seenBatchIds.includes(batchId) || state.tutorials.skippedTutorialBatches.includes(batchId)) {
-            this.logger.log('TutorialService', `Skipping tutorial batch '${batchId}': already seen or skipped.`);
+    checkState(actionData = null) {
+        // If a tutorial is currently active, check if the action completes the current step.
+        if (this.activeBatchId && this.activeStepId) {
+            const batch = DB.TUTORIAL_DATA[this.activeBatchId];
+            const step = batch.steps.find(s => s.stepId === this.activeStepId);
+
+            if (step && this._matchesCondition(step.completion, actionData)) {
+                this.advanceStep();
+            }
             return;
         }
 
-        this.activeBatch = DB.TUTORIAL_DATA[batchId];
-        if (!this.activeBatch) {
-            this.logger.error('TutorialService', `Tutorial batch '${batchId}' not found in database.`);
-            return;
-        }
-
-        this.logger.log('TutorialService', `Triggering tutorial batch: ${batchId}`);
-        this.gameState.setState({
-            tutorials: {
-                ...state.tutorials,
-                activeBatchId: batchId,
-                activeStepId: this.activeBatch.steps[0].stepId,
-                navLock: this.activeBatch.navLock || null,
+        // If no tutorial is active, check if the action triggers a new tutorial batch.
+        for (const batchId in DB.TUTORIAL_DATA) {
+            const batch = DB.TUTORIAL_DATA[batchId];
+            const hasBeenSeen = this.gameState.tutorials.seenBatchIds.includes(batchId);
+            const isSkipped = this.gameState.tutorials.skippedTutorialBatches.includes(batchId);
+            
+            if (!hasBeenSeen && !isSkipped) {
+                const triggerAction = actionData || { type: TUTORIAL_ACTION_TYPES.SCREEN_LOAD, screenId: this.gameState.activeScreen };
+                if (this._matchesCondition(batch.trigger, triggerAction)) {
+                    this.triggerBatch(batchId);
+                    break;
+                }
             }
-        });
-        this.activeStep = this.activeBatch.steps[0];
-        this._showCurrentStep();
-
-        // If this batch has an associated quest, mark it as started
-        if (this.activeBatch.questFlag) {
-            // This is a placeholder for a future quest system
         }
     }
 
     /**
-     * Advances the tutorial to the next step or completes the batch.
+     * Starts a specific tutorial batch by its ID.
+     * @param {string} batchId The unique identifier of the tutorial batch to start.
+     * @param {string|null} [startStepId=null] The ID of a specific step to start from. If null, starts from the beginning.
      */
-    advanceStep() {
-        if (!this.activeBatch || !this.activeStep) return;
+    triggerBatch(batchId, startStepId = null) {
+        if (!DB.TUTORIAL_DATA[batchId]) return;
+        const batch = DB.TUTORIAL_DATA[batchId];
 
-        const currentIndex = this.activeBatch.steps.findIndex(s => s.stepId === this.activeStep.stepId);
-        const nextIndex = currentIndex + 1;
-
-        if (nextIndex < this.activeBatch.steps.length) {
-            // --- Advance to next step ---
-            this.activeStep = this.activeBatch.steps[nextIndex];
-            this.gameState.setState({
-                tutorials: {
-                    ...this.gameState.getState().tutorials,
-                    activeStepId: this.activeStep.stepId,
+        // If the tutorial is triggered by loading a specific screen, navigate to that screen first.
+        if (batch.trigger.type === TUTORIAL_ACTION_TYPES.SCREEN_LOAD) {
+            const targetScreenId = batch.trigger.screenId;
+            if (this.gameState.activeScreen !== targetScreenId) {
+                const targetNavId = this.screenToNavMap[targetScreenId];
+                if (targetNavId) {
+                    this.simulationService.setScreen(targetNavId, targetScreenId);
                 }
-            });
-            this._showCurrentStep();
-        } else {
-            // --- Complete the batch ---
-            this.logger.log('TutorialService', `Tutorial batch '${this.activeBatch.id}' completed.`);
-            const state = this.gameState.getState();
-            const newSeenBatches = [...state.tutorials.seenBatchIds];
-            if (!newSeenBatches.includes(this.activeBatch.id)) {
-                newSeenBatches.push(this.activeBatch.id);
-            }
-
-            this.gameState.setState({
-                tutorials: {
-                    ...state.tutorials,
-                    activeBatchId: null,
-                    activeStepId: null,
-                    navLock: null,
-                    seenBatchIds: newSeenBatches,
-                }
-            });
-            this.activeStep = null;
-            this.activeBatch = null;
-
-            // --- VIRTUAL WORKBENCH: HIDE TOAST ---
-            this.tutorialRenderer.hideTutorialToast();
-            // --- END VIRTUAL WORKBENCH ---
-
-            // Check if this tutorial completion triggers another service
-            if (state.introSequenceActive) {
-                this.simulationService.introService.continueAfterTutorial();
             }
         }
+
+        this.activeBatchId = batchId;
+        this.gameState.tutorials.activeBatchId = batchId;
+        
+        if (!this.gameState.tutorials.seenBatchIds.includes(batchId)) {
+            this.gameState.tutorials.seenBatchIds.push(batchId);
+        }
+
+        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_START', `Starting tutorial batch: ${batchId}`);
+        this.gameState.setState(this.gameState);
+        this.uiManager.render(this.gameState.getState());
+        
+        const firstStepId = startStepId || batch.steps[0].stepId;
+        this._displayStep(firstStepId);
     }
 
     /**
-     * Skips the currently active tutorial batch.
+     * Skips the currently active tutorial batch, preventing it from triggering again.
      */
     skipActiveTutorial() {
-        if (!this.activeBatch) return;
-
-        const state = this.gameState.getState();
-        const batchId = this.activeBatch.id;
-
-        this.logger.log('TutorialService', `Skipping tutorial batch: ${batchId}`);
-
-        // --- VIRTUAL WORKBENCH: HIDE MODALS ---
-        this.tutorialRenderer.hideSkipTutorialModal();
-        this.tutorialRenderer.hideTutorialToast();
-        // --- END VIRTUAL WORKBENCH ---
-
-        // Add to skipped list
-        const newSkippedBatches = [...state.tutorials.skippedTutorialBatches];
-        if (!newSkippedBatches.includes(batchId)) {
-            newSkippedBatches.push(batchId);
+        if (!this.activeBatchId) return;
+        if (!this.gameState.tutorials.skippedTutorialBatches.includes(this.activeBatchId)) {
+            this.gameState.tutorials.skippedTutorialBatches.push(this.activeBatchId);
         }
+        this.logger.info.player(this.gameState.day, 'TUTORIAL_SKIP', `Skipped tutorial: ${this.activeBatchId}`);
+        this._endBatch();
+        this.gameState.setState(this.gameState);
+    }
+    
+    /**
+     * Advances the tutorial to the next step in the current batch, or ends the batch if it's the final step.
+     */
+    advanceStep() {
+        if (!this.activeStepId || !this.activeBatchId) return;
 
-        // Clear active state
-        this.gameState.setState({
-            tutorials: {
-                ...state.tutorials,
-                activeBatchId: null,
-                activeStepId: null,
-                navLock: null,
-                skippedTutorialBatches: newSkippedBatches,
+        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
+        const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
+        
+        this.uiManager.hideTutorialToast();
+
+        if (currentStep && currentStep.nextStepId) {
+            this._displayStep(currentStep.nextStepId);
+        } else {
+            const completedBatchId = this.activeBatchId;
+            this._endBatch(); 
+            // If the completed tutorial was part of the intro sequence, continue the sequence.
+            if (this.gameState.introSequenceActive && completedBatchId?.startsWith('intro_')) {
+                this.simulationService._continueIntroSequence(completedBatchId);
             }
-        });
-
-        this.activeStep = null;
-        this.activeBatch = null;
-
-        // Check if this tutorial skip triggers another service
-        if (state.introSequenceActive) {
-            this.simulationService.introService.continueAfterTutorial();
         }
     }
 
     /**
-     * Handles the UI request to skip a tutorial (shows confirmation).
-     */
-    handleSkipRequest() {
-        // --- VIRTUAL WORKBENCH: USE RENDERER ---
-        this.tutorialRenderer.showSkipTutorialModal(
-            () => this.skipActiveTutorial(), // onConfirm
-            () => this.tutorialRenderer.hideSkipTutorialModal() // onCancel
-        );
-        // --- END VIRTUAL WORKBENCH ---
-    }
-
-    /**
-     * Replays a previously seen tutorial batch.
-     * @param {string} batchId - The ID of the batch to replay.
-     */
-    replayTutorial(batchId) {
-        this.logger.log('TutorialService', `Replaying tutorial batch: ${batchId}`);
-        // Temporarily remove from seen list to allow 'triggerBatch' to run
-        const state = this.gameState.getState();
-        this.gameState.setState({
-            tutorials: {
-                ...state.tutorials,
-                seenBatchIds: state.tutorials.seenBatchIds.filter(id => id !== batchId),
-            }
-        });
-        this.triggerBatch(batchId);
-    }
-
-    /**
-     * Shows the list of seen tutorials for replay.
-     */
-    showReplayLog() {
-        const { seenBatchIds } = this.gameState.getState().tutorials;
-        // --- VIRTUAL WORKBENCH: USE RENDERER ---
-        this.tutorialRenderer.showTutorialLogModal({
-            seenBatches: seenBatchIds,
-            onSelect: this.replayTutorial
-        });
-        // --- END VIRTUAL WORKBENCH ---
-    }
-
-    /**
-     * Displays the current active tutorial step's UI.
+     * Displays a specific tutorial step by its ID and manages UI navigation locks.
+     * @param {string} stepId The ID of the step to display.
      * @private
      */
-    _showCurrentStep() {
-        if (!this.activeStep) {
-            // --- VIRTUAL WORKBENCH: USE RENDERER ---
-            this.tutorialRenderer.hideTutorialToast();
-            // --- END VIRTUAL WORKBENCH ---
+    _displayStep(stepId) {
+        if (!this.activeBatchId) return;
+        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
+        const step = batch.steps.find(s => s.stepId === stepId);
+        if (!step) {
+            this._endBatch();
             return;
         }
 
-        // Apply highlights
-        if (this.activeStep.highlights) {
-            // --- VIRTUAL WORKBENCH: USE RENDERER ---
-            this.tutorialRenderer.applyTutorialHighlight(this.activeStep.highlights);
-            // --- END VIRTUAL WORKBENCH ---
+        // Apply navigation lock based on tutorial data.
+        if (step.hasOwnProperty('navLock')) {
+            // A step can explicitly define its own lock (or null to unlock).
+            this.gameState.tutorials.navLock = step.navLock;
+        } else if (batch.navLock) {
+            // Otherwise, inherit the lock from the parent batch.
+            const currentScreenId = this.gameState.activeScreen;
+            const currentNavId = this.screenToNavMap[currentScreenId];
+            this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
         } else {
-            // --- VIRTUAL WORKBENCH: USE RENDERER ---
-            this.tutorialRenderer.applyTutorialHighlight(null);
-            // --- END VIRTUAL WORKBENCH ---
+            // Ensure navigation is unlocked if no lock is specified.
+            this.gameState.tutorials.navLock = null;
         }
 
-        // Show the toast
-        // --- VIRTUAL WORKBENCH: USE RENDERER ---
-        this.tutorialRenderer.showTutorialToast({
-            step: this.activeStep,
-            onSkip: () => this.handleSkipRequest(),
-            onNext: this.advanceStep,
+        this.activeStepId = stepId;
+        this.gameState.tutorials.activeStepId = stepId;
+        this.logger.info.system('Tutorial', this.gameState.day, 'STEP_DISPLAY', `Displaying step: ${stepId}`);
+        
+        this.uiManager.showTutorialToast({
+            step: step,
+            onSkip: () => this.uiManager.showSkipTutorialModal(() => this.skipActiveTutorial()),
+            onNext: () => this.advanceStep(),
             gameState: this.gameState.getState()
         });
-        // --- END VIRTUAL WORKBENCH ---
+        
+        // Re-render to apply navLock changes and any other state updates from advancing the step.
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**
-     * A helper to evaluate complex state conditions for tutorial triggers.
-     * @param {object} condition - The condition object from the tutorial data.
-     * @param {object} gameState - The current game state.
-     * @returns {boolean} - True if the condition is met.
+     * Cleans up the state when a tutorial batch ends.
      * @private
      */
-    _evaluateStateCondition(condition, gameState) {
-        if (!condition) return false;
-        // Example condition: { "path": "player.credits", "op": ">", "value": 1000 }
-        try {
-            // Simple path resolver (e.g., "player.credits")
-            const value = condition.path.split('.').reduce((obj, key) => obj?.[key], gameState);
-            if (value === undefined) return false;
+    _endBatch() {
+        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_END', `Ending tutorial batch: ${this.activeBatchId}`);
+        this.uiManager.hideTutorialToast();
+        this.activeBatchId = null;
+        this.activeStepId = null;
+        this.gameState.tutorials.activeBatchId = null;
+        this.gameState.tutorials.activeStepId = null;
+        this.gameState.tutorials.navLock = null; // Clear any active navigation lock.
+    }
 
-            switch (condition.op) {
-                case '>': return value > condition.value;
-                case '>=': return value >= condition.value;
-                case '<': return value < condition.value;
-                case '<=': return value <= condition.value;
-                case '==': return value == condition.value;
-                case '===': return value === condition.value;
-                case 'exists': return value !== undefined && value !== null;
-                default: return false;
-            }
-        } catch (error) {
-            this.logger.error('TutorialService', `Error evaluating state condition: ${error.message}`);
-            return false;
+    /**
+     * Checks if a player action matches a tutorial step's completion or trigger condition.
+     * @param {object|object[]} condition The condition object or array of conditions from the database.
+     * @param {object} actionData The action performed by the player.
+     * @returns {boolean} True if the condition(s) are met.
+     * @private
+     */
+    _matchesCondition(condition, actionData) {
+        if (!condition || !actionData) return false;
+        // A condition can be an array of multiple sub-conditions that must all be true.
+        if (Array.isArray(condition)) {
+            return condition.every(c => this._matchesSingleCondition(c, actionData));
+        }
+        return this._matchesSingleCondition(condition, actionData);
+    }
+    
+    /**
+     * Helper for _matchesCondition to check a single condition object against a player action.
+     * @param {object} condition The single condition object.
+     * @param {object} actionData The action performed by the player.
+     * @returns {boolean} True if the single condition is met.
+     * @private
+     */
+    _matchesSingleCondition(condition, actionData) {
+        if (condition.type !== actionData.type) return false;
+        switch (condition.type) {
+            case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
+                return condition.screenId === actionData.screenId;
+            case TUTORIAL_ACTION_TYPES.ACTION:
+                if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
+                    return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
+                }
+                return condition.action === actionData.action;
+            case TUTORIAL_ACTION_TYPES.INFO:
+                return true; // Info steps are always completed by the "Next" button, not a game action.
+            default:
+                return false;
         }
     }
 }

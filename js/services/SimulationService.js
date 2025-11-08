@@ -1,226 +1,416 @@
 // js/services/SimulationService.js
 /**
- * @fileoverview
- * This is the SimulationService, the core game engine Facade.
- * It is responsible for instantiating and coordinating all specialized sub-services
- * (e.g., MarketService, TravelService, PlayerActionService).
- *
- * It acts as the central point of contact for the EventManager, delegating
- * actions to the appropriate service. It also hosts shared helper methods
- * needed by multiple services.
- *
- * This file was refactored from a "god object" to a lean Facade as per ADR-002.
+ * @fileoverview This file contains the SimulationService class, which acts as the core game engine
+ * facade. It instantiates all specialized game logic services and delegates calls to them,
+ * providing a single, clean API for the EventManager.
  */
-
-import { GameState } from './GameState.js';
-import { UIManager } from './UIManager.js';
-import { Logger } from './LoggingService.js';
-import { ACTION_IDS, SCREEN_IDS, NAV_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
-
-// Import all specialized services
+import { calculateInventoryUsed, formatCredits } from '../utils.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS } from '../data/constants.js';
 import { MarketService } from './simulation/MarketService.js';
-import { TimeService } from './world/TimeService.js';
-import { TravelService } from './world/TravelService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
-import { TutorialService } from './TutorialService.js';
-import { MissionService } from './MissionService.js';
-import { NewsTickerService } from './NewsTickerService.js';
+import { TimeService } from './world/TimeService.js';
+import { TravelService } from './world/TravelService.js';
+// --- VIRTUAL WORKBENCH: IMPORT ---
 import { IntelService } from './IntelService.js';
-
-// --- VIRTUAL WORKBENCH: IMPORT MODALSERVICE ---
-import { ModalService } from './ui/ModalService.js';
 // --- END VIRTUAL WORKBENCH ---
 
+/**
+ * @class SimulationService
+ * @description Manages the core game loop, player actions, and state changes by delegating to specialized services.
+ */
 export class SimulationService {
     /**
-     * @param {GameState} gameState
-     * @param {UIManager} uiManager
-     * @param {Logger} logger
-     * @param {object} services - A container for all instantiated services.
-     * @param {import('./DebugService.js').DebugService} debugService
+     * @param {import('./GameState.js').GameState} gameState - The central state object.
+     * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
+     * @param {import('./LoggingService.js').Logger} logger - The logging utility.
+     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, services, debugService) {
+    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.services = services; // This will be populated by this constructor
-        this.debugService = debugService;
-
-        this.logger.log('SimulationService', 'SimulationService constructing...');
-
-        // --- VIRTUAL WORKBENCH: INSTANTIATE MODALSERVICE ---
-        /**
-         * The dedicated "dumb" service for managing the modal queue.
-         * @type {ModalService}
-         */
-        this.modalService = new ModalService(this.logger);
+        this.newsTickerService = newsTickerService; // ADDED
+        this.tutorialService = null; // Injected post-instantiation.
+        this.missionService = null;  // Injected post-instantiation.
+        
+        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE ---
+        this.intelService = null; // Will be instantiated below
         // --- END VIRTUAL WORKBENCH ---
 
-        // --- Service Instantiation ---
-        // Order matters here to ensure dependencies are available.
+        // Instantiate all services
+        this.marketService = new MarketService(gameState);
+        // MODIFIED: Pass newsTickerService
+        this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
+        this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
+        this.introService = new IntroService(gameState, uiManager, logger, this);
+        this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
 
-        /** @type {MarketService} */
-        this.marketService = new MarketService(this.gameState);
-        this.services.marketService = this.marketService;
-
-        /** @type {NewsTickerService} */
-        this.newsTickerService = new NewsTickerService(this.gameState, DB);
-        this.services.newsTickerService = this.newsTickerService;
-
-        // --- VIRTUAL WORKBENCH: INJECT MODALSERVICE INTO INTELSERVICE ---
-        /** @type {IntelService} */
-        this.intelService = new IntelService(this.gameState, this.marketService, this.newsTickerService, this.modalService, this.logger, DB);
-        this.services.intelService = this.intelService;
+        // --- VIRTUAL WORKBENCH: INSTANTIATE AND INJECT INTEL SERVICE ---
+        // Must be after dependencies (time, market, news) are created
+        this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
+        
+        // Inject intelService into services that depend on it
+        this.timeService.intelService = this.intelService;
+        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
         // --- END VIRTUAL WORKBENCH ---
 
-        /** @type {TimeService} */
-        this.timeService = new TimeService(this.gameState, this.marketService, this.uiManager, this.logger, this, this.intelService);
-        this.services.timeService = this.timeService;
-
-        /** @type {TravelService} */
-        this.travelService = new TravelService(this.gameState, this.uiManager, this.timeService, this.logger, this);
-        this.services.travelService = this.travelService;
-
-        /** @type {MissionService} */
-        this.missionService = new MissionService(this.gameState, this.uiManager, this.logger, this);
-        this.services.missionService = this.missionService;
-
-        /** @type {PlayerActionService} */
-        this.playerActionService = new PlayerActionService(this.gameState, this.uiManager, this.missionService, this.marketService, this.timeService, this.logger, this);
-        this.services.playerActionService = this.playerActionService;
-
-        /** @type {IntroService} */
-        this.introService = new IntroService(this.gameState, this.uiManager, this.logger, this);
-        this.services.introService = this.introService;
-
-        // --- VIRTUAL WORKBENCH: UPDATE TUTORIALSERVICE DEPENDENCIES ---
-        /** @type {TutorialService} */
-        this.tutorialService = new TutorialService(this.gameState, this, this.logger, this.debugService);
-        this.services.tutorialService = this.tutorialService;
-        // --- END VIRTUAL WORKBENCH ---
-
-        // --- Inject dependencies into UIManager ---
-        this.uiManager.setMissionService(this.missionService);
-        this.uiManager.setSimulationService(this);
-        this.uiManager.setNewsTickerService(this.newsTickerService);
-        this.uiManager.setIntelService(this.intelService); // UIManager needs this for its stub handlers
-        this.uiManager.setDebugService(this.debugService);
-
-        // --- Inject dependencies into NewsTickerService ---
-        // This is for dynamic message generation (e.g., market status)
-        this.newsTickerService.setServices(this.marketService, this);
-
-        this.logger.log('SimulationService', 'All services instantiated and dependencies injected.');
+        // Inject cross-dependencies that couldn't be set in constructors
+        this.timeService.simulationService = this;
+        
+        // --- [NEW V2 CHANGE] ---
+        // Inject services required by NewsTickerService for dynamic content.
+        this.newsTickerService.setServices(this, this.marketService);
+        // --- [END NEW V2 CHANGE] ---
     }
 
     /**
-     * Initializes the game by setting the starting screen.
+     * Injects the TutorialService after all services have been instantiated.
+     * @param {import('./TutorialService.js').TutorialService} tutorialService
      */
-    initialize() {
-        // We defer setting the screen until the intro sequence explicitly asks for it.
-        // This prevents a flash of the game UI before the intro modals.
-        this.logger.log('SimulationService', 'Simulation initialized.');
+    setTutorialService(tutorialService) {
+        this.tutorialService = tutorialService;
     }
+
+    /**
+     * Injects the MissionService after all services have been instantiated.
+     * @param {import('./MissionService.js').MissionService} missionService
+     */
+    setMissionService(missionService) {
+        this.missionService = missionService;
+        this.playerActionService.missionService = missionService;
+    }
+
+    // --- FACADE METHODS ---
+    // These methods provide a clean API to the EventManager and other high-level services,
+    // delegating the actual work to the specialized services.
+
+    // IntroService Delegation
+    startIntroSequence() { this.introService.start(); }
+    handleIntroClick(e) { this.introService.handleIntroClick(e); }
+    _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
+    
+    // PlayerActionService Delegation
+    buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
+    sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
+    initiateShipTransactionAnimation(shipId, action, event) { this.playerActionService.initiateShipTransactionAnimation(shipId, action, event); }
+    buyShip(shipId, event) { return this.playerActionService.buyShip(shipId, event); }
+    sellShip(shipId, event) { return this.playerActionService.sellShip(shipId, event); }
+    setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
+    
+    // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+    /**
+     * Pays off the player's entire outstanding debt.
+     * @param {Event} [event] - The click event for placing floating text.
+     */
+    payOffDebt(event) { this.playerActionService.payOffDebt(event); }
+
+    /**
+     * Allows the player to take out a loan, adding to their debt.
+     * @param {object} loanData - Contains amount, fee, and interest for the loan.
+     * @param {Event} [event] - The click event for placing floating text.
+     */
+    takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
+    // --- END VIRTUAL WORKBENCH ---
+    
+    purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
+    
+    // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
+    // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
+    // --- END VIRTUAL WORKBENCH ---
+
+    refuelTick() { return this.playerActionService.refuelTick(); }
+    repairTick() { return this.playerActionService.repairTick(); }
+    
+    // TravelService Delegation
+    travelTo(locationId) { this.travelService.travelTo(locationId); }
+    resumeTravel() { this.travelService.resumeTravel(); }
+
+    // ADDED: NewsTickerService Delegation
+    /**
+     * Pushes a new message to the news ticker.
+     * @param {string} text - The message content.
+     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
+     * @param {boolean} [isPriority=false] - If true, prepends to the front.
+     */
+    pushNewsMessage(text, type, isPriority = false) {
+        if (this.newsTickerService) {
+            this.newsTickerService.pushMessage(text, type, isPriority);
+        }
+    }
+
+    /**
+     * Pulses the news ticker for daily updates (e.g., flavor text).
+     */
+    pulseNewsTicker() {
+        if (this.newsTickerService) {
+            this.newsTickerService.pulse();
+        }
+    }
+
+    // --- CORE & SHARED METHODS ---
+    // These methods remain in the facade because they are either simple state setters
+    // or are helpers required by multiple services.
 
     /**
      * Sets the active navigation tab and screen.
-     * This is the primary method for changing the view.
-     * @param {string} navId - The ID of the main navigation tab (e.g., 'ship').
-     * @param {string} screenId - The ID of the screen to display (e.g., 'map').
+     * @param {string} navId
+     * @param {string} screenId
      */
     setScreen(navId, screenId) {
-        const currentState = this.gameState.getState();
-
-        // Prevent navigation if the intro sequence is active (and not on the last step)
-        if (currentState.introSequenceActive) {
-            this.logger.warn('SimulationService', 'Screen navigation blocked by active intro sequence.');
-            return;
-        }
-
-        // Prevent navigation if a tutorial lock is active
-        const { navLock } = currentState.tutorials;
-        if (navLock) {
-            if (navLock.navId && navLock.navId !== navId) {
-                this.logger.warn('SimulationService', `Navigation to ${navId} blocked by tutorial lock.`);
-                return;
-            }
-            if (navLock.screenId && navLock.screenId !== screenId) {
-                this.logger.warn('SimulationService', `Navigation to ${screenId} blocked by tutorial lock.`);
-                return;
-            }
-        }
-
-        const newLastActiveScreen = { ...currentState.lastActiveScreen, [navId]: screenId };
-
-        this.gameState.setState({
-            activeNav: navId,
+        const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
+        this.gameState.setState({ 
+            activeNav: navId, 
             activeScreen: screenId,
-            lastActiveScreen: newLastActiveScreen
+            lastActiveScreen: newLastActive 
         });
 
-        // Notify TutorialService of the navigation change
-        this.tutorialService.checkState('nav', { navId, screenId });
+        // --- [NEW V2 CHANGE] ---
+        // MODIFICATION: Removed the onLocationChange() call from this function.
+        // It will now be called by TravelService when the location *actually* changes.
+        // --- [END NEW V2 CHANGE] ---
+
+        if (this.tutorialService) {
+            this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
+        }
     }
 
+    // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
     /**
-     * Facade method to initiate travel. Delegates to TravelService.
-     * @param {string} locationId - The ID of the destination location.
-     */
-    travelTo(locationId) {
-        this.travelService.travelTo(locationId);
-    }
-
-    /**
-     * Facade method to buy an item. Delegates to PlayerActionService.
-     * @param {string} goodId - The ID of the commodity to buy.
-     * @param {number} quantity - The amount to buy.
-     */
-    buyItem(goodId, quantity) {
-        this.playerActionService.buyItem(goodId, quantity);
-    }
-
-    /**
-     * Facade method to sell an item. Delegates to PlayerActionService.
-     * @param {string} goodId - The ID of the commodity to sell.
-     * @param {number} quantity - The amount to sell.
-     */
-    sellItem(goodId, quantity) {
-        this.playerActionService.sellItem(goodId, quantity);
-    }
-
-// --- VIRTUAL WORKBENCH: ADD INTEL STUB ---
-    /**
-     * Facade method to set the active tab on the Intel screen.
-     * @param {string} tabId - The ID of the tab content to show.
+     * Sets the active tab on the Intel screen.
+     * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
+     * @JSDoc
      */
     setIntelTab(tabId) {
-        this.gameState.setUiState({ activeIntelTab: tabId });
+        if (this.gameState.uiState.activeIntelTab !== tabId) {
+            this.gameState.uiState.activeIntelTab = tabId;
+            this.gameState.setState({ 
+                uiState: this.gameState.uiState 
+            });
+        }
     }
-// --- END VIRTUAL WORKBENCH ---
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
-     * Facade method to push a message to the news ticker.
-     * @param {string} message - The text to display.
-     * @param {string} type - The message type (e.g., 'SYSTEM', 'FLAVOR').
-     * @param {string} [id] - A unique ID to prevent duplicates.
+     * Sets the hangar/shipyard toggle state.
+     * @param {string} mode - 'hangar' or 'shipyard'.
      */
-    pushNewsMessage(message, type, id) {
-        this.newsTickerService.pushMessage(message, type, id);
+    setHangarShipyardMode(mode) {
+        if (this.gameState.uiState.hangarShipyardToggleState !== mode) {
+            this.gameState.uiState.hangarShipyardToggleState = mode;
+            this.gameState.setState({});
+        }
+    }
+    
+    /**
+     * Updates the active index for the hangar or shipyard carousel.
+     * @param {number} index
+     * @param {string} mode
+     */
+    setHangarCarouselIndex(index, mode) {
+        if (mode === 'hangar') {
+            this.gameState.uiState.hangarActiveIndex = index;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = index;
+        }
+        this.gameState.setState({});
     }
 
     /**
-     * Retrieves the shipyard inventory for the current location.
-     * This is a helper method used by HangarScreen.js.
-     * @returns {Array<[string, number]>} - An array of [shipId, stock] tuples.
+     * Cycles the hangar/shipyard carousel.
+     * @param {string} direction - 'next' or 'prev'.
+     */
+    cycleHangarCarousel(direction) {
+        const { uiState, player } = this.gameState;
+        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+        const shipList = isHangarMode ? player.ownedShipIds : this._getShipyardInventory().map(([id]) => id);
+        
+        if (shipList.length <= 1) return;
+
+        let currentIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+
+        if (direction === 'next') {
+            currentIndex = (currentIndex + 1) % shipList.length;
+        } else {
+            currentIndex = (currentIndex - 1 + shipList.length) % shipList.length;
+        }
+
+        this.setHangarCarouselIndex(currentIndex, isHangarMode ? 'hangar' : 'shipyard');
+    }
+
+    /**
+     * Ends the game and displays a final message.
+     * @param {string} message
      * @private
      */
-    _getShipyardInventory() {
-        const currentLocationId = this.gameState.getState().currentLocationId;
-        const shipyardStock = this.gameState.getState().market.shipyardStock[currentLocationId];
-        if (!shipyardStock) return [];
+    _gameOver(message) {
+        if (this.gameState.isGameOver) return; // Prevent multiple game over triggers
+        this.logger.info.state(this.gameState.day, 'GAME_OVER', message);
+        this.gameState.setState({ isGameOver: true });
+        this.uiManager.queueModal('event-modal', "Game Over", message, () => {
+            localStorage.removeItem(SAVE_KEY);
+            window.location.reload();
+        }, { buttonText: 'Restart' });
+    }
 
-        return Object.entries(shipyardStock).filter(([, stock]) => stock > 0);
+    /**
+     * Checks for any condition that would end the game, such as bankruptcy.
+     * This is intended to be called only by automated processes that can
+     * reduce credits without a prior "insufficient funds" check (e.g., garnishment, debug).
+     * @private
+     */
+    _checkGameOverConditions() {
+        // This is the performant check: it reads directly from the state
+        // object instead of creating an expensive deep copy with getState().
+        if (this.gameState.player.credits <= 0) {
+            this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
+        }
+    }
+
+    // --- HELPER & PRIVATE METHODS (SHARED) ---
+    // These are kept here to be accessible by the specialized services that need them.
+
+    addShipToHangar(shipId) {
+        const ship = DB.SHIPS[shipId];
+        if (!ship) return;
+        this.gameState.player.ownedShipIds.push(shipId);
+        this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
+        if (!this.gameState.player.inventories[shipId]) {
+            this.gameState.player.inventories[shipId] = {};
+            DB.COMMODITIES.forEach(c => {
+                this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
+            });
+        }
+    }
+
+    _applyPerk(choice) {
+        this.logger.info.player(this.gameState.day, 'PERK_APPLIED', `Gained perk: ${choice.title}`);
+        if (choice.perkId) this.gameState.player.activePerks[choice.perkId] = true;
+        if (choice.playerTitle) this.gameState.player.playerTitle = choice.playerTitle;
+        if (choice.perkId === PERK_IDS.MERCHANT_GUILD_SHIP) {
+            this.addShipToHangar(SHIP_IDS.STALWART);
+            this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild has delivered a new ${DB.SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
+        }
+        this.gameState.setState({});
+    }
+    
+    _getActiveShip() {
+        const state = this.gameState;
+        const activeId = state.player.activeShipId;
+        if (!activeId) return null;
+        return { id: activeId, ...DB.SHIPS[activeId], ...state.player.shipStates[activeId] };
+    }
+
+    _getActiveInventory() {
+        if (!this.gameState.player.activeShipId) return null;
+        return this.gameState.player.inventories[this.gameState.player.activeShipId];
+    }
+    
+    _checkHullWarnings(shipId) {
+        const shipState = this.gameState.player.shipStates[shipId];
+        const shipStatic = DB.SHIPS[shipId];
+        const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
+        else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
+        if (healthPct > 30) shipState.hullAlerts.one = false;
+        if (healthPct > 15) shipState.hullAlerts.two = false;
+    }
+
+    _logTransaction(type, amount, description) {
+        this.gameState.player.financeLog.push({ 
+            day: this.gameState.day,
+            type: type, 
+            amount: amount,
+            balance: this.gameState.player.credits,
+            description: description
+        });
+        // Enforce the history limit
+        while (this.gameState.player.financeLog.length > GAME_RULES.FINANCE_HISTORY_LENGTH) {
+            this.gameState.player.financeLog.shift();
+        }
+    }
+
+    _logConsolidatedTrade(goodName, quantity, transactionValue) {
+        const log = this.gameState.player.financeLog;
+        const isBuy = transactionValue < 0;
+        const actionWord = isBuy ? 'Bought' : 'Sold';
+        const existingEntry = log.find(entry => 
+            entry.day === this.gameState.day &&
+            entry.type === 'trade' &&
+            entry.description.startsWith(`${actionWord}`) &&
+            entry.description.endsWith(` ${goodName}`) &&
+            ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0))
+        );
+        if (existingEntry) {
+            existingEntry.amount += transactionValue;
+            existingEntry.balance = this.gameState.player.credits;
+            const match = existingEntry.description.match(/\s(\d+)x\s/);
+            if (match) {
+                const currentQty = parseInt(match[1], 10);
+                existingEntry.description = `${actionWord} ${currentQty + quantity}x ${goodName}`;
+            }
+        } else {
+            this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
+        }
+    }
+
+    _logConsolidatedTransaction(type, amount, description) {
+        const log = this.gameState.player.financeLog;
+        const lastEntry = log.length > 0 ? log[log.length - 1] : null;
+        if (lastEntry && lastEntry.day === this.gameState.day && lastEntry.type === type) {
+            lastEntry.amount += amount;
+            lastEntry.balance = this.gameState.player.credits;
+        } else {
+            this._logTransaction(type, amount, description);
+        }
+    }
+
+    _getShipyardInventory() {
+        const { tutorials, player, currentLocationId, market } = this.gameState;
+        if (tutorials.activeBatchId === 'intro_hangar') {
+            return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
+        } else {
+            const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
+            return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
+        }
+    }
+
+    _grantRewards(rewards, sourceName) {
+        rewards.forEach(reward => {
+            if (reward.type === 'credits') {
+                this.gameState.player.credits += reward.amount;
+                this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
+                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+            }
+            if (reward.type === 'license') {
+                if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
+                    this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                    const license = DB.LICENSES[reward.licenseId];
+                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
+                    this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
+                }
+            }
+        });
+    }
+    
+    grantMissionCargo(missionId) {
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.providedCargo) return;
+        const inventory = this._getActiveInventory();
+        if (!inventory) {
+            this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory found.');
+            return;
+        }
+        mission.providedCargo.forEach(cargo => {
+            if (!inventory[cargo.goodId]) {
+                inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[cargo.goodId].quantity += cargo.quantity;
+            this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
+        });
+        if (this.missionService) {
+            this.missionService.checkTriggers();
+        }
     }
 }

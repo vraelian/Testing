@@ -5,7 +5,7 @@
  * volatility and market pressure, replenishing market inventories with persistence,
  * and managing system-wide economic states.
  */
-import { GAME_RULES, PERK_IDS } from '../../data/constants.js'; // VIRTUAL WORKBENCH: Added PERK_IDS
+import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
 
@@ -38,7 +38,7 @@ export class MarketService {
 
         // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
         if (deal &&
-            deal.dealLocationId === locationId && // VIRTUAL WORKBENCH: Fix logic to use dealLocationId
+            deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             
             // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
@@ -46,22 +46,12 @@ export class MarketService {
             // market prices, which are being fluctuated daily by evolveMarketPrices.
             // We no longer return the static deal.overridePrice here, as that
             // would bypass the daily fluctuation.
-            
-            // --- VIRTUAL WORKBENCH: RE-FIX LOGIC ---
-            // The deal logic in TimeService *sets* the overridePrice.
-            // The logic in evolveMarketPrices *fluctuates* it.
-            // This function just needs to read the price.
-            // The original logic was correct.
-            const basePrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
-            const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
-            const avgPrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
-            
-            // Return the dynamically calculated deal price
-            return Math.floor(avgPrice * (1 - deal.discountPercent));
-            // --- END RE-FIX ---
+            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            // --- END MODIFICATION ---
         }
         // --- END NEW LOGIC ---
 
+        // ... existing price simulation logic ...
         // Fallback to the standard market price
         return this.gameState.market.prices[locationId]?.[commodityId] || 0;
     }
@@ -76,74 +66,6 @@ export class MarketService {
         return this.gameState.market.galacticAverages[commodityId] || 0;
     }
 
-    // --- VIRTUAL WORKBENCH: MOVED FROM UIMANAGER.JS (Phase 4) ---
-    /**
-     * Calculates the final sale price, including diminishing returns for high-volume sales.
-     * @param {string} goodId - The ID of the commodity.
-     * @param {number} quantity - The quantity being sold.
-     * @returns {{totalPrice: number, effectivePricePerUnit: number, netProfit: number}}
-     * @JSDoc
-     */
-    calculateSaleDetails(goodId, quantity) {
-        const state = this.gameState.getState(); // Refactored from this.lastKnownState
-        if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-
-        // Refactored from this.getItemPrice(state, goodId, true)
-        const basePrice = this.getPrice(state.currentLocationId, goodId);
-
-        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-        const avgCost = playerItem?.avgCost || 0;
-
-        // Guard against division by zero if market stock is depleted.
-        if (marketStock <= 0) {
-            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-        }
-
-        // --- Diminishing Returns Logic ---
-        const threshold = marketStock * 0.1; // No penalty for sales <= 10% of stock
-        if (quantity <= threshold) {
-            const totalPrice = basePrice * quantity;
-            const totalCost = avgCost * quantity;
-            let netProfit = totalPrice - totalCost;
-            // Apply profit bonuses
-            if (netProfit > 0) {
-                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-                netProfit += netProfit * totalBonus;
-            }
-            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
-        }
-
-        // Calculate penalty for sales > 10%
-        const excessRatio = quantity / marketStock;
-        let reduction = 0;
-
-        if (good.tier <= 2) {
-            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) {
-            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else {
-            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
-        }
-
-        const effectivePrice = basePrice * (1 - reduction);
-        const totalPrice = Math.floor(effectivePrice * quantity);
-        const totalCost = avgCost * quantity;
-        let netProfit = totalPrice - totalCost;
-        // Apply profit bonuses
-        if (netProfit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-            netProfit += netProfit * totalBonus;
-        }
-
-        return {
-            totalPrice,
-            effectivePricePerUnit: effectivePrice,
-            netProfit
-        };
-    }
     // --- END VIRTUAL WORKBENCH ---
 
     /**
@@ -170,17 +92,13 @@ export class MarketService {
 
                 // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
                 // Enforce Intel Price Lock
-                const activeDeal = this.gameState.getState().activeIntelDeal;
+                const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
-                     activeDeal.dealLocationId === location.id && // VIRTUAL WORKBENCH: Fix logic to use dealLocationId
+                     activeDeal.locationId === location.id &&
                      activeDeal.commodityId === commodity.id)
                 {
                     // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
-                    // VIRTUAL WORKBENCH: RE-FIX - Calculate the base deal price
-                    const avgPrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
-                    const basePrice = Math.floor(avgPrice * (1 - activeDeal.discountPercent));
-                    // ---
-                    
+                    const basePrice = activeDeal.overridePrice;
                     const fluctuation = 0.03; // 3%
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
