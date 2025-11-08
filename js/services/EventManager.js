@@ -1,10 +1,19 @@
 // js/services/EventManager.js
 /**
- * @fileoverview This file contains the EventManager class, which is responsible for handling all user input
- * for the application. It binds event listeners and delegates the logic to specialized handler modules,
- * acting as the primary bridge between the UI and the game's logic.
+ * @fileoverview
+ * The EventManager is the universal input layer for the application.
+ * It sets up all global event listeners (click, hover, hold) and delegates
+ * the event handling to specialized, context-specific handler modules.
+ * This decoupled approach keeps the core logic clean and organized.
  */
-import { NAV_IDS, SCREEN_IDS, ACTION_IDS } from '../data/constants.js';
+
+import { GameState } from './GameState.js';
+import { SimulationService } from './SimulationService.js';
+import { UIManager } from './UIManager.js';
+import { TutorialService } from './TutorialService.js';
+import { DebugService } from './DebugService.js';
+import { Logger } from './LoggingService.js';
+import { ACTION_IDS } from '../data/constants.js';
 
 // Import all specialized event handlers
 import { ActionClickHandler } from './handlers/ActionClickHandler.js';
@@ -13,20 +22,20 @@ import { HoldEventHandler } from './handlers/HoldEventHandler.js';
 import { CarouselEventHandler } from './handlers/CarouselEventHandler.js';
 import { TooltipHandler } from './handlers/TooltipHandler.js';
 
-/**
- * @class EventManager
- * @description Listens for and processes all user inputs, delegating actions to the appropriate services.
- */
+// --- VIRTUAL WORKBENCH: IMPORT TOOLTIPSERVICE ---
+import { TooltipService } from './ui/TooltipService.js';
+// --- END VIRTUAL WORKBENCH ---
+
 export class EventManager {
     /**
-     * @param {import('./GameState.js').GameState} gameState The central game state object.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
-     * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
+     * @param {GameState} gameState
+     * @param {SimulationService} simulationService
+     * @param {UIManager} uiManager
+     * @param {TutorialService} tutorialService
+     * @param {DebugService} debugService
+     * @param {Logger} logger
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, tutorialService, debugService, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
@@ -34,191 +43,206 @@ export class EventManager {
         this.debugService = debugService;
         this.logger = logger;
 
+        // --- VIRTUAL WORKBENCH: INSTANTIATE TOOLTIPSERVICE ---
+        /**
+         * The dedicated service for managing graph and generic tooltips.
+         * @type {TooltipService}
+         */
+        this.tooltipService = new TooltipService();
+        // --- END VIRTUAL WORKBENCH ---
+
         // Instantiate all specialized handlers
+        // These handlers are "stateful" and manage their own internal logic
+        // in response to events.
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        // MODIFIED: Pass the correct service (playerActionService) to the constructor
-        this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
-        this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
-        this.tooltipHandler = new TooltipHandler(gameState, uiManager);
+        this.holdEventHandler = new HoldEventHandler(simulationService.playerActionService, uiManager);
+        this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService, uiManager);
 
-        // --- VIRTUAL WORKBENCH ---
-        // Define the set of actions that should be exclusively handled by the MarketEventHandler.
-        this.marketActions = new Set([
-            'toggle-trade-mode',
-            'confirm-trade',
-            'set-max-trade',
-            ACTION_IDS.INCREMENT,
-            ACTION_IDS.DECREMENT
-        ]);
+        // --- VIRTUAL WORKBENCH: INJECT TOOLTIPSERVICE ---
+        /**
+         * The handler for all hover/click tooltip-related events.
+         * It is now injected with the TooltipService, not the UIManager.
+         * @type {TooltipHandler}
+         */
+        this.tooltipHandler = new TooltipHandler(gameState, this.tooltipService);
+        // --- END VIRTUAL WORKBENCH ---
+
+        // Bind 'this' context for global listeners
+        this._handleClick = this._handleClick.bind(this);
+        this._handleMouseOver = this._handleMouseOver.bind(this);
+        this._handleMouseOut = this._handleMouseOut.bind(this);
+        this._handleKeyDown = this._handleKeyDown.bind(this);
+        this._handleInput = this._handleInput.bind(this);
+
+        this.logger.log('EventManager', 'Event Manager initialized.');
+    }
+
+    /**
+     * Binds all global event listeners to the document.
+     * This is the entry point for all user interactions.
+     */
+    bindEvents() {
+        document.addEventListener('click', this._handleClick);
+        document.addEventListener('mouseover', this._handleMouseOver);
+        document.addEventListener('mouseout', this._handleMouseOut);
+        document.addEventListener('keydown', this._handleKeyDown);
+        document.addEventListener('input', this._handleInput);
+
+        // Bind "hold" events separately as they need a different capture model
+        // See ADR-004
+        this.holdEventHandler.bindHoldEvents();
+
+        // Bind carousel drag/swipe events
+        this.carouselEventHandler.bindDragEvents();
+
+        this.logger.log('EventManager', 'Global event listeners bound.');
+    }
+
+    /**
+     * The central delegated click handler for the entire application.
+     * @param {Event} e - The native click event.
+     * @private
+     */
+    _handleClick(e) {
+        // Find the closest ancestor with a data-action attribute
+        const target = e.target.closest('[data-action]');
+        if (!target) {
+            // Check for modal backdrop click
+            const modalId = this.uiManager.getModalIdFromEvent(e);
+            if (modalId) {
+                this.uiManager.hideModal(modalId);
+            }
+            return;
+        }
+
+        const action = target.dataset.action;
+        if (!action) return;
+
+        // Stop propagation for click events to prevent multi-triggering
+        e.stopPropagation();
+
+        // Check for tutorial block
+        if (this.tutorialService.isBlocked(action, target)) {
+            this.logger.warn('EventManager', `Action '${action}' blocked by active tutorial.`);
+            this.tutorialService.triggerHint(target);
+S            return;
+        }
+
+        // Delegate to the appropriate handler based on the action
+        switch (action) {
+            case ACTION_IDS.SHOW_PRICE_GRAPH:
+            case ACTION_IDS.SHOW_FINANCE_GRAPH:
+            case ACTION_IDS.TOGGLE_TOOLTIP:
+                // --- VIRTUAL WORKBENCH: DELEGATE TO TOOLTIPHANDLER ---
+                this.tooltipHandler.handleClick(e, target, action);
+                // --- END VIRTUAL WORKBENCH ---
+                break;
+
+            case ACTION_IDS.TOGGLE_TRADE_MODE:
+            case ACTION_IDS.DECREMENT:
+            case ACTION_IDS.INCREMENT:
+            case ACTION_IDS.CONFIRM_TRADE:
+            case ACTION_IDS.SET_MAX_TRADE:
+            case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
+                this.marketEventHandler.handleClick(e, target, action);
+                break;
+
+            // --- VIRTUAL WORKBENCH: CONSOLIDATE HANDLERS ---
+            // Removed carousel-specific cases, now handled by ActionClickHandler
+            case ACTION_IDS.SET_SCREEN:
+            case ACTION_IDS.SET_HANGAR_PAGE:
+            case ACTION_IDS.TOGGLE_HANGAR_MODE:
+            case ACTION_IDS.BUY_SHIP:
+            case ACTION_IDS.SELL_SHIP:
+            case ACTION_IDS.SELECT_SHIP:
+            case ACTION_IDS.TRAVEL:
+            case ACTION_IDS.SHOW_LAUNCH_MODAL:
+            case ACTION_IDS.SHOW_SHIP_DETAIL:
+            case ACTION_IDS.ACCEPT_MISSION:
+            case ACTION_IDS.ABANDON_MISSION:
+            case ACTION_IDS.COMPLETE_MISSION:
+            case ACTION_IDS.SHOW_MISSION_MODAL:
+            case ACTION_IDS.PAY_DEBT:
+            case ACTION_IDS.TAKE_LOAN:
+            case ACTION_IDS.ACQUIRE_LICENSE:
+            case ACTION_IDS.SHOW_LORE:
+            case ACTION.IDS.SHOW_EULA: // [[START]] VIRTUAL WORKBENCH (Add EULA Action)
+            case ACTION_IDS.SHOW_CARGO_DETAIL:
+            case ACTION_IDS.TUTORIAL_SKIP:
+            case ACTION_IDS.TUTORIAL_NEXT:
+            case ACTION_IDS.TUTORIAL_REPLAY:
+            case ACTION_IDS.SET_INTEL_TAB:
+            case ACTION_IDS.SHOW_INTEL_OFFER:
+            case ACTION_IDS.BUY_INTEL:
+            case ACTION_IDS.SHOW_INTEL_DETAILS:
+            // --- VIRTUAL WORKBENCH: ADD INTEL HANDLERS ---
+                // All other general actions are handled by the ActionClickHandler
+                this.actionClickHandler.handle(target);
+                break;
+            // --- END VIRTUAL WORKBENCH ---
+
+            default:
+                this.logger.warn('EventManager', `No handler defined for action: ${action}`);
+        }
+    }
+
+    /**
+     * Central delegated handler for 'mouseover' events.
+     * @param {Event} e - The native mouseover event.
+     * @private
+     */
+    _handleMouseOver(e) {
+        // --- VIRTUAL WORKBENCH: DELEGATE TO TOOLTIPHANDLER ---
+        // Delegate all mouseover logic to the specialized handler
+        this.tooltipHandler.handleMouseOver(e);
         // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
-     * Binds all necessary global event listeners to the document body.
-     */
-    bindEvents() {
-        document.body.addEventListener('click', (e) => this._handleClick(e));
-        document.body.addEventListener('dblclick', (e) => e.preventDefault());
-        document.body.addEventListener('mouseover', (e) => this.tooltipHandler.handleMouseOver(e));
-        document.body.addEventListener('mouseout', (e) => this.tooltipHandler.handleMouseOut(e));
-        document.addEventListener('keydown', (e) => this._handleKeyDown(e));
-        document.body.addEventListener('input', (e) => this.marketEventHandler.handleInput(e));
-
-        document.body.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        document.body.addEventListener('wheel', (e) => {
-            if (e.target.closest('.carousel-container')) {
-                e.preventDefault();
-                this.carouselEventHandler.handleWheel(e);
-            }
-        }, { passive: false });
-
-        // --- VIRTUAL WORKBENCH MODIFICATION ---
-        // Renamed 'startDragOrHold' to 'startCarouselDrag' for clarity.
-        // Added a guard clause to prevent starting a carousel drag
-        // when a stepper button is pressed. This allows the HoldEventHandler
-        // to manage stepper holds without conflict.
-        const startCarouselDrag = (e) => {
-            // IGNORE presses on stepper buttons
-            if (e.target.closest('.qty-stepper button')) {
-                return;
-            }
-            // Proceed with carousel drag start for all other elements
-            this.carouselEventHandler.handleDragStart(e);
-        };
-        // --- END MODIFICATION ---
-
-        document.body.addEventListener('mousedown', startCarouselDrag);
-
-        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
-        // The if condition was modified to add an exception for '.action-button'.
-        // This prevents e.preventDefault() from being called on a tap/touch of
-        // an action button, which was blocking the subsequent 'click' event
-        // from firing on touch devices (like the iOS Simulator).
-        document.body.addEventListener('touchstart', (e) => {
-            // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
-            // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || (e.target.closest('.carousel-container') && !e.target.closest('.action-button'))) {
-                 e.preventDefault();
-            }
-            startCarouselDrag(e); // Call the modified start function
-        }, { passive: false });
-        // --- END MODIFICATION ---
-
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
-        const endDragOrHold = () => {
-            this.carouselEventHandler.handleDragEnd();
-        };
-        document.body.addEventListener('mouseup', endDragOrHold);
-        document.body.addEventListener('mouseleave', endDragOrHold);
-        document.body.addEventListener('touchend', endDragOrHold);
-        document.body.addEventListener('touchcancel', endDragOrHold);
-
-        document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
-        document.body.addEventListener('touchmove', (e) => {
-            // Prevent default touchmove ONLY if dragging the carousel
-             if (this.carouselEventHandler.state.isDragging) {
-                 e.preventDefault();
-             }
-            this.carouselEventHandler.handleDragMove(e);
-        }, { passive: false });
-
-
-        window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
-
-        if (this.uiManager.cache.missionStickyBar) {
-            this.uiManager.cache.missionStickyBar.addEventListener('click', () => {
-                this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-            });
-        }
-    }
-
-    /**
-     * Central click handler for the entire application, using event delegation.
-     * @param {Event} e The click event object.
+     * Central delegated handler for 'mouseout' events.
+     * @param {Event} e - The native mouseout event.
      * @private
      */
-    _handleClick(e) {
-        // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
-        if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
-             // Reset stepper hold flag after suppressing click
-             if (this.holdEventHandler.isStepperHolding) {
-                 this.holdEventHandler.isStepperHolding = false;
-             }
-            e.preventDefault();
+    _handleMouseOut(e) {
+        // --- VIRTUAL WORKBENCH: DELEGATE TO TOOLTIPHANDLER ---
+        // Delegate all mouseout logic to the specialized handler
+        this.tooltipHandler.handleMouseOut(e);
+        // --- END VIRTUAL WORKBENCH ---
+    }
+
+    /**
+     * Central delegated handler for 'input' events.
+     * @param {Event} e - The native input event.
+     * @private
+     */
+    _handleInput(e) {
+        const target = e.target;
+        if (!target) return;
+
+        // Check for tutorial block
+        if (this.tutorialService.isBlocked('input', target)) {
+            this.logger.warn('EventManager', `Input blocked by active tutorial.`);
+            // Optionally provide feedback
             return;
         }
 
-
-        const state = this.gameState.getState();
-        const actionTarget = e.target.closest('[data-action]');
-
-        // Always delegate to the tooltip handler for managing popups and cleanup
-        this.tooltipHandler.handleClick(e);
-
-        if (actionTarget) {
-            const action = actionTarget.dataset.action;
-
-            if (action === ACTION_IDS.DEBUG_SIMPLE_START) {
-                if (this.debugService) {
-                    this.debugService.simpleStart();
-                }
-                return;
-            }
-
-            // --- New Lore Modal Action ---
-            if (action === 'show_lore') {
-                e.preventDefault();
-                const loreId = actionTarget.dataset.loreId;
-                if (loreId) {
-                    this.uiManager.showLoreModal(loreId);
-                }
-                return;
-            }
-
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            // Route the event to the correct handler instead of broadcasting to all.
-            // This prevents action misfires, like 'acquire-license' (from ActionClickHandler)
-            // firing on a 'confirm-trade' (from MarketEventHandler) click.
-            if (this.marketActions.has(action)) {
-                this.marketEventHandler.handleClick(e, actionTarget);
-            } else {
-                this.actionClickHandler.handle(e, actionTarget);
-            }
-            return;
-            // --- END VIRTUAL WORKBENCH MODIFICATION ---
-        }
-
-        // --- Fallback Handlers for non-action clicks ---
-        if (state.introSequenceActive && !state.tutorials.activeBatchId) {
-            this.simulationService.handleIntroClick(e);
-            return;
-        }
-        if (state.isGameOver) return;
-
-        // Check for modal dismissal clicks
-        const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
-        if (modalIdToClose) {
-            // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
-            // to allow for content-area clicks.
-            if (modalIdToClose !== 'lore-modal') {
-                // *** VIRTUAL WORKBENCH CORRECTION ***
-                this.uiManager.hideModal(modalIdToClose); // Changed modalIdTo-close to modalIdToClose
-                // *** END CORRECTION ***
-            }
+        // Delegate to the market handler if it's a quantity input
+        if (target.id && target.id.startsWith('qty-')) {
+            this.marketEventHandler.handleInput(e, target);
         }
     }
 
     /**
-     * Handles keydown events, primarily for debug shortcuts.
-     * @param {Event} e The keydown event object.
+     * Global keydown handler.
+     * @param {KeyboardEvent} e - The native keydown event.
      * @private
      */
     _handleKeyDown(e) {
-        if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
-        if ((e.key === '`' || e.key === '&') && this.debugService) {
-            this.debugService.toggleVisibility();
+        // Open/Close Debug Panel
+        if (e.key === '`') {
+            e.preventDefault();
+            this.debugService.togglePanel();
         }
     }
 }
