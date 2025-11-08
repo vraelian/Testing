@@ -143,26 +143,45 @@ export class PlayerActionService {
     }
 
     /**
-     * Purchases a new ship and adds it to the player's hangar.
+     * Validates if a ship purchase is possible.
+     * @param {string} shipId - The ID of the ship to buy.
+     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
+     * @JSDoc
+     */
+    validateBuyShip(shipId) {
+        if (this.isTransactionInProgress) {
+            return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
+        }
+        const ship = DB.SHIPS[shipId];
+        if (!ship) {
+            this.logger.error('PlayerActionService', `validateBuyShip called with invalid shipId: ${shipId}`);
+            return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist in the database." };
+        }
+        if (this.gameState.player.credits < ship.price) {
+            return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
+        }
+        return { success: true };
+    }
+
+    /**
+     * Executes the purchase of a new ship (Assumes validation passed).
+     * This replaces the logic in the original buyShip .
      * @param {string} shipId - The ID of the ship to buy.
      * @param {Event} [event] - The click event for placing floating text.
-     * @returns {object|null} - The purchased ship object on success, otherwise null.
+     * @returns {object|null} - The purchased ship object.
+     * @JSDoc
      */
-    buyShip(shipId, event) {
-        if (this.isTransactionInProgress) return null;
+    executeBuyShip(shipId, event) {
         this.isTransactionInProgress = true;
 
         try {
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                this.logger.error('PlayerActionService', `buyShip called with invalid shipId: ${shipId}`);
+                // This check is redundant if validateBuyShip was called, but good practice.
+                this.logger.error('PlayerActionService', `executeBuyShip called with invalid shipId: ${shipId}`);
                 return null;
             }
-            if (this.gameState.player.credits < ship.price) {
-                this.uiManager.queueModal('event-modal', "Insufficient Funds", "You cannot afford this ship.");
-                return null;
-            }
-
+            
             this.gameState.player.credits -= ship.price;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
             if (event) {
@@ -190,40 +209,58 @@ export class PlayerActionService {
             });
             return ship;
         } finally {
-            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100); // Reset guard
         }
     }
 
     /**
-     * Sells a ship from the player's hangar.
+     * Validates if a ship sale is possible.
+     * @param {string} shipId - The ID of the ship to sell.
+     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
+     * @JSDoc
+     */
+    validateSellShip(shipId) {
+        if (this.isTransactionInProgress) {
+            return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
+        }
+        const state = this.gameState.getState(); // Get fresh state for validation
+        if (state.player.ownedShipIds.length <= 1) {
+            return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
+        }
+        if (shipId === state.player.activeShipId) {
+            return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
+        }
+        if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
+            return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
+        }
+        const ship = DB.SHIPS[shipId];
+        if (!ship) {
+            this.logger.error('PlayerActionService', `validateSellShip called with invalid shipId: ${shipId}`);
+            return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist." };
+        }
+        return { success: true, ship: ship };
+    }
+
+
+    /**
+     * Executes the sale of a ship (Assumes validation passed).
+     * This replaces the logic in the original sellShip .
      * @param {string} shipId - The ID of the ship to sell.
      * @param {Event} [event] - The click event for placing floating text.
-     * @returns {number|false} - The sale price, or false if the sale is not allowed.
+     * @returns {number|false} - The sale price.
+     * @JSDoc
      */
-    sellShip(shipId, event) {
-        if (this.isTransactionInProgress) return false;
+    executeSellShip(shipId, event) {
         this.isTransactionInProgress = true;
 
         try {
-            const state = this.gameState.getState();
-            if (state.player.ownedShipIds.length <= 1) {
-                this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your last remaining ship.");
-                return false;
-            }
-            if (shipId === state.player.activeShipId) {
-                this.uiManager.queueModal('event-modal', "Action Blocked", "You cannot sell your active ship.");
-                return false;
-            }
-            if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-                this.uiManager.queueModal('event-modal', 'Cannot Sell Ship', 'This vessel\'s cargo hold is not empty.');
-                return false;
-            }
-
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                this.logger.error('PlayerActionService', `sellShip called with invalid shipId: ${shipId}`);
+                // This check is redundant if validateSellShip was called, but good practice.
+                this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
                 return false;
             }
+          
             const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             this.gameState.player.credits += salePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
@@ -349,7 +386,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: MODIFIED (Point A) ---
         // Added glowing classes and font-roboto-mono for consistency
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class"text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);

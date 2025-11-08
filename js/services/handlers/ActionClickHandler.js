@@ -28,7 +28,7 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    handle(e, actionTarget) {
+    async handle(e, actionTarget) { // <-- Add async
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
@@ -41,7 +41,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                this.simulationService.buyShip(shipId, e);
+                await this.simulationService.buyShip(shipId, e); // <-- Add await
                 actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
                 break;
             }
@@ -49,7 +49,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                this.simulationService.sellShip(shipId, e);
+                await this.simulationService.sellShip(shipId, e); // <-- Add await
                 break;
             }
             case ACTION_IDS.SELECT_SHIP: {

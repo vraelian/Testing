@@ -712,3 +712,33 @@ body {
         display: none;
     }
 }
+
+/* --- [[START]] GENERIC ANIMATIONS --- */
+@keyframes dematerialize {
+    0% {
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 5px var(--theme-color-primary, #fff));
+        transform: scale(1);
+    }
+    40% {
+        opacity: 1;
+        filter: brightness(15) drop-shadow(0 0 20px #fff);
+    }
+    100% {
+        opacity: 0;
+        filter: brightness(25) drop-shadow(0 0 30px #fff);
+        transform: scale(0.95);
+    }
+}
+.is-dematerializing {
+    /*
+     * Applies a 2.5s dematerialization effect.
+     * 'forwards' is critical - it holds the element at opacity: 0
+     * until the next state render removes it from the DOM.
+    */
+    animation: dematerialize 2.5s ease-in-out forwards;
+    
+    /* Prevent the invisible element from blocking clicks */
+    pointer-events: none;
+}
+/* --- [[END]] GENERIC ANIMATIONS --- */

@@ -94,9 +94,51 @@ export class SimulationService {
     // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
-    initiateShipTransactionAnimation(shipId, action, event) { this.playerActionService.initiateShipTransactionAnimation(shipId, action, event); }
-    buyShip(shipId, event) { return this.playerActionService.buyShip(shipId, event); }
-    sellShip(shipId, event) { return this.playerActionService.sellShip(shipId, event); }
+    
+    /**
+     * Orchestrates buying a ship: Validates, plays animation, then executes.
+     * @param {string} shipId
+     * @param {Event} event
+     */
+    async buyShip(shipId, event) {
+        // 1. Validate
+        const validation = this.playerActionService.validateBuyShip(shipId);
+        if (!validation.success) {
+            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+            return null;
+        }
+
+        // 2. Animate
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
+        await this.uiManager.runShipTransactionAnimation(shipId);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
+
+        // 3. Execute
+        return this.playerActionService.executeBuyShip(shipId, event);
+    }
+
+    /**
+     * Orchestrates selling a ship: Validates, plays animation, then executes.
+     * @param {string} shipId
+     * @param {Event} event
+     */
+    async sellShip(shipId, event) {
+        // 1. Validate
+        const validation = this.playerActionService.validateSellShip(shipId);
+        if (!validation.success) {
+            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+            return false;
+        }
+
+        // 2. Animate
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
+        await this.uiManager.runShipTransactionAnimation(shipId);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
+
+        // 3. Execute
+        return this.playerActionService.executeSellShip(shipId, event);
+    }
+
     setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
     
     // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---

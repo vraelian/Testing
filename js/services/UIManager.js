@@ -19,6 +19,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
+import { playBlockingAnimation } from './ui/AnimationService.js';
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -161,7 +162,6 @@ export class UIManager {
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
             [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
         };
-
         this._cacheDOM();
 
         // --- VIRTUAL WORKBENCH: BIND 'this' CONTEXT ---
@@ -458,7 +458,7 @@ export class UIManager {
             statusPodHtml = `
                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
-                         <span class="status-bar-label">H</span>
+                        <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
@@ -486,10 +486,12 @@ export class UIManager {
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  
+ 
                  // --- VIRTUAL WORKBENCH: BUG FIX ---
                  // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
                  // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
                  const action = ACTION_IDS.SET_SCREEN;
+    
                  // --- END VIRTUAL WORKBENCH ---
 
                  let subStyle = '';
@@ -500,6 +502,7 @@ export class UIManager {
                  // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
+            
             
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -627,7 +630,6 @@ export class UIManager {
 
         // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
-
         // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
@@ -1759,7 +1761,7 @@ export class UIManager {
                     </div>
                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                         <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
+                        <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
@@ -1782,7 +1784,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
-                     <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
@@ -1818,7 +1820,7 @@ export class UIManager {
                 </div>
 
                 <div class="flex-grow flex items-center justify-center">
-                   <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                    <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
 
                 <div class="travel-info-text">
@@ -1875,6 +1877,47 @@ export class UIManager {
             }
         });
         // --- [[END]] VIRTUAL WORKBENCH ---
+    }
+
+    /**
+     * Finds the currently active carousel page element from the DOM.
+     * @returns {HTMLElement | null} The .carousel-page element or null.
+     * @private
+     */
+    _getActiveCarouselPage() {
+        const state = this.lastKnownState; // Use lastKnownState for accuracy
+        if (!state) return null;
+
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return null;
+
+        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
+        if (!carousel) return null;
+
+        const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
+        const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
+
+        const pages = carousel.querySelectorAll('.carousel-page');
+        return pages[activeIndex] || null;
+    }
+
+    /**
+     * Finds the correct DOM element for the active ship and runs a
+     * blocking "dematerialize" animation on it.
+     * @param {string} shipId - The ID of the ship, for logging.
+     * @returns {Promise<void>}
+     * @JSDoc
+     */
+    async runShipTransactionAnimation(shipId) {
+        const pageToAnimate = this._getActiveCarouselPage();
+
+        if (!pageToAnimate) {
+            this.logger.warn('UIManager', `No page to animate for ${shipId}. Skipping animation.`);
+            return; // Resolve immediately if no element
+        }
+
+        // Await the generic animation utility
+        await playBlockingAnimation(pageToAnimate, 'is-dematerializing');
     }
 
     renderStickyBar(gameState) {
@@ -2039,7 +2082,7 @@ export class UIManager {
 
         if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
              // Special case: Allow lore-modal to be dismissed by clicking content
-            if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
+             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
             // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
@@ -2371,6 +2414,7 @@ export class UIManager {
         result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
         // --- END VIRTUAL WORKBENCH ---
         
+
         return result;
     }
 

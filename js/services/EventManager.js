@@ -139,7 +139,7 @@ export class EventManager {
      * @param {Event} e The click event object.
      * @private
      */
-    _handleClick(e) {
+    async _handleClick(e) { // <-- Add async
         // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
         if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
              // Reset stepper hold flag after suppressing click
@@ -184,7 +184,7 @@ export class EventManager {
             if (this.marketActions.has(action)) {
                 this.marketEventHandler.handleClick(e, actionTarget);
             } else {
-                this.actionClickHandler.handle(e, actionTarget);
+                await this.actionClickHandler.handle(e, actionTarget); // <-- ADD await
             }
             return;
             // --- END VIRTUAL WORKBENCH MODIFICATION ---
