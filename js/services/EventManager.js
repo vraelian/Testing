@@ -126,7 +126,7 @@ export class EventManager {
         if (this.tutorialService.isBlocked(action, target)) {
             this.logger.warn('EventManager', `Action '${action}' blocked by active tutorial.`);
             this.tutorialService.triggerHint(target);
-S            return;
+            return;
         }
 
         // Delegate to the appropriate handler based on the action
@@ -167,7 +167,9 @@ S            return;
             case ACTION_IDS.TAKE_LOAN:
             case ACTION_IDS.ACQUIRE_LICENSE:
             case ACTION_IDS.SHOW_LORE:
-            case ACTION.IDS.SHOW_EULA: // [[START]] VIRTUAL WORKBENCH (Add EULA Action)
+            // --- VIRTUAL WORKBENCH: TYPO FIX ---
+            case ACTION_IDS.SHOW_EULA: // [[START]] VIRTUAL WORKBENCH (Add EULA Action)
+            // --- END VIRTUAL WORKBENCH: TYPO FIX ---
             case ACTION_IDS.SHOW_CARGO_DETAIL:
             case ACTION_IDS.TUTORIAL_SKIP:
             case ACTION_IDS.TUTORIAL_NEXT:
