@@ -76,7 +76,7 @@ const EULA_CONTENT = `
         <li>a.  License, Not Ownership:  You acknowledge that Virtual Goods are licensed to You as part of the Software and are not sold. You have no ownership right or property interest in any Virtual Goods, regardless of whether they were "earned" through gameplay or "purchased" with real money.</li>
         <li>b.  No Real-World Value:  Virtual Goods have no monetary value, are not real currency, and cannot be redeemed, sold, transferred, or exchanged for real-world money or any item of monetary value.</li>
         <li>c.  Licensor's Rights:  Licensor has the absolute right to manage, regulate, control, modify, and/or eliminate Virtual Goods at any time, in its sole discretion, with or without notice. Licensor shall have no liability to You or any third party for the exercise of such rights.</li>
-        <li>d.  No Refunds:  All purchases of Virtual Goods are final and non-refundable, except as required by applicable law.</li>
+        <li>d. No Refunds:  All purchases of Virtual Goods are final and non-refundable, except as required by applicable law.</li>
     </ul>
     <h4 class="text-xl font-orbitron mt-4 mb-2">5. FEEDBACK AND SUGGESTIONS</h4>
     <p>If You provide Licensor with any ideas, suggestions, bug reports, or other feedback regarding the Software ("Feedback"), You hereby grant Licensor a perpetual, irrevocable, worldwide, non-exclusive, royalty-free, fully paid-up, transferable, and sublicensable license to use, reproduce, modify, distribute, and otherwise exploit such Feedback for any purpose whatsoever (including for commercial purposes) without any obligation to provide compensation, credit, or attribution to You.</p>
@@ -468,7 +468,7 @@ export class UIManager {
                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
-                          <span class="status-bar-label">C</span>
+                        <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
                     </div>
@@ -494,6 +494,7 @@ export class UIManager {
     
                  // --- END VIRTUAL WORKBENCH ---
 
+                
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
@@ -1234,7 +1235,7 @@ export class UIManager {
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
-            }
+                }
             }, { once: true });
         }
     }
@@ -1382,7 +1383,6 @@ export class UIManager {
         const staticAvgY = getY(staticAvg);
         svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
         svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
-
         if (playerBuyPrice) {
             const buyPriceY = getY(playerBuyPrice);
             svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
@@ -1608,7 +1608,7 @@ export class UIManager {
             if (this.popperInstance) {
                  // Update existing instance
                  this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
-                     this.logger.error('UIManager', 'Error updating Popper options:', e);
+                      this.logger.error('UIManager', 'Error updating Popper options:', e);
                  });
             } else {
                  // Need to create Popper instance if switching modes or first time
@@ -1663,7 +1663,7 @@ export class UIManager {
                         }
                     </svg>`;
             } else if (cue.type === 'Arrow') {
-                 content = `
+                content = `
                     <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
                         <defs>
                             <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
@@ -1884,7 +1884,7 @@ export class UIManager {
      * @returns {HTMLElement | null} The .carousel-page element or null.
      * @private
      */
-    _getActiveCarouselPage() {
+    _getActiveShipTerminalElement() {
         const state = this.lastKnownState; // Use lastKnownState for accuracy
         if (!state) return null;
 
@@ -1898,7 +1898,8 @@ export class UIManager {
         const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
 
         const pages = carousel.querySelectorAll('.carousel-page');
-        return pages[activeIndex] || null;
+        const activePage = pages[activeIndex];
+        return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
 
     /**
@@ -1909,15 +1910,15 @@ export class UIManager {
      * @JSDoc
      */
     async runShipTransactionAnimation(shipId) {
-        const pageToAnimate = this._getActiveCarouselPage();
+        const elementToAnimate = this._getActiveShipTerminalElement();
 
-        if (!pageToAnimate) {
-            this.logger.warn('UIManager', `No page to animate for ${shipId}. Skipping animation.`);
+        if (!elementToAnimate) {
+            this.logger.warn('UIManager', `No element to animate for ${shipId}. Skipping animation.`);
             return; // Resolve immediately if no element
         }
 
         // Await the generic animation utility
-        await playBlockingAnimation(pageToAnimate, 'is-dematerializing');
+        await playBlockingAnimation(elementToAnimate, 'is-dematerializing');
     }
 
     renderStickyBar(gameState) {
@@ -2076,7 +2077,6 @@ export class UIManager {
         // --- VIRTUAL WORKBENCH: GDD DISMISSAL LOGIC ---
         const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
         const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
-        
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
 

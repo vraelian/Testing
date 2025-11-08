@@ -89,7 +89,41 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
     height: auto; 
+    
+    /* --- VIRTUAL WORKBENCH --- */
+    /* Add relative positioning for the new pseudo-element */
+    position: relative;
+    /* --- END VIRTUAL WORKBENCH --- */
 }
+
+/* --- VIRTUAL WORKBENCH: ADD GLOW PSEUDO-ELEMENT --- */
+/*
+ * This is the new high-performance glow element.
+ * It's a theme-colored radial gradient, hidden by default.
+ * The 'dematerialize' animation will animate its opacity and transform.
+*/
+#ship-terminal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1; /* Sit behind the card content */
+    border-radius: 0.5rem; /* rounded-lg, matching the card */
+    
+    /* Use the theme border color for the glow */
+    background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
+    
+    opacity: 0; /* Hidden by default */
+    pointer-events: none; /* Ignore clicks */
+    
+    /* Set defaults for animation */
+    transform-origin: center;
+    transform: scale(0.5);
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 /* The new intermediate container for constraining height */
 #ship-card-main-content {

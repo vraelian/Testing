@@ -714,31 +714,68 @@ body {
 }
 
 /* --- [[START]] GENERIC ANIMATIONS --- */
-@keyframes dematerialize {
+
+/* --- VIRTUAL WORKBENCH --- */
+/*
+ * High-performance dematerialize animation for the card.
+ * Animates opacity, transform, and clip-path.
+ * clip-path: inset(Y X Y X) - animates from 0% (top/bottom) to 50% (center).
+*/
+@keyframes dematerialize-card {
     0% {
         opacity: 1;
-        filter: brightness(1) drop-shadow(0 0 5px var(--theme-color-primary, #fff));
         transform: scale(1);
+        clip-path: inset(0% 0% 0% 0%);
     }
-    40% {
-        opacity: 1;
-        filter: brightness(15) drop-shadow(0 0 20px #fff);
+    60% {
+        /* Apex of the shrink, matches user spec */
+        opacity: 0.8; /* Keep it mostly visible during the wipe */
+        transform: scale(0.9);
+        clip-path: inset(25% 0% 25% 0%); /* Half-way wiped */
     }
     100% {
         opacity: 0;
-        filter: brightness(25) drop-shadow(0 0 30px #fff);
-        transform: scale(0.95);
+        transform: scale(0.85);
+        clip-path: inset(50% 0% 50% 0%); /* Fully collapsed to a line */
     }
 }
+
+/*
+ * High-performance glow animation for the card's ::before pseudo-element.
+ * Animates opacity and transform to create the "apex" glow.
+*/
+@keyframes dematerialize-glow {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    60% {
+        /* Apex of the glow, matches user spec */
+        opacity: 1;
+        transform: scale(1.3);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2);
+    }
+}
+
 .is-dematerializing {
     /*
-     * Applies a 2.5s dematerialization effect.
-     * 'forwards' is critical - it holds the element at opacity: 0
-     * until the next state render removes it from the DOM.
+     * Applies a 1.5s dematerialization effect to the card.
+     * 'forwards' holds the final state (opacity: 0).
     */
-    animation: dematerialize 2.5s ease-in-out forwards;
-    
+    animation: dematerialize-card 1.5s ease-in-out forwards;
     /* Prevent the invisible element from blocking clicks */
     pointer-events: none;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+.is-dematerializing::before {
+    /*
+     * Simultaneously applies the 1.5s glow animation
+     * to the pseudo-element created in hangar-screen.css.
+    */
+    animation: dematerialize-glow 1.5s ease-in-out forwards;
 }
 /* --- [[END]] GENERIC ANIMATIONS --- */
