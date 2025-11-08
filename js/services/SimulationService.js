@@ -98,8 +98,22 @@ export class SimulationService {
     buyShip(shipId, event) { return this.playerActionService.buyShip(shipId, event); }
     sellShip(shipId, event) { return this.playerActionService.sellShip(shipId, event); }
     setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
-    payOffDebt() { this.playerActionService.payOffDebt(); }
-    takeLoan(loanData) { this.playerActionService.takeLoan(loanData); }
+    
+    // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+    /**
+     * Pays off the player's entire outstanding debt.
+     * @param {Event} [event] - The click event for placing floating text.
+     */
+    payOffDebt(event) { this.playerActionService.payOffDebt(event); }
+
+    /**
+     * Allows the player to take out a loan, adding to their debt.
+     * @param {object} loanData - Contains amount, fee, and interest for the loan.
+     * @param {Event} [event] - The click event for placing floating text.
+     */
+    takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
+    // --- END VIRTUAL WORKBENCH ---
+    
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---

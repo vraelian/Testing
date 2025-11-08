@@ -1,4 +1,9 @@
 /* css/screens/finance-screen.css */
+/**
+ * @fileoverview This file contains the styles specific to the Finance screen,
+ * including the loan module and the transaction log.
+ */
+
 /* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
 .themed-header-bar {
     position: relative;
@@ -92,34 +97,37 @@
     box-shadow: none;
 }
 
-/* VIRTUAL WORKBENCH: New Credit-themed button */
+/* --- VIRTUAL WORKBENCH: MODIFIED (Point E) --- */
+/* Changed from cyan to sky to match main credit glow */
 .btn-module-credit {
-    background-color: #083344; /* cyan-950 */
-    border-color: #0e7490; /* cyan-700 */
-    color: #a5f3fc; /* cyan-200 */
-    /* Add cyan glow to the convex shadow */
-    box-shadow: 0 0 10px -2px #0e7490, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background-color: #0c4a6e; /* sky-900 */
+    border-color: #075985; /* sky-800 */
+    color: #bae6fd; /* sky-200 */
+    /* Add sky-blue glow to the convex shadow */
+    box-shadow: 0 0 10px -2px #0ea5e9, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 
 .btn-module-credit:hover:not(:disabled) {
-    background-color: #0e7490; /* cyan-700 */
-    border-color: #22d3ee; /* cyan-400 */
-    color: #ecfeff; /* cyan-50 */
-    box-shadow: 0 0 15px -2px #22d3ee, 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background-color: #075985; /* sky-800 */
+    border-color: #0ea5e9; /* sky-500 */
+    color: #f0f9ff; /* sky-50 */
+    box-shadow: 0 0 15px -2px #0ea5e9, 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
 }
+/* --- END VIRTUAL WORKBENCH --- */
 
 
-/* VIRTUAL WORKBENCH: Lighter, convex destructive button */
+/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) --- */
+/* Muted destructive button */
 .btn-module-destructive {
-    /* Lighter red */
-    background-color: #b91c1c; /* red-700 */
-    border-color: #dc2626; /* red-600 */
+    /* Muted red */
+    background-color: #991b1b; /* red-800 */
+    border-color: #b91c1c; /* red-700 */
     color: #fecaca; /* red-200 */
 }
 
 .btn-module-destructive:hover:not(:disabled) {
-    background-color: #dc2626; /* red-600 */
-    border-color: #ef4444; /* red-500 */
+    background-color: #b91c1c; /* red-700 */
+    border-color: #dc2626; /* red-600 */
     color: #ffffff;
 }
 /* --- END VIRTUAL WORKBENCH --- */

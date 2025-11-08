@@ -284,8 +284,9 @@ export class PlayerActionService {
 
     /**
      * Pays off the player's entire outstanding debt.
+     * @param {Event} [event] - The click event for placing floating text.
      */
-    payOffDebt() {
+    payOffDebt(event) {
         if (this.gameState.isGameOver) return;
         const { player } = this.gameState;
         if (player.credits < player.debt) {
@@ -295,6 +296,13 @@ export class PlayerActionService {
 
         const debtAmount = player.debt;
         player.credits -= debtAmount;
+
+        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        if (event) {
+            this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
         player.debt = 0;
@@ -308,8 +316,9 @@ export class PlayerActionService {
     /**
      * Allows the player to take out a loan, adding to their debt.
      * @param {object} loanData - Contains amount, fee, and interest for the loan.
+     * @param {Event} [event] - The click event for placing floating text.
      */
-    takeLoan(loanData) {
+    takeLoan(loanData, event) {
         const { player, day } = this.gameState;
         if (player.debt > 0) {
             this.uiManager.queueModal('event-modal', "Loan Unavailable", `You must pay off your existing debt first.`);
@@ -322,7 +331,15 @@ export class PlayerActionService {
 
         player.credits -= loanData.fee;
         this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        
         player.credits += loanData.amount;
+
+        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        if (event) {
+            this.uiManager.createFloatingText(`+${formatCredits(loanData.amount, false)}`, event.clientX, event.clientY, '#34d399'); // Green
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         this.simulationService._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
         player.debt += loanData.amount;
@@ -330,8 +347,11 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        // VIRTUAL WORKBENCH: Replaced hl-blue with glowing credit text classes
-        const loanDesc = `You've acquired a loan of <span class="text-cyan-300 text-glow-cyan font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
+        // --- VIRTUAL WORKBENCH: MODIFIED (Point A) ---
+        // Added glowing classes and font-roboto-mono for consistency
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
+        // --- END VIRTUAL WORKBENCH ---
+        
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});
@@ -444,7 +464,7 @@ export class PlayerActionService {
         const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+        if (state.player.activePerks[PERK_IDS.VENETIAN__SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
          costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1

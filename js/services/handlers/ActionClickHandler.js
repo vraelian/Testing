@@ -188,12 +188,15 @@ export class ActionClickHandler {
                 break;
 
             // --- Finance & Licenses ---
+            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
-                this.simulationService.payOffDebt();
+                this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
-                this.simulationService.takeLoan(JSON.parse(dataset.loanDetails));
+                this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
+            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
                 // This is now obsolete, but we'll leave it in case any old UI elements still call it.
                 // The new flow is show_intel_offer -> buy_intel

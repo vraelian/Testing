@@ -1,4 +1,8 @@
 /* css/global.css */
+/**
+ * @fileoverview This file contains the global styles, font definitions,
+ * utility classes, and base layout for the entire application.
+ */
 
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
@@ -286,6 +290,20 @@ body {
     }
 }
 
+/* --- VIRTUAL WORKBENCH: ADDED RED GLOW --- */
+@keyframes pulse-red-glow {
+    0% {
+        text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
+    }
+    50% {
+        text-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
+    }
+    100% {
+        text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 @keyframes pulse-green-glow {
 
     0%,
@@ -398,6 +416,13 @@ body {
     color: #7dd3fc;
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
+
+/* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
+.text-glow-red {
+    color: #f87171;
+    animation: pulse-red-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
 
 .pulse-green-glow {
     animation: pulse-green-glow 2s infinite;
