@@ -42,15 +42,11 @@ graph TD
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
 }
-````
+Detailed Flow Example: Intel Market (Local Data Broker)
+This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
 
------
+Code snippet
 
-## Detailed Flow Example: Intel Market (Local Data Broker)
-
-This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the `activeIntelDeal` affecting market prices.
-
-```mermaid
 graph TD
     subgraph Player Action (UI)
         A[Player clicks 'Intel Market' tab] --> B[UIManager calls IntelMarketRenderer];
@@ -84,23 +80,22 @@ graph TD
     end
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
-```
+Explanation of Intel Market Data Flow
+UI Render: When the 'Intel Market' tab is clicked, IntelMarketRenderer is called. [cite_start]It reads gameState.intelMarket for the current location and calls IntelService.calculateIntelPrice for each packet to get a dynamic price based on player credits.
 
-### Explanation of Intel Market Data Flow
+Player Purchase: Player clicks 'Purchase'. [cite_start]UIManager calls IntelService.purchaseIntel.
 
-1.  **UI Render:** When the 'Intel Market' tab is clicked, `IntelMarketRenderer` is called. [cite\_start]It reads `gameState.intelMarket` for the current location and calls `IntelService.calculateIntelPrice` for each packet to get a dynamic price based on player credits [cite: 32, 35-36, 134, 216].
-2.  **Player Purchase:** Player clicks 'Purchase'. [cite\_start]`UIManager` calls `IntelService.purchaseIntel`[cite: 52, 141, 231].
-3.  **Transaction Logic:** `IntelService` validates the purchase, deducts `player.credits`, sets the packet's `isPurchased` flag, and (most importantly) creates the `gameState.activeIntelDeal` object. [cite\_start]This object "locks" the market [cite: 54, 143-148].
-4.  **Market Override:** The `MarketService.getPrice` function is modified to *first* check for an `activeIntelDeal`. [cite\_start]If a deal matches the location and commodity, it returns the `deal.overridePrice`, bypassing all normal simulation logic [cite: 151, 156-161].
-5.  **Expiration:** The `TimeService.pulse` function checks daily if the `activeIntelDeal` has expired. [cite\_start]If it has, it sets `activeIntelDeal` back to `null`, "unlocking" the Intel Market [cite: 166, 174-175].
+Transaction Logic: IntelService validates the purchase, deducts player.credits, sets the packet's isPurchased flag, and (most importantly) creates the gameState.activeIntelDeal object. [cite_start]This object "locks" the market.
 
------
+Market Override: The MarketService.getPrice function is modified to first check for an activeIntelDeal. [cite_start]If a deal matches the location and commodity, it returns the deal.overridePrice, bypassing all normal simulation logic.
 
-## Detailed Flow Example: Market Simulation
+Expiration: The TimeService.pulse function checks daily if the activeIntelDeal has expired. [cite_start]If it has, it sets activeIntelDeal back to null, "unlocking" the Intel Market.
 
+Detailed Flow Example: Market Simulation
 This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.
 
-```mermaid
+Code snippet
+
 graph TD
     subgraph Player Action (Instant)
         A[PlayerActionService.buyItem/sellItem] --> B[Sets inventoryItem.lastPlayerInteractionTimestamp];
@@ -132,32 +127,89 @@ graph TD
 
     style A fill:#e63946,stroke:#fff
     style E fill:#457b9d,stroke:#fff
-```
-
-### Explanation of Market Data Flow
-
+Explanation of Market Data Flow
 This model ensures player actions have a powerful, delayed effect, preventing same-day abuse.
 
-1.  **Instant Player Action**: When a player trades, `PlayerActionService` *immediately* modifies the `GameState`:
+Instant Player Action: When a player trades, PlayerActionService immediately modifies the GameState:
 
-      * It changes the item's `quantity` (e.g., increases it on a sale).
-      * It sets `lastPlayerInteractionTimestamp` to the current `day`.
-      * It sets `marketPressure` (this is *only* for stock logic, not price).
-      * It activates the `priceLockEndDay` (this disables `meanReversion`).
+It changes the item's quantity (e.g., increases it on a sale).
 
-2.  **Weekly Price Logic (`evolveMarketPrices`)**: On the weekly tick, `MarketService` runs its price logic:
+It sets lastPlayerInteractionTimestamp to the current day.
 
-      * It checks if the 7-day anti-abuse delay has passed (Day \>= timestamp + 7).
-      * **If NO (Delay Active)**: No `availabilityEffect` is calculated. The price is only affected by natural `meanReversion` (which is likely disabled by the Price Lock) and `randomFluctuation`.
-      * **If YES (Delay Over)**: The `availabilityEffect` is calculated *now*, using the `quantity` the player changed days ago. This single effect (tuned to 0.50 strength) creates the large price crash or spike.
+It sets marketPressure (this is only for stock logic, not price).
 
-3.  **Weekly Stock Logic (`replenishMarketInventory`)**:
+It activates the priceLockEndDay (this disables meanReversion).
 
-      * This system runs separately and is *not* subject to the 7-day price delay.
-      * It uses the `marketPressure` set by the player to dynamically adjust the `targetStock`.
-      * It then moves the `quantity` 10% closer to this `targetStock` every week, creating the "race" for the player as the market's supply (and thus its price) slowly recovers.
+Weekly Price Logic (evolveMarketPrices): On the weekly tick, MarketService runs its price logic:
 
-<!-- end list -->
+It checks if the 7-day anti-abuse delay has passed (Day >= timestamp + 7).
 
-```
-```
+If NO (Delay Active): No availabilityEffect is calculated. The price is only affected by natural meanReversion (which is likely disabled by the Price Lock) and randomFluctuation.
+
+If YES (Delay Over): The availabilityEffect is calculated now, using the quantity the player changed days ago. This single effect (tuned to 0.50 strength) creates the large price crash or spike.
+
+Weekly Stock Logic (replenishMarketInventory):
+
+This system runs separately and is not subject to the 7-day price delay.
+
+It uses the marketPressure set by the player to dynamically adjust the targetStock.
+
+It then moves the quantity 10% closer to this targetStock every week, creating the "race" for the player as the market's supply (and thus its price) slowly recovers.
+
+Detailed Flow Example: Animated Ship Purchase
+This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
+
+Code snippet
+
+graph TD
+    subgraph Input Layer
+        A[Click 'Buy Ship' Button] --> B[EventManager];
+        B --> C[ActionClickHandler.handle (async)];
+    end
+
+    subgraph Logic Layer
+        C -- 1. --> D[SimulationService.buyShip (async)];
+        D -- 2. --> E[PlayerActionService.validateBuyShip];
+        E -- 3. (Success) --> D;
+        D -- 4. --> F[UIManager.runShipTransactionAnimation (await)];
+        F -- 5. --> G[AnimationService.playBlockingAnimation (await)];
+    end
+    
+    subgraph Output Layer
+        G -- 6. (Animation ends) --> H[Promise Resolves];
+    end
+
+    subgraph Logic Layer
+        H -- 7. --> D;
+        D -- 8. --> I[PlayerActionService.executeBuyShip];
+    end
+
+    subgraph State Layer
+        I -- 9. --> J((GameState.setState));
+    end
+
+    subgraph Output Layer
+        J -- 10. --> K[UIManager.render];
+        K -- 11. --> L[DOM (Ship card is gone)];
+    end
+
+    style J fill:#2a9d8f,stroke:#fff,stroke-width:2px
+    style K fill:#f4a261,stroke:#fff,stroke-width:2px
+    style F fill:#e76f51,stroke:#fff,stroke-width:2px
+    style G fill:#e76f51,stroke:#fff,stroke-width:2px
+Explanation of Animated Ship Purchase Flow
+Async Handling: The EventManager and ActionClickHandler are now async to handle the await keyword.
+
+Orchestration: SimulationService.buyShip acts as the orchestrator.
+
+Validation: It first calls the synchronous PlayerActionService.validateBuyShip. If this fails, the process stops.
+
+Blocking Animation: On success, it calls await UIManager.runShipTransactionAnimation. The await keyword pauses the execution of the buyShip function.
+
+Promise: The UIManager in turn calls await AnimationService.playBlockingAnimation. This service attaches a CSS animation class and returns a Promise that only resolves when the animationend event fires.
+
+Execution: Once the animation Promise resolves, execution resumes in SimulationService.buyShip. It then calls the synchronous PlayerActionService.executeBuyShip.
+
+State Change: executeBuyShip mutates the GameState (deducts credits, adds ship).
+
+Final Render: The GameState.setState call notifies UIManager.render, which re-renders the Hangar/Shipyard, now showing the newly purchased ship (or its absence from the shipyard list).

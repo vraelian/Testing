@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.00] - 2025-11-8
+-  added transition effects
+-  add ship card transitions
+-  added AnimationService.js
+
 ## [31.90] - 2025-11-7
 -  finance screen polish
 

@@ -3,9 +3,7 @@
 
 ## Planned Ideas
 - System states influencing market performance
-- Improve finance screen, logging
 - Ship trading overhaul
-- Ship card transitions
 - Implement ship list
 - implement ship lore
 - Station Quirks
@@ -14,7 +12,9 @@
 ## Long-Term Ideas
 - Refine commodities names, identity
 - Reputation system
-- Player age events
+- V2 Player age events
+- V2 Random events
+- V2 player perks
 - Player Stations
 - Additional tutorials
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
