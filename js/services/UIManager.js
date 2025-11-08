@@ -1080,7 +1080,7 @@ export class UIManager {
             // --- END VIRTUAL WORKBENCH ---
                 // Original default button logic
                 if (btnContainer) {
-                    btnContainer.innerHTML = '';
+                btnContainer.innerHTML = '';
                     button = document.createElement('button');
                     btnContainer.appendChild(button);
                 } else {
@@ -1232,7 +1232,7 @@ export class UIManager {
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
-                }
+            }
             }, { once: true });
         }
     }
@@ -1858,12 +1858,23 @@ export class UIManager {
 
         if (!good || !item) return;
 
-        const modal = this.cache.cargoDetailModal;
-        const modalContent = this.cache.cargoDetailContent;
+        // --- [[START]] VIRTUAL WORKBENCH ---
+        // Refactor to use the queueModal system for standardized dismissal.
+        this.queueModal('cargo-detail-modal', null, null, null, {
+            // GDD-compliant dismissal: allow click inside or outside to close
+            dismissInside: true,
+            dismissOutside: true,
+            footer: null, // No default buttons
 
-        modalContent.innerHTML = _renderMaxCargoModal(good, item);
-        modal.classList.remove('hidden');
-        modal.classList.add('modal-visible');
+            // Custom setup to inject the rendered cargo card
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('#cargo-detail-content');
+                if (modalContent) {
+                    modalContent.innerHTML = _renderMaxCargoModal(good, item);
+                }
+            }
+        });
+        // --- [[END]] VIRTUAL WORKBENCH ---
     }
 
     renderStickyBar(gameState) {
@@ -2147,7 +2158,7 @@ export class UIManager {
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
                     <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${location.specialty || 'None reported'}</p>
                 </div>
-            </div>
+          </div>
 
             <div class="text-center">
                 <div>
@@ -2240,7 +2251,6 @@ export class UIManager {
         if (!screen) return;
         
         const subNavBar = screen.querySelector('.sub-nav-bar');
-        
         // --- VIRTUAL WORKBENCH: BUG FIX ---
         // Add guard clause to prevent error if subNavBar isn't rendered yet.
         if (!subNavBar) {
@@ -2253,7 +2263,6 @@ export class UIManager {
         // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
-
         // Activate the target tab and content
         const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
         const activeContent = screen.querySelector(`#${activeTabId}`);

@@ -330,7 +330,8 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
+        // VIRTUAL WORKBENCH: Replaced hl-blue with glowing credit text classes
+        const loanDesc = `You've acquired a loan of <span class="text-cyan-300 text-glow-cyan font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});

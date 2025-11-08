@@ -17,6 +17,15 @@ export function renderFinanceScreen(gameState) {
     const { player, day, currentLocationId } = gameState;
     const location = DB.MARKETS.find(l => l.id === currentLocationId);
     const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+    
+    // --- VIRTUAL WORKBENCH: Define theme vars for inline styling ---
+    const themeStyleVars = `
+        --theme-gradient: ${theme.gradient}; 
+        --theme-text-color: ${theme.textColor}; 
+        --theme-border-color: ${theme.borderColor};
+    `;
+    // --- END VIRTUAL WORKBENCH ---
+
     let loanHtml;
 
     // Display the current debt panel if the player has debt.
@@ -25,14 +34,17 @@ export function renderFinanceScreen(gameState) {
         if (player.loanStartDate) {
             const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
             if (daysRemaining > 0) {
-                garnishmentTimerHtml = `<p class="text-xs text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+                // VIRTUAL WORKBENCH: Increased font size from text-xs to text-sm
+                garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
             }
         }
         loanHtml = `
             <div>
-                <h3 class="text-2xl font-orbitron text-center mb-4">Debt</h3>
-                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-2 bg-red-800/80 hover:bg-red-700/80 border-red-500 font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Debt</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         Pay Off ${formatCredits(player.debt)}
                     </button>
                     ${garnishmentTimerHtml}
@@ -48,18 +60,22 @@ export function renderFinanceScreen(gameState) {
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            return `<button class="btn btn-loan w-full p-2 mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
+            // --- VIRTUAL WORKBENCH: Updated button classes to btn-module-credit ---
+            return `<button class="btn-module btn-module-credit w-full mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
                         <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
                     </button>`;
         }).join('');
         loanHtml = `
             <div>
-                <h3 class="text-2xl font-orbitron text-center mb-4">Financing</h3>
-                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Financing</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
                     <div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>
                 </div>
             </div>`;
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
@@ -80,15 +96,19 @@ export function renderFinanceScreen(gameState) {
                 ${loanHtml}
             </div>
             <div class="md:col-span-2 flex flex-col min-h-0">
-                 <h3 class="text-2xl font-orbitron text-center mb-4 flex-shrink-0">Transaction Log</h3>
-                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; background: ${theme.gradient}; --theme-text-color: ${theme.textColor};">
-                    <div class="log-header" style="border-color: ${theme.borderColor};">
-                       <span class="text-center">Day</span>
-                       <span>Description</span>
-                       <span class="text-right">Amount</span>
-                    </div>
-                    <div class="log-entries-container">
-                        ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                 <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Transaction Log</div>
+                 </div>
+                 <div class="finance-module-panel flex flex-col flex-grow min-h-0" style="border-color: ${theme.borderColor}; --theme-text-color: ${theme.textColor};">
+                    <div class="finance-log-panel">
+                        <div class="log-header" style="border-color: ${theme.borderColor};">
+                           <span class="text-center">Day</span>
+                           <span>Description</span>
+                           <span class="text-right">Amount</span>
+                        </div>
+                        <div class="log-entries-container">
+                            ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                        </div>
                     </div>
                  </div>
             </div>

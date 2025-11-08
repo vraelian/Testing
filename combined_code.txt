@@ -4017,6 +4017,134 @@ WORKBENCH --- */
 
 --- START OF FILE: ./css/screens/finance-screen.css ---
 /* css/screens/finance-screen.css */
+/* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
+.themed-header-bar {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    
+    /* Recessed panel look - REMOVED inset shadow */
+    background-color: #0D1117; /* bg-[#0D1117] */
+    border: 1px solid var(--theme-border-color, #334155);
+    border-radius: 0.375rem; /* rounded-md - ADDED */
+    padding: 0.125rem; /* p-0.5, reduced by ~30% */
+    
+    width: 100%;
+    flex-shrink: 0; /* Prevent shrinking */
+    
+    margin-bottom: 0.75rem; /* mb-3 */
+}
+
+.themed-header-title {
+    position: relative; 
+    z-index: 10;
+    flex: 1 1 0; /* flex-1 */
+
+    font-family: 'Orbitron', sans-serif;
+    /* VIRTUAL WORKBENCH: Increased font size from text-xs (0.75rem) to text-sm (0.875rem) */
+    font-size: 0.875rem;
+    font-weight: 700;
+    
+    /* THEME: Use theme gradient and colors */
+    color: var(--theme-text-color, #f0f0f0);
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+
+    /* RESIZE: Reduced vertical padding */
+    padding: 0.375rem 1rem; /* py-1.5, reduced by ~30% */
+    
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* tracking-wider */
+    text-align: center;
+
+    /* VIRTUAL WORKBENCH: Removed clip-path, added border-radius */
+    border-radius: 0.375rem; /* rounded-md */
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED MODULE PANEL & BUTTON STYLES --- */
+.finance-module-panel {
+    /* Dark, recessed background similar to intel market */
+    background: rgba(13, 17, 23, 0.6); /* bg-[#0D1117]/60 */
+    border: 1px solid var(--theme-border-color, #4a6a8a);
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 1rem; /* p-4 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+}
+
+/* Base button style, copied from .btn-intel */
+.btn-module {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    background-color: #1e293b; /* slate-800 */
+    border: 1px solid #334155; /* slate-700 */
+    color: #cbd5e1; /* slate-300 */
+    padding: 0.75rem 1rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    
+    /* VIRTUAL WORKBENCH: Add rounded corners and convex shadow */
+    border-radius: 0.375rem; /* rounded-md */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+.btn-module:hover:not(:disabled) {
+    background-color: #334155; /* slate-700 */
+    border-color: #475569; /* slate-600 */
+    color: #f1f5f9; /* slate-100 */
+    transform: translateY(-1px);
+    /* VIRTUAL WORKBENCH: Enhance shadow on hover */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+.btn-module:disabled {
+    background-color: #0f172a; /* slate-900 */
+    border-color: #1e293b; /* slate-800 */
+    color: #334155; /* slate-700 */
+    cursor: not-allowed;
+    opacity: 0.6;
+    /* VIRTUAL WORKBENCH: Remove convex shadow on disabled */
+    box-shadow: none;
+}
+
+/* VIRTUAL WORKBENCH: New Credit-themed button */
+.btn-module-credit {
+    background-color: #083344; /* cyan-950 */
+    border-color: #0e7490; /* cyan-700 */
+    color: #a5f3fc; /* cyan-200 */
+    /* Add cyan glow to the convex shadow */
+    box-shadow: 0 0 10px -2px #0e7490, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+.btn-module-credit:hover:not(:disabled) {
+    background-color: #0e7490; /* cyan-700 */
+    border-color: #22d3ee; /* cyan-400 */
+    color: #ecfeff; /* cyan-50 */
+    box-shadow: 0 0 15px -2px #22d3ee, 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+}
+
+
+/* VIRTUAL WORKBENCH: Lighter, convex destructive button */
+.btn-module-destructive {
+    /* Lighter red */
+    background-color: #b91c1c; /* red-700 */
+    border-color: #dc2626; /* red-600 */
+    color: #fecaca; /* red-200 */
+}
+
+.btn-module-destructive:hover:not(:disabled) {
+    background-color: #dc2626; /* red-600 */
+    border-color: #ef4444; /* red-500 */
+    color: #ffffff;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* --- VIRTUAL WORKBENCH: ADJUST LOG PANEL STYLING --- */
+/* This panel now sits *inside* .finance-module-panel */
 .finance-log-panel {
     display: flex; /* Use flexbox to manage children */
     flex-direction: column; /* Stack header and log entries vertically */
@@ -4025,7 +4153,11 @@ WORKBENCH --- */
     overflow: hidden; /* Prevent this panel itself from scrolling */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    
+    /* REMOVED: padding, border, background, shadow. Now handled by .finance-module-panel */
 }
+/* --- END VIRTUAL WORKBENCH --- */
+
 .finance-log-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
@@ -4074,7 +4206,10 @@ WORKBENCH --- */
     color: var(--theme-text-color, #f0f0f0);
     position: sticky;
     top: 0;
-    background: inherit;
+    /* VIRTUAL WORKBENCH: Use a slightly darker bg to stand out from panel */
+    background: rgba(13, 17, 23, 0.8); /* bg-[#0D1117]/80 */
+    backdrop-filter: blur(2px);
+    /* END VIRTUAL WORKBENCH */
     flex-shrink: 0; /* Prevent header from shrinking */
 }
 
@@ -5615,6 +5750,15 @@ export function renderFinanceScreen(gameState) {
     const { player, day, currentLocationId } = gameState;
     const location = DB.MARKETS.find(l => l.id === currentLocationId);
     const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+    
+    // --- VIRTUAL WORKBENCH: Define theme vars for inline styling ---
+    const themeStyleVars = `
+        --theme-gradient: ${theme.gradient}; 
+        --theme-text-color: ${theme.textColor}; 
+        --theme-border-color: ${theme.borderColor};
+    `;
+    // --- END VIRTUAL WORKBENCH ---
+
     let loanHtml;
 
     // Display the current debt panel if the player has debt.
@@ -5623,14 +5767,17 @@ export function renderFinanceScreen(gameState) {
         if (player.loanStartDate) {
             const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
             if (daysRemaining > 0) {
-                garnishmentTimerHtml = `<p class="text-xs text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+                // VIRTUAL WORKBENCH: Increased font size from text-xs to text-sm
+                garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
             }
         }
         loanHtml = `
             <div>
-                <h3 class="text-2xl font-orbitron text-center mb-4">Debt</h3>
-                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
-                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn w-full py-2 bg-red-800/80 hover:bg-red-700/80 border-red-500 font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Debt</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         Pay Off ${formatCredits(player.debt)}
                     </button>
                     ${garnishmentTimerHtml}
@@ -5646,18 +5793,22 @@ export function renderFinanceScreen(gameState) {
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            return `<button class="btn btn-loan w-full p-2 mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
+            // --- VIRTUAL WORKBENCH: Updated button classes to btn-module-credit ---
+            return `<button class="btn-module btn-module-credit w-full mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
                         <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
                     </button>`;
         }).join('');
         loanHtml = `
             <div>
-                <h3 class="text-2xl font-orbitron text-center mb-4">Financing</h3>
-                <div class="p-4 rounded-lg flex flex-col items-center justify-center space-y-2 shadow-lg panel-border border text-center" style="border-color: ${theme.borderColor}; color: ${theme.textColor}; background: ${theme.gradient};">
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Financing</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
                     <div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>
                 </div>
             </div>`;
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
@@ -5678,15 +5829,19 @@ export function renderFinanceScreen(gameState) {
                 ${loanHtml}
             </div>
             <div class="md:col-span-2 flex flex-col min-h-0">
-                 <h3 class="text-2xl font-orbitron text-center mb-4 flex-shrink-0">Transaction Log</h3>
-                 <div class="finance-log-panel p-4 rounded-lg shadow-lg panel-border border" style="border-color: ${theme.borderColor}; background: ${theme.gradient}; --theme-text-color: ${theme.textColor};">
-                    <div class="log-header" style="border-color: ${theme.borderColor};">
-                       <span class="text-center">Day</span>
-                       <span>Description</span>
-                       <span class="text-right">Amount</span>
-                    </div>
-                    <div class="log-entries-container">
-                        ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                 <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Transaction Log</div>
+                 </div>
+                 <div class="finance-module-panel flex flex-col flex-grow min-h-0" style="border-color: ${theme.borderColor}; --theme-text-color: ${theme.textColor};">
+                    <div class="finance-log-panel">
+                        <div class="log-header" style="border-color: ${theme.borderColor};">
+                           <span class="text-center">Day</span>
+                           <span>Description</span>
+                           <span class="text-right">Amount</span>
+                        </div>
+                        <div class="log-entries-container">
+                            ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                        </div>
                     </div>
                  </div>
             </div>
@@ -13619,7 +13774,7 @@ export class UIManager {
             // --- END VIRTUAL WORKBENCH ---
                 // Original default button logic
                 if (btnContainer) {
-                    btnContainer.innerHTML = '';
+                btnContainer.innerHTML = '';
                     button = document.createElement('button');
                     btnContainer.appendChild(button);
                 } else {
@@ -13771,7 +13926,7 @@ export class UIManager {
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
-                }
+            }
             }, { once: true });
         }
     }
@@ -14397,12 +14552,23 @@ export class UIManager {
 
         if (!good || !item) return;
 
-        const modal = this.cache.cargoDetailModal;
-        const modalContent = this.cache.cargoDetailContent;
+        // --- [[START]] VIRTUAL WORKBENCH ---
+        // Refactor to use the queueModal system for standardized dismissal.
+        this.queueModal('cargo-detail-modal', null, null, null, {
+            // GDD-compliant dismissal: allow click inside or outside to close
+            dismissInside: true,
+            dismissOutside: true,
+            footer: null, // No default buttons
 
-        modalContent.innerHTML = _renderMaxCargoModal(good, item);
-        modal.classList.remove('hidden');
-        modal.classList.add('modal-visible');
+            // Custom setup to inject the rendered cargo card
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('#cargo-detail-content');
+                if (modalContent) {
+                    modalContent.innerHTML = _renderMaxCargoModal(good, item);
+                }
+            }
+        });
+        // --- [[END]] VIRTUAL WORKBENCH ---
     }
 
     renderStickyBar(gameState) {
@@ -14686,7 +14852,7 @@ export class UIManager {
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
                     <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${location.specialty || 'None reported'}</p>
                 </div>
-            </div>
+          </div>
 
             <div class="text-center">
                 <div>
@@ -14779,7 +14945,6 @@ export class UIManager {
         if (!screen) return;
         
         const subNavBar = screen.querySelector('.sub-nav-bar');
-        
         // --- VIRTUAL WORKBENCH: BUG FIX ---
         // Add guard clause to prevent error if subNavBar isn't rendered yet.
         if (!subNavBar) {
@@ -14792,7 +14957,6 @@ export class UIManager {
         // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
-
         // Activate the target tab and content
         const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
         const activeContent = screen.querySelector(`#${activeTabId}`);
@@ -18852,7 +19016,8 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="hl-blue">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
+        // VIRTUAL WORKBENCH: Replaced hl-blue with glowing credit text classes
+        const loanDesc = `You've acquired a loan of <span class="text-cyan-300 text-glow-cyan font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="hl-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});
