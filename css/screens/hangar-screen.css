@@ -24,7 +24,8 @@ CORE THEME & VARIABLE SETUP
     --ot-shipyard-blue-glow: #93c5fd;
 
     /* Ship Class Colors */
-    --class-s-color: #facc15;
+  
+  --class-s-color: #facc15;
     --class-a-color: #60a5fa;
     --class-b-color: #4ade80;
     --class-c-color: #e5e7eb;
@@ -43,13 +44,6 @@ CORE THEME & VARIABLE SETUP
 #ship-terminal-container.mode-hangar {
     --frame-border-color: var(--ot-hangar-red-base);
 }
-
-/* --- VIRTUAL WORKBENCH: MODIFICATION (Phase 1) --- */
-/* Force the frame to blue during the boarding animation, even in hangar mode */
-#ship-terminal.is-boarding {
-    --frame-border-color: var(--ot-shipyard-blue-base);
-}
-/* --- END VIRTUAL WORKBENCH --- */
 
 
 /* ================================================================================
@@ -91,7 +85,8 @@ COMPONENT-SPECIFIC STYLING
 
 /* Backgrounds & Theming */
 #ship-terminal {
-    background-image: var(--theme-bg-gradient); /* Base theme from location */
+    
+background-image: var(--theme-bg-gradient); /* Base theme from location */
     display: flex; 
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
@@ -112,7 +107,8 @@ COMPONENT-SPECIFIC STYLING
 #ship-terminal::before {
     content: '';
     position: absolute;
-    top: 0;
+    top: 
+0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -131,19 +127,37 @@ COMPONENT-SPECIFIC STYLING
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
-/* --- VIRTUAL WORKBENCH: MODIFICATION (Request A) --- */
-/* Adds a static border and glow to the active ship in Hangar mode */
-#ship-terminal.active-ship-glow {
-    border-width: 3px; /* 50% thicker than base 2px */
-    /* Static red glow using the hangar-mode variable */
-    box-shadow: 0 0 15px var(--ot-hangar-red-glow);
+/* --- VIRTUAL WORKBENCH: ADD ACTIVE SHIP GLOW --- */
+@keyframes pulse-red-border-glow {
+    0%, 100% {
+        /* Use the base red color and a standard glow */
+        border-color: var(--ot-hangar-red-base);
+        box-shadow: 0 0 10px var(--ot-hangar-red-glow), 0 0 15px var(--ot-hangar-red-glow), inset 0 0 8px rgba(239, 68, 68, 0.2);
+    }
+    50% {
+        /* Use the brighter glow color and a more intense shadow */
+        border-color: var(--ot-hangar-red-glow);
+        box-shadow: 0 0 15px var(--ot-hangar-red-glow), 0 0 25px var(--ot-hangar-red-glow), inset 0 0 12px rgba(239, 68, 68, 0.3);
+    }
+}
+
+.active-ship {
+    /* * This !important rule is crucial. It overrides the default --frame-border-color
+     * (which is blue) and fixes the bug where the card gets "stuck" on blue
+     * after the boarding animation.
+    */
+    border-color: var(--ot-hangar-red-base) !important;
+    
+    /* This applies the new persistent red glow animation */
+    animation: pulse-red-border-glow 2.5s infinite ease-in-out;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
 
 /* The new intermediate container for constraining height */
 #ship-card-main-content {
-    flex: 1 1 auto; /* Grow to fill space */
+    
+flex: 1 1 auto; /* Grow to fill space */
     min-height: 0; /* CRUCIAL for allowing the child to scroll */
     display: flex;
     flex-direction: column;
@@ -173,7 +187,7 @@ COMPONENT-SPECIFIC STYLING
 
 #ship-terminal-container.mode-hangar #ship-terminal {
     background-blend-mode: overlay;
-    background-color: #1a193d; 
+    background-color: #1a193d;
 }
 #ship-terminal-container.mode-hangar #ship-terminal::after { 
     content: '';
@@ -206,7 +220,8 @@ COMPONENT-SPECIFIC STYLING
     transform: translateX(-50%) translateY(50%);
     background-color: #1a2030;
     border: 1px solid;
-    padding: 3px 11px;
+    padding: 
+3px 11px;
     border-radius: 99px;
     font-size: 0.77rem;
     font-weight: 700;
@@ -245,7 +260,8 @@ COMPONENT-SPECIFIC STYLING
     font-weight: 900;
 }
 #ship-terminal-container.mode-hangar .toggle-label.hangar { 
-    background-color: var(--ot-hangar-red-base);
+  
+  background-color: var(--ot-hangar-red-base);
     box-shadow: 0 0 10px var(--ot-hangar-red-glow);
 }
 #ship-terminal-container.mode-shipyard .toggle-label.shipyard { 
@@ -303,7 +319,8 @@ COMPONENT-SPECIFIC STYLING
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-/* NEW: Price text specifically for action buttons (like Sell) */
+/* NEW: Price 
+text specifically for action buttons (like Sell) */
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
@@ -328,7 +345,8 @@ COMPONENT-SPECIFIC STYLING
     bottom: 1.25rem; /* The 55% value, as a gap from the bottom of the screen */
     left: 0;
     right: 0;
-    z-index: 10; /* Ensure it's above the card content */
+    z-index: 10; /* Ensure it's above the card 
+content */
 
     flex-shrink: 0;
     overflow-x: auto;
@@ -372,7 +390,8 @@ COMPONENT-SPECIFIC STYLING
 }
 
 .pagination-dot.half {
-    width: 0.9rem; /* Half the original width */
+    width: 0.9rem; /* Half the original 
+width */
     opacity: 0.2;
 }
 
@@ -395,7 +414,8 @@ COMPONENT-SPECIFIC STYLING
     .ship-card-content-wrapper > .col-span-3 {
         grid-column: span 1 / span 1; /* Make each column take full width */
     }
-    .ship-display-area {
+    
+.ship-display-area {
         min-height: 180px; /* Ensure hologram area has enough height */
     }
 }

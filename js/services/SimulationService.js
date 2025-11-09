@@ -8,7 +8,8 @@ import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS } from '../data/constants.js';
 import { MarketService } from './simulation/MarketService.js';
-import { IntroService } from './game/IntroService.js';
+import { 
+IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
@@ -27,7 +28,8 @@ export class SimulationService {
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
+  
+  constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
@@ -41,7 +43,8 @@ export class SimulationService {
 
         // Instantiate all services
         this.marketService = new MarketService(gameState);
-        // MODIFIED: Pass newsTickerService
+        // 
+MODIFIED: Pass newsTickerService
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
@@ -53,7 +56,8 @@ export class SimulationService {
         
         // Inject intelService into services that depend on it
         this.timeService.intelService = this.intelService;
-        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
+        this.uiManager.setIntelService(this.intelService); // UIManager will 
+need this setter
         // --- END VIRTUAL WORKBENCH ---
 
         // Inject cross-dependencies that couldn't be set in constructors
@@ -69,7 +73,8 @@ export class SimulationService {
      * Injects the TutorialService after all services have been instantiated.
      * @param {import('./TutorialService.js').TutorialService} tutorialService
      */
-    setTutorialService(tutorialService) {
+    setTutorialService(tutorialService) 
+{
         this.tutorialService = tutorialService;
     }
 
@@ -88,7 +93,8 @@ export class SimulationService {
 
     // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
-    handleIntroClick(e) { this.introService.handleIntroClick(e); }
+    
+handleIntroClick(e) { this.introService.handleIntroClick(e); }
     _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
     
     // PlayerActionService Delegation
@@ -103,17 +109,14 @@ export class SimulationService {
     async buyShip(shipId, event) {
         // 1. Validate
         const validation = this.playerActionService.validateBuyShip(shipId);
-        if (!validation.success) {
+if (!validation.success) {
             this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return null;
         }
 
         // 2. Animate
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
-        // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 3) ---
-        // Pass the default animation class
-        await this.uiManager.runShipTransactionAnimation(shipId, 'is-dematerializing');
-        // --- END VIRTUAL WORKBENCH ---
+        await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
 
         // 3. Execute
@@ -125,7 +128,8 @@ export class SimulationService {
      * @param {string} shipId
      * @param {Event} event
      */
-    async sellShip(shipId, event) {
+    async 
+sellShip(shipId, event) {
         // 1. Validate
         const validation = this.playerActionService.validateSellShip(shipId);
         if (!validation.success) {
@@ -135,46 +139,35 @@ export class SimulationService {
 
         // 2. Animate
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
-        // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 3) ---
-        // Pass the default animation class
-        await this.uiManager.runShipTransactionAnimation(shipId, 'is-dematerializing');
-        // --- END VIRTUAL WORKBENCH ---
+        await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
 
         // 3. Execute
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 2 & 4) ---
+    // --- VIRTUAL WORKBENCH: NEW ASYNC ORCHESTRATOR ---
     /**
      * Orchestrates boarding a ship: Plays animation, then executes.
      * @param {string} shipId
      * @param {Event} event
+     * @JSDoc
      */
     async boardShip(shipId, event) {
-        // --- VIRTUAL WORKBENCH: MODIFICATION (Request C) ---
-        // 1. Execute State Change First
-        this.setActiveShip(shipId); // <-- State change first (Makes button grey)
-        
-        // 2. Animate (and wait)
+        // 1. Animate
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
-        // Pass our new CSS class to the parameterized function
-        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding'); // <-- Animation second
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
-        // --- END VIRTUAL WORKBENCH ---
-    }
+        await this.uiManager.runShipTransactionAnimation(shipId);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete. Executing logic.`);
 
-    /**
-     * Facade method to set the active ship.
-     * The logic has been moved to PlayerActionService.
-     * @param {string} shipId
-     */
-    setActiveShip(shipId) { 
-        this.playerActionService.setActiveShip(shipId); 
+        // 2. Execute (This will set the state and trigger the re-render)
+        this.playerActionService.setActiveShip(shipId);
     }
     // --- END VIRTUAL WORKBENCH ---
+
+    setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
     
-    // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+    // 
+--- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
     /**
      * Pays off the player's entire outstanding debt.
      * @param {Event} [event] - The click event for placing floating text.
@@ -188,7 +181,8 @@ export class SimulationService {
      */
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
     // --- END VIRTUAL WORKBENCH ---
-    
+ 
+   
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
@@ -204,7 +198,8 @@ export class SimulationService {
 
     // ADDED: NewsTickerService Delegation
     /**
-     * Pushes a new message to the news ticker.
+     
+* Pushes a new message to the news ticker.
      * @param {string} text - The message content.
      * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
      * @param {boolean} [isPriority=false] - If true, prepends to the front.
@@ -219,7 +214,8 @@ export class SimulationService {
      * Pulses the news ticker for daily updates (e.g., flavor text).
      */
     pulseNewsTicker() {
-        if (this.newsTickerService) {
+    
+    if (this.newsTickerService) {
             this.newsTickerService.pulse();
         }
     }
@@ -234,7 +230,8 @@ export class SimulationService {
      * @param {string} screenId
      */
     setScreen(navId, screenId) {
-        const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
+        const newLastActive = 
+{ ...this.gameState.lastActiveScreen, [navId]: screenId };
         this.gameState.setState({ 
             activeNav: navId, 
             activeScreen: screenId,
@@ -247,7 +244,8 @@ export class SimulationService {
         // --- [END NEW V2 CHANGE] ---
 
         if (this.tutorialService) {
-            this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
+ 
+           this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
     }
 
@@ -261,7 +259,8 @@ export class SimulationService {
         if (this.gameState.uiState.activeIntelTab !== tabId) {
             this.gameState.uiState.activeIntelTab = tabId;
             this.gameState.setState({ 
-                uiState: this.gameState.uiState 
+     
+           uiState: this.gameState.uiState 
             });
         }
     }
@@ -279,7 +278,8 @@ export class SimulationService {
     }
     
     /**
-     * Updates the active index for the hangar or shipyard carousel.
+ 
+    * Updates the active index for the hangar or shipyard carousel.
      * @param {number} index
      * @param {string} mode
      */
@@ -294,7 +294,8 @@ export class SimulationService {
 
     /**
      * Cycles the hangar/shipyard carousel.
-     * @param {string} direction - 'next' or 'prev'.
+     * @param {string} direction 
+- 'next' or 'prev'.
      */
     cycleHangarCarousel(direction) {
         const { uiState, player } = this.gameState;
@@ -311,7 +312,8 @@ export class SimulationService {
             currentIndex = (currentIndex - 1 + shipList.length) % shipList.length;
         }
 
-        this.setHangarCarouselIndex(currentIndex, isHangarMode ? 'hangar' : 'shipyard');
+     
+   this.setHangarCarouselIndex(currentIndex, isHangarMode ? 'hangar' : 'shipyard');
     }
 
     /**
@@ -326,7 +328,8 @@ export class SimulationService {
         this.uiManager.queueModal('event-modal', "Game Over", message, () => {
             localStorage.removeItem(SAVE_KEY);
             window.location.reload();
-        }, { buttonText: 'Restart' });
+ 
+       }, { buttonText: 'Restart' });
     }
 
     /**
@@ -337,7 +340,8 @@ export class SimulationService {
      */
     _checkGameOverConditions() {
         // This is the performant check: it reads directly from the state
-        // object instead of creating an expensive deep copy with getState().
+        // object instead of creating an expensive 
+deep copy with getState().
         if (this.gameState.player.credits <= 0) {
             this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
         }
@@ -351,7 +355,8 @@ export class SimulationService {
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
-        if (!this.gameState.player.inventories[shipId]) {
+        if (!this.gameState.player.inventories[shipId]) 
+{
             this.gameState.player.inventories[shipId] = {};
             DB.COMMODITIES.forEach(c => {
                 this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
@@ -365,7 +370,8 @@ export class SimulationService {
         if (choice.playerTitle) this.gameState.player.playerTitle = choice.playerTitle;
         if (choice.perkId === PERK_IDS.MERCHANT_GUILD_SHIP) {
             this.addShipToHangar(SHIP_IDS.STALWART);
-            this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild has delivered a new ${DB.SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
+            this.uiManager.queueModal('event-modal', 'Vessel Delivered', `The Merchant's Guild 
+has delivered a new ${DB.SHIPS[SHIP_IDS.STALWART].name} to your hangar.`);
         }
         this.gameState.setState({});
     }
@@ -386,7 +392,8 @@ export class SimulationService {
         const shipState = this.gameState.player.shipStates[shipId];
         const shipStatic = DB.SHIPS[shipId];
         const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
-        if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
+        if (healthPct <= 
+15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;
         if (healthPct > 15) shipState.hullAlerts.two = false;
@@ -397,7 +404,8 @@ export class SimulationService {
             day: this.gameState.day,
             type: type, 
             amount: amount,
-            balance: this.gameState.player.credits,
+   
+         balance: this.gameState.player.credits,
             description: description
         });
         // Enforce the history limit
@@ -411,7 +419,8 @@ export class SimulationService {
         const isBuy = transactionValue < 0;
         const actionWord = isBuy ? 'Bought' : 'Sold';
         const existingEntry = log.find(entry => 
-            entry.day === this.gameState.day &&
+     
+       entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
             entry.description.endsWith(` ${goodName}`) &&
@@ -421,7 +430,8 @@ export class SimulationService {
             existingEntry.amount += transactionValue;
             existingEntry.balance = this.gameState.player.credits;
             const match = existingEntry.description.match(/\s(\d+)x\s/);
-            if (match) {
+            if 
+(match) {
                 const currentQty = parseInt(match[1], 10);
                 existingEntry.description = `${actionWord} ${currentQty + quantity}x ${goodName}`;
             }
@@ -434,7 +444,8 @@ export class SimulationService {
         const log = this.gameState.player.financeLog;
         const lastEntry = log.length > 0 ? log[log.length - 1] : null;
         if (lastEntry && lastEntry.day === this.gameState.day && lastEntry.type === type) {
-            lastEntry.amount += amount;
+       
+     lastEntry.amount += amount;
             lastEntry.balance = this.gameState.player.credits;
         } else {
             this._logTransaction(type, amount, description);
@@ -447,7 +458,8 @@ export class SimulationService {
             return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
         } else {
             const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
-            return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) => !player.ownedShipIds.includes(id));
+            return shipsForSaleIds.map(id => [id, DB.SHIPS[id]]).filter(([id]) 
+=> !player.ownedShipIds.includes(id));
         }
     }
 
@@ -457,13 +469,15 @@ export class SimulationService {
                 this.gameState.player.credits += reward.amount;
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
-            }
+         
+   }
             if (reward.type === 'license') {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
-                    this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
+    
+                this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
                 }
             }
         });
@@ -474,7 +488,8 @@ export class SimulationService {
         if (!mission || !mission.providedCargo) return;
         const inventory = this._getActiveInventory();
         if (!inventory) {
-            this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory found.');
+            this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory 
+found.');
             return;
         }
         mission.providedCargo.forEach(cargo => {
@@ -485,7 +500,8 @@ export class SimulationService {
             this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
         });
         if (this.missionService) {
-            this.missionService.checkTriggers();
+  
+          this.missionService.checkTriggers();
         }
     }
 }
