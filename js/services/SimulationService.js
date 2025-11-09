@@ -110,7 +110,10 @@ export class SimulationService {
 
         // 2. Animate
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
+        // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 3) ---
+        // Pass the default animation class
+        await this.uiManager.runShipTransactionAnimation(shipId, 'is-dematerializing');
+        // --- END VIRTUAL WORKBENCH ---
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
 
         // 3. Execute
@@ -132,14 +135,44 @@ export class SimulationService {
 
         // 2. Animate
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
+        // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 3) ---
+        // Pass the default animation class
+        await this.uiManager.runShipTransactionAnimation(shipId, 'is-dematerializing');
+        // --- END VIRTUAL WORKBENCH ---
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
 
         // 3. Execute
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
+    // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 2 & 4) ---
+    /**
+     * Orchestrates boarding a ship: Plays animation, then executes.
+     * @param {string} shipId
+     * @param {Event} event
+     */
+    async boardShip(shipId, event) {
+        // --- VIRTUAL WORKBENCH: MODIFICATION (Request C) ---
+        // 1. Execute State Change First
+        this.setActiveShip(shipId); // <-- State change first (Makes button grey)
+        
+        // 2. Animate (and wait)
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
+        // Pass our new CSS class to the parameterized function
+        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding'); // <-- Animation second
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
+        // --- END VIRTUAL WORKBENCH ---
+    }
+
+    /**
+     * Facade method to set the active ship.
+     * The logic has been moved to PlayerActionService.
+     * @param {string} shipId
+     */
+    setActiveShip(shipId) { 
+        this.playerActionService.setActiveShip(shipId); 
+    }
+    // --- END VIRTUAL WORKBENCH ---
     
     // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
     /**

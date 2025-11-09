@@ -44,6 +44,13 @@ CORE THEME & VARIABLE SETUP
     --frame-border-color: var(--ot-hangar-red-base);
 }
 
+/* --- VIRTUAL WORKBENCH: MODIFICATION (Phase 1) --- */
+/* Force the frame to blue during the boarding animation, even in hangar mode */
+#ship-terminal.is-boarding {
+    --frame-border-color: var(--ot-shipyard-blue-base);
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 /* ================================================================================
 COMPONENT-SPECIFIC STYLING
@@ -121,6 +128,15 @@ COMPONENT-SPECIFIC STYLING
     /* Set defaults for animation */
     transform-origin: center;
     transform: scale(0.5);
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: MODIFICATION (Request A) --- */
+/* Adds a static border and glow to the active ship in Hangar mode */
+#ship-terminal.active-ship-glow {
+    border-width: 3px; /* 50% thicker than base 2px */
+    /* Static red glow using the hangar-mode variable */
+    box-shadow: 0 0 15px var(--ot-hangar-red-glow);
 }
 /* --- END VIRTUAL WORKBENCH --- */
 

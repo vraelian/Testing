@@ -310,6 +310,7 @@ export class PlayerActionService {
      * @param {string} shipId - The ID of the ship to make active.
      */
     setActiveShip(shipId) {
+        // --- VIRTUAL WORKBENCH: LOGIC MOVED FROM SimulationService (Phase 2) ---
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         this.gameState.player.activeShipId = shipId;
 
@@ -325,6 +326,7 @@ export class PlayerActionService {
         }
 
         this.gameState.setState({});
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
