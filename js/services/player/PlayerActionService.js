@@ -58,7 +58,7 @@ export class PlayerActionService {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
             return false;
         }
-        if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
+         if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
@@ -108,7 +108,7 @@ export class PlayerActionService {
         const activeInventory = this.simulationService._getActiveInventory();
         const item = activeInventory[goodId];
         if (!item || item.quantity < quantity) {
-            this.uiManager.queueModal('event-modal', "Insufficient Inventory", `You do not have ${quantity} units of ${good.name} to sell.`);
+             this.uiManager.queueModal('event-modal', "Insufficient Inventory", `You do not have ${quantity} units of ${good.name} to sell.`);
             return 0;
         }
 
@@ -200,9 +200,14 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
+            // --- VIRTUAL WORKBENCH: ADDED "VESSEL PURCHASED" MODAL (REQUEST A & B) ---
+            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red font-roboto-mono">-${formatCredits(ship.price, false)}</span>.`;
+            this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
+            // --- END VIRTUAL WORKBENCH ---
+
             this.gameState.setState({
                 uiState: {
-                    ...this.gameState.uiState,
+                     ...this.gameState.uiState,
                     shipyardActiveIndex: newShipyardIndex, // Set the corrected index
                     lastTransactionTimestamp: Date.now()
                 }
@@ -231,7 +236,7 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
         }
         if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-            return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
+             return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
         }
         const ship = DB.SHIPS[shipId];
         if (!ship) {
@@ -282,11 +287,14 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            this.uiManager.queueModal('event-modal', "Vessel Sold", `You sold the ${ship.name} for ${formatCredits(salePrice)}.`);
+            // --- VIRTUAL WORKBENCH: STYLED "VESSEL SOLD" MODAL (REQUEST B) ---
+            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing font-roboto-mono">+${formatCredits(salePrice, false)}</span>.`;
+            this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
+            // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
-                    ...this.gameState.uiState,
+                     ...this.gameState.uiState,
                     hangarActiveIndex: newActiveIndex,
                     lastTransactionTimestamp: Date.now()
                 }
@@ -386,7 +394,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: MODIFIED (Point A) ---
         // Added glowing classes and font-roboto-mono for consistency
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class"text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
@@ -412,7 +420,6 @@ export class PlayerActionService {
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
-
         this.gameState.setState({});
 
         return { success: true };
@@ -516,7 +523,7 @@ export class PlayerActionService {
         // --- ADDED: Floating Text ---
         const repairBtn = document.getElementById('repair-btn');
         if (repairBtn) {
-            const rect = repairBtn.getBoundingClientRect();
+             const rect = repairBtn.getBoundingClientRect();
              // Calculate center X, top Y for the text origin
             const x = rect.left + rect.width / 2;
             const y = rect.top;
