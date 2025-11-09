@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 32.00</title>
+    <title>Orbital Trading 32.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 32.00</p>
+            <p>Version 32.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1225,7 +1225,8 @@
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
   src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
-  font-weight: 800; /* ExtraBold is typically 800 weight */
+  font-weight: 800;
+/* ExtraBold is typically 800 weight */
   font-style: normal;
 }
 
@@ -1254,7 +1255,7 @@
     --button-height: 28px;
     --font-family: 'Orbitron', sans-serif;
     --buy-primary: #196a8f;
-    --buy-secondary-bg: #1e2a3e;
+--buy-secondary-bg: #1e2a3e;
     --buy-secondary-border: #3c4e68;
     --buy-text-light: #8ca4b5;
     --buy-text-dark: #ddf3f8;
@@ -1281,7 +1282,8 @@ body {
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Removed flex properties that were causing the layout bug */
-    /* display: flex; */
+  
+  /* display: flex; */
     /* justify-content: center; */
     /* align-items: center; */
     font-family: 'Exo 2', sans-serif;
@@ -1321,7 +1323,8 @@ body {
 }
 
 .game-container {
-    max-width: 1200px;
+   
+ max-width: 1200px;
     width: 100%;
     height: 100%;
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
@@ -1356,7 +1359,8 @@ body {
 }
 
 #main-content {
-    display: flex;
+    
+display: flex;
     flex-direction: column;
     height: 100%;
 }
@@ -1398,7 +1402,8 @@ body {
 }
 
 .btn:hover:not(:disabled) {
-    background-color: #32405a;
+    
+background-color: #32405a;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     color: #e0f0ff;
@@ -1442,7 +1447,8 @@ body {
 
 @keyframes fadeOut {
     from {
-        opacity: 1;
+        
+opacity: 1;
         transform: scale(1);
     }
 
@@ -1475,7 +1481,8 @@ body {
     }
 
     50% {
-        box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
+   
+     box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
         border-color: #34d399;
     }
 }
@@ -1499,7 +1506,8 @@ body {
         text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
     }
 
-    50% {
+ 
+   50% {
         text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9;
     }
 
@@ -1517,10 +1525,25 @@ body {
         text-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
     }
     100% {
-        text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
+     
+   text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
     }
 }
 /* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: REMOVED WHITE GLOW (REQUEST A) --- */
+@keyframes pulse-white-glow {
+    0%, 100% {
+        /* Static black outline + base white glow */
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #e5e7eb, 0 0 8px #e5e7eb;
+    }
+    50% {
+        /* Static black outline + bright white glow */
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffffff, 0 0 16px #ffffff;
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes pulse-green-glow {
 
@@ -1547,7 +1570,8 @@ body {
 }
 
 @keyframes shimmer {
-    0% {
+ 
+   0% {
         background-position: -400px 0;
     }
 
@@ -1573,7 +1597,8 @@ body {
 @keyframes blue-pulse-glow {
 
     0%,
-    100% {
+    100% 
+{
         box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
@@ -1597,7 +1622,7 @@ body {
 @keyframes shimmer-effect {
     0% {
         background-position: -600px 0;
-    }
+}
 
     100% {
         background-position: 600px 0;
@@ -1635,11 +1660,16 @@ body {
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 
-/* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
+/* --- VIRTUAL WORKBENCH: 
+ADDED RED GLOW CLASS --- */
 .text-glow-red {
     color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
 }
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: REMOVED WHITE GLOW CLASS (REQUEST A) --- */
+/* .text-glow-white class and @keyframes pulse-white-glow removed */
 /* --- END VIRTUAL WORKBENCH --- */
 
 .pulse-green-glow {
@@ -1682,7 +1712,8 @@ body {
     z-index: 101;
 }
 
-#garnishment-toast {
+#garnishment-toast 
+{
     background-color: #991b1b;
     border: 1px solid #f87171;
     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
@@ -1777,7 +1808,8 @@ body {
     content: '';
     position: absolute;
     width: 15px;
-    height: 15px;
+    height: 
+15px;
     border-color: var(--theme-border-color, #7a9ac0);
     border-style: solid;
 }
@@ -1819,7 +1851,8 @@ body {
 }
 
 .base-concept {
-    width: 100%;
+    width: 
+100%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -1869,7 +1902,8 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 6px 
+rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -1906,7 +1940,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 
+100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1941,7 +1976,8 @@ body {
 */
 @keyframes dematerialize-card {
     0% {
-        opacity: 1;
+  
+      opacity: 1;
         transform: scale(1);
         clip-path: inset(0% 0% 0% 0%);
     }
@@ -1955,7 +1991,8 @@ body {
         opacity: 0;
         transform: scale(0.85);
         clip-path: inset(50% 0% 50% 0%); /* Fully collapsed to a line */
-    }
+   
+ }
 }
 
 /*
@@ -1980,7 +2017,8 @@ body {
 
 .is-dematerializing {
     /*
-     * Applies a 1.5s dematerialization effect to the card.
+     * Applies a 1.5s dematerialization effect to 
+the card.
      * 'forwards' holds the final state (opacity: 0).
     */
     animation: dematerialize-card 1.5s ease-in-out forwards;
@@ -2567,12 +2605,105 @@ body {
 
 --- START OF FILE: ./css/screens/services-screen.css ---
 /* css/screens/services-screen.css */
+
+/* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
+.themed-header-bar {
+    position: relative;
+    display: flex;
+    flex-direction: column; /* MODIFIED: Stack title and subtitle */
+    justify-content: center;
+    align-items: center; /* MODIFIED: Center align content */
+    
+    background-color: #0D1117; /* bg-[#0D1117] */
+    border: 1px solid var(--theme-border-color, #334155);
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.125rem; /* p-0.5 */
+    
+    width: 100%;
+    flex-shrink: 0; /* Prevent shrinking */
+    
+    /* VIRTUAL WORKBENCH: MODIFIED margin-bottom */
+    margin-bottom: 0.25rem; /* reduced from 0.75rem */
+}
+
+/* Selector to remove margin only from the ship-header's bar */
+.ship-services-panel .themed-header-bar {
+    margin-bottom: 0;
+}
+
+.themed-header-title {
+    position: relative; 
+    z-index: 10;
+    flex: 1 1 0; /* flex-1 */
+    width: 100%; /* Ensure it spans the bar */
+
+    font-family: 'Orbitron', sans-serif;
+    /* VIRTUAL WORKBENCH: Increased font size (Request A) */
+    font-size: 1.3rem; /* 20.8px */
+    font-weight: 700;
+    
+    color: var(--theme-text-color, #f0f0f0);
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+
+    padding: 0.375rem 1rem; /* py-1.5 */
+    
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* tracking-wider */
+    text-align: center;
+
+    border-radius: 0.375rem; /* rounded-md */
+    
+    /* ADDED: Clip-path for inner bevel, matching intel screen */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* NEW: Ship Header Title (Request B & C) */
+.ship-header-title {
+    position: relative; 
+    z-index: 10;
+    flex: 1 1 0;
+    width: 100%;
+    font-family: 'Space Mono', monospace; /* MODIFIED: New Font */
+    font-size: 1.2rem; /* 19.2px */
+    font-weight: 700;
+    color: var(--theme-text-color, #f0f0f0); /* MODIFIED: Set color */
+    text-transform: uppercase; /* ADDED: All caps */
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* ADDED: Outline */
+    background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
+    box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
+    padding: 0.25rem 1rem; /* Smaller padding */
+    letter-spacing: 0.05em;
+    text-align: center;
+    border-radius: 0.375rem;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+
+/* REMOVED: .themed-header-subtitle (Request C) */
+
+/* NEW: Ship Services Panel (Request A & C) */
+.ship-services-panel {
+    background: rgba(13, 17, 23, 0.4); /* MODIFIED: Lighter background */
+    border: 1px solid var(--theme-border-color, #4a6a8a);
+    border-radius: 0.375rem; /* rounded-md */
+    /* Padding is handled by children */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
 .services-scroll-panel {
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     padding: 0.25rem;
     touch-action: pan-y; /* Allow vertical scrolling */
+    
+    /* VIRTUAL WORKBENCH: Added flex properties */
+    flex-grow: 1;
+    min-height: 0;
+    /* --- END VIRTUAL WORKBENCH --- */
 }
 .services-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
@@ -2676,12 +2807,6 @@ body {
   border-radius: 0.375rem; /* rounded-md */
 }
 
-/* Scanning Hotspot Animation - REMOVED */
-/* @keyframes scan-hotspot {
-  0% { transform: translateX(-100%) skewX(-30deg); }
-  100% { transform: translateX(500%) skewX(-30deg); }
-} */
-
 /* MODIFIED: Added new animation for the fill bar itself */
 @keyframes pulse-glow {
   0%, 100% {
@@ -2698,19 +2823,6 @@ body {
   /* MODIFIED: Ensure animation is infinite */
   animation: pulse-glow 3s ease-in-out infinite;
 }
-
-/* Spark effect pseudo-element - REMOVED */
-/* .progress-bar-fill.filling::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 20%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent); */
-  /* MODIFIED: Ensure animation is infinite */
-  /* animation: scan-hotspot 2.5s ease-in-out infinite; */
-/* } */
 
 /* Control Deck (Buttons and Price) */
 .control-deck {
@@ -6003,14 +6115,59 @@ import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
 export function renderServicesScreen(gameState) {
     const { player, currentLocationId } = gameState;
 
+    // VIRTUAL WORKBENCH: Added Starport Name map (Request B)
+    const STARPORT_NAMES = {
+        [LOCATION_IDS.VENUS]: "Venetian Cloudport",
+        [LOCATION_IDS.EARTH]: "Earth Starport",
+        [LOCATION_IDS.LUNA]: "Lunar Starport",
+        [LOCATION_IDS.MARS]: "Martian Starport",
+        [LOCATION_IDS.BELT]: "Belt Station",
+        [LOCATION_IDS.EXCHANGE]: "The Exchange",
+        [LOCATION_IDS.JUPITER]: "Jupiter Starport",
+        [LOCATION_IDS.SATURN]: "Saturn Starport",
+        [LOCATION_IDS.URANUS]: "Uranus Starport",
+        [LOCATION_IDS.NEPTUNE]: "Neptune Starport",
+        [LOCATION_IDS.KEPLER]: "Kepler's Eye",
+        [LOCATION_IDS.PLUTO]: "The Fringe",
+    };
+
+    const location = DB.MARKETS.find(l => l.id === currentLocationId);
+    const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
+    const themeStyleVars = `
+        --theme-gradient: ${theme.gradient}; 
+        --theme-text-color: ${theme.textColor}; 
+        --theme-border-color: ${theme.borderColor};
+    `;
+    // VIRTUAL WORKBENCH: Use new name map
+    const locationName = STARPORT_NAMES[currentLocationId] || 'UNKNOWN STARPORT';
+
     // --- Crash Fix: Check if activeShipId exists and its state data is available ---
     if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
-        return '<p class="text-center text-gray-500 text-lg mt-8">No active ship available for servicing.</p>';
+        // VIRTUAL WORKBENCH: Updated header fallback
+        return `
+            <div class="flex flex-col h-full">
+                <div class="themed-header-bar mb-4" style="${themeStyleVars}">
+                    <div class="themed-header-title">${locationName}</div>
+                </div>
+                <div class="services-scroll-panel flex-grow min-h-0">
+                    <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
+                        <div class="themed-header-bar">
+                            <div class="ship-header-title">NO ACTIVE SHIP</div>
+                        </div>
+                        <div class="p-4 md:p-8">
+                            <p class="text-center text-gray-500 text-lg">No active ship available for servicing.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        // --- END VIRTUAL WORKBENCH ---
     }
     // --- End Crash Fix ---
 
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
+    const shipName = shipStatic?.name || 'NO ACTIVE SHIP'; // VIRTUAL WORKBENCH: Get ship name
 
     // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
@@ -6040,66 +6197,80 @@ export function renderServicesScreen(gameState) {
     const isDisabledRefuel = isFuelFull || !canAffordRefuel;
     const isDisabledRepair = isHealthFull || !canAffordRepair;
     
+    // VIRTUAL WORKBENCH: Wrapped in flex container, updated header, added new ship header
     return `
-        <div class="services-scroll-panel">
-            <div class="flex flex-col md:flex-row justify-center items-center gap-8 max-w-4xl mx-auto mt-8">
-              <div
-                class="service-module w-full max-w-sm"
-                style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6; --ot-cyan-base: #08d9d6;"
-              >
-                <div class="bar-housing">
-                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
-                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
-                      <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
-                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
-                        ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
-                      </span>
-                    </div>
-                    <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
-                  </div>
-                  </div>
-                <div class="control-deck flex justify-center items-center gap-4">
-                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
-                    <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
-                        ${formatCredits(fuelCostPerTick, true)}
-                    </span>
-                  </div>
-                  <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
-                      <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
-                  </button>
-                  </div>
-              </div>
-
-              <div
-                class="service-module w-full max-w-sm"
-                style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;"
-              >
-                <div class="bar-housing">
-                  <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
-                    <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
-                      <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
-                      <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
-                        ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
-                      </span>
-                    </div>
-                    <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
-                  </div>
-                  </div>
-                <div class="control-deck flex justify-center items-center gap-4">
-                  <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
-                    <span class="price-label text-sm engraved-text">COST</span>
-                    <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
-                        ${formatCredits(repairCostPerTick, true)}
-                    </span>
-                  </div>
-                  <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
-                      <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
-                  </button>
-                  </div>
-              </div>
+        <div class="flex flex-col h-full">
+            <div class="themed-header-bar mb-4" style="${themeStyleVars}">
+                <div class="themed-header-title">${locationName}</div>
             </div>
-        </div>`;
+            <div class="services-scroll-panel flex-grow min-h-0">
+                
+                <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
+                    <div class="themed-header-bar">
+                        <div class="ship-header-title">${shipName}</div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-8 p-4 md:p-8">
+                      <div
+                        class="service-module w-full max-w-sm"
+                        style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6; --ot-cyan-base: #08d9d6;"
+                      >
+                        <div class="bar-housing">
+                          <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                            <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
+                              <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
+                              <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
+                                ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
+                              </span>
+                            </div>
+                            <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                          </div>
+                        </div>
+                        <div class="control-deck flex justify-center items-center gap-4">
+                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                            <span class="price-label text-sm engraved-text">COST</span>
+                            <span class="price-digits text-base ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                              ${formatCredits(fuelCostPerTick, true)}
+                            </span>
+                          </div>
+                          <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
+                            <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
+                          </button>
+                          </div>
+                      </div>
+
+                      <div
+                        class="service-module w-full max-w-sm"
+                        style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;"
+                      >
+                        <div class="bar-housing">
+                          <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                            <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
+                               <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
+                              <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
+                                ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
+                              </span>
+                            </div>
+                            <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
+                          </div>
+                          </div>
+                        <div class="control-deck flex justify-center items-center gap-4">
+                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                            <span class.price-label text-sm engraved-text">COST</span>
+                            <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                              ${formatCredits(repairCostPerTick, true)}
+                            </span>
+                          </div>
+                          <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
+                              <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
+                          </button>
+                          </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 --- END OF FILE: ./js/ui/components/ServicesScreen.js ---
 
@@ -19503,9 +19674,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.20] - 2025-11-8
+-  services screen polish
+
 ## [32.10] - 2025-11-8
 -  ship transaction polish
--  
 
 ## [32.00] - 2025-11-8
 -  added transition effects

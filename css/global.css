@@ -7,7 +7,8 @@
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
   src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
-  font-weight: 800; /* ExtraBold is typically 800 weight */
+  font-weight: 800;
+/* ExtraBold is typically 800 weight */
   font-style: normal;
 }
 
@@ -36,7 +37,7 @@
     --button-height: 28px;
     --font-family: 'Orbitron', sans-serif;
     --buy-primary: #196a8f;
-    --buy-secondary-bg: #1e2a3e;
+--buy-secondary-bg: #1e2a3e;
     --buy-secondary-border: #3c4e68;
     --buy-text-light: #8ca4b5;
     --buy-text-dark: #ddf3f8;
@@ -63,7 +64,8 @@ body {
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Removed flex properties that were causing the layout bug */
-    /* display: flex; */
+  
+  /* display: flex; */
     /* justify-content: center; */
     /* align-items: center; */
     font-family: 'Exo 2', sans-serif;
@@ -103,7 +105,8 @@ body {
 }
 
 .game-container {
-    max-width: 1200px;
+   
+ max-width: 1200px;
     width: 100%;
     height: 100%;
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
@@ -138,7 +141,8 @@ body {
 }
 
 #main-content {
-    display: flex;
+    
+display: flex;
     flex-direction: column;
     height: 100%;
 }
@@ -180,7 +184,8 @@ body {
 }
 
 .btn:hover:not(:disabled) {
-    background-color: #32405a;
+    
+background-color: #32405a;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     color: #e0f0ff;
@@ -224,7 +229,8 @@ body {
 
 @keyframes fadeOut {
     from {
-        opacity: 1;
+        
+opacity: 1;
         transform: scale(1);
     }
 
@@ -257,7 +263,8 @@ body {
     }
 
     50% {
-        box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
+   
+     box-shadow: 0 0 20px #34d399, inset 0 0 15px rgba(52, 211, 153, 0.5);
         border-color: #34d399;
     }
 }
@@ -281,7 +288,8 @@ body {
         text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
     }
 
-    50% {
+ 
+   50% {
         text-shadow: 0 0 10px #0ea5e9, 0 0 16px #0ea5e9;
     }
 
@@ -299,10 +307,25 @@ body {
         text-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
     }
     100% {
-        text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
+     
+   text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
     }
 }
 /* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: REMOVED WHITE GLOW (REQUEST A) --- */
+@keyframes pulse-white-glow {
+    0%, 100% {
+        /* Static black outline + base white glow */
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #e5e7eb, 0 0 8px #e5e7eb;
+    }
+    50% {
+        /* Static black outline + bright white glow */
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffffff, 0 0 16px #ffffff;
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes pulse-green-glow {
 
@@ -329,7 +352,8 @@ body {
 }
 
 @keyframes shimmer {
-    0% {
+ 
+   0% {
         background-position: -400px 0;
     }
 
@@ -355,7 +379,8 @@ body {
 @keyframes blue-pulse-glow {
 
     0%,
-    100% {
+    100% 
+{
         box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
@@ -379,7 +404,7 @@ body {
 @keyframes shimmer-effect {
     0% {
         background-position: -600px 0;
-    }
+}
 
     100% {
         background-position: 600px 0;
@@ -417,11 +442,16 @@ body {
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 
-/* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
+/* --- VIRTUAL WORKBENCH: 
+ADDED RED GLOW CLASS --- */
 .text-glow-red {
     color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
 }
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: REMOVED WHITE GLOW CLASS (REQUEST A) --- */
+/* .text-glow-white class and @keyframes pulse-white-glow removed */
 /* --- END VIRTUAL WORKBENCH --- */
 
 .pulse-green-glow {
@@ -464,7 +494,8 @@ body {
     z-index: 101;
 }
 
-#garnishment-toast {
+#garnishment-toast 
+{
     background-color: #991b1b;
     border: 1px solid #f87171;
     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
@@ -559,7 +590,8 @@ body {
     content: '';
     position: absolute;
     width: 15px;
-    height: 15px;
+    height: 
+15px;
     border-color: var(--theme-border-color, #7a9ac0);
     border-style: solid;
 }
@@ -601,7 +633,8 @@ body {
 }
 
 .base-concept {
-    width: 100%;
+    width: 
+100%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -651,7 +684,8 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 6px 
+rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -688,7 +722,8 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 
+100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -723,7 +758,8 @@ body {
 */
 @keyframes dematerialize-card {
     0% {
-        opacity: 1;
+  
+      opacity: 1;
         transform: scale(1);
         clip-path: inset(0% 0% 0% 0%);
     }
@@ -737,7 +773,8 @@ body {
         opacity: 0;
         transform: scale(0.85);
         clip-path: inset(50% 0% 50% 0%); /* Fully collapsed to a line */
-    }
+   
+ }
 }
 
 /*
@@ -762,7 +799,8 @@ body {
 
 .is-dematerializing {
     /*
-     * Applies a 1.5s dematerialization effect to the card.
+     * Applies a 1.5s dematerialization effect to 
+the card.
      * 'forwards' holds the final state (opacity: 0).
     */
     animation: dematerialize-card 1.5s ease-in-out forwards;
