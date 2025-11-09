@@ -995,7 +995,6 @@ export class UIManager {
             modal.classList.add('dismiss-disabled');
         }
         
-        
         // --- VIRTUAL WORKBENCH: GDD MODAL THEMING ---
         // Apply theme data attribute for CSS-based theming (e.g., glowing borders)
         if (options.theme) {
@@ -1306,6 +1305,7 @@ export class UIManager {
         if (!this.activeGraphAnchor) return;
         const tooltip = this.cache.graphTooltip;
         if (tooltip.style.display === 'none') return;
+
         const rect = this.activeGraphAnchor.closest('.item-card-container').getBoundingClientRect();
         const tooltipHeight = tooltip.offsetHeight;
 
@@ -1425,7 +1425,7 @@ export class UIManager {
             if (!referenceEl) {
                 this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
                 referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
-                // TODO: Decide if we should force isOverlayAnchor = true here?
+                 // TODO: Decide if we should force isOverlayAnchor = true here?
             }
         }
         
@@ -1906,11 +1906,10 @@ export class UIManager {
      * Finds the correct DOM element for the active ship and runs a
      * blocking "dematerialize" animation on it.
      * @param {string} shipId - The ID of the ship, for logging.
-     * @param {string} [animationClass='is-dematerializing'] - The CSS class to apply.
      * @returns {Promise<void>}
      * @JSDoc
      */
-    async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
+    async runShipTransactionAnimation(shipId) {
         const elementToAnimate = this._getActiveShipTerminalElement();
 
         if (!elementToAnimate) {
@@ -1919,7 +1918,7 @@ export class UIManager {
         }
 
         // Await the generic animation utility
-        await playBlockingAnimation(elementToAnimate, animationClass);
+        await playBlockingAnimation(elementToAnimate, 'is-dematerializing');
     }
 
     renderStickyBar(gameState) {
@@ -2356,7 +2355,6 @@ export class UIManager {
                 return packet;
             }
         }
-        
         // --- END VIRTUAL WORKBENCH ---
 
         this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} anywhere.`);
@@ -2506,7 +2504,7 @@ export class UIManager {
             // --- VIRTUAL WORKBENCH (B) ---
             /**
              * GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
-             * * This manual render call is no longer needed. The setState() in
+             * This manual render call is no longer needed. The setState() in
              * IntelService.js now triggers renderActiveScreen (via the main
              * UIManager.render() subscription), which surgically updates 
              * the market content without a full page reset.

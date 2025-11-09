@@ -789,13 +789,11 @@ rgba(0, 0, 0, 0.7);
     60% {
         /* Apex of the glow, matches user spec */
         opacity: 1;
-        /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
-        transform: scale(2.6); /* Was 1.3 */
+        transform: scale(1.3);
     }
     100% {
         opacity: 0;
-        /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
-        transform: scale(3.0); /* Was 2.0 */
+        transform: scale(2);
     }
 }
 
@@ -811,16 +809,11 @@ the card.
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
-/* --- VIRTUAL WORKBENCH: MODIFICATION (Phase 1 & 2) --- */
-/* Added the .is-boarding::before selector */
-.is-dematerializing::before,
-.is-boarding::before {
+.is-dematerializing::before {
     /*
-     * Simultaneously applies the glow animation
+     * Simultaneously applies the 1.5s glow animation
      * to the pseudo-element created in hangar-screen.css.
     */
-    /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
-    animation: dematerialize-glow 2.5s ease-in-out forwards; /* Was 1.5s */
+    animation: dematerialize-glow 1.5s ease-in-out forwards;
 }
-/* --- END VIRTUAL WORKBENCH --- */
 /* --- [[END]] GENERIC ANIMATIONS --- */
