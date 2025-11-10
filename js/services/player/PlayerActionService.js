@@ -181,7 +181,7 @@ export class PlayerActionService {
                 this.logger.error('PlayerActionService', `executeBuyShip called with invalid shipId: ${shipId}`);
                 return null;
             }
-            
+
             this.gameState.player.credits -= ship.price;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
             if (event) {
@@ -207,7 +207,7 @@ export class PlayerActionService {
 
             this.gameState.setState({
                 uiState: {
-                     ...this.gameState.uiState,
+                    ...this.gameState.uiState,
                     shipyardActiveIndex: newShipyardIndex, // Set the corrected index
                     lastTransactionTimestamp: Date.now()
                 }
@@ -236,7 +236,7 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
         }
         if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-             return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
+            return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
         }
         const ship = DB.SHIPS[shipId];
         if (!ship) {
@@ -306,28 +306,62 @@ export class PlayerActionService {
     }
 
     /**
-     * Sets the player's currently active ship.
+     * Validates if setting a ship as active is possible.
      * @param {string} shipId - The ID of the ship to make active.
+     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
+     * @JSDoc
      */
-    setActiveShip(shipId) {
-        // --- VIRTUAL WORKBENCH: LOGIC MOVED FROM SimulationService (Phase 2) ---
+    validateSetActiveShip(shipId) {
+        if (this.isTransactionInProgress) {
+            return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
+        }
+        if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+            this.logger.error('PlayerActionService', `validateSetActiveShip called with unowned shipId: ${shipId}`);
+            return { success: false, errorTitle: "Ship Not Found", errorMessage: "You do not own this ship." };
+        }
+        if (this.gameState.player.activeShipId === shipId) {
+            return { success: false, errorTitle: "Action Redundant", errorMessage: "This ship is already your active vessel." };
+        }
+        return { success: true };
+    }
+
+
+    /**
+     * Executes setting the player's currently active ship (Assumes validation passed).
+     * @param {string} shipId - The ID of the ship to make active.
+     * @JSDoc
+     */
+    executeSetActiveShip(shipId) {
+        // --- VIRTUAL WORKBENCH: RENAMED FROM setActiveShip ---
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
-        this.gameState.player.activeShipId = shipId;
+        
+        this.isTransactionInProgress = true; // Set guard
 
-        const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
-        if (newIndex !== -1) {
-            this.gameState.uiState.hangarActiveIndex = newIndex;
+        try {
+            this.gameState.player.activeShipId = shipId;
+            const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
+            if (newIndex !== -1) {
+                this.gameState.uiState.hangarActiveIndex = newIndex;
+            }
+
+            this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
+            
+            // The tutorial check is now moved to SimulationService.boardShip
+            // after the animation completes.
+
+            this.gameState.setState({
+                uiState: {
+                    ...this.gameState.uiState,
+                    lastTransactionTimestamp: Date.now()
+                }
+            });
+        } finally {
+             // Reset guard after a short delay to allow UI to update
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
-
-        this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
-
-        if (this.gameState.introSequenceActive) {
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
-        }
-
-        this.gameState.setState({});
         // --- END VIRTUAL WORKBENCH ---
     }
+
 
     /**
      * Pays off the player's entire outstanding debt.
@@ -516,7 +550,6 @@ export class PlayerActionService {
          costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
 
         if (state.player.credits < costPerTick) return 0;
-
         state.player.credits -= costPerTick;
         state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
@@ -531,7 +564,7 @@ export class PlayerActionService {
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-         // --- END ADDED ---
+        // --- END ADDED ---
 
         this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;

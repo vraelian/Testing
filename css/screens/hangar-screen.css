@@ -90,9 +90,8 @@ background-image: var(--theme-bg-gradient); /* Base theme from location */
     display: flex; 
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
-    height: auto; 
-    
-    /* --- VIRTUAL WORKBENCH --- */
+    height: auto;
+/* --- VIRTUAL WORKBENCH --- */
     /* Add relative positioning for the new pseudo-element */
     position: relative;
     /* --- END VIRTUAL WORKBENCH --- */
@@ -107,8 +106,7 @@ background-image: var(--theme-bg-gradient); /* Base theme from location */
 #ship-terminal::before {
     content: '';
     position: absolute;
-    top: 
-0;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -220,8 +218,7 @@ flex: 1 1 auto; /* Grow to fill space */
     transform: translateX(-50%) translateY(50%);
     background-color: #1a2030;
     border: 1px solid;
-    padding: 
-3px 11px;
+    padding: 3px 11px;
     border-radius: 99px;
     font-size: 0.77rem;
     font-weight: 700;
@@ -319,8 +316,19 @@ flex: 1 1 auto; /* Grow to fill space */
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-/* NEW: Price 
-text specifically for action buttons (like Sell) */
+/* --- VIRTUAL WORKBENCH: ADD 'BOARD' BUTTON GLOW CLASS --- */
+.action-button.is-glowing-button {
+    /* Use the cyan color variables */
+    --ot-cyan-base: #22d3ee;
+    --ot-cyan-glow: #67e8f9;
+    /* Apply the new animation from global.css */
+    /* VIRTUAL WORKBENCH: MODIFIED from 0.4s to 1.0s */
+    animation: pulse-cyan-button-glow 1.0s ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* NEW: Price text specifically for action buttons (like Sell) */
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
@@ -345,8 +353,7 @@ text specifically for action buttons (like Sell) */
     bottom: 1.25rem; /* The 55% value, as a gap from the bottom of the screen */
     left: 0;
     right: 0;
-    z-index: 10; /* Ensure it's above the card 
-content */
+    z-index: 10; /* Ensure it's above the card content */
 
     flex-shrink: 0;
     overflow-x: auto;
@@ -390,8 +397,7 @@ content */
 }
 
 .pagination-dot.half {
-    width: 0.9rem; /* Half the original 
-width */
+    width: 0.9rem; /* Half the original width */
     opacity: 0.2;
 }
 

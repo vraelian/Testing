@@ -6,7 +6,10 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS } from '../data/constants.js';
+// VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
+import { playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+// END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
@@ -139,9 +142,65 @@ export class SimulationService {
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
-    
-    // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+    // --- VIRTUAL WORKBENCH: RE-ORCHESTRATE boardShip ---
+    /**
+     * Orchestrates boarding a ship: Glows button, waits 1s, sets state, then animates card.
+     * @param {string} shipId
+     * @param {Event} event - The click event, used to find the button for animation.
+     * @returns {Promise<boolean>} True on success, false on failure.
+     * @JSDoc
+     */
+    async boardShip(shipId, event) {
+        // 1. Validate
+        const validation = this.playerActionService.validateSetActiveShip(shipId);
+        if (!validation.success) {
+            if (validation.errorTitle !== "Action Redundant") {
+                 this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+            }
+            return false;
+        }
+
+        // --- NEW SEQUENCE ---
+
+        // 2. Find the button that was clicked
+        const boardButton = event.target.closest('.action-button');
+        
+        // 3. (NEW) Find the sibling "Sell" button and disable it immediately
+        if (boardButton) {
+            const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
+            if (sellButton) {
+                sellButton.disabled = true;
+            }
+        }
+
+        // 4. Trigger the BLOCKING 1-second glow on the "Board" button
+        if (boardButton) {
+            // This is the new BLOCKING helper that waits for the animation to end
+            await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+        }
+
+        // 5. Execute the state change (this will re-render button to "ACTIVE")
+        this.playerActionService.executeSetActiveShip(shipId);
+        
+        // 6. Check Tutorial
+        if (this.gameState.introSequenceActive) {
+            this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
+        }
+        
+        // 7. Run the BLOCKING card animation *LAST*
+        // We must wait one frame for the UI to re-render *before* we can
+        // find the element we want to animate.
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
+        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
+        // --- END NEW SEQUENCE ---
+        
+        return true;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Pays off the player's entire outstanding debt.
      * @param {Event} [event] - The click event for placing floating text.
@@ -154,7 +213,6 @@ export class SimulationService {
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
-    // --- END VIRTUAL WORKBENCH ---
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     

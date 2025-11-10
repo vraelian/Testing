@@ -59,4 +59,35 @@ export function playAndRemoveAnimation(element, animationClass) {
     element.addEventListener('animationend', onAnimationEnd, { once: true });
     element.classList.add(animationClass);
 }
+
+/**
+ * (NEW) Applies a CSS class, awaits the animation's completion,
+ * and then removes the class. This is a BLOCKING "fire-and-forget"
+ * that is perfect for sequential effects.
+ *
+ * @param {HTMLElement | null} element - The DOM element to animate.
+ * @param {string} animationClass - The CSS class that triggers the animation.
+ * @returns {Promise<void>} A promise that resolves when the animation is complete
+ * and the class has been removed.
+ * @JSDoc
+ */
+export async function playBlockingAnimationAndRemove(element, animationClass) {
+    return new Promise((resolve) => {
+        // Failsafe: If no element is provided, resolve immediately.
+        if (!element) {
+            console.warn('playBlockingAnimationAndRemove: No element provided.');
+            resolve();
+             return;
+        }
+
+        const onAnimationEnd = () => {
+            element.removeEventListener('animationend', onAnimationEnd);
+            element.classList.remove(animationClass); // Automatically remove class
+             resolve();
+        };
+
+        element.addEventListener('animationend', onAnimationEnd, { once: true });
+        element.classList.add(animationClass);
+    });
+}
 // --- [[END]] VIRTUAL WORKBENCH ---

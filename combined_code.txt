@@ -1225,8 +1225,7 @@
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
   src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
-  font-weight: 800;
-/* ExtraBold is typically 800 weight */
+  font-weight: 800; /* ExtraBold is typically 800 weight */
   font-style: normal;
 }
 
@@ -1435,7 +1434,7 @@ background-color: #32405a;
 
 @keyframes fadeIn {
     from {
-        opacity: 0;
+         opacity: 0;
         transform: scale(0.95);
     }
 
@@ -1474,7 +1473,7 @@ opacity: 1;
 
 @keyframes pulse-green-border {
 
-    0%,
+     0%,
     100% {
         box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
         border-color: #10b981;
@@ -1553,9 +1552,26 @@ opacity: 1;
     }
 
     50% {
-        text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e;
+   
+         text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e;
     }
 }
+
+/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' BUTTON GLOW --- */
+@keyframes pulse-cyan-button-glow {
+    0%, 100% {
+        background-color: var(--ot-cyan-base, #22d3ee);
+        box-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
+        transform: scale(1);
+    }
+    50% {
+        background-color: var(--ot-cyan-glow, #67e8f9);
+        box-shadow: 0 0 16px var(--ot-cyan-glow, #67e8f9), 0 0 24px var(--ot-cyan-glow, #67e8f9);
+        transform: scale(1.05);
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes float-up {
     from {
@@ -1585,6 +1601,7 @@ opacity: 1;
         box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
     }
 
+ 
     50% {
         box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
     }
@@ -1597,8 +1614,7 @@ opacity: 1;
 @keyframes blue-pulse-glow {
 
     0%,
-    100% 
-{
+    100% {
         box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
@@ -1609,6 +1625,7 @@ opacity: 1;
 
 @keyframes flash-green {
 
+ 
     0%,
     100% {
         color: #34d399;
@@ -1660,8 +1677,7 @@ opacity: 1;
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 
-/* --- VIRTUAL WORKBENCH: 
-ADDED RED GLOW CLASS --- */
+/* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
 .text-glow-red {
     color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
@@ -1677,6 +1693,7 @@ ADDED RED GLOW CLASS --- */
 }
 
 .hl {
+ 
     color: #fde047;
     font-weight: 700;
 }
@@ -1712,8 +1729,7 @@ ADDED RED GLOW CLASS --- */
     z-index: 101;
 }
 
-#garnishment-toast 
-{
+#garnishment-toast {
     background-color: #991b1b;
     border: 1px solid #f87171;
     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
@@ -1808,8 +1824,7 @@ ADDED RED GLOW CLASS --- */
     content: '';
     position: absolute;
     width: 15px;
-    height: 
-15px;
+    height: 15px;
     border-color: var(--theme-border-color, #7a9ac0);
     border-style: solid;
 }
@@ -1851,8 +1866,7 @@ ADDED RED GLOW CLASS --- */
 }
 
 .base-concept {
-    width: 
-100%;
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -1902,8 +1916,7 @@ ADDED RED GLOW CLASS --- */
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px 
-rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -1918,7 +1931,7 @@ rgba(0, 0, 0, 0.7);
 
 @media (min-width: 768px) {
     .game-container {
-        padding: calc(0.6rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
+         padding: calc(0.6rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
     }
 }
 
@@ -1940,8 +1953,7 @@ rgba(0, 0, 0, 0.7);
     position: fixed;
     top: 0;
     left: 0;
-    width: 
-100vw;
+    width: 100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1958,7 +1970,7 @@ rgba(0, 0, 0, 0.7);
 
 @media (orientation: landscape) {
     #orientation-overlay {
-        display: flex;
+         display: flex;
     }
 
     #game-container {
@@ -1983,7 +1995,7 @@ rgba(0, 0, 0, 0.7);
     }
     60% {
         /* Apex of the shrink, matches user spec */
-        opacity: 0.8; /* Keep it mostly visible during the wipe */
+         opacity: 0.8; /* Keep it mostly visible during the wipe */
         transform: scale(0.9);
         clip-path: inset(25% 0% 25% 0%); /* Half-way wiped */
     }
@@ -2004,7 +2016,8 @@ rgba(0, 0, 0, 0.7);
         opacity: 0;
         transform: scale(0.5);
     }
-    60% {
+  
+     60% {
         /* Apex of the glow, matches user spec */
         opacity: 1;
         /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
@@ -2019,8 +2032,8 @@ rgba(0, 0, 0, 0.7);
 
 .is-dematerializing {
     /*
-     * Applies a 1.5s dematerialization effect to 
-the card.
+     * Applies a 1.5s dematerialization effect to the 
+card.
      * 'forwards' holds the final state (opacity: 0).
     */
     animation: dematerialize-card 1.5s ease-in-out forwards;
@@ -4544,9 +4557,8 @@ background-image: var(--theme-bg-gradient); /* Base theme from location */
     display: flex; 
     flex-direction: column; 
     flex-grow: 1; /* Make the card itself grow to fill the page */
-    height: auto; 
-    
-    /* --- VIRTUAL WORKBENCH --- */
+    height: auto;
+/* --- VIRTUAL WORKBENCH --- */
     /* Add relative positioning for the new pseudo-element */
     position: relative;
     /* --- END VIRTUAL WORKBENCH --- */
@@ -4561,8 +4573,7 @@ background-image: var(--theme-bg-gradient); /* Base theme from location */
 #ship-terminal::before {
     content: '';
     position: absolute;
-    top: 
-0;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -4674,8 +4685,7 @@ flex: 1 1 auto; /* Grow to fill space */
     transform: translateX(-50%) translateY(50%);
     background-color: #1a2030;
     border: 1px solid;
-    padding: 
-3px 11px;
+    padding: 3px 11px;
     border-radius: 99px;
     font-size: 0.77rem;
     font-weight: 700;
@@ -4773,8 +4783,19 @@ flex: 1 1 auto; /* Grow to fill space */
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-/* NEW: Price 
-text specifically for action buttons (like Sell) */
+/* --- VIRTUAL WORKBENCH: ADD 'BOARD' BUTTON GLOW CLASS --- */
+.action-button.is-glowing-button {
+    /* Use the cyan color variables */
+    --ot-cyan-base: #22d3ee;
+    --ot-cyan-glow: #67e8f9;
+    /* Apply the new animation from global.css */
+    /* VIRTUAL WORKBENCH: MODIFIED from 0.4s to 1.0s */
+    animation: pulse-cyan-button-glow 1.0s ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+
+/* NEW: Price text specifically for action buttons (like Sell) */
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
@@ -4799,8 +4820,7 @@ text specifically for action buttons (like Sell) */
     bottom: 1.25rem; /* The 55% value, as a gap from the bottom of the screen */
     left: 0;
     right: 0;
-    z-index: 10; /* Ensure it's above the card 
-content */
+    z-index: 10; /* Ensure it's above the card content */
 
     flex-shrink: 0;
     overflow-x: auto;
@@ -4844,8 +4864,7 @@ content */
 }
 
 .pagination-dot.half {
-    width: 0.9rem; /* Half the original 
-width */
+    width: 0.9rem; /* Half the original width */
     opacity: 0.2;
 }
 
@@ -9016,6 +9035,37 @@ export function playAndRemoveAnimation(element, animationClass) {
     element.addEventListener('animationend', onAnimationEnd, { once: true });
     element.classList.add(animationClass);
 }
+
+/**
+ * (NEW) Applies a CSS class, awaits the animation's completion,
+ * and then removes the class. This is a BLOCKING "fire-and-forget"
+ * that is perfect for sequential effects.
+ *
+ * @param {HTMLElement | null} element - The DOM element to animate.
+ * @param {string} animationClass - The CSS class that triggers the animation.
+ * @returns {Promise<void>} A promise that resolves when the animation is complete
+ * and the class has been removed.
+ * @JSDoc
+ */
+export async function playBlockingAnimationAndRemove(element, animationClass) {
+    return new Promise((resolve) => {
+        // Failsafe: If no element is provided, resolve immediately.
+        if (!element) {
+            console.warn('playBlockingAnimationAndRemove: No element provided.');
+            resolve();
+             return;
+        }
+
+        const onAnimationEnd = () => {
+            element.removeEventListener('animationend', onAnimationEnd);
+            element.classList.remove(animationClass); // Automatically remove class
+             resolve();
+        };
+
+        element.addEventListener('animationend', onAnimationEnd, { once: true });
+        element.classList.add(animationClass);
+    });
+}
 // --- [[END]] VIRTUAL WORKBENCH ---
 --- END OF FILE: ./js/services/ui/AnimationService.js ---
 
@@ -11910,7 +11960,10 @@ export class IntroService {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS } from '../data/constants.js';
+// VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
+import { playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+// END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
@@ -12043,9 +12096,65 @@ export class SimulationService {
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    setActiveShip(shipId) { this.playerActionService.setActiveShip(shipId); }
-    
-    // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+    // --- VIRTUAL WORKBENCH: RE-ORCHESTRATE boardShip ---
+    /**
+     * Orchestrates boarding a ship: Glows button, waits 1s, sets state, then animates card.
+     * @param {string} shipId
+     * @param {Event} event - The click event, used to find the button for animation.
+     * @returns {Promise<boolean>} True on success, false on failure.
+     * @JSDoc
+     */
+    async boardShip(shipId, event) {
+        // 1. Validate
+        const validation = this.playerActionService.validateSetActiveShip(shipId);
+        if (!validation.success) {
+            if (validation.errorTitle !== "Action Redundant") {
+                 this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+            }
+            return false;
+        }
+
+        // --- NEW SEQUENCE ---
+
+        // 2. Find the button that was clicked
+        const boardButton = event.target.closest('.action-button');
+        
+        // 3. (NEW) Find the sibling "Sell" button and disable it immediately
+        if (boardButton) {
+            const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
+            if (sellButton) {
+                sellButton.disabled = true;
+            }
+        }
+
+        // 4. Trigger the BLOCKING 1-second glow on the "Board" button
+        if (boardButton) {
+            // This is the new BLOCKING helper that waits for the animation to end
+            await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+        }
+
+        // 5. Execute the state change (this will re-render button to "ACTIVE")
+        this.playerActionService.executeSetActiveShip(shipId);
+        
+        // 6. Check Tutorial
+        if (this.gameState.introSequenceActive) {
+            this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
+        }
+        
+        // 7. Run the BLOCKING card animation *LAST*
+        // We must wait one frame for the UI to re-render *before* we can
+        // find the element we want to animate.
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
+        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
+        // --- END NEW SEQUENCE ---
+        
+        return true;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
      * Pays off the player's entire outstanding debt.
      * @param {Event} [event] - The click event for placing floating text.
@@ -12058,7 +12167,6 @@ export class SimulationService {
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
-    // --- END VIRTUAL WORKBENCH ---
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
@@ -18741,7 +18849,7 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent any other clicks
                 await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                // actionData is now set *inside* SimulationService.boardShip
                 break;
             }
             // --- END VIRTUAL WORKBENCH ---
@@ -19422,7 +19530,7 @@ export class PlayerActionService {
                 this.logger.error('PlayerActionService', `executeBuyShip called with invalid shipId: ${shipId}`);
                 return null;
             }
-            
+
             this.gameState.player.credits -= ship.price;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
             if (event) {
@@ -19448,7 +19556,7 @@ export class PlayerActionService {
 
             this.gameState.setState({
                 uiState: {
-                     ...this.gameState.uiState,
+                    ...this.gameState.uiState,
                     shipyardActiveIndex: newShipyardIndex, // Set the corrected index
                     lastTransactionTimestamp: Date.now()
                 }
@@ -19477,7 +19585,7 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
         }
         if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-             return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
+            return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
         }
         const ship = DB.SHIPS[shipId];
         if (!ship) {
@@ -19547,28 +19655,62 @@ export class PlayerActionService {
     }
 
     /**
-     * Sets the player's currently active ship.
+     * Validates if setting a ship as active is possible.
      * @param {string} shipId - The ID of the ship to make active.
+     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
+     * @JSDoc
      */
-    setActiveShip(shipId) {
-        // --- VIRTUAL WORKBENCH: LOGIC MOVED FROM SimulationService (Phase 2) ---
+    validateSetActiveShip(shipId) {
+        if (this.isTransactionInProgress) {
+            return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
+        }
+        if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+            this.logger.error('PlayerActionService', `validateSetActiveShip called with unowned shipId: ${shipId}`);
+            return { success: false, errorTitle: "Ship Not Found", errorMessage: "You do not own this ship." };
+        }
+        if (this.gameState.player.activeShipId === shipId) {
+            return { success: false, errorTitle: "Action Redundant", errorMessage: "This ship is already your active vessel." };
+        }
+        return { success: true };
+    }
+
+
+    /**
+     * Executes setting the player's currently active ship (Assumes validation passed).
+     * @param {string} shipId - The ID of the ship to make active.
+     * @JSDoc
+     */
+    executeSetActiveShip(shipId) {
+        // --- VIRTUAL WORKBENCH: RENAMED FROM setActiveShip ---
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
-        this.gameState.player.activeShipId = shipId;
+        
+        this.isTransactionInProgress = true; // Set guard
 
-        const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
-        if (newIndex !== -1) {
-            this.gameState.uiState.hangarActiveIndex = newIndex;
+        try {
+            this.gameState.player.activeShipId = shipId;
+            const newIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
+            if (newIndex !== -1) {
+                this.gameState.uiState.hangarActiveIndex = newIndex;
+            }
+
+            this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
+            
+            // The tutorial check is now moved to SimulationService.boardShip
+            // after the animation completes.
+
+            this.gameState.setState({
+                uiState: {
+                    ...this.gameState.uiState,
+                    lastTransactionTimestamp: Date.now()
+                }
+            });
+        } finally {
+             // Reset guard after a short delay to allow UI to update
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
-
-        this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
-
-        if (this.gameState.introSequenceActive) {
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
-        }
-
-        this.gameState.setState({});
         // --- END VIRTUAL WORKBENCH ---
     }
+
 
     /**
      * Pays off the player's entire outstanding debt.
@@ -19757,7 +19899,6 @@ export class PlayerActionService {
          costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
 
         if (state.player.credits < costPerTick) return 0;
-
         state.player.credits -= costPerTick;
         state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
@@ -19772,7 +19913,7 @@ export class PlayerActionService {
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-         // --- END ADDED ---
+        // --- END ADDED ---
 
         this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;
@@ -19785,8 +19926,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [32.30] - 2025-11-8
--  shipyard screen polish
+## [32.30] - 2025-11-10
+-  added boarding animation
+-  ship card polish
 
 ## [32.20] - 2025-11-8
 -  services screen polish

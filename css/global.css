@@ -7,8 +7,7 @@
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
   src: url('fonts/Oxanium-ExtraBold.ttf') format('truetype'); /* Correct path to the font file */
-  font-weight: 800;
-/* ExtraBold is typically 800 weight */
+  font-weight: 800; /* ExtraBold is typically 800 weight */
   font-style: normal;
 }
 
@@ -217,7 +216,7 @@ background-color: #32405a;
 
 @keyframes fadeIn {
     from {
-        opacity: 0;
+         opacity: 0;
         transform: scale(0.95);
     }
 
@@ -256,7 +255,7 @@ opacity: 1;
 
 @keyframes pulse-green-border {
 
-    0%,
+     0%,
     100% {
         box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
         border-color: #10b981;
@@ -335,9 +334,26 @@ opacity: 1;
     }
 
     50% {
-        text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e;
+   
+         text-shadow: 0 0 4px #22c55e, 0 0 8px #22c55e;
     }
 }
+
+/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' BUTTON GLOW --- */
+@keyframes pulse-cyan-button-glow {
+    0%, 100% {
+        background-color: var(--ot-cyan-base, #22d3ee);
+        box-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
+        transform: scale(1);
+    }
+    50% {
+        background-color: var(--ot-cyan-glow, #67e8f9);
+        box-shadow: 0 0 16px var(--ot-cyan-glow, #67e8f9), 0 0 24px var(--ot-cyan-glow, #67e8f9);
+        transform: scale(1.05);
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes float-up {
     from {
@@ -367,6 +383,7 @@ opacity: 1;
         box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
     }
 
+ 
     50% {
         box-shadow: 0 0 24px rgba(52, 211, 153, 0.9);
     }
@@ -379,8 +396,7 @@ opacity: 1;
 @keyframes blue-pulse-glow {
 
     0%,
-    100% 
-{
+    100% {
         box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
@@ -391,6 +407,7 @@ opacity: 1;
 
 @keyframes flash-green {
 
+ 
     0%,
     100% {
         color: #34d399;
@@ -442,8 +459,7 @@ opacity: 1;
     animation: credits-pulse-glow 2.5s infinite ease-in-out;
 }
 
-/* --- VIRTUAL WORKBENCH: 
-ADDED RED GLOW CLASS --- */
+/* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
 .text-glow-red {
     color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
@@ -459,6 +475,7 @@ ADDED RED GLOW CLASS --- */
 }
 
 .hl {
+ 
     color: #fde047;
     font-weight: 700;
 }
@@ -494,8 +511,7 @@ ADDED RED GLOW CLASS --- */
     z-index: 101;
 }
 
-#garnishment-toast 
-{
+#garnishment-toast {
     background-color: #991b1b;
     border: 1px solid #f87171;
     box-shadow: 0 0 15px rgba(248, 113, 113, 0.7);
@@ -590,8 +606,7 @@ ADDED RED GLOW CLASS --- */
     content: '';
     position: absolute;
     width: 15px;
-    height: 
-15px;
+    height: 15px;
     border-color: var(--theme-border-color, #7a9ac0);
     border-style: solid;
 }
@@ -633,8 +648,7 @@ ADDED RED GLOW CLASS --- */
 }
 
 .base-concept {
-    width: 
-100%;
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -684,8 +698,7 @@ ADDED RED GLOW CLASS --- */
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px 
-rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -700,7 +713,7 @@ rgba(0, 0, 0, 0.7);
 
 @media (min-width: 768px) {
     .game-container {
-        padding: calc(0.6rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
+         padding: calc(0.6rem + env(safe-area-inset-top)) 2rem calc(2rem + env(safe-area-inset-bottom)) 2rem;
     }
 }
 
@@ -722,8 +735,7 @@ rgba(0, 0, 0, 0.7);
     position: fixed;
     top: 0;
     left: 0;
-    width: 
-100vw;
+    width: 100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -740,7 +752,7 @@ rgba(0, 0, 0, 0.7);
 
 @media (orientation: landscape) {
     #orientation-overlay {
-        display: flex;
+         display: flex;
     }
 
     #game-container {
@@ -765,7 +777,7 @@ rgba(0, 0, 0, 0.7);
     }
     60% {
         /* Apex of the shrink, matches user spec */
-        opacity: 0.8; /* Keep it mostly visible during the wipe */
+         opacity: 0.8; /* Keep it mostly visible during the wipe */
         transform: scale(0.9);
         clip-path: inset(25% 0% 25% 0%); /* Half-way wiped */
     }
@@ -786,7 +798,8 @@ rgba(0, 0, 0, 0.7);
         opacity: 0;
         transform: scale(0.5);
     }
-    60% {
+  
+     60% {
         /* Apex of the glow, matches user spec */
         opacity: 1;
         /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
@@ -801,8 +814,8 @@ rgba(0, 0, 0, 0.7);
 
 .is-dematerializing {
     /*
-     * Applies a 1.5s dematerialization effect to 
-the card.
+     * Applies a 1.5s dematerialization effect to the 
+card.
      * 'forwards' holds the final state (opacity: 0).
     */
     animation: dematerialize-card 1.5s ease-in-out forwards;

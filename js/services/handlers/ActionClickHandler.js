@@ -58,7 +58,7 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent any other clicks
                 await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
+                // actionData is now set *inside* SimulationService.boardShip
                 break;
             }
             // --- END VIRTUAL WORKBENCH ---
