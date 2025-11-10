@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.30] - 2025-11-8
+-  shipyard screen polish
+
 ## [32.20] - 2025-11-8
 -  services screen polish
 

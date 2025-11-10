@@ -52,13 +52,16 @@ export class ActionClickHandler {
                 await this.simulationService.sellShip(shipId, e); // <-- Add await
                 break;
             }
+            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
-                this.simulationService.setActiveShip(shipId);
+                e.stopPropagation(); // Prevent any other clicks
+                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
                 actionData = { type: 'ACTION', action: ACTION_IDS.SELECT_SHIP };
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
 
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
