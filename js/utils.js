@@ -47,7 +47,9 @@ export function getCommodityStyle(styleClass) {
 export function formatCredits(amount, withSymbol = true) {
     const isNegative = amount < 0;
     const num = Math.abs(Math.floor(amount));
+    // --- VIRTUAL WORKBENCH: REVERTED TO STANDARD SPACE ---
     const prefix = withSymbol ? '⌬ ' : '';
+    // --- END VIRTUAL WORKBENCH ---
     const sign = isNegative ? '-' : '';
 
     let formattedNumber;

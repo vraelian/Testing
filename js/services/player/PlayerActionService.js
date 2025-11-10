@@ -200,8 +200,8 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: ADDED "VESSEL PURCHASED" MODAL (REQUEST A & B) ---
-            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red font-roboto-mono">-${formatCredits(ship.price, false)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
+            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red">-${formatCredits(ship.price, false)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -287,8 +287,8 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: STYLED "VESSEL SOLD" MODAL (REQUEST B) ---
-            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing font-roboto-mono">+${formatCredits(salePrice, false)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
+            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing">+${formatCredits(salePrice, false)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -394,9 +394,9 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        // --- VIRTUAL WORKBENCH: MODIFIED (Point A) ---
-        // Added glowing classes and font-roboto-mono for consistency
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing font-roboto-mono">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red font-roboto-mono">${formatCredits(loanData.fee)}</span> was deducted.`;
+        // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
+        // Added glowing classes and removed font-roboto-mono for consistency
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(loanData.fee)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
