@@ -1,20 +1,17 @@
 ## Immediate Concerns, Bugs, Issues
-- 
+- n/a
 
 ## Planned Ideas
-- System states influencing market performance
-- Ship trading overhaul
 - Implement ship list
 - implement ship lore
 - Station Quirks
+- (Gem3) Add ship card BOARDING effect
 - Install tailwind CSS resources locally
 
 ## Long-Term Ideas
 - Refine commodities names, identity
 - Reputation system
-- V2 Player age events
-- V2 Random events
-- V2 player perks
+- Player age events
 - Player Stations
 - Additional tutorials
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
@@ -23,6 +20,7 @@
 - Storyline
 - Storyline Timeline Governor (Mission availability, System States, Features)
 - Design cononical missions
+- System states influencing market performance DEFERRED
 - Tactile feedback
 - Art design
 - Sound design

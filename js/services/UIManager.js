@@ -497,7 +497,7 @@ export class UIManager {
                 
                  let subStyle = '';
                  if (isSubNavActive) {
-                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
                  
                  // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
@@ -564,7 +564,7 @@ export class UIManager {
                 break;
             }
             case SCREEN_IDS.MISSIONS:
-                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
@@ -855,36 +855,37 @@ export class UIManager {
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
 
+        // --- VIRTUAL WORKBENCH: REMOVE PENALTY ---
         // Guard against division by zero if market stock is depleted.
-        if (marketStock <= 0) {
-            return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
-        }
-
-        const threshold = marketStock * 0.1;
-        if (quantity <= threshold) {
-            const totalPrice = basePrice * quantity;
-            const totalCost = avgCost * quantity;
-            let netProfit = totalPrice - totalCost;
-            if (netProfit > 0) {
-                let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-                netProfit += netProfit * totalBonus;
-            }
-            return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
-        }
-
-        const excessRatio = quantity / marketStock;
-        let reduction = 0;
-
-        if (good.tier <= 2) {
-            reduction = Math.min(0.10, (excessRatio - 0.1) * 0.2);
-        } else if (good.tier <= 5) {
-            reduction = Math.min(0.25, (excessRatio - 0.1) * 0.5);
-        } else {
-            reduction = Math.min(0.40, (excessRatio - 0.1) * 0.8);
-        }
-
-        const effectivePrice = basePrice * (1 - reduction);
+        // if (marketStock <= 0) { // This check is no longer needed as we're not dividing by it
+        //     return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0, reduction: 0 };
+        // }
+        
+        const effectivePrice = basePrice; // Price is always the base price
         const totalPrice = Math.floor(effectivePrice * quantity);
+
+        // This block is now simplified as reduction is gone
+        // const threshold = marketStock * 0.1;
+        // if (quantity <= threshold) {
+        //     const totalPrice = basePrice * quantity;
+        //     const totalCost = avgCost * quantity;
+        //     let netProfit = totalPrice - totalCost;
+        //     if (netProfit > 0) {
+        //         let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+        //         netProfit += netProfit * totalBonus;
+        //     }
+        //     return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
+        // }
+        //
+        // const excessRatio = quantity / marketStock;
+        // let reduction = 0;
+        //
+        // [OLD PENALTY LOGIC REMOVED]
+        //
+        // const effectivePrice = basePrice * (1 - reduction);
+        // const totalPrice = Math.floor(effectivePrice * quantity);
+        // --- END VIRTUAL WORKBENCH ---
+
         const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
         if (netProfit > 0) {
@@ -894,7 +895,7 @@ export class UIManager {
 
         return {
             totalPrice,
-            effectivePricePerUnit: effectivePrice,
+            effectivePricePerUnit: effectivePrice, // This is now just basePrice
             netProfit
         };
     }
@@ -947,7 +948,10 @@ export class UIManager {
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
-                effectivePriceEl.textContent = `(${formatCredits(effectivePricePerUnit, false)}/unit)`;
+                // --- VIRTUAL WORKBENCH: RE-ADD per user request ---
+                // Show the base price per unit, since there is no penalty
+                effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
+                // --- END VIRTUAL WORKBENCH ---
                 priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
@@ -1563,7 +1567,6 @@ export class UIManager {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
-
         // --- Apply Size (Common) ---
         // Apply size *first* so calculations are based on the new dimensions
         toast.style.width = width > 0 ? `${width}px` : 'auto';
@@ -1606,7 +1609,7 @@ export class UIManager {
             };
 
             if (this.popperInstance) {
-                 // Update existing instance
+                // Update existing instance
                  this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
                       this.logger.error('UIManager', 'Error updating Popper options:', e);
                  });
@@ -1961,7 +1964,6 @@ export class UIManager {
 
         const { missions, currentLocationId } = this.lastKnownState;
         const { activeMissionId, activeMissionObjectivesMet } = missions;
-
         const isActive = activeMissionId === missionId;
         const canComplete = isActive && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId;
 
@@ -2402,6 +2404,7 @@ export class UIManager {
         } else {
             durationStr = `${remainingDays} days`;
         }
+        
         
         let result = template
             .replace(/\[location name\]/g, locationName)

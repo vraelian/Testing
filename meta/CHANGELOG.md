@@ -2,9 +2,6 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [32.40] - 2025-11-10
--  ship card polish
-
 ## [32.30] - 2025-11-10
 -  added boarding animation
 -  ship card polish
