@@ -189,12 +189,14 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                 </div>
+                ${'' /* --- VIRTUAL WORKBENCH (Hide Hangar Specs) ---
                 <div class="hangar-specs my-4">
             
         ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
                     ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
                     ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
                 </div>
+                --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                
      <p class="text-sm text-gray-300">${shipStatic.lore}</p>
@@ -210,12 +212,14 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     <p class="ship-price-display font-roboto-mono text-2xl">${formatCredits(shipStatic.price)}</p>
                 </div>
+                ${'' /* --- VIRTUAL WORKBENCH (Request A) ---
                  <div class="grid grid-cols-3 gap-2 my-4">
                
      ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
                     ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
                     ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
                 </div>
+                --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p 
 class="text-sm text-gray-300">${shipStatic.lore}</p>

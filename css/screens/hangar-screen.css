@@ -169,7 +169,9 @@ flex: 1 1 auto; /* Grow to fill space */
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
     padding: 1rem;
-    flex-grow: 1; /* Make the grid wrapper fill the container */
+    /* --- VIRTUAL WORKBENCH (Clipping Fix) --- */
+    /* flex-grow: 1; */ /* REMOVED: This was causing the container to grow instead of scroll */
+    /* --- END VIRTUAL WORKBENCH --- */
 }
 .ship-card-content-wrapper::-webkit-scrollbar {
     display: none; 
@@ -209,7 +211,9 @@ flex: 1 1 auto; /* Grow to fill space */
     border: 1px solid var(--ot-border-light); 
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
-    aspect-ratio: 1 / 0.72; /* Make it a 1:0.8 rectangle */
+    /* --- VIRTUAL WORKBENCH (Request B) --- */
+    aspect-ratio: 1 / 1; /* Make it a 1:1 square */
+    /* --- END VIRTUAL WORKBENCH --- */
 }
 .status-badge {
     position: absolute;
