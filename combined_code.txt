@@ -4636,7 +4636,9 @@ flex: 1 1 auto; /* Grow to fill space */
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
     padding: 1rem;
-    flex-grow: 1; /* Make the grid wrapper fill the container */
+    /* --- VIRTUAL WORKBENCH (Clipping Fix) --- */
+    /* flex-grow: 1; */ /* REMOVED: This was causing the container to grow instead of scroll */
+    /* --- END VIRTUAL WORKBENCH --- */
 }
 .ship-card-content-wrapper::-webkit-scrollbar {
     display: none; 
@@ -4676,7 +4678,9 @@ flex: 1 1 auto; /* Grow to fill space */
     border: 1px solid var(--ot-border-light); 
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
-    aspect-ratio: 1 / 0.72; /* Make it a 1:0.8 rectangle */
+    /* --- VIRTUAL WORKBENCH (Request B) --- */
+    aspect-ratio: 1 / 1; /* Make it a 1:1 square */
+    /* --- END VIRTUAL WORKBENCH --- */
 }
 .status-badge {
     position: absolute;
@@ -5756,12 +5760,14 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                 </div>
+                ${'' /* --- VIRTUAL WORKBENCH (Hide Hangar Specs) ---
                 <div class="hangar-specs my-4">
             
         ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
                     ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
                     ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
                 </div>
+                --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                
      <p class="text-sm text-gray-300">${shipStatic.lore}</p>
@@ -5777,12 +5783,14 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     <p class="ship-price-display font-roboto-mono text-2xl">${formatCredits(shipStatic.price)}</p>
                 </div>
+                ${'' /* --- VIRTUAL WORKBENCH (Request A) ---
                  <div class="grid grid-cols-3 gap-2 my-4">
                
      ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
                     ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
                     ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
                 </div>
+                --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p 
 class="text-sm text-gray-300">${shipStatic.lore}</p>
@@ -19928,6 +19936,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [32.40] - 2025-11-11
+-  removed quantity sale penalty
+-  updated hangar/ship card frame to 1x1
+-  removed parameter bars from H/S ship cards
 
 ## [32.30] - 2025-11-10
 -  added boarding animation
