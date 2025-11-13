@@ -200,8 +200,9 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
-            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red">-${formatCredits(ship.price, false)}</span>.`;
+            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
+            // Pass negative price and 'true' to formatCredits to get '⌬ -1,234'
+            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -266,6 +267,7 @@ export class PlayerActionService {
                 return false;
             }
           
+         
             const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             this.gameState.player.credits += salePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
@@ -287,14 +289,15 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
-            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing">+${formatCredits(salePrice, false)}</span>.`;
+            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
+            // Add '+' sign and pass 'true' to formatCredits to get '+⌬ 12,345'
+            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
             // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
-                     ...this.gameState.uiState,
+                    ...this.gameState.uiState,
                     hangarActiveIndex: newActiveIndex,
                     lastTransactionTimestamp: Date.now()
                 }

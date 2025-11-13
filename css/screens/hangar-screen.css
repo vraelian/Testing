@@ -12,7 +12,10 @@ CORE THEME & VARIABLE SETUP
     --ot-border-light: #4a6a8a;
     --ot-text-primary: #d0d8e8;
     --ot-text-secondary: #9ca3af;
-    --ot-green-accent: #4ade80;
+    /* --- VIRTUAL WORKBENCH --- */
+    /* MODIFIED: Changed from #4ade80 to #16a34a for a richer green */
+    --ot-green-accent: #16a34a;
+    /* --- END VIRTUAL WORKBENCH --- */
     --ot-red-accent: #f87171;
     --ot-cyan-base: #22d3ee;
     --ot-cyan-glow: #67e8f9;
