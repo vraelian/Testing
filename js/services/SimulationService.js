@@ -111,12 +111,26 @@ export class SimulationService {
             return null;
         }
 
-        // 2. Animate
+        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
+        // 2. Find the button that was clicked
+        const purchaseButton = event.target.closest('.action-button');
+
+        // 3. Trigger the BLOCKING 1-second glow
+        if (purchaseButton) {
+            // Use playBlockingAnimationAndRemove to properly clean up the class
+            await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+        }
+        
+        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        // --- END VIRTUAL WORKBENCH ---
+
+        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
 
-        // 3. Execute
+        // 6. Execute
         return this.playerActionService.executeBuyShip(shipId, event);
     }
 
@@ -133,12 +147,26 @@ export class SimulationService {
             return false;
         }
 
-        // 2. Animate
+        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
+        // 2. Find the button that was clicked
+        const sellButton = event.target.closest('.action-button');
+
+        // 3. Trigger the BLOCKING 1-second glow
+        if (sellButton) {
+            // Use playBlockingAnimationAndRemove to properly clean up the class
+            await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+        }
+        
+        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        // --- END VIRTUAL WORKBENCH ---
+
+        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
 
-        // 3. Execute
+        // 6. Execute
         return this.playerActionService.executeSellShip(shipId, event);
     }
 

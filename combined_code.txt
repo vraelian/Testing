@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 32.40</title>
+    <title>Orbital Trading 32.50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 32.40</p>
+            <p>Version 32.50</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -12115,12 +12115,26 @@ export class SimulationService {
             return null;
         }
 
-        // 2. Animate
+        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
+        // 2. Find the button that was clicked
+        const purchaseButton = event.target.closest('.action-button');
+
+        // 3. Trigger the BLOCKING 1-second glow
+        if (purchaseButton) {
+            // Use playBlockingAnimationAndRemove to properly clean up the class
+            await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+        }
+        
+        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        // --- END VIRTUAL WORKBENCH ---
+
+        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
 
-        // 3. Execute
+        // 6. Execute
         return this.playerActionService.executeBuyShip(shipId, event);
     }
 
@@ -12137,12 +12151,26 @@ export class SimulationService {
             return false;
         }
 
-        // 2. Animate
+        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
+        // 2. Find the button that was clicked
+        const sellButton = event.target.closest('.action-button');
+
+        // 3. Trigger the BLOCKING 1-second glow
+        if (sellButton) {
+            // Use playBlockingAnimationAndRemove to properly clean up the class
+            await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+        }
+        
+        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        // --- END VIRTUAL WORKBENCH ---
+
+        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
 
-        // 3. Execute
+        // 6. Execute
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
@@ -19981,6 +20009,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [32.50] - 2025-11-14
+-  ship card polish
 
 ## [32.40] - 2025-11-11
 -  removed quantity sale penalty
