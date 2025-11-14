@@ -4479,7 +4479,7 @@ CORE THEME & VARIABLE SETUP
     --ot-border-light: #4a6a8a;
     --ot-text-primary: #d0d8e8;
     --ot-text-secondary: #9ca3af;
-    /* --- VIRTUAL WORKBENCH --- */
+    /* --- VIRTUAL WORKBENCH (A) --- */
     /* MODIFIED: Changed from #4ade80 to #16a34a for a richer green */
     --ot-green-accent: #16a34a;
     /* --- END VIRTUAL WORKBENCH --- */
@@ -4618,6 +4618,23 @@ background-image: var(--theme-bg-gradient); /* Base theme from location */
     
     /* This applies the new persistent red glow animation */
     animation: pulse-red-border-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADD GREEN BUTTON GLOW KEYFRAMES (Request A) --- */
+@keyframes pulse-green-button-glow {
+    0%, 100% {
+        /* Use the green variables from :root */
+        background-color: var(--ot-green-accent);
+        box-shadow: 0 0 10px var(--class-b-color), 0 0 15px var(--class-b-color);
+        transform: scale(1);
+    }
+    50% {
+        /* Use the brighter green for the pulse */
+        background-color: var(--class-b-color);
+        box-shadow: 0 0 15px var(--class-b-color), 0 0 25px var(--class-b-color);
+        transform: scale(1.05);
+    }
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -4798,6 +4815,28 @@ flex: 1 1 auto; /* Grow to fill space */
     /* Apply the new animation from global.css */
     /* VIRTUAL WORKBENCH: MODIFIED from 0.4s to 1.0s */
     animation: pulse-cyan-button-glow 1.0s ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADD GREEN AND RED GLOW CLASSES (Request A & B) --- */
+.action-button.is-glowing-green {
+    /*
+     * We don't need to set variables here.
+     * The keyframes `pulse-green-button-glow` use:
+     * --ot-green-accent (from :root)
+     * --class-b-color (from :root)
+    */
+    animation: pulse-green-button-glow 1.0s ease-in-out;
+}
+
+.action-button.is-glowing-red {
+    /*
+     * We don't need to set variables here.
+     * The keyframes `pulse-red-border-glow` are already defined
+     * and use --ot-hangar-red-base and --ot-hangar-red-glow (from :root).
+     * We just apply the animation with a 1.0s duration for the button.
+    */
+    animation: pulse-red-border-glow 1.0s ease-in-out;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
