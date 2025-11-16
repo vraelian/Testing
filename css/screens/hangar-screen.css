@@ -356,7 +356,8 @@ flex: 1 1 auto; /* Grow to fill space */
 }
 
 .param-bar-label {
-    font-size: 0.65rem; /* MODIFIED: Was 0.7rem */
+    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
+    font-size: 0.6rem; /* Was 0.65rem */
     color: var(--ot-text-secondary);
     text-transform: uppercase;
     width: 40px; /* Fixed width for alignment */
@@ -365,7 +366,8 @@ flex: 1 1 auto; /* Grow to fill space */
 }
 
 .param-bar-track {
-    height: 10px; /* Thinner bar */
+    /* VIRTUAL WORKBENCH: Request D - Increased thickness */
+    height: 12px; /* Was 10px */
     background-color: rgba(0,0,0,0.3);
     flex-grow: 1;
     border-radius: 4px;
@@ -390,12 +392,15 @@ flex: 1 1 auto; /* Grow to fill space */
     left: 50%;
     transform: translate(-50%, -50%); /* Default: center-aligned */
     z-index: 2; /* Sits on top of the fill */
-    font-size: 0.6rem;
+    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
+    font-size: 0.55rem; /* Was 0.6rem */
     font-family: 'Roboto Mono', sans-serif;
     color: #ffffff;
     text-shadow: 0 0 2px #000, 0 0 4px #000; /* Shadow for readability */
     white-space: nowrap; /* Prevent line breaks */
     pointer-events: none; /* Allow clicks to pass through */
+    /* VIRTUAL WORKBENCH: Request A - Reduce visibility */
+    opacity: 0.7;
 }
 
 /* NEW: Alignment for maxed-out bars */
