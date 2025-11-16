@@ -106,7 +106,7 @@ const EULA_CONTENT = `
     <p>You agree to indemnify, defend, and hold harmless Licensor (Devon P. Casey) and his employees, agents, and affiliates from and against any and all claims, losses, damages, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to Your breach of this EULA or Your misuse of the Software.</p>
     <h4 class="text-xl font-orbitron mt-4 mb-2">12. GOVERNING LAW AND DISPUTE RESOLUTION</h4>
     <ul class="list-disc list-outside ml-6 space-y-2">
-        <li>a.  Governing Law:  This EULA shall be governed by and construed in accordance with the laws of the State of California, USA, without regard to its conflict of law principles.</li>
+        <li>a. Governing Law:  This EULA shall be governed by and construed in accordance with the laws of the State of California, USA, without regard to its conflict of law principles.</li>
         <li>b.  Informal Negotiation:  To expedite resolution and control the cost of any dispute, You and Licensor agree to first attempt to negotiate any dispute informally for at least thirty (30) days before initiating any arbitration or court proceeding. Such informal negotiations commence upon written notice from one party to the other.</li>
         <li>c.  Binding Arbitration:  If a dispute cannot be resolved through informal negotiations, any claim, dispute, or controversy (excluding claims for injunctive or other equitable relief) shall be resolved by binding arbitration conducted by a single neutral arbitrator from the American Arbitration Association (AAA) under its Commercial Arbitration Rules. The arbitration shall take place in Santa Clara County, California. The arbitrator's decision shall be final and binding and may be entered as a judgment in any court of competent jurisdiction.</li>
         <li>d.  CLASS ACTION AND JURY TRIAL WAIVER:  YOU AND LICENSOR AGREE THAT ANY PROCEEDINGS TO RESOLVE OR LITIGATE ANY DISPUTE WILL BE CONDUCTED SOLELY ON AN INDIVIDUAL BASIS. NEITHER YOU NOR LICENSOR WILL SEEK TO HAVE ANY DISPUTE HEARD AS A CLASS ACTION, PRIVATE ATTORNEY GENERAL ACTION, OR IN ANY OTHER PROCEEDING IN WHICH EITHER PARTY ACTS OR PROPOSES TO ACT IN A REPRESENTATIVE CAPACITY. YOU AND LICENSOR BOTH EXPRESSLY WAIVE ANY RIGHT TO A TRIAL BY JURY.</li>
@@ -445,7 +445,7 @@ export class UIManager {
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
- style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+                         style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -494,7 +494,7 @@ export class UIManager {
     
                  // --- END VIRTUAL WORKBENCH ---
 
-                
+                 
                  let subStyle = '';
                  if (isSubNavActive) {
                      subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
@@ -606,6 +606,7 @@ export class UIManager {
                 // (Codex or Market) is shown based on the game state.
                 this.updateIntelTab(gameState.uiState.activeIntelTab);
                 // --- END VIRTUAL WORKBENCH (B) ---
+                
                 break;
         }
     }
@@ -929,10 +930,12 @@ export class UIManager {
         }
 
         if (mode === 'buy') {
+            // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
+            // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
             effectivePriceEl.textContent = '';
-
+            
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
@@ -1088,7 +1091,7 @@ export class UIManager {
             // --- END VIRTUAL WORKBENCH ---
                 // Original default button logic
                 if (btnContainer) {
-                btnContainer.innerHTML = '';
+                    btnContainer.innerHTML = '';
                     button = document.createElement('button');
                     btnContainer.appendChild(button);
                 } else {
@@ -1347,7 +1350,6 @@ export class UIManager {
         const tooltipHeight = tooltip.offsetHeight;
         let leftPos = rect.right + 10;
         let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-
         if (topPos < 10) {
             topPos = rect.bottom + 10;
         }
@@ -1567,6 +1569,7 @@ export class UIManager {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
+
         // --- Apply Size (Common) ---
         // Apply size *first* so calculations are based on the new dimensions
         toast.style.width = width > 0 ? `${width}px` : 'auto';
@@ -1999,10 +2002,12 @@ export class UIManager {
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
+                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
+                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -2042,10 +2047,12 @@ export class UIManager {
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
+                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
+                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -2096,7 +2103,7 @@ export class UIManager {
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
             // Standard dismissal (backdrop click only)
-             if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -2189,6 +2196,7 @@ export class UIManager {
         ).join('');
 
         // *** MODIFIED HTML Structure to apply theme color ***
+        // --- VIRTUAL WORKBENCH START: Phase 6 ---
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -2198,11 +2206,11 @@ export class UIManager {
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${formatCredits(location.fuelPrice, true)}/unit</p>
+                    <p class="font-roboto-mono imprinted-text-embedded"><span class="credits-text-pulsing">${formatCredits(location.fuelPrice, true)}</span>/unit</p>
                 </div>
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${location.specialty || 'None reported'}</p>
+                    <p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>
                 </div>
           </div>
 
@@ -2217,6 +2225,7 @@ export class UIManager {
                 </div>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 6 ---
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
@@ -2304,6 +2313,7 @@ export class UIManager {
             // has populated the innerHTML.
             return; 
         }
+        
         // --- END VIRTUAL WORKBENCH ---
 
         // Deactivate all
@@ -2384,11 +2394,11 @@ export class UIManager {
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         
-        // --- VIRTUAL WORKBENCH (Revert Logic) ---
-        // The price for the placeholder is the *price paid*, not a recalculation.
-        // This is passed as `price`.
-        const priceStr = `${price.toLocaleString()} ⌬`;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
+        // The price for the placeholder is the *price paid*.
+        // Use a fallback for legacy packets that may not have pricePaid.
+        const priceStr = price ? formatCredits(-price, true) : '???';
+        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
 
         // --- VIRTUAL WORKBENCH (Phase 4/5 Refactor) ---
@@ -2409,8 +2419,8 @@ export class UIManager {
         let result = template
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
-            .replace(/\[discount amount %\]/g, discountStr)
-            .replace(/\[⌬ credit price\]/g, priceStr);
+            .replace(/\[discount amount %\]/g, discountStr);
+            // [Observed issue]: priceStr replacement is now conditional
 
         // --- VIRTUAL WORKBENCH (Revert Logic) ---
         // This logic handles both old save-game packets ("... [durationDays] days")
@@ -2419,6 +2429,12 @@ export class UIManager {
         result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
         // --- END VIRTUAL WORKBENCH ---
         
+        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
+        // Handle new packet format (with span)
+        result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
+        // Handle old packet format (no span, for save compatibility)
+        result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
         return result;
     }
@@ -2465,14 +2481,17 @@ export class UIManager {
         // --- END VIRTUAL WORKBENCH ---
         
         const priceNum = parseInt(price, 10);
+        
+        // --- VIRTUAL WORKBENCH START: Phase 5 ---
         const purchaseButtonHTML = `
-            <button class="btn btn-intel-buy" 
+            <button class="btn btn-module btn-module-credit" 
                     data-action="buy_intel" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${locationId}" 
                     data-price="${priceNum}">
-                Purchase Intel (${priceNum.toLocaleString()} ⌬)
+                Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
             theme: locationId, // GDD: Apply location-specific theme
@@ -2484,9 +2503,11 @@ export class UIManager {
     /**
      * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
      * @param {HTMLElement} element - The clicked "Purchase Intel" button.
+     * @param {Event} e - The click event (for floating text).
      * @JSDoc
      */
-    handleBuyIntel(element) {
+    handleBuyIntel(element, e) {
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
         const { packetId, locationId, price } = element.dataset;
         const priceNum = parseInt(price, 10);
 
@@ -2497,13 +2518,20 @@ export class UIManager {
             // GDD: On success, immediately close "Sample" modal and open "Details" modal
             this.hideModal('event-modal'); // Close the sample modal
             
+            // --- VIRTUAL WORKBENCH START: Phase 5 ---
+            // Add floating text
+            if(e) {
+                this.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
+            }
+            // --- VIRTUAL WORKBENCH END: Phase 5 ---
+
             // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
-                // --- VIRTUAL WORKBENCH (Revert) ---
-                // Pass the price *paid* (priceNum) to the details modal
-                this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
-                // --- END VIRTUAL WORKBENCH ---
+                // --- VIRTUAL WORKBENCH START: Phase 5 ---
+                // Pass the *stored* pricePaid from the packet
+                this._showIntelDetailsModal(updatedPacket, updatedPacket.pricePaid, locationId);
+                // --- VIRTUAL WORKBENCH END: Phase 5 ---
             }
 
             // --- VIRTUAL WORKBENCH (B) ---
@@ -2538,9 +2566,10 @@ export class UIManager {
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
 
-        // Price wasn't passed, but we need it for the text. Re-calculate it.
-        // This is okay, as it's just for display and not for a transaction.
-        const price = this.intelService.calculateIntelPrice(packet);
+        // --- VIRTUAL WORKBENCH START: Phase 5 ---
+        // Use the stored pricePaid if it exists, otherwise fall back to re-calculating
+        const price = packet.pricePaid || this.intelService.calculateIntelPrice(packet);
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         // --- VIRTUAL WORKBENCH (Revert) ---
         // Pass the re-calculated price, as the price paid isn't stored on the button.

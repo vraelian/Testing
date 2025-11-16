@@ -141,9 +141,11 @@ export class ActionClickHandler {
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
+            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
-                this.uiManager.handleBuyIntel(actionTarget);
+                this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
+            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
@@ -174,6 +176,7 @@ export class ActionClickHandler {
                 break;
             // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
+            
             // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
@@ -234,7 +237,9 @@ export class ActionClickHandler {
         if (!license) return;
 
         if (license.type === 'purchase') {
-            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
+            // --- VIRTUAL WORKBENCH START: Phase 2 ---
+            const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
+            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');

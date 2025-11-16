@@ -338,7 +338,7 @@
 .mission-reward {
     font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-size: 0.9rem;
-    color: #facc15;
+    /* color: #facc15; */ /* <-- VIRTUAL WORKBENCH: Phase 7 */
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
     font-weight: 800;
 }
@@ -4358,21 +4358,21 @@ WORKBENCH --- */
 /* --- END VIRTUAL WORKBENCH --- */
 
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) --- */
+/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) & Phase 2 --- */
 /* Muted destructive button */
 .btn-module-destructive {
     /* Muted red */
-    background-color: #991b1b; /* red-800 */
-    border-color: #b91c1c; /* red-700 */
+    background-color: #7f1d1d; /* red-900 */
+    border-color: #991b1b; /* red-800 */
     color: #fecaca; /* red-200 */
 }
 
 .btn-module-destructive:hover:not(:disabled) {
-    background-color: #b91c1c; /* red-700 */
+    background-color: #991b1b; /* red-800 */
     border-color: #dc2626; /* red-600 */
     color: #ffffff;
 }
-/* --- END VIRTUAL WORKBENCH --- */
+/* --- END VIRTUAL WORKBENCH & Phase 2 --- */
 
 
 /* --- VIRTUAL WORKBENCH: ADJUST LOG PANEL STYLING --- */
@@ -5203,7 +5203,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
-}
+    }
 
     /**
      * Renders the intel packet buttons into the provided container.
@@ -5239,8 +5239,7 @@ export class IntelMarketRenderer {
         const isLocked = activeIntelDeal !== null;
 
         if (combinedList.length === 0) {
-            containerElement.innerHTML 
-= `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
             return;
         }
 
@@ -5249,7 +5248,7 @@ export class IntelMarketRenderer {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-          const price = this.intelService.calculateIntelPrice(packet);
+                const price = this.intelService.calculateIntelPrice(packet);
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');
@@ -5261,7 +5260,7 @@ export class IntelMarketRenderer {
      * Renders a button for a previously purchased intel packet.
      * @param {object} packet - The intelPacket object.
      * @returns {string} HTML for the "View Intel" button.
-* @private
+     * @private
      * @JSDoc
      */
     _renderPurchasedButton(packet) {
@@ -5286,7 +5285,8 @@ export class IntelMarketRenderer {
         return `
             <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
-             data-location-id="${packet.locationId}"> ${dealLocationName} - View Intel
+                    data-location-id="${packet.locationId}"> 
+                ${dealLocationName} - View Intel
             </button>`;
     }
 
@@ -5295,8 +5295,7 @@ export class IntelMarketRenderer {
      * @param {object} packet - The intelPacket object.
      * @param {number} price - The dynamically calculated price.
      * @param {boolean} isLocked - Whether the Intel Market is locked by an active deal.
-     * @returns {string} HTML 
-for the "Purchase" button.
+     * @returns {string} HTML for the "Purchase" button.
      * @private
      * @JSDoc
      */
@@ -5309,15 +5308,22 @@ for the "Purchase" button.
         const disabledAttr = isLocked ? 'disabled' : '';
         const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel for a deal at ${dealLocationName}`;
         
+        // --- VIRTUAL WORKBENCH START: Phase 3 ---
+        // Conditionally apply pulsing class only if not locked
+        const priceHtml = isLocked
+            ? formatCredits(price, true) // Plain text (with symbol) for disabled button
+            : `<span class="credits-text-pulsing">${formatCredits(price, true)}</span>`; // Pulsing class for active button
+
         return `
             <button class="btn btn-intel" 
-   data-action="show_intel_offer" 
+                    data-action="show_intel_offer" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
-        ${disabledAttr}>
-                ${dealLocationName} ⌬ ${price.toLocaleString()}
+                    ${disabledAttr}>
+                ${dealLocationName} ${priceHtml}
             </button>`;
+        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     }
 }
 --- END OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
@@ -5618,8 +5624,7 @@ function _updateCurrentLocationHighlight(uiManager) {
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
-import { ACTION_IDS, SHIP_IDS, GAME_RULES } 
-from '../../data/constants.js';
+import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 
 /**
  * Renders the entire Hangar screen UI.
@@ -5637,8 +5642,7 @@ export function renderHangarScreen(gameState, simulationService) {
     const shipList = isHangarMode ? player.ownedShipIds : simulationService._getShipyardInventory().map(([id]) => id);
     
     // Use the active index from the UI state for the carousel
-    const activeCarouselIndex = 
-isHangarMode 
+    const activeCarouselIndex = isHangarMode 
         ? (uiState.hangarActiveIndex || 0) 
         : (uiState.shipyardActiveIndex || 0);
 
@@ -5649,27 +5653,23 @@ isHangarMode
     return `
         <div class="flex flex-col h-full">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
-                <div 
-class="toggle-container mx-auto my-1">
+                <div class="toggle-container mx-auto my-1">
                     <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                         <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
                         <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
-                
-    </div>
+                    </div>
                 </div>
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
                     <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
                         ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
-           
-         </div>
+                    </div>
                 </div>
             </div>
             <div id="hangar-pagination-wrapper">
                 <div id="hangar-pagination">
                     {/* This will be populated by UIManager._renderHangarPagination */}
-              
-  </div>
+                </div>
             </div>
         </div>
     `;
@@ -5685,8 +5685,7 @@ function _renderEmptyCarouselPage(isHangarMode) {
     const message = isHangarMode ? "Your hangar is empty." : "No ships available in the shipyard.";
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
-       
-      <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div class="flex flex-col items-center justify-center h-full">
                     <p class="text-gray-400">${message}</p>
                 </div>
@@ -5698,8 +5697,7 @@ function _renderEmptyCarouselPage(isHangarMode) {
 
 /**
  * Renders a single page within the ship carousel.
- * @param 
-{object} gameState The current game state.
+ * @param {object} gameState The current game state.
  * @param {string} shipId The ID of the ship for this page.
  * @param {boolean} isHangarMode True if the view is for the player's hangar.
  * @returns {string} The HTML for a single carousel page.
@@ -5715,8 +5713,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const isActive = player.activeShipId === shipId; // <-- VIRTUAL WORKBENCH: Moved this up
     if (isHangarMode) {
         // const isActive = player.activeShipId === shipId; // <-- VIRTUAL WORKBENCH: This is now defined above
-        statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive 
-? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
+        statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
     // Conditional rendering for shipyard layout
@@ -5725,16 +5722,14 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
-       
-         </div>
+                </div>
                 ${statusBadgeHtml}
             </div>
         </div>
         <div class="col-span-2 flex flex-col justify-between">
             ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode)}
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, 
-gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
         </div>
     `;
@@ -5746,15 +5741,13 @@ gameState.tutorials)}
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-             
-   <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
                 ${statusBadgeHtml}
             </div>
             <div class="action-buttons-container pt-2">
-                
-${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
         </div>
     `;
@@ -5768,8 +5761,7 @@ ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutor
             <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
                 <div id="ship-card-main-content" class="h-full">
                     <div class="ship-card-content-wrapper h-full">
-       
-                 ${isHangarMode ? hangarLayout : shipyardLayout}
+                        ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
             </div>
@@ -5782,8 +5774,7 @@ ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutor
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
  * @param {object} gameState - The current state of the game.
- * @param {string} shipId - 
-The ID of the ship.
+ * @param {string} shipId - The ID of the ship.
  * @param {object} shipStatic - The static data for the ship.
  * @param {object} shipDynamic - The dynamic state for the ship (hangar only).
  * @param {object} player - The player object.
@@ -5798,47 +5789,45 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, is
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
       
-          <div>
+                <div>
                     <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                 </div>
                 ${'' /* --- VIRTUAL WORKBENCH (Hide Hangar Specs) ---
                 <div class="hangar-specs my-4">
             
-        ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
+                    ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
                     ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
                     ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
                 </div>
                 --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-               
-     <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
     } else {
+        // --- VIRTUAL WORKBENCH START: Phase 3 ---
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div>
-                   
- <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                    <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                     <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                    <p class="ship-price-display font-roboto-mono text-2xl">${formatCredits(shipStatic.price)}</p>
+                    <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                 </div>
                 ${'' /* --- VIRTUAL WORKBENCH (Request A) ---
                  <div class="grid grid-cols-3 gap-2 my-4">
-               
-     ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
+                    ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
                     ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
                     ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
                 </div>
                 --- END VIRTUAL WORKBENCH --- */}
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p 
-class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     }
 }
 
@@ -5852,26 +5841,25 @@ class="text-sm text-gray-300">${shipStatic.lore}</p>
  * @param {object} tutorials - The current tutorial state.
  * @returns {string} The HTML for the action buttons.
  * @private
- 
-*/
+ */
 function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
+        // --- VIRTUAL WORKBENCH START: Phase 3 ---
         return `
             <div class="grid grid-cols-2 gap-2">
                 <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
-                
-    <span class="font-bold">${isActive ? 'ACTIVE' : 'BOARD'}</span>
+                    <span class="font-bold">${isActive ? 'ACTIVE' : 'BOARD'}</span>
                 </button>
                 <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
                     <span class="font-bold">SELL</span>
-                    <span class="action-button-price font-roboto-mono">${formatCredits(salePrice, true)}</span>
-             
-   </button>
+                    <span class="action-button-price font-roboto-mono credits-text-pulsing">${formatCredits(salePrice, true)}</span>
+                </button>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
@@ -5880,8 +5868,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
-               
- <span class="font-bold">PURCHASE</span>
+                <span class="font-bold">PURCHASE</span>
             </button>
         `;
     }
@@ -5897,8 +5884,7 @@ function _renderSpecBar(label, current, max, color) {
     return `
         <div class="spec-readout hangar-specs">
             <span class="text-xs text-right pr-2 text-gray-400">${label}</span>
-            <div class="spec-bar"><div class="spec-bar-fill" style="width: ${percentage}%; background-color: ${color}; --bar-color: 
-${color};"></div></div>
+            <div class="spec-bar"><div class="spec-bar-fill" style="width: ${percentage}%; background-color: ${color}; --bar-color: ${color};"></div></div>
             <span class="text-xs text-left pl-2">${Math.floor(current ?? 0)}/${max}</span>
         </div>
     `;
@@ -6042,6 +6028,9 @@ export function renderNavigationScreen(gameState) {
  * available missions for the player.
  */
 import { DB } from '../../data/database.js';
+// --- VIRTUAL WORKBENCH: IMPORT formatCredits ---
+import { formatCredits } from '../../utils.js';
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * Renders the entire Missions screen UI.
@@ -6069,10 +6058,13 @@ export function renderMissionsScreen(gameState, missionService) {
         }
 
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        
+        // --- VIRTUAL WORKBENCH START: Phase 7 ---
         const rewardText = mission.rewards.map(r => {
-            if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+            if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
             return r.type.toUpperCase();
         }).join(', ');
+        // --- VIRTUAL WORKBENCH END: Phase 7 ---
 
         return `
             <div class="mission-card sci-fi-frame ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
@@ -6131,6 +6123,10 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 
+// --- VIRTUAL WORKBENCH START: Phase 1 ---
+// This function is now REMOVED as the global formatCredits handles all logic.
+// --- VIRTUAL WORKBENCH END: Phase 1 ---
+
 /**
  * Renders the entire Finance screen UI.
  * @param {object} gameState - The current state of the game.
@@ -6161,6 +6157,7 @@ export function renderFinanceScreen(gameState) {
                 garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
             }
         }
+        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         loanHtml = `
             <div>
                 <div class="themed-header-bar" style="${themeStyleVars}">
@@ -6168,26 +6165,30 @@ export function renderFinanceScreen(gameState) {
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
                     <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
-                        Pay Off ${formatCredits(player.debt)}
+                        <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
                     </button>
                     ${garnishmentTimerHtml}
                 </div>
             </div>`;
+        // --- VIRTUAL WORKBENCH END: Phase 2 ---
     } else {
         // Otherwise, display available loan options.
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
         const dynamicLoanFee = Math.floor(dynamicLoanAmount * 0.1);
         const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
         const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
+        
+        // --- VIRTUAL WORKBENCH START: Phase 1 & 2 ---
         const loanButtonsHtml = [
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            // --- VIRTUAL WORKBENCH: Updated button classes to btn-module-credit ---
             return `<button class="btn-module btn-module-credit w-full mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
-                        <span class="font-orbitron text-cyan-300">⌬ ${formatCredits(loan.amount, false)}</span>
+                        <span class="credits-text-pulsing">${formatCredits(loan.amount, true)}</span>
                     </button>`;
         }).join('');
+        // --- VIRTUAL WORKBENCH END: Phase 1 & 2 ---
+
         loanHtml = `
             <div>
                 <div class="themed-header-bar" style="${themeStyleVars}">
@@ -6202,7 +6203,7 @@ export function renderFinanceScreen(gameState) {
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
-        const amountColor = entry.amount > 0 ? 'text-green-400' : 'text-red-400';
+        const amountColor = entry.amount > 0 ? 'credits-text-pulsing' : 'text-glow-red';
         const sign = entry.amount > 0 ? '+' : '';
         return `
             <div class="log-entry">
@@ -6230,7 +6231,7 @@ export function renderFinanceScreen(gameState) {
                            <span class="text-right">Amount</span>
                         </div>
                         <div class="log-entries-container">
-                            ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
+                           ${logEntries || '<p class="text-center p-4">No transactions recorded.</p>'}
                         </div>
                     </div>
                  </div>
@@ -6601,10 +6602,12 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
         buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
         
+        // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
         cardContentHtml = `
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
                 <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+                
                 <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
                 
                 <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
@@ -6621,6 +6624,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
 
     } else {
         // --- [[START]] MODIFIED (locked) card content ---
@@ -6913,17 +6917,23 @@ export function formatCredits(amount, withSymbol = true) {
     const sign = isNegative ? '-' : '';
 
     let formattedNumber;
-    if (num >= 1e12) {
-        formattedNumber = `${(num / 1e12).toFixed(2)}T`;
+    // --- VIRTUAL WORKBENCH START: Phase 1 (Universal Abbreviation) ---
+    if (num >= 1e18) { // Numbers >= 1 Quintillion
+        formattedNumber = `${(num).toExponential(1)}`;
+    } else if (num >= 1e15) { // Numbers >= 1 Quadrillion
+        formattedNumber = `${parseFloat((num / 1e15).toFixed(2)).toString()}Q`;
+    } else if (num >= 1e12) {
+        formattedNumber = `${parseFloat((num / 1e12).toFixed(2)).toString()}T`;
     } else if (num >= 1e9) {
-        formattedNumber = `${(num / 1e9).toFixed(2)}B`;
+        formattedNumber = `${parseFloat((num / 1e9).toFixed(2)).toString()}B`;
     } else if (num >= 1e6) {
-        formattedNumber = `${(num / 1e6).toFixed(2)}M`;
+        formattedNumber = `${parseFloat((num / 1e6).toFixed(2)).toString()}M`;
     } else if (num >= 1e3) {
-        formattedNumber = `${(num / 1e3).toFixed(1)}k`;
+        formattedNumber = `${parseFloat((num / 1e3).toFixed(1)).toString()}k`;
     } else {
         formattedNumber = num.toLocaleString();
     }
+    // --- VIRTUAL WORKBENCH END: Phase 1 (Universal Abbreviation) ---
 
     return `${prefix}${sign}${formattedNumber}`;
 }
@@ -13489,7 +13499,7 @@ const EULA_CONTENT = `
     <p>You agree to indemnify, defend, and hold harmless Licensor (Devon P. Casey) and his employees, agents, and affiliates from and against any and all claims, losses, damages, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to Your breach of this EULA or Your misuse of the Software.</p>
     <h4 class="text-xl font-orbitron mt-4 mb-2">12. GOVERNING LAW AND DISPUTE RESOLUTION</h4>
     <ul class="list-disc list-outside ml-6 space-y-2">
-        <li>a.  Governing Law:  This EULA shall be governed by and construed in accordance with the laws of the State of California, USA, without regard to its conflict of law principles.</li>
+        <li>a. Governing Law:  This EULA shall be governed by and construed in accordance with the laws of the State of California, USA, without regard to its conflict of law principles.</li>
         <li>b.  Informal Negotiation:  To expedite resolution and control the cost of any dispute, You and Licensor agree to first attempt to negotiate any dispute informally for at least thirty (30) days before initiating any arbitration or court proceeding. Such informal negotiations commence upon written notice from one party to the other.</li>
         <li>c.  Binding Arbitration:  If a dispute cannot be resolved through informal negotiations, any claim, dispute, or controversy (excluding claims for injunctive or other equitable relief) shall be resolved by binding arbitration conducted by a single neutral arbitrator from the American Arbitration Association (AAA) under its Commercial Arbitration Rules. The arbitration shall take place in Santa Clara County, California. The arbitrator's decision shall be final and binding and may be entered as a judgment in any court of competent jurisdiction.</li>
         <li>d.  CLASS ACTION AND JURY TRIAL WAIVER:  YOU AND LICENSOR AGREE THAT ANY PROCEEDINGS TO RESOLVE OR LITIGATE ANY DISPUTE WILL BE CONDUCTED SOLELY ON AN INDIVIDUAL BASIS. NEITHER YOU NOR LICENSOR WILL SEEK TO HAVE ANY DISPUTE HEARD AS A CLASS ACTION, PRIVATE ATTORNEY GENERAL ACTION, OR IN ANY OTHER PROCEEDING IN WHICH EITHER PARTY ACTS OR PROPOSES TO ACT IN A REPRESENTATIVE CAPACITY. YOU AND LICENSOR BOTH EXPRESSLY WAIVE ANY RIGHT TO A TRIAL BY JURY.</li>
@@ -13828,7 +13838,7 @@ export class UIManager {
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
- style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+                         style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -13877,7 +13887,7 @@ export class UIManager {
     
                  // --- END VIRTUAL WORKBENCH ---
 
-                
+                 
                  let subStyle = '';
                  if (isSubNavActive) {
                      subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
@@ -13989,6 +13999,7 @@ export class UIManager {
                 // (Codex or Market) is shown based on the game state.
                 this.updateIntelTab(gameState.uiState.activeIntelTab);
                 // --- END VIRTUAL WORKBENCH (B) ---
+                
                 break;
         }
     }
@@ -14312,10 +14323,12 @@ export class UIManager {
         }
 
         if (mode === 'buy') {
+            // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
+            // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
             effectivePriceEl.textContent = '';
-
+            
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
@@ -14471,7 +14484,7 @@ export class UIManager {
             // --- END VIRTUAL WORKBENCH ---
                 // Original default button logic
                 if (btnContainer) {
-                btnContainer.innerHTML = '';
+                    btnContainer.innerHTML = '';
                     button = document.createElement('button');
                     btnContainer.appendChild(button);
                 } else {
@@ -14730,7 +14743,6 @@ export class UIManager {
         const tooltipHeight = tooltip.offsetHeight;
         let leftPos = rect.right + 10;
         let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-
         if (topPos < 10) {
             topPos = rect.bottom + 10;
         }
@@ -14950,6 +14962,7 @@ export class UIManager {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
+
         // --- Apply Size (Common) ---
         // Apply size *first* so calculations are based on the new dimensions
         toast.style.width = width > 0 ? `${width}px` : 'auto';
@@ -15382,10 +15395,12 @@ export class UIManager {
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
+                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
+                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -15425,10 +15440,12 @@ export class UIManager {
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
+                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
+                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -15479,7 +15496,7 @@ export class UIManager {
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
             // Standard dismissal (backdrop click only)
-             if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -15572,6 +15589,7 @@ export class UIManager {
         ).join('');
 
         // *** MODIFIED HTML Structure to apply theme color ***
+        // --- VIRTUAL WORKBENCH START: Phase 6 ---
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -15581,11 +15599,11 @@ export class UIManager {
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${formatCredits(location.fuelPrice, true)}/unit</p>
+                    <p class="font-roboto-mono imprinted-text-embedded"><span class="credits-text-pulsing">${formatCredits(location.fuelPrice, true)}</span>/unit</p>
                 </div>
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded" style="color: ${theme.textColor};">${location.specialty || 'None reported'}</p>
+                    <p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>
                 </div>
           </div>
 
@@ -15600,6 +15618,7 @@ export class UIManager {
                 </div>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 6 ---
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
@@ -15687,6 +15706,7 @@ export class UIManager {
             // has populated the innerHTML.
             return; 
         }
+        
         // --- END VIRTUAL WORKBENCH ---
 
         // Deactivate all
@@ -15767,11 +15787,11 @@ export class UIManager {
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         
-        // --- VIRTUAL WORKBENCH (Revert Logic) ---
-        // The price for the placeholder is the *price paid*, not a recalculation.
-        // This is passed as `price`.
-        const priceStr = `${price.toLocaleString()} ⌬`;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
+        // The price for the placeholder is the *price paid*.
+        // Use a fallback for legacy packets that may not have pricePaid.
+        const priceStr = price ? formatCredits(-price, true) : '???';
+        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
 
         // --- VIRTUAL WORKBENCH (Phase 4/5 Refactor) ---
@@ -15792,8 +15812,8 @@ export class UIManager {
         let result = template
             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
-            .replace(/\[discount amount %\]/g, discountStr)
-            .replace(/\[⌬ credit price\]/g, priceStr);
+            .replace(/\[discount amount %\]/g, discountStr);
+            // [Observed issue]: priceStr replacement is now conditional
 
         // --- VIRTUAL WORKBENCH (Revert Logic) ---
         // This logic handles both old save-game packets ("... [durationDays] days")
@@ -15802,6 +15822,12 @@ export class UIManager {
         result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
         // --- END VIRTUAL WORKBENCH ---
         
+        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
+        // Handle new packet format (with span)
+        result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
+        // Handle old packet format (no span, for save compatibility)
+        result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
         return result;
     }
@@ -15848,14 +15874,17 @@ export class UIManager {
         // --- END VIRTUAL WORKBENCH ---
         
         const priceNum = parseInt(price, 10);
+        
+        // --- VIRTUAL WORKBENCH START: Phase 5 ---
         const purchaseButtonHTML = `
-            <button class="btn btn-intel-buy" 
+            <button class="btn btn-module btn-module-credit" 
                     data-action="buy_intel" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${locationId}" 
                     data-price="${priceNum}">
-                Purchase Intel (${priceNum.toLocaleString()} ⌬)
+                Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
             theme: locationId, // GDD: Apply location-specific theme
@@ -15867,9 +15896,11 @@ export class UIManager {
     /**
      * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
      * @param {HTMLElement} element - The clicked "Purchase Intel" button.
+     * @param {Event} e - The click event (for floating text).
      * @JSDoc
      */
-    handleBuyIntel(element) {
+    handleBuyIntel(element, e) {
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
         const { packetId, locationId, price } = element.dataset;
         const priceNum = parseInt(price, 10);
 
@@ -15880,13 +15911,20 @@ export class UIManager {
             // GDD: On success, immediately close "Sample" modal and open "Details" modal
             this.hideModal('event-modal'); // Close the sample modal
             
+            // --- VIRTUAL WORKBENCH START: Phase 5 ---
+            // Add floating text
+            if(e) {
+                this.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
+            }
+            // --- VIRTUAL WORKBENCH END: Phase 5 ---
+
             // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
-                // --- VIRTUAL WORKBENCH (Revert) ---
-                // Pass the price *paid* (priceNum) to the details modal
-                this._showIntelDetailsModal(updatedPacket, priceNum, locationId);
-                // --- END VIRTUAL WORKBENCH ---
+                // --- VIRTUAL WORKBENCH START: Phase 5 ---
+                // Pass the *stored* pricePaid from the packet
+                this._showIntelDetailsModal(updatedPacket, updatedPacket.pricePaid, locationId);
+                // --- VIRTUAL WORKBENCH END: Phase 5 ---
             }
 
             // --- VIRTUAL WORKBENCH (B) ---
@@ -15921,9 +15959,10 @@ export class UIManager {
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
 
-        // Price wasn't passed, but we need it for the text. Re-calculate it.
-        // This is okay, as it's just for display and not for a transaction.
-        const price = this.intelService.calculateIntelPrice(packet);
+        // --- VIRTUAL WORKBENCH START: Phase 5 ---
+        // Use the stored pricePaid if it exists, otherwise fall back to re-calculating
+        const price = packet.pricePaid || this.intelService.calculateIntelPrice(packet);
+        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         // --- VIRTUAL WORKBENCH (Revert) ---
         // Pass the re-calculated price, as the price paid isn't stored on the button.
@@ -19013,9 +19052,11 @@ export class ActionClickHandler {
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
+            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
-                this.uiManager.handleBuyIntel(actionTarget);
+                this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
+            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
@@ -19046,6 +19087,7 @@ export class ActionClickHandler {
                 break;
             // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
+            
             // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
@@ -19106,7 +19148,9 @@ export class ActionClickHandler {
         if (!license) return;
 
         if (license.type === 'purchase') {
-            const description = `${license.description}<br><br>Cost: <b class='hl-yellow'>${formatCredits(license.cost)}</b>`;
+            // --- VIRTUAL WORKBENCH START: Phase 2 ---
+            const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
+            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
@@ -19696,8 +19740,7 @@ export class PlayerActionService {
                 this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
                 return false;
             }
-          
-         
+            
             const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             this.gameState.player.credits += salePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
@@ -19811,11 +19854,11 @@ export class PlayerActionService {
         const debtAmount = player.debt;
         player.credits -= debtAmount;
 
-        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
@@ -19848,11 +19891,11 @@ export class PlayerActionService {
         
         player.credits += loanData.amount;
 
-        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`+${formatCredits(loanData.amount, false)}`, event.clientX, event.clientY, '#34d399'); // Green
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.simulationService._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
@@ -19863,7 +19906,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
         // Added glowing classes and removed font-roboto-mono for consistency
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(loanData.fee)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
@@ -19910,7 +19953,7 @@ export class PlayerActionService {
         this.simulationService._logTransaction('intel', -cost, 'Purchased market intel');
         this.gameState.intel.available[currentLocationId] = false;
 
-        const otherMarkets = DB.MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLocationIds.includes(m.id));
+        const otherMarkets = DB.MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLicenseIds.includes(m.id));
         if (otherMarkets.length === 0) return;
 
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];

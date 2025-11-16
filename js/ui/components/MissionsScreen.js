@@ -5,6 +5,9 @@
  * available missions for the player.
  */
 import { DB } from '../../data/database.js';
+// --- VIRTUAL WORKBENCH: IMPORT formatCredits ---
+import { formatCredits } from '../../utils.js';
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * Renders the entire Missions screen UI.
@@ -32,10 +35,13 @@ export function renderMissionsScreen(gameState, missionService) {
         }
 
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        
+        // --- VIRTUAL WORKBENCH START: Phase 7 ---
         const rewardText = mission.rewards.map(r => {
-            if(r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+            if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
             return r.type.toUpperCase();
         }).join(', ');
+        // --- VIRTUAL WORKBENCH END: Phase 7 ---
 
         return `
             <div class="mission-card sci-fi-frame ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">

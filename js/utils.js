@@ -53,17 +53,23 @@ export function formatCredits(amount, withSymbol = true) {
     const sign = isNegative ? '-' : '';
 
     let formattedNumber;
-    if (num >= 1e12) {
-        formattedNumber = `${(num / 1e12).toFixed(2)}T`;
+    // --- VIRTUAL WORKBENCH START: Phase 1 (Universal Abbreviation) ---
+    if (num >= 1e18) { // Numbers >= 1 Quintillion
+        formattedNumber = `${(num).toExponential(1)}`;
+    } else if (num >= 1e15) { // Numbers >= 1 Quadrillion
+        formattedNumber = `${parseFloat((num / 1e15).toFixed(2)).toString()}Q`;
+    } else if (num >= 1e12) {
+        formattedNumber = `${parseFloat((num / 1e12).toFixed(2)).toString()}T`;
     } else if (num >= 1e9) {
-        formattedNumber = `${(num / 1e9).toFixed(2)}B`;
+        formattedNumber = `${parseFloat((num / 1e9).toFixed(2)).toString()}B`;
     } else if (num >= 1e6) {
-        formattedNumber = `${(num / 1e6).toFixed(2)}M`;
+        formattedNumber = `${parseFloat((num / 1e6).toFixed(2)).toString()}M`;
     } else if (num >= 1e3) {
-        formattedNumber = `${(num / 1e3).toFixed(1)}k`;
+        formattedNumber = `${parseFloat((num / 1e3).toFixed(1)).toString()}k`;
     } else {
         formattedNumber = num.toLocaleString();
     }
+    // --- VIRTUAL WORKBENCH END: Phase 1 (Universal Abbreviation) ---
 
     return `${prefix}${sign}${formattedNumber}`;
 }

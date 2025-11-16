@@ -23,7 +23,7 @@
 .mission-reward {
     font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
     font-size: 0.9rem;
-    color: #facc15;
+    /* color: #facc15; */ /* <-- VIRTUAL WORKBENCH: Phase 7 */
     text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
     font-weight: 800;
 }

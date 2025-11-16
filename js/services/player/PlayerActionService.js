@@ -266,8 +266,7 @@ export class PlayerActionService {
                 this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
                 return false;
             }
-          
-         
+            
             const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             this.gameState.player.credits += salePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
@@ -381,11 +380,11 @@ export class PlayerActionService {
         const debtAmount = player.debt;
         player.credits -= debtAmount;
 
-        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
@@ -418,11 +417,11 @@ export class PlayerActionService {
         
         player.credits += loanData.amount;
 
-        // --- VIRTUAL WORKBENCH: ADDED FLOATING TEXT (Point C) ---
+        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`+${formatCredits(loanData.amount, false)}`, event.clientX, event.clientY, '#34d399'); // Green
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.simulationService._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
@@ -433,7 +432,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
         // Added glowing classes and removed font-roboto-mono for consistency
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(loanData.fee)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
@@ -480,7 +479,7 @@ export class PlayerActionService {
         this.simulationService._logTransaction('intel', -cost, 'Purchased market intel');
         this.gameState.intel.available[currentLocationId] = false;
 
-        const otherMarkets = DB.MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLocationIds.includes(m.id));
+        const otherMarkets = DB.MARKETS.filter(m => m.id !== currentLocationId && player.unlockedLicenseIds.includes(m.id));
         if (otherMarkets.length === 0) return;
 
         const targetMarket = otherMarkets[Math.floor(Math.random() * otherMarkets.length)];

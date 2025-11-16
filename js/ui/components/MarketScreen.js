@@ -85,10 +85,12 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
         buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
         
+        // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
         cardContentHtml = `
             <div class="max-view-content">
                 <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
                 <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
+                
                 <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
                 
                 <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
@@ -105,6 +107,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
             </div>
         `;
+        // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
 
     } else {
         // --- [[START]] MODIFIED (locked) card content ---

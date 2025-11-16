@@ -116,21 +116,21 @@
 /* --- END VIRTUAL WORKBENCH --- */
 
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) --- */
+/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) & Phase 2 --- */
 /* Muted destructive button */
 .btn-module-destructive {
     /* Muted red */
-    background-color: #991b1b; /* red-800 */
-    border-color: #b91c1c; /* red-700 */
+    background-color: #7f1d1d; /* red-900 */
+    border-color: #991b1b; /* red-800 */
     color: #fecaca; /* red-200 */
 }
 
 .btn-module-destructive:hover:not(:disabled) {
-    background-color: #b91c1c; /* red-700 */
+    background-color: #991b1b; /* red-800 */
     border-color: #dc2626; /* red-600 */
     color: #ffffff;
 }
-/* --- END VIRTUAL WORKBENCH --- */
+/* --- END VIRTUAL WORKBENCH & Phase 2 --- */
 
 
 /* --- VIRTUAL WORKBENCH: ADJUST LOG PANEL STYLING --- */

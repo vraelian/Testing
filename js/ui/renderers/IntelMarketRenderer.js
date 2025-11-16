@@ -19,7 +19,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
-}
+    }
 
     /**
      * Renders the intel packet buttons into the provided container.
@@ -55,8 +55,7 @@ export class IntelMarketRenderer {
         const isLocked = activeIntelDeal !== null;
 
         if (combinedList.length === 0) {
-            containerElement.innerHTML 
-= `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
             return;
         }
 
@@ -65,7 +64,7 @@ export class IntelMarketRenderer {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-          const price = this.intelService.calculateIntelPrice(packet);
+                const price = this.intelService.calculateIntelPrice(packet);
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');
@@ -77,7 +76,7 @@ export class IntelMarketRenderer {
      * Renders a button for a previously purchased intel packet.
      * @param {object} packet - The intelPacket object.
      * @returns {string} HTML for the "View Intel" button.
-* @private
+     * @private
      * @JSDoc
      */
     _renderPurchasedButton(packet) {
@@ -102,7 +101,8 @@ export class IntelMarketRenderer {
         return `
             <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
-             data-location-id="${packet.locationId}"> ${dealLocationName} - View Intel
+                    data-location-id="${packet.locationId}"> 
+                ${dealLocationName} - View Intel
             </button>`;
     }
 
@@ -111,8 +111,7 @@ export class IntelMarketRenderer {
      * @param {object} packet - The intelPacket object.
      * @param {number} price - The dynamically calculated price.
      * @param {boolean} isLocked - Whether the Intel Market is locked by an active deal.
-     * @returns {string} HTML 
-for the "Purchase" button.
+     * @returns {string} HTML for the "Purchase" button.
      * @private
      * @JSDoc
      */
@@ -125,14 +124,21 @@ for the "Purchase" button.
         const disabledAttr = isLocked ? 'disabled' : '';
         const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel for a deal at ${dealLocationName}`;
         
+        // --- VIRTUAL WORKBENCH START: Phase 3 ---
+        // Conditionally apply pulsing class only if not locked
+        const priceHtml = isLocked
+            ? formatCredits(price, true) // Plain text (with symbol) for disabled button
+            : `<span class="credits-text-pulsing">${formatCredits(price, true)}</span>`; // Pulsing class for active button
+
         return `
             <button class="btn btn-intel" 
-   data-action="show_intel_offer" 
+                    data-action="show_intel_offer" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
-        ${disabledAttr}>
-                ${dealLocationName} ⌬ ${price.toLocaleString()}
+                    ${disabledAttr}>
+                ${dealLocationName} ${priceHtml}
             </button>`;
+        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     }
 }
