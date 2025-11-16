@@ -8,7 +8,7 @@ import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 // VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
-import { playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 // END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -42,7 +42,8 @@ export class SimulationService {
         this.intelService = null; // Will be instantiated below
         // --- END VIRTUAL WORKBENCH ---
 
-        // Instantiate all services
+  
+         // Instantiate all services
         this.marketService = new MarketService(gameState);
         // MODIFIED: Pass newsTickerService
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
@@ -104,6 +105,7 @@ export class SimulationService {
      * @param {Event} event
      */
     async buyShip(shipId, event) {
+        
         // 1. Validate
         const validation = this.playerActionService.validateBuyShip(shipId);
         if (!validation.success) {
@@ -190,7 +192,8 @@ export class SimulationService {
 
         // --- NEW SEQUENCE ---
 
-        // 2. Find the button that was clicked
+   
+         // 2. Find the button that was clicked
         const boardButton = event.target.closest('.action-button');
         
         // 3. (NEW) Find the sibling "Sell" button and disable it immediately
@@ -202,7 +205,8 @@ export class SimulationService {
         }
 
         // 4. Trigger the BLOCKING 1-second glow on the "Board" button
-        if (boardButton) {
+  
+         if (boardButton) {
             // This is the new BLOCKING helper that waits for the animation to end
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
@@ -214,7 +218,8 @@ export class SimulationService {
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
         }
-        
+   
+      
         // 7. Run the BLOCKING card animation *LAST*
         // We must wait one frame for the UI to re-render *before* we can
         // find the element we want to animate.
@@ -244,7 +249,8 @@ export class SimulationService {
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
-    // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
+ 
+     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
     // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
     // --- END VIRTUAL WORKBENCH ---
 
@@ -290,7 +296,7 @@ export class SimulationService {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         this.gameState.setState({ 
             activeNav: navId, 
-            activeScreen: screenId,
+             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
 
@@ -304,7 +310,8 @@ export class SimulationService {
         }
     }
 
-    // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
+   
+     // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
     /**
      * Sets the active tab on the Intel screen.
      * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
@@ -467,7 +474,7 @@ export class SimulationService {
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
-            entry.description.endsWith(` ${goodName}`) &&
+             entry.description.endsWith(` ${goodName}`) &&
             ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0))
         );
         if (existingEntry) {
@@ -479,7 +486,7 @@ export class SimulationService {
                 existingEntry.description = `${actionWord} ${currentQty + quantity}x ${goodName}`;
             }
         } else {
-            this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
+             this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
         }
     }
 
@@ -507,13 +514,18 @@ export class SimulationService {
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
-                this.gameState.player.credits += reward.amount;
+              
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+                // --- END VIRTUAL WORKBENCH ---
+
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
             if (reward.type === 'license') {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
-                    this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                 
+                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
@@ -533,7 +545,8 @@ export class SimulationService {
         mission.providedCargo.forEach(cargo => {
             if (!inventory[cargo.goodId]) {
                 inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
-            }
+         
+             }
             inventory[cargo.goodId].quantity += cargo.quantity;
             this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
         });

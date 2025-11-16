@@ -55,7 +55,7 @@ export class DebugService {
             selectedAgeEvent: DB.AGE_EVENTS[0].id,
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
-            botStrategy: 'MIXED', // [GEMINI] ADDED
+             botStrategy: 'MIXED', // [GEMINI] ADDED
             botProgress: 'Idle',
             logLevel: 'INFO',
             // Tutorial Tuner State
@@ -75,7 +75,7 @@ export class DebugService {
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
 
         // References to GUI controllers and folders for enabling/disabling
-        this.tutorialPositionalControllers = {};
+         this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -157,7 +157,10 @@ ${logHistory}
         this.gameState.tutorials.activeStepId = null;
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
 
-        this.gameState.player.credits = 1000000000000;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
+        // --- END VIRTUAL WORKBENCH ---
+
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
         this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
@@ -173,7 +176,7 @@ ${logHistory}
     }
 
     simpleStart() {
-        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+         this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
@@ -213,7 +216,7 @@ ${logHistory}
 
     // --- NEW SHIP-SPECIFIC HANDLERS ---
     deductHull(amount) {
-        const ship = this.simulationService._getActiveShip();
+         const ship = this.simulationService._getActiveShip();
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = Math.max(0, shipState.health - amount);
@@ -255,7 +258,7 @@ ${logHistory}
     restoreFuel() {
         const ship = this.simulationService._getActiveShip();
         if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
+             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = ship.maxFuel;
             this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
             this.gameState.setState({});
@@ -275,7 +278,7 @@ ${logHistory}
     }
 
     fillWithCybernetics() {
-        const ship = this.simulationService._getActiveShip();
+         const ship = this.simulationService._getActiveShip();
         const inventory = this.simulationService._getActiveInventory();
         if (ship && inventory) {
             this.removeAllCargo();
@@ -292,7 +295,7 @@ ${logHistory}
     grantAllItems() {
         const inventory = this.simulationService._getActiveInventory();
         if (!inventory) {
-            this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
+             this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
             return;
         }
         DB.COMMODITIES.forEach(commodity => {
@@ -301,7 +304,7 @@ ${logHistory}
             } else {
                 inventory[commodity.id] = { quantity: 1, avgCost: 0 };
             }
-        });
+         });
         this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
         this.gameState.setState({});
     }
@@ -329,9 +332,11 @@ ${logHistory}
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
-            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
+             skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
-                this.gameState.player.credits += this.debugState.creditsToAdd;
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
+                // --- END VIRTUAL WORKBENCH ---
                 this.simulationService.timeService._checkMilestones();
                 this.gameState.setState({});
             }},
@@ -340,7 +345,7 @@ ${logHistory}
                 this.simulationService._checkGameOverConditions();
                 this.gameState.setState({});
             }},
-            payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
+             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
                     this.gameState.currentLocationId = this.debugState.selectedLocation;
@@ -356,14 +361,14 @@ ${logHistory}
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
                     if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
+                         this.simulationService.addShipToHangar(shipId);
                     }
                 });
                 this.gameState.setState({});
             }},
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
-                this.simulationService.marketService.replenishMarketInventory();
+                 this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
             // --- VIRTUAL WORKBENCH REMOVAL ---
@@ -372,7 +377,7 @@ ${logHistory}
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
                 const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                 if (dest) {
-                    this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                     this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
                 }
             }},
             triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
@@ -381,21 +386,21 @@ ${logHistory}
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
-            triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
+             triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
                     if(this.gameState.missions.activeMissionId) {
                         this.simulationService.missionService.abandonMission();
                     }
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
                 }
-            }},
+             }},
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
                 // [GEMINI] MODIFIED: Pass strategy from debugState
                 const config = {
                     daysToRun: this.debugState.botDaysToRun,
-                    strategy: this.debugState.botStrategy 
+                     strategy: this.debugState.botStrategy 
                 };
                 
                 this.bot.runSimulation(config, (current, end) => {
@@ -409,7 +414,7 @@ ${logHistory}
             deductHull20: { name: 'Deduct 20 Hull', type: 'button', handler: () => this.deductHull(20) },
             restoreHull: { name: 'Restore Hull', type: 'button', handler: () => this.restoreHull() },
             destroyShip: { name: 'Destroy Current Ship', type: 'button', handler: () => this.destroyShip() },
-            deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
+             deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
             restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
@@ -420,7 +425,7 @@ ${logHistory}
             // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
             presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
             presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
-            presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
+             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
             presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
             presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
             presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
@@ -444,7 +449,7 @@ ${logHistory}
             day: document.getElementById('diag-day'),
             navScreen: document.getElementById('diag-nav-screen'),
             tutorialBatch: document.getElementById('diag-tutorial-batch'),
-            tutorialStep: document.getElementById('diag-tutorial-step'),
+             tutorialStep: document.getElementById('diag-tutorial-step'),
         };
     }
 
@@ -629,7 +634,7 @@ ${logHistory}
             } else {
                  this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
             }
-        } else {
+         } else {
             // Placeholder: Need to define offset presets if required for element anchors
             this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
             // Example:
@@ -672,7 +677,7 @@ ${logHistory}
          if (this.tutorialPositionalControllers.presetFolder) {
               this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
          }
-    }
+     }
 
 
     /**
@@ -726,7 +731,7 @@ ${logHistory}
         }
 
         // Update visibility of controls AFTER setting state
-        this._updateTutorialControlVisibility(isOverlayAnchor);
+         this._updateTutorialControlVisibility(isOverlayAnchor);
 
         // Manually update displays for all relevant controllers
         // This ensures sliders reflect the loaded step's values
@@ -812,7 +817,7 @@ size: { width: ${widthVal}, height: ${heightVal} },` : '';
              // Make sure anchorElement is 'body'
              positionString = `
 anchorElement: 'body',`; // Explicitly set anchor
-            // Only add percentages if not default (50, 50)
+             // Only add percentages if not default (50, 50)
             if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
                  positionString += `
 positionX: ${this.debugState.ttPercentX},
@@ -837,7 +842,7 @@ popperOptions: {
         }
 
         // Construct final code, removing potential trailing comma before a closing brace
-        let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
+         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
         code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
 
         this.debugState.ttGeneratedCode = code;

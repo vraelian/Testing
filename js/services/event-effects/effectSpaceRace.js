@@ -22,7 +22,9 @@ export function resolveSpaceRace(gameState, simulationService, effectData, outco
 
     if (Math.random() < winChance) {
         // Player wins the race.
-        gameState.player.credits += wager;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + wager);
+        // --- END VIRTUAL WORKBENCH ---
         simulationService._logTransaction('event', wager, 'Won space race wager');
         outcome.description = `Your Class ${ship.class} ship wins! You gain <span class="hl-green">${formatCredits(wager)}</span>.`;
     } else {

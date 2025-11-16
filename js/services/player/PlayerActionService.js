@@ -52,7 +52,8 @@ export class PlayerActionService {
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-        const activeShip = this.simulationService._getActiveShip();
+   
+     const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
@@ -65,7 +66,8 @@ export class PlayerActionService {
         inventoryItem.quantity -= quantity;
 
         // --- VIRTUAL WORKBENCH: REFACTOR ---
-        // Check for depletion bonus logic
+      
+     // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
             // Delegate depletion check to MarketService
             this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
@@ -85,7 +87,6 @@ export class PlayerActionService {
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
         this.gameState.setState({});
-
         return true;
     }
 
@@ -122,7 +123,11 @@ export class PlayerActionService {
         }
 
         totalSaleValue = Math.floor(totalSaleValue);
-        this.gameState.player.credits += totalSaleValue;
+        
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + totalSaleValue);
+        // --- END VIRTUAL WORKBENCH ---
+
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
 
@@ -148,7 +153,7 @@ export class PlayerActionService {
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
      * @JSDoc
      */
-    validateBuyShip(shipId) {
+     validateBuyShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
         }
@@ -158,7 +163,8 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist in the database." };
         }
         if (this.gameState.player.credits < ship.price) {
-            return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
+  
+             return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
         }
         return { success: true };
     }
@@ -231,7 +237,7 @@ export class PlayerActionService {
         }
         const state = this.gameState.getState(); // Get fresh state for validation
         if (state.player.ownedShipIds.length <= 1) {
-            return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
+             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
         }
         if (shipId === state.player.activeShipId) {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
@@ -239,7 +245,8 @@ export class PlayerActionService {
         if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
             return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
         }
-        const ship = DB.SHIPS[shipId];
+    
+     const ship = DB.SHIPS[shipId];
         if (!ship) {
             this.logger.error('PlayerActionService', `validateSellShip called with invalid shipId: ${shipId}`);
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist." };
@@ -267,8 +274,13 @@ export class PlayerActionService {
                 return false;
             }
             
-            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
-            this.gameState.player.credits += salePrice;
+         
+     const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            
+            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+            this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
+            // --- END VIRTUAL WORKBENCH ---
+
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
             if (event) {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
@@ -382,7 +394,8 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
-            this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
+      
+             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
         }
         // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
@@ -415,7 +428,9 @@ export class PlayerActionService {
         player.credits -= loanData.fee;
         this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
-        player.credits += loanData.amount;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
+        // --- END VIRTUAL WORKBENCH ---
 
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
@@ -432,6 +447,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
         // Added glowing classes and removed font-roboto-mono for consistency
+ 
         const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
@@ -452,7 +468,14 @@ export class PlayerActionService {
         if (!license) return { success: false, error: 'INVALID_LICENSE' };
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
-        if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // This is the check that was failing. It will now correctly compare
+        // a (potentially huge) number against a number.
+        if (player.credits < license.cost) {
+            return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
@@ -487,7 +510,8 @@ export class PlayerActionService {
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
 
         if (commodity) {
-            this.gameState.intel.active = {
+      
+             this.gameState.intel.active = {
                 targetMarketId: targetMarket.id,
                 commodityId: commodity.id,
                 type: 'demand',
@@ -495,7 +519,8 @@ export class PlayerActionService {
                 endDay: day + 100
             };
         }
-        this.gameState.setState({});
+  
+         this.gameState.setState({});
     }
 
     /**
@@ -509,7 +534,8 @@ export class PlayerActionService {
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+    
+             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
 
@@ -524,7 +550,8 @@ export class PlayerActionService {
         if (refuelBtn) {
             const rect = refuelBtn.getBoundingClientRect();
             // Calculate center X, top Y for the text origin
-            const x = rect.left + rect.width / 2;
+        
+             const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
@@ -566,7 +593,8 @@ export class PlayerActionService {
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-        // --- END ADDED ---
+      
+       // --- END ADDED ---
 
         this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;

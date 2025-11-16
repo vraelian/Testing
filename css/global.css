@@ -1,6 +1,7 @@
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font definitions,
+ * @fileoverview This file contains the global styles, font 
+definitions,
  * utility classes, and base layout for the entire application.
  */
 
@@ -20,7 +21,8 @@
 
 @font-face {
   font-family: 'Zorque'; /* Name for the Zorque font */
-  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file */
+  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file 
+*/
   font-weight: normal;
   font-style: normal;
 }
@@ -59,7 +61,8 @@ body {
     /* height: 100vh; */ /* REMOVED */
     /* Fallback */
     /* height: var(--app-height); */ /* REMOVED: This was the JS override */
-    height: 100%; /* MODIFIED: Make body fill 100% of html */
+ 
+   height: 100%; /* MODIFIED: Make body fill 100% of html */
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Removed flex properties that were causing the layout bug */
@@ -89,7 +92,7 @@ body {
     border-radius: 50%;
     font-size: 1.2rem;
     font-family: 'Orbitron', sans-serif;
-    background-color: #4a5568;
+background-color: #4a5568;
     color: #1a202c;
     border: 2px solid #2d3748;
     z-index: 100;
@@ -130,7 +133,8 @@ body {
 
 
 .main-content-wrapper {
-    flex-grow: 1;
+   
+ flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
@@ -172,7 +176,8 @@ display: flex;
     user-select: none;
 }
 
-.btn-sm {
+.btn-sm 
+{
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
 }
@@ -221,7 +226,8 @@ background-color: #32405a;
     }
 
     to {
-        opacity: 1;
+    
+    opacity: 1;
         transform: scale(1);
     }
 }
@@ -257,7 +263,8 @@ opacity: 1;
 
      0%,
     100% {
-        box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 
+0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
         border-color: #10b981;
     }
 
@@ -283,7 +290,8 @@ opacity: 1;
 }
 
 @keyframes credits-pulse-glow {
-    0% {
+    0% 
+{
         text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
     }
 
@@ -303,7 +311,8 @@ opacity: 1;
         text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
     }
     50% {
-        text-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
+        text-shadow: 0 0 10px 
+#ef4444, 0 0 16px #ef4444;
     }
     100% {
      
@@ -319,7 +328,8 @@ opacity: 1;
         text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #e5e7eb, 0 0 8px #e5e7eb;
     }
     50% {
-        /* Static black outline + bright white glow */
+     
+   /* Static black outline + bright white glow */
         text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffffff, 0 0 16px #ffffff;
     }
 }
@@ -339,7 +349,8 @@ opacity: 1;
     }
 }
 
-/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' BUTTON GLOW --- */
+/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' 
+BUTTON GLOW --- */
 @keyframes pulse-cyan-button-glow {
     0%, 100% {
         background-color: var(--ot-cyan-base, #22d3ee);
@@ -350,6 +361,17 @@ opacity: 1;
         background-color: var(--ot-cyan-glow, #67e8f9);
         box-shadow: 0 0 16px var(--ot-cyan-glow, #67e8f9), 0 0 24px var(--ot-cyan-glow, #67e8f9);
         transform: scale(1.05);
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADDED GOLD GLOW (Phase 1) --- */
+@keyframes pulse-gold-glow {
+    0%, 100% {
+        text-shadow: 0 0 5px #fde047, 0 0 10px #fde047;
+    }
+    50% {
+        text-shadow: 0 0 12px #fef08a, 0 0 20px #fef08a;
     }
 }
 /* --- END VIRTUAL WORKBENCH --- */
@@ -369,7 +391,8 @@ opacity: 1;
 
 @keyframes shimmer {
  
-   0% {
+ 
+  0% {
         background-position: -400px 0;
     }
 
@@ -397,7 +420,8 @@ opacity: 1;
 
     0%,
     100% {
-        box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+   
+     box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
     50% {
@@ -423,7 +447,8 @@ opacity: 1;
         background-position: -600px 0;
 }
 
-    100% {
+    100% 
+{
         background-position: 600px 0;
     }
 }
@@ -461,8 +486,16 @@ opacity: 1;
 
 /* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
 .text-glow-red {
-    color: #f87171;
+  
+  color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADDED GOLD GLOW CLASS (Phase 1) --- */
+.text-glow-gold {
+    color: #fde047; /* Match .hl color */
+    animation: pulse-gold-glow 2.5s infinite ease-in-out;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -501,7 +534,8 @@ opacity: 1;
 }
 
 .text-outline {
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 
+0 #000, 1px 1px 0 #000;
 }
 
 #save-toast,
@@ -553,7 +587,7 @@ opacity: 1;
     font-family: 'Exo 2', sans-serif;
     left: 105%;
     top: 50%;
-    transform: translateY(-50%);
+transform: translateY(-50%);
 }
 
 .loan-btn-tooltip[data-tooltip]:hover::after {
@@ -603,7 +637,8 @@ opacity: 1;
 
 .panel-border::before,
 .panel-border::after {
-    content: '';
+   
+ content: '';
     position: absolute;
     width: 15px;
     height: 15px;
@@ -647,7 +682,8 @@ opacity: 1;
     box-sizing: border-box;
 }
 
-.base-concept {
+.base-concept 
+{
     width: 100%;
     height: 100%;
     display: flex;
@@ -698,7 +734,8 @@ opacity: 1;
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 
+0 6px rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -735,7 +772,8 @@ opacity: 1;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 
+100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -771,7 +809,8 @@ opacity: 1;
 @keyframes dematerialize-card {
     0% {
   
-      opacity: 1;
+  
+    opacity: 1;
         transform: scale(1);
         clip-path: inset(0% 0% 0% 0%);
     }
@@ -790,7 +829,8 @@ opacity: 1;
 }
 
 /*
- * High-performance glow animation for the card's ::before pseudo-element.
+ * High-performance 
+glow animation for the card's ::before pseudo-element.
  * Animates opacity and transform to create the "apex" glow.
 */
 @keyframes dematerialize-glow {
@@ -807,7 +847,8 @@ opacity: 1;
     }
     100% {
         opacity: 0;
-        /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
+        /* VIRTUAL 
+WORKBENCH: MODIFICATION (Request B) */
         transform: scale(3.0); /* Was 2.0 */
     }
 }
@@ -830,7 +871,8 @@ card.
 .is-boarding::before {
     /*
      * Simultaneously applies the glow animation
-     * to the pseudo-element created in hangar-screen.css.
+   
+  * to the pseudo-element created in hangar-screen.css.
     */
     /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
     animation: dematerialize-glow 2.5s ease-in-out forwards; /* Was 1.5s */

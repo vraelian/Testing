@@ -23,7 +23,9 @@ const effectHandlers = {
 
     // --- Standard, Reusable Effect Handlers ---
     'credits': (gameState, simulationService, effect) => {
-        gameState.player.credits += effect.value;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + effect.value);
+        // --- END VIRTUAL WORKBENCH ---
         simulationService._logTransaction('event', effect.value, 'Received credits from event');
     },
     'fuel': (gameState, simulationService, effect) => {
@@ -87,13 +89,17 @@ const effectHandlers = {
         if (heldCommodities.length > 0) {
             const [id, item] = heldCommodities[Math.floor(Math.random() * heldCommodities.length)];
             const saleValue = gameState.market.galacticAverages[id] * effect.value * item.quantity;
-            gameState.player.credits += saleValue;
+            
+            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+            gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + saleValue);
+            // --- END VIRTUAL WORKBENCH ---
+
             simulationService._logTransaction('trade', saleValue, 'Emergency supply drop sale');
             item.quantity = 0;
         }
     },
     'set_new_random_destination': (gameState, simulationService, effect) => {
-        const otherMarkets = DB.MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
+         const otherMarkets = DB.MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
         if(otherMarkets.length > 0) {
             gameState.pendingTravel.destinationId = otherMarkets[Math.floor(Math.random() * otherMarkets.length)].id;
         }

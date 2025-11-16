@@ -59,6 +59,7 @@ export class IntroService {
                     // This callback runs after the "Invalid Signature" modal is closed.
                     // We need to re-show the signature modal without advancing the step.
                     this.gameState.player.introStep--; // Decrement to counteract the increment in _showNextModal
+    
                     this._showNextModal();
                 });
             } else {
@@ -69,7 +70,7 @@ export class IntroService {
     
                 this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
-                    name: sanitizedPlayerName
+                     name: sanitizedPlayerName
                 });
                 this._startProcessingSequence();
             }
@@ -85,7 +86,8 @@ export class IntroService {
             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
         } else if (completedBatchId === 'intro_finance') {
-            this._end();
+ 
+             this._end();
         }
     }
 
@@ -185,7 +187,10 @@ export class IntroService {
                 
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
-                this.gameState.player.credits += 25000;
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
+                // --- END VIRTUAL WORKBENCH ---
+
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
@@ -200,6 +205,7 @@ export class IntroService {
                 contentClass: 'text-center',
                 customSetup: (modal, closeHandler) => {
                     modal.querySelector('.modal-content').classList.add('modal-theme-admin');
+     
                     const btnContainer = modal.querySelector('#event-button-container');
 
                     btnContainer.innerHTML = '';
@@ -210,7 +216,8 @@ export class IntroService {
                         hangarTransition(event);
                         closeHandler();
                     };
-                    btnContainer.appendChild(button);
+                  
+                     btnContainer.appendChild(button);
                 }
             });
         };
@@ -232,6 +239,7 @@ export class IntroService {
         this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
+     
              this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
              this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });

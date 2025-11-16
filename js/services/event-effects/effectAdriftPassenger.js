@@ -38,7 +38,8 @@ export function resolveAdriftPassenger(gameState, simulationService, outcome) {
         inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
     }
 
-    // Determine the reward based on player's current state.
+  
+     // Determine the reward based on player's current state.
     if (calculateInventoryUsed(inventory) + 40 <= ship.cargoCapacity) {
         inventory[COMMODITY_IDS.CYBERNETICS].quantity += 40;
         return { key: 'reward_cybernetics' };
@@ -49,7 +50,11 @@ export function resolveAdriftPassenger(gameState, simulationService, outcome) {
         return { key: 'reward_debt_paid', amount: formatCredits(paid) };
     } else {
         const credits = Math.floor(gameState.player.credits * 0.05);
-        gameState.player.credits += credits;
+        
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + credits);
+        // --- END VIRTUAL WORKBENCH ---
+
         simulationService._logTransaction('event', credits, 'Passenger payment');
         return { key: 'reward_credits', amount: formatCredits(credits) };
     }
