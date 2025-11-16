@@ -102,7 +102,7 @@ export class IntelService {
         
         const revealedTier = state.player.revealedTier;
         const unlockedCommodities = this.db.COMMODITIES
-            .filter(c => c.tier <= revealedTier)
+             .filter(c => c.tier <= revealedTier)
             .map(c => c.id);
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
@@ -143,7 +143,7 @@ export class IntelService {
         let messageKey;
 
         if (availableKeys.length === 0) {
-            this.logger.warn('IntelService', `All message keys for ${saleLocationId} are in use. Reusing a key to generate packet.`);
+             this.logger.warn('IntelService', `All message keys for ${saleLocationId} are in use. Reusing a key to generate packet.`);
             messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)];
         } else {
             messageKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
@@ -220,6 +220,10 @@ export class IntelService {
         
         // 5. Mutate the live packet object.
         packet.isPurchased = true;
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Save the price that was paid to the packet object.
+        packet.pricePaid = calculatedPrice;
+        // --- END BUG FIX ---
 
         this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
 

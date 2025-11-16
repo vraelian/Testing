@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.60] - 2025-11-15
+-  credit text styling alignment
+
 ## [32.50] - 2025-11-14
 -  ship card polish
 

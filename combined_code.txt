@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 32.50</title>
+    <title>Orbital Trading 32.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 32.50</p>
+            <p>Version 32.60</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -17909,7 +17909,7 @@ export class IntelService {
         
         const revealedTier = state.player.revealedTier;
         const unlockedCommodities = this.db.COMMODITIES
-            .filter(c => c.tier <= revealedTier)
+             .filter(c => c.tier <= revealedTier)
             .map(c => c.id);
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
@@ -17950,7 +17950,7 @@ export class IntelService {
         let messageKey;
 
         if (availableKeys.length === 0) {
-            this.logger.warn('IntelService', `All message keys for ${saleLocationId} are in use. Reusing a key to generate packet.`);
+             this.logger.warn('IntelService', `All message keys for ${saleLocationId} are in use. Reusing a key to generate packet.`);
             messageKey = messageKeys[Math.floor(Math.random() * messageKeys.length)];
         } else {
             messageKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
@@ -18027,6 +18027,10 @@ export class IntelService {
         
         // 5. Mutate the live packet object.
         packet.isPurchased = true;
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Save the price that was paid to the packet object.
+        packet.pricePaid = calculatedPrice;
+        // --- END BUG FIX ---
 
         this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
 
@@ -20052,6 +20056,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [32.60] - 2025-11-15
+-  credit text styling alignment
 
 ## [32.50] - 2025-11-14
 -  ship card polish
