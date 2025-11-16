@@ -1,5 +1,5 @@
 Orbital Trading - GameState Schema
-Version: 2.2 Source: js/services/GameState.js (see startNewGame method)
+Version: 2.3 Source: js/services/GameState.js (see startNewGame method)
 
 This document defines the structure of the central GameState object, which is instantiated in main.js and managed by GameState.js. It is the "source of truth" for all dynamic, mutable data in the application.
 
@@ -25,17 +25,13 @@ lastActiveScreen: {object} - A map storing the last active screen for each main 
 
 [NAV_ID: string]: {string} - The SCREEN_ID to return to (e.g., ship: "map").
 
-pendingTravel: {object | null} - If not null, contains details of the player's active travel.
+pendingTravel: {object | null} - If not null, contains details of a travel action interrupted by an event.
 
-fromId: {string} - The LOCATION_ID of the departure location.
-
-toId: {string} - The LOCATION_ID of the destination.
-
-departureDay: {number} - The game day on which travel started.
-
-arrivalDay: {number} - The game day on which travel will end.
-
-duration: {number} - The total number of days for the trip.
+destinationId: {string} - The LOCATION_ID the player was traveling to.
+eventHullDamagePercent: {number} - (Optional) Hull damage from an event, applied on arrival.
+travelTimeAdd: {number} - (Optional) Flat number of days added to the trip by an event.
+travelTimeAddPercent: {number} - (Optional) Multiplier to increase travel time from an event.
+setTravelTime: {number} - (Optional) A new, fixed travel time set by an event.
 
 player: {object} - Contains all data specific to the player.
 
@@ -47,7 +43,7 @@ playerAge: {number} - The player's current age.
 
 lastBirthdayYear: {number} - The in-game year of the player's last birthday.
 
-birthdayProfitBonus: {number} - A temporary credit bonus awarded on their birthday.
+birthdayProfitBonus: {number} - A permanent, cumulative profit bonus that increases each birthday.
 
 introStep: {number} - A counter tracking progress through the intro sequence.
 
@@ -81,7 +77,7 @@ amount: {number} - Credits value (positive for income, negative for expense).
 
 description: {string} - Human-readable log (e.g., "Bought 10 Water").
 
-activePerks: {object} - (Currently unused) A map of active player perks.
+activePerks: {object} - A map of active player perks (e.g., `PERK_IDS.NAVIGATOR: true`).
 
 seenEvents: {Array<string>} - A list of EVENT_IDs the player has already encountered.
 
@@ -175,21 +171,25 @@ intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by lo
 
 {intelPacket}:
 id: {string} - Unique packet ID.
-locationId: {string} - The location of the deal.
+locationId: {string} - The location where the packet is SOLD.
+dealLocationId: {string} - The location where the DEAL is.
 commodityId: {string} - The commodity of the deal.
 discountPercent: {float} - The hidden discount (e.g., 0.40).
-durationDays: {integer} - The hidden duration.
+durationDays: {integer} - The hidden duration (used for pricing).
 valueMultiplier: {float} - Scaling factor for price calculation.
 messageKey: {string} - Key to look up text in `intelContent.js`.
 isPurchased: {boolean} - State flag, `false` by default.
+pricePaid: {number} - (Set on purchase) The credit amount the player paid.
+expiryDay: {number} - (Set on purchase) The game day the deal expires.
 
 activeIntelDeal: {object | null} - Stores the single active, purchased deal. If `null`, the Intel Market is "unlocked".
 
-locationId: {string} - The location where the deal is active.
+locationId: {string} - The location where the deal is active (dealLocationId from packet).
 commodityId: {string} - The commodity affected by the deal.
 overridePrice: {number} - The pre-calculated, locked-in price for the commodity.
 expiryDay: {number} - The game-day this deal expires.
-sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was sold.
+sourcePacketId: {string} - The ID of the packet that generated this deal.
+sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was purchased.
 
 tutorials: {object} - State of the Tutorial Toast System (TTS).
 
@@ -201,7 +201,7 @@ seenBatchIds: {Array<string>} - A list of tutorial batch IDs the player has alre
 
 skippedTutorialBatches: {Array<string>} - A list of batch IDs the player has explicitly skipped.
 
-navLock: {string | null} - If set, locks the UI to a specific NAV_ID or SCREEN_ID for a tutorial step.
+navLock: {object | null} - If set, locks the UI to a specific NAV_ID or SCREEN_ID (e.g., `{ navId: 'ship', screenId: 'navigation' }`).
 
 missions: {object} - Tracks mission states.
 
@@ -224,3 +224,5 @@ hangarShipyardToggleState: {string} - The active tab on the Hangar screen ("hang
 hangarActiveIndex: {number} - The index of the ship carousel slide in "hangar" mode.
 
 shipyardActiveIndex: {number} - The index of the ship carousel slide in "shipyard" mode.
+
+activeIntelTab: {string} - The active tab on the Intel screen ("codex" or "market").

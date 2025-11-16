@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 32.60</title>
+    <title>Orbital Trading 32.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 32.60</p>
+            <p>Version 32.70</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1218,7 +1218,8 @@
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font definitions,
+ * @fileoverview This file contains the global styles, font 
+definitions,
  * utility classes, and base layout for the entire application.
  */
 
@@ -1238,7 +1239,8 @@
 
 @font-face {
   font-family: 'Zorque'; /* Name for the Zorque font */
-  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file */
+  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file 
+*/
   font-weight: normal;
   font-style: normal;
 }
@@ -1277,7 +1279,8 @@ body {
     /* height: 100vh; */ /* REMOVED */
     /* Fallback */
     /* height: var(--app-height); */ /* REMOVED: This was the JS override */
-    height: 100%; /* MODIFIED: Make body fill 100% of html */
+ 
+   height: 100%; /* MODIFIED: Make body fill 100% of html */
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Removed flex properties that were causing the layout bug */
@@ -1307,7 +1310,7 @@ body {
     border-radius: 50%;
     font-size: 1.2rem;
     font-family: 'Orbitron', sans-serif;
-    background-color: #4a5568;
+background-color: #4a5568;
     color: #1a202c;
     border: 2px solid #2d3748;
     z-index: 100;
@@ -1348,7 +1351,8 @@ body {
 
 
 .main-content-wrapper {
-    flex-grow: 1;
+   
+ flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
@@ -1390,7 +1394,8 @@ display: flex;
     user-select: none;
 }
 
-.btn-sm {
+.btn-sm 
+{
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
 }
@@ -1439,7 +1444,8 @@ background-color: #32405a;
     }
 
     to {
-        opacity: 1;
+    
+    opacity: 1;
         transform: scale(1);
     }
 }
@@ -1475,7 +1481,8 @@ opacity: 1;
 
      0%,
     100% {
-        box-shadow: 0 0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 
+0 10px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.3);
         border-color: #10b981;
     }
 
@@ -1501,7 +1508,8 @@ opacity: 1;
 }
 
 @keyframes credits-pulse-glow {
-    0% {
+    0% 
+{
         text-shadow: 0 0 4px #7dd3fc, 0 0 8px #7dd3fc;
     }
 
@@ -1521,7 +1529,8 @@ opacity: 1;
         text-shadow: 0 0 4px #f87171, 0 0 8px #f87171;
     }
     50% {
-        text-shadow: 0 0 10px #ef4444, 0 0 16px #ef4444;
+        text-shadow: 0 0 10px 
+#ef4444, 0 0 16px #ef4444;
     }
     100% {
      
@@ -1537,7 +1546,8 @@ opacity: 1;
         text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 4px #e5e7eb, 0 0 8px #e5e7eb;
     }
     50% {
-        /* Static black outline + bright white glow */
+     
+   /* Static black outline + bright white glow */
         text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px #ffffff, 0 0 16px #ffffff;
     }
 }
@@ -1557,7 +1567,8 @@ opacity: 1;
     }
 }
 
-/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' BUTTON GLOW --- */
+/* --- VIRTUAL WORKBENCH: ADDED 'BOARD' 
+BUTTON GLOW --- */
 @keyframes pulse-cyan-button-glow {
     0%, 100% {
         background-color: var(--ot-cyan-base, #22d3ee);
@@ -1568,6 +1579,17 @@ opacity: 1;
         background-color: var(--ot-cyan-glow, #67e8f9);
         box-shadow: 0 0 16px var(--ot-cyan-glow, #67e8f9), 0 0 24px var(--ot-cyan-glow, #67e8f9);
         transform: scale(1.05);
+    }
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADDED GOLD GLOW (Phase 1) --- */
+@keyframes pulse-gold-glow {
+    0%, 100% {
+        text-shadow: 0 0 5px #fde047, 0 0 10px #fde047;
+    }
+    50% {
+        text-shadow: 0 0 12px #fef08a, 0 0 20px #fef08a;
     }
 }
 /* --- END VIRTUAL WORKBENCH --- */
@@ -1587,7 +1609,8 @@ opacity: 1;
 
 @keyframes shimmer {
  
-   0% {
+ 
+  0% {
         background-position: -400px 0;
     }
 
@@ -1615,7 +1638,8 @@ opacity: 1;
 
     0%,
     100% {
-        box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
+   
+     box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
     }
 
     50% {
@@ -1641,7 +1665,8 @@ opacity: 1;
         background-position: -600px 0;
 }
 
-    100% {
+    100% 
+{
         background-position: 600px 0;
     }
 }
@@ -1679,8 +1704,16 @@ opacity: 1;
 
 /* --- VIRTUAL WORKBENCH: ADDED RED GLOW CLASS --- */
 .text-glow-red {
-    color: #f87171;
+  
+  color: #f87171;
     animation: pulse-red-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
+/* --- VIRTUAL WORKBENCH: ADDED GOLD GLOW CLASS (Phase 1) --- */
+.text-glow-gold {
+    color: #fde047; /* Match .hl color */
+    animation: pulse-gold-glow 2.5s infinite ease-in-out;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -1719,7 +1752,8 @@ opacity: 1;
 }
 
 .text-outline {
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 
+0 #000, 1px 1px 0 #000;
 }
 
 #save-toast,
@@ -1771,7 +1805,7 @@ opacity: 1;
     font-family: 'Exo 2', sans-serif;
     left: 105%;
     top: 50%;
-    transform: translateY(-50%);
+transform: translateY(-50%);
 }
 
 .loan-btn-tooltip[data-tooltip]:hover::after {
@@ -1821,7 +1855,8 @@ opacity: 1;
 
 .panel-border::before,
 .panel-border::after {
-    content: '';
+   
+ content: '';
     position: absolute;
     width: 15px;
     height: 15px;
@@ -1865,7 +1900,8 @@ opacity: 1;
     box-sizing: border-box;
 }
 
-.base-concept {
+.base-concept 
+{
     width: 100%;
     height: 100%;
     display: flex;
@@ -1916,7 +1952,8 @@ opacity: 1;
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 4px;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 
+0 6px rgba(0, 0, 0, 0.7);
 }
 
 .pt-name {
@@ -1953,7 +1990,8 @@ opacity: 1;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
+    width: 
+100vw;
     height: 100dvh;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1989,7 +2027,8 @@ opacity: 1;
 @keyframes dematerialize-card {
     0% {
   
-      opacity: 1;
+  
+    opacity: 1;
         transform: scale(1);
         clip-path: inset(0% 0% 0% 0%);
     }
@@ -2008,7 +2047,8 @@ opacity: 1;
 }
 
 /*
- * High-performance glow animation for the card's ::before pseudo-element.
+ * High-performance 
+glow animation for the card's ::before pseudo-element.
  * Animates opacity and transform to create the "apex" glow.
 */
 @keyframes dematerialize-glow {
@@ -2025,7 +2065,8 @@ opacity: 1;
     }
     100% {
         opacity: 0;
-        /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
+        /* VIRTUAL 
+WORKBENCH: MODIFICATION (Request B) */
         transform: scale(3.0); /* Was 2.0 */
     }
 }
@@ -2048,7 +2089,8 @@ card.
 .is-boarding::before {
     /*
      * Simultaneously applies the glow animation
-     * to the pseudo-element created in hangar-screen.css.
+   
+  * to the pseudo-element created in hangar-screen.css.
     */
     /* VIRTUAL WORKBENCH: MODIFICATION (Request B) */
     animation: dematerialize-glow 2.5s ease-in-out forwards; /* Was 1.5s */
@@ -9187,7 +9229,7 @@ export class DebugService {
             selectedAgeEvent: DB.AGE_EVENTS[0].id,
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
-            botStrategy: 'MIXED', // [GEMINI] ADDED
+             botStrategy: 'MIXED', // [GEMINI] ADDED
             botProgress: 'Idle',
             logLevel: 'INFO',
             // Tutorial Tuner State
@@ -9207,7 +9249,7 @@ export class DebugService {
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
 
         // References to GUI controllers and folders for enabling/disabling
-        this.tutorialPositionalControllers = {};
+         this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -9289,7 +9331,10 @@ ${logHistory}
         this.gameState.tutorials.activeStepId = null;
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
 
-        this.gameState.player.credits = 1000000000000;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
+        // --- END VIRTUAL WORKBENCH ---
+
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
         this.gameState.player.activeShipId = SHIP_IDS.BEHEMOTH;
@@ -9305,7 +9350,7 @@ ${logHistory}
     }
 
     simpleStart() {
-        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+         this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
         this.simulationService.tutorialService.activeBatchId = null;
         this.simulationService.tutorialService.activeStepId = null;
@@ -9345,7 +9390,7 @@ ${logHistory}
 
     // --- NEW SHIP-SPECIFIC HANDLERS ---
     deductHull(amount) {
-        const ship = this.simulationService._getActiveShip();
+         const ship = this.simulationService._getActiveShip();
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = Math.max(0, shipState.health - amount);
@@ -9387,7 +9432,7 @@ ${logHistory}
     restoreFuel() {
         const ship = this.simulationService._getActiveShip();
         if (ship) {
-            const shipState = this.gameState.player.shipStates[ship.id];
+             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = ship.maxFuel;
             this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
             this.gameState.setState({});
@@ -9407,7 +9452,7 @@ ${logHistory}
     }
 
     fillWithCybernetics() {
-        const ship = this.simulationService._getActiveShip();
+         const ship = this.simulationService._getActiveShip();
         const inventory = this.simulationService._getActiveInventory();
         if (ship && inventory) {
             this.removeAllCargo();
@@ -9424,7 +9469,7 @@ ${logHistory}
     grantAllItems() {
         const inventory = this.simulationService._getActiveInventory();
         if (!inventory) {
-            this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
+             this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
             return;
         }
         DB.COMMODITIES.forEach(commodity => {
@@ -9433,7 +9478,7 @@ ${logHistory}
             } else {
                 inventory[commodity.id] = { quantity: 1, avgCost: 0 };
             }
-        });
+         });
         this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
         this.gameState.setState({});
     }
@@ -9461,9 +9506,11 @@ ${logHistory}
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
-            skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
+             skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
-                this.gameState.player.credits += this.debugState.creditsToAdd;
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
+                // --- END VIRTUAL WORKBENCH ---
                 this.simulationService.timeService._checkMilestones();
                 this.gameState.setState({});
             }},
@@ -9472,7 +9519,7 @@ ${logHistory}
                 this.simulationService._checkGameOverConditions();
                 this.gameState.setState({});
             }},
-            payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
+             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
                     this.gameState.currentLocationId = this.debugState.selectedLocation;
@@ -9488,14 +9535,14 @@ ${logHistory}
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
                     if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                        this.simulationService.addShipToHangar(shipId);
+                         this.simulationService.addShipToHangar(shipId);
                     }
                 });
                 this.gameState.setState({});
             }},
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
-                this.simulationService.marketService.replenishMarketInventory();
+                 this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
             // --- VIRTUAL WORKBENCH REMOVAL ---
@@ -9504,7 +9551,7 @@ ${logHistory}
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
                 const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                 if (dest) {
-                    this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                     this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
                 }
             }},
             triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
@@ -9513,21 +9560,21 @@ ${logHistory}
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
-            triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
+             triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
                     if(this.gameState.missions.activeMissionId) {
                         this.simulationService.missionService.abandonMission();
                     }
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
                 }
-            }},
+             }},
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
                 // [GEMINI] MODIFIED: Pass strategy from debugState
                 const config = {
                     daysToRun: this.debugState.botDaysToRun,
-                    strategy: this.debugState.botStrategy 
+                     strategy: this.debugState.botStrategy 
                 };
                 
                 this.bot.runSimulation(config, (current, end) => {
@@ -9541,7 +9588,7 @@ ${logHistory}
             deductHull20: { name: 'Deduct 20 Hull', type: 'button', handler: () => this.deductHull(20) },
             restoreHull: { name: 'Restore Hull', type: 'button', handler: () => this.restoreHull() },
             destroyShip: { name: 'Destroy Current Ship', type: 'button', handler: () => this.destroyShip() },
-            deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
+             deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
             restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
@@ -9552,7 +9599,7 @@ ${logHistory}
             // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
             presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
             presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
-            presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
+             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
             presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
             presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
             presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
@@ -9576,7 +9623,7 @@ ${logHistory}
             day: document.getElementById('diag-day'),
             navScreen: document.getElementById('diag-nav-screen'),
             tutorialBatch: document.getElementById('diag-tutorial-batch'),
-            tutorialStep: document.getElementById('diag-tutorial-step'),
+             tutorialStep: document.getElementById('diag-tutorial-step'),
         };
     }
 
@@ -9761,7 +9808,7 @@ ${logHistory}
             } else {
                  this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
             }
-        } else {
+         } else {
             // Placeholder: Need to define offset presets if required for element anchors
             this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
             // Example:
@@ -9804,7 +9851,7 @@ ${logHistory}
          if (this.tutorialPositionalControllers.presetFolder) {
               this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
          }
-    }
+     }
 
 
     /**
@@ -9858,7 +9905,7 @@ ${logHistory}
         }
 
         // Update visibility of controls AFTER setting state
-        this._updateTutorialControlVisibility(isOverlayAnchor);
+         this._updateTutorialControlVisibility(isOverlayAnchor);
 
         // Manually update displays for all relevant controllers
         // This ensures sliders reflect the loaded step's values
@@ -9944,7 +9991,7 @@ size: { width: ${widthVal}, height: ${heightVal} },` : '';
              // Make sure anchorElement is 'body'
              positionString = `
 anchorElement: 'body',`; // Explicitly set anchor
-            // Only add percentages if not default (50, 50)
+             // Only add percentages if not default (50, 50)
             if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
                  positionString += `
 positionX: ${this.debugState.ttPercentX},
@@ -9969,7 +10016,7 @@ popperOptions: {
         }
 
         // Construct final code, removing potential trailing comma before a closing brace
-        let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
+         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
         code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
 
         this.debugState.ttGeneratedCode = code;
@@ -11829,6 +11876,7 @@ export class IntroService {
                     // This callback runs after the "Invalid Signature" modal is closed.
                     // We need to re-show the signature modal without advancing the step.
                     this.gameState.player.introStep--; // Decrement to counteract the increment in _showNextModal
+    
                     this._showNextModal();
                 });
             } else {
@@ -11839,7 +11887,7 @@ export class IntroService {
     
                 this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
                     debt: 25000,
-                    name: sanitizedPlayerName
+                     name: sanitizedPlayerName
                 });
                 this._startProcessingSequence();
             }
@@ -11855,7 +11903,8 @@ export class IntroService {
             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
         } else if (completedBatchId === 'intro_finance') {
-            this._end();
+ 
+             this._end();
         }
     }
 
@@ -11955,7 +12004,10 @@ export class IntroService {
                 
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
-                this.gameState.player.credits += 25000;
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
+                // --- END VIRTUAL WORKBENCH ---
+
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
@@ -11970,6 +12022,7 @@ export class IntroService {
                 contentClass: 'text-center',
                 customSetup: (modal, closeHandler) => {
                     modal.querySelector('.modal-content').classList.add('modal-theme-admin');
+     
                     const btnContainer = modal.querySelector('#event-button-container');
 
                     btnContainer.innerHTML = '';
@@ -11980,7 +12033,8 @@ export class IntroService {
                         hangarTransition(event);
                         closeHandler();
                     };
-                    btnContainer.appendChild(button);
+                  
+                     btnContainer.appendChild(button);
                 }
             });
         };
@@ -12002,6 +12056,7 @@ export class IntroService {
         this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
+     
              this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
              this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
@@ -12022,7 +12077,7 @@ import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 // VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
-import { playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 // END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -12056,7 +12111,8 @@ export class SimulationService {
         this.intelService = null; // Will be instantiated below
         // --- END VIRTUAL WORKBENCH ---
 
-        // Instantiate all services
+  
+         // Instantiate all services
         this.marketService = new MarketService(gameState);
         // MODIFIED: Pass newsTickerService
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
@@ -12118,6 +12174,7 @@ export class SimulationService {
      * @param {Event} event
      */
     async buyShip(shipId, event) {
+        
         // 1. Validate
         const validation = this.playerActionService.validateBuyShip(shipId);
         if (!validation.success) {
@@ -12204,7 +12261,8 @@ export class SimulationService {
 
         // --- NEW SEQUENCE ---
 
-        // 2. Find the button that was clicked
+   
+         // 2. Find the button that was clicked
         const boardButton = event.target.closest('.action-button');
         
         // 3. (NEW) Find the sibling "Sell" button and disable it immediately
@@ -12216,7 +12274,8 @@ export class SimulationService {
         }
 
         // 4. Trigger the BLOCKING 1-second glow on the "Board" button
-        if (boardButton) {
+  
+         if (boardButton) {
             // This is the new BLOCKING helper that waits for the animation to end
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
@@ -12228,7 +12287,8 @@ export class SimulationService {
         if (this.gameState.introSequenceActive) {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
         }
-        
+   
+      
         // 7. Run the BLOCKING card animation *LAST*
         // We must wait one frame for the UI to re-render *before* we can
         // find the element we want to animate.
@@ -12258,7 +12318,8 @@ export class SimulationService {
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
-    // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
+ 
+     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
     // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
     // --- END VIRTUAL WORKBENCH ---
 
@@ -12304,7 +12365,7 @@ export class SimulationService {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         this.gameState.setState({ 
             activeNav: navId, 
-            activeScreen: screenId,
+             activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
 
@@ -12318,7 +12379,8 @@ export class SimulationService {
         }
     }
 
-    // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
+   
+     // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
     /**
      * Sets the active tab on the Intel screen.
      * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
@@ -12481,7 +12543,7 @@ export class SimulationService {
             entry.day === this.gameState.day &&
             entry.type === 'trade' &&
             entry.description.startsWith(`${actionWord}`) &&
-            entry.description.endsWith(` ${goodName}`) &&
+             entry.description.endsWith(` ${goodName}`) &&
             ((isBuy && entry.amount < 0) || (!isBuy && entry.amount > 0))
         );
         if (existingEntry) {
@@ -12493,7 +12555,7 @@ export class SimulationService {
                 existingEntry.description = `${actionWord} ${currentQty + quantity}x ${goodName}`;
             }
         } else {
-            this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
+             this._logTransaction('trade', transactionValue, `${actionWord} ${quantity}x ${goodName}`);
         }
     }
 
@@ -12521,13 +12583,18 @@ export class SimulationService {
     _grantRewards(rewards, sourceName) {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
-                this.gameState.player.credits += reward.amount;
+              
+                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+                // --- END VIRTUAL WORKBENCH ---
+
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
             }
             if (reward.type === 'license') {
                 if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
-                    this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                 
+                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
@@ -12547,7 +12614,8 @@ export class SimulationService {
         mission.providedCargo.forEach(cargo => {
             if (!inventory[cargo.goodId]) {
                 inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
-            }
+         
+             }
             inventory[cargo.goodId].quantity += cargo.quantity;
             this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
         });
@@ -12599,7 +12667,8 @@ export function resolveAdriftPassenger(gameState, simulationService, outcome) {
         inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
     }
 
-    // Determine the reward based on player's current state.
+  
+     // Determine the reward based on player's current state.
     if (calculateInventoryUsed(inventory) + 40 <= ship.cargoCapacity) {
         inventory[COMMODITY_IDS.CYBERNETICS].quantity += 40;
         return { key: 'reward_cybernetics' };
@@ -12610,7 +12679,11 @@ export function resolveAdriftPassenger(gameState, simulationService, outcome) {
         return { key: 'reward_debt_paid', amount: formatCredits(paid) };
     } else {
         const credits = Math.floor(gameState.player.credits * 0.05);
-        gameState.player.credits += credits;
+        
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + credits);
+        // --- END VIRTUAL WORKBENCH ---
+
         simulationService._logTransaction('event', credits, 'Passenger payment');
         return { key: 'reward_credits', amount: formatCredits(credits) };
     }
@@ -12642,7 +12715,9 @@ export function resolveSpaceRace(gameState, simulationService, effectData, outco
 
     if (Math.random() < winChance) {
         // Player wins the race.
-        gameState.player.credits += wager;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + wager);
+        // --- END VIRTUAL WORKBENCH ---
         simulationService._logTransaction('event', wager, 'Won space race wager');
         outcome.description = `Your Class ${ship.class} ship wins! You gain <span class="hl-green">${formatCredits(wager)}</span>.`;
     } else {
@@ -12789,6 +12864,11 @@ export class EventManager {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Bind the hold event handlers globally, once, at startup.
+        this.holdEventHandler.bindHoldEvents();
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -12800,7 +12880,7 @@ export class EventManager {
         // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
         if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
              // Reset stepper hold flag after suppressing click
-             if (this.holdEventHandler.isStepperHolding) {
+            if (this.holdEventHandler.isStepperHolding) {
                  this.holdEventHandler.isStepperHolding = false;
              }
             e.preventDefault();
@@ -13295,7 +13375,9 @@ const effectHandlers = {
 
     // --- Standard, Reusable Effect Handlers ---
     'credits': (gameState, simulationService, effect) => {
-        gameState.player.credits += effect.value;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + effect.value);
+        // --- END VIRTUAL WORKBENCH ---
         simulationService._logTransaction('event', effect.value, 'Received credits from event');
     },
     'fuel': (gameState, simulationService, effect) => {
@@ -13359,13 +13441,17 @@ const effectHandlers = {
         if (heldCommodities.length > 0) {
             const [id, item] = heldCommodities[Math.floor(Math.random() * heldCommodities.length)];
             const saleValue = gameState.market.galacticAverages[id] * effect.value * item.quantity;
-            gameState.player.credits += saleValue;
+            
+            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+            gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + saleValue);
+            // --- END VIRTUAL WORKBENCH ---
+
             simulationService._logTransaction('trade', saleValue, 'Emergency supply drop sale');
             item.quantity = 0;
         }
     },
     'set_new_random_destination': (gameState, simulationService, effect) => {
-        const otherMarkets = DB.MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
+         const otherMarkets = DB.MARKETS.filter(m => m.id !== gameState.currentLocationId && gameState.player.unlockedLocationIds.includes(m.id));
         if(otherMarkets.length > 0) {
             gameState.pendingTravel.destinationId = otherMarkets[Math.floor(Math.random() * otherMarkets.length)].id;
         }
@@ -13521,7 +13607,7 @@ export class UIManager {
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
     constructor(logger) {
-        this.logger = logger;
+         this.logger = logger;
         this.isMobile = window.innerWidth <= 768;
         this.modalQueue = [];
         this.activeGraphAnchor = null;
@@ -13543,7 +13629,8 @@ export class UIManager {
         /** @type {import('./IntelService.js').IntelService | null} */
         this.intelService = null; // To be injected
         /** @type {IntelMarketRenderer | null} */
-        this.intelMarketRenderer = null; // To be instantiated
+        this.intelMarketRenderer = null;
+        // To be instantiated
         // --- END VIRTUAL WORKBENCH ---
 
         this.effectsManager = new EffectsManager();
@@ -13554,7 +13641,7 @@ export class UIManager {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.MAP]: 'Map', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
             [NAV_IDS.STARPORT]: { label: 'Starport', screens: { [SCREEN_IDS.MARKET]: 'Market', [SCREEN_IDS.SERVICES]: 'Services', [SCREEN_IDS.HANGAR]: 'Shipyard' } },
             [NAV_IDS.DATA]: { label: 'Data', screens: { [SCREEN_IDS.MISSIONS]: 'Missions', [SCREEN_IDS.FINANCE]: 'Finance', [SCREEN_IDS.INTEL]: 'Intel' } }
-        };
+         };
         this._cacheDOM();
 
         // --- VIRTUAL WORKBENCH: BIND 'this' CONTEXT ---
@@ -13590,7 +13677,7 @@ export class UIManager {
      * @param {import('./MissionService.js').MissionService} missionService
      */
     setMissionService(missionService) {
-        this.missionService = missionService;
+         this.missionService = missionService;
     }
 
     /**
@@ -13633,7 +13720,7 @@ export class UIManager {
      * MODIFIED: Injects the EventManager after instantiation.
      * @param {import('./EventManager.js').EventManager} eventManager
      */
-    setEventManager(eventManager) {
+     setEventManager(eventManager) {
         this.eventManager = eventManager;
     }
 
@@ -13658,7 +13745,7 @@ export class UIManager {
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
             cargoScreen: document.getElementById(`${SCREEN_IDS.CARGO}-screen`),
             hangarScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
-            missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
+             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             graphTooltip: document.getElementById('graph-tooltip'),
@@ -13666,7 +13753,7 @@ export class UIManager {
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
-            launchModalContent: document.getElementById('launch-modal-content'),
+             launchModalContent: document.getElementById('launch-modal-content'),
             cargoDetailModal: document.getElementById('cargo-detail-modal'),
             cargoDetailContent: document.getElementById('cargo-detail-content'),
 
@@ -13685,7 +13772,7 @@ export class UIManager {
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
-            tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
+             tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
             tutorialToastNextBtn: document.getElementById('tutorial-toast-next-btn'),
             skipTutorialModal: document.getElementById('skip-tutorial-modal'),
             skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
@@ -13732,7 +13819,7 @@ export class UIManager {
                 // --- [[END]] MODIFICATION ---
 
             } else {
-                document.documentElement.style.removeProperty('--theme-border-color');
+                 document.documentElement.style.removeProperty('--theme-border-color');
                 // --- VIRTUAL WORKBENCH: THEME VARIABLES ---
                 // Clear theme variables
                 document.documentElement.style.removeProperty('--theme-gradient');
@@ -13746,7 +13833,7 @@ export class UIManager {
                     this.cache.newsTickerBar.style.borderTopColor = ''; // Will revert to CSS default
                     this.cache.newsTickerBar.style.borderBottomColor = ''; // Will revert to CSS default
                     this.cache.newsTickerBar.style.backgroundColor = ''; // Will revert to CSS default
-                }
+                 }
                 // --- [[END]] MODIFICATION (Reset) ---
 
             }
@@ -13754,7 +13841,7 @@ export class UIManager {
             // --- [[START]] MODIFICATION (Reset) ---
             // Handle case where there is no location (e.g., in transit)
             if (this.cache.newsTickerBar) {
-                this.cache.newsTickerBar.style.backgroundImage = '';
+                 this.cache.newsTickerBar.style.backgroundImage = '';
                 this.cache.newsTickerBar.style.borderTopColor = '';
                 this.cache.newsTickerBar.style.borderBottomColor = '';
                 this.cache.newsTickerBar.style.backgroundColor = '';
@@ -13793,7 +13880,7 @@ export class UIManager {
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         
         if (contentElement) {
-            const innerHtml = contentElement.innerHTML;
+             const innerHtml = contentElement.innerHTML;
             
             // 3. Measure the width of the single block of content
             // We do this *before* duplicating
@@ -13825,11 +13912,17 @@ export class UIManager {
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
 
+        // --- VIRTUAL WORKBENCH: APPLY MAX CREDITS DISPLAY ---
+        const isMax = player.credits >= Number.MAX_SAFE_INTEGER;
+        const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
+        const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
+
         const contextBarHtml = `
             <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
-                <span class="credit-text">${formatCredits(player.credits)}</span>
+                <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
+        // --- END VIRTUAL WORKBENCH ---
 
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
@@ -13837,7 +13930,7 @@ export class UIManager {
             const isDisabledByTutorial = navLock && navLock.navId !== navId;
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-            return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
+             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
                          style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
@@ -13849,16 +13942,16 @@ export class UIManager {
             const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
 
             statusPodHtml = `
-                <div class="status-pod">
+                 <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">H</span>
                         <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
-                        <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
+                         <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
                     <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">F</span>
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
-                        <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
+                         <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
                     <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
@@ -13872,7 +13965,7 @@ export class UIManager {
 
         const subNavsHtml = Object.keys(this.navStructure).map(navId => {
             const screens = this.navStructure[navId].screens;
-            const isActive = navId === activeNav;
+             const isActive = navId === activeNav;
             const subNavButtons = Object.keys(screens).map(screenId => {
                  const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
@@ -13883,6 +13976,7 @@ export class UIManager {
                  // --- VIRTUAL WORKBENCH: BUG FIX ---
                  // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
                  // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
+    
                  const action = ACTION_IDS.SET_SCREEN;
     
                  // --- END VIRTUAL WORKBENCH ---
@@ -13906,7 +14000,7 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
-        const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
+         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
 
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
@@ -13921,7 +14015,8 @@ export class UIManager {
             case SCREEN_IDS.MAP:
                 this.cache.mapScreen.innerHTML = renderMapScreen();
                 // Defer map initialization until after the browser has painted the new DOM elements,
-                // ensuring the map container has a valid clientHeight for D3 to use.
+    
+                 // ensuring the map container has a valid clientHeight for D3 to use.
                 requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
@@ -13931,7 +14026,7 @@ export class UIManager {
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 // MODIFIED: Bind hold events after rendering the services screen
                 if (this.eventManager) {
-                    this.eventManager.holdEventHandler.bindHoldEvents();
+                     this.eventManager.holdEventHandler.bindHoldEvents();
                 }
                 break;
             case SCREEN_IDS.MARKET:
@@ -13960,7 +14055,8 @@ export class UIManager {
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
-                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+          
+                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
                 // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
@@ -13970,31 +14066,36 @@ export class UIManager {
                 const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.INTEL;
                 
                 /**
+   
                  * Only render the static shell of the Intel screen if it's the first time
                  * navigating to it. This prevents state updates (like purchasing intel)
                  * from destroying the DOM and resetting the active tab.
                  */
                 if (needsFullRender) {
-                    this.cache.intelScreen.innerHTML = renderIntelScreen();
+          
+                     this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
                 // --- END VIRTUAL WORKBENCH (A) ---
                 
                 /**
                  * This block runs on *every* render for the INTEL screen.
                  * If the shell was just built, it populates the content.
-                 * If a state change occurred (like a purchase), it *surgically
+                 * If a state 
+change occurred (like a purchase), it *surgically
                  * re-renders* the market content, updating button states
                  * without resetting the active tab.
                  */
                 if (this.intelMarketRenderer) {
                     // Find the container for the market tab content
-                    const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
+           
+                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
                 
                 // --- VIRTUAL WORKBENCH (B) ---
+                
                 // Always call updateIntelTab to ensure the *correct* tab
                 // (Codex or Market) is shown based on the game state.
                 this.updateIntelTab(gameState.uiState.activeIntelTab);
@@ -14089,7 +14190,7 @@ export class UIManager {
                 start = 0;
                 end = VISIBLE_FULL_DOTS;
             } else if (isNearEnd) {
-                start = totalItems - VISIBLE_FULL_DOTS;
+                 start = totalItems - VISIBLE_FULL_DOTS;
                 end = totalItems;
             } else {
                 start = activeIndex - Math.floor(VISIBLE_FULL_DOTS / 2) + 1;
@@ -14101,7 +14202,7 @@ export class UIManager {
                 dots.push({ isHalf: true, jump: 'prev' });
             }
 
-            // Add the main window of full dots
+             // Add the main window of full dots
             for (let i = start; i < end; i++) {
                 dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
             }
@@ -14118,7 +14219,7 @@ export class UIManager {
                 --theme-glow-color: ${theme.borderColor};
             `;
             if (dot.isHalf) {
-                return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
+                 return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
                 return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
@@ -14157,6 +14258,7 @@ export class UIManager {
     }
 
     updateMarketScreen(gameState) {
+ 
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         
         // --- [[START]] MODIFICATION ---
@@ -14170,7 +14272,8 @@ export class UIManager {
             this.marketScrollPosition = 0;
         }
     
-        this._saveMarketTransactionState();
+       
+         this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
         
@@ -14188,7 +14291,7 @@ export class UIManager {
         if (!this.lastKnownState || this.lastKnownState.activeScreen !== SCREEN_IDS.MARKET) return;
         const controls = this.cache.marketScreen.querySelectorAll('.transaction-controls');
         controls.forEach(control => {
-            const goodId = control.dataset.goodId;
+             const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
             const mode = control.dataset.mode;
 
@@ -14196,7 +14299,7 @@ export class UIManager {
                 this.marketTransactionState[goodId] = {
                     quantity: qtyInput.value,
                     mode: mode
-                };
+                 };
             }
         });
     }
@@ -14208,7 +14311,7 @@ export class UIManager {
             if (control) {
                 const qtyInput = control.querySelector('input');
                 if (qtyInput) {
-                    qtyInput.value = state.quantity;
+                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
                     // After restoring state, immediately update the display to reflect it.
                     this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
@@ -14232,7 +14335,7 @@ export class UIManager {
         // MarketService.getPrice() now does (checking for intel overrides).
         return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
         // --- END VIRTUAL WORKBENCH ---
-    }
+     }
 
     _calculateSaleDetails(goodId, quantity) {
         const state = this.lastKnownState;
@@ -14280,7 +14383,7 @@ export class UIManager {
         // const totalPrice = Math.floor(effectivePrice * quantity);
         // --- END VIRTUAL WORKBENCH ---
 
-        const totalCost = avgCost * quantity;
+         const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
         if (netProfit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
@@ -14291,7 +14394,7 @@ export class UIManager {
             totalPrice,
             effectivePricePerUnit: effectivePrice, // This is now just basePrice
             netProfit
-        };
+         };
     }
 
 
@@ -14327,7 +14430,7 @@ export class UIManager {
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
             // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
-            effectivePriceEl.textContent = '';
+             effectivePriceEl.textContent = '';
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
@@ -14335,7 +14438,7 @@ export class UIManager {
                 sellPrice: this.getItemPrice(state, goodId, true),
                 // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
-                playerItem: playerItem
+                 playerItem: playerItem
             });
 
         } else { // 'sell' mode
@@ -14356,7 +14459,7 @@ export class UIManager {
             }
 
             indicatorEl.innerHTML = renderIndicatorPills({
-                price: basePrice,
+                 price: basePrice,
                 // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
                 // --- END VIRTUAL WORKBENCH ---
@@ -14406,7 +14509,7 @@ export class UIManager {
         }
         
         // GDD: Control dismissal behavior
-        modal.dataset.dismissInside = options.dismissInside || 'false';
+         modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
         // --- END VIRTUAL WORKBENCH ---
 
@@ -14421,7 +14524,7 @@ export class UIManager {
             descEl.className = 'my-4 text-gray-300'; // Reset classes
 
             if (modalId !== 'mission-modal') {
-                descEl.classList.add('mb-6', 'text-lg');
+                 descEl.classList.add('mb-6', 'text-lg');
             }
 
             // Default to centered text for generic event modals, which are mostly short notices.
@@ -14432,7 +14535,7 @@ export class UIManager {
             if (options.contentClass) {
                 // Allow `contentClass` to override the default alignment.
                 if (options.contentClass.includes('text-left') || options.contentClass.includes('text-right') || options.contentClass.includes('text-justify')) {
-                    descEl.classList.remove('text-center');
+                     descEl.classList.remove('text-center');
                 }
                 // Add all provided custom classes.
                 descEl.classList.add(...options.contentClass.split(' ').filter(Boolean));
@@ -14457,7 +14560,7 @@ export class UIManager {
                 if (btnContainer) {
                     btnContainer.innerHTML = options.footer;
                     // Find any buttons *inside* the new footer and attach handlers
-                    btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
+                     btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                             // --- VIRTUAL WORKBENCH (C) ---
                             /**
@@ -14467,11 +14570,11 @@ export class UIManager {
                              * manage the modal closing and chaining, preventing a race condition.
                              */
                             if (btn.dataset.action === 'buy_intel') {
-                                return; // Let the specific handler do the work
+                                 return; // Let the specific handler do the work
                             }
                             // --- END VIRTUAL WORKBENCH (C) ---
 
-                            // Let the main EventManager handle the action first
+                             // Let the main EventManager handle the action first
                             // But also ensure the modal closes for all *other* actions.
                             closeHandler();
                         });
@@ -14501,7 +14604,7 @@ export class UIManager {
             // --- END VIRTUAL WORKBENCH ---
         }
 
-        modal.classList.remove('hidden');
+         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }
 
@@ -14516,7 +14619,7 @@ export class UIManager {
                     button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
                     button.innerHTML = choice.title;
                     button.onclick = () => {
-                        choicesCallback(event.id, index);
+                         choicesCallback(event.id, index);
                         closeHandler();
                     };
                     choicesContainer.appendChild(button);
@@ -14555,7 +14658,7 @@ export class UIManager {
         const contentEl = this.cache.loreModalContent;
         
         if (!modal || !contentEl) {
-            this.logger.error('UIManager', 'Lore modal elements not cached or found in DOM.');
+             this.logger.error('UIManager', 'Lore modal elements not cached or found in DOM.');
             return;
         }
 
@@ -14587,7 +14690,7 @@ export class UIManager {
      * Displays the new modal for showing the EULA.
      * Modeled after showLoreModal for scrollability and dismissal.
      */
-    showEulaModal() {
+     showEulaModal() {
         const modal = this.cache.eulaModal;
         const contentEl = this.cache.eulaModalContent;
         
@@ -14603,7 +14706,8 @@ export class UIManager {
             contentEl.innerHTML = EULA_CONTENT;
         }
         
-        // Ensure scroll position is at the top
+    
+         // Ensure scroll position is at the top
         contentEl.scrollTop = 0;
 
         modal.classList.remove('hidden');
@@ -14621,7 +14725,8 @@ export class UIManager {
     // [[END]] VIRTUAL WORKBENCH (showEulaModal)
 
     hideModal(modalId) {
-        const modal = document.getElementById(modalId);
+    
+         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('modal-hiding');
             modal.addEventListener('animationend', () => {
@@ -14636,7 +14741,7 @@ export class UIManager {
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
-                }
+                 }
             }, { once: true });
         }
     }
@@ -14659,7 +14764,7 @@ export class UIManager {
         }, 100);
 
         setTimeout(() => {
-            statusText.textContent = 'Processing complete!';
+             statusText.textContent = 'Processing complete!';
             setTimeout(() => {
                 this.hideModal('processing-modal');
                 if (callback) callback();
@@ -14695,7 +14800,8 @@ export class UIManager {
         this.updateGraphTooltipPosition();
     }
 
-    hideGraph() {
+    
+     hideGraph() {
         if (this.activeGraphAnchor) {
             this.cache.graphTooltip.style.display = 'none';
             this.activeGraphAnchor = null;
@@ -14783,7 +14889,7 @@ export class UIManager {
         svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
         svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
         if (playerBuyPrice) {
-            const buyPriceY = getY(playerBuyPrice);
+             const buyPriceY = getY(playerBuyPrice);
             svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
             svg += `<text x="${width - padding + 4}" y="${buyPriceY + 3}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid: ${formatCredits(playerBuyPrice, false)}</text>`;
         }
@@ -14810,7 +14916,7 @@ export class UIManager {
      * @param {function} options.onNext - Callback for next.
      * @param {object} options.gameState - The current game state.
      */
-    showTutorialToast({ step, onSkip, onNext, gameState }) {
+     showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         // Use the new overlay if anchor is 'body', otherwise find the element
@@ -14822,7 +14928,7 @@ export class UIManager {
         } else {
             referenceEl = document.querySelector(step.anchorElement);
             if (!referenceEl) {
-                this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
+                 this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
                 referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
                 // TODO: Decide if we should force isOverlayAnchor = true here?
             }
@@ -14834,7 +14940,7 @@ export class UIManager {
             this.popperInstance = null;
         }
 
-        // --- Update Content ---
+         // --- Update Content ---
         let processedText = step.text;
         // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
@@ -14845,7 +14951,7 @@ export class UIManager {
 
         // c. Fix {playerName} replacement
         if (processedText.includes('{playerName}')) {
-            const playerName = gameState.player.name || 'Captain'; // Fallback
+             const playerName = gameState.player.name || 'Captain'; // Fallback
             processedText = processedText.replace(/{playerName}/g, playerName);
         }
 
@@ -14878,16 +14984,16 @@ export class UIManager {
             
             arrow.style.display = 'block'; // Show arrow
 
-            // Configure Popper.js
+             // Configure Popper.js
             const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
                 placement: 'auto',
                 modifiers: [
                     { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                     { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
-            };
+             };
             
              // Merge step-specific Popper options/modifiers
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
@@ -14900,7 +15006,7 @@ export class UIManager {
      
             if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
 
-            const finalOptions = {
+             const finalOptions = {
                 placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
                 modifiers: baseModifiers
             };
@@ -14972,7 +15078,8 @@ export class UIManager {
         if (isOverlayAnchor) {
             // Using Percentage Positioning
             
-            // Destroy Popper instance if it exists (switching modes)
+        
+             // Destroy Popper instance if it exists (switching modes)
             if (this.popperInstance) {
                 this.popperInstance.destroy();
                 this.popperInstance = null;
@@ -14994,7 +15101,7 @@ export class UIManager {
             arrow.style.display = 'block';
 
             const popperUpdateOptions = {
-                placement: placement,
+                 placement: placement,
                 modifiers: [
                     { name: 'offset', options: { offset: [skidding, distance] } },
                     // Re-apply other essential modifiers for element anchoring
@@ -15005,7 +15112,7 @@ export class UIManager {
             };
 
             if (this.popperInstance) {
-                // Update existing instance
+                 // Update existing instance
                  this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
                       this.logger.error('UIManager', 'Error updating Popper options:', e);
                  });
@@ -15026,7 +15133,7 @@ export class UIManager {
         this._renderHighlightsFromConfig(this.activeHighlightConfig);
     }
 
-    _renderHighlightsFromConfig(highlightConfig) {
+     _renderHighlightsFromConfig(highlightConfig) {
         const overlay = this.cache.tutorialHighlightOverlay;
         if (!overlay) return;
 
@@ -15042,7 +15149,7 @@ export class UIManager {
             const el = document.createElement('div');
             el.className = 'tutorial-cue';
             el.style.left = `${cue.x}px`;
-            el.style.top = `${cue.y}px`;
+             el.style.top = `${cue.y}px`;
             el.style.width = `${cue.width}px`;
             el.style.height = `${cue.height}px`;
             el.style.transform = `rotate(${cue.rotation}deg)`;
@@ -15052,29 +15159,29 @@ export class UIManager {
                 el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
             }
 
-            let content = '';
+             let content = '';
             if (cue.type === 'Shape') {
                 content = `
                     <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
                         ${cue.shapeType === 'Rectangle' ?
-                            `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
+                             `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
                         }
-                    </svg>`;
+                     </svg>`;
             } else if (cue.type === 'Arrow') {
                 content = `
                     <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
                         <defs>
-                            <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                             <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
                                 <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
                             </marker>
                         </defs>
-                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
+                         <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
                     </svg>
                 `;
             } else if (cue.type === 'Spotlight') {
                 el.style.borderRadius = '50%';
-                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
+                 el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
             }
 
             el.innerHTML = content;
@@ -15125,12 +15232,12 @@ export class UIManager {
             seenBatches.forEach(batchId => {
                 const batchData = DB.TUTORIAL_DATA[batchId];
                 if (batchData) {
-                    const li = document.createElement('li');
+                     const li = document.createElement('li');
                     li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
                     li.onclick = () => {
                         logModal.classList.remove('visible');
                         onSelect(batchId);
-                    };
+                     };
                     list.appendChild(li);
                 }
             });
@@ -15144,18 +15251,18 @@ export class UIManager {
         let modalContentHtml;
 
         if (context === 'shipyard') {
-            const canAfford = player.credits >= shipStatic.price;
+             const canAfford = player.credits >= shipStatic.price;
             const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
             const isDisabled = !canAfford || isHangarTutStep1Active;
             modalContentHtml = `
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
+                             <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
                             <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
+                             <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
@@ -15164,7 +15271,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
-                    <button class="btn w-full mt-2" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
+                     <button class="btn w-full mt-2" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
                 </div>`;
         } else { // context === 'hangar'
             const shipDynamic = player.shipStates[shipId];
@@ -15183,11 +15290,11 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                     <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
-                </div>`;
+                 </div>`;
         }
 
         const modal = this.cache.shipDetailModal;
@@ -15219,7 +15326,7 @@ export class UIManager {
                 </div>
 
                 <div class="flex-grow flex items-center justify-center">
-                    <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                     <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
                 </div>
 
                 <div class="travel-info-text">
@@ -15238,7 +15345,7 @@ export class UIManager {
             const wrapper = modal.querySelector('.launch-modal-wrapper');
             if (wrapper) {
                 requestAnimationFrame(() => {
-                    wrapper.classList.add('is-glowing');
+                     wrapper.classList.add('is-glowing');
                 });
             }
         });
@@ -15253,7 +15360,8 @@ export class UIManager {
         modal.addEventListener('click', closeHandler);
     }
 
-    showCargoDetailModal(gameState, goodId) {
+    
+     showCargoDetailModal(gameState, goodId) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
 
@@ -15265,14 +15373,14 @@ export class UIManager {
             // GDD-compliant dismissal: allow click inside or outside to close
             dismissInside: true,
             dismissOutside: true,
-            footer: null, // No default buttons
+             footer: null, // No default buttons
 
             // Custom setup to inject the rendered cargo card
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
                 if (modalContent) {
                     modalContent.innerHTML = _renderMaxCargoModal(good, item);
-                }
+                 }
             }
         });
         // --- [[END]] VIRTUAL WORKBENCH ---
@@ -15396,12 +15504,12 @@ export class UIManager {
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     // --- VIRTUAL WORKBENCH START: Phase 6 ---
-                    const rewardsHtml = mission.rewards.map(r => {
+                     const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
                     // --- VIRTUAL WORKBENCH END: Phase 6 ---
-                    rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
+                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
                     rewardsEl.innerHTML = '';
@@ -15424,7 +15532,7 @@ export class UIManager {
     }
 
     _showMissionCompletionModal(mission) {
-        const options = {
+         const options = {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
@@ -15460,7 +15568,7 @@ export class UIManager {
         this.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
     }
 
-    flashObjectiveProgress() {
+     flashObjectiveProgress() {
         const progressEl = this.cache.stickyObjectiveProgress;
         if (progressEl) {
             progressEl.classList.add('objective-progress-flash');
@@ -15503,7 +15611,7 @@ export class UIManager {
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                  return modalBackdrop.id;
             }
-            // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
+             // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
             // Standard dismissal for eula-modal (backdrop click only)
             if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
@@ -15513,7 +15621,8 @@ export class UIManager {
             // GDD-compliant dismissal
             return modalBackdrop.id;
         }
-        // --- END VIRTUAL WORKBENCH ---
+    
+         // --- END VIRTUAL WORKBENCH ---
 
         return null;
     }
@@ -15569,7 +15678,7 @@ export class UIManager {
 
         if (location.availabilityModifier) {
             for (const [commodityId, modifier] of Object.entries(location.availabilityModifier)) {
-                const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                 const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
                 if (commodity) {
                     const tag = {
                         name: commodity.name,
@@ -15585,7 +15694,7 @@ export class UIManager {
         }
 
         const renderTags = (tagArray) => tagArray.map(tag =>
-            `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
+             `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
         ).join('');
 
         // *** MODIFIED HTML Structure to apply theme color ***
@@ -15593,27 +15702,28 @@ export class UIManager {
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
-                <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
+                 <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
             </div>
 
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
                     <p class="font-roboto-mono imprinted-text-embedded"><span class="credits-text-pulsing">${formatCredits(location.fuelPrice, true)}</span>/unit</p>
-                </div>
+                 </div>
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
                     <p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>
                 </div>
           </div>
 
-            <div class="text-center">
+            
+             <div class="text-center">
                 <div>
                     <h5 class="font-bold imprinted-text">Exports:</h5>
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                    <h5 class="font-bold imprinted-text">Needs:</h5>
+                     <h5 class="font-bold imprinted-text">Needs:</h5>
                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
@@ -15625,7 +15735,7 @@ export class UIManager {
         modal.classList.remove('is-glowing');
 
         // Use requestAnimationFrame to ensure the browser has rendered the modal
-        // before we add the class that triggers the animation.
+             // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             modal.classList.add('is-glowing');
@@ -15635,7 +15745,7 @@ export class UIManager {
         const closeHandler = (e) => {
             // Close if clicking the backdrop OR the content area
             if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
-                this.hideMapDetailModal();
+                 this.hideMapDetailModal();
                 modal.removeEventListener('click', closeHandler); // Ensure listener is removed
             }
         };
@@ -15649,7 +15759,7 @@ export class UIManager {
     hideMapDetailModal() {
         const modal = this.cache.mapDetailModal;
         if (modal) {
-            modal.classList.remove('is-glowing');
+             modal.classList.remove('is-glowing');
             // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
             delete modal.dataset.theme; // Clear theme on close
             // --- END VIRTUAL WORKBENCH ---
@@ -15659,7 +15769,8 @@ export class UIManager {
                 modal.removeEventListener('click', existingHandler);
                 delete modal.__mapDetailCloseHandler;
             }
-        }
+    
+         }
         this.hideModal('map-detail-modal');
     }
 
@@ -15719,7 +15830,8 @@ export class UIManager {
         if (activeTabButton) {
             activeTabButton.classList.add('active');
         }
-        if (activeContent) {
+  
+         if (activeContent) {
             activeContent.classList.add('active');
         }
 
@@ -15757,7 +15869,7 @@ export class UIManager {
         for (const locId of Object.keys(state.intelMarket)) {
             const packet = state.intelMarket[locId].find(p => p.id === packetId);
             if (packet) {
-                // this.logger.info('UIManager', `_findIntelPacket: Found packet ${packetId} at fallback location ${locId}`);
+                 // this.logger.info('UIManager', `_findIntelPacket: Found packet ${packetId} at fallback location ${locId}`);
                 return packet;
             }
         }
@@ -15810,7 +15922,7 @@ export class UIManager {
         
         
         let result = template
-            .replace(/\[location name\]/g, locationName)
+             .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr);
             // [Observed issue]: priceStr replacement is now conditional
@@ -15829,7 +15941,7 @@ export class UIManager {
         result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
         // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
-        return result;
+         return result;
     }
 
     /**
@@ -15856,7 +15968,7 @@ export class UIManager {
             // New universal system: Use messageKey
             msg = INTEL_CONTENT[packet.messageKey];
         } else if (packet.messageIndex !== undefined) {
-            // Old location-based system: Use messageIndex (Save Game Compat)
+             // Old location-based system: Use messageIndex (Save Game Compat)
             let msgArray = INTEL_CONTENT[packet.locationId]; // Use SALE location for message
             if (packet.fallbackMsg) { // Handle fallback packet
                 msgArray = INTEL_CONTENT[packet.fallbackMsgSource];
@@ -15881,7 +15993,7 @@ export class UIManager {
                     data-action="buy_intel" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${locationId}" 
-                    data-price="${priceNum}">
+                     data-price="${priceNum}">
                 Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
         // --- VIRTUAL WORKBENCH END: Phase 5 ---
@@ -15889,7 +16001,7 @@ export class UIManager {
         this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
             theme: locationId, // GDD: Apply location-specific theme
             dismissOutside: true, // GDD: Allow dismissing outside
-            footer: purchaseButtonHTML // GDD: Use custom footer
+             footer: purchaseButtonHTML // GDD: Use custom footer
         });
     }
 
@@ -15903,7 +16015,6 @@ export class UIManager {
         // --- VIRTUAL WORKBENCH END: Phase 5 ---
         const { packetId, locationId, price } = element.dataset;
         const priceNum = parseInt(price, 10);
-
         // Call the service to perform the transaction
         const purchasedPacket = this.intelService.purchaseIntel(packetId, locationId, priceNum);
 
@@ -15913,7 +16024,7 @@ export class UIManager {
             
             // --- VIRTUAL WORKBENCH START: Phase 5 ---
             // Add floating text
-            if(e) {
+             if(e) {
                 this.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
             }
             // --- VIRTUAL WORKBENCH END: Phase 5 ---
@@ -15921,7 +16032,7 @@ export class UIManager {
             // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
-                // --- VIRTUAL WORKBENCH START: Phase 5 ---
+                 // --- VIRTUAL WORKBENCH START: Phase 5 ---
                 // Pass the *stored* pricePaid from the packet
                 this._showIntelDetailsModal(updatedPacket, updatedPacket.pricePaid, locationId);
                 // --- VIRTUAL WORKBENCH END: Phase 5 ---
@@ -15935,7 +16046,7 @@ export class UIManager {
              * UIManager.render() subscription), which surgically updates 
              * the market content without a full page reset.
              */
-            // const intelScreen = document.getElementById('intel-screen');
+             // const intelScreen = document.getElementById('intel-screen');
             // const marketContentEl = intelScreen?.querySelector('#intel-market-content');
             // if (marketContentEl && this.intelMarketRenderer) {
             //     this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
@@ -15986,7 +16097,7 @@ export class UIManager {
 
         if (packet.messageKey) {
             // New universal system: Use messageKey
-            detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
+             detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
             isNewFormat = true; // New packets use the new duration placeholder
         } else if (packet.messageIndex !== undefined) {
             // Old location-based system: Use messageIndex (Save Game Compat)
@@ -15998,7 +16109,7 @@ export class UIManager {
             // This handles the *original* 2-message system, if a save is that old.
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
-                "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
+                 "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
             };
             detailsTemplate = originalContent[packet.messageKey]?.details || "Packet is corrupted. No message data found.";
         }
@@ -16015,7 +16126,8 @@ export class UIManager {
         });
     }
 
-    // --- END VIRTUAL WORKBENCH ---
+   
+     // --- END VIRTUAL WORKBENCH ---
 
     // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
 }
@@ -18387,7 +18499,10 @@ export class HoldEventHandler {
         
         // --- Stepper logic ---
         this.isStepperHolding = false;
-        this.stepperInitialDelay = 1000;
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Reduced initial delay for better responsiveness.
+        this.stepperInitialDelay = 400;
+        // --- END VIRTUAL WORKBENCH ---
         this.stepperRepeatRate = 1000 / 7;
         this.stepperTimeout = null;
         this.stepperInterval = null;
@@ -18570,7 +18685,7 @@ export class HoldEventHandler {
                 this._applyVisuals('repair');
                 
                 if (cost > 0 && this.repairBtn) {
-                     const rect = this.repairBtn.getBoundingClientRect();
+                    const rect = this.repairBtn.getBoundingClientRect();
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
                     serviceStillActive = true;
                 } else {
@@ -18668,7 +18783,7 @@ export class HoldEventHandler {
 
             const progressBarFill = document.getElementById(barId);
             if (progressBarFill) {
-                progressBarFill.classList.remove('filling');
+                 progressBarFill.classList.remove('filling');
                 const progressBarContainer = progressBarFill.closest('.progress-bar-container');
                 if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
             }
@@ -18816,6 +18931,13 @@ export class HoldEventHandler {
             // ignore
         }
 
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Prevent default browser actions (like text selection or context menu)
+        // on touch-hold or mouse-drag, which would otherwise fire 'pointercancel'
+        // and stop our hold logic before it starts.
+        e.preventDefault();
+        // --- END VIRTUAL WORKBENCH ---
+
         const qtyStepperEl = button.closest('.qty-stepper');
         const qtyInput = controls.querySelector('input');
         const direction = button.classList.contains('qty-up') ? 1 : -1;
@@ -18850,6 +18972,7 @@ export class HoldEventHandler {
      */
     _stopStepperHold() {
         // This function is now called by the master _handleInteractionStop
+        
         if (!this.stepperTarget) return;
 
         // Release pointer capture
@@ -18870,12 +18993,11 @@ export class HoldEventHandler {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
-        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
-        // Added this line to defensively reset the stepper hold flag.
-        // This fixes the bug where the flag would get "stuck" as true,
-        // causing EventManager to suppress the next click after a hold.
-        this.isStepperHolding = false;
-        // --- END MODIFICATION ---
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // DO NOT reset this.isStepperHolding here.
+        // It must be reset by EventManager *after* the click event is suppressed.
+        // this.isStepperHolding = false; // <-- This line is removed.
+        // --- END VIRTUAL WORKBENCH ---
 
         // Clear the state
         this.stepperTimeout = null;
@@ -19156,6 +19278,10 @@ export class ActionClickHandler {
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
             // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                // --- VIRTUAL WORKBENCH: BUG FIX ---
+                // Add dismissOutside: true to allow the modal to be closed
+                dismissOutside: true,
+                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
@@ -19530,7 +19656,8 @@ export class PlayerActionService {
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-        const activeShip = this.simulationService._getActiveShip();
+   
+     const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
@@ -19543,7 +19670,8 @@ export class PlayerActionService {
         inventoryItem.quantity -= quantity;
 
         // --- VIRTUAL WORKBENCH: REFACTOR ---
-        // Check for depletion bonus logic
+      
+     // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
             // Delegate depletion check to MarketService
             this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
@@ -19563,7 +19691,6 @@ export class PlayerActionService {
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
         this.gameState.setState({});
-
         return true;
     }
 
@@ -19600,7 +19727,11 @@ export class PlayerActionService {
         }
 
         totalSaleValue = Math.floor(totalSaleValue);
-        this.gameState.player.credits += totalSaleValue;
+        
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + totalSaleValue);
+        // --- END VIRTUAL WORKBENCH ---
+
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
 
@@ -19626,7 +19757,7 @@ export class PlayerActionService {
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
      * @JSDoc
      */
-    validateBuyShip(shipId) {
+     validateBuyShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
         }
@@ -19636,7 +19767,8 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist in the database." };
         }
         if (this.gameState.player.credits < ship.price) {
-            return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
+  
+             return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
         }
         return { success: true };
     }
@@ -19709,7 +19841,7 @@ export class PlayerActionService {
         }
         const state = this.gameState.getState(); // Get fresh state for validation
         if (state.player.ownedShipIds.length <= 1) {
-            return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
+             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
         }
         if (shipId === state.player.activeShipId) {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
@@ -19717,7 +19849,8 @@ export class PlayerActionService {
         if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
             return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
         }
-        const ship = DB.SHIPS[shipId];
+    
+     const ship = DB.SHIPS[shipId];
         if (!ship) {
             this.logger.error('PlayerActionService', `validateSellShip called with invalid shipId: ${shipId}`);
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist." };
@@ -19745,8 +19878,13 @@ export class PlayerActionService {
                 return false;
             }
             
-            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
-            this.gameState.player.credits += salePrice;
+         
+     const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            
+            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+            this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
+            // --- END VIRTUAL WORKBENCH ---
+
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
             if (event) {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
@@ -19860,7 +19998,8 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
-            this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
+      
+             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
         }
         // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
@@ -19893,7 +20032,9 @@ export class PlayerActionService {
         player.credits -= loanData.fee;
         this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
-        player.credits += loanData.amount;
+        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+        player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
+        // --- END VIRTUAL WORKBENCH ---
 
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
@@ -19910,6 +20051,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
         // Added glowing classes and removed font-roboto-mono for consistency
+ 
         const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
         // --- END VIRTUAL WORKBENCH ---
         
@@ -19930,7 +20072,14 @@ export class PlayerActionService {
         if (!license) return { success: false, error: 'INVALID_LICENSE' };
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
-        if (player.credits < license.cost) return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // This is the check that was failing. It will now correctly compare
+        // a (potentially huge) number against a number.
+        if (player.credits < license.cost) {
+            return { success: false, error: 'INSUFFICIENT_FUNDS' };
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
@@ -19965,7 +20114,8 @@ export class PlayerActionService {
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
 
         if (commodity) {
-            this.gameState.intel.active = {
+      
+             this.gameState.intel.active = {
                 targetMarketId: targetMarket.id,
                 commodityId: commodity.id,
                 type: 'demand',
@@ -19973,7 +20123,8 @@ export class PlayerActionService {
                 endDay: day + 100
             };
         }
-        this.gameState.setState({});
+  
+         this.gameState.setState({});
     }
 
     /**
@@ -19987,7 +20138,8 @@ export class PlayerActionService {
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+    
+             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
 
@@ -20002,7 +20154,8 @@ export class PlayerActionService {
         if (refuelBtn) {
             const rect = refuelBtn.getBoundingClientRect();
             // Calculate center X, top Y for the text origin
-            const x = rect.left + rect.width / 2;
+        
+             const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
@@ -20044,7 +20197,8 @@ export class PlayerActionService {
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-        // --- END ADDED ---
+      
+       // --- END ADDED ---
 
         this.gameState.setState({}); // Notify state change *after* potentially adding text
         return costPerTick;
@@ -20057,8 +20211,12 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.70] - 2025-11-15
+-  added contingency max credit limit
+
 ## [32.60] - 2025-11-15
 -  credit text styling alignment
+-  modal dismissal bug fixes
 
 ## [32.50] - 2025-11-14
 -  ship card polish
@@ -20665,9 +20823,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
     }
   },
   "key_concepts": {
-    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. Heavy selling increases pressure, driving prices down over time, while heavy buying decreases it, driving prices up.",
+    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
-    "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
@@ -21209,127 +21366,127 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "role": "LOGIC_SERVICE"
     },
     "F033": {
-      "path": "./js/effects/SystemSurgeEffect.js",
-      "role": "LOGIC_MODULE",
-      "status": "deprecated"
-    },
-    "F034": {
       "path": "./js/services/game/IntroService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F035": {
+    "F034": {
       "path": "./js/services/player/PlayerActionService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F036": {
+    "F035": {
       "path": "./js/services/world/TimeService.js",
       "role": "LOGIC_SERVICE",
       "dependencies": [
         "js/services/IntelService.js"
       ]
     },
-    "F037": {
+    "F036": {
       "path": "./js/services/world/TravelService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F038": {
+    "F037": {
       "path": "./meta/ROADMAP.md",
       "role": "DOCUMENTATION"
     },
-    "F039": {
+    "F038": {
       "path": "./meta/ARCHITECTURAL_DECISIONS.md",
       "role": "DOCUMENTATION"
     },
-    "F040": {
+    "F039": {
       "path": "./js/services/handlers/ActionClickHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F041": {
+    "F040": {
       "path": "./js/services/handlers/MarketEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F042": {
+    "F041": {
       "path": "./js/services/handlers/HoldEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F043": {
+    "F042": {
       "path": "./js/services/handlers/CarouselEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F044": {
+    "F043": {
       "path": "./js/services/handlers/TooltipHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F045": {
+    "F044": {
       "path": "./js/services/ui/TravelAnimationService.js",
       "role": "UI_SERVICE"
     },
-    "F046": {
+    "F045": {
       "path": "./css/orientation.css",
       "role": "STYLESHEET"
     },
-    "F047": {
+    "F046": {
       "path": "ViewController.swift",
       "role": "NATIVE_IOS_WRAPPER"
     },
-    "F048": {
+    "F047": {
       "path": "./meta/STATE_SCHEMA.md",
       "role": "DOCUMENTATION_STATE_SCHEMA"
     },
-    "F049": {
+    "F048": {
       "path": "./meta/SERVICES.md",
       "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"
     },
-    "F050": {
+    "F049": {
       "path": "./js/data/age_events.js",
       "role": "DATA_DEFINITION"
     },
-    "F051": {
+    "F050": {
       "path": "./js/data/events.js",
       "role": "DATA_DEFINITION"
     },
-    "F052": {
+    "F051": {
       "path": "./js/data/missions.js",
       "role": "DATA_DEFINITION"
     },
-    "F053": {
+    "F052": {
       "path": "./js/data/tutorials.js",
       "role": "DATA_DEFINITION"
     },
-    "F054": {
+    "F053": {
       "path": "./js/services/NewsTickerService.js",
       "role": "UI_SERVICE"
     },
-    "F055": {
+    "F054": {
       "path": "./js/data/flavorAds.js",
       "role": "DATA_DEFINITION",
       "description": "Defines location-specific flavor text for the news ticker."
     },
-    "F056": {
+    "F055": {
       "path": "./css/news-ticker.css",
       "role": "STYLESHEET"
     },
-    "F057": {
+    "F056": {
       "path": "./js/data/intelMessages.js",
       "role": "DATA_DEFINITION",
       "description": "Defines templates for market intel messages for the news ticker."
     },
-    "F058": {
+    "F057": {
       "path": "./js/services/IntelService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F059": {
+    "F058": {
       "path": "./js/ui/renderers/IntelMarketRenderer.js",
       "role": "UI_RENDERER"
     },
-    "F060": {
+    "F059": {
       "path": "./js/data/intelContent.js",
       "role": "DATA_DEFINITION",
       "description": "Defines sample/detail text for the Intel Market."
     },
-    "F061": {
+    "F060": {
       "path": "./js/services/ui/AnimationService.js",
       "role": "UI_SERVICE"
+    },
+    "F061": {
+      "path": "./js/services/bot/AutomatedPlayerService.js",
+      "role": "AUTOMATION_SERVICE",
+      "description": "Contains the AutomatedPlayer class, a bot for stress-testing the economy."
     }
   }
 }
@@ -21372,7 +21529,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.6
+**Version:** 1.7
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -21384,9 +21541,9 @@ This document defines the single responsibility of each service in the applicati
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. [cite_start]New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow[cite: 3681, 3985].
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. [cite_start]Is a primary driver for the Intel system[cite: 3609]. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -21396,13 +21553,13 @@ This document defines the single responsibility of each service in the applicati
 
 #### World
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. [cite_start]Will be updated to call `IntelService.generateIntelRefresh()` and to check for `activeIntelDeal` expiration[cite: 3679, 3981]. **Uses:** `js/data/age_events.js`.
+-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. Calls `IntelService.generateIntelRefresh()` and checks for `activeIntelDeal` expiration. **Uses:** `js/data/age_events.js`.
 -   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
 
--   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. [cite_start]Will be updated to check for an `activeIntelDeal` override before calculating its normal prices[cite: 3680, 3982].
--   **`IntelService.js`**: The "brain" of the Intel Market system. [cite_start]Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic[cite: 3674, 3971]. **Uses:** `js/data/intelContent.js`.
+-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. Checks for an `activeIntelDeal` override before calculating its normal prices.
+-   **`IntelService.js`**: The "brain" of the Intel Market system. Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic. **Uses:** `js/data/intelContent.js`.
 -   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
 #### Game
@@ -21421,7 +21578,7 @@ This document defines the single responsibility of each service in the applicati
 
 ### UI/Renderers
 
--   **`IntelMarketRenderer.js`**: A new, dedicated renderer. [cite_start]Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab [cite: 3677, 3976-3977].
+-   **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
 
 ### Event Effects
 
@@ -21451,7 +21608,7 @@ This document defines the single responsibility of each service in the applicati
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 -   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
 -   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
--   [cite_start]**`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market[cite: 3678, 3979].
+-   **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -21761,7 +21918,7 @@ Final Render: The GameState.setState call notifies UIManager.render, which re-re
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
 Orbital Trading - GameState Schema
-Version: 2.2 Source: js/services/GameState.js (see startNewGame method)
+Version: 2.3 Source: js/services/GameState.js (see startNewGame method)
 
 This document defines the structure of the central GameState object, which is instantiated in main.js and managed by GameState.js. It is the "source of truth" for all dynamic, mutable data in the application.
 
@@ -21787,17 +21944,13 @@ lastActiveScreen: {object} - A map storing the last active screen for each main 
 
 [NAV_ID: string]: {string} - The SCREEN_ID to return to (e.g., ship: "map").
 
-pendingTravel: {object | null} - If not null, contains details of the player's active travel.
+pendingTravel: {object | null} - If not null, contains details of a travel action interrupted by an event.
 
-fromId: {string} - The LOCATION_ID of the departure location.
-
-toId: {string} - The LOCATION_ID of the destination.
-
-departureDay: {number} - The game day on which travel started.
-
-arrivalDay: {number} - The game day on which travel will end.
-
-duration: {number} - The total number of days for the trip.
+destinationId: {string} - The LOCATION_ID the player was traveling to.
+eventHullDamagePercent: {number} - (Optional) Hull damage from an event, applied on arrival.
+travelTimeAdd: {number} - (Optional) Flat number of days added to the trip by an event.
+travelTimeAddPercent: {number} - (Optional) Multiplier to increase travel time from an event.
+setTravelTime: {number} - (Optional) A new, fixed travel time set by an event.
 
 player: {object} - Contains all data specific to the player.
 
@@ -21809,7 +21962,7 @@ playerAge: {number} - The player's current age.
 
 lastBirthdayYear: {number} - The in-game year of the player's last birthday.
 
-birthdayProfitBonus: {number} - A temporary credit bonus awarded on their birthday.
+birthdayProfitBonus: {number} - A permanent, cumulative profit bonus that increases each birthday.
 
 introStep: {number} - A counter tracking progress through the intro sequence.
 
@@ -21843,7 +21996,7 @@ amount: {number} - Credits value (positive for income, negative for expense).
 
 description: {string} - Human-readable log (e.g., "Bought 10 Water").
 
-activePerks: {object} - (Currently unused) A map of active player perks.
+activePerks: {object} - A map of active player perks (e.g., `PERK_IDS.NAVIGATOR: true`).
 
 seenEvents: {Array<string>} - A list of EVENT_IDs the player has already encountered.
 
@@ -21937,21 +22090,25 @@ intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by lo
 
 {intelPacket}:
 id: {string} - Unique packet ID.
-locationId: {string} - The location of the deal.
+locationId: {string} - The location where the packet is SOLD.
+dealLocationId: {string} - The location where the DEAL is.
 commodityId: {string} - The commodity of the deal.
 discountPercent: {float} - The hidden discount (e.g., 0.40).
-durationDays: {integer} - The hidden duration.
+durationDays: {integer} - The hidden duration (used for pricing).
 valueMultiplier: {float} - Scaling factor for price calculation.
 messageKey: {string} - Key to look up text in `intelContent.js`.
 isPurchased: {boolean} - State flag, `false` by default.
+pricePaid: {number} - (Set on purchase) The credit amount the player paid.
+expiryDay: {number} - (Set on purchase) The game day the deal expires.
 
 activeIntelDeal: {object | null} - Stores the single active, purchased deal. If `null`, the Intel Market is "unlocked".
 
-locationId: {string} - The location where the deal is active.
+locationId: {string} - The location where the deal is active (dealLocationId from packet).
 commodityId: {string} - The commodity affected by the deal.
 overridePrice: {number} - The pre-calculated, locked-in price for the commodity.
 expiryDay: {number} - The game-day this deal expires.
-sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was sold.
+sourcePacketId: {string} - The ID of the packet that generated this deal.
+sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was purchased.
 
 tutorials: {object} - State of the Tutorial Toast System (TTS).
 
@@ -21963,7 +22120,7 @@ seenBatchIds: {Array<string>} - A list of tutorial batch IDs the player has alre
 
 skippedTutorialBatches: {Array<string>} - A list of batch IDs the player has explicitly skipped.
 
-navLock: {string | null} - If set, locks the UI to a specific NAV_ID or SCREEN_ID for a tutorial step.
+navLock: {object | null} - If set, locks the UI to a specific NAV_ID or SCREEN_ID (e.g., `{ navId: 'ship', screenId: 'navigation' }`).
 
 missions: {object} - Tracks mission states.
 
@@ -21986,5 +22143,7 @@ hangarShipyardToggleState: {string} - The active tab on the Hangar screen ("hang
 hangarActiveIndex: {number} - The index of the ship carousel slide in "hangar" mode.
 
 shipyardActiveIndex: {number} - The index of the ship carousel slide in "shipyard" mode.
+
+activeIntelTab: {string} - The active tab on the Intel screen ("codex" or "market").
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 

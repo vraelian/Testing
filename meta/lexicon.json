@@ -31,9 +31,8 @@
     }
   },
   "key_concepts": {
-    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. Heavy selling increases pressure, driving prices down over time, while heavy buying decreases it, driving prices up.",
+    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
-    "Diminishing_Returns": "A mechanic that reduces the sale price of a commodity when selling large quantities at once, simulating the effect of flooding a market and reducing demand.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
@@ -575,127 +574,127 @@
       "role": "LOGIC_SERVICE"
     },
     "F033": {
-      "path": "./js/effects/SystemSurgeEffect.js",
-      "role": "LOGIC_MODULE",
-      "status": "deprecated"
-    },
-    "F034": {
       "path": "./js/services/game/IntroService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F035": {
+    "F034": {
       "path": "./js/services/player/PlayerActionService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F036": {
+    "F035": {
       "path": "./js/services/world/TimeService.js",
       "role": "LOGIC_SERVICE",
       "dependencies": [
         "js/services/IntelService.js"
       ]
     },
-    "F037": {
+    "F036": {
       "path": "./js/services/world/TravelService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F038": {
+    "F037": {
       "path": "./meta/ROADMAP.md",
       "role": "DOCUMENTATION"
     },
-    "F039": {
+    "F038": {
       "path": "./meta/ARCHITECTURAL_DECISIONS.md",
       "role": "DOCUMENTATION"
     },
-    "F040": {
+    "F039": {
       "path": "./js/services/handlers/ActionClickHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F041": {
+    "F040": {
       "path": "./js/services/handlers/MarketEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F042": {
+    "F041": {
       "path": "./js/services/handlers/HoldEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F043": {
+    "F042": {
       "path": "./js/services/handlers/CarouselEventHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F044": {
+    "F043": {
       "path": "./js/services/handlers/TooltipHandler.js",
       "role": "EVENT_HANDLER"
     },
-    "F045": {
+    "F044": {
       "path": "./js/services/ui/TravelAnimationService.js",
       "role": "UI_SERVICE"
     },
-    "F046": {
+    "F045": {
       "path": "./css/orientation.css",
       "role": "STYLESHEET"
     },
-    "F047": {
+    "F046": {
       "path": "ViewController.swift",
       "role": "NATIVE_IOS_WRAPPER"
     },
-    "F048": {
+    "F047": {
       "path": "./meta/STATE_SCHEMA.md",
       "role": "DOCUMENTATION_STATE_SCHEMA"
     },
-    "F049": {
+    "F048": {
       "path": "./meta/SERVICES.md",
       "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"
     },
-    "F050": {
+    "F049": {
       "path": "./js/data/age_events.js",
       "role": "DATA_DEFINITION"
     },
-    "F051": {
+    "F050": {
       "path": "./js/data/events.js",
       "role": "DATA_DEFINITION"
     },
-    "F052": {
+    "F051": {
       "path": "./js/data/missions.js",
       "role": "DATA_DEFINITION"
     },
-    "F053": {
+    "F052": {
       "path": "./js/data/tutorials.js",
       "role": "DATA_DEFINITION"
     },
-    "F054": {
+    "F053": {
       "path": "./js/services/NewsTickerService.js",
       "role": "UI_SERVICE"
     },
-    "F055": {
+    "F054": {
       "path": "./js/data/flavorAds.js",
       "role": "DATA_DEFINITION",
       "description": "Defines location-specific flavor text for the news ticker."
     },
-    "F056": {
+    "F055": {
       "path": "./css/news-ticker.css",
       "role": "STYLESHEET"
     },
-    "F057": {
+    "F056": {
       "path": "./js/data/intelMessages.js",
       "role": "DATA_DEFINITION",
       "description": "Defines templates for market intel messages for the news ticker."
     },
-    "F058": {
+    "F057": {
       "path": "./js/services/IntelService.js",
       "role": "LOGIC_SERVICE"
     },
-    "F059": {
+    "F058": {
       "path": "./js/ui/renderers/IntelMarketRenderer.js",
       "role": "UI_RENDERER"
     },
-    "F060": {
+    "F059": {
       "path": "./js/data/intelContent.js",
       "role": "DATA_DEFINITION",
       "description": "Defines sample/detail text for the Intel Market."
     },
-    "F061": {
+    "F060": {
       "path": "./js/services/ui/AnimationService.js",
       "role": "UI_SERVICE"
+    },
+    "F061": {
+      "path": "./js/services/bot/AutomatedPlayerService.js",
+      "role": "AUTOMATION_SERVICE",
+      "description": "Contains the AutomatedPlayer class, a bot for stress-testing the economy."
     }
   }
 }
