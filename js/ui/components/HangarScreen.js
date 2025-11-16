@@ -91,9 +91,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
     // Determine Status Badge
     let statusBadgeHtml = '';
-    const isActive = player.activeShipId === shipId; // <-- VIRTUAL WORKBENCH: Moved this up
+    const isActive = player.activeShipId === shipId; 
     if (isHangarMode) {
-        // const isActive = player.activeShipId === shipId; // <-- VIRTUAL WORKBENCH: This is now defined above
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
@@ -135,8 +134,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
     // --- VIRTUAL WORKBENCH: MODIFICATION ---
     // Added the .active-ship class conditionally based on isActive and isHangarMode.
-    // This implements the glowing red border for the active ship in the hangar
-    // and fixes the "stuck blue border" bug.
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
@@ -166,50 +163,42 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, player, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
+    // --- VIRTUAL WORKBENCH START ---
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
-      
-                <div>
-                    <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                    <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+                <div class="info-panel-header">
+                    <div class="info-panel-text">
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+                    </div>
+                    ${_renderParamBars(shipStatic, shipDynamic, player, false)}
                 </div>
-                ${'' /* --- VIRTUAL WORKBENCH (Hide Hangar Specs) ---
-                <div class="hangar-specs my-4">
-            
-                    ${_renderSpecBar("Hull", shipDynamic?.health, shipStatic.maxHealth, 'var(--ot-green-accent)')}
-                    ${_renderSpecBar("Fuel", shipDynamic?.fuel, shipStatic.maxFuel, 'var(--ot-cyan-base)')}
-                    ${_renderSpecBar("Cargo", calculateInventoryUsed(player.inventories[shipId]), shipStatic.cargoCapacity, 'var(--class-s-color)')}
-                </div>
-                --- END VIRTUAL WORKBENCH --- */}
+                
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
     } else {
-        // --- VIRTUAL WORKBENCH START: Phase 3 ---
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
-                <div>
-                    <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                    <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                    <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
+                <div class="info-panel-header">
+                    <div class="info-panel-text">
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
+                    </div>
+                    ${_renderParamBars(shipStatic, shipDynamic, player, true)}
                 </div>
-                ${'' /* --- VIRTUAL WORKBENCH (Request A) ---
-                 <div class="grid grid-cols-3 gap-2 my-4">
-                    ${_renderSpecCard("Max Hull", shipStatic.maxHealth)}
-                    ${_renderSpecCard("Max Fuel", shipStatic.maxFuel)}
-                    ${_renderSpecCard("Cargo Hold", shipStatic.cargoCapacity)}
-                </div>
-                --- END VIRTUAL WORKBENCH --- */}
+
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
                     <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
-        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     }
+    // --- VIRTUAL WORKBENCH END ---
 }
 
 
@@ -228,7 +217,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-        // --- VIRTUAL WORKBENCH START: Phase 3 ---
+        
         return `
             <div class="grid grid-cols-2 gap-2">
                 <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
@@ -240,7 +229,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
                 </button>
             </div>
         `;
-        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
@@ -256,30 +244,68 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 }
 
 
+// --- VIRTUAL WORKBENCH START ---
 /**
- * Helper to render a single stat bar for the Hangar view.
+ * Renders the HULL, CARGO, and FUEL parameter bars.
+ * @param {object} shipStatic - The static data for the ship (for max values).
+ * @param {object} shipDynamic - The dynamic state (health, fuel). Null for shipyard.
+ * @param {object} player - The player object (for cargo).
+ * @param {boolean} [isShipyard=false] - Flag to determine style and values.
+ * @returns {string} HTML for the parameter bars.
  * @private
  */
-function _renderSpecBar(label, current, max, color) {
-    const percentage = max > 0 ? (current / max) * 100 : 0;
-    return `
-        <div class="spec-readout hangar-specs">
-            <span class="text-xs text-right pr-2 text-gray-400">${label}</span>
-            <div class="spec-bar"><div class="spec-bar-fill" style="width: ${percentage}%; background-color: ${color}; --bar-color: ${color};"></div></div>
-            <span class="text-xs text-left pl-2">${Math.floor(current ?? 0)}/${max}</span>
-        </div>
-    `;
-}
+function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false) {
+    const shipId = shipStatic.id;
 
-/**
- * Helper to render a single spec card for the Shipyard view.
- * @private
- */
-function _renderSpecCard(label, value) {
+    // Determine current values
+    const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
+    const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
+    const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
+
+    // Determine percentages
+    const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
+    const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
+    const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
+
+    // Determine colors
+    const hullColor = 'var(--ot-green-accent)';
+    const cargoColor = 'var(--class-s-color)'; // Yellow
+    const fuelColor = 'var(--ot-shipyard-blue-base)'; // MODIFIED: Was --ot-cyan-base
+
+    /**
+     * Helper to render a single bar with its text overlay.
+     * @param {string} label - The bar's label (e.g., "HULL").
+     * @param {number} current - The current value.
+     * @param {number} max - The maximum value.
+     * @param {number} percentage - The fill percentage.
+     * @param {string} color - The bar's fill color.
+     * @returns {string} HTML for a single bar item.
+     */
+    const renderBar = (label, current, max, percentage, color) => {
+        const c = Math.floor(current);
+        const m = Math.floor(max);
+        
+        const isMax = (c >= m);
+        const displayText = isMax ? m : `${c} / ${m}`;
+        const textClass = isMax ? 'max' : 'partial'; // ADDED: Class for alignment
+
+        return `
+            <div class="param-bar-item">
+                <span class="param-bar-label">${label}</span>
+                <div class="param-bar-track">
+                    <div class="param-bar-fill" style="width: ${percentage}%; background-color: ${color}; --bar-color: ${color};"></div>
+                    <span class="param-bar-text ${textClass}">${displayText}</span>
+                </div>
+            </div>
+        `;
+    };
+
     return `
-        <div class="spec-card">
-            <p class="text-xs text-gray-400">${label}</p>
-            <p class="text-lg font-bold font-orbitron">${value}</p>
+        <div class="ship-param-bars ${isShipyard ? 'shipyard-bars' : ''}">
+            ${renderBar('HULL', currentHull, shipStatic.maxHealth, hullPct, hullColor)}
+            ${renderBar('CARGO', currentCargo, shipStatic.cargoCapacity, cargoPct, cargoColor)}
+            ${renderBar('FUEL', currentFuel, shipStatic.maxFuel, fuelPct, fuelColor)}
         </div>
     `;
 }
+// --- VIRTUAL WORKBENCH END ---
