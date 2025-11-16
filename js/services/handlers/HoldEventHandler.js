@@ -99,7 +99,10 @@ export class HoldEventHandler {
         
         // --- Stepper logic ---
         this.isStepperHolding = false;
-        this.stepperInitialDelay = 1000;
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Reduced initial delay for better responsiveness.
+        this.stepperInitialDelay = 400;
+        // --- END VIRTUAL WORKBENCH ---
         this.stepperRepeatRate = 1000 / 7;
         this.stepperTimeout = null;
         this.stepperInterval = null;
@@ -282,7 +285,7 @@ export class HoldEventHandler {
                 this._applyVisuals('repair');
                 
                 if (cost > 0 && this.repairBtn) {
-                     const rect = this.repairBtn.getBoundingClientRect();
+                    const rect = this.repairBtn.getBoundingClientRect();
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
                     serviceStillActive = true;
                 } else {
@@ -380,7 +383,7 @@ export class HoldEventHandler {
 
             const progressBarFill = document.getElementById(barId);
             if (progressBarFill) {
-                progressBarFill.classList.remove('filling');
+                 progressBarFill.classList.remove('filling');
                 const progressBarContainer = progressBarFill.closest('.progress-bar-container');
                 if (progressBarContainer) progressBarContainer.classList.remove('active-pulse');
             }
@@ -528,6 +531,13 @@ export class HoldEventHandler {
             // ignore
         }
 
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Prevent default browser actions (like text selection or context menu)
+        // on touch-hold or mouse-drag, which would otherwise fire 'pointercancel'
+        // and stop our hold logic before it starts.
+        e.preventDefault();
+        // --- END VIRTUAL WORKBENCH ---
+
         const qtyStepperEl = button.closest('.qty-stepper');
         const qtyInput = controls.querySelector('input');
         const direction = button.classList.contains('qty-up') ? 1 : -1;
@@ -562,6 +572,7 @@ export class HoldEventHandler {
      */
     _stopStepperHold() {
         // This function is now called by the master _handleInteractionStop
+        
         if (!this.stepperTarget) return;
 
         // Release pointer capture
@@ -582,12 +593,11 @@ export class HoldEventHandler {
             this.stepperTarget.element.classList.remove('stepper-active');
         }
 
-        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
-        // Added this line to defensively reset the stepper hold flag.
-        // This fixes the bug where the flag would get "stuck" as true,
-        // causing EventManager to suppress the next click after a hold.
-        this.isStepperHolding = false;
-        // --- END MODIFICATION ---
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // DO NOT reset this.isStepperHolding here.
+        // It must be reset by EventManager *after* the click event is suppressed.
+        // this.isStepperHolding = false; // <-- This line is removed.
+        // --- END VIRTUAL WORKBENCH ---
 
         // Clear the state
         this.stepperTimeout = null;

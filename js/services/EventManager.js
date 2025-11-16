@@ -132,6 +132,11 @@ export class EventManager {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             });
         }
+        
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Bind the hold event handlers globally, once, at startup.
+        this.holdEventHandler.bindHoldEvents();
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -143,7 +148,7 @@ export class EventManager {
         // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
         if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
              // Reset stepper hold flag after suppressing click
-             if (this.holdEventHandler.isStepperHolding) {
+            if (this.holdEventHandler.isStepperHolding) {
                  this.holdEventHandler.isStepperHolding = false;
              }
             e.preventDefault();

@@ -1987,6 +1987,10 @@ export class UIManager {
         }
 
         const options = {
+            // --- VIRTUAL WORKBENCH: BUG FIX ---
+            // Add dismissOutside: true to allow the modal to be closed
+            dismissOutside: true,
+            // --- END VIRTUAL WORKBENCH ---
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
@@ -2032,6 +2036,10 @@ export class UIManager {
 
     _showMissionCompletionModal(mission) {
         const options = {
+            // --- VIRTUAL WORKBENCH: BUG FIX ---
+            // Add dismissOutside: true to allow the modal to be closed
+            dismissOutside: true,
+            // --- END VIRTUAL WORKBENCH ---
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';

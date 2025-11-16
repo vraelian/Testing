@@ -241,6 +241,10 @@ export class ActionClickHandler {
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
             // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                // --- VIRTUAL WORKBENCH: BUG FIX ---
+                // Add dismissOutside: true to allow the modal to be closed
+                dismissOutside: true,
+                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
