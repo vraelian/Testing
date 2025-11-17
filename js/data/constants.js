@@ -31,26 +31,55 @@ export const NAV_IDS = Object.freeze({
     DATA: 'data',
 });
 
+// --- VIRTUAL WORKBENCH: SHIP_IDS REPLACEMENT ---
+// This object is replaced with the new comprehensive list from the spreadsheet
+// to ensure all code referencing old enums (like 'WANDERER') now maps
+// to the new string-based GAME ID (e.g., 'Wanderer.Ship').
 /**
  * Unique identifiers for each type of ship available in the game.
  * @enum {string}
  */
 export const SHIP_IDS = Object.freeze({
-    WANDERER: 'starter',
-    STALWART: 'hauler_c1',
-    MULE: 'hauler_c2',
-    PATHFINDER: 'explorer_b1',
-    NOMAD: 'explorer_b2',
-    VINDICATOR: 'frigate_a1',
-    AEGIS: 'frigate_a2',
-    ODYSSEY: 'luxury_s1',
-    MAJESTIC: 'luxury_s2',
-    TITAN_HAULER: 'rare_s1',
-    VOID_CHASER: 'rare_s2',
-    GUARDIAN: 'rare_s3',
-    STARGAZER: 'rare_s4',
-    BEHEMOTH: 'rare_o1',
+    WANDERER: 'Wanderer.Ship',
+    STALWART: 'Stalwart.Ship',
+    MULE: 'Mule.Ship',
+    NOMAD: 'Nomad.Ship',
+    ROOSTER: 'Rooster.Ship',
+    MESA: 'Mesa.Ship',
+    PATHFINDER: 'Pathfinder.Ship',
+    ODYSSEY: 'Odyssey.Ship',
+    PILGRIM: 'Pilgrim.Ship',
+    MERIDIAN: 'Meridian.Ship',
+    RAVEN: 'Raven.Ship',
+    WARDEN: 'Warden.Ship',
+    AEGIS: 'Aegis.Ship',
+    FORERUNNER: 'Forerunner.Ship',
+    GUARDIAN: 'Guardian.Ship',
+    VALIANT: 'Valiant.Ship',
+    EAGLE: 'Eagle.Ship',
+    TUNDRA: 'Tundra.Ship',
+    ATLAS: 'Atlas.Ship',
+    VINDICATOR: 'Vindicator.Ship',
+    RADIANT: 'Radiant.Ship',
+    AESUDON: 'Aesudon.Ship',
+    PTERODACTYL: 'Pterodactyl.Ship',
+    SOVEREIGN: 'Sovereign.Ship',
+    TITAN: 'Titan.Ship',
+    BEHEMOTH: 'Behemoth.Ship',
+    CITADEL: 'Citadel.Ship',
+    SOPHISTACLES: 'Sophistacles.Ship',
+    OUROBOROS: 'Ouroboros.Ship',
+    THALASSODROMEUS: 'Thalassodromeus.Ship',
+    SHELL_THAT_ECHOES_ONLY: 'ShellThatEchoesOnly.Ship',
+    PARALLAX_OF_THOUGHT: 'ParallaxofThought.Ship',
+    ANOMALY_OF_THE_SONG: 'AnomalyoftheSong.Ship',
+    CAUSALITY_OF_SILENCE: 'CausalityofSilence.Ship',
+    ENGINE_OF_RECURSION: 'EngineofRecursion.Ship',
+    FINALITY_OF_WHISPERS: 'FinalityofWhispers.Ship',
+    THE_LISTENER: 'TheListener.Ship',
+    DRIFTING_CRYO_POD: 'DriftingCryoPod.Ship',
 });
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * Unique identifiers for each type of commodity that can be traded.
