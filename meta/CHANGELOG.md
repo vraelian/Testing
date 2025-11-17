@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.90] - 2025-11-116
+-  updated fixed aspect ratio
+
 ## [32.80] - 2025-11-16
 -  ship card polish
 

@@ -62,14 +62,14 @@ body {
     /* Fallback */
     /* height: var(--app-height); */ /* REMOVED: This was the JS override */
  
-   height: 100%; /* MODIFIED: Make body fill 100% of html */
+   height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
     overflow: hidden;
     margin: 0;
-    /* MODIFIED: Removed flex properties that were causing the layout bug */
+    /* MODIFIED: Re-enabled flex properties for scaling */
   
-  /* display: flex; */
-    /* justify-content: center; */
-    /* align-items: center; */
+  display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -110,7 +110,7 @@ background-color: #4a5568;
    
  max-width: 1200px;
     width: 100%;
-    height: 100%;
+    height: 100dvh; /* MODIFIED: Use dynamic viewport height */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
     border: 2px solid #3a4a6a;
     border-radius: 55px;
@@ -118,7 +118,8 @@ background-color: #4a5568;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    padding: calc(-0.35rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
+    /* MODIFIED: Corrected safe-area-inset padding */
+    padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
 }

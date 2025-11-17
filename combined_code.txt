@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 32.80</title>
+    <title>Orbital Trading 32.90</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 32.80</p>
+            <p>Version 32.90</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1280,14 +1280,14 @@ body {
     /* Fallback */
     /* height: var(--app-height); */ /* REMOVED: This was the JS override */
  
-   height: 100%; /* MODIFIED: Make body fill 100% of html */
+   height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
     overflow: hidden;
     margin: 0;
-    /* MODIFIED: Removed flex properties that were causing the layout bug */
+    /* MODIFIED: Re-enabled flex properties for scaling */
   
-  /* display: flex; */
-    /* justify-content: center; */
-    /* align-items: center; */
+  display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: 'Exo 2', sans-serif;
     background-color: #0c101d;
     color: #d0d8e8;
@@ -1328,7 +1328,7 @@ background-color: #4a5568;
    
  max-width: 1200px;
     width: 100%;
-    height: 100%;
+    height: 100dvh; /* MODIFIED: Use dynamic viewport height */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
     border: 2px solid #3a4a6a;
     border-radius: 55px;
@@ -1336,7 +1336,8 @@ background-color: #4a5568;
     box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
     display: flex;
     flex-direction: column;
-    padding: calc(-0.35rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
+    /* MODIFIED: Corrected safe-area-inset padding */
+    padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -6835,18 +6836,48 @@ import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
 /**
- * Sets the --app-height CSS variable to the actual window inner height.
- * This is the definitive fix for the mobile viewport height bug on iOS.
+ * This function now manages both app height and "letterbox" scaling.
+ * It sets the --app-height variable for the body and dynamically scales
+ * the game-container down if the visual viewport is too short.
  */
-/* // MODIFIED: This function actively prevents viewport-fit=cover from working correctly
-   // by setting the height to the safe-area height, not the full screen height.
-   // The CSS 'env(safe-area-inset-top)' variable is the correct way to handle the notch.
 const setAppHeight = () => {
-    // Use the visualViewport height if available, as it's more reliable on mobile.
-    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty('--app-height', `${height}px`);
+    const gameContainer = document.getElementById('game-container');
+    if (!gameContainer) return;
+
+    // This is the *true* available height, including notch/browser UI.
+    const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    // Set the body height to the *full* inner height (PWA/standalone height)
+    // or the visual viewport height (browser). 100dvh in CSS handles this mostly,
+    // but this JS variable is a robust override.
+    document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
+
+    // --- SCALING LOGIC ---
+    // We define the DESIGN TARGET height (iPhone Pro Max).
+    // If the screen is shorter, we scale the container down.
+    const DESIGN_TARGET_HEIGHT = 926; // iPhone 14/13 Pro Max logical height
+
+    if (visualHeight < DESIGN_TARGET_HEIGHT) {
+        // The screen is too short, we must scale down.
+        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; // e.g., 667px / 926px = 0.72
+        
+        // Set height to the *design* height, then scale it
+        gameContainer.style.height = `${DESIGN_TARGET_HEIGHT}px`;
+        gameContainer.style.transform = `scale(${scaleFactor})`;
+        gameContainer.style.transformOrigin = 'top center';
+        
+        // Align the scaled container to the top of the flex-box body
+        document.body.style.alignItems = 'flex-start'; // <-- MODIFIED
+    } else {
+        // The screen is tall enough, no scaling needed.
+        gameContainer.style.transform = 'none';
+        gameContainer.style.height = '100dvh'; // Use dynamic height
+        
+        // Re-center the container vertically (for desktop/tall devices)
+        document.body.style.alignItems = 'center'; // <-- MODIFIED
+    }
 };
-*/
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -6913,17 +6944,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // [[END]] VIRTUAL WORKBENCH (EULA Logic)
 
     // Set the app height on initial load and whenever the viewport changes.
-    // setAppHeight(); // MODIFIED: Disabled
+    setAppHeight(); // MODIFIED: Re-enabled
     
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
-    /* // MODIFIED: Disabled
+    // MODIFIED: Re-enabled
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
         window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
-    */
+
 
 
     // Set up the main start button to initialize and begin the game.
@@ -20337,6 +20368,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [32.90] - 2025-11-116
+-  updated fixed aspect ratio
+
 ## [32.80] - 2025-11-16
 -  ship card polish
 
@@ -21825,6 +21859,23 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Provides a scalable, dynamic credit-sink based on player wealth.
     * **Pro**: Creates a strong, non-arbitrary incentive for player travel.
     * **Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService`.
+
+---
+
+### ADR-007: Dynamic Viewport "Letterbox" Scaling
+
+* **Status**: Accepted (2025-11-16)
+* **Context**: The game's UI is designed for a tall phone screen aspect ratio (e.g., iPhone Pro Max, ~926px). On shorter devices (e.g., iPhone SE) or in mobile browsers where the URL bar reduces the `visualViewport`, the UI was "crushed" and clipped.
+* **Decision**: Implemented a dynamic scaling mechanism to ensure layout integrity.
+    1.  **CSS Foundation**: `body` is set to `display: flex`, `align-items: center`, `justify-content: center`, and `height: 100dvh`. `css/global.css` padding for `.game-container` was corrected to use `env(safe-area-inset-top)`.
+    2.  **JS Scaling Logic**: The `setAppHeight` function in `js/main.js` now runs on load and resize. It compares the `window.visualViewport.height` to a fixed `DESIGN_TARGET_HEIGHT` of 926px.
+    3.  **Scaling (If Shorter)**: If `visualHeight < DESIGN_TARGET_HEIGHT`, a CSS `transform: scale()` is applied to the `.game-container`, and `transform-origin` is set to `top center`. The `body`'s `align-items` is set to `flex-start` to align the scaled container to the top of the viewport.
+    4.  **No Scaling (If Taller)**: If `visualHeight >= DESIGN_TARGET_HEIGHT`, the `transform` is set to `none`, and the `body`'s `align-items` is set to `center` to vertically center the container.
+* **Consequences**:
+    * **Pro**: Guarantees the game's UI fits proportionally on any screen shorter than the 926px design target, preventing all clipping and layout breakage.
+    * **Pro**: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
+    * **Pro**: Uses `visualViewport` to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
+    * **Con**: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---

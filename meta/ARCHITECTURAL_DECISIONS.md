@@ -82,3 +82,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Provides a scalable, dynamic credit-sink based on player wealth.
     * **Pro**: Creates a strong, non-arbitrary incentive for player travel.
     * **Con**: Increases the number of services and adds new dependencies to `TimeService` and `MarketService`.
+
+---
+
+### ADR-007: Dynamic Viewport "Letterbox" Scaling
+
+* **Status**: Accepted (2025-11-16)
+* **Context**: The game's UI is designed for a tall phone screen aspect ratio (e.g., iPhone Pro Max, ~926px). On shorter devices (e.g., iPhone SE) or in mobile browsers where the URL bar reduces the `visualViewport`, the UI was "crushed" and clipped.
+* **Decision**: Implemented a dynamic scaling mechanism to ensure layout integrity.
+    1.  **CSS Foundation**: `body` is set to `display: flex`, `align-items: center`, `justify-content: center`, and `height: 100dvh`. `css/global.css` padding for `.game-container` was corrected to use `env(safe-area-inset-top)`.
+    2.  **JS Scaling Logic**: The `setAppHeight` function in `js/main.js` now runs on load and resize. It compares the `window.visualViewport.height` to a fixed `DESIGN_TARGET_HEIGHT` of 926px.
+    3.  **Scaling (If Shorter)**: If `visualHeight < DESIGN_TARGET_HEIGHT`, a CSS `transform: scale()` is applied to the `.game-container`, and `transform-origin` is set to `top center`. The `body`'s `align-items` is set to `flex-start` to align the scaled container to the top of the viewport.
+    4.  **No Scaling (If Taller)**: If `visualHeight >= DESIGN_TARGET_HEIGHT`, the `transform` is set to `none`, and the `body`'s `align-items` is set to `center` to vertically center the container.
+* **Consequences**:
+    * **Pro**: Guarantees the game's UI fits proportionally on any screen shorter than the 926px design target, preventing all clipping and layout breakage.
+    * **Pro**: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
+    * **Pro**: Uses `visualViewport` to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
+    * **Con**: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.

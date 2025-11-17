@@ -16,18 +16,48 @@ import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
 /**
- * Sets the --app-height CSS variable to the actual window inner height.
- * This is the definitive fix for the mobile viewport height bug on iOS.
+ * This function now manages both app height and "letterbox" scaling.
+ * It sets the --app-height variable for the body and dynamically scales
+ * the game-container down if the visual viewport is too short.
  */
-/* // MODIFIED: This function actively prevents viewport-fit=cover from working correctly
-   // by setting the height to the safe-area height, not the full screen height.
-   // The CSS 'env(safe-area-inset-top)' variable is the correct way to handle the notch.
 const setAppHeight = () => {
-    // Use the visualViewport height if available, as it's more reliable on mobile.
-    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty('--app-height', `${height}px`);
+    const gameContainer = document.getElementById('game-container');
+    if (!gameContainer) return;
+
+    // This is the *true* available height, including notch/browser UI.
+    const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    
+    // Set the body height to the *full* inner height (PWA/standalone height)
+    // or the visual viewport height (browser). 100dvh in CSS handles this mostly,
+    // but this JS variable is a robust override.
+    document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
+
+    // --- SCALING LOGIC ---
+    // We define the DESIGN TARGET height (iPhone Pro Max).
+    // If the screen is shorter, we scale the container down.
+    const DESIGN_TARGET_HEIGHT = 926; // iPhone 14/13 Pro Max logical height
+
+    if (visualHeight < DESIGN_TARGET_HEIGHT) {
+        // The screen is too short, we must scale down.
+        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; // e.g., 667px / 926px = 0.72
+        
+        // Set height to the *design* height, then scale it
+        gameContainer.style.height = `${DESIGN_TARGET_HEIGHT}px`;
+        gameContainer.style.transform = `scale(${scaleFactor})`;
+        gameContainer.style.transformOrigin = 'top center';
+        
+        // Align the scaled container to the top of the flex-box body
+        document.body.style.alignItems = 'flex-start'; // <-- MODIFIED
+    } else {
+        // The screen is tall enough, no scaling needed.
+        gameContainer.style.transform = 'none';
+        gameContainer.style.height = '100dvh'; // Use dynamic height
+        
+        // Re-center the container vertically (for desktop/tall devices)
+        document.body.style.alignItems = 'center'; // <-- MODIFIED
+    }
 };
-*/
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization ---
@@ -94,17 +124,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // [[END]] VIRTUAL WORKBENCH (EULA Logic)
 
     // Set the app height on initial load and whenever the viewport changes.
-    // setAppHeight(); // MODIFIED: Disabled
+    setAppHeight(); // MODIFIED: Re-enabled
     
     // The visualViewport API is a more reliable way to track viewport changes on mobile.
-    /* // MODIFIED: Disabled
+    // MODIFIED: Re-enabled
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
         window.visualViewport.addEventListener('scroll', setAppHeight);
     } else {
         window.addEventListener('resize', setAppHeight);
     }
-    */
+
 
 
     // Set up the main start button to initialize and begin the game.
