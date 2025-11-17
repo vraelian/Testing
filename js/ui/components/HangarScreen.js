@@ -101,6 +101,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
@@ -122,6 +123,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>

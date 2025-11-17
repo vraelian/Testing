@@ -289,6 +289,11 @@ export class UIManager {
             eulaModalContent: document.getElementById('eula-modal-content'),
             // [[END]] VIRTUAL WORKBENCH (Cache EULA Modal)
 
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+            shipInfoModal: document.getElementById('ship-info-modal'),
+            shipInfoModalContent: document.getElementById('ship-info-modal-content'),
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
@@ -1205,6 +1210,51 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
+
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+    /**
+     * Displays the new modal for showing ship info text.
+     * @param {string} shipId The ID of the ship to display info for.
+     */
+    showShipInfoModal(shipId) {
+        const modal = this.cache.shipInfoModal;
+        const contentEl = this.cache.shipInfoModalContent;
+        
+        if (!modal || !contentEl) {
+             this.logger.error('UIManager', 'Ship info modal elements not cached or found in DOM.');
+            return;
+        }
+
+        const ship = DB.SHIPS[shipId];
+        let contentHtml = '';
+
+        if (!ship) {
+            this.logger.error('UIManager', `No ship info content found for ID: ${shipId}`);
+            contentHtml = '<p>Error: Ship info content not found.</p>';
+        } else {
+            // Use the ship's lore, wrapped in <p> tags for formatting.
+            contentHtml = `<p>${ship.lore.replace(/\n/g, '</p><p>')}</p>`;
+        }
+        
+        contentEl.innerHTML = contentHtml;
+        
+        // Ensure scroll position is at the top
+        contentEl.scrollTop = 0;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-visible');
+        
+        // Add a one-time click listener to the backdrop *and* content area to close the modal.
+        // This fulfills the requirement to be "dismissable by tapping/clicking inside or outside".
+        const closeHandler = (e) => {
+            if (e.target.closest('#ship-info-modal-content') || e.target.id === 'ship-info-modal') {
+                this.hideModal('ship-info-modal');
+                modal.removeEventListener('click', closeHandler);
+            }
+        };
+        modal.addEventListener('click', closeHandler);
+    }
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
 
     // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**
@@ -2124,8 +2174,15 @@ change occurred (like a purchase), it *surgically
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+            // Special case: Allow ship-info-modal to be dismissed by clicking content
+            if (modalBackdrop.id === 'ship-info-modal' && e.target.closest('#ship-info-modal-content')) {
+                return modalBackdrop.id;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+
             // Standard dismissal (backdrop click only)
-            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && modalBackdrop.id !== 'ship-info-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -2138,6 +2195,14 @@ change occurred (like a purchase), it *surgically
                 return modalBackdrop.id;
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
+
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+            // Standard dismissal for ship-info-modal (backdrop click only)
+            if (modalBackdrop.id === 'ship-info-modal' && !e.target.closest('.modal-content')) {
+                return modalBackdrop.id;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+
 
             // GDD-compliant dismissal
             return modalBackdrop.id;

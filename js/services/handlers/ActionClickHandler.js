@@ -63,6 +63,16 @@ export class ActionClickHandler {
             }
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
+            case 'show_ship_info': {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation(); // Prevent click from bubbling up
+                this.uiManager.showShipInfoModal(shipId);
+                break;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+    
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
