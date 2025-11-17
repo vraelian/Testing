@@ -101,6 +101,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
@@ -122,6 +123,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
+                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
@@ -174,13 +176,12 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     <div class="info-panel-text">
                         <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                        ${shipStatic.attribute && shipStatic.attribute !== 'None' ? `<p class="ship-attribute-text text-sm mt-1">${shipStatic.attribute.replace(/\n/g, '<br>')}</p>` : ''}
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
@@ -191,14 +192,13 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     <div class="info-panel-text">
                         <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                        ${shipStatic.attribute && shipStatic.attribute !== 'None' ? `<p class="ship-attribute-text text-sm mt-1">${shipStatic.attribute.replace(/\n/g, '<br>')}</p>` : ''}
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                     <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
                 </div>
             </div>
         `;
