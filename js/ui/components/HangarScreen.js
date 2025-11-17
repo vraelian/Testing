@@ -127,6 +127,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
                 </div>
                 ${statusBadgeHtml}
             </div>
+            
             <div class="action-buttons-container pt-2">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
@@ -143,6 +144,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
                         ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
+            
             </div>
         </div>
     `;
@@ -173,7 +175,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false)}
+                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -190,7 +192,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true)}
+                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -252,11 +254,15 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * @param {object} shipDynamic - The dynamic state (health, fuel). Null for shipyard.
  * @param {object} player - The player object (for cargo).
  * @param {boolean} [isShipyard=false] - Flag to determine style and values.
+ * @param {string} shipId - The specific ID of the ship being rendered.
  * @returns {string} HTML for the parameter bars.
  * @private
  */
-function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false) {
-    const shipId = shipStatic.id;
+function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
+    // --- VIRTUAL WORKBENCH: BUG FIX ---
+    // The incorrect line 'const shipId = shipStatic.id;' has been removed.
+    // The correct 'shipId' is now passed in as an argument.
+    // --- END BUG FIX ---
 
     // Determine current values
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
@@ -269,7 +275,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false) {
     const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
     const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
     const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
-
     // Determine colors
     const hullColor = 'var(--ot-green-accent)';
     // VIRTUAL WORKBENCH: Request B - Match nav bar colors
