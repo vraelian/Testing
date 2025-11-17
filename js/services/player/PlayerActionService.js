@@ -86,6 +86,11 @@ export class PlayerActionService {
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Set timestamp to force UIManager to do a full re-render of HangarScreen
+        this.gameState.uiState.lastTransactionTimestamp = Date.now();
+        // --- END VIRTUAL WORKBENCH ---
+
         this.gameState.setState({});
         return true;
     }
@@ -141,6 +146,11 @@ export class PlayerActionService {
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
+
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // Set timestamp to force UIManager to do a full re-render of HangarScreen
+        this.gameState.uiState.lastTransactionTimestamp = Date.now();
+        // --- END VIRTUAL WORKBENCH ---
 
         this.gameState.setState({});
 
