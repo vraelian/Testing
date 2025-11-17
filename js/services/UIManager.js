@@ -1211,7 +1211,7 @@ change occurred (like a purchase), it *surgically
         modal.addEventListener('click', closeHandler);
     }
 
-    // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
     /**
      * Displays the new modal for showing ship info text.
      * @param {string} shipId The ID of the ship to display info for.
@@ -1225,15 +1225,22 @@ change occurred (like a purchase), it *surgically
             return;
         }
 
-        const ship = DB.SHIPS[shipId];
+        const ship = DB.SHIPS[shipId]; // This now gets the full object from SHIP_DATABASE
         let contentHtml = '';
 
         if (!ship) {
             this.logger.error('UIManager', `No ship info content found for ID: ${shipId}`);
             contentHtml = '<p>Error: Ship info content not found.</p>';
         } else {
-            // Use the ship's lore, wrapped in <p> tags for formatting.
-            contentHtml = `<p>${ship.lore.replace(/\n/g, '</p><p>')}</p>`;
+            // Get new data fields from the ship object (from ship_database.js)
+            // Replace newlines with <br> for HTML rendering
+            const attributeText = (ship.attribute || "No Attribute").replace(/\n/g, '<br>');
+            // 'lore' in the new SHIP_DATABASE is the extended flavor text
+            // Replace newlines with <br> for HTML rendering
+            const extendedLoreText = (ship.lore || "No extended lore available.").replace(/\n/g, '<br>');
+        
+            // Format as requested: "[Attribute] <br><br> [Extended Flavor Text]"
+            contentHtml = `${attributeText}<br><br>${extendedLoreText}`;
         }
         
         contentEl.innerHTML = contentHtml;
@@ -1247,14 +1254,15 @@ change occurred (like a purchase), it *surgically
         // Add a one-time click listener to the backdrop *and* content area to close the modal.
         // This fulfills the requirement to be "dismissable by tapping/clicking inside or outside".
         const closeHandler = (e) => {
-            if (e.target.closest('#ship-info-modal-content') || e.target.id === 'ship-info-modal') {
+            if (e.target.closest('#ship-info-modal-content') 
+ || e.target.id === 'ship-info-modal') {
                 this.hideModal('ship-info-modal');
                 modal.removeEventListener('click', closeHandler);
             }
         };
         modal.addEventListener('click', closeHandler);
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
 
     // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**

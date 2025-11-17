@@ -31,26 +31,29 @@ export const NAV_IDS = Object.freeze({
     DATA: 'data',
 });
 
+// --- [[START]] VIRTUAL WORKBENCH (Phase 2) ---
 /**
  * Unique identifiers for each type of ship available in the game.
+ * Values are mapped to the 'GAME ID' column from the ship database.
  * @enum {string}
  */
 export const SHIP_IDS = Object.freeze({
-    WANDERER: 'starter',
-    STALWART: 'hauler_c1',
-    MULE: 'hauler_c2',
-    PATHFINDER: 'explorer_b1',
-    NOMAD: 'explorer_b2',
-    VINDICATOR: 'frigate_a1',
-    AEGIS: 'frigate_a2',
-    ODYSSEY: 'luxury_s1',
-    MAJESTIC: 'luxury_s2',
-    TITAN_HAULER: 'rare_s1',
-    VOID_CHASER: 'rare_s2',
-    GUARDIAN: 'rare_s3',
-    STARGAZER: 'rare_s4',
-    BEHEMOTH: 'rare_o1',
+    WANDERER: 'Wanderer.Ship',
+    STALWART: 'Stalwart.Ship',
+    MULE: 'Mule.Ship',
+    PATHFINDER: 'Pathfinder.Ship',
+    NOMAD: 'Nomad.Ship',
+    VINDICATOR: 'Vindicator.Ship',
+    AEGIS: 'Aegis.Ship',
+    ODYSSEY: 'Odyssey.Ship',
+    MAJESTIC: 'luxury_s2', // Obsolete: Not in new ship_database.js
+    TITAN_HAULER: 'Titan.Ship', // Mapped from 'Titan Hauler' to 'Titan'
+    VOID_CHASER: 'rare_s2', // Obsolete: Not in new ship_database.js
+    GUARDIAN: 'Guardian.Ship',
+    STARGAZER: 'rare_s4', // Obsolete: Not in new ship_database.js
+    BEHEMOTH: 'Behemoth.Ship',
 });
+// --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
 
 /**
  * Unique identifiers for each type of commodity that can be traded.
@@ -72,7 +75,6 @@ export const COMMODITY_IDS = Object.freeze({
     ANTIMATTER: 'antimatter',
     FOLDED_DRIVES: 'folded_drives',
 });
-
 /**
  * Unique identifiers for each travel destination (market location).
  * @enum {string}

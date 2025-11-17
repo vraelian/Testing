@@ -5974,7 +5974,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- VIRTUAL WORKBENCH START ---
+    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -5987,7 +5988,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -6004,12 +6005,12 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
                 </div>
             </div>
         `;
     }
-    // --- VIRTUAL WORKBENCH END ---
+    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 
@@ -7475,26 +7476,29 @@ export const NAV_IDS = Object.freeze({
     DATA: 'data',
 });
 
+// --- [[START]] VIRTUAL WORKBENCH (Phase 2) ---
 /**
  * Unique identifiers for each type of ship available in the game.
+ * Values are mapped to the 'GAME ID' column from the ship database.
  * @enum {string}
  */
 export const SHIP_IDS = Object.freeze({
-    WANDERER: 'starter',
-    STALWART: 'hauler_c1',
-    MULE: 'hauler_c2',
-    PATHFINDER: 'explorer_b1',
-    NOMAD: 'explorer_b2',
-    VINDICATOR: 'frigate_a1',
-    AEGIS: 'frigate_a2',
-    ODYSSEY: 'luxury_s1',
-    MAJESTIC: 'luxury_s2',
-    TITAN_HAULER: 'rare_s1',
-    VOID_CHASER: 'rare_s2',
-    GUARDIAN: 'rare_s3',
-    STARGAZER: 'rare_s4',
-    BEHEMOTH: 'rare_o1',
+    WANDERER: 'Wanderer.Ship',
+    STALWART: 'Stalwart.Ship',
+    MULE: 'Mule.Ship',
+    PATHFINDER: 'Pathfinder.Ship',
+    NOMAD: 'Nomad.Ship',
+    VINDICATOR: 'Vindicator.Ship',
+    AEGIS: 'Aegis.Ship',
+    ODYSSEY: 'Odyssey.Ship',
+    MAJESTIC: 'luxury_s2', // Obsolete: Not in new ship_database.js
+    TITAN_HAULER: 'Titan.Ship', // Mapped from 'Titan Hauler' to 'Titan'
+    VOID_CHASER: 'rare_s2', // Obsolete: Not in new ship_database.js
+    GUARDIAN: 'Guardian.Ship',
+    STARGAZER: 'rare_s4', // Obsolete: Not in new ship_database.js
+    BEHEMOTH: 'Behemoth.Ship',
 });
+// --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
 
 /**
  * Unique identifiers for each type of commodity that can be traded.
@@ -7516,7 +7520,6 @@ export const COMMODITY_IDS = Object.freeze({
     ANTIMATTER: 'antimatter',
     FOLDED_DRIVES: 'folded_drives',
 });
-
 /**
  * Unique identifiers for each travel destination (market location).
  * @enum {string}
@@ -7730,6 +7733,9 @@ import { MISSIONS } from './missions.js';
 import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
 import { TUTORIAL_DATA } from './tutorials.js';
+// --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
+import { SHIP_DATABASE } from './ship_database.js';
+// --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -7882,23 +7888,11 @@ export const DB = {
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: RANDOM_EVENTS,
 
-    // --- Ship Data ---
-    SHIPS: {
-        [SHIP_IDS.WANDERER]: { name: 'Wanderer', class: 'C', price: 25000, maxHealth: 100, cargoCapacity: 20, maxFuel: 100, saleLocationId: null, lore: 'The All-Rounder. A reliable, if unspectacular, light freighter. Its balanced stats make it a good choice for new captains finding their niche.' },
-        [SHIP_IDS.STALWART]: { name: 'Stalwart', class: 'C', price: 25000, maxHealth: 150, cargoCapacity: 45, maxFuel: 80, saleLocationId: LOCATION_IDS.MARS, lore: 'The Hauler. A workhorse of the inner worlds. Slow and cumbersome, but boasts an impressive cargo capacity for its price point.' },
-        [SHIP_IDS.MULE]: { name: 'Mule', class: 'C', price: 25000, maxHealth: 75, cargoCapacity: 30, maxFuel: 150, saleLocationId: LOCATION_IDS.BELT, lore: 'The Explorer. What it lacks in cargo space, it makes up for with surprising efficiency and robust systems, allowing it to travel further and cheaper than other ships in its class.' },
-        [SHIP_IDS.PATHFINDER]: { name: 'Pathfinder', class: 'B', price: 180000, maxHealth: 120, cargoCapacity: 40, maxFuel: 150, saleLocationId: LOCATION_IDS.LUNA, lore: 'Built for the long haul. Its extended fuel tanks and robust sensor suite make it ideal for reaching the outer edges of the system.' },
-        [SHIP_IDS.NOMAD]: { name: 'Nomad', class: 'B', price: 280000, maxHealth: 100, cargoCapacity: 35, maxFuel: 140, saleLocationId: LOCATION_IDS.URANUS, lore: 'A vessel designed for self-sufficiency, featuring advanced life support and a small onboard workshop for emergency repairs.' },
-        [SHIP_IDS.VINDICATOR]: { name: 'Vindicator', class: 'A', price: 750000, maxHealth: 250, cargoCapacity: 80, maxFuel: 120, saleLocationId: LOCATION_IDS.NEPTUNE, lore: 'A decommissioned military frigate. Fast, tough, and intimidating, with cargo space retrofitted where missile launchers used to be.' },
-        [SHIP_IDS.AEGIS]: { name: 'Aegis', class: 'A', price: 1200000, maxHealth: 120, cargoCapacity: 70, maxFuel: 140, saleLocationId: LOCATION_IDS.EARTH, lore: 'Built as a high-threat escort vessel, its hull is exceptionally dense. A flying fortress that can also haul a respectable amount of cargo.' },
-        [SHIP_IDS.ODYSSEY]: { name: 'Odyssey', class: 'S', price: 3800000, maxHealth: 100, cargoCapacity: 120, maxFuel: 250, saleLocationId: LOCATION_IDS.SATURN, lore: 'The pinnacle of personal transport. Gleaming chrome, whisper-quiet engines, and a cabin that smells of rich Corinthian leather.' },
-        [SHIP_IDS.MAJESTIC]: { name: 'Majestic', class: 'S', price: 7200000, maxHealth: 200, cargoCapacity: 160, maxFuel: 250, saleLocationId: LOCATION_IDS.KEPLER, lore: 'A flying palace favored by corporate magnates. Its speed, range, and capacity make it one of the most versatile ships money can buy.' },
-        [SHIP_IDS.TITAN_HAULER]: { name: 'Titan Hauler', class: 'S', price: 1800000, maxHealth: 175, cargoCapacity: 300, maxFuel: 75, saleLocationId: LOCATION_IDS.URANUS, isRare: true, lore: 'A relic of a failed colonization effort, this ship is almost entirely a cargo container with an engine strapped to it.' },
-        [SHIP_IDS.VOID_CHASER]: { name: 'Void Chaser', class: 'S', price: 3100000, maxHealth: 50, cargoCapacity: 90, maxFuel: 400, saleLocationId: LOCATION_IDS.BELT, isRare: true, lore: 'A heavily modified smuggling vessel. Its paper-thin hull is a small price to pay for its legendary engine and long-range fuel cells.' },
-        [SHIP_IDS.GUARDIAN]: { name: 'Guardian', class: 'S', price: 1500000, maxHealth: 400, cargoCapacity: 75, maxFuel: 150, saleLocationId: LOCATION_IDS.EARTH, isRare: true, lore: 'An experimental military prototype with redundant hull plating, designed to withstand extreme punishment.' },
-        [SHIP_IDS.STARGAZER]: { name: 'Stargazer', class: 'S', price: 950000, maxHealth: 100, cargoCapacity: 60, maxFuel: 350, saleLocationId: LOCATION_IDS.JUPITER, isRare: true, lore: 'A deep-space exploration vessel with colossal fuel reserves, intended for journeys far beyond the known systems.' },
-        [SHIP_IDS.BEHEMOTH]: { name: 'Behemoth', class: 'O', price: 32000000, maxHealth: 600, cargoCapacity: 500, maxFuel: 600, saleLocationId: LOCATION_IDS.EXCHANGE, isRare: true, lore: 'An orbital-class freighter that dwarfs even the largest stations. It is a legend among traders, rumored to be a mobile black market in its own right.' }
-    },
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
+    // The old, hardcoded DB.SHIPS object has been removed.
+    // It is now replaced by the imported SHIP_DATABASE object from js/data/ship_database.js
+    SHIPS: SHIP_DATABASE,
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
@@ -15991,7 +15985,7 @@ change occurred (like a purchase), it *surgically
         modal.addEventListener('click', closeHandler);
     }
 
-    // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
     /**
      * Displays the new modal for showing ship info text.
      * @param {string} shipId The ID of the ship to display info for.
@@ -16005,15 +15999,22 @@ change occurred (like a purchase), it *surgically
             return;
         }
 
-        const ship = DB.SHIPS[shipId];
+        const ship = DB.SHIPS[shipId]; // This now gets the full object from SHIP_DATABASE
         let contentHtml = '';
 
         if (!ship) {
             this.logger.error('UIManager', `No ship info content found for ID: ${shipId}`);
             contentHtml = '<p>Error: Ship info content not found.</p>';
         } else {
-            // Use the ship's lore, wrapped in <p> tags for formatting.
-            contentHtml = `<p>${ship.lore.replace(/\n/g, '</p><p>')}</p>`;
+            // Get new data fields from the ship object (from ship_database.js)
+            // Replace newlines with <br> for HTML rendering
+            const attributeText = (ship.attribute || "No Attribute").replace(/\n/g, '<br>');
+            // 'lore' in the new SHIP_DATABASE is the extended flavor text
+            // Replace newlines with <br> for HTML rendering
+            const extendedLoreText = (ship.lore || "No extended lore available.").replace(/\n/g, '<br>');
+        
+            // Format as requested: "[Attribute] <br><br> [Extended Flavor Text]"
+            contentHtml = `${attributeText}<br><br>${extendedLoreText}`;
         }
         
         contentEl.innerHTML = contentHtml;
@@ -16027,14 +16028,15 @@ change occurred (like a purchase), it *surgically
         // Add a one-time click listener to the backdrop *and* content area to close the modal.
         // This fulfills the requirement to be "dismissable by tapping/clicking inside or outside".
         const closeHandler = (e) => {
-            if (e.target.closest('#ship-info-modal-content') || e.target.id === 'ship-info-modal') {
+            if (e.target.closest('#ship-info-modal-content') 
+ || e.target.id === 'ship-info-modal') {
                 this.hideModal('ship-info-modal');
                 modal.removeEventListener('click', closeHandler);
             }
         };
         modal.addEventListener('click', closeHandler);
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
 
     // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**

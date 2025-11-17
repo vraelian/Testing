@@ -168,7 +168,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- VIRTUAL WORKBENCH START ---
+    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -181,7 +182,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -198,12 +199,12 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.lore}</p>
+                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
                 </div>
             </div>
         `;
     }
-    // --- VIRTUAL WORKBENCH END ---
+    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 
