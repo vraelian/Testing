@@ -68,7 +68,13 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent click from bubbling up
+                
+                // --- VIRTUAL WORKBENCH: CLEANUP ---
+                // Removed the setTimeout(..., 0) wrapper.
+                // This is a direct call. The race condition
+                // will be fixed in UIManager.js (Phase 2).
                 this.uiManager.showShipInfoModal(shipId);
+                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---

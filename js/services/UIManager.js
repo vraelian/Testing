@@ -1209,7 +1209,8 @@ change occurred (like a purchase), it *surgically
             }
         };
         modal.addEventListener('click', closeHandler);
-    }
+    }// js/services/UIManager.js
+// ... (first half of the file)
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
     /**
@@ -1251,8 +1252,10 @@ change occurred (like a purchase), it *surgically
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
         
-        // Add a one-time click listener to the backdrop *and* content area to close the modal.
-        // This fulfills the requirement to be "dismissable by tapping/clicking inside or outside".
+        // --- VIRTUAL WORKBENCH: MODIFICATION (BUG FIX) ---
+        // Re-add the local closeHandler to prevent the race condition
+        // with the global EventManager. This makes it behave like
+        // showLoreModal and showEulaModal, which are working.
         const closeHandler = (e) => {
             if (e.target.closest('#ship-info-modal-content') 
  || e.target.id === 'ship-info-modal') {
@@ -1261,6 +1264,7 @@ change occurred (like a purchase), it *surgically
             }
         };
         modal.addEventListener('click', closeHandler);
+        // --- END VIRTUAL WORKBENCH ---
     }
     // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
 
@@ -2182,15 +2186,15 @@ change occurred (like a purchase), it *surgically
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
-            // Special case: Allow ship-info-modal to be dismissed by clicking content
-            if (modalBackdrop.id === 'ship-info-modal' && e.target.closest('#ship-info-modal-content')) {
-                return modalBackdrop.id;
-            }
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+
+            // --- [[START]] VIRTUAL WORKBENCH: BUG FIX ---
+            // The redundant checks for 'ship-info-modal' have been REMOVED.
+            // Its dismissal is now handled *only* by the local closeHandler
+            // in showShipInfoModal, just like lore-modal and eula-modal.
 
             // Standard dismissal (backdrop click only)
-            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && modalBackdrop.id !== 'ship-info-modal' && !e.target.closest('.modal-content')) {
+            // NOTE: 'ship-info-modal' is removed from this condition.
+            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -2203,14 +2207,8 @@ change occurred (like a purchase), it *surgically
                 return modalBackdrop.id;
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
-
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
-            // Standard dismissal for ship-info-modal (backdrop click only)
-            if (modalBackdrop.id === 'ship-info-modal' && !e.target.closest('.modal-content')) {
-                return modalBackdrop.id;
-            }
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
-
+            
+            // --- [[END]] VIRTUAL WORKBENCH: BUG FIX ---
 
             // GDD-compliant dismissal
             return modalBackdrop.id;
@@ -2317,7 +2315,7 @@ change occurred (like a purchase), it *surgically
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                     <h5 class="font-bold imprinted-text">Needs:</h5>
+                     <h5 class."font-bold imprinted-text">Needs:</h5>
                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
