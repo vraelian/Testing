@@ -1218,8 +1218,7 @@
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font 
-definitions,
+ * @fileoverview This file contains the global styles, font definitions,
  * utility classes, and base layout for the entire application.
  */
 
@@ -1267,6 +1266,36 @@ definitions,
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
+
+    /* --- [[START]] THEME COLORS --- */
+    --ot-bg-dark: #111827; /* gray-900 */
+    --ot-bg-darker: #0f172a; /* slate-900 */
+    
+    /* UI Accents */
+    --ot-green-accent: #10b981; /* emerald-500 */
+    --ot-red-alert: #ef4444; /* red-500 */
+    --ot-border-light: #374151; /* gray-700 */
+    
+    /* Theme Colors (Defaults) */
+    --ot-cyan-dim: #22d3ee;
+    --ot-cyan-base: #06b6d4;
+    --ot-cyan-glow: #67e8f9;
+    --ot-hangar-red-base: #b91c1c;
+    --ot-shipyard-blue-base: #3b82f6;
+    
+    /* Ship Class Colors */
+    --class-c-color: #9ca3af; /* Gray */
+    --class-b-color: #3b82f6; /* Blue */
+    --class-a-color: #8b5cf6; /* Purple */
+    --class-s-color: #f59e0b; /* Gold/Orange */
+    --class-o-color: #ef4444; /* Red (Capital) */
+    --class-z-color: #10b981; /* Green (Alien) */
+    --class-f-color: #6b7280; /* Dark Gray (Fail/Cryo) */
+
+    /* Text Colors */
+    --ot-text-primary: #f3f4f6; /* gray-100 */
+    --ot-text-secondary: #9ca3af; /* gray-400 */
+    /* --- [[END]] THEME COLORS --- */
 }
 
 html {
@@ -2098,6 +2127,34 @@ card.
 }
 /* --- END VIRTUAL WORKBENCH --- */
 /* --- [[END]] GENERIC ANIMATIONS --- */
+
+
+/* --- [[START]] GHOST LINK TRIGGER --- */
+.ghost-link {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ot-cyan-dim, #22d3ee);
+    padding: 8px 12px;
+    margin: -8px -12px; /* Hitbox extension for touch */
+    cursor: pointer;
+    opacity: 0.8;
+    animation: ghost-breathe 4s infinite ease-in-out;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ghost-link:active {
+    color: var(--ot-cyan-base, #06b6d4);
+    text-shadow: 0 0 8px var(--ot-cyan-base, #06b6d4);
+    opacity: 1;
+    animation: none;
+}
+
+@keyframes ghost-breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+}
+/* --- [[END]] GHOST LINK TRIGGER --- */
 --- END OF FILE: ./css/global.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -2554,6 +2611,82 @@ card.
     text-align: center; /* Center-align text */
     width: 100%;       /* Ensure element spans modal width for centering */
 }
+
+
+/* --- [[START]] SHIP LORE "DIGITAL MANIFEST" STYLES --- */
+/* Applied via specialClass in queueModal */
+.manifest-modal .modal-content {
+    max-width: 600px;
+    width: 90%;
+    height: 70vh; /* Fixed height for scrollable interior */
+    max-height: 800px;
+    background-color: #050505;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(6, 182, 212, 0.05) 1px, /* Cyan-ish scanline */
+        rgba(6, 182, 212, 0.05) 2px
+    );
+    border: 1px solid var(--ot-cyan-dim, #22d3ee);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    padding: 1.5rem;
+    color: #e2e8f0;
+    overflow: hidden; /* Container doesn't scroll, body does */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Animation container */
+.manifest-content-wrapper {
+    height: 100%;
+    width: 100%;
+    animation: scanIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Typography overrides */
+.manifest-header h2 {
+    font-family: 'Roboto Mono', monospace;
+    /* Colors handled inline by renderer */
+}
+
+/* Scrollable Body */
+.manifest-body {
+    /* Custom Scrollbar Styling for WebKit */
+    scrollbar-width: thin;
+    scrollbar-color: var(--ot-cyan-dim, #22d3ee) #050505;
+}
+
+.manifest-body::-webkit-scrollbar {
+    width: 6px;
+}
+.manifest-body::-webkit-scrollbar-track {
+    background: #050505;
+}
+.manifest-body::-webkit-scrollbar-thumb {
+    background-color: var(--ot-cyan-dim, #22d3ee);
+    border-radius: 3px;
+}
+
+/* Button Styling */
+.btn-manifest {
+    transition: all 0.2s ease;
+}
+.btn-manifest:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 15px var(--ot-cyan-base, #06b6d4);
+}
+
+/* Animations */
+@keyframes scanIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* --- [[END]] SHIP LORE STYLES --- */
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -5315,6 +5448,74 @@ BULKHEAD NAVIGATION STYLES
 }
 --- END OF FILE: ./css/orientation.css ---
 
+--- START OF FILE: ./js/ui/renderers/ShipLoreRenderer.js ---
+// js/ui/renderers/ShipLoreRenderer.js
+/**
+ * @fileoverview Stateless renderer for the Ship Lore "Digital Manifest" modal.
+ * Generates the HTML structure for the ship's detailed database entry.
+ */
+
+/**
+ * Generates the HTML string for the Ship Lore modal.
+ * @param {object} ship - The ship object from the database.
+ * @returns {string} The HTML content.
+ */
+export const renderShipLore = (ship) => {
+    if (!ship) return '<div class="text-center text-red-500 font-roboto-mono">ERROR: SHIP DATA CORRUPTED</div>';
+
+    // Fallback for missing lore
+    const rawLore = ship.lore || "Data Corrupted... No registry information available.";
+
+    // Parse lore: Split by newlines to create paragraphs
+    // We filter out empty strings to avoid empty paragraphs and spacing issues
+    const loreParagraphs = rawLore
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => `<p class="mb-4 last:mb-0">${line}</p>`)
+        .join('');
+
+    const shipClass = ship.class || '?';
+    // Dynamic CSS variable for class color (e.g., --class-s-color, --class-c-color)
+    const classColorVar = `var(--class-${shipClass.toLowerCase()}-color, #fff)`;
+
+    // Generate a "Registry ID" for flavor (e.g., REGISTRY_ID: 884-C-WANDERER)
+    const registryId = `REGISTRY_ID: 884-${shipClass}-${ship.name.toUpperCase().replace(/\s+/g, '_')}`;
+
+    return `
+        <div class="manifest-content-wrapper flex flex-col h-full relative overflow-hidden">
+            <div class="manifest-header flex justify-between items-baseline border-b border-gray-700/50 pb-2 mb-4 shrink-0">
+                <h2 class="text-2xl font-roboto-mono font-bold uppercase tracking-wide" style="color: ${classColorVar}; text-shadow: 0 0 8px ${classColorVar}40;">
+                    ${ship.name}
+                </h2>
+                <span class="text-xs font-roboto-mono text-gray-500 tracking-widest hidden md:block opacity-70">
+                    ${registryId}
+                </span>
+            </div>
+
+            <div class="manifest-body flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                <div class="lore-text text-justify font-sans text-slate-300 leading-relaxed text-lg tracking-wide">
+                    ${loreParagraphs}
+                </div>
+                
+                <div class="mt-8 pt-4 border-t border-gray-800/50 text-xs font-roboto-mono text-gray-600 text-center opacity-50">
+                    <p>MERCHANT'S GUILD ARCHIVE // CLASSIFIED: LEVEL 4</p>
+                    <p>END OF RECORD</p>
+                </div>
+            </div>
+
+            <div class="manifest-footer mt-4 pt-2 shrink-0">
+                <button class="btn-manifest w-full py-4 border border-cyan-900/50 hover:border-cyan-500/50 bg-cyan-900/10 hover:bg-cyan-900/20 active:bg-cyan-900/40 text-cyan-500 hover:text-cyan-400 font-roboto-mono tracking-[0.2em] transition-all uppercase text-sm font-bold">
+                    [ CLOSE_FILE ]
+                </button>
+            </div>
+            
+            <div class="pointer-events-none absolute inset-0 bg-scanline opacity-10 z-10"></div>
+        </div>
+    `;
+};
+--- END OF FILE: ./js/ui/renderers/ShipLoreRenderer.js ---
+
 --- START OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
 // js/ui/renderers/IntelMarketRenderer.js
 /**
@@ -5839,9 +6040,8 @@ function _renderEmptyCarouselPage(isHangarMode) {
  */
 function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
-    // VIRTUAL WORKBENCH: Bug Fix B - We no longer need the destructured 'player' here.
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
-    const { player } = gameState; // Keep this for _renderActionButtons
+    const { player } = gameState; 
 
     // Determine Status Badge
     let statusBadgeHtml = '';
@@ -5887,8 +6087,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
-    // --- VIRTUAL WORKBENCH: MODIFICATION ---
-    // Added the .active-ship class conditionally based on isActive and isHangarMode.
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
@@ -5901,7 +6099,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
-    // --- END VIRTUAL WORKBENCH ---
 }
 
 
@@ -5915,18 +6112,21 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
  * @returns {string} The HTML for the info panel.
  * @private
  */
-// VIRTUAL WORKBENCH: Bug Fix B - Removed 'player' from args, will use 'gameState.player'
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
-    // Replaced shipStatic.lore with shipStatic.description
+    // --- [[START]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
+    // Added flex container for title and ghost link
+    // Added role="button" to the ghost link for iOS robustness
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <div class="flex justify-between items-baseline w-full">
+                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
+                        </div>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
@@ -5942,7 +6142,10 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <div class="flex justify-between items-baseline w-full">
+                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
+                        </div>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>
@@ -5955,7 +6158,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
 }
 
 
@@ -6001,7 +6204,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 }
 
 
-// --- VIRTUAL WORKBENCH START ---
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
  * @param {object} shipStatic - The static data for the ship (for max values).
@@ -6013,27 +6215,17 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
-    // --- VIRTUAL WORKBENCH: BUG FIX ---
-    // The incorrect line 'const shipId = shipStatic.id;' has been removed.
-    // The correct 'shipId' is now passed in as an argument.
-    // --- END BUG FIX ---
-
-    // Determine current values
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
-    // VIRTUAL WORKBENCH: Request E - This logic is correct and matches the nav bar.
-    // It reads the *entire* player object and keys into the *specific* ship's inventory.
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
-    // Determine percentages
     const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
     const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
     const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
-    // Determine colors
+    
     const hullColor = 'var(--ot-green-accent)';
-    // VIRTUAL WORKBENCH: Request B - Match nav bar colors
-    const cargoColor = '#f59e0b'; // Was 'var(--class-s-color)'
-    const fuelColor = '#3b82f6'; // Was 'var(--ot-shipyard-blue-base)'
+    const cargoColor = '#f59e0b'; 
+    const fuelColor = '#3b82f6'; 
 
     /**
      * Helper to render a single bar with its text overlay.
@@ -6050,7 +6242,7 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
-        const textClass = isMax ? 'max' : 'partial'; // ADDED: Class for alignment
+        const textClass = isMax ? 'max' : 'partial';
 
         return `
             <div class="param-bar-item">
@@ -6071,7 +6263,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
-// --- VIRTUAL WORKBENCH END ---
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -7522,6 +7713,13 @@ export const ACTION_IDS = Object.freeze({
     TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
     TOGGLE_HANGAR_MODE: 'toggle-hangar-mode',
     SET_HANGAR_PAGE: 'set-hangar-page',
+    SHOW_INTEL_OFFER: 'show_intel_offer',
+    BUY_INTEL: 'buy_intel',
+    SHOW_INTEL_DETAILS: 'show_intel_details',
+    SET_INTEL_TAB: 'set-intel-tab',
+    // --- [[START]] NEW ACTION ---
+    SHOW_SHIP_LORE: 'show_ship_lore',
+    // --- [[END]] NEW ACTION ---
 });
 
 /**
@@ -20309,6 +20507,7 @@ export class HoldEventHandler {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; 
 
 export class ActionClickHandler {
     /**
@@ -20329,7 +20528,7 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    async handle(e, actionTarget) { // <-- Add async
+    async handle(e, actionTarget) { 
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
@@ -20342,7 +20541,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.buyShip(shipId, e); // <-- Add await
+                await this.simulationService.buyShip(shipId, e);
                 actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
                 break;
             }
@@ -20350,24 +20549,17 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.sellShip(shipId, e); // <-- Add await
+                await this.simulationService.sellShip(shipId, e);
                 break;
             }
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent any other clicks
-                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                // actionData is now set *inside* SimulationService.boardShip
+                await this.simulationService.boardShip(shipId, e);
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-            // REMOVED 'show_ship_info' case
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
-    
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
@@ -20415,18 +20607,12 @@ export class ActionClickHandler {
 
             // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN: {
-                // This is the "smarter" logic you described.
-                // We check if the *actual* click target (e.target) was a sub-nav button.
-                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
-                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
-                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
-                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
@@ -20439,22 +20625,52 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
+            // --- Intel Actions ---
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
                 this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
+
+            // --- [[START]] SHIP LORE HANDLER ---
+            case ACTION_IDS.SHOW_SHIP_LORE: {
+                const shipId = dataset.shipId;
+                // console.log('ActionClickHandler: Triggering Ship Lore for', shipId); // Debug log
+                
+                const ship = DB.SHIPS[shipId];
+                
+                // 1. Generate the HTML using our stateless renderer
+                const loreHtml = renderShipLore(ship);
+                
+                // 2. Queue the modal using the "Digital Manifest" configuration
+                this.uiManager.queueModal('event-modal', null, null, null, {
+                    specialClass: 'manifest-modal', // CORRECTED: Use specialClass for container styling
+                    dismissInside: true, 
+                    dismissOutside: true,
+                    customSetup: (modal, closeHandler) => {
+                        // Direct injection into the modal content box
+                        const contentBox = modal.querySelector('.modal-content');
+                        if (contentBox) {
+                            contentBox.innerHTML = loreHtml;
+                            
+                            // 3. Wire up the [ CLOSE_FILE ] button inside the injected HTML
+                            const closeBtn = contentBox.querySelector('.btn-manifest');
+                            if (closeBtn) {
+                                closeBtn.onclick = closeHandler;
+                            }
+                        }
+                    }
+                });
+                break;
+            }
+            // --- [[END]] SHIP LORE HANDLER ---
 
             // --- Modals ---
             case 'show-mission-modal':
@@ -20474,14 +20690,11 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             
-            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
             case 'show_eula_modal':
                 e.preventDefault();
                 this.uiManager.showEulaModal();
                 break;
-            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
-            
             // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
@@ -20499,19 +20712,14 @@ export class ActionClickHandler {
                 break;
 
             // --- Finance & Licenses ---
-            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
-            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
-                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
-                // The new flow is show_intel_offer -> buy_intel
-                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
+                // Obsolete
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);
@@ -20531,25 +20739,14 @@ export class ActionClickHandler {
         }
     }
 
-    /**
-     * Handles the UI flow for acquiring a trade license.
-     * @param {string} licenseId The ID of the license to acquire.
-     * @param {Event} [e] The original click event for positioning floating text.
-     * @private
-     */
     _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
         if (license.type === 'purchase') {
-            // --- VIRTUAL WORKBENCH START: Phase 2 ---
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
-            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
-                // --- VIRTUAL WORKBENCH: BUG FIX ---
-                // Add dismissOutside: true to allow the modal to be closed
                 dismissOutside: true,
-                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
@@ -22074,706 +22271,730 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
-{
-  "project_info": {
-    "project_name": "Orbital Trading",
-    "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
-    "core_mechanics": [
-      "arbitrage_trading",
-      "ship_progression",
-      "procedural_events",
-      "debt_management",
-      "wealth_milestones",
-      "deal-on-demand intel"
-    ],
-    "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
-  },
-  "ai_collaboration_guidelines": {
-    "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
-    "bug_reporting_protocol": {
-      "title": "Standard Bug Reporting and Diagnostic Workflow",
-      "steps": [
-        "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
-        "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
-        "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
-        "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
-        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
-        "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
-      ]
-    },
-    "logging_utility_overview": {
-      "title": "About the Centralized Logging System",
-      "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
+[
+  {
+    "fileName": "meta/lexicon.json",
+    "fullContent": {
+      "project_info": {
+        "project_name": "Orbital Trading",
+        "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
+        "core_mechanics": [
+          "arbitrage_trading",
+          "ship_progression",
+          "procedural_events",
+          "debt_management",
+          "wealth_milestones",
+          "deal-on-demand intel"
+        ],
+        "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
+      },
+      "ai_collaboration_guidelines": {
+        "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
+        "bug_reporting_protocol": {
+          "title": "Standard Bug Reporting and Diagnostic Workflow",
+          "steps": [
+            "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
+            "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
+            "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
+            "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
+            "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
+            "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
+          ]
+        },
+        "logging_utility_overview": {
+          "title": "About the Centralized Logging System",
+          "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
+        }
+      },
+      "key_concepts": {
+        "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
+        "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
+        "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
+        "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
+        "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
+        "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
+        "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice."
+      },
+      "service_summaries": {
+        "GameState": {
+          "description": "The single source of truth for all mutable game data. It holds the current state and notifies other services of changes.",
+          "dependencies": [],
+          "key_functions": {
+            "setState": "Merges a partial state object into the main state and notifies subscribers.",
+            "getState": "Returns a deep copy of the current game state.",
+            "startNewGame": "Initializes the entire game state for a new session.",
+            "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
+          },
+          "mutates_state": [
+            "day",
+            "currentLocationId",
+            "player",
+            "market",
+            "missions",
+            "tutorials",
+            "introSequenceActive",
+            "uiState",
+            "intelMarket",
+            "activeIntelDeal"
+          ]
+        },
+        "SimulationService": {
+          "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "Logger",
+            "MarketService",
+            "TimeService",
+            "TravelService",
+            "IntroService",
+            "PlayerActionService",
+            "TutorialService",
+            "MissionService",
+            "NewsTickerService",
+            "IntelService",
+            "js/services/ui/AnimationService.js"
+          ],
+          "key_functions": {
+            "constructor": "Instantiates all specialized services.",
+            "setScreen": "Sets the active navigation tab and screen.",
+            "travelTo": "Facade method that delegates to TravelService.",
+            "buyItem": "Facade method that delegates to PlayerActionService.",
+            "pushNewsMessage": "Facade method to push a message to the NewsTickerService.",
+            "buyShip": "Orchestrates the ship purchase flow: validates, awaits the UI animation, then executes the PlayerActionService logic.",
+            "sellShip": "Orchestrates the ship sale flow: validates, awaits the UI animation, then executes the PlayerActionService logic."
+          },
+          "mutates_state": [
+            "activeNav",
+            "activeScreen",
+            "isGameOver",
+            "uiState"
+          ]
+        },
+        "IntroService": {
+          "description": "Manages the entire new game introduction sequence, from the initial lore modals to the final tutorial kickoff.",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "Logger",
+            "SimulationService (Facade)"
+          ],
+          "key_functions": {
+            "start": "Begins the intro sequence.",
+            "handleIntroClick": "Handles clicks on intro-specific buttons.",
+            "continueAfterTutorial": "Resumes the intro sequence after a tutorial batch is completed."
+          },
+          "mutates_state": [
+            "player.introStep",
+            "player.name",
+            "player.debt",
+            "introSequenceActive"
+          ]
+        },
+        "PlayerActionService": {
+          "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "MissionService",
+            "MarketService",
+            "TimeService",
+            "Logger",
+            "SimulationService (Facade)"
+          ],
+          "key_functions": {
+            "buyItem": "Handles the logic for purchasing a commodity.",
+            "sellItem": "Handles the logic for selling a commodity.",
+            "validateBuyShip": "Validates if a ship purchase is possible.",
+            "executeBuyShip": "Executes the state changes for purchasing a ship.",
+            "validateSellShip": "Validates if a ship sale is possible.",
+            "executeSellShip": "Executes the state changes for selling a ship.",
+            "refuelTick": "Processes one 'tick' of refueling."
+          },
+          "mutates_state": [
+            "player.credits",
+            "player.debt",
+            "player.inventories",
+            "player.shipStates",
+            "player.ownedShipIds",
+            "market.inventory"
+          ]
+        },
+        "TravelService": {
+          "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "TimeService",
+            "Logger",
+            "SimulationService (Facade)",
+            "js/data/events.js",
+            "js/services/eventEffectResolver.js"
+          ],
+          "key_functions": {
+            "travelTo": "Validates and begins travel to a new location.",
+            "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
+            "resumeTravel": "Continues a pending travel action after an event."
+          },
+          "mutates_state": [
+            "pendingTravel",
+            "player.shipStates.health",
+            "player.shipStates.fuel"
+          ]
+        },
+        "TimeService": {
+          "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`. Also checks for `activeIntelDeal` expiration and triggers the `IntelService` refresh.",
+          "dependencies": [
+            "GameState",
+            "MarketService",
+            "UIManager",
+            "Logger",
+            "SimulationService (Facade)",
+            "js/data/age_events.js",
+            "IntelService"
+          ],
+          "key_functions": {
+            "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
+          },
+          "mutates_state": [
+            "day",
+            "player.playerAge",
+            "player.debt",
+            "player.shipStates.health",
+            "market.prices",
+            "market.inventory",
+            "activeIntelDeal"
+          ]
+        },
+        "MarketService": {
+          "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides.",
+          "dependencies": [
+            "GameState",
+            "IntelService"
+          ],
+          "key_functions": {
+            "evolveMarketPrices": "Simulates daily price changes for all commodities.",
+            "replenishMarketInventory": "Handles the weekly restocking of all markets.",
+            "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
+            "_updateShipyardStock": "Updates the available ships for sale at each location.",
+            "getPrice": "Gets the price, checking for Intel overrides first."
+          },
+          "mutates_state": [
+            "market.prices",
+            "market.inventory",
+            "market.shipyardStock"
+          ]
+        },
+        "IntelService": {
+          "description": "The 'brain' of the Intel system. Manages the lifecycle of intel: generation, persistence, dynamic pricing logic, and the purchase transaction.",
+          "dependencies": [
+            "GameState",
+            "TimeService",
+            "MarketService",
+            "NewsTickerService",
+            "js/data/intelContent.js",
+            "DB"
+          ],
+          "key_functions": {
+            "generateIntelRefresh": "Called by TimeService to repopulate intel markets.",
+            "calculateIntelPrice": "Dynamically calculates intel price based on player credits and deal value.",
+            "purchaseIntel": "Validates and executes the purchase, creating an 'activeIntelDeal'."
+          },
+          "mutates_state": [
+            "intelMarket",
+            "activeIntelDeal",
+            "player.credits"
+          ]
+        },
+        "UIManager": {
+          "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
+          "dependencies": [
+            "Logger",
+            "EffectsManager",
+            "TravelAnimationService",
+            "MissionService",
+            "SimulationService",
+            "NewsTickerService",
+            "IntelService",
+            "IntelMarketRenderer",
+            "js/services/ui/AnimationService.js"
+          ],
+          "key_functions": {
+            "render": "The main function that orchestrates the re-drawing of all UI components.",
+            "queueModal": "Manages a queue for displaying modals to prevent overlap.",
+            "triggerEffect": "Initiates a visual effect through the EffectsManager.",
+            "showTravelAnimation": "Initiates the travel animation sequence.",
+            "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
+            "handleShowIntelOffer": "New handler for Intel Market.",
+            "handleBuyIntel": "New handler for Intel Market.",
+            "handleShowIntelDetails": "New handler for Intel Market.",
+            "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect."
+          },
+          "mutates_state": []
+        },
+        "IntelMarketRenderer": {
+          "description": "A dedicated renderer class. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the 'Intel Market' tab.",
+          "dependencies": [
+            "UIManager",
+            "GameState",
+            "IntelService",
+            "DB"
+          ],
+          "key_functions": {
+            "render": "Builds and injects the HTML for the Intel Market."
+          },
+          "mutates_state": []
+        },
+        "NewsTickerService": {
+          "description": "Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system.",
+          "dependencies": [
+            "GameState",
+            "js/data/flavorAds.js",
+            "js/data/intelMessages.js",
+            "js/data/database.js"
+          ],
+          "key_functions": {
+            "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
+            "pulse": "Called daily by TimeService; currently stubbed, logic moved to `onLocationChange`.",
+            "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render, generating live data (like STATUS) on the fly.",
+            "onLocationChange": "Rebuilds the entire default message queue (welcome, intel, ads, status) when the player arrives at a new location.",
+            "setServices": "Injects MarketService and SimulationService for generating dynamic intel and status messages."
+          },
+          "mutates_state": []
+        },
+        "EventManager": {
+          "description": "The universal input layer. Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.",
+          "dependencies": [
+            "GameState",
+            "SimulationService",
+            "UIManager",
+            "TutorialService",
+            "DebugService",
+            "Logger"
+          ],
+          "key_functions": {
+            "bindEvents": "Sets up all global event listeners for the application.",
+            "_handleClick": "The central delegated click handler that routes events to the appropriate handler module, now async to support awaiting animated actions."
+          },
+          "mutates_state": []
+        },
+        "ActionClickHandler": {
+          "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions like 'show_intel_offer'.",
+          "dependencies": [
+            "GameState",
+            "SimulationService",
+            "UIManager",
+            "TutorialService"
+          ],
+          "key_functions": {
+            "handle": "Processes a click event on an element with a `data-action` attribute, now an async function to await promise-based actions like animated ship purchases."
+          },
+          "mutates_state": []
+        },
+        "MarketEventHandler": {
+          "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
+          "dependencies": [
+            "GameState",
+            "SimulationService",
+            "UIManager"
+          ],
+          "key_functions": {
+            "handleClick": "Handles clicks on market card controls.",
+            "handleInput": "Handles direct input into the quantity field."
+          },
+          "mutates_state": []
+        },
+        "HoldEventHandler": {
+          "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
+          "dependencies": [
+            "PlayerActionService",
+            "UIManager"
+          ],
+          "key_functions": {
+            "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
+            "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
+            "_handleInteractionStop": "Master 'stop' handler that stops any active action."
+          },
+          "mutates_state": []
+        },
+        "CarouselEventHandler": {
+          "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
+          "dependencies": [
+            "GameState",
+            "SimulationService"
+          ],
+          "key_functions": {
+            "handleDragStart": "Initiates a drag sequence.",
+            "handleDragMove": "Updates the carousel during a drag.",
+            "handleDragEnd": "Concludes a drag sequence and snaps to a page.",
+            "handleWheel": "Handles mouse wheel scrolling."
+          },
+          "mutates_state": []
+        },
+        "TooltipHandler": {
+          "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
+          "dependencies": [
+            "GameState",
+            "UIManager"
+          ],
+          "key_functions": {
+            "handleClick": "Manages tooltip visibility on click.",
+            "handleMouseOver": "Shows tooltips on hover.",
+            "handleMouseOut": "Hides tooltips on hover out."
+          },
+          "mutates_state": []
+        },
+        "MissionService": {
+          "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "Logger",
+            "SimulationService",
+            "js/data/missions.js"
+          ],
+          "key_functions": {
+            "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
+            "acceptMission": "Sets a mission as active and initializes its progress tracking.",
+            "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
+            "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
+          },
+          "mutates_state": [
+            "missions.activeMissionId",
+            "missions.completedMissionIds",
+            "missions.missionProgress",
+            "missions.activeMissionObjectivesMet"
+          ]
+        },
+        "TutorialService": {
+          "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
+          "dependencies": [
+            "GameState",
+            "UIManager",
+            "SimulationService",
+            "Logger",
+            "js/data/tutorials.js"
+          ],
+          "key_functions": {
+            "checkState": "Checks game state/action against triggers/completion conditions.",
+            "triggerBatch": "Starts a specific tutorial batch.",
+            "advanceStep": "Moves to the next step in the current batch.",
+            "skipActiveTutorial": "Skips the current tutorial batch."
+          },
+          "mutates_state": [
+            "tutorials.activeBatchId",
+            "tutorials.activeStepId",
+            "tutorials.seenBatchIds",
+            "tutorials.skippedTutorialBatches",
+            "tutorials.navLock"
+          ]
+        },
+        "TravelAnimationService": {
+          "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
+          "dependencies": [],
+          "key_functions": {
+            "play": "Starts the travel animation sequence."
+          },
+          "mutates_state": []
+        },
+        "AnimationService": {
+          "description": "Provides a generic, promise-based utility (playBlockingAnimation) to run CSS animations and block further execution until the animation completes. Used for ship buy/sell transitions.",
+          "dependencies": [],
+          "key_functions": {
+            "playBlockingAnimation": "Returns a promise that resolves on 'animationend' for a given element and CSS class."
+          },
+          "mutates_state": []
+        },
+        "MapScreen": {
+          "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
+          "dependencies": [
+            "UIManager"
+          ],
+          "key_functions": {
+            "renderMapScreen": "Renders the initial container for the map.",
+            "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
+          },
+          "mutates_state": []
+        },
+        "ViewController": {
+          "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
+          "dependencies": [
+            "WKWebView"
+          ],
+          "key_functions": {
+            "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
+          },
+          "mutates_state": []
+        }
+      },
+      "asset_index": {
+        "F001": {
+          "path": "./index.html",
+          "role": "DOCUMENT_ROOT"
+        },
+        "F003": {
+          "path": "./js/main.js",
+          "role": "ENTRY_POINT"
+        },
+        "F004": {
+          "path": "./js/utils.js",
+          "role": "UTILITY_LIBRARY"
+        },
+        "F005": {
+          "path": "./js/data/constants.js",
+          "role": "DATA_DEFINITION"
+        },
+        "F006": {
+          "path": "./js/data/database.js",
+          "role": "DATA_AGGREGATOR",
+          "description": "Aggregates and exports static game data imported from other modules."
+        },
+        "F009": {
+          "path": "./js/services/GameState.js",
+          "role": "STATE_MANAGER"
+        },
+        "F010": {
+          "path": "./js/services/simulation/MarketService.js",
+          "role": "LOGIC_SERVICE",
+          "dependencies": [
+            "js/services/IntelService.js"
+          ]
+        },
+        "F011": {
+          "path": "./js/services/SimulationService.js",
+          "role": "LOGIC_FACADE"
+        },
+        "F014": {
+          "path": "./js/services/eventEffectResolver.js",
+          "role": "LOGIC_SERVICE",
+          "dependencies": [
+            "js/data/events.js"
+          ]
+        },
+        "F015": {
+          "path": "./js/services/EventManager.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F016": {
+          "path": "./js/services/TutorialService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F017": {
+          "path": "./js/services/UIManager.js",
+          "role": "UI_RENDERER",
+          "dependencies": [
+            "js/services/IntelService.js",
+            "js/ui/renderers/IntelMarketRenderer.js"
+          ]
+        },
+        "F018": {
+          "path": "./js/services/MissionService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F019": {
+          "path": "./js/ui/components/CargoScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F020": {
+          "path": "./js/ui/components/FinanceScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F021": {
+          "path": "./js/ui/components/HangarScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F022": {
+          "path": "./js/ui/components/IntelScreen.js",
+          "role": "UI_COMPONENT",
+          "description": "Renders the static shell for the Intel screen (Codex and Intel Market tabs)."
+        },
+        "F023": {
+          "path": "./js/ui/components/MarketScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F024": {
+          "path": "./js/ui/components/MissionsScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F025": {
+          "path": "./js/ui/components/NavigationScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F026": {
+          "path": "./js/ui/components/ServicesScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F027": {
+          "path": "./js/ui/components/StatusScreen.js",
+          "role": "UI_COMPONENT",
+          "status": "deprecated"
+        },
+        "F028": {
+          "path": "./js/ui/components/MapScreen.js",
+          "role": "UI_COMPONENT"
+        },
+        "F029": {
+          "path": "./js/services/DebugService.js",
+          "role": "DEBUG_TOOL"
+        },
+        "F030": {
+          "path": "./js/services/LoggingService.js",
+          "role": "DEBUG_TOOL"
+        },
+        "F031": {
+          "path": "./js/effects/BaseEffect.js",
+          "role": "LOGIC_MODULE"
+        },
+        "F032": {
+          "path": "./js/effects/EffectsManager.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F033": {
+          "path": "./js/services/game/IntroService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F034": {
+          "path": "./js/services/player/PlayerActionService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F035": {
+          "path": "./js/services/world/TimeService.js",
+          "role": "LOGIC_SERVICE",
+          "dependencies": [
+            "js/services/IntelService.js"
+          ]
+        },
+        "F036": {
+          "path": "./js/services/world/TravelService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F037": {
+          "path": "./meta/ROADMAP.md",
+          "role": "DOCUMENTATION"
+        },
+        "F038": {
+          "path": "./meta/ARCHITECTURAL_DECISIONS.md",
+          "role": "DOCUMENTATION"
+        },
+        "F039": {
+          "path": "./js/services/handlers/ActionClickHandler.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F040": {
+          "path": "./js/services/handlers/MarketEventHandler.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F041": {
+          "path": "./js/services/handlers/HoldEventHandler.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F042": {
+          "path": "./js/services/handlers/CarouselEventHandler.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F043": {
+          "path": "./js/services/handlers/TooltipHandler.js",
+          "role": "EVENT_HANDLER"
+        },
+        "F044": {
+          "path": "./js/services/ui/TravelAnimationService.js",
+          "role": "UI_SERVICE"
+        },
+        "F045": {
+          "path": "./css/orientation.css",
+          "role": "STYLESHEET"
+        },
+        "F046": {
+          "path": "ViewController.swift",
+          "role": "NATIVE_IOS_WRAPPER"
+        },
+        "F047": {
+          "path": "./meta/STATE_SCHEMA.md",
+          "role": "DOCUMENTATION_STATE_SCHEMA"
+        },
+        "F048": {
+          "path": "./meta/SERVICES.md",
+          "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"
+        },
+        "F049": {
+          "path": "./js/data/age_events.js",
+          "role": "DATA_DEFINITION"
+        },
+        "F050": {
+          "path": "./js/data/events.js",
+          "role": "DATA_DEFINITION"
+        },
+        "F051": {
+          "path": "./js/data/missions.js",
+          "role": "DATA_DEFINITION"
+        },
+        "F052": {
+          "path": "./js/data/tutorials.js",
+          "role": "DATA_DEFINITION"
+        },
+        "F053": {
+          "path": "./js/services/NewsTickerService.js",
+          "role": "UI_SERVICE"
+        },
+        "F054": {
+          "path": "./js/data/flavorAds.js",
+          "role": "DATA_DEFINITION",
+          "description": "Defines location-specific flavor text for the news ticker."
+        },
+        "F055": {
+          "path": "./css/news-ticker.css",
+          "role": "STYLESHEET"
+        },
+        "F056": {
+          "path": "./js/data/intelMessages.js",
+          "role": "DATA_DEFINITION",
+          "description": "Defines templates for market intel messages for the news ticker."
+        },
+        "F057": {
+          "path": "./js/services/IntelService.js",
+          "role": "LOGIC_SERVICE"
+        },
+        "F058": {
+          "path": "./js/ui/renderers/IntelMarketRenderer.js",
+          "role": "UI_RENDERER"
+        },
+        "F059": {
+          "path": "./js/data/intelContent.js",
+          "role": "DATA_DEFINITION",
+          "description": "Defines sample/detail text for the Intel Market."
+        },
+        "F060": {
+          "path": "./js/services/ui/AnimationService.js",
+          "role": "UI_SERVICE"
+        },
+        "F061": {
+          "path": "./js/services/bot/AutomatedPlayerService.js",
+          "role": "AUTOMATION_SERVICE",
+          "description": "Contains the AutomatedPlayer class, a bot for stress-testing the economy."
+        },
+        "F062": {
+          "path": "./js/data/ship_database.js",
+          "role": "DATA_DEFINITION",
+          "description": "The single source of truth for all static ship data, imported by database.js."
+        },
+        "F063": {
+          "path": "./js/services/event-effects/effectAdriftPassenger.js",
+          "role": "LOGIC_MODULE",
+          "description": "Contains the specific outcome logic for the 'Adrift Passenger' random event."
+        },
+        "F064": {
+          "path": "./js/services/event-effects/effectSpaceRace.js",
+          "role": "LOGIC_MODULE",
+          "description": "Contains the specific outcome logic for the 'Space Race' random event."
+        }
+      }
     }
   },
-  "key_concepts": {
-    "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
-    "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
-    "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
-    "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
-    "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
-    "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
-    "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice."
-  },
-  "service_summaries": {
-    "GameState": {
-      "description": "The single source of truth for all mutable game data. It holds the current state and notifies other services of changes.",
-      "dependencies": [],
-      "key_functions": {
-        "setState": "Merges a partial state object into the main state and notifies subscribers.",
-        "getState": "Returns a deep copy of the current game state.",
-        "startNewGame": "Initializes the entire game state for a new session.",
-        "subscribe": "Allows other services (primarily UIManager) to listen for state changes."
-      },
-      "mutates_state": [
-        "day",
-        "currentLocationId",
-        "player",
-        "market",
-        "missions",
-        "tutorials",
-        "introSequenceActive",
-        "uiState",
-        "intelMarket",
-        "activeIntelDeal"
-      ]
-    },
-    "SimulationService": {
-      "description": "The core game engine **Facade**. It instantiates and coordinates all specialized services. It receives calls from the EventManager and delegates them to the appropriate service. It also hosts shared helper methods needed by multiple services.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "Logger",
-        "MarketService",
-        "TimeService",
-        "TravelService",
-        "IntroService",
-        "PlayerActionService",
-        "TutorialService",
-        "MissionService",
-        "NewsTickerService",
-        "IntelService",
-        "js/services/ui/AnimationService.js"
-      ],
-      "key_functions": {
-        "constructor": "Instantiates all specialized services.",
-        "setScreen": "Sets the active navigation tab and screen.",
-        "travelTo": "Facade method that delegates to TravelService.",
-        "buyItem": "Facade method that delegates to PlayerActionService.",
-        "pushNewsMessage": "Facade method to push a message to the NewsTickerService.",
-        "buyShip": "Orchestrates the ship purchase flow: validates, awaits the UI animation, then executes the PlayerActionService logic.",
-        "sellShip": "Orchestrates the ship sale flow: validates, awaits the UI animation, then executes the PlayerActionService logic."
-      },
-      "mutates_state": [
-        "activeNav",
-        "activeScreen",
-        "isGameOver",
-        "uiState"
-      ]
-    },
-    "IntroService": {
-      "description": "Manages the entire new game introduction sequence, from the initial lore modals to the final tutorial kickoff.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "Logger",
-        "SimulationService (Facade)"
-      ],
-      "key_functions": {
-        "start": "Begins the intro sequence.",
-        "handleIntroClick": "Handles clicks on intro-specific buttons.",
-        "continueAfterTutorial": "Resumes the intro sequence after a tutorial batch is completed."
-      },
-      "mutates_state": [
-        "player.introStep",
-        "player.name",
-        "player.debt",
-        "introSequenceActive"
-      ]
-    },
-    "PlayerActionService": {
-      "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "MissionService",
-        "MarketService",
-        "TimeService",
-        "Logger",
-        "SimulationService (Facade)"
-      ],
-      "key_functions": {
-        "buyItem": "Handles the logic for purchasing a commodity.",
-        "sellItem": "Handles the logic for selling a commodity.",
-        "validateBuyShip": "Validates if a ship purchase is possible.",
-        "executeBuyShip": "Executes the state changes for purchasing a ship.",
-        "validateSellShip": "Validates if a ship sale is possible.",
-        "executeSellShip": "Executes the state changes for selling a ship.",
-        "refuelTick": "Processes one 'tick' of refueling."
-      },
-      "mutates_state": [
-        "player.credits",
-        "player.debt",
-        "player.inventories",
-        "player.shipStates",
-        "player.ownedShipIds",
-        "market.inventory"
-      ]
-    },
-    "TravelService": {
-      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "TimeService",
-        "Logger",
-        "SimulationService (Facade)",
-        "js/data/events.js",
-        "js/services/eventEffectResolver.js"
-      ],
-      "key_functions": {
-        "travelTo": "Validates and begins travel to a new location.",
-        "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
-        "resumeTravel": "Continues a pending travel action after an event."
-      },
-      "mutates_state": [
-        "pendingTravel",
-        "player.shipStates.health",
-        "player.shipStates.fuel"
-      ]
-    },
-    "TimeService": {
-      "description": "Responsible for advancing the game clock (`advanceDays`) and triggering all time-based events like birthdays, debt interest charges, and weekly market updates. Draws age event data from `js/data/age_events.js`. Also checks for `activeIntelDeal` expiration and triggers the `IntelService` refresh.",
-      "dependencies": [
-        "GameState",
-        "MarketService",
-        "UIManager",
-        "Logger",
-        "SimulationService (Facade)",
-        "js/data/age_events.js",
-        "IntelService"
-      ],
-      "key_functions": {
-        "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
-      },
-      "mutates_state": [
-        "day",
-        "player.playerAge",
-        "player.debt",
-        "player.shipStates.health",
-        "market.prices",
-        "market.inventory",
-        "activeIntelDeal"
-      ]
-    },
-    "MarketService": {
-      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides.",
-      "dependencies": [
-        "GameState",
-        "IntelService"
-      ],
-      "key_functions": {
-        "evolveMarketPrices": "Simulates daily price changes for all commodities.",
-        "replenishMarketInventory": "Handles the weekly restocking of all markets.",
-        "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
-        "_updateShipyardStock": "Updates the available ships for sale at each location.",
-        "getPrice": "Gets the price, checking for Intel overrides first."
-      },
-      "mutates_state": [
-        "market.prices",
-        "market.inventory",
-        "market.shipyardStock"
-      ]
-    },
-    "IntelService": {
-      "description": "The 'brain' of the Intel system. Manages the lifecycle of intel: generation, persistence, dynamic pricing logic, and the purchase transaction.",
-      "dependencies": [
-        "GameState",
-        "TimeService",
-        "MarketService",
-        "NewsTickerService",
-        "js/data/intelContent.js",
-        "DB"
-      ],
-      "key_functions": {
-        "generateIntelRefresh": "Called by TimeService to repopulate intel markets.",
-        "calculateIntelPrice": "Dynamically calculates intel price based on player credits and deal value.",
-        "purchaseIntel": "Validates and executes the purchase, creating an 'activeIntelDeal'."
-      },
-      "mutates_state": [
-        "intelMarket",
-        "activeIntelDeal",
-        "player.credits"
-      ]
-    },
-    "UIManager": {
-      "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
-      "dependencies": [
-        "Logger",
-        "EffectsManager",
-        "TravelAnimationService",
-        "MissionService",
-        "SimulationService",
-        "NewsTickerService",
-        "IntelService",
-        "IntelMarketRenderer",
-        "js/services/ui/AnimationService.js"
-      ],
-      "key_functions": {
-        "render": "The main function that orchestrates the re-drawing of all UI components.",
-        "queueModal": "Manages a queue for displaying modals to prevent overlap.",
-        "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-        "showTravelAnimation": "Initiates the travel animation sequence.",
-        "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
-        "handleShowIntelOffer": "New handler for Intel Market.",
-        "handleBuyIntel": "New handler for Intel Market.",
-        "handleShowIntelDetails": "New handler for Intel Market.",
-        "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect."
-      },
-      "mutates_state": []
-    },
-    "IntelMarketRenderer": {
-      "description": "A dedicated renderer class. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the 'Intel Market' tab.",
-      "dependencies": [
-        "UIManager",
-        "GameState",
-        "IntelService",
-        "DB"
-      ],
-      "key_functions": {
-        "render": "Builds and injects the HTML for the Intel Market."
-      },
-      "mutates_state": []
-    },
-    "NewsTickerService": {
-      "description": "Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system.",
-      "dependencies": [
-        "GameState",
-        "js/data/flavorAds.js",
-        "js/data/intelMessages.js",
-        "js/data/database.js"
-      ],
-      "key_functions": {
-        "pushMessage": "Adds a new, non-duplicate message to the ticker queue and sets the dirty flag.",
-        "pulse": "Called daily by TimeService; currently stubbed, logic moved to `onLocationChange`.",
-        "getTickerContentHtml": "Returns the complete HTML string for the UIManager to render, generating live data (like STATUS) on the fly.",
-        "onLocationChange": "Rebuilds the entire default message queue (welcome, intel, ads, status) when the player arrives at a new location.",
-        "setServices": "Injects MarketService and SimulationService for generating dynamic intel and status messages."
-      },
-      "mutates_state": []
-    },
-    "EventManager": {
-      "description": "The universal input layer. Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.",
-      "dependencies": [
-        "GameState",
-        "SimulationService",
-        "UIManager",
-        "TutorialService",
-        "DebugService",
-        "Logger"
-      ],
-      "key_functions": {
-        "bindEvents": "Sets up all global event listeners for the application.",
-        "_handleClick": "The central delegated click handler that routes events to the appropriate handler module, now async to support awaiting animated actions."
-      },
-      "mutates_state": []
-    },
-    "ActionClickHandler": {
-      "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions like 'show_intel_offer'.",
-      "dependencies": [
-        "GameState",
-        "SimulationService",
-        "UIManager",
-        "TutorialService"
-      ],
-      "key_functions": {
-        "handle": "Processes a click event on an element with a `data-action` attribute, now an async function to await promise-based actions like animated ship purchases."
-      },
-      "mutates_state": []
-    },
-    "MarketEventHandler": {
-      "description": "Manages all interactions within a market commodity card, including mode toggling, quantity changes, and trade confirmations.",
-      "dependencies": [
-        "GameState",
-        "SimulationService",
-        "UIManager"
-      ],
-      "key_functions": {
-        "handleClick": "Handles clicks on market card controls.",
-        "handleInput": "Handles direct input into the quantity field."
-      },
-      "mutates_state": []
-    },
-    "HoldEventHandler": {
-      "description": "Manages 'hold-to-act' functionality (e.g., Refuel/Repair) using a persistent, capture-phase Pointer Event model to remain stable through UI re-renders.",
-      "dependencies": [
-        "PlayerActionService",
-        "UIManager"
-      ],
-      "key_functions": {
-        "bindHoldEvents": "Binds persistent 'pointerdown', 'pointerup', and 'pointercancel' listeners.",
-        "_handleInteractionStart": "Master 'start' handler that delegates to specific actions.",
-        "_handleInteractionStop": "Master 'stop' handler that stops any active action."
-      },
-      "mutates_state": []
-    },
-    "CarouselEventHandler": {
-      "description": "Encapsulates all logic for the drag, swipe, and scroll functionality of the hangar/shipyard carousel.",
-      "dependencies": [
-        "GameState",
-        "SimulationService"
-      ],
-      "key_functions": {
-        "handleDragStart": "Initiates a drag sequence.",
-        "handleDragMove": "Updates the carousel during a drag.",
-        "handleDragEnd": "Concludes a drag sequence and snaps to a page.",
-        "handleWheel": "Handles mouse wheel scrolling."
-      },
-      "mutates_state": []
-    },
-    "TooltipHandler": {
-      "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
-      "dependencies": [
-        "GameState",
-        "UIManager"
-      ],
-      "key_functions": {
-        "handleClick": "Manages tooltip visibility on click.",
-        "handleMouseOver": "Shows tooltips on hover.",
-        "handleMouseOut": "Hides tooltips on hover out."
-      },
-      "mutates_state": []
-    },
-    "MissionService": {
-      "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "Logger",
-        "SimulationService",
-        "js/data/missions.js"
-      ],
-      "key_functions": {
-        "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
-        "acceptMission": "Sets a mission as active and initializes its progress tracking.",
-        "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
-        "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
-      },
-      "mutates_state": [
-        "missions.activeMissionId",
-        "missions.completedMissionIds",
-        "missions.missionProgress",
-        "missions.activeMissionObjectivesMet"
-      ]
-    },
-    "TutorialService": {
-      "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "SimulationService",
-        "Logger",
-        "js/data/tutorials.js"
-      ],
-      "key_functions": {
-        "checkState": "Checks game state/action against triggers/completion conditions.",
-        "triggerBatch": "Starts a specific tutorial batch.",
-        "advanceStep": "Moves to the next step in the current batch.",
-        "skipActiveTutorial": "Skips the current tutorial batch."
-      },
-      "mutates_state": [
-        "tutorials.activeBatchId",
-        "tutorials.activeStepId",
-        "tutorials.seenBatchIds",
-        "tutorials.skippedTutorialBatches",
-        "tutorials.navLock"
-      ]
-    },
-    "TravelAnimationService": {
-      "description": "Handles the rendering and animation logic for the travel sequence modal. It uses the Canvas API to create a dynamic visual representation of the journey.",
-      "dependencies": [],
-      "key_functions": {
-        "play": "Starts the travel animation sequence."
-      },
-      "mutates_state": []
-    },
-    "AnimationService": {
-      "description": "Provides a generic, promise-based utility (playBlockingAnimation) to run CSS animations and block further execution until the animation completes. Used for ship buy/sell transitions.",
-      "dependencies": [],
-      "key_functions": {
-        "playBlockingAnimation": "Returns a promise that resolves on 'animationend' for a given element and CSS class."
-      },
-      "mutates_state": []
-    },
-    "MapScreen": {
-      "description": "A UI component responsible for rendering the interactive D3.js solar system map.",
-      "dependencies": [
-        "UIManager"
-      ],
-      "key_functions": {
-        "renderMapScreen": "Renders the initial container for the map.",
-        "initMap": "Initializes the D3 map, drawing all celestial bodies and labels."
-      },
-      "mutates_state": []
-    },
-    "ViewController": {
-      "description": "The native Swift code for the iOS wrapper. It is responsible for creating and configuring the WKWebView that hosts the entire web application. It also handles the communication bridge for debugging and is the key to the live-reload development workflow with the Xcode simulator.",
-      "dependencies": [
-        "WKWebView"
-      ],
-      "key_functions": {
-        "viewDidLoad": "Initializes the web view, sets its constraints to fill the screen, and loads the game either from the local development server or the bundled files."
-      },
-      "mutates_state": []
-    }
-  },
-  "asset_index": {
-    "F001": {
-      "path": "./index.html",
-      "role": "DOCUMENT_ROOT"
-    },
-    "F003": {
-      "path": "./js/main.js",
-      "role": "ENTRY_POINT"
-    },
-    "F004": {
-      "path": "./js/utils.js",
-      "role": "UTILITY_LIBRARY"
-    },
-    "F005": {
-      "path": "./js/data/constants.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F006": {
-      "path": "./js/data/database.js",
-      "role": "DATA_AGGREGATOR",
-      "description": "Aggregates and exports static game data imported from other modules."
-    },
-    "F009": {
-      "path": "./js/services/GameState.js",
-      "role": "STATE_MANAGER"
-    },
-    "F010": {
-      "path": "./js/services/simulation/MarketService.js",
-      "role": "LOGIC_SERVICE",
-      "dependencies": [
-        "js/services/IntelService.js"
-      ]
-    },
-    "F011": {
-      "path": "./js/services/SimulationService.js",
-      "role": "LOGIC_FACADE"
-    },
-    "F014": {
-      "path": "./js/services/eventEffectResolver.js",
-      "role": "LOGIC_SERVICE",
-      "dependencies": [
-        "js/data/events.js"
-      ]
-    },
-    "F015": {
-      "path": "./js/services/EventManager.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F016": {
-      "path": "./js/services/TutorialService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F017": {
-      "path": "./js/services/UIManager.js",
-      "role": "UI_RENDERER",
-      "dependencies": [
-        "js/services/IntelService.js",
-        "js/ui/renderers/IntelMarketRenderer.js"
-      ]
-    },
-    "F018": {
-      "path": "./js/services/MissionService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F019": {
-      "path": "./js/ui/components/CargoScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F020": {
-      "path": "./js/ui/components/FinanceScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F021": {
-      "path": "./js/ui/components/HangarScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F022": {
-      "path": "./js/ui/components/IntelScreen.js",
-      "role": "UI_COMPONENT",
-      "description": "Renders the static shell for the Intel screen (Codex and Intel Market tabs)."
-    },
-    "F023": {
-      "path": "./js/ui/components/MarketScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F024": {
-      "path": "./js/ui/components/MissionsScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F025": {
-      "path": "./js/ui/components/NavigationScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F026": {
-      "path": "./js/ui/components/ServicesScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F027": {
-      "path": "./js/ui/components/StatusScreen.js",
-      "role": "UI_COMPONENT",
-      "status": "deprecated"
-    },
-    "F028": {
-      "path": "./js/ui/components/MapScreen.js",
-      "role": "UI_COMPONENT"
-    },
-    "F029": {
-      "path": "./js/services/DebugService.js",
-      "role": "DEBUG_TOOL"
-    },
-    "F030": {
-      "path": "./js/services/LoggingService.js",
-      "role": "DEBUG_TOOL"
-    },
-    "F031": {
-      "path": "./js/effects/BaseEffect.js",
-      "role": "LOGIC_MODULE"
-    },
-    "F032": {
-      "path": "./js/effects/EffectsManager.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F033": {
-      "path": "./js/services/game/IntroService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F034": {
-      "path": "./js/services/player/PlayerActionService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F035": {
-      "path": "./js/services/world/TimeService.js",
-      "role": "LOGIC_SERVICE",
-      "dependencies": [
-        "js/services/IntelService.js"
-      ]
-    },
-    "F036": {
-      "path": "./js/services/world/TravelService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F037": {
-      "path": "./meta/ROADMAP.md",
-      "role": "DOCUMENTATION"
-    },
-    "F038": {
-      "path": "./meta/ARCHITECTURAL_DECISIONS.md",
-      "role": "DOCUMENTATION"
-    },
-    "F039": {
-      "path": "./js/services/handlers/ActionClickHandler.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F040": {
-      "path": "./js/services/handlers/MarketEventHandler.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F041": {
-      "path": "./js/services/handlers/HoldEventHandler.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F042": {
-      "path": "./js/services/handlers/CarouselEventHandler.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F043": {
-      "path": "./js/services/handlers/TooltipHandler.js",
-      "role": "EVENT_HANDLER"
-    },
-    "F044": {
-      "path": "./js/services/ui/TravelAnimationService.js",
-      "role": "UI_SERVICE"
-    },
-    "F045": {
-      "path": "./css/orientation.css",
-      "role": "STYLESHEET"
-    },
-    "F046": {
-      "path": "ViewController.swift",
-      "role": "NATIVE_IOS_WRAPPER"
-    },
-    "F047": {
-      "path": "./meta/STATE_SCHEMA.md",
-      "role": "DOCUMENTATION_STATE_SCHEMA"
-    },
-    "F048": {
-      "path": "./meta/SERVICES.md",
-      "role": "DOCUMENTATION_SERVICE_RESPONSIBILITY"
-    },
-    "F049": {
-      "path": "./js/data/age_events.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F050": {
-      "path": "./js/data/events.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F051": {
-      "path": "./js/data/missions.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F052": {
-      "path": "./js/data/tutorials.js",
-      "role": "DATA_DEFINITION"
-    },
-    "F053": {
-      "path": "./js/services/NewsTickerService.js",
-      "role": "UI_SERVICE"
-    },
-    "F054": {
-      "path": "./js/data/flavorAds.js",
-      "role": "DATA_DEFINITION",
-      "description": "Defines location-specific flavor text for the news ticker."
-    },
-    "F055": {
-      "path": "./css/news-ticker.css",
-      "role": "STYLESHEET"
-    },
-    "F056": {
-      "path": "./js/data/intelMessages.js",
-      "role": "DATA_DEFINITION",
-      "description": "Defines templates for market intel messages for the news ticker."
-    },
-    "F057": {
-      "path": "./js/services/IntelService.js",
-      "role": "LOGIC_SERVICE"
-    },
-    "F058": {
-      "path": "./js/ui/renderers/IntelMarketRenderer.js",
-      "role": "UI_RENDERER"
-    },
-    "F059": {
-      "path": "./js/data/intelContent.js",
-      "role": "DATA_DEFINITION",
-      "description": "Defines sample/detail text for the Intel Market."
-    },
-    "F060": {
-      "path": "./js/services/ui/AnimationService.js",
-      "role": "UI_SERVICE"
-    },
-    "F061": {
-      "path": "./js/services/bot/AutomatedPlayerService.js",
-      "role": "AUTOMATION_SERVICE",
-      "description": "Contains the AutomatedPlayer class, a bot for stress-testing the economy."
-    }
+  {
+    "fileName": "meta/SERVICES.md",
+    "fullContent": "# Orbital Trading - Service Responsibilities\n**Version:** 1.7\n**Source:** `js/services/` directory structure and `js/data/` structure\n\nThis document defines the single responsibility of each service in the application and notes key static data dependencies.\n\n---\n\n### Core Services\n\n-   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.\n-   **`SimulationService.js`**: Acts as the main game loop \"heartbeat\" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).\n-   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.\n-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow.\n-   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.\n-   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.\n\n### Game Logic Services\n\n#### Player\n\n-   **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, use services).\n\n#### World\n\n-   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. Calls `IntelService.generateIntelRefresh()` and checks for `activeIntelDeal` expiration. **Uses:** `js/data/age_events.js`.\n-   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).\n\n#### Simulation\n\n-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a \"Delayed Supply\" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. Checks for an `activeIntelDeal` override before calculating its normal prices.\n-   **`IntelService.js`**: The \"brain\" of the Intel Market system. Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic. **Uses:** `js/data/intelContent.js`.\n-   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.\n\n#### Game\n\n-   **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.\n-   **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.\n\n### UI/Event Handlers\n\n-   **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes).\n-   **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.\n-   **`HoldEventHandler.js`**: Implements the \"click-and-hold\" functionality for buttons (e.g., refuel/repair, market quantity steppers).\n-   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).\n-   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.\n-   **`TravelAnimationService.js`**: Controls the visual \"travel animation\" modal when the player travels.\n\n### UI/Renderers\n\n-   **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the \"Intel Market\" tab.\n\n### Event Effects\n\n-   **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.\n-   **`effectAdriftPassenger.js`**: The specific implementation for the \"Adrift Passenger\" event outcome.\n-   **`effectSpaceRace.js`**: The specific implementation for the \"Space Race\" event outcome.\n\n### Effects\n\n-   **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).\n-   **`BaseEffect.js`**: The abstract base class for all visual effects.\n\n### Debug & Automation\n\n-   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.\n-   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy by simulating an advanced, market-manipulating player.\n\n---\n\n### Static Data Files (`js/data/`)\n\n-   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).\n-   **`ship_database.js`**: Defines the static data for all player-tradable ships, including stats, lore, and pricing. This is imported by `database.js`.\n-   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).\n-   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).\n-   **`events.js`**: Defines static data for random events encountered during travel.\n-   **`missions.js`**: Defines static data for all player missions.\n-   **`tutorials.js`**: Defines static data for all tutorial batches and steps.\n-   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.\n-   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.\n-   **`intelContent.js`**: Defines the \"Sample\" and \"Details\" message pairs for the purchasable Intel Packets in the Intel Market.\n"
   }
-}
+]
 --- END OF FILE: ./meta/lexicon.json ---
 
 --- START OF FILE: ./meta/ROADMAP.md ---
@@ -22885,6 +23106,7 @@ This document defines the single responsibility of each service in the applicati
 ### Static Data Files (`js/data/`)
 
 -   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
+-   **`ship_database.js`**: Defines the static data for all player-tradable ships, including stats, lore, and pricing. This is imported by `database.js`.
 -   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
 -   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
 -   **`events.js`**: Defines static data for random events encountered during travel.

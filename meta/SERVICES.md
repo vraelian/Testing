@@ -71,6 +71,7 @@ This document defines the single responsibility of each service in the applicati
 ### Static Data Files (`js/data/`)
 
 -   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
+-   **`ship_database.js`**: Defines the static data for all player-tradable ships, including stats, lore, and pricing. This is imported by `database.js`.
 -   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
 -   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
 -   **`events.js`**: Defines static data for random events encountered during travel.

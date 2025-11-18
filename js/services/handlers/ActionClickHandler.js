@@ -8,6 +8,7 @@
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; 
 
 export class ActionClickHandler {
     /**
@@ -28,7 +29,7 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    async handle(e, actionTarget) { // <-- Add async
+    async handle(e, actionTarget) { 
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
@@ -41,7 +42,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.buyShip(shipId, e); // <-- Add await
+                await this.simulationService.buyShip(shipId, e);
                 actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
                 break;
             }
@@ -49,24 +50,17 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.sellShip(shipId, e); // <-- Add await
+                await this.simulationService.sellShip(shipId, e);
                 break;
             }
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent any other clicks
-                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                // actionData is now set *inside* SimulationService.boardShip
+                await this.simulationService.boardShip(shipId, e);
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-            // REMOVED 'show_ship_info' case
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
-    
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
@@ -114,18 +108,12 @@ export class ActionClickHandler {
 
             // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN: {
-                // This is the "smarter" logic you described.
-                // We check if the *actual* click target (e.target) was a sub-nav button.
-                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
-                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
-                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
-                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
@@ -138,22 +126,52 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
+            // --- Intel Actions ---
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
                 this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
+
+            // --- [[START]] SHIP LORE HANDLER ---
+            case ACTION_IDS.SHOW_SHIP_LORE: {
+                const shipId = dataset.shipId;
+                // console.log('ActionClickHandler: Triggering Ship Lore for', shipId); // Debug log
+                
+                const ship = DB.SHIPS[shipId];
+                
+                // 1. Generate the HTML using our stateless renderer
+                const loreHtml = renderShipLore(ship);
+                
+                // 2. Queue the modal using the "Digital Manifest" configuration
+                this.uiManager.queueModal('event-modal', null, null, null, {
+                    specialClass: 'manifest-modal', // CORRECTED: Use specialClass for container styling
+                    dismissInside: true, 
+                    dismissOutside: true,
+                    customSetup: (modal, closeHandler) => {
+                        // Direct injection into the modal content box
+                        const contentBox = modal.querySelector('.modal-content');
+                        if (contentBox) {
+                            contentBox.innerHTML = loreHtml;
+                            
+                            // 3. Wire up the [ CLOSE_FILE ] button inside the injected HTML
+                            const closeBtn = contentBox.querySelector('.btn-manifest');
+                            if (closeBtn) {
+                                closeBtn.onclick = closeHandler;
+                            }
+                        }
+                    }
+                });
+                break;
+            }
+            // --- [[END]] SHIP LORE HANDLER ---
 
             // --- Modals ---
             case 'show-mission-modal':
@@ -173,14 +191,11 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             
-            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
             case 'show_eula_modal':
                 e.preventDefault();
                 this.uiManager.showEulaModal();
                 break;
-            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
-            
             // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
@@ -198,19 +213,14 @@ export class ActionClickHandler {
                 break;
 
             // --- Finance & Licenses ---
-            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
-            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
-                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
-                // The new flow is show_intel_offer -> buy_intel
-                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
+                // Obsolete
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);
@@ -230,25 +240,14 @@ export class ActionClickHandler {
         }
     }
 
-    /**
-     * Handles the UI flow for acquiring a trade license.
-     * @param {string} licenseId The ID of the license to acquire.
-     * @param {Event} [e] The original click event for positioning floating text.
-     * @private
-     */
     _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
         if (license.type === 'purchase') {
-            // --- VIRTUAL WORKBENCH START: Phase 2 ---
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
-            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
-                // --- VIRTUAL WORKBENCH: BUG FIX ---
-                // Add dismissOutside: true to allow the modal to be closed
                 dismissOutside: true,
-                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `

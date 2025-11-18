@@ -451,3 +451,79 @@
     text-align: center; /* Center-align text */
     width: 100%;       /* Ensure element spans modal width for centering */
 }
+
+
+/* --- [[START]] SHIP LORE "DIGITAL MANIFEST" STYLES --- */
+/* Applied via specialClass in queueModal */
+.manifest-modal .modal-content {
+    max-width: 600px;
+    width: 90%;
+    height: 70vh; /* Fixed height for scrollable interior */
+    max-height: 800px;
+    background-color: #050505;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(6, 182, 212, 0.05) 1px, /* Cyan-ish scanline */
+        rgba(6, 182, 212, 0.05) 2px
+    );
+    border: 1px solid var(--ot-cyan-dim, #22d3ee);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    padding: 1.5rem;
+    color: #e2e8f0;
+    overflow: hidden; /* Container doesn't scroll, body does */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Animation container */
+.manifest-content-wrapper {
+    height: 100%;
+    width: 100%;
+    animation: scanIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+/* Typography overrides */
+.manifest-header h2 {
+    font-family: 'Roboto Mono', monospace;
+    /* Colors handled inline by renderer */
+}
+
+/* Scrollable Body */
+.manifest-body {
+    /* Custom Scrollbar Styling for WebKit */
+    scrollbar-width: thin;
+    scrollbar-color: var(--ot-cyan-dim, #22d3ee) #050505;
+}
+
+.manifest-body::-webkit-scrollbar {
+    width: 6px;
+}
+.manifest-body::-webkit-scrollbar-track {
+    background: #050505;
+}
+.manifest-body::-webkit-scrollbar-thumb {
+    background-color: var(--ot-cyan-dim, #22d3ee);
+    border-radius: 3px;
+}
+
+/* Button Styling */
+.btn-manifest {
+    transition: all 0.2s ease;
+}
+.btn-manifest:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 15px var(--ot-cyan-base, #06b6d4);
+}
+
+/* Animations */
+@keyframes scanIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* --- [[END]] SHIP LORE STYLES --- */
