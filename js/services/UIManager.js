@@ -15,6 +15,7 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
+import { SHIP_DATABASE } from '../data/ship_database.js';
 
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
@@ -433,7 +434,7 @@ export class UIManager {
         const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials, subNavCollapsed } = gameState;
         const { navLock } = tutorials;
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
-        const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
+        const activeShipStatic = player.activeShipId ? SHIP_DATABASE[player.activeShipId] : null;
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
         const inventory = player.activeShipId ? player.inventories[player.activeShipId] : null;
         const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0' };
@@ -763,7 +764,7 @@ change occurred (like a purchase), it *surgically
     updateServicesScreen(gameState) {
         if (gameState.activeScreen !== SCREEN_IDS.SERVICES) return;
         const { player } = gameState;
-        const shipStatic = DB.SHIPS[player.activeShipId];
+        const shipStatic = SHIP_DATABASE[player.activeShipId];
         const shipState = player.shipStates[player.activeShipId];
 
         const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
@@ -1210,10 +1211,8 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
-// js/services/UIManager.js
-// ... (first half of the file)
 
-    // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
     /**
      * Displays the new modal for showing ship info text.
      * @param {string} shipId The ID of the ship to display info for.
@@ -1227,22 +1226,15 @@ change occurred (like a purchase), it *surgically
             return;
         }
 
-        const ship = DB.SHIPS[shipId]; // This now gets the full object from SHIP_DATABASE
+        const ship = SHIP_DATABASE[shipId];
         let contentHtml = '';
 
         if (!ship) {
             this.logger.error('UIManager', `No ship info content found for ID: ${shipId}`);
             contentHtml = '<p>Error: Ship info content not found.</p>';
         } else {
-            // Get new data fields from the ship object (from ship_database.js)
-            // Replace newlines with <br> for HTML rendering
-            const attributeText = (ship.attribute || "No Attribute").replace(/\n/g, '<br>');
-            // 'lore' in the new SHIP_DATABASE is the extended flavor text
-            // Replace newlines with <br> for HTML rendering
-            const extendedLoreText = (ship.lore || "No extended lore available.").replace(/\n/g, '<br>');
-        
-            // Format as requested: "[Attribute] <br><br> [Extended Flavor Text]"
-            contentHtml = `${attributeText}<br><br>${extendedLoreText}`;
+            // Use the ship's lore, wrapped in <p> tags for formatting.
+            contentHtml = `<p>${ship.lore.replace(/\n/g, '</p><p>')}</p>`;
         }
         
         contentEl.innerHTML = contentHtml;
@@ -1253,21 +1245,17 @@ change occurred (like a purchase), it *surgically
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
         
-        // --- VIRTUAL WORKBENCH: MODIFICATION (BUG FIX) ---
-        // Re-add the local closeHandler to prevent the race condition
-        // with the global EventManager. This makes it behave like
-        // showLoreModal and showEulaModal, which are working.
+        // Add a one-time click listener to the backdrop *and* content area to close the modal.
+        // This fulfills the requirement to be "dismissable by tapping/clicking inside or outside".
         const closeHandler = (e) => {
-            if (e.target.closest('#ship-info-modal-content') 
- || e.target.id === 'ship-info-modal') {
+            if (e.target.closest('#ship-info-modal-content') || e.target.id === 'ship-info-modal') {
                 this.hideModal('ship-info-modal');
                 modal.removeEventListener('click', closeHandler);
             }
         };
         modal.addEventListener('click', closeHandler);
-        // --- END VIRTUAL WORKBENCH ---
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
 
     // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**
@@ -1529,7 +1517,7 @@ change occurred (like a purchase), it *surgically
         // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
             const activeShipId = gameState.player.activeShipId;
-            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; // Fallback
+            const shipName = activeShipId ? SHIP_DATABASE[activeShipId].name : 'your ship'; // Fallback
             processedText = processedText.replace(/{shipName}/g, shipName);
         }
 
@@ -1831,7 +1819,7 @@ change occurred (like a purchase), it *surgically
 
     showShipDetailModal(gameState, shipId, context) {
         const { player, tutorials } = gameState;
-        const shipStatic = DB.SHIPS[shipId];
+        const shipStatic = SHIP_DATABASE[shipId];
         let modalContentHtml;
 
         if (context === 'shipyard') {
@@ -2187,15 +2175,15 @@ change occurred (like a purchase), it *surgically
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
-
-            // --- [[START]] VIRTUAL WORKBENCH: BUG FIX ---
-            // The redundant checks for 'ship-info-modal' have been REMOVED.
-            // Its dismissal is now handled *only* by the local closeHandler
-            // in showShipInfoModal, just like lore-modal and eula-modal.
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+            // Special case: Allow ship-info-modal to be dismissed by clicking content
+            if (modalBackdrop.id === 'ship-info-modal' && e.target.closest('#ship-info-modal-content')) {
+                return modalBackdrop.id;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
 
             // Standard dismissal (backdrop click only)
-            // NOTE: 'ship-info-modal' is removed from this condition.
-            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && modalBackdrop.id !== 'ship-info-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
              // Standard dismissal for lore-modal (backdrop click only)
@@ -2208,8 +2196,14 @@ change occurred (like a purchase), it *surgically
                 return modalBackdrop.id;
             }
             // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
-            
-            // --- [[END]] VIRTUAL WORKBENCH: BUG FIX ---
+
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
+            // Standard dismissal for ship-info-modal (backdrop click only)
+            if (modalBackdrop.id === 'ship-info-modal' && !e.target.closest('.modal-content')) {
+                return modalBackdrop.id;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
+
 
             // GDD-compliant dismissal
             return modalBackdrop.id;
@@ -2316,7 +2310,7 @@ change occurred (like a purchase), it *surgically
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                     <h5 class."font-bold imprinted-text">Needs:</h5>
+                     <h5 class="font-bold imprinted-text">Needs:</h5>
                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
