@@ -6,7 +6,6 @@
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
-import { SHIP_DATABASE } from '../../data/ship_database.js';
 
 /**
  * Renders the entire Hangar screen UI.
@@ -86,7 +85,7 @@ function _renderEmptyCarouselPage(isHangarMode) {
  * @private
  */
 function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
-    const shipStatic = SHIP_DATABASE[shipId];
+    const shipStatic = DB.SHIPS[shipId];
     // VIRTUAL WORKBENCH: Bug Fix B - We no longer need the destructured 'player' here.
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; // Keep this for _renderActionButtons
@@ -102,7 +101,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
@@ -124,7 +122,6 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <button class="ship-info-button" data-action="show_ship_info" data-ship-id="${shipId}">ⓘ</button>
                 <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
                     <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
                 </div>
@@ -169,7 +166,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- VIRTUAL WORKBENCH START ---
+    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -204,7 +202,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     }
-    // --- VIRTUAL WORKBENCH END ---
+    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 

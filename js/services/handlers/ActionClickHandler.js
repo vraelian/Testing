@@ -64,19 +64,7 @@ export class ActionClickHandler {
             // --- END VIRTUAL WORKBENCH ---
 
             // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-            case 'show_ship_info': {
-                const { shipId } = dataset;
-                if (!shipId) return;
-                e.stopPropagation(); // Prevent click from bubbling up
-                
-                // --- VIRTUAL WORKBENCH: CLEANUP ---
-                // Removed the setTimeout(..., 0) wrapper.
-                // This is a direct call. The race condition
-                // will be fixed in UIManager.js (Phase 2).
-                this.uiManager.showShipInfoModal(shipId);
-                // --- END VIRTUAL WORKBENCH ---
-                break;
-            }
+            // REMOVED 'show_ship_info' case
             // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
     
             // --- Hangar UI ---
