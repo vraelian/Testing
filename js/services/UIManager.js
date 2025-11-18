@@ -1209,7 +1209,8 @@ change occurred (like a purchase), it *surgically
             }
         };
         modal.addEventListener('click', closeHandler);
-    }// js/services/UIManager.js
+    }
+// js/services/UIManager.js
 // ... (first half of the file)
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
