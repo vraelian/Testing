@@ -1,6 +1,7 @@
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font definitions,
+ * @fileoverview This file contains the global styles, font 
+definitions,
  * utility classes, and base layout for the entire application.
  */
 
@@ -48,36 +49,6 @@
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
-
-    /* --- [[START]] THEME COLORS --- */
-    --ot-bg-dark: #111827; /* gray-900 */
-    --ot-bg-darker: #0f172a; /* slate-900 */
-    
-    /* UI Accents */
-    --ot-green-accent: #10b981; /* emerald-500 */
-    --ot-red-alert: #ef4444; /* red-500 */
-    --ot-border-light: #374151; /* gray-700 */
-    
-    /* Theme Colors (Defaults) */
-    --ot-cyan-dim: #22d3ee;
-    --ot-cyan-base: #06b6d4;
-    --ot-cyan-glow: #67e8f9;
-    --ot-hangar-red-base: #b91c1c;
-    --ot-shipyard-blue-base: #3b82f6;
-    
-    /* Ship Class Colors */
-    --class-c-color: #9ca3af; /* Gray */
-    --class-b-color: #3b82f6; /* Blue */
-    --class-a-color: #8b5cf6; /* Purple */
-    --class-s-color: #f59e0b; /* Gold/Orange */
-    --class-o-color: #ef4444; /* Red (Capital) */
-    --class-z-color: #10b981; /* Green (Alien) */
-    --class-f-color: #6b7280; /* Dark Gray (Fail/Cryo) */
-
-    /* Text Colors */
-    --ot-text-primary: #f3f4f6; /* gray-100 */
-    --ot-text-secondary: #9ca3af; /* gray-400 */
-    /* --- [[END]] THEME COLORS --- */
 }
 
 html {
@@ -909,31 +880,3 @@ card.
 }
 /* --- END VIRTUAL WORKBENCH --- */
 /* --- [[END]] GENERIC ANIMATIONS --- */
-
-
-/* --- [[START]] GHOST LINK TRIGGER --- */
-.ghost-link {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--ot-cyan-dim, #22d3ee);
-    padding: 8px 12px;
-    margin: -8px -12px; /* Hitbox extension for touch */
-    cursor: pointer;
-    opacity: 0.8;
-    animation: ghost-breathe 4s infinite ease-in-out;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ghost-link:active {
-    color: var(--ot-cyan-base, #06b6d4);
-    text-shadow: 0 0 8px var(--ot-cyan-base, #06b6d4);
-    opacity: 1;
-    animation: none;
-}
-
-@keyframes ghost-breathe {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 0.9; }
-}
-/* --- [[END]] GHOST LINK TRIGGER --- */

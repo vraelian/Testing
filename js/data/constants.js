@@ -132,13 +132,6 @@ export const ACTION_IDS = Object.freeze({
     TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
     TOGGLE_HANGAR_MODE: 'toggle-hangar-mode',
     SET_HANGAR_PAGE: 'set-hangar-page',
-    SHOW_INTEL_OFFER: 'show_intel_offer',
-    BUY_INTEL: 'buy_intel',
-    SHOW_INTEL_DETAILS: 'show_intel_details',
-    SET_INTEL_TAB: 'set-intel-tab',
-    // --- [[START]] NEW ACTION ---
-    SHOW_SHIP_LORE: 'show_ship_lore',
-    // --- [[END]] NEW ACTION ---
 });
 
 /**

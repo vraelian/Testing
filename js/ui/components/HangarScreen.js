@@ -166,18 +166,14 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- [[START]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
-    // Added flex container for title and ghost link
-    // Added role="button" to the ghost link for iOS robustness
+    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <div class="flex justify-between items-baseline w-full">
-                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
-                        </div>
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
@@ -193,10 +189,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <div class="flex justify-between items-baseline w-full">
-                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
-                        </div>
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>
@@ -209,7 +202,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 
@@ -255,6 +248,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 }
 
 
+// --- VIRTUAL WORKBENCH START ---
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
  * @param {object} shipStatic - The static data for the ship (for max values).
@@ -324,3 +318,4 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
+// --- VIRTUAL WORKBENCH END ---

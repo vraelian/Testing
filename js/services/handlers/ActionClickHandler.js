@@ -8,7 +8,6 @@
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
-import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; // NEW IMPORT
 
 export class ActionClickHandler {
     /**
@@ -155,40 +154,6 @@ export class ActionClickHandler {
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
             // --- END VIRTUAL WORKBENCH ---
-
-            // --- [[START]] SHIP LORE HANDLER ---
-            case ACTION_IDS.SHOW_SHIP_LORE: {
-                const shipId = dataset.shipId;
-                // console.log('ActionClickHandler: Triggering Ship Lore for', shipId); // Debug log
-                
-                const ship = DB.SHIPS[shipId];
-                
-                // 1. Generate the HTML using our stateless renderer
-                const loreHtml = renderShipLore(ship);
-                
-                // 2. Queue the modal using the "Digital Manifest" configuration
-                this.uiManager.queueModal('event-modal', null, null, null, {
-                    specialClass: 'manifest-modal', // CORRECTED: Use specialClass for container styling
-                    dismissInside: true, 
-                    dismissOutside: true,
-                    customSetup: (modal, closeHandler) => {
-                        // Direct injection into the modal content box
-                        // We replace the entire innerHTML to bypass the default Title/Description layout
-                        const contentBox = modal.querySelector('.modal-content');
-                        if (contentBox) {
-                            contentBox.innerHTML = loreHtml;
-                            
-                            // 3. Wire up the [ CLOSE_FILE ] button inside the injected HTML
-                            const closeBtn = contentBox.querySelector('.btn-manifest');
-                            if (closeBtn) {
-                                closeBtn.onclick = closeHandler;
-                            }
-                        }
-                    }
-                });
-                break;
-            }
-            // --- [[END]] SHIP LORE HANDLER ---
 
             // --- Modals ---
             case 'show-mission-modal':

@@ -1218,7 +1218,8 @@
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font definitions,
+ * @fileoverview This file contains the global styles, font 
+definitions,
  * utility classes, and base layout for the entire application.
  */
 
@@ -1266,36 +1267,6 @@
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
-
-    /* --- [[START]] THEME COLORS --- */
-    --ot-bg-dark: #111827; /* gray-900 */
-    --ot-bg-darker: #0f172a; /* slate-900 */
-    
-    /* UI Accents */
-    --ot-green-accent: #10b981; /* emerald-500 */
-    --ot-red-alert: #ef4444; /* red-500 */
-    --ot-border-light: #374151; /* gray-700 */
-    
-    /* Theme Colors (Defaults) */
-    --ot-cyan-dim: #22d3ee;
-    --ot-cyan-base: #06b6d4;
-    --ot-cyan-glow: #67e8f9;
-    --ot-hangar-red-base: #b91c1c;
-    --ot-shipyard-blue-base: #3b82f6;
-    
-    /* Ship Class Colors */
-    --class-c-color: #9ca3af; /* Gray */
-    --class-b-color: #3b82f6; /* Blue */
-    --class-a-color: #8b5cf6; /* Purple */
-    --class-s-color: #f59e0b; /* Gold/Orange */
-    --class-o-color: #ef4444; /* Red (Capital) */
-    --class-z-color: #10b981; /* Green (Alien) */
-    --class-f-color: #6b7280; /* Dark Gray (Fail/Cryo) */
-
-    /* Text Colors */
-    --ot-text-primary: #f3f4f6; /* gray-100 */
-    --ot-text-secondary: #9ca3af; /* gray-400 */
-    /* --- [[END]] THEME COLORS --- */
 }
 
 html {
@@ -2127,34 +2098,6 @@ card.
 }
 /* --- END VIRTUAL WORKBENCH --- */
 /* --- [[END]] GENERIC ANIMATIONS --- */
-
-
-/* --- [[START]] GHOST LINK TRIGGER --- */
-.ghost-link {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--ot-cyan-dim, #22d3ee);
-    padding: 8px 12px;
-    margin: -8px -12px; /* Hitbox extension for touch */
-    cursor: pointer;
-    opacity: 0.8;
-    animation: ghost-breathe 4s infinite ease-in-out;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ghost-link:active {
-    color: var(--ot-cyan-base, #06b6d4);
-    text-shadow: 0 0 8px var(--ot-cyan-base, #06b6d4);
-    opacity: 1;
-    animation: none;
-}
-
-@keyframes ghost-breathe {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 0.9; }
-}
-/* --- [[END]] GHOST LINK TRIGGER --- */
 --- END OF FILE: ./css/global.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -2611,82 +2554,6 @@ card.
     text-align: center; /* Center-align text */
     width: 100%;       /* Ensure element spans modal width for centering */
 }
-
-
-/* --- [[START]] SHIP LORE "DIGITAL MANIFEST" STYLES --- */
-/* Applied via specialClass in queueModal */
-.manifest-modal .modal-content {
-    max-width: 600px;
-    width: 90%;
-    height: 70vh; /* Fixed height for scrollable interior */
-    max-height: 800px;
-    background-color: #050505;
-    background-image: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 1px,
-        rgba(6, 182, 212, 0.05) 1px, /* Cyan-ish scanline */
-        rgba(6, 182, 212, 0.05) 2px
-    );
-    border: 1px solid var(--ot-cyan-dim, #22d3ee);
-    box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.8);
-    padding: 1.5rem;
-    color: #e2e8f0;
-    overflow: hidden; /* Container doesn't scroll, body does */
-    display: flex;
-    flex-direction: column;
-}
-
-/* Animation container */
-.manifest-content-wrapper {
-    height: 100%;
-    width: 100%;
-    animation: scanIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-    transform: translateY(10px);
-}
-
-/* Typography overrides */
-.manifest-header h2 {
-    font-family: 'Roboto Mono', monospace;
-    /* Colors handled inline by renderer */
-}
-
-/* Scrollable Body */
-.manifest-body {
-    /* Custom Scrollbar Styling for WebKit */
-    scrollbar-width: thin;
-    scrollbar-color: var(--ot-cyan-dim, #22d3ee) #050505;
-}
-
-.manifest-body::-webkit-scrollbar {
-    width: 6px;
-}
-.manifest-body::-webkit-scrollbar-track {
-    background: #050505;
-}
-.manifest-body::-webkit-scrollbar-thumb {
-    background-color: var(--ot-cyan-dim, #22d3ee);
-    border-radius: 3px;
-}
-
-/* Button Styling */
-.btn-manifest {
-    transition: all 0.2s ease;
-}
-.btn-manifest:active {
-    transform: scale(0.98);
-    box-shadow: 0 0 15px var(--ot-cyan-base, #06b6d4);
-}
-
-/* Animations */
-@keyframes scanIn {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-/* --- [[END]] SHIP LORE STYLES --- */
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -5448,74 +5315,6 @@ BULKHEAD NAVIGATION STYLES
 }
 --- END OF FILE: ./css/orientation.css ---
 
---- START OF FILE: ./js/ui/renderers/ShipLoreRenderer.js ---
-// js/ui/renderers/ShipLoreRenderer.js
-/**
- * @fileoverview Stateless renderer for the Ship Lore "Digital Manifest" modal.
- * Generates the HTML structure for the ship's detailed database entry.
- */
-
-/**
- * Generates the HTML string for the Ship Lore modal.
- * @param {object} ship - The ship object from the database.
- * @returns {string} The HTML content.
- */
-export const renderShipLore = (ship) => {
-    if (!ship) return '<div class="text-center text-red-500 font-roboto-mono">ERROR: SHIP DATA CORRUPTED</div>';
-
-    // Fallback for missing lore
-    const rawLore = ship.lore || "Data Corrupted... No registry information available.";
-
-    // Parse lore: Split by newlines to create paragraphs
-    // We filter out empty strings to avoid empty paragraphs and spacing issues
-    const loreParagraphs = rawLore
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .map(line => `<p class="mb-4 last:mb-0">${line}</p>`)
-        .join('');
-
-    const shipClass = ship.class || '?';
-    // Dynamic CSS variable for class color (e.g., --class-s-color, --class-c-color)
-    const classColorVar = `var(--class-${shipClass.toLowerCase()}-color, #fff)`;
-
-    // Generate a "Registry ID" for flavor (e.g., REGISTRY_ID: 884-C-WANDERER)
-    const registryId = `REGISTRY_ID: 884-${shipClass}-${ship.name.toUpperCase().replace(/\s+/g, '_')}`;
-
-    return `
-        <div class="manifest-content-wrapper flex flex-col h-full relative overflow-hidden">
-            <div class="manifest-header flex justify-between items-baseline border-b border-gray-700/50 pb-2 mb-4 shrink-0">
-                <h2 class="text-2xl font-roboto-mono font-bold uppercase tracking-wide" style="color: ${classColorVar}; text-shadow: 0 0 8px ${classColorVar}40;">
-                    ${ship.name}
-                </h2>
-                <span class="text-xs font-roboto-mono text-gray-500 tracking-widest hidden md:block opacity-70">
-                    ${registryId}
-                </span>
-            </div>
-
-            <div class="manifest-body flex-grow overflow-y-auto pr-2 custom-scrollbar">
-                <div class="lore-text text-justify font-sans text-slate-300 leading-relaxed text-lg tracking-wide">
-                    ${loreParagraphs}
-                </div>
-                
-                <div class="mt-8 pt-4 border-t border-gray-800/50 text-xs font-roboto-mono text-gray-600 text-center opacity-50">
-                    <p>MERCHANT'S GUILD ARCHIVE // CLASSIFIED: LEVEL 4</p>
-                    <p>END OF RECORD</p>
-                </div>
-            </div>
-
-            <div class="manifest-footer mt-4 pt-2 shrink-0">
-                <button class="btn-manifest w-full py-4 border border-cyan-900/50 hover:border-cyan-500/50 bg-cyan-900/10 hover:bg-cyan-900/20 active:bg-cyan-900/40 text-cyan-500 hover:text-cyan-400 font-roboto-mono tracking-[0.2em] transition-all uppercase text-sm font-bold">
-                    [ CLOSE_FILE ]
-                </button>
-            </div>
-            
-            <div class="pointer-events-none absolute inset-0 bg-scanline opacity-10 z-10"></div>
-        </div>
-    `;
-};
---- END OF FILE: ./js/ui/renderers/ShipLoreRenderer.js ---
-
 --- START OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
 // js/ui/renderers/IntelMarketRenderer.js
 /**
@@ -6120,18 +5919,14 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- [[START]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
-    // Added flex container for title and ghost link
-    // Added role="button" to the ghost link for iOS robustness
+    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
+    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <div class="flex justify-between items-baseline w-full">
-                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
-                        </div>
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
@@ -6147,10 +5942,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <div class="flex justify-between items-baseline w-full">
-                            <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
-                            <div class="ghost-link" role="button" data-action="show_ship_lore" data-ship-id="${shipId}">[ ARCHIVE ]</div>
-                        </div>
+                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>
@@ -6163,7 +5955,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Ghost Link Injection) ---
+    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 
@@ -6209,6 +6001,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 }
 
 
+// --- VIRTUAL WORKBENCH START ---
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
  * @param {object} shipStatic - The static data for the ship (for max values).
@@ -6278,6 +6071,7 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
+// --- VIRTUAL WORKBENCH END ---
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -7728,13 +7522,6 @@ export const ACTION_IDS = Object.freeze({
     TOGGLE_MARKET_CARD_VIEW: 'toggle-market-card-view',
     TOGGLE_HANGAR_MODE: 'toggle-hangar-mode',
     SET_HANGAR_PAGE: 'set-hangar-page',
-    SHOW_INTEL_OFFER: 'show_intel_offer',
-    BUY_INTEL: 'buy_intel',
-    SHOW_INTEL_DETAILS: 'show_intel_details',
-    SET_INTEL_TAB: 'set-intel-tab',
-    // --- [[START]] NEW ACTION ---
-    SHOW_SHIP_LORE: 'show_ship_lore',
-    // --- [[END]] NEW ACTION ---
 });
 
 /**
@@ -20522,7 +20309,6 @@ export class HoldEventHandler {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
-import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; // NEW IMPORT
 
 export class ActionClickHandler {
     /**
@@ -20669,40 +20455,6 @@ export class ActionClickHandler {
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
             // --- END VIRTUAL WORKBENCH ---
-
-            // --- [[START]] SHIP LORE HANDLER ---
-            case ACTION_IDS.SHOW_SHIP_LORE: {
-                const shipId = dataset.shipId;
-                // console.log('ActionClickHandler: Triggering Ship Lore for', shipId); // Debug log
-                
-                const ship = DB.SHIPS[shipId];
-                
-                // 1. Generate the HTML using our stateless renderer
-                const loreHtml = renderShipLore(ship);
-                
-                // 2. Queue the modal using the "Digital Manifest" configuration
-                this.uiManager.queueModal('event-modal', null, null, null, {
-                    specialClass: 'manifest-modal', // CORRECTED: Use specialClass for container styling
-                    dismissInside: true, 
-                    dismissOutside: true,
-                    customSetup: (modal, closeHandler) => {
-                        // Direct injection into the modal content box
-                        // We replace the entire innerHTML to bypass the default Title/Description layout
-                        const contentBox = modal.querySelector('.modal-content');
-                        if (contentBox) {
-                            contentBox.innerHTML = loreHtml;
-                            
-                            // 3. Wire up the [ CLOSE_FILE ] button inside the injected HTML
-                            const closeBtn = contentBox.querySelector('.btn-manifest');
-                            if (closeBtn) {
-                                closeBtn.onclick = closeHandler;
-                            }
-                        }
-                    }
-                });
-                break;
-            }
-            // --- [[END]] SHIP LORE HANDLER ---
 
             // --- Modals ---
             case 'show-mission-modal':
