@@ -86,8 +86,9 @@ function _renderEmptyCarouselPage(isHangarMode) {
  */
 function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
+    // VIRTUAL WORKBENCH: Bug Fix B - We no longer need the destructured 'player' here.
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
-    const { player } = gameState; 
+    const { player } = gameState; // Keep this for _renderActionButtons
 
     // Determine Status Badge
     let statusBadgeHtml = '';
@@ -133,6 +134,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
+    // --- VIRTUAL WORKBENCH: MODIFICATION ---
+    // Added the .active-ship class conditionally based on isActive and isHangarMode.
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
@@ -145,6 +148,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
+    // --- END VIRTUAL WORKBENCH ---
 }
 
 
@@ -158,6 +162,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
  * @returns {string} The HTML for the info panel.
  * @private
  */
+// VIRTUAL WORKBENCH: Bug Fix B - Removed 'player' from args, will use 'gameState.player'
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
@@ -261,17 +266,27 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
+    // --- VIRTUAL WORKBENCH: BUG FIX ---
+    // The incorrect line 'const shipId = shipStatic.id;' has been removed.
+    // The correct 'shipId' is now passed in as an argument.
+    // --- END BUG FIX ---
+
+    // Determine current values
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
+    // VIRTUAL WORKBENCH: Request E - This logic is correct and matches the nav bar.
+    // It reads the *entire* player object and keys into the *specific* ship's inventory.
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
+    // Determine percentages
     const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
     const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
     const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
-    
+    // Determine colors
     const hullColor = 'var(--ot-green-accent)';
-    const cargoColor = '#f59e0b'; 
-    const fuelColor = '#3b82f6'; 
+    // VIRTUAL WORKBENCH: Request B - Match nav bar colors
+    const cargoColor = '#f59e0b'; // Was 'var(--class-s-color)'
+    const fuelColor = '#3b82f6'; // Was 'var(--ot-shipyard-blue-base)'
 
     /**
      * Helper to render a single bar with its text overlay.
@@ -288,7 +303,7 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
-        const textClass = isMax ? 'max' : 'partial';
+        const textClass = isMax ? 'max' : 'partial'; // ADDED: Class for alignment
 
         return `
             <div class="param-bar-item">

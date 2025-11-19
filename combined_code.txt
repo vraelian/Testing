@@ -6040,8 +6040,9 @@ function _renderEmptyCarouselPage(isHangarMode) {
  */
 function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
+    // VIRTUAL WORKBENCH: Bug Fix B - We no longer need the destructured 'player' here.
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
-    const { player } = gameState; 
+    const { player } = gameState; // Keep this for _renderActionButtons
 
     // Determine Status Badge
     let statusBadgeHtml = '';
@@ -6087,6 +6088,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
+    // --- VIRTUAL WORKBENCH: MODIFICATION ---
+    // Added the .active-ship class conditionally based on isActive and isHangarMode.
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
@@ -6099,6 +6102,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
+    // --- END VIRTUAL WORKBENCH ---
 }
 
 
@@ -6112,6 +6116,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
  * @returns {string} The HTML for the info panel.
  * @private
  */
+// VIRTUAL WORKBENCH: Bug Fix B - Removed 'player' from args, will use 'gameState.player'
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
@@ -6215,17 +6220,27 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
+    // --- VIRTUAL WORKBENCH: BUG FIX ---
+    // The incorrect line 'const shipId = shipStatic.id;' has been removed.
+    // The correct 'shipId' is now passed in as an argument.
+    // --- END BUG FIX ---
+
+    // Determine current values
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
+    // VIRTUAL WORKBENCH: Request E - This logic is correct and matches the nav bar.
+    // It reads the *entire* player object and keys into the *specific* ship's inventory.
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
+    // Determine percentages
     const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
     const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
     const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
-    
+    // Determine colors
     const hullColor = 'var(--ot-green-accent)';
-    const cargoColor = '#f59e0b'; 
-    const fuelColor = '#3b82f6'; 
+    // VIRTUAL WORKBENCH: Request B - Match nav bar colors
+    const cargoColor = '#f59e0b'; // Was 'var(--class-s-color)'
+    const fuelColor = '#3b82f6'; // Was 'var(--ot-shipyard-blue-base)'
 
     /**
      * Helper to render a single bar with its text overlay.
@@ -6242,7 +6257,7 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
-        const textClass = isMax ? 'max' : 'partial';
+        const textClass = isMax ? 'max' : 'partial'; // ADDED: Class for alignment
 
         return `
             <div class="param-bar-item">
@@ -20507,7 +20522,7 @@ export class HoldEventHandler {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
-import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; 
+import { renderShipLore } from '../../ui/renderers/ShipLoreRenderer.js'; // NEW IMPORT
 
 export class ActionClickHandler {
     /**
@@ -20528,7 +20543,7 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    async handle(e, actionTarget) { 
+    async handle(e, actionTarget) { // <-- Add async
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
@@ -20541,7 +20556,7 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.buyShip(shipId, e);
+                await this.simulationService.buyShip(shipId, e); // <-- Add await
                 actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
                 break;
             }
@@ -20549,17 +20564,24 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.sellShip(shipId, e);
+                await this.simulationService.sellShip(shipId, e); // <-- Add await
                 break;
             }
+            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); // Prevent any other clicks
-                await this.simulationService.boardShip(shipId, e);
+                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
+                // actionData is now set *inside* SimulationService.boardShip
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
 
+            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
+            // REMOVED 'show_ship_info' case
+            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+    
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
@@ -20607,12 +20629,18 @@ export class ActionClickHandler {
 
             // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN: {
+                // This is the "smarter" logic you described.
+                // We check if the *actual* click target (e.target) was a sub-nav button.
+                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
+                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
+                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
+                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
@@ -20625,19 +20653,22 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- Intel Actions ---
+            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
+            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
                 this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
+            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
+            // --- END VIRTUAL WORKBENCH ---
 
             // --- [[START]] SHIP LORE HANDLER ---
             case ACTION_IDS.SHOW_SHIP_LORE: {
@@ -20656,6 +20687,7 @@ export class ActionClickHandler {
                     dismissOutside: true,
                     customSetup: (modal, closeHandler) => {
                         // Direct injection into the modal content box
+                        // We replace the entire innerHTML to bypass the default Title/Description layout
                         const contentBox = modal.querySelector('.modal-content');
                         if (contentBox) {
                             contentBox.innerHTML = loreHtml;
@@ -20690,11 +20722,14 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             
+            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
             case 'show_eula_modal':
                 e.preventDefault();
                 this.uiManager.showEulaModal();
                 break;
+            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
+            
             // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
@@ -20712,14 +20747,19 @@ export class ActionClickHandler {
                 break;
 
             // --- Finance & Licenses ---
+            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
+            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
+            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
-                // Obsolete
+                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
+                // The new flow is show_intel_offer -> buy_intel
+                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);
@@ -20739,14 +20779,25 @@ export class ActionClickHandler {
         }
     }
 
+    /**
+     * Handles the UI flow for acquiring a trade license.
+     * @param {string} licenseId The ID of the license to acquire.
+     * @param {Event} [e] The original click event for positioning floating text.
+     * @private
+     */
     _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;
 
         if (license.type === 'purchase') {
+            // --- VIRTUAL WORKBENCH START: Phase 2 ---
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
+            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
+                // --- VIRTUAL WORKBENCH: BUG FIX ---
+                // Add dismissOutside: true to allow the modal to be closed
                 dismissOutside: true,
+                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
