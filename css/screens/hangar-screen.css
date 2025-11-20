@@ -28,10 +28,16 @@ CORE THEME & VARIABLE SETUP
 
     /* Ship Class Colors */
   
-  --class-s-color: #facc15;
-    --class-a-color: #60a5fa;
-    --class-b-color: #4ade80;
-    --class-c-color: #e5e7eb;
+    --class-s-color: #facc15; /* Gold */
+    --class-a-color: #60a5fa; /* Blue */
+    --class-b-color: #4ade80; /* Green */
+    --class-c-color: #e5e7eb; /* White/Light Grey */
+    
+    /* --- VIRTUAL WORKBENCH (New Class Colors) --- */
+    --class-o-color: #fb923c; /* Orange (Capital) */
+    --class-z-color: #ef4444; /* Red (Alien) */
+    --class-f-color: #9ca3af; /* Grey (Flotsam) */
+    /* --- END VIRTUAL WORKBENCH --- */
     
     /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set.
  */
@@ -308,11 +314,14 @@ flex: 1 1 auto; /* Grow to fill space */
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem; /* Space between text and bars */
+    /* VIRTUAL WORKBENCH: Request B - Revert gap to 0.5rem to fix bars */
+    gap: 0.5rem; 
 }
 
 .info-panel-text {
     flex-grow: 1; /* Allow text to take up remaining space */
+    /* VIRTUAL WORKBENCH: Request B - Add padding to ensure separation */
+    padding-right: 1.5rem;
 }
 /* --- VIRTUAL WORKBENCH END --- */
 
@@ -557,3 +566,125 @@ flex: 1 1 auto; /* Grow to fill space */
         min-height: 180px; /* Ensure hologram area has enough height */
     }
 }
+
+/* --- VIRTUAL WORKBENCH: ARCHIVE LINK STYLE (UPDATED) --- */
+.archive-link {
+    position: absolute;
+    /* Use right: -90px; based on user feedback to pull it closer to the toggle, but keep it to the right. 
+       Since the container is centered, this places it nicely to the side. 
+    */
+    left: 100%; 
+    margin-left: 0.1rem; /* Reduced from 0.2rem to move it tighter */
+    
+    /* Use top: 50% to align with the middle of the toggle height, effectively moving it up */
+    top: 50%; 
+    transform: translateY(-50%); /* Center vertically */
+    
+    white-space: normal; /* Allow wrapping for <br> */
+    text-align: center; /* Center align the stacked text */
+    line-height: 0.9; /* Tight line height for stacked text */
+    
+    font-family: 'Oxanium', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--ot-cyan-base); 
+    text-shadow: 0 0 5px var(--ot-cyan-glow);
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    z-index: 20;
+}
+
+.archive-link:hover {
+    opacity: 1;
+    text-shadow: 0 0 8px var(--ot-cyan-glow), 0 0 12px var(--ot-cyan-glow);
+}
+
+/* Mobile adjustment */
+@media (max-width: 400px) {
+    .archive-link {
+        margin-left: 0.1rem;
+        font-size: 0.6rem;
+    }
+}
+
+/* --- VIRTUAL WORKBENCH: MODAL CONTENT STYLES (NEW) --- */
+/* The wrapper for the lore text to ensure scrolling and max-height */
+.ship-lore-modal-wrapper {
+    max-height: 50vh; /* Limit height to 50% of viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 0 0.5rem; /* Add breathing room */
+    margin-top: 0.5rem;
+    
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--ot-cyan-base) rgba(0,0,0,0.3);
+}
+
+.ship-lore-modal-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+.ship-lore-modal-wrapper::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+}
+.ship-lore-modal-wrapper::-webkit-scrollbar-thumb {
+    background-color: var(--ot-cyan-base);
+    border-radius: 3px;
+}
+
+/* Attribute Header Style (Refinement B) */
+.ship-lore-attribute {
+    text-align: center;
+    color: var(--theme-color-primary, #fde047);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 0.25rem; /* Reduced from 1.0rem */
+    padding-bottom: 1.5rem; /* Increased from 0.5rem to act as <br> space */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px var(--theme-color-glow, #fef08a);
+}
+
+/* Main Lore Text Style (Refinement C) */
+.ship-lore-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.0rem; /* Increased from 0.9rem */
+    line-height: 1.6;
+    color: var(--ot-cyan-base); /* Updated to Teal */
+    text-align: left; /* Changed from justify */
+    white-space: pre-line; /* Preserve original line breaks in lore */
+}
+
+/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 5) --- */
+.glow-text-z {
+    text-shadow:
+        /* Definition Layer (Dark background for text) */
+        0 0 1px rgba(0,0,0,1),
+        0 2px 4px rgba(0,0,0,1),
+        /* Glow Layers (Behind the definition) */
+        0 0 15px var(--class-z-color),
+        0 0 25px var(--class-z-color) !important;
+}
+.glow-text-o {
+     text-shadow:
+        /* Definition Layer */
+        0 0 1px rgba(0,0,0,1),
+        0 2px 4px rgba(0,0,0,1),
+        /* Glow Layers */
+        0 0 15px var(--class-o-color),
+        0 0 25px var(--class-o-color) !important;
+}
+.glow-text-s {
+     text-shadow:
+        /* Definition Layer */
+        0 0 1px rgba(0,0,0,1),
+        0 2px 4px rgba(0,0,0,1),
+        /* Glow Layers */
+        0 0 15px var(--class-s-color),
+        0 0 25px var(--class-s-color) !important;
+}
+/* --- END VIRTUAL WORKBENCH --- */

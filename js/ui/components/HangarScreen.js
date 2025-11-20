@@ -34,11 +34,15 @@ export function renderHangarScreen(gameState, simulationService) {
     return `
         <div class="flex flex-col h-full">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
-                <div class="toggle-container mx-auto my-1">
-                    <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
-                        <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
-                        <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
+                
+                <div class="relative mx-auto my-1 w-max flex justify-center items-center">
+                    <div class="toggle-container">
+                        <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
+                            <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
+                            <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
+                        </div>
                     </div>
+                    <div class="archive-link" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
                 </div>
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
@@ -166,6 +170,34 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
+    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Refinement Phase 4) ---
+    // A. Base size reduced to text-xl (from text-2xl).
+    // B. Logic: >11 -> lg, >15 -> base, >20 -> sm.
+    const len = shipStatic.name.length;
+    let nameClass = 'text-xl'; // Default base size
+
+    if (len > 20) {
+        // e.g., "Shell That Echoes Only" (22 chars)
+        nameClass = 'text-sm leading-tight';
+    } else if (len > 15) {
+        // e.g., "Finality of Whispers" (20 chars)
+        nameClass = 'text-base leading-tight';
+    } else if (len > 11) {
+         // e.g., "Sophistacles" (12 chars)
+         nameClass = 'text-lg leading-tight';
+    }
+    
+    // Enforce one line with whitespace-nowrap and overflow-hidden
+    const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
+
+    // --- VIRTUAL WORKBENCH: GLOW LOGIC (Refinement Phase 5) ---
+    // Determine text shadow class. O, S, Z get specific glows; others get inset shadow.
+    let shadowClass = 'inset-text-shadow'; // Default
+    if (shipStatic.class === 'Z') shadowClass = 'glow-text-z';
+    else if (shipStatic.class === 'O') shadowClass = 'glow-text-o';
+    else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
+    // --- END VIRTUAL WORKBENCH ---
+
     // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
     // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
@@ -173,7 +205,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
@@ -189,7 +221,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
-                        <h3 class="text-2xl font-orbitron inset-text-shadow" style="color: var(--class-${shipClassLower}-color);">${shipStatic.name}</h3>
+                        <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
                     </div>

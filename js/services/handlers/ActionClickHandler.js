@@ -66,6 +66,65 @@ export class ActionClickHandler {
             // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
             // REMOVED 'show_ship_info' case
             // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+            
+            // --- [[START]] VIRTUAL WORKBENCH (Access Archives Logic - UPDATED Phase 2) ---
+            case 'show_ship_lore': {
+                const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
+                const currentIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
+                
+                let shipId;
+                if (isHangarMode) {
+                    const shipList = state.player.ownedShipIds;
+                    shipId = shipList[currentIndex] || shipList[0];
+                } else {
+                    // Use internal inventory method if accessible (it is in JS)
+                    // shipList is array of [id, data]
+                    const inventory = this.simulationService._getShipyardInventory();
+                    if (inventory && inventory.length > 0) {
+                        // Ensure index is safe
+                        const safeIndex = Math.min(currentIndex, inventory.length - 1);
+                        const shipData = inventory[safeIndex];
+                        shipId = shipData ? shipData[0] : null;
+                    }
+                }
+
+                if (shipId && DB.SHIPS[shipId]) {
+                    const ship = DB.SHIPS[shipId];
+                    // Format Attribute
+                    let attributeHtml = '';
+                    if (ship.attribute && ship.attribute !== 'None') {
+                        // Strip brackets if present in raw data (though regex targets display mostly)
+                        // Split by the FIRST colon to separate Title from Description
+                        const parts = ship.attribute.split(':');
+                        const title = parts[0].trim().replace(/[\[\]]/g, ''); // Remove brackets from title
+                        const description = parts.slice(1).join(':').trim(); // Re-join rest in case of other colons
+
+                        attributeHtml = `<div class="ship-lore-attribute">${title}:<br>${description}</div>`;
+                    }
+                    
+                    // Format Content
+                    // Wrap in the scroll container div with the specific classes
+                    const content = `
+                        <div class="ship-lore-modal-wrapper">
+                            ${attributeHtml}
+                            <div class="ship-lore-text">
+                                ${ship.lore || ship.description}
+                            </div>
+                        </div>
+                    `;
+
+                    // Show modal with 'codex-like' behavior (no footer, dismissible)
+                    // We remove 'contentClass' because we are wrapping the content ourselves now
+                    this.uiManager.queueModal('event-modal', ship.name, content, null, {
+                        dismissInside: true,
+                        dismissOutside: true,
+                        footer: null, 
+                        contentClass: 'text-left' 
+                    });
+                }
+                break;
+            }
+            // --- [[END]] VIRTUAL WORKBENCH ---
     
             // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:

@@ -2,7 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
-## [32.90] - 2025-11-116
+## [33.00] - 2025-11-19
+-  updated ship roster
+-  added ship lore
+-  added ship_database.js
+-  ship card polish
+
+## [32.90] - 2025-11-16
 -  updated fixed aspect ratio
 
 ## [32.80] - 2025-11-16
