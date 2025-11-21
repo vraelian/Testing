@@ -320,7 +320,9 @@ flex: 1 1 auto; /* Grow to fill space */
 
 .info-panel-text {
     flex-grow: 1; /* Allow text to take up remaining space */
-    /* VIRTUAL WORKBENCH: Request B - Add padding to ensure separation */
+    /* --- VIRTUAL WORKBENCH (QOL D) --- */
+    min-width: 0; /* CRITICAL: Allows flex child to shrink below content size (truncation) */
+    /* --- END VIRTUAL WORKBENCH --- */
     padding-right: 1.5rem;
 }
 /* --- VIRTUAL WORKBENCH END --- */
@@ -357,6 +359,9 @@ flex: 1 1 auto; /* Grow to fill space */
     width: 40%;
     max-width: 160px; /* Constrain max width */
     flex-shrink: 0; /* Prevent shrinking */
+    /* --- VIRTUAL WORKBENCH (QOL D) --- */
+    margin-left: 1rem; /* Add buffer against text to accommodate scale expansion */
+    /* --- END VIRTUAL WORKBENCH --- */
 
     /* Scale transform */
     transform: scale(1.25);
@@ -545,6 +550,15 @@ flex: 1 1 auto; /* Grow to fill space */
     opacity: 1.0;
 }
 
+/* --- VIRTUAL WORKBENCH: QOL UPDATE B (Boarded Dot) --- */
+.pagination-dot.boarded {
+    /* Force white, irrespective of theme */
+    background-color: #ffffff !important;
+    opacity: 1.0 !important;
+    box-shadow: 0 0 8px #ffffff, 0 0 15px rgba(255, 255, 255, 0.6);
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 .pagination-dot.half {
     width: 0.9rem; /* Half the original width */
     opacity: 0.2;
@@ -659,32 +673,31 @@ flex: 1 1 auto; /* Grow to fill space */
     white-space: pre-line; /* Preserve original line breaks in lore */
 }
 
-/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 5) --- */
+/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 5 - QOL UPDATE C) --- */
+/* Updated to use a white-hot core stack for better fidelity */
 .glow-text-z {
+    /* Force white core for heat, let shadow define the color halo */
+    color: #fff !important; 
     text-shadow:
-        /* Definition Layer (Dark background for text) */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers (Behind the definition) */
-        0 0 15px var(--class-z-color),
-        0 0 25px var(--class-z-color) !important;
+        0 0 2px #000, /* Contrast Outline */
+        0 0 5px var(--class-z-color), /* Tight Core */
+        0 0 15px var(--class-z-color), /* Soft Glow */
+        0 0 30px var(--class-z-color) !important; /* Wide Diffuse */
 }
 .glow-text-o {
+     color: #fff !important;
      text-shadow:
-        /* Definition Layer */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers */
+        0 0 2px #000,
+        0 0 5px var(--class-o-color),
         0 0 15px var(--class-o-color),
-        0 0 25px var(--class-o-color) !important;
+        0 0 30px var(--class-o-color) !important;
 }
 .glow-text-s {
+     color: #fff !important;
      text-shadow:
-        /* Definition Layer */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers */
+        0 0 2px #000,
+        0 0 5px var(--class-s-color),
         0 0 15px var(--class-s-color),
-        0 0 25px var(--class-s-color) !important;
+        0 0 30px var(--class-s-color) !important;
 }
 /* --- END VIRTUAL WORKBENCH --- */

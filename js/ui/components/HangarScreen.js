@@ -30,6 +30,12 @@ export function renderHangarScreen(gameState, simulationService) {
     // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
+    // --- VIRTUAL WORKBENCH: QOL UPDATE A ---
+    // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
+    // If Shipyard is empty, hiding this button reduces clutter.
+    const showArchive = isHangarMode || shipList.length > 0;
+    // --- END VIRTUAL WORKBENCH ---
+
     // NOTE: The pagination dots are now rendered dynamically by the UIManager._updateHangarScreen method.
     return `
         <div class="flex flex-col h-full">
@@ -42,7 +48,7 @@ export function renderHangarScreen(gameState, simulationService) {
                             <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
                         </div>
                     </div>
-                    <div class="archive-link" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
+                    <div class="archive-link ${showArchive ? '' : 'hidden'}" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
                 </div>
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
@@ -176,16 +182,18 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     const len = shipStatic.name.length;
     let nameClass = 'text-xl'; // Default base size
 
-    if (len > 20) {
-        // e.g., "Shell That Echoes Only" (22 chars)
+    // --- VIRTUAL WORKBENCH: QOL UPDATE D ---
+    // Refined breakpoints to prevent layout breakage with names like "Anomaly of the Song" (19 chars).
+    if (len > 22) {
+        nameClass = 'text-xs leading-tight';
+    } else if (len > 18) {
         nameClass = 'text-sm leading-tight';
-    } else if (len > 15) {
-        // e.g., "Finality of Whispers" (20 chars)
+    } else if (len > 14) {
         nameClass = 'text-base leading-tight';
-    } else if (len > 11) {
-         // e.g., "Sophistacles" (12 chars)
+    } else if (len > 10) {
          nameClass = 'text-lg leading-tight';
     }
+    // --- END VIRTUAL WORKBENCH ---
     
     // Enforce one line with whitespace-nowrap and overflow-hidden
     const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;

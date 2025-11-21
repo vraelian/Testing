@@ -629,9 +629,7 @@ change occurred (like a purchase), it *surgically
                 
                 break;
         }
-    }
-
-    /**
+    }/**
      * Surgically updates the Hangar screen for smooth transitions without a full re-render.
      * @param {object} gameState The current game state.
      * @private
@@ -697,6 +695,14 @@ change occurred (like a purchase), it *surgically
 
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
+        // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
+        // Determine the index of the currently boarded ship to mark it specially.
+        let boardedIndex = -1;
+        if (isHangarMode) {
+            boardedIndex = player.ownedShipIds.indexOf(player.activeShipId);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const theme = location?.navTheme || { borderColor: '#7a9ac0' };
 
@@ -705,7 +711,12 @@ change occurred (like a purchase), it *surgically
 
         if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
             for (let i = 0; i < totalItems; i++) {
-                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+                dots.push({ 
+                    index: i, 
+                    isActive: i === activeIndex, 
+                    isHalf: false,
+                    isBoarded: i === boardedIndex // Pass boarded status
+                });
             }
         } else {
             let start, end;
@@ -730,7 +741,12 @@ change occurred (like a purchase), it *surgically
 
              // Add the main window of full dots
             for (let i = start; i < end; i++) {
-                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+                dots.push({ 
+                    index: i, 
+                    isActive: i === activeIndex, 
+                    isHalf: false,
+                    isBoarded: i === boardedIndex // Pass boarded status
+                });
             }
 
             // Add next indicator if needed
@@ -747,7 +763,12 @@ change occurred (like a purchase), it *surgically
             if (dot.isHalf) {
                  return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
-                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
+                // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
+                // Add 'boarded' class if applicable
+                const boardedClass = dot.isBoarded ? 'boarded' : '';
+                // --- END VIRTUAL WORKBENCH ---
+
+                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''} ${boardedClass}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
 
