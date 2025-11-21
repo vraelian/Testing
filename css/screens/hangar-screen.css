@@ -61,8 +61,9 @@ COMPONENT-SPECIFIC STYLING
     cursor: grab;
     flex-grow: 1;
     display: flex;
-    /* Ensure the container clips efficiently */
     overflow: hidden;
+    /* Optimization: Isolate layout containment */
+    contain: content; 
 }
 .carousel-container:active {
     cursor: grabbing;
@@ -74,10 +75,11 @@ COMPONENT-SPECIFIC STYLING
     width: 100%;
     transition: transform 0.4s ease-out;
     
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* Keep this. Promoting the PARENT track is good. 
-       The children must remain "flat" for this to work efficiently. */
+    /* OPTIMIZATION: Standard hardware acceleration */
     will-change: transform;
+    /* iOS Fix: Prevent flickering during drag */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .carousel-page {
@@ -87,6 +89,12 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column; 
     user-select: none;
     padding-bottom: 4.0rem;
+    
+    /* VIRTUAL WORKBENCH: CRITICAL PERFORMANCE FIX (Virtualization-Lite) */
+    /* This tells the browser to SKIP painting anything inside this page if it is off-screen.
+       This massively reduces GPU load for lists > 3 items. */
+    contain: paint layout style; 
+    content-visibility: auto; 
 }
 
 /* Backgrounds & Theming */
@@ -100,18 +108,11 @@ COMPONENT-SPECIFIC STYLING
     height: auto;
     position: relative;
     z-index: 0;
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: background-blend-mode: overlay; */
 }
 
 /* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX
-       Instead of using `background-blend-mode: overlay` (expensive),
-       we stack a semi-transparent dark blue gradient ON TOP of the theme gradient.
-       This simulates the "overlay" darkening effect without the per-pixel compositing cost.
-    */
+    /* Stacked gradient to simulate overlay blend mode cheaply */
     background-image: 
         linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
         var(--theme-bg-gradient);
@@ -146,11 +147,6 @@ COMPONENT-SPECIFIC STYLING
     
     transform-origin: center;
     transform: scale(0.5);
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: will-change: transform, opacity; */
-    /* Reason: Having this on every ship card (off-screen) consumes massive memory.
-       The browser will promote this layer automatically when the animation starts. */
 }
 
 /* Generic Opacity Pulse */
@@ -174,7 +170,6 @@ COMPONENT-SPECIFIC STYLING
         inset 0 0 12px rgba(239, 68, 68, 0.3);
     
     animation: pulse-opacity 2.5s infinite ease-in-out;
-    /* Keep will-change here because it ONLY exists on the single active card */
     will-change: opacity;
 }
 
@@ -220,10 +215,11 @@ COMPONENT-SPECIFIC STYLING
 
 /* Hologram */
 .ship-display-area { 
-    perspective: 1500px; 
+    /* VIRTUAL WORKBENCH: CRITICAL FIX */
+    /* Removed perspective and transform-style: preserve-3d.
+       This was creating a 3D stacking context for EVERY ship, causing memory explosion. */
     position: relative; 
     flex-grow: 1;
-    transform-style: preserve-3d;
 }
 
 .ship-image-placeholder { 
@@ -232,10 +228,6 @@ COMPONENT-SPECIFIC STYLING
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     aspect-ratio: 1 / 1;
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: transform: translateZ(0); */
-    /* Reason: This created a 3D context for every ship in the list. */
 }
 
 .status-badge {
@@ -402,7 +394,6 @@ COMPONENT-SPECIFIC STYLING
     z-index: -1; 
     opacity: 0;
     transition: opacity 0.3s ease;
-    /* Keep will-change here as buttons are few and interactive */
     will-change: opacity;
     pointer-events: none;
 }

@@ -14,6 +14,7 @@ export class CarouselEventHandler {
 
         this.isScrolling = false;
         this.scrollTimeout = null;
+        this.rafId = null; // Track the animation frame request
 
         this.state = {
             isDragging: false,
@@ -91,7 +92,16 @@ export class CarouselEventHandler {
         if (Math.abs(diff) > 10) this.state.moved = true;
 
         if (this.state.activeCarousel) {
-            this.state.activeCarousel.style.transform = `translateX(${this.state.currentTranslate}px)`;
+            // VIRTUAL WORKBENCH: PERFORMANCE FIX
+            // Use requestAnimationFrame to decouple input from rendering.
+            // This prevents layout thrashing on high-refresh rate displays.
+            if (this.rafId) cancelAnimationFrame(this.rafId);
+            
+            this.rafId = requestAnimationFrame(() => {
+                if (this.state.activeCarousel) {
+                    this.state.activeCarousel.style.transform = `translateX(${this.state.currentTranslate}px)`;
+                }
+            });
         }
     }
 
@@ -100,6 +110,9 @@ export class CarouselEventHandler {
      */
     handleDragEnd() {
         if (!this.state.isDragging) return;
+        
+        // Cancel any pending frame to prevent overwrite after end
+        if (this.rafId) cancelAnimationFrame(this.rafId);
 
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.state;
 

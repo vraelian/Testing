@@ -96,11 +96,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
     
-    // --- VIRTUAL WORKBENCH: OPTIMIZATION PHASE 1 ---
-    // We no longer apply the .active-ship class to the container.
-    // Instead, we inject a dedicated glow layer DIV if the ship is active.
+    // Optimized: Only inject the glow layer DIV if this specific ship is active.
     const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
-    // --- END VIRTUAL WORKBENCH ---
 
     if (isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;

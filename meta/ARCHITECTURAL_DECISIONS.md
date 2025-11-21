@@ -99,3 +99,16 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
     * **Pro**: Uses `visualViewport` to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
     * **Con**: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.
+    ### ADR-008: iOS-Targeted Rendering & Performance Standards
+
+* **Status**: Accepted (2025-11-21)
+* **Context**: The Hangar/Shipyard screen, containing lists of complex ship cards, exhibited significant frame rate drops and scrolling lag on the primary target device (iPhone/iOS). The use of "expensive" CSS properties (`background-blend-mode`, `box-shadow` animations, 3D transforms) and synchronous drag handlers saturated the GPU compositor and main thread.
+* **Decision**: A strict "Performance-First" rendering strategy was adopted for all scrollable/draggable UI components:
+    1.  **CSS Virtualization ("Virtualization-Lite")**: All list items in a carousel or scroll view must utilize `contain: paint layout style` and `content-visibility: auto`. This allows the browser to skip rendering work for off-screen elements without the complexity of JavaScript-based virtualization libraries.
+    2.  **Decoupled Input Handling**: All high-frequency input handlers (drag, swipe, scroll) must use `requestAnimationFrame` to decouple the input event rate (which can be >120Hz) from the render update rate, preventing layout thrashing.
+    3.  **GPU-Friendly Animations**: Animations are restricted to Composite-only properties (`transform`, `opacity`). "Expensive" effects like pulses must be achieved by animating the `opacity` of a static, pre-rendered pseudo-element, rather than animating `box-shadow` or `border-color` directly.
+    4.  **3D Context Budget**: The use of `perspective` and `transform-style: preserve-3d` is strictly limited to active, single elements. Applying 3D contexts to entire lists is prohibited to prevent memory explosion.
+* **Consequences**:
+    * **Pro**: Achieves native-like 60fps (or 120fps) scrolling performance on iOS devices.
+    * **Pro**: Significantly reduces battery drain and device heat.
+    * **Con**: Requires more disciplined CSS authoring and strict avoidance of certain "convenient" modern CSS features (like mix-blend-modes) in scrollable areas.

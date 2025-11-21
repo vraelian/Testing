@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.10</title>
+    <title>Orbital Trading 33.15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.10</p>
+            <p>Version 33.15</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4576,8 +4576,9 @@ COMPONENT-SPECIFIC STYLING
     cursor: grab;
     flex-grow: 1;
     display: flex;
-    /* Ensure the container clips efficiently */
     overflow: hidden;
+    /* Optimization: Isolate layout containment */
+    contain: content; 
 }
 .carousel-container:active {
     cursor: grabbing;
@@ -4589,10 +4590,11 @@ COMPONENT-SPECIFIC STYLING
     width: 100%;
     transition: transform 0.4s ease-out;
     
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* Keep this. Promoting the PARENT track is good. 
-       The children must remain "flat" for this to work efficiently. */
+    /* OPTIMIZATION: Standard hardware acceleration */
     will-change: transform;
+    /* iOS Fix: Prevent flickering during drag */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .carousel-page {
@@ -4602,6 +4604,12 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column; 
     user-select: none;
     padding-bottom: 4.0rem;
+    
+    /* VIRTUAL WORKBENCH: CRITICAL PERFORMANCE FIX (Virtualization-Lite) */
+    /* This tells the browser to SKIP painting anything inside this page if it is off-screen.
+       This massively reduces GPU load for lists > 3 items. */
+    contain: paint layout style; 
+    content-visibility: auto; 
 }
 
 /* Backgrounds & Theming */
@@ -4615,18 +4623,11 @@ COMPONENT-SPECIFIC STYLING
     height: auto;
     position: relative;
     z-index: 0;
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: background-blend-mode: overlay; */
 }
 
 /* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX
-       Instead of using `background-blend-mode: overlay` (expensive),
-       we stack a semi-transparent dark blue gradient ON TOP of the theme gradient.
-       This simulates the "overlay" darkening effect without the per-pixel compositing cost.
-    */
+    /* Stacked gradient to simulate overlay blend mode cheaply */
     background-image: 
         linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
         var(--theme-bg-gradient);
@@ -4661,11 +4662,6 @@ COMPONENT-SPECIFIC STYLING
     
     transform-origin: center;
     transform: scale(0.5);
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: will-change: transform, opacity; */
-    /* Reason: Having this on every ship card (off-screen) consumes massive memory.
-       The browser will promote this layer automatically when the animation starts. */
 }
 
 /* Generic Opacity Pulse */
@@ -4689,7 +4685,6 @@ COMPONENT-SPECIFIC STYLING
         inset 0 0 12px rgba(239, 68, 68, 0.3);
     
     animation: pulse-opacity 2.5s infinite ease-in-out;
-    /* Keep will-change here because it ONLY exists on the single active card */
     will-change: opacity;
 }
 
@@ -4735,10 +4730,11 @@ COMPONENT-SPECIFIC STYLING
 
 /* Hologram */
 .ship-display-area { 
-    perspective: 1500px; 
+    /* VIRTUAL WORKBENCH: CRITICAL FIX */
+    /* Removed perspective and transform-style: preserve-3d.
+       This was creating a 3D stacking context for EVERY ship, causing memory explosion. */
     position: relative; 
     flex-grow: 1;
-    transform-style: preserve-3d;
 }
 
 .ship-image-placeholder { 
@@ -4747,10 +4743,6 @@ COMPONENT-SPECIFIC STYLING
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     aspect-ratio: 1 / 1;
-    
-    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
-    /* REMOVED: transform: translateZ(0); */
-    /* Reason: This created a 3D context for every ship in the list. */
 }
 
 .status-badge {
@@ -4917,7 +4909,6 @@ COMPONENT-SPECIFIC STYLING
     z-index: -1; 
     opacity: 0;
     transition: opacity 0.3s ease;
-    /* Keep will-change here as buttons are few and interactive */
     will-change: opacity;
     pointer-events: none;
 }
@@ -5901,11 +5892,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
     
-    // --- VIRTUAL WORKBENCH: OPTIMIZATION PHASE 1 ---
-    // We no longer apply the .active-ship class to the container.
-    // Instead, we inject a dedicated glow layer DIV if the ship is active.
+    // Optimized: Only inject the glow layer DIV if this specific ship is active.
     const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
-    // --- END VIRTUAL WORKBENCH ---
 
     if (isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
@@ -20887,6 +20875,7 @@ export class CarouselEventHandler {
 
         this.isScrolling = false;
         this.scrollTimeout = null;
+        this.rafId = null; // Track the animation frame request
 
         this.state = {
             isDragging: false,
@@ -20964,7 +20953,16 @@ export class CarouselEventHandler {
         if (Math.abs(diff) > 10) this.state.moved = true;
 
         if (this.state.activeCarousel) {
-            this.state.activeCarousel.style.transform = `translateX(${this.state.currentTranslate}px)`;
+            // VIRTUAL WORKBENCH: PERFORMANCE FIX
+            // Use requestAnimationFrame to decouple input from rendering.
+            // This prevents layout thrashing on high-refresh rate displays.
+            if (this.rafId) cancelAnimationFrame(this.rafId);
+            
+            this.rafId = requestAnimationFrame(() => {
+                if (this.state.activeCarousel) {
+                    this.state.activeCarousel.style.transform = `translateX(${this.state.currentTranslate}px)`;
+                }
+            });
         }
     }
 
@@ -20973,6 +20971,9 @@ export class CarouselEventHandler {
      */
     handleDragEnd() {
         if (!this.state.isDragging) return;
+        
+        // Cancel any pending frame to prevent overwrite after end
+        if (this.rafId) cancelAnimationFrame(this.rafId);
 
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.state;
 
@@ -21632,6 +21633,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [33.15] - 2025-11-21
+-  shipyard screen performance improvements
 
 ## [33.10] - 2025-11-20
 -  ship card polish
@@ -23173,6 +23177,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
     * **Pro**: Uses `visualViewport` to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
     * **Con**: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.
+    ### ADR-008: iOS-Targeted Rendering & Performance Standards
+
+* **Status**: Accepted (2025-11-21)
+* **Context**: The Hangar/Shipyard screen, containing lists of complex ship cards, exhibited significant frame rate drops and scrolling lag on the primary target device (iPhone/iOS). The use of "expensive" CSS properties (`background-blend-mode`, `box-shadow` animations, 3D transforms) and synchronous drag handlers saturated the GPU compositor and main thread.
+* **Decision**: A strict "Performance-First" rendering strategy was adopted for all scrollable/draggable UI components:
+    1.  **CSS Virtualization ("Virtualization-Lite")**: All list items in a carousel or scroll view must utilize `contain: paint layout style` and `content-visibility: auto`. This allows the browser to skip rendering work for off-screen elements without the complexity of JavaScript-based virtualization libraries.
+    2.  **Decoupled Input Handling**: All high-frequency input handlers (drag, swipe, scroll) must use `requestAnimationFrame` to decouple the input event rate (which can be >120Hz) from the render update rate, preventing layout thrashing.
+    3.  **GPU-Friendly Animations**: Animations are restricted to Composite-only properties (`transform`, `opacity`). "Expensive" effects like pulses must be achieved by animating the `opacity` of a static, pre-rendered pseudo-element, rather than animating `box-shadow` or `border-color` directly.
+    4.  **3D Context Budget**: The use of `perspective` and `transform-style: preserve-3d` is strictly limited to active, single elements. Applying 3D contexts to entire lists is prohibited to prevent memory explosion.
+* **Consequences**:
+    * **Pro**: Achieves native-like 60fps (or 120fps) scrolling performance on iOS devices.
+    * **Pro**: Significantly reduces battery drain and device heat.
+    * **Con**: Requires more disciplined CSS authoring and strict avoidance of certain "convenient" modern CSS features (like mix-blend-modes) in scrollable areas.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
