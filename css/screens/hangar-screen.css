@@ -352,34 +352,35 @@ flex: 1 1 auto; /* Grow to fill space */
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem; /* Tighter spacing between bars */
+    gap: 0.2rem; /* Tighter spacing between bars */
     font-family: 'Roboto Mono', sans-serif;
     
-    /* Sizing & Position */
-    width: 40%;
-    max-width: 160px; /* Constrain max width */
+    /* Sizing & Position - COMPACT MINI BARS (Phase 5) */
+    width: 25%;       /* Reduced from 40% */
+    max-width: 85px;  /* Reduced from 160px */
     flex-shrink: 0; /* Prevent shrinking */
     /* --- VIRTUAL WORKBENCH (QOL D) --- */
-    margin-left: 1rem; /* Add buffer against text to accommodate scale expansion */
+    margin-left: 0.2rem; /* Tighter buffer */
     /* --- END VIRTUAL WORKBENCH --- */
 
     /* Scale transform */
-    transform: scale(1.25);
+    /* Request A: Increased by 15% (was 1.0) */
+    transform: scale(1.15); 
     transform-origin: top right;
 }
 
 .param-bar-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* Space between label and bar */
+    gap: 0.2rem; /* Space between label and bar */
 }
 
 .param-bar-label {
-    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
-    font-size: 0.6rem; /* Was 0.65rem */
+    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
+    font-size: 0.65rem; /* Bumped from 0.55rem */
     color: var(--ot-text-secondary);
     text-transform: uppercase;
-    width: 40px; /* Fixed width for alignment */
+    width: 32px; /* Fixed width for alignment */
     text-align: right;
     flex-shrink: 0;
 }
@@ -411,15 +412,15 @@ flex: 1 1 auto; /* Grow to fill space */
     left: 50%;
     transform: translate(-50%, -50%); /* Default: center-aligned */
     z-index: 2; /* Sits on top of the fill */
-    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
-    font-size: 0.55rem; /* Was 0.6rem */
+    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
+    font-size: 0.6rem; /* Bumped from 0.5rem */
     font-family: 'Roboto Mono', sans-serif;
     color: #ffffff;
     text-shadow: 0 0 2px #000, 0 0 4px #000; /* Shadow for readability */
     white-space: nowrap; /* Prevent line breaks */
     pointer-events: none; /* Allow clicks to pass through */
-    /* VIRTUAL WORKBENCH: Request A - Reduce visibility */
-    opacity: 0.7;
+    /* VIRTUAL WORKBENCH: Request B - Increased visibility */
+    opacity: 0.9;
 }
 
 /* NEW: Alignment for maxed-out bars */
@@ -673,31 +674,24 @@ flex: 1 1 auto; /* Grow to fill space */
     white-space: pre-line; /* Preserve original line breaks in lore */
 }
 
-/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 5 - QOL UPDATE C) --- */
-/* Updated to use a white-hot core stack for better fidelity */
+/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 6 - Gentle Colored Glow) --- */
+/* Updated to replace white core with colored text and remove boxy bloom */
 .glow-text-z {
-    /* Force white core for heat, let shadow define the color halo */
-    color: #fff !important; 
+    /* No override: Text color is inherited from inline style (Red) */
     text-shadow:
         0 0 2px #000, /* Contrast Outline */
-        0 0 5px var(--class-z-color), /* Tight Core */
-        0 0 15px var(--class-z-color), /* Soft Glow */
-        0 0 30px var(--class-z-color) !important; /* Wide Diffuse */
+        0 0 10px var(--class-z-color) !important; /* Soft Colored Glow */
 }
 .glow-text-o {
-     color: #fff !important;
+     /* No override: Text color is inherited from inline style (Orange) */
      text-shadow:
         0 0 2px #000,
-        0 0 5px var(--class-o-color),
-        0 0 15px var(--class-o-color),
-        0 0 30px var(--class-o-color) !important;
+        0 0 10px var(--class-o-color) !important;
 }
 .glow-text-s {
-     color: #fff !important;
+     /* No override: Text color is inherited from inline style (Gold) */
      text-shadow:
         0 0 2px #000,
-        0 0 5px var(--class-s-color),
-        0 0 15px var(--class-s-color),
-        0 0 30px var(--class-s-color) !important;
+        0 0 10px var(--class-s-color) !important;
 }
 /* --- END VIRTUAL WORKBENCH --- */

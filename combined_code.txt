@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.00</title>
+    <title>Orbital Trading 33.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.00</p>
+            <p>Version 33.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4835,7 +4835,9 @@ flex: 1 1 auto; /* Grow to fill space */
 
 .info-panel-text {
     flex-grow: 1; /* Allow text to take up remaining space */
-    /* VIRTUAL WORKBENCH: Request B - Add padding to ensure separation */
+    /* --- VIRTUAL WORKBENCH (QOL D) --- */
+    min-width: 0; /* CRITICAL: Allows flex child to shrink below content size (truncation) */
+    /* --- END VIRTUAL WORKBENCH --- */
     padding-right: 1.5rem;
 }
 /* --- VIRTUAL WORKBENCH END --- */
@@ -4865,31 +4867,35 @@ flex: 1 1 auto; /* Grow to fill space */
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem; /* Tighter spacing between bars */
+    gap: 0.2rem; /* Tighter spacing between bars */
     font-family: 'Roboto Mono', sans-serif;
     
-    /* Sizing & Position */
-    width: 40%;
-    max-width: 160px; /* Constrain max width */
+    /* Sizing & Position - COMPACT MINI BARS (Phase 5) */
+    width: 25%;       /* Reduced from 40% */
+    max-width: 85px;  /* Reduced from 160px */
     flex-shrink: 0; /* Prevent shrinking */
+    /* --- VIRTUAL WORKBENCH (QOL D) --- */
+    margin-left: 0.2rem; /* Tighter buffer */
+    /* --- END VIRTUAL WORKBENCH --- */
 
     /* Scale transform */
-    transform: scale(1.25);
+    /* Request A: Increased by 15% (was 1.0) */
+    transform: scale(1.15); 
     transform-origin: top right;
 }
 
 .param-bar-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* Space between label and bar */
+    gap: 0.2rem; /* Space between label and bar */
 }
 
 .param-bar-label {
-    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
-    font-size: 0.6rem; /* Was 0.65rem */
+    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
+    font-size: 0.65rem; /* Bumped from 0.55rem */
     color: var(--ot-text-secondary);
     text-transform: uppercase;
-    width: 40px; /* Fixed width for alignment */
+    width: 32px; /* Fixed width for alignment */
     text-align: right;
     flex-shrink: 0;
 }
@@ -4921,15 +4927,15 @@ flex: 1 1 auto; /* Grow to fill space */
     left: 50%;
     transform: translate(-50%, -50%); /* Default: center-aligned */
     z-index: 2; /* Sits on top of the fill */
-    /* VIRTUAL WORKBENCH: Request A - Reduced text size */
-    font-size: 0.55rem; /* Was 0.6rem */
+    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
+    font-size: 0.6rem; /* Bumped from 0.5rem */
     font-family: 'Roboto Mono', sans-serif;
     color: #ffffff;
     text-shadow: 0 0 2px #000, 0 0 4px #000; /* Shadow for readability */
     white-space: nowrap; /* Prevent line breaks */
     pointer-events: none; /* Allow clicks to pass through */
-    /* VIRTUAL WORKBENCH: Request A - Reduce visibility */
-    opacity: 0.7;
+    /* VIRTUAL WORKBENCH: Request B - Increased visibility */
+    opacity: 0.9;
 }
 
 /* NEW: Alignment for maxed-out bars */
@@ -5060,6 +5066,15 @@ flex: 1 1 auto; /* Grow to fill space */
     opacity: 1.0;
 }
 
+/* --- VIRTUAL WORKBENCH: QOL UPDATE B (Boarded Dot) --- */
+.pagination-dot.boarded {
+    /* Force white, irrespective of theme */
+    background-color: #ffffff !important;
+    opacity: 1.0 !important;
+    box-shadow: 0 0 8px #ffffff, 0 0 15px rgba(255, 255, 255, 0.6);
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 .pagination-dot.half {
     width: 0.9rem; /* Half the original width */
     opacity: 0.2;
@@ -5174,33 +5189,25 @@ flex: 1 1 auto; /* Grow to fill space */
     white-space: pre-line; /* Preserve original line breaks in lore */
 }
 
-/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 5) --- */
+/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 6 - Gentle Colored Glow) --- */
+/* Updated to replace white core with colored text and remove boxy bloom */
 .glow-text-z {
+    /* No override: Text color is inherited from inline style (Red) */
     text-shadow:
-        /* Definition Layer (Dark background for text) */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers (Behind the definition) */
-        0 0 15px var(--class-z-color),
-        0 0 25px var(--class-z-color) !important;
+        0 0 2px #000, /* Contrast Outline */
+        0 0 10px var(--class-z-color) !important; /* Soft Colored Glow */
 }
 .glow-text-o {
+     /* No override: Text color is inherited from inline style (Orange) */
      text-shadow:
-        /* Definition Layer */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers */
-        0 0 15px var(--class-o-color),
-        0 0 25px var(--class-o-color) !important;
+        0 0 2px #000,
+        0 0 10px var(--class-o-color) !important;
 }
 .glow-text-s {
+     /* No override: Text color is inherited from inline style (Gold) */
      text-shadow:
-        /* Definition Layer */
-        0 0 1px rgba(0,0,0,1),
-        0 2px 4px rgba(0,0,0,1),
-        /* Glow Layers */
-        0 0 15px var(--class-s-color),
-        0 0 25px var(--class-s-color) !important;
+        0 0 2px #000,
+        0 0 10px var(--class-s-color) !important;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 --- END OF FILE: ./css/screens/hangar-screen.css ---
@@ -5914,6 +5921,12 @@ export function renderHangarScreen(gameState, simulationService) {
     // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
+    // --- VIRTUAL WORKBENCH: QOL UPDATE A ---
+    // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
+    // If Shipyard is empty, hiding this button reduces clutter.
+    const showArchive = isHangarMode || shipList.length > 0;
+    // --- END VIRTUAL WORKBENCH ---
+
     // NOTE: The pagination dots are now rendered dynamically by the UIManager._updateHangarScreen method.
     return `
         <div class="flex flex-col h-full">
@@ -5926,7 +5939,7 @@ export function renderHangarScreen(gameState, simulationService) {
                             <div class="toggle-label shipyard flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="shipyard">SHIPYARD</div>
                         </div>
                     </div>
-                    <div class="archive-link" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
+                    <div class="archive-link ${showArchive ? '' : 'hidden'}" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
                 </div>
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
@@ -6054,22 +6067,38 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Refinement Phase 4) ---
-    // A. Base size reduced to text-xl (from text-2xl).
-    // B. Logic: >11 -> lg, >15 -> base, >20 -> sm.
+    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Final Refinement) ---
+    // Strict thresholds to prevent truncation while maximizing size.
+    // The user specifically noted 22 chars ("Shell That Echoes Only") needed more room.
+    // Relaxing thresholds: 22 chars will now fall into 'text-base' instead of 'text-sm'.
     const len = shipStatic.name.length;
     let nameClass = 'text-xl'; // Default base size
 
-    if (len > 20) {
-        // e.g., "Shell That Echoes Only" (22 chars)
-        nameClass = 'text-sm leading-tight';
-    } else if (len > 15) {
-        // e.g., "Finality of Whispers" (20 chars)
-        nameClass = 'text-base leading-tight';
-    } else if (len > 11) {
-         // e.g., "Sophistacles" (12 chars)
-         nameClass = 'text-lg leading-tight';
+    if (len > 25) {
+        nameClass = 'text-xs leading-tight'; // Emergency shrink
+    } else if (len > 22) {
+        nameClass = 'text-sm leading-tight'; // Only for very long names > 22
+    } else if (len > 17) {
+        nameClass = 'text-base leading-tight'; // 18-22 chars get base size (approx 16px)
+    } else {
+        nameClass = 'text-xl'; // Standard for < 18 chars
     }
+    
+    // --- VIRTUAL WORKBENCH: DESCRIPTION TEXT SCALING (Phase 7) ---
+    // Heuristic: ~45 chars/line. 
+    // > 4 lines (~190 chars): Reduce 1pt (from text-sm/14px to ~13px).
+    // > 5 lines (~240 chars): Reduce 2pt (to text-xs/12px).
+    const descLen = shipStatic.description.length;
+    let descClass = 'text-sm'; // Default (14px)
+    let descStyle = '';
+
+    if (descLen > 240) {
+        descClass = 'text-xs'; // 12px
+    } else if (descLen > 190) {
+        descClass = ''; // Remove class to use style
+        descStyle = 'font-size: 0.8rem; line-height: 1.4;'; // ~12.8px
+    }
+    // --- END VIRTUAL WORKBENCH ---
     
     // Enforce one line with whitespace-nowrap and overflow-hidden
     const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
@@ -6096,7 +6125,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -6113,7 +6142,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -6235,7 +6264,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
     `;
 }
 // --- VIRTUAL WORKBENCH END ---
-
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -15512,9 +15540,7 @@ change occurred (like a purchase), it *surgically
                 
                 break;
         }
-    }
-
-    /**
+    }/**
      * Surgically updates the Hangar screen for smooth transitions without a full re-render.
      * @param {object} gameState The current game state.
      * @private
@@ -15580,6 +15606,14 @@ change occurred (like a purchase), it *surgically
 
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
+        // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
+        // Determine the index of the currently boarded ship to mark it specially.
+        let boardedIndex = -1;
+        if (isHangarMode) {
+            boardedIndex = player.ownedShipIds.indexOf(player.activeShipId);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const theme = location?.navTheme || { borderColor: '#7a9ac0' };
 
@@ -15588,7 +15622,12 @@ change occurred (like a purchase), it *surgically
 
         if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
             for (let i = 0; i < totalItems; i++) {
-                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+                dots.push({ 
+                    index: i, 
+                    isActive: i === activeIndex, 
+                    isHalf: false,
+                    isBoarded: i === boardedIndex // Pass boarded status
+                });
             }
         } else {
             let start, end;
@@ -15613,7 +15652,12 @@ change occurred (like a purchase), it *surgically
 
              // Add the main window of full dots
             for (let i = start; i < end; i++) {
-                dots.push({ index: i, isActive: i === activeIndex, isHalf: false });
+                dots.push({ 
+                    index: i, 
+                    isActive: i === activeIndex, 
+                    isHalf: false,
+                    isBoarded: i === boardedIndex // Pass boarded status
+                });
             }
 
             // Add next indicator if needed
@@ -15630,7 +15674,12 @@ change occurred (like a purchase), it *surgically
             if (dot.isHalf) {
                  return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
-                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
+                // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
+                // Add 'boarded' class if applicable
+                const boardedClass = dot.isBoarded ? 'boarded' : '';
+                // --- END VIRTUAL WORKBENCH ---
+
+                return `<div class="pagination-dot ${dot.isActive ? 'active' : ''} ${boardedClass}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
 
@@ -21712,6 +21761,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [33.10] - 2025-11-20
+-  ship card polish
+-  card paginator polish
+
 ## [33.00] - 2025-11-19
 -  updated ship roster
 -  added ship lore
@@ -23034,10 +23087,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 - n/a
 
 ## Planned Ideas
-- Implement ship list
-- implement ship lore
 - Station Quirks
-- (Gem3) Add ship card BOARDING effect
 - Install tailwind CSS resources locally
 
 ## Long-Term Ideas

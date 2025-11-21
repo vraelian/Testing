@@ -2,10 +2,7 @@
 - n/a
 
 ## Planned Ideas
-- Implement ship list
-- implement ship lore
 - Station Quirks
-- (Gem3) Add ship card BOARDING effect
 - Install tailwind CSS resources locally
 
 ## Long-Term Ideas

@@ -176,22 +176,36 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
 
-    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Refinement Phase 4) ---
-    // A. Base size reduced to text-xl (from text-2xl).
-    // B. Logic: >11 -> lg, >15 -> base, >20 -> sm.
+    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Final Refinement) ---
+    // Strict thresholds to prevent truncation while maximizing size.
+    // The user specifically noted 22 chars ("Shell That Echoes Only") needed more room.
+    // Relaxing thresholds: 22 chars will now fall into 'text-base' instead of 'text-sm'.
     const len = shipStatic.name.length;
     let nameClass = 'text-xl'; // Default base size
 
-    // --- VIRTUAL WORKBENCH: QOL UPDATE D ---
-    // Refined breakpoints to prevent layout breakage with names like "Anomaly of the Song" (19 chars).
-    if (len > 22) {
-        nameClass = 'text-xs leading-tight';
-    } else if (len > 18) {
-        nameClass = 'text-sm leading-tight';
-    } else if (len > 14) {
-        nameClass = 'text-base leading-tight';
-    } else if (len > 10) {
-         nameClass = 'text-lg leading-tight';
+    if (len > 25) {
+        nameClass = 'text-xs leading-tight'; // Emergency shrink
+    } else if (len > 22) {
+        nameClass = 'text-sm leading-tight'; // Only for very long names > 22
+    } else if (len > 17) {
+        nameClass = 'text-base leading-tight'; // 18-22 chars get base size (approx 16px)
+    } else {
+        nameClass = 'text-xl'; // Standard for < 18 chars
+    }
+    
+    // --- VIRTUAL WORKBENCH: DESCRIPTION TEXT SCALING (Phase 7) ---
+    // Heuristic: ~45 chars/line. 
+    // > 4 lines (~190 chars): Reduce 1pt (from text-sm/14px to ~13px).
+    // > 5 lines (~240 chars): Reduce 2pt (to text-xs/12px).
+    const descLen = shipStatic.description.length;
+    let descClass = 'text-sm'; // Default (14px)
+    let descStyle = '';
+
+    if (descLen > 240) {
+        descClass = 'text-xs'; // 12px
+    } else if (descLen > 190) {
+        descClass = ''; // Remove class to use style
+        descStyle = 'font-size: 0.8rem; line-height: 1.4;'; // ~12.8px
     }
     // --- END VIRTUAL WORKBENCH ---
     
@@ -220,7 +234,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -237,7 +251,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
-                    <p class="text-sm text-gray-300">${shipStatic.description}</p>
+                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
         `;
