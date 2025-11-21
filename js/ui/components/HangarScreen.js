@@ -1,8 +1,5 @@
 // js/ui/components/HangarScreen.js
-/**
- * @fileoverview Renders the Hangar screen, now a unified "Ship Terminal" with toggleable
- * Hangar and Shipyard views, a central ship display, and a carousel.
- */
+
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
@@ -30,13 +27,9 @@ export function renderHangarScreen(gameState, simulationService) {
     // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
 
-    // --- VIRTUAL WORKBENCH: QOL UPDATE A ---
     // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
-    // If Shipyard is empty, hiding this button reduces clutter.
     const showArchive = isHangarMode || shipList.length > 0;
-    // --- END VIRTUAL WORKBENCH ---
 
-    // NOTE: The pagination dots are now rendered dynamically by the UIManager._updateHangarScreen method.
     return `
         <div class="flex flex-col h-full">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
@@ -96,13 +89,19 @@ function _renderEmptyCarouselPage(isHangarMode) {
  */
 function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
-    // VIRTUAL WORKBENCH: Bug Fix B - We no longer need the destructured 'player' here.
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
-    const { player } = gameState; // Keep this for _renderActionButtons
+    const { player } = gameState; 
 
     // Determine Status Badge
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
+    
+    // --- VIRTUAL WORKBENCH: OPTIMIZATION PHASE 1 ---
+    // We no longer apply the .active-ship class to the container.
+    // Instead, we inject a dedicated glow layer DIV if the ship is active.
+    const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
+    // --- END VIRTUAL WORKBENCH ---
+
     if (isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
@@ -144,21 +143,18 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
-    // --- VIRTUAL WORKBENCH: MODIFICATION ---
-    // Added the .active-ship class conditionally based on isActive and isHangarMode.
     return `
         <div class="carousel-page p-2 md:p-4 w-full">
-            <div id="ship-terminal" class="relative h-full rounded-lg border-2 ${isActive && isHangarMode ? 'active-ship' : ''}" style="border-color: var(--frame-border-color);">
-                <div id="ship-card-main-content" class="h-full">
+            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+                ${activeGlowLayer}
+                <div id="ship-card-main-content" class="h-full relative z-10">
                     <div class="ship-card-content-wrapper h-full">
                         ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
-            
             </div>
         </div>
     `;
-    // --- END VIRTUAL WORKBENCH ---
 }
 
 
@@ -172,56 +168,40 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
  * @returns {string} The HTML for the info panel.
  * @private
  */
-// VIRTUAL WORKBENCH: Bug Fix B - Removed 'player' from args, will use 'gameState.player'
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
     const shipClassLower = shipStatic.class.toLowerCase();
-
-    // --- VIRTUAL WORKBENCH: DYNAMIC FONT SIZING (Final Refinement) ---
-    // Strict thresholds to prevent truncation while maximizing size.
-    // The user specifically noted 22 chars ("Shell That Echoes Only") needed more room.
-    // Relaxing thresholds: 22 chars will now fall into 'text-base' instead of 'text-sm'.
     const len = shipStatic.name.length;
-    let nameClass = 'text-xl'; // Default base size
+    let nameClass = 'text-xl'; 
 
     if (len > 25) {
-        nameClass = 'text-xs leading-tight'; // Emergency shrink
+        nameClass = 'text-xs leading-tight'; 
     } else if (len > 22) {
-        nameClass = 'text-sm leading-tight'; // Only for very long names > 22
+        nameClass = 'text-sm leading-tight'; 
     } else if (len > 17) {
-        nameClass = 'text-base leading-tight'; // 18-22 chars get base size (approx 16px)
+        nameClass = 'text-base leading-tight';
     } else {
-        nameClass = 'text-xl'; // Standard for < 18 chars
+        nameClass = 'text-xl'; 
     }
     
-    // --- VIRTUAL WORKBENCH: DESCRIPTION TEXT SCALING (Phase 7) ---
-    // Heuristic: ~45 chars/line. 
-    // > 4 lines (~190 chars): Reduce 1pt (from text-sm/14px to ~13px).
-    // > 5 lines (~240 chars): Reduce 2pt (to text-xs/12px).
     const descLen = shipStatic.description.length;
-    let descClass = 'text-sm'; // Default (14px)
+    let descClass = 'text-sm'; 
     let descStyle = '';
 
     if (descLen > 240) {
-        descClass = 'text-xs'; // 12px
+        descClass = 'text-xs'; 
     } else if (descLen > 190) {
-        descClass = ''; // Remove class to use style
-        descStyle = 'font-size: 0.8rem; line-height: 1.4;'; // ~12.8px
+        descClass = ''; 
+        descStyle = 'font-size: 0.8rem; line-height: 1.4;';
     }
-    // --- END VIRTUAL WORKBENCH ---
     
     // Enforce one line with whitespace-nowrap and overflow-hidden
     const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
 
-    // --- VIRTUAL WORKBENCH: GLOW LOGIC (Refinement Phase 5) ---
-    // Determine text shadow class. O, S, Z get specific glows; others get inset shadow.
-    let shadowClass = 'inset-text-shadow'; // Default
+    let shadowClass = 'inset-text-shadow'; 
     if (shipStatic.class === 'Z') shadowClass = 'glow-text-z';
     else if (shipStatic.class === 'O') shadowClass = 'glow-text-o';
     else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
-    // --- END VIRTUAL WORKBENCH ---
 
-    // --- [[START]] VIRTUAL WORKBENCH (Corrective Action) ---
-    // Replaced shipStatic.lore with shipStatic.description
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -256,7 +236,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     }
-    // --- [[END]] VIRTUAL WORKBENCH (Corrective Action) ---
 }
 
 
@@ -279,11 +258,11 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         return `
             <div class="grid grid-cols-2 gap-2">
                 <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
-                    <span class="font-bold">${isActive ? 'ACTIVE' : 'BOARD'}</span>
+                    <span class="font-bold z-10 relative">${isActive ? 'ACTIVE' : 'BOARD'}</span>
                 </button>
                 <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
-                    <span class="font-bold">SELL</span>
-                    <span class="action-button-price font-roboto-mono credits-text-pulsing">${formatCredits(salePrice, true)}</span>
+                    <span class="font-bold z-10 relative">SELL</span>
+                    <span class="action-button-price font-roboto-mono credits-text-pulsing z-10 relative">${formatCredits(salePrice, true)}</span>
                 </button>
             </div>
         `;
@@ -295,14 +274,13 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
-                <span class="font-bold">PURCHASE</span>
+                <span class="font-bold z-10 relative">PURCHASE</span>
             </button>
         `;
     }
 }
 
 
-// --- VIRTUAL WORKBENCH START ---
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
  * @param {object} shipStatic - The static data for the ship (for max values).
@@ -314,44 +292,25 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
-    // --- VIRTUAL WORKBENCH: BUG FIX ---
-    // The incorrect line 'const shipId = shipStatic.id;' has been removed.
-    // The correct 'shipId' is now passed in as an argument.
-    // --- END BUG FIX ---
-
-    // Determine current values
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
-    // VIRTUAL WORKBENCH: Request E - This logic is correct and matches the nav bar.
-    // It reads the *entire* player object and keys into the *specific* ship's inventory.
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
-    // Determine percentages
     const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
     const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
     const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
-    // Determine colors
+    
     const hullColor = 'var(--ot-green-accent)';
-    // VIRTUAL WORKBENCH: Request B - Match nav bar colors
-    const cargoColor = '#f59e0b'; // Was 'var(--class-s-color)'
-    const fuelColor = '#3b82f6'; // Was 'var(--ot-shipyard-blue-base)'
+    const cargoColor = '#f59e0b'; 
+    const fuelColor = '#3b82f6'; 
 
-    /**
-     * Helper to render a single bar with its text overlay.
-     * @param {string} label - The bar's label (e.g., "HULL").
-     * @param {number} current - The current value.
-     * @param {number} max - The maximum value.
-     * @param {number} percentage - The fill percentage.
-     * @param {string} color - The bar's fill color.
-     * @returns {string} HTML for a single bar item.
-     */
     const renderBar = (label, current, max, percentage, color) => {
         const c = Math.floor(current);
         const m = Math.floor(max);
         
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
-        const textClass = isMax ? 'max' : 'partial'; // ADDED: Class for alignment
+        const textClass = isMax ? 'max' : 'partial';
 
         return `
             <div class="param-bar-item">
@@ -372,4 +331,3 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
-// --- VIRTUAL WORKBENCH END ---

@@ -2,8 +2,6 @@
 
 /* ================================================================================
 CORE THEME & VARIABLE SETUP
-- Defines the color palette, fonts, and dynamic variables used throughout the component.
-- Theming is driven by CSS variables to allow for easy changes based on game state (e..g., location).
 ================================================================================
 */
 :root {
@@ -12,10 +10,7 @@ CORE THEME & VARIABLE SETUP
     --ot-border-light: #4a6a8a;
     --ot-text-primary: #d0d8e8;
     --ot-text-secondary: #9ca3af;
-    /* --- VIRTUAL WORKBENCH (A) --- */
-    /* MODIFIED: Changed from #4ade80 to #16a34a for a richer green */
     --ot-green-accent: #16a34a;
-    /* --- END VIRTUAL WORKBENCH --- */
     --ot-red-accent: #f87171;
     --ot-cyan-base: #22d3ee;
     --ot-cyan-glow: #67e8f9;
@@ -27,25 +22,20 @@ CORE THEME & VARIABLE SETUP
     --ot-shipyard-blue-glow: #93c5fd;
 
     /* Ship Class Colors */
-  
     --class-s-color: #facc15; /* Gold */
     --class-a-color: #60a5fa; /* Blue */
     --class-b-color: #4ade80; /* Green */
     --class-c-color: #e5e7eb; /* White/Light Grey */
-    
-    /* --- VIRTUAL WORKBENCH (New Class Colors) --- */
     --class-o-color: #fb923c; /* Orange (Capital) */
     --class-z-color: #ef4444; /* Red (Alien) */
     --class-f-color: #9ca3af; /* Grey (Flotsam) */
-    /* --- END VIRTUAL WORKBENCH --- */
     
-    /* Placeholder Theme (Saturn) - In the final game, these will be dynamically set.
- */
+    /* Placeholder Theme */
     --theme-color-primary: #fde047;
     --theme-color-glow: #fef08a;
     --theme-bg-gradient: linear-gradient(145deg, rgba(113, 63, 18, 0.5), rgba(49, 46, 129, 0.8));
 
-    /* Dynamic Frame Border Color - Changes based on Hangar/Shipyard mode */
+    /* Dynamic Frame Border Color */
     --frame-border-color: var(--ot-shipyard-blue-base);
 }
 
@@ -69,152 +59,67 @@ COMPONENT-SPECIFIC STYLING
     width: 100%;
     position: relative;
     cursor: grab;
-    flex-grow: 1; /* Ensure this container fills available vertical space */
+    flex-grow: 1;
     display: flex;
+    /* Ensure the container clips efficiently */
+    overflow: hidden;
 }
 .carousel-container:active {
     cursor: grabbing;
 }
 
 #hangar-carousel {
-    display: flex; /* Lays out the pages side-by-side */
+    display: flex;
     height: 100%;
     width: 100%;
-    /* ALWAYS have the transition property defined in CSS for smooth animations */
     transition: transform 0.4s ease-out;
+    
+    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
+    /* Keep this. Promoting the PARENT track is good. 
+       The children must remain "flat" for this to work efficiently. */
+    will-change: transform;
 }
+
 .carousel-page {
     width: 100%;
-    flex-shrink: 0; /* Prevents the page from shrinking */
+    flex-shrink: 0;
     display: flex; 
     flex-direction: column; 
     user-select: none;
-    padding-bottom: 4.0rem; /* New: Add space at the bottom for the absolute-positioned paginator */
+    padding-bottom: 4.0rem;
 }
 
 /* Backgrounds & Theming */
 #ship-terminal {
+    /* Default (Shipyard) Background */
+    background-image: var(--theme-bg-gradient);
     
-background-image: var(--theme-bg-gradient); /* Base theme from location */
     display: flex; 
     flex-direction: column; 
-    flex-grow: 1; /* Make the card itself grow to fill the page */
+    flex-grow: 1;
     height: auto;
-/* --- VIRTUAL WORKBENCH --- */
-    /* Add relative positioning for the new pseudo-element */
     position: relative;
-    /* --- END VIRTUAL WORKBENCH --- */
-}
-
-/* --- VIRTUAL WORKBENCH: ADD GLOW PSEUDO-ELEMENT --- */
-/*
- * This is the new high-performance glow element.
- * It's a theme-colored radial gradient, hidden by default.
- * The 'dematerialize' animation will animate its opacity and transform.
-*/
-#ship-terminal::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1; /* Sit behind the card content */
-    border-radius: 0.5rem; /* rounded-lg, matching the card */
+    z-index: 0;
     
-    /* Use the theme border color for the glow */
-    background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
-    
-    opacity: 0; /* Hidden by default */
-    pointer-events: none; /* Ignore clicks */
-    
-    /* Set defaults for animation */
-    transform-origin: center;
-    transform: scale(0.5);
-}
-/* --- END VIRTUAL WORKBENCH --- */
-
-/* --- VIRTUAL WORKBENCH: ADD ACTIVE SHIP GLOW --- */
-@keyframes pulse-red-border-glow {
-    0%, 100% {
-        /* Use the base red color and a standard glow */
-        border-color: var(--ot-hangar-red-base);
-        box-shadow: 0 0 10px var(--ot-hangar-red-glow), 0 0 15px var(--ot-hangar-red-glow), inset 0 0 8px rgba(239, 68, 68, 0.2);
-    }
-    50% {
-        /* Use the brighter glow color and a more intense shadow */
-        border-color: var(--ot-hangar-red-glow);
-        box-shadow: 0 0 15px var(--ot-hangar-red-glow), 0 0 25px var(--ot-hangar-red-glow), inset 0 0 12px rgba(239, 68, 68, 0.3);
-    }
+    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
+    /* REMOVED: background-blend-mode: overlay; */
 }
 
-.active-ship {
-    /* * This !important rule is crucial. It overrides the default --frame-border-color
-     * (which is blue) and fixes the bug where the card gets "stuck" on blue
-     * after the boarding animation.
-    */
-    border-color: var(--ot-hangar-red-base) !important;
-    
-    /* This applies the new persistent red glow animation */
-    animation: pulse-red-border-glow 2.5s infinite ease-in-out;
-}
-/* --- END VIRTUAL WORKBENCH --- */
-
-/* --- VIRTUAL WORKBENCH: ADD GREEN BUTTON GLOW KEYFRAMES (Request A) --- */
-@keyframes pulse-green-button-glow {
-    0%, 100% {
-        /* Use the green variables from :root */
-        background-color: var(--ot-green-accent);
-        box-shadow: 0 0 10px var(--class-b-color), 0 0 15px var(--class-b-color);
-        transform: scale(1);
-    }
-    50% {
-        /* Use the brighter green for the pulse */
-        background-color: var(--class-b-color);
-        box-shadow: 0 0 15px var(--class-b-color), 0 0 25px var(--class-b-color);
-        transform: scale(1.05);
-    }
-}
-/* --- END VIRTUAL WORKBENCH --- */
-
-
-/* The new intermediate container for constraining height */
-#ship-card-main-content {
-    
-flex: 1 1 auto; /* Grow to fill space */
-    min-height: 0; /* CRUCIAL for allowing the child to scroll */
-    display: flex;
-    flex-direction: column;
-}
-
-/* The scrollable grid content wrapper */
-.ship-card-content-wrapper {
-    overflow-y: auto; 
-    scrollbar-width: none;
-    display: grid; 
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    /* --- VIRTUAL WORKBENCH (Clipping Fix) --- */
-    /* flex-grow: 1; */ /* REMOVED: This was causing the container to grow instead of scroll */
-    /* --- END VIRTUAL WORKBENCH --- */
-}
-.ship-card-content-wrapper::-webkit-scrollbar {
-    display: none; 
-}
-
-/* Force grid columns to behave as flex containers to distribute space */
-.ship-card-content-wrapper > .col-span-2,
-.ship-card-content-wrapper > .col-span-3 {
-    display: flex;
-    flex-direction: column;
-}
-
-
+/* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
-    background-blend-mode: overlay;
+    /* VIRTUAL WORKBENCH: PERFORMANCE FIX
+       Instead of using `background-blend-mode: overlay` (expensive),
+       we stack a semi-transparent dark blue gradient ON TOP of the theme gradient.
+       This simulates the "overlay" darkening effect without the per-pixel compositing cost.
+    */
+    background-image: 
+        linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
+        var(--theme-bg-gradient);
+    
     background-color: #1a193d;
 }
+
+/* The grid texture overlay */
 #ship-terminal-container.mode-hangar #ship-terminal::after { 
     content: '';
     position: absolute;
@@ -223,6 +128,93 @@ flex: 1 1 auto; /* Grow to fill space */
         radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px);
     background-size: 20px 20px;
     pointer-events: none;
+    z-index: -1;
+}
+
+/* Glow Pseudo-Element (Dematerialize Effect) */
+#ship-terminal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    border-radius: 0.5rem;
+    
+    background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
+    
+    opacity: 0;
+    pointer-events: none;
+    
+    transform-origin: center;
+    transform: scale(0.5);
+    
+    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
+    /* REMOVED: will-change: transform, opacity; */
+    /* Reason: Having this on every ship card (off-screen) consumes massive memory.
+       The browser will promote this layer automatically when the animation starts. */
+}
+
+/* Generic Opacity Pulse */
+@keyframes pulse-opacity {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1.0; }
+}
+
+/* The Active Ship Glow Layer */
+.active-ship-glow-layer {
+    position: absolute;
+    inset: -2px;
+    border-radius: 0.5rem;
+    pointer-events: none;
+    z-index: -1;
+
+    border: 2px solid var(--ot-hangar-red-glow);
+    box-shadow: 
+        0 0 15px var(--ot-hangar-red-glow), 
+        0 0 25px var(--ot-hangar-red-glow), 
+        inset 0 0 12px rgba(239, 68, 68, 0.3);
+    
+    animation: pulse-opacity 2.5s infinite ease-in-out;
+    /* Keep will-change here because it ONLY exists on the single active card */
+    will-change: opacity;
+}
+
+
+/* Intermediate Container */
+#ship-card-main-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollable Grid */
+.ship-card-content-wrapper {
+    overflow-y: auto; 
+    scrollbar-width: none;
+    display: grid; 
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+.ship-card-content-wrapper::-webkit-scrollbar {
+    display: none; 
+}
+
+.ship-card-content-wrapper > .col-span-2,
+.ship-card-content-wrapper > .col-span-3 {
+    display: flex;
+    flex-direction: column;
+}
+
+
+#ship-terminal-container.mode-hangar .ship-display-area,
+#ship-terminal-container.mode-shipyard .info-panel-content {
+    margin-bottom: 1rem;
+}
+
+#ship-terminal-container.mode-hangar .info-panel-hangar, 
+#ship-terminal-container.mode-shipyard .info-panel-shipyard { 
+    display: flex;
 }
 
 
@@ -230,22 +222,22 @@ flex: 1 1 auto; /* Grow to fill space */
 .ship-display-area { 
     perspective: 1500px; 
     position: relative; 
-    flex-grow: 1; /* Pushes buttons down */
+    flex-grow: 1;
+    transform-style: preserve-3d;
 }
-
-/* --- [[START]] VIRTUAL WORKBENCH (Phase 3) --- */
-/* REMOVED .ship-info-button styles */
-/* --- [[END]] VIRTUAL WORKBENCH (Phase 3) --- */
 
 .ship-image-placeholder { 
     background: transparent; 
     border: 1px solid var(--ot-border-light); 
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
-    /* --- VIRTUAL WORKBENCH (Request B) --- */
-    aspect-ratio: 1 / 1; /* Make it a 1:1 square */
-    /* --- END VIRTUAL WORKBENCH --- */
+    aspect-ratio: 1 / 1;
+    
+    /* VIRTUAL WORKBENCH: PERFORMANCE FIX */
+    /* REMOVED: transform: translateZ(0); */
+    /* Reason: This created a 3D context for every ship in the list. */
 }
+
 .status-badge {
     position: absolute;
     bottom: -1px;
@@ -257,6 +249,7 @@ flex: 1 1 auto; /* Grow to fill space */
     border-radius: 99px;
     font-size: 0.77rem;
     font-weight: 700;
+    z-index: 20; 
 }
 
 /* Hangar/Shipyard Toggle Switch */
@@ -292,8 +285,7 @@ flex: 1 1 auto; /* Grow to fill space */
     font-weight: 900;
 }
 #ship-terminal-container.mode-hangar .toggle-label.hangar { 
-  
-  background-color: var(--ot-hangar-red-base);
+    background-color: var(--ot-hangar-red-base);
     box-shadow: 0 0 10px var(--ot-hangar-red-glow);
 }
 #ship-terminal-container.mode-shipyard .toggle-label.shipyard { 
@@ -301,140 +293,95 @@ flex: 1 1 auto; /* Grow to fill space */
     box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
 }
 
-/* Main Info Panels & Mode-Specific Spacing */
+/* Info Panel */
 .info-panel-content { 
     display: none; 
-    flex-grow: 1; /* Pushes buttons down */
+    flex-grow: 1;
     flex-direction: column;
 }
-
-/* --- VIRTUAL WORKBENCH START --- */
-/* NEW: Header for info panel */
 .info-panel-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    /* VIRTUAL WORKBENCH: Request B - Revert gap to 0.5rem to fix bars */
     gap: 0.5rem; 
 }
-
 .info-panel-text {
-    flex-grow: 1; /* Allow text to take up remaining space */
-    /* --- VIRTUAL WORKBENCH (QOL D) --- */
-    min-width: 0; /* CRITICAL: Allows flex child to shrink below content size (truncation) */
-    /* --- END VIRTUAL WORKBENCH --- */
+    flex-grow: 1;
+    min-width: 0;
     padding-right: 1.5rem;
 }
-/* --- VIRTUAL WORKBENCH END --- */
 
-
-/* ADDED: Mode-specific rules for spacing above action buttons */
-#ship-terminal-container.mode-hangar .ship-display-area,
-#ship-terminal-container.mode-shipyard .info-panel-content {
-    margin-bottom: 1rem;
-}
-
-#ship-terminal-container.mode-hangar .info-panel-hangar, 
-#ship-terminal-container.mode-shipyard .info-panel-shipyard { 
-    display: flex;
-}
-
-/* NEW: Ship Price Display for Shipyard */
 .ship-price-display {
     margin-top: 0.5rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
 }
 
-
-/* --- VIRTUAL WORKBENCH START --- */
-/* NEW: Parameter Bars Styling */
+/* Parameter Bars */
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem; /* Tighter spacing between bars */
+    gap: 0.2rem;
     font-family: 'Roboto Mono', sans-serif;
-    
-    /* Sizing & Position - COMPACT MINI BARS (Phase 5) */
-    width: 25%;       /* Reduced from 40% */
-    max-width: 85px;  /* Reduced from 160px */
-    flex-shrink: 0; /* Prevent shrinking */
-    /* --- VIRTUAL WORKBENCH (QOL D) --- */
-    margin-left: 0.2rem; /* Tighter buffer */
-    /* --- END VIRTUAL WORKBENCH --- */
-
-    /* Scale transform */
-    /* Request A: Increased by 15% (was 1.0) */
+    width: 25%;
+    max-width: 85px;
+    flex-shrink: 0;
+    margin-left: 0.2rem;
     transform: scale(1.15); 
     transform-origin: top right;
 }
-
 .param-bar-item {
     display: flex;
     align-items: center;
-    gap: 0.2rem; /* Space between label and bar */
+    gap: 0.2rem;
 }
-
 .param-bar-label {
-    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
-    font-size: 0.65rem; /* Bumped from 0.55rem */
+    font-size: 0.65rem;
     color: var(--ot-text-secondary);
     text-transform: uppercase;
-    width: 32px; /* Fixed width for alignment */
+    width: 32px;
     text-align: right;
     flex-shrink: 0;
 }
-
 .param-bar-track {
-    /* VIRTUAL WORKBENCH: Request D - Increased thickness */
-    height: 12px; /* Was 10px */
+    height: 12px;
     background-color: rgba(0,0,0,0.3);
     flex-grow: 1;
     border-radius: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-    overflow: hidden; /* Ensure fill stays inside */
-    position: relative; /* For text overlay positioning */
+    overflow: hidden;
+    position: relative;
 }
-
 .param-bar-fill {
     height: 100%;
     border-radius: 4px;
     box-shadow: 0 0 8px var(--bar-color);
     transition: width 0.4s ease-out;
-    position: relative; /* For z-index */
-    z-index: 1; /* Sits below text */
+    position: relative;
+    z-index: 1;
 }
-
-/* Quantitative text overlay */
 .param-bar-text {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Default: center-aligned */
-    z-index: 2; /* Sits on top of the fill */
-    /* VIRTUAL WORKBENCH: Request B - Increased text size (Phase 6) */
-    font-size: 0.6rem; /* Bumped from 0.5rem */
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    font-size: 0.6rem;
     font-family: 'Roboto Mono', sans-serif;
     color: #ffffff;
-    text-shadow: 0 0 2px #000, 0 0 4px #000; /* Shadow for readability */
-    white-space: nowrap; /* Prevent line breaks */
-    pointer-events: none; /* Allow clicks to pass through */
-    /* VIRTUAL WORKBENCH: Request B - Increased visibility */
+    text-shadow: 0 0 2px #000, 0 0 4px #000;
+    white-space: nowrap;
+    pointer-events: none;
     opacity: 0.9;
 }
-
-/* NEW: Alignment for maxed-out bars */
 .param-bar-text.max {
-    left: auto; /* Unset left */
-    right: 5px; /* Position 5px from the right */
-    transform: translateY(-50%); /* Center vertically only */
+    left: auto;
+    right: 5px;
+    transform: translateY(-50%);
 }
 
-/* REMOVED: Shipyard-specific coloring rule */
-/* --- VIRTUAL WORKBENCH END --- */
 
-
-/* Action Buttons */
+/* Action Buttons - GPU Optimized Glows */
 .action-button { 
     transition: transform 0.2s ease; 
     border-radius: 0.5rem; 
@@ -442,48 +389,53 @@ flex: 1 1 auto; /* Grow to fill space */
     justify-content: space-between;
     align-items: center;
     padding: 0.3rem 0.8rem;
+    position: relative;
+    overflow: visible;
+    z-index: 1; 
 }
+
+.action-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    z-index: -1; 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    /* Keep will-change here as buttons are few and interactive */
+    will-change: opacity;
+    pointer-events: none;
+}
+
 .action-button:not(:disabled) {
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-/* --- VIRTUAL WORKBENCH: ADD 'BOARD' BUTTON GLOW CLASS --- */
-.action-button.is-glowing-button {
-    /* Use the cyan color variables */
-    --ot-cyan-base: #22d3ee;
-    --ot-cyan-glow: #67e8f9;
-    /* Apply the new animation from global.css */
-    /* VIRTUAL WORKBENCH: MODIFIED from 0.4s to 1.0s */
-    animation: pulse-cyan-button-glow 1.0s ease-in-out;
+/* Button Variations */
+.action-button.is-glowing-button::before {
+    background-color: var(--ot-cyan-base);
+    box-shadow: 0 0 15px var(--ot-cyan-glow), 0 0 25px var(--ot-cyan-glow);
 }
-/* --- END VIRTUAL WORKBENCH --- */
+.action-button.is-glowing-button { animation: none; }
+.action-button.is-glowing-button::before { animation: pulse-opacity 1.0s ease-in-out; }
 
-/* --- VIRTUAL WORKBENCH: ADD GREEN AND RED GLOW CLASSES (Request A & B) --- */
-.action-button.is-glowing-green {
-    /*
-     * We don't need to set variables here.
-     * The keyframes `pulse-green-button-glow` use:
-     * --ot-green-accent (from :root)
-     * --class-b-color (from :root)
-    */
-    animation: pulse-green-button-glow 1.0s ease-in-out;
+.action-button.is-glowing-green::before {
+    background-color: var(--class-b-color); 
+    box-shadow: 0 0 15px var(--class-b-color), 0 0 25px var(--class-b-color);
 }
+.action-button.is-glowing-green { animation: none; }
+.action-button.is-glowing-green::before { animation: pulse-opacity 1.0s ease-in-out; }
 
-.action-button.is-glowing-red {
-    /*
-     * We don't need to set variables here.
-     * The keyframes `pulse-red-border-glow` are already defined
-     * and use --ot-hangar-red-base and --ot-hangar-red-glow (from :root).
-     * We just apply the animation with a 1.0s duration for the button.
-    */
-    animation: pulse-red-border-glow 1.0s ease-in-out;
+.action-button.is-glowing-red::before {
+    background-color: var(--ot-hangar-red-glow); 
+    box-shadow: 0 0 15px var(--ot-hangar-red-glow), 0 0 25px var(--ot-hangar-red-glow);
 }
-/* --- END VIRTUAL WORKBENCH --- */
+.action-button.is-glowing-red { animation: none; }
+.action-button.is-glowing-red::before { animation: pulse-opacity 1.0s ease-in-out; }
 
 
-/* NEW: Price text specifically for action buttons (like Sell) */
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
@@ -497,7 +449,7 @@ flex: 1 1 auto; /* Grow to fill space */
     box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.5);
 }
 
-/* Inset Text Shadow for ship names/roles */
+/* Inset Text Shadow */
 .inset-text-shadow {
     text-shadow: 0 2px 3px rgba(0,0,0,0.6);
 }
@@ -505,11 +457,10 @@ flex: 1 1 auto; /* Grow to fill space */
 /* Pagination Dots */
 #hangar-pagination-wrapper {
     position: absolute;
-    bottom: 1.25rem; /* The 55% value, as a gap from the bottom of the screen */
+    bottom: 1.25rem;
     left: 0;
     right: 0;
-    z-index: 10; /* Ensure it's above the card content */
-
+    z-index: 10;
     flex-shrink: 0;
     overflow-x: auto;
     padding-top: 0.5rem;
@@ -519,7 +470,6 @@ flex: 1 1 auto; /* Grow to fill space */
     display: flex;
     justify-content: center;
 }
-
 #hangar-pagination-wrapper::-webkit-scrollbar {
     display: none;
 }
@@ -541,64 +491,47 @@ flex: 1 1 auto; /* Grow to fill space */
     opacity: 0.3;
     transition: all 0.3s ease;
     cursor: pointer;
-    pointer-events: auto; /* Make pagers interactive */
+    pointer-events: auto; 
     display: block; 
 }
-
 .pagination-dot.active { 
     background-color: var(--theme-color-primary, #fde047);
     box-shadow: 0 0 8px var(--theme-glow-color, #fef08a);
     opacity: 1.0;
 }
-
-/* --- VIRTUAL WORKBENCH: QOL UPDATE B (Boarded Dot) --- */
 .pagination-dot.boarded {
-    /* Force white, irrespective of theme */
     background-color: #ffffff !important;
     opacity: 1.0 !important;
     box-shadow: 0 0 8px #ffffff, 0 0 15px rgba(255, 255, 255, 0.6);
 }
-/* --- END VIRTUAL WORKBENCH --- */
-
 .pagination-dot.half {
-    width: 0.9rem; /* Half the original width */
+    width: 0.9rem;
     opacity: 0.2;
 }
 
-/* Spec Cards (REMOVED) */
-
-/* Responsive adjustments for smaller screens */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .ship-card-content-wrapper {
-        grid-template-columns: 1fr; /* Stack columns vertically */
+        grid-template-columns: 1fr;
     }
     .ship-card-content-wrapper > .col-span-2,
     .ship-card-content-wrapper > .col-span-3 {
-        grid-column: span 1 / span 1; /* Make each column take full width */
+        grid-column: span 1 / span 1;
     }
-    
-.ship-display-area {
-        min-height: 180px; /* Ensure hologram area has enough height */
+    .ship-display-area {
+        min-height: 180px;
     }
 }
 
-/* --- VIRTUAL WORKBENCH: ARCHIVE LINK STYLE (UPDATED) --- */
 .archive-link {
     position: absolute;
-    /* Use right: -90px; based on user feedback to pull it closer to the toggle, but keep it to the right. 
-       Since the container is centered, this places it nicely to the side. 
-    */
     left: 100%; 
-    margin-left: 0.1rem; /* Reduced from 0.2rem to move it tighter */
-    
-    /* Use top: 50% to align with the middle of the toggle height, effectively moving it up */
+    margin-left: 0.1rem; 
     top: 50%; 
-    transform: translateY(-50%); /* Center vertically */
-    
-    white-space: normal; /* Allow wrapping for <br> */
-    text-align: center; /* Center align the stacked text */
-    line-height: 0.9; /* Tight line height for stacked text */
-    
+    transform: translateY(-50%);
+    white-space: normal;
+    text-align: center;
+    line-height: 0.9;
     font-family: 'Oxanium', sans-serif;
     font-size: 0.7rem;
     font-weight: 600;
@@ -611,13 +544,11 @@ flex: 1 1 auto; /* Grow to fill space */
     transition: all 0.2s ease;
     z-index: 20;
 }
-
 .archive-link:hover {
     opacity: 1;
     text-shadow: 0 0 8px var(--ot-cyan-glow), 0 0 12px var(--ot-cyan-glow);
 }
 
-/* Mobile adjustment */
 @media (max-width: 400px) {
     .archive-link {
         margin-left: 0.1rem;
@@ -625,19 +556,15 @@ flex: 1 1 auto; /* Grow to fill space */
     }
 }
 
-/* --- VIRTUAL WORKBENCH: MODAL CONTENT STYLES (NEW) --- */
-/* The wrapper for the lore text to ensure scrolling and max-height */
+/* Ship Lore Modal Wrapper */
 .ship-lore-modal-wrapper {
-    max-height: 50vh; /* Limit height to 50% of viewport height */
-    overflow-y: auto; /* Enable vertical scrolling */
-    padding: 0 0.5rem; /* Add breathing room */
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 0 0.5rem;
     margin-top: 0.5rem;
-    
-    /* Custom Scrollbar */
     scrollbar-width: thin;
     scrollbar-color: var(--ot-cyan-base) rgba(0,0,0,0.3);
 }
-
 .ship-lore-modal-wrapper::-webkit-scrollbar {
     width: 6px;
 }
@@ -650,48 +577,35 @@ flex: 1 1 auto; /* Grow to fill space */
     border-radius: 3px;
 }
 
-/* Attribute Header Style (Refinement B) */
 .ship-lore-attribute {
     text-align: center;
     color: var(--theme-color-primary, #fde047);
     font-family: 'Orbitron', sans-serif;
     font-size: 1rem;
-    margin-bottom: 0.25rem; /* Reduced from 1.0rem */
-    padding-bottom: 1.5rem; /* Increased from 0.5rem to act as <br> space */
+    margin-bottom: 0.25rem;
+    padding-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     text-transform: uppercase;
     letter-spacing: 1px;
     text-shadow: 0 0 5px var(--theme-color-glow, #fef08a);
 }
 
-/* Main Lore Text Style (Refinement C) */
 .ship-lore-text {
     font-family: 'Roboto Mono', monospace;
-    font-size: 1.0rem; /* Increased from 0.9rem */
+    font-size: 1.0rem;
     line-height: 1.6;
-    color: var(--ot-cyan-base); /* Updated to Teal */
-    text-align: left; /* Changed from justify */
-    white-space: pre-line; /* Preserve original line breaks in lore */
+    color: var(--ot-cyan-base);
+    text-align: left;
+    white-space: pre-line;
 }
 
-/* --- VIRTUAL WORKBENCH: GLOW CLASSES (Refinement Phase 6 - Gentle Colored Glow) --- */
-/* Updated to replace white core with colored text and remove boxy bloom */
+/* Colored Text Glows */
 .glow-text-z {
-    /* No override: Text color is inherited from inline style (Red) */
-    text-shadow:
-        0 0 2px #000, /* Contrast Outline */
-        0 0 10px var(--class-z-color) !important; /* Soft Colored Glow */
+    text-shadow: 0 0 2px #000, 0 0 10px var(--class-z-color) !important;
 }
 .glow-text-o {
-     /* No override: Text color is inherited from inline style (Orange) */
-     text-shadow:
-        0 0 2px #000,
-        0 0 10px var(--class-o-color) !important;
+     text-shadow: 0 0 2px #000, 0 0 10px var(--class-o-color) !important;
 }
 .glow-text-s {
-     /* No override: Text color is inherited from inline style (Gold) */
-     text-shadow:
-        0 0 2px #000,
-        0 0 10px var(--class-s-color) !important;
+     text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important;
 }
-/* --- END VIRTUAL WORKBENCH --- */
