@@ -7,7 +7,7 @@ The application is built on a strict **unidirectional data flow** model. This en
 -   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions.
 -   **Logic Layer (`SimulationService` & Sub-Services)**: Executes the core game logic in response to actions from the input layer. This is the only layer authorized to request a state change.
 -   **State Layer (`GameState`)**: The single source of truth. It holds all mutable game data and notifies the UI layer when changes occur.
--   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it.
+-   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it. *Note: Components (e.g., `HangarScreen`) now utilize helper services like `AssetService` to resolve static resource paths before rendering.*
 
 ---
 
@@ -81,15 +81,15 @@ graph TD
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
 Explanation of Intel Market Data Flow
-UI Render: When the 'Intel Market' tab is clicked, IntelMarketRenderer is called. [cite_start]It reads gameState.intelMarket for the current location and calls IntelService.calculateIntelPrice for each packet to get a dynamic price based on player credits.
+UI Render: When the 'Intel Market' tab is clicked, IntelMarketRenderer is called. It reads gameState.intelMarket for the current location and calls IntelService.calculateIntelPrice for each packet to get a dynamic price based on player credits.
 
-Player Purchase: Player clicks 'Purchase'. [cite_start]UIManager calls IntelService.purchaseIntel.
+Player Purchase: Player clicks 'Purchase'. UIManager calls IntelService.purchaseIntel.
 
-Transaction Logic: IntelService validates the purchase, deducts player.credits, sets the packet's isPurchased flag, and (most importantly) creates the gameState.activeIntelDeal object. [cite_start]This object "locks" the market.
+Transaction Logic: IntelService validates the purchase, deducts player.credits, sets the packet's isPurchased flag, and (most importantly) creates the gameState.activeIntelDeal object. This object "locks" the market.
 
-Market Override: The MarketService.getPrice function is modified to first check for an activeIntelDeal. [cite_start]If a deal matches the location and commodity, it returns the deal.overridePrice, bypassing all normal simulation logic.
+Market Override: The MarketService.getPrice function is modified to first check for an activeIntelDeal. If a deal matches the location and commodity, it returns the deal.overridePrice, bypassing all normal simulation logic.
 
-Expiration: The TimeService.pulse function checks daily if the activeIntelDeal has expired. [cite_start]If it has, it sets activeIntelDeal back to null, "unlocking" the Intel Market.
+Expiration: The TimeService.pulse function checks daily if the activeIntelDeal has expired. If it has, it sets activeIntelDeal back to null, "unlocking" the Intel Market.
 
 Detailed Flow Example: Market Simulation
 This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.

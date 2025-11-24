@@ -1,5 +1,5 @@
 Orbital Trading - GameState Schema
-Version: 2.3 Source: js/services/GameState.js (see startNewGame method)
+Version: 2.4 Source: js/services/GameState.js (see startNewGame method)
 
 This document defines the structure of the central GameState object, which is instantiated in main.js and managed by GameState.js. It is the "source of truth" for all dynamic, mutable data in the application.
 
@@ -58,6 +58,8 @@ loanStartDate: {number | null} - The day on which the loan was taken.
 seenGarnishmentWarning: {boolean} - Flag tracking if the player has been warned about wage garnishment.
 
 revealedTier: {number} - The highest market tier the player has unlocked.
+
+visualSeed: {number} - The integer used to deterministically calculate which visual variant (A, B, C...) is displayed for a ship.
 
 unlockedLicenseIds: {Array<string>} - A list of LICENSE_IDs the player has purchased.
 

@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [33.20] - 2025-11-24
+-  added shipcard art assets
+-  added Wanderer assets (4)
+-  added debug cycle ship art assets
+-  added assets_config.js
+-  updated meta files
+
 ## [33.15] - 2025-11-21
 -  shipyard screen performance improvements
 

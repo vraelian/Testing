@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 1.7
+**Version:** 1.8
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -32,10 +32,11 @@ This document defines the single responsibility of each service in the applicati
 -   **`IntelService.js`**: The "brain" of the Intel Market system. Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic. **Uses:** `js/data/intelContent.js`.
 -   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
-#### Game
+#### Game & Assets
 
 -   **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
 -   **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
+-   **`AssetService.js`**: Centralizes the logic for generating dynamic asset paths (specifically for ships). Implements the "Modulo Variant" system to deterministically select visual variants (A, B, C...) based on the player's `visualSeed`. **Uses:** `js/data/assets_config.js`.
 
 ### UI/Event Handlers
 
@@ -63,7 +64,7 @@ This document defines the single responsibility of each service in the applicati
 
 ### Debug & Automation
 
--   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
+-   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Now includes tools for asset validation (`cycleShipPics`, `boardShip`) and Tutorial Tuning.
 -   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy by simulating an advanced, market-manipulating player.
 
 ---
@@ -72,6 +73,7 @@ This document defines the single responsibility of each service in the applicati
 
 -   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
 -   **`ship_database.js`**: Defines the static data for all player-tradable ships, including stats, lore, and pricing. This is imported by `database.js`.
+-   **`assets_config.js`**: Defines configuration for ship asset variants (e.g., how many variants exist for each ship ID).
 -   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
 -   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
 -   **`events.js`**: Defines static data for random events encountered during travel.

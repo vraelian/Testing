@@ -99,7 +99,10 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
     * **Pro**: Uses `visualViewport` to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
     * **Con**: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.
-    ### ADR-008: iOS-Targeted Rendering & Performance Standards
+
+---
+
+### ADR-008: iOS-Targeted Rendering & Performance Standards
 
 * **Status**: Accepted (2025-11-21)
 * **Context**: The Hangar/Shipyard screen, containing lists of complex ship cards, exhibited significant frame rate drops and scrolling lag on the primary target device (iPhone/iOS). The use of "expensive" CSS properties (`background-blend-mode`, `box-shadow` animations, 3D transforms) and synchronous drag handlers saturated the GPU compositor and main thread.
@@ -112,3 +115,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Achieves native-like 60fps (or 120fps) scrolling performance on iOS devices.
     * **Pro**: Significantly reduces battery drain and device heat.
     * **Con**: Requires more disciplined CSS authoring and strict avoidance of certain "convenient" modern CSS features (like mix-blend-modes) in scrollable areas.
+
+---
+
+### ADR-009: Deterministic "Modulo" Asset Variants
+
+* **Status**: Accepted (2025-11-24)
+* **Context**: As the game's art assets expanded, ships needed multiple visual variants (e.g., different paint jobs or configurations). Tracking these specific filenames or adding a complex "skin inventory" system was deemed unnecessary overhead for the current phase.
+* **Decision**: A lightweight, deterministic system was implemented using the `AssetService`.
+    1.  **Player State**: A single integer, `visualSeed`, was added to the player's state.
+    2.  **Modulo Logic**: The UI (via `AssetService`) calculates which variant to display using the formula: `seed % variantCount`. The `variantCount` is defined per ship in `assets_config.js`.
+    3.  **Cycling**: The seed increments indefinitely, ensuring that as the player progresses (or triggers a debug command), the visuals cycle predictably through available options (A -> B -> C -> A...).
+* **Consequences**:
+    * **Pro**: Extremely low state overhead (one integer).
+    * **Pro**: Guarantees perfect distribution of variants without random number generation quirks.
+    * **Pro**: Simplifies testing; a single button press ("Cycle Ship Pics") verifies all asset paths.
+    * **Pro**: Decouples the save state from physical file paths; if assets are added/removed, the logic adapts automatically.
