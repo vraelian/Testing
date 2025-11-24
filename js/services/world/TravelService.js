@@ -134,10 +134,12 @@ export class TravelService {
         // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange();
         
+        // Increment the visual seed. This ensures a predictable cycle through variants (A->B->C->A...).
+        // The AssetService will modulo this number by the variant count for each specific ship.
+        this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+        
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
         // --- [[END]] MODIFICATION ---
-
-        // MOVED: onLocationChange() was moved up.
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);

@@ -3,6 +3,7 @@
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
+import { AssetService } from '../../services/AssetService.js';
 
 /**
  * Renders the entire Hangar screen UI.
@@ -103,12 +104,34 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
+    // --- [[START]] MODIFICATION ---
+    // Calculate Paths using Modulo Math (via AssetService)
+    const imagePath = AssetService.getShipImage(shipId, player.visualSeed);
+    const fallbackPath = AssetService.getFallbackImage(shipId);
+    const isVariantA = imagePath.endsWith('_A.jpeg');
+
+    // Logic: 
+    // 1. Try loading [Ship]_[Variant].jpeg
+    // 2. On Error:
+    //    a. If we already tried fallback OR the requested variant WAS 'A', give up (hide image, show text).
+    //    b. Else, try loading [Ship]_A.jpeg and set a flag.
+    const shipImageHtml = `
+        <img src="${imagePath}" 
+             class="w-full h-full object-cover rounded-lg relative z-10" 
+             alt="${shipStatic.name}"
+             data-fallback-src="${fallbackPath}"
+             data-is-a="${isVariantA}"
+             onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
+        <span class="text-2xl font-orbitron absolute inset-0 hidden items-center justify-center z-0 text-center">[ SHIP HOLOGRAM ]</span>
+    `;
+    // --- [[END]] MODIFICATION ---
+
     // Conditional rendering for shipyard layout
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
-                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+                    ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
@@ -128,8 +151,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
-                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+                    ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>

@@ -162,7 +162,11 @@ export class GameState {
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
                 inventories: { },
-                debugEventIndex: 0
+                debugEventIndex: 0,
+                // --- VIRTUAL WORKBENCH ---
+                // Visual Seed: A counter that increments to drive the deterministic asset rotation.
+                visualSeed: 0 
+                // --- END VIRTUAL WORKBENCH ---
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             

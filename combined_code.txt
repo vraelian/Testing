@@ -5799,6 +5799,7 @@ function _updateCurrentLocationHighlight(uiManager) {
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
+import { AssetService } from '../../services/AssetService.js';
 
 /**
  * Renders the entire Hangar screen UI.
@@ -5899,12 +5900,34 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
+    // --- [[START]] MODIFICATION ---
+    // Calculate Paths using Modulo Math (via AssetService)
+    const imagePath = AssetService.getShipImage(shipId, player.visualSeed);
+    const fallbackPath = AssetService.getFallbackImage(shipId);
+    const isVariantA = imagePath.endsWith('_A.jpeg');
+
+    // Logic: 
+    // 1. Try loading [Ship]_[Variant].jpeg
+    // 2. On Error:
+    //    a. If we already tried fallback OR the requested variant WAS 'A', give up (hide image, show text).
+    //    b. Else, try loading [Ship]_A.jpeg and set a flag.
+    const shipImageHtml = `
+        <img src="${imagePath}" 
+             class="w-full h-full object-cover rounded-lg relative z-10" 
+             alt="${shipStatic.name}"
+             data-fallback-src="${fallbackPath}"
+             data-is-a="${isVariantA}"
+             onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
+        <span class="text-2xl font-orbitron absolute inset-0 hidden items-center justify-center z-0 text-center">[ SHIP HOLOGRAM ]</span>
+    `;
+    // --- [[END]] MODIFICATION ---
+
     // Conditional rendering for shipyard layout
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
-                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+                    ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
@@ -5924,8 +5947,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
 
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center">
-                    <span class="text-2xl font-orbitron">[ SHIP HOLOGRAM ]</span>
+                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+                    ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
@@ -10071,6 +10094,27 @@ export const TUTORIAL_DATA = {
 };
 --- END OF FILE: ./js/data/tutorials.js ---
 
+--- START OF FILE: ./js/data/assets_config.js ---
+// js/data/assets_config.js
+/**
+ * @fileoverview Configuration for ship asset variants.
+ * Defines how many visual variants (A, B, C...) exist for each ship.
+ */
+
+export const DEFAULT_VARIANT_COUNT = 3;
+
+/**
+ * A map of Ship IDs to their specific variant counts.
+ * Only add entries here if a ship has more or fewer than the DEFAULT_VARIANT_COUNT.
+ * Example: If the Mule has 7 variants (A-G), add '[SHIP_IDS.MULE]: 7'.
+ * @type {Object<string, number>}
+ */
+export const SHIP_VARIANT_COUNTS = {
+    // 'Mule.Ship': 7, (<-- EXAMPLE)
+    'Wanderer.Ship': 4,
+};
+--- END OF FILE: ./js/data/assets_config.js ---
+
 --- START OF FILE: ./js/services/ui/TravelAnimationService.js ---
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
@@ -11483,7 +11527,11 @@ export class GameState {
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
                 inventories: { },
-                debugEventIndex: 0
+                debugEventIndex: 0,
+                // --- VIRTUAL WORKBENCH ---
+                // Visual Seed: A counter that increments to drive the deterministic asset rotation.
+                visualSeed: 0 
+                // --- END VIRTUAL WORKBENCH ---
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             
@@ -12163,6 +12211,63 @@ export class NewsTickerService {
 }
 --- END OF FILE: ./js/services/NewsTickerService.js ---
 
+--- START OF FILE: ./js/services/AssetService.js ---
+// js/services/AssetService.js
+/**
+ * @fileoverview Centralizes the logic for generating dynamic asset paths.
+ * Implements the "Modulo Variant" system for perfect probability distribution.
+ */
+
+import { DB } from '../data/database.js';
+import { DEFAULT_VARIANT_COUNT, SHIP_VARIANT_COUNTS } from '../data/assets_config.js';
+
+export class AssetService {
+    /**
+     * Generates the target image path for a ship based on the player's visual seed.
+     * Uses modulo arithmetic to cycle through available variants (A, B, C...) perfectly.
+     * * Naming Convention: assets/images/ships/[Name]/[Name]_[Variant].jpeg
+     * * @param {string} shipId - The GAME ID of the ship (e.g., 'Wanderer.Ship').
+     * @param {number} visualSeed - The player's current visual seed integer.
+     * @returns {string} The relative path to the image asset.
+     */
+    static getShipImage(shipId, visualSeed = 0) {
+        const shipData = DB.SHIPS[shipId];
+        if (!shipData) return '';
+
+        const baseName = shipData.name; 
+        
+        // 1. Determine how many variants this ship has
+        const variantCount = SHIP_VARIANT_COUNTS[shipId] || DEFAULT_VARIANT_COUNT;
+
+        // 2. Calculate the index (0 to Count-1)
+        // The visualSeed increments indefinitely, but modulo keeps the result within bounds.
+        const variantIndex = Math.abs(visualSeed) % variantCount;
+
+        // 3. Convert index to letter (0='A', 1='B', 2='C', etc.)
+        // String.fromCharCode(65) is 'A'.
+        const variantLetter = String.fromCharCode(65 + variantIndex);
+
+        // 4. Construct Path
+        // Example: assets/images/ships/Wanderer/Wanderer_B.jpeg
+        return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.jpeg`;
+    }
+
+    /**
+     * Generates the guaranteed fallback path (Variant A).
+     * Used by the UI if a specific file is missing/broken.
+     * @param {string} shipId 
+     * @returns {string}
+     */
+    static getFallbackImage(shipId) {
+        const shipData = DB.SHIPS[shipId];
+        if (!shipData) return '';
+
+        const baseName = shipData.name;
+        return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
+    }
+}
+--- END OF FILE: ./js/services/AssetService.js ---
+
 --- START OF FILE: ./js/services/simulation/MarketService.js ---
 // js/services/simulation/MarketService.js
 /**
@@ -12752,10 +12857,12 @@ export class TravelService {
         // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange();
         
+        // Increment the visual seed. This ensures a predictable cycle through variants (A->B->C->A...).
+        // The AssetService will modulo this number by the variant count for each specific ship.
+        this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+        
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
         // --- [[END]] MODIFICATION ---
-
-        // MOVED: onLocationChange() was moved up.
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
