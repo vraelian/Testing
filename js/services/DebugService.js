@@ -7,9 +7,9 @@ import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed } from '../utils.js';
-import { AutomatedPlayer } from './bot/AutomatedPlayerService.js'; // [GEMINI] ADDED IMPORT
+import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 
-// --- [[START]] NEW PRESET MAPPING ---
+// --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
 const TUTORIAL_PRESETS_PERCENT = {
     topCenter: [50, 15], // Example: 50% across, 15% down
@@ -20,12 +20,6 @@ const TUTORIAL_PRESETS_PERCENT = {
     bottomLeft: [15, 85],
     topLeft: [15, 15],
 };
-// --- [[END]] NEW PRESET MAPPING ---
-
-
-// [GEMINI] REMOVED ENTIRE 200+ LINE AutomatedPlayer CLASS
-// The class definition has been moved to js/services/bot/AutomatedPlayerService.js
-
 
 export class DebugService {
     /**
@@ -55,9 +49,14 @@ export class DebugService {
             selectedAgeEvent: DB.AGE_EVENTS[0].id,
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
-             botStrategy: 'MIXED', // [GEMINI] ADDED
+            botStrategy: 'MIXED', 
             botProgress: 'Idle',
             logLevel: 'INFO',
+            
+            // --- [GEMINI] NEW DEBUG STATE ---
+            shipToBoard: null, // Holds the ID of the ship selected in the dropdown
+            // -------------------------------
+
             // Tutorial Tuner State
             ttStepId: 'None',
             ttAnchor: 'N/A',
@@ -157,9 +156,7 @@ ${logHistory}
         this.gameState.tutorials.activeStepId = null;
         this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
 
-        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
-        // --- END VIRTUAL WORKBENCH ---
 
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.BEHEMOTH);
@@ -334,9 +331,7 @@ ${logHistory}
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
              skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
-                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
-                // --- END VIRTUAL WORKBENCH ---
                 this.simulationService.timeService._checkMilestones();
                 this.gameState.setState({});
             }},
@@ -366,14 +361,18 @@ ${logHistory}
                 });
                 this.gameState.setState({});
             }},
+            // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
+            cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
+                this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+                this.gameState.setState({}); // Force re-render
+                this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
+            }},
+            // --------------------------------------------
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
-            // --- VIRTUAL WORKBENCH REMOVAL ---
-            // 'addAllIntel' action removed
-            // --- END REMOVAL ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
                 const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
                 if (dest) {
@@ -397,7 +396,6 @@ ${logHistory}
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
-                // [GEMINI] MODIFIED: Pass strategy from debugState
                 const config = {
                     daysToRun: this.debugState.botDaysToRun,
                      strategy: this.debugState.botStrategy 
@@ -504,6 +502,34 @@ ${logHistory}
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
 
         const shipFolder = this.gui.addFolder('Ship');
+        // --- [GEMINI] ADDED: Cycle Pics and Board Dropdown ---
+        shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
+        
+        // Populate Dropdown Options from Database
+        const shipOptions = {};
+        Object.values(DB.SHIPS).forEach(ship => {
+            shipOptions[ship.name] = ship.id;
+        });
+
+        shipFolder.add(this.debugState, 'shipToBoard', shipOptions)
+            .name('Board Ship')
+            .onChange((shipId) => {
+                if (!shipId) return;
+                // 1. Grant if not owned
+                if (!this.gameState.player.ownedShipIds.includes(shipId)) {
+                    this.simulationService.addShipToHangar(shipId);
+                }
+                // 2. Set Active
+                this.simulationService.playerActionService.executeSetActiveShip(shipId);
+                // 3. Navigate to Hangar to see it
+                this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                // 4. Refresh
+                this.gameState.setState({});
+                this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
+            });
+        // -----------------------------------------------------
+
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
         shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
@@ -522,12 +548,9 @@ ${logHistory}
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
 
-        this.economyFolder = this.gui.addFolder('Economy'); // [GEMINI] Stored ref
+        this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
-        // --- VIRTUAL WORKBENCH REMOVAL ---
-        // The 'addAllIntel' button has been removed from this folder.
-        // --- END REMOVAL ---
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
@@ -586,9 +609,7 @@ ${logHistory}
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
-        // --- [GEMINI] MODIFIED: Added PROSPECTOR strategy ---
         automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
-        // --- End Modification ---
         
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
