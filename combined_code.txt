@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.20</title>
+    <title>Orbital Trading 33.23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.20</p>
+            <p>Version 33.23</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10101,7 +10101,7 @@ export const TUTORIAL_DATA = {
  * Defines how many visual variants (A, B, C...) exist for each ship.
  */
 
-export const DEFAULT_VARIANT_COUNT = 3;
+export const DEFAULT_VARIANT_COUNT = 4;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -10111,7 +10111,9 @@ export const DEFAULT_VARIANT_COUNT = 3;
  */
 export const SHIP_VARIANT_COUNTS = {
     // 'Mule.Ship': 7, (<-- EXAMPLE)
-    'Wanderer.Ship': 4,
+    'Wanderer.Ship': 6,
+    'Mule.Ship': 6,
+    'Nomad.Ship': 6,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -21762,9 +21764,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [33.23] - 2025-11-26
+-  added Stalwart assets (5)
+-  added Nomad assets (6)
+
+## [33.21] - 2025-11-24
+-  added Mule assets (6)
+
 ## [33.20] - 2025-11-24
 -  added shipcard art assets
--  added Wanderer assets (4)
+-  added Wanderer assets (6)
 -  added debug cycle ship art assets
 -  added assets_config.js
 -  updated meta files

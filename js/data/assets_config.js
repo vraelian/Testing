@@ -4,7 +4,7 @@
  * Defines how many visual variants (A, B, C...) exist for each ship.
  */
 
-export const DEFAULT_VARIANT_COUNT = 3;
+export const DEFAULT_VARIANT_COUNT = 4;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -14,5 +14,7 @@ export const DEFAULT_VARIANT_COUNT = 3;
  */
 export const SHIP_VARIANT_COUNTS = {
     // 'Mule.Ship': 7, (<-- EXAMPLE)
-    'Wanderer.Ship': 4,
+    'Wanderer.Ship': 6,
+    'Mule.Ship': 6,
+    'Nomad.Ship': 6,
 };
