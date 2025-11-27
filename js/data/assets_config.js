@@ -4,7 +4,7 @@
  * Defines how many visual variants (A, B, C...) exist for each ship.
  */
 
-export const DEFAULT_VARIANT_COUNT = 4;
+export const DEFAULT_VARIANT_COUNT = 5;
 
 /**
  * A map of Ship IDs to their specific variant counts.
