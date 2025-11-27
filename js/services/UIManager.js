@@ -16,6 +16,10 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
+// --- [[START]] PHASE 2 IMPORT ---
+import { AssetService } from './AssetService.js';
+// --- [[END]] PHASE 2 IMPORT ---
+
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
@@ -629,13 +633,15 @@ change occurred (like a purchase), it *surgically
                 
                 break;
         }
-    }/**
+    }
+
+    /**
      * Surgically updates the Hangar screen for smooth transitions without a full re-render.
      * @param {object} gameState The current game state.
      * @private
      */
     _updateHangarScreen(gameState) {
-        const { uiState } = gameState;
+        const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
         if (!hangarScreenEl) return;
 
@@ -647,6 +653,39 @@ change occurred (like a purchase), it *surgically
 
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
+
+        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
+        const SAFE_DISTANCE = 2;
+        const pages = carousel.querySelectorAll('.carousel-page');
+
+        pages.forEach((page, index) => {
+            const distance = Math.abs(activeIndex - index);
+            const img = page.querySelector('img');
+            const placeholder = page.querySelector('span'); // The text placeholder
+
+            if (!img) return;
+
+            if (distance > SAFE_DISTANCE) {
+                // --- UNLOAD ---
+                if (img.hasAttribute('src')) {
+                    img.removeAttribute('src');
+                    img.style.opacity = '0';
+                    // Important: Reset fallback flag so it retries if reloaded
+                    img.removeAttribute('data-tried-fallback'); 
+                    if (placeholder) placeholder.style.display = 'flex';
+                }
+            } else {
+                // --- RELOAD ---
+                if (!img.hasAttribute('src')) {
+                    const shipId = page.dataset.shipId;
+                    if (shipId) {
+                        const src = AssetService.getShipImage(shipId, player.visualSeed);
+                        img.src = src;
+                    }
+                }
+            }
+        });
+        // --- [[END]] GARBAGE COLLECTION ---
 
         // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
@@ -2692,8 +2731,76 @@ change occurred (like a purchase), it *surgically
         });
     }
 
-   
-     // --- END VIRTUAL WORKBENCH ---
+    /**
+     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
+     * @param {object} gameState The current game state.
+     * @private
+     */
+    _updateHangarScreen(gameState) {
+        const { uiState, player } = gameState; // Added player for visualSeed
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return;
 
-    // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
+        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
+        if (!carousel) return;
+
+        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+        const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+
+        // Update carousel position
+        carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
+
+        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
+        const SAFE_DISTANCE = 2;
+        const pages = carousel.querySelectorAll('.carousel-page');
+
+        pages.forEach((page, index) => {
+            const distance = Math.abs(activeIndex - index);
+            const img = page.querySelector('img');
+            const placeholder = page.querySelector('span'); // The text placeholder
+
+            if (!img) return;
+
+            if (distance > SAFE_DISTANCE) {
+                // --- UNLOAD ---
+                if (img.hasAttribute('src')) {
+                    img.removeAttribute('src');
+                    img.style.opacity = '0';
+                    // Important: Reset fallback flag so it retries if reloaded
+                    img.removeAttribute('data-tried-fallback'); 
+                    if (placeholder) placeholder.style.display = 'flex';
+                }
+            } else {
+                // --- RELOAD ---
+                if (!img.hasAttribute('src')) {
+                    const shipId = page.dataset.shipId;
+                    if (shipId) {
+                        const src = AssetService.getShipImage(shipId, player.visualSeed);
+                        img.src = src;
+                    }
+                }
+            }
+        });
+        // --- [[END]] GARBAGE COLLECTION ---
+
+        // RENDER VIRTUAL PAGINATION
+        this._renderHangarPagination(gameState);
+        // Scroll the pagination container to center the active dot
+        const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
+        const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
+
+        if (paginationWrapper && activeDot) {
+            const wrapperWidth = paginationWrapper.clientWidth;
+            const dotOffsetLeft = activeDot.offsetLeft;
+            const dotWidth = activeDot.offsetWidth;
+
+            // Calculate the target scroll position to center the active dot
+            const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
+
+            paginationWrapper.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    }
 }

@@ -15,6 +15,10 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
+// --- [[START]] PHASE 4 IMPORT ---
+import { AssetService } from './services/AssetService.js';
+// --- [[END]] PHASE 4 IMPORT ---
+
 /**
  * This function now manages both app height and "letterbox" scaling.
  * It sets the --app-height variable for the body and dynamically scales
@@ -219,6 +223,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- [[END]] MODIFICATION ---
 
             uiManager.render(gameState.getState());
+
+            // --- [[START]] PHASE 4: INITIALIZATION POLISH ---
+            // Background preload current ship image shortly after render.
+            // This guarantees the high-res asset is fetched for the active ship
+            // even if the lazy-loading intersection observer hasn't fired yet.
+            setTimeout(() => {
+                const state = gameState.getState();
+                if (state.player && state.player.activeShipId) {
+                    const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
+                    // Creating an Image object forces the browser to download and cache the file
+                    const img = new Image();
+                    img.src = src;
+                }
+            }, 2000); 
+            // --- [[END]] PHASE 4: INITIALIZATION POLISH ---
         }
         
         // --- [[START]] MODIFICATION ---

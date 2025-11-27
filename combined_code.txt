@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.23</title>
+    <title>Orbital Trading 33.24</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.23</p>
+            <p>Version 33.24</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -5900,25 +5900,25 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- [[START]] MODIFICATION ---
+    // --- [[START]] MODIFICATION (Smart Loading) ---
     // Calculate Paths using Modulo Math (via AssetService)
     const imagePath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
     const isVariantA = imagePath.endsWith('_A.jpeg');
 
-    // Logic: 
-    // 1. Try loading [Ship]_[Variant].jpeg
-    // 2. On Error:
-    //    a. If we already tried fallback OR the requested variant WAS 'A', give up (hide image, show text).
-    //    b. Else, try loading [Ship]_A.jpeg and set a flag.
     const shipImageHtml = `
-        <img src="${imagePath}" 
-             class="w-full h-full object-cover rounded-lg relative z-10" 
-             alt="${shipStatic.name}"
-             data-fallback-src="${fallbackPath}"
-             data-is-a="${isVariantA}"
-             onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
-        <span class="text-2xl font-orbitron absolute inset-0 hidden items-center justify-center z-0 text-center">[ SHIP HOLOGRAM ]</span>
+        <div class="relative w-full h-full">
+            <img src="${imagePath}" 
+                 class="w-full h-full object-cover rounded-lg relative z-10" 
+                 alt="${shipStatic.name}"
+                 loading="lazy" 
+                 data-fallback-src="${fallbackPath}"
+                 data-is-a="${isVariantA}"
+                 style="opacity: 0; transition: opacity 0.3s ease-in;"
+                 onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
+                 onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
+            <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600">[ SHIP HOLOGRAM ]</span>
+        </div>
     `;
     // --- [[END]] MODIFICATION ---
 
@@ -5959,8 +5959,10 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
+    // --- [[START]] MODIFICATION (Garbage Collection Hook) ---
+    // Added data-ship-id to the wrapper div
     return `
-        <div class="carousel-page p-2 md:p-4 w-full">
+        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10">
@@ -5971,6 +5973,7 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
+    // --- [[END]] MODIFICATION ---
 }
 
 
@@ -6921,6 +6924,10 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
+// --- [[START]] PHASE 4 IMPORT ---
+import { AssetService } from './services/AssetService.js';
+// --- [[END]] PHASE 4 IMPORT ---
+
 /**
  * This function now manages both app height and "letterbox" scaling.
  * It sets the --app-height variable for the body and dynamically scales
@@ -7125,6 +7132,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- [[END]] MODIFICATION ---
 
             uiManager.render(gameState.getState());
+
+            // --- [[START]] PHASE 4: INITIALIZATION POLISH ---
+            // Background preload current ship image shortly after render.
+            // This guarantees the high-res asset is fetched for the active ship
+            // even if the lazy-loading intersection observer hasn't fired yet.
+            setTimeout(() => {
+                const state = gameState.getState();
+                if (state.player && state.player.activeShipId) {
+                    const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
+                    // Creating an Image object forces the browser to download and cache the file
+                    const img = new Image();
+                    img.src = src;
+                }
+            }, 2000); 
+            // --- [[END]] PHASE 4: INITIALIZATION POLISH ---
         }
         
         // --- [[START]] MODIFICATION ---
@@ -14917,6 +14939,10 @@ import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 
+// --- [[START]] PHASE 2 IMPORT ---
+import { AssetService } from './AssetService.js';
+// --- [[END]] PHASE 2 IMPORT ---
+
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
@@ -15530,13 +15556,15 @@ change occurred (like a purchase), it *surgically
                 
                 break;
         }
-    }/**
+    }
+
+    /**
      * Surgically updates the Hangar screen for smooth transitions without a full re-render.
      * @param {object} gameState The current game state.
      * @private
      */
     _updateHangarScreen(gameState) {
-        const { uiState } = gameState;
+        const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
         if (!hangarScreenEl) return;
 
@@ -15548,6 +15576,39 @@ change occurred (like a purchase), it *surgically
 
         // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
+
+        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
+        const SAFE_DISTANCE = 2;
+        const pages = carousel.querySelectorAll('.carousel-page');
+
+        pages.forEach((page, index) => {
+            const distance = Math.abs(activeIndex - index);
+            const img = page.querySelector('img');
+            const placeholder = page.querySelector('span'); // The text placeholder
+
+            if (!img) return;
+
+            if (distance > SAFE_DISTANCE) {
+                // --- UNLOAD ---
+                if (img.hasAttribute('src')) {
+                    img.removeAttribute('src');
+                    img.style.opacity = '0';
+                    // Important: Reset fallback flag so it retries if reloaded
+                    img.removeAttribute('data-tried-fallback'); 
+                    if (placeholder) placeholder.style.display = 'flex';
+                }
+            } else {
+                // --- RELOAD ---
+                if (!img.hasAttribute('src')) {
+                    const shipId = page.dataset.shipId;
+                    if (shipId) {
+                        const src = AssetService.getShipImage(shipId, player.visualSeed);
+                        img.src = src;
+                    }
+                }
+            }
+        });
+        // --- [[END]] GARBAGE COLLECTION ---
 
         // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
@@ -17593,10 +17654,78 @@ change occurred (like a purchase), it *surgically
         });
     }
 
-   
-     // --- END VIRTUAL WORKBENCH ---
+    /**
+     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
+     * @param {object} gameState The current game state.
+     * @private
+     */
+    _updateHangarScreen(gameState) {
+        const { uiState, player } = gameState; // Added player for visualSeed
+        const hangarScreenEl = this.cache.hangarScreen;
+        if (!hangarScreenEl) return;
 
-    // MODIFIED: Removed obsolete _bindScreenSpecificEvents method
+        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
+        if (!carousel) return;
+
+        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
+        const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
+
+        // Update carousel position
+        carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
+
+        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
+        const SAFE_DISTANCE = 2;
+        const pages = carousel.querySelectorAll('.carousel-page');
+
+        pages.forEach((page, index) => {
+            const distance = Math.abs(activeIndex - index);
+            const img = page.querySelector('img');
+            const placeholder = page.querySelector('span'); // The text placeholder
+
+            if (!img) return;
+
+            if (distance > SAFE_DISTANCE) {
+                // --- UNLOAD ---
+                if (img.hasAttribute('src')) {
+                    img.removeAttribute('src');
+                    img.style.opacity = '0';
+                    // Important: Reset fallback flag so it retries if reloaded
+                    img.removeAttribute('data-tried-fallback'); 
+                    if (placeholder) placeholder.style.display = 'flex';
+                }
+            } else {
+                // --- RELOAD ---
+                if (!img.hasAttribute('src')) {
+                    const shipId = page.dataset.shipId;
+                    if (shipId) {
+                        const src = AssetService.getShipImage(shipId, player.visualSeed);
+                        img.src = src;
+                    }
+                }
+            }
+        });
+        // --- [[END]] GARBAGE COLLECTION ---
+
+        // RENDER VIRTUAL PAGINATION
+        this._renderHangarPagination(gameState);
+        // Scroll the pagination container to center the active dot
+        const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
+        const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
+
+        if (paginationWrapper && activeDot) {
+            const wrapperWidth = paginationWrapper.clientWidth;
+            const dotOffsetLeft = activeDot.offsetLeft;
+            const dotWidth = activeDot.offsetWidth;
+
+            // Calculate the target scroll position to center the active dot
+            const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
+
+            paginationWrapper.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -20994,6 +21123,11 @@ export class TooltipHandler {
  * @fileoverview Manages all pointer, touch, and wheel events for the
  * hangar/shipyard carousel, providing a smooth drag-and-swipe interface.
  */
+
+// --- [[START]] PHASE 3 IMPORT ---
+import { AssetService } from '../AssetService.js';
+// --- [[END]] PHASE 3 IMPORT ---
+
 export class CarouselEventHandler {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
@@ -21127,11 +21261,55 @@ export class CarouselEventHandler {
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
+        // --- [[START]] PHASE 3: PREDICTIVE PRELOAD ---
+        // Immediately fetch neighbor images so they are ready for the next swipe
+        this._preloadNeighbors(newIndex, mode);
+        // --- [[END]] PHASE 3: PREDICTIVE PRELOAD ---
+
         // A timeout is used to reset the 'moved' flag, preventing a click event from firing immediately after a drag.
         setTimeout(() => {
             this.state.moved = false;
         }, 50);
     }
+
+    // --- [[START]] PHASE 3: PRELOAD HELPER ---
+    /**
+     * Silently fetches images for the ships immediately adjacent to the current index.
+     * This relies on the browser's cache to store the result.
+     * @param {number} centerIndex The current active index.
+     * @param {string} mode 'hangar' or 'shipyard'.
+     * @private
+     */
+    _preloadNeighbors(centerIndex, mode) {
+        const state = this.gameState.getState();
+        const player = state.player;
+        
+        let shipList = [];
+        if (mode === 'hangar') {
+            shipList = player.ownedShipIds;
+        } else {
+            // Using internal method to stay consistent with HangarScreen.js data source
+            if (this.simulationService._getShipyardInventory) {
+                shipList = this.simulationService._getShipyardInventory().map(([id]) => id);
+            }
+        }
+
+        // Identify neighbors (safe bounds check handled in loop)
+        const indicesToLoad = [centerIndex - 1, centerIndex + 1];
+
+        indicesToLoad.forEach(idx => {
+            if (idx >= 0 && idx < shipList.length) {
+                const shipId = shipList[idx];
+                // Use the player's visual seed to ensure we fetch the CORRECT variant
+                const src = AssetService.getShipImage(shipId, player.visualSeed);
+                if (src) {
+                    const img = new Image();
+                    img.src = src; // Trigger download to cache
+                }
+            }
+        });
+    }
+    // --- [[END]] PHASE 3: PRELOAD HELPER ---
     
     /**
      * Returns whether the carousel was moved during the last drag operation.
@@ -21763,6 +21941,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+
+## [33.24] - 2025-11-27
+-  added Rooster assets (5)
+-  updated image loading logic
+-  updated garbage collection logic
 
 ## [33.23] - 2025-11-26
 -  added Stalwart assets (5)

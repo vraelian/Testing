@@ -3,6 +3,11 @@
  * @fileoverview Manages all pointer, touch, and wheel events for the
  * hangar/shipyard carousel, providing a smooth drag-and-swipe interface.
  */
+
+// --- [[START]] PHASE 3 IMPORT ---
+import { AssetService } from '../AssetService.js';
+// --- [[END]] PHASE 3 IMPORT ---
+
 export class CarouselEventHandler {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
@@ -136,11 +141,55 @@ export class CarouselEventHandler {
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
+        // --- [[START]] PHASE 3: PREDICTIVE PRELOAD ---
+        // Immediately fetch neighbor images so they are ready for the next swipe
+        this._preloadNeighbors(newIndex, mode);
+        // --- [[END]] PHASE 3: PREDICTIVE PRELOAD ---
+
         // A timeout is used to reset the 'moved' flag, preventing a click event from firing immediately after a drag.
         setTimeout(() => {
             this.state.moved = false;
         }, 50);
     }
+
+    // --- [[START]] PHASE 3: PRELOAD HELPER ---
+    /**
+     * Silently fetches images for the ships immediately adjacent to the current index.
+     * This relies on the browser's cache to store the result.
+     * @param {number} centerIndex The current active index.
+     * @param {string} mode 'hangar' or 'shipyard'.
+     * @private
+     */
+    _preloadNeighbors(centerIndex, mode) {
+        const state = this.gameState.getState();
+        const player = state.player;
+        
+        let shipList = [];
+        if (mode === 'hangar') {
+            shipList = player.ownedShipIds;
+        } else {
+            // Using internal method to stay consistent with HangarScreen.js data source
+            if (this.simulationService._getShipyardInventory) {
+                shipList = this.simulationService._getShipyardInventory().map(([id]) => id);
+            }
+        }
+
+        // Identify neighbors (safe bounds check handled in loop)
+        const indicesToLoad = [centerIndex - 1, centerIndex + 1];
+
+        indicesToLoad.forEach(idx => {
+            if (idx >= 0 && idx < shipList.length) {
+                const shipId = shipList[idx];
+                // Use the player's visual seed to ensure we fetch the CORRECT variant
+                const src = AssetService.getShipImage(shipId, player.visualSeed);
+                if (src) {
+                    const img = new Image();
+                    img.src = src; // Trigger download to cache
+                }
+            }
+        });
+    }
+    // --- [[END]] PHASE 3: PRELOAD HELPER ---
     
     /**
      * Returns whether the carousel was moved during the last drag operation.
