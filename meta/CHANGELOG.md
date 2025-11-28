@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
 
+## [33.25] - 2025-11-27
+-  added Mesa assets (8)
+
 ## [33.24] - 2025-11-27
 -  added Rooster assets (5)
 -  updated image loading logic

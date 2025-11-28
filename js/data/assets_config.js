@@ -17,4 +17,5 @@ export const SHIP_VARIANT_COUNTS = {
     'Wanderer.Ship': 6,
     'Mule.Ship': 6,
     'Nomad.Ship': 6,
+    'Mesa.Ship': 8,
 };
