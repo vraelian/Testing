@@ -131,3 +131,21 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Guarantees perfect distribution of variants without random number generation quirks.
     * **Pro**: Simplifies testing; a single button press ("Cycle Ship Pics") verifies all asset paths.
     * **Pro**: Decouples the save state from physical file paths; if assets are added/removed, the logic adapts automatically.
+
+---
+
+### ADR-010: Automated "Sibling Repo" Deployment Workflow
+
+* **Status**: Accepted (2025-11-28)
+* **Context**: The project maintains two repositories: a source repo (`Testing`) and a live distribution repo (`OrbitalTrading`). As the asset library grew (specifically ship images), the manual "drag-and-drop" upload method via the GitHub web interface became unviable due to file count/size limits. Additionally, the manual process of moving build tools in and out of the project root to perform obfuscation was error-prone and tedious.
+* **Decision**: A local shell script (`publish_game.sh`) was implemented to automate the entire deployment pipeline.
+    1.  **Tool Borrowing**: Temporarily moves obfuscation tools (`build.js`, `package.json`, etc.) from a sibling directory into the project root.
+    2.  **Build Execution**: Runs `npm run build` to generate the obfuscated `dist` folder.
+    3.  **Sibling Deployment**: Uses `cp -R` to overwrite the contents of the local sibling `OrbitalTrading` repository with the new `dist` files (preserving Xcode configuration files).
+    4.  **Git Automation**: Automatically stages, commits, and pushes the changes in the `OrbitalTrading` repo to GitHub.
+    5.  **Cleanup**: Moves the build tools and the generated `dist` folder back to their storage directory, restoring the source workspace to its clean state.
+* **Consequences**:
+    * **Pro**: Bypasses GitHub web interface limits entirely, allowing for unlimited asset expansion.
+    * **Pro**: Reduces the deployment time from minutes of manual work to seconds.
+    * **Pro**: Eliminates human error in the build/transfer process (e.g., forgetting to move a file).
+    * **Pro**: strict separation of concerns; the "clean" source repo remains free of build artifacts and tooling config files when not actively building.

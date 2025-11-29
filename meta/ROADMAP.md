@@ -1,17 +1,27 @@
-## Immediate Concerns, Bugs, Issues
+# ROADMAP
+
+All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## Ongoing, WIP Efforts
+- Creating 5 art assets for all ships in the game
+- Optimzimg ship art asset use
+
+## Immediate Concerns, Bugs
 - n/a
 
-## Planned Ideas
+## Imminent Projects
+- Art assets for commodities
+- Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Station Quirks
+- Ship Attributes
 - Install tailwind CSS resources locally
 
-## Long-Term Ideas
+## Long-Term Goals, Ideas
 - Refine commodities names, identity
 - Reputation system
 - Player age events
 - Player Stations
 - Additional tutorials
-- Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders
 - Storyline

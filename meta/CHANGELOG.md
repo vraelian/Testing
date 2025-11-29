@@ -1,6 +1,15 @@
 # Changelog
 
-All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.31] - 2025-11-29
+-  added Pathfinder assets (7)
+
+## [33.30] - 2025-11-28
+-  automated public repo obfuscation/update
+-  added publish_game.sh
+-  updated meta files
+-  updated ROADMAP.md
 
 ## [33.25] - 2025-11-27
 -  added Mesa assets (8)

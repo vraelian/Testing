@@ -744,6 +744,11 @@
         "path": "./js/data/assets_config.js",
         "role": "DATA_DEFINITION",
         "description": "Configuration for ship asset variants."
+      },
+      "F067": {
+        "path": "./publish_game.sh",
+        "role": "BUILD_TOOL",
+        "description": "Automated deployment script that orchestrates the 'borrow tools -> build -> deploy -> cleanup' workflow for the live OrbitalTrading repository."
       }
     }
   }

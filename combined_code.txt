@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.25</title>
+    <title>Orbital Trading 33.31</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.25</p>
+            <p>Version 33.31</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10137,6 +10137,7 @@ export const SHIP_VARIANT_COUNTS = {
     'Mule.Ship': 6,
     'Nomad.Ship': 6,
     'Mesa.Ship': 8,
+    'Pathfinder.Ship': 7,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -21941,7 +21942,16 @@ export class PlayerActionService {
 --- START OF FILE: ./meta/CHANGELOG.md ---
 # Changelog
 
-All notable changes to the Orbital Trading project will be documented in this file. Gemini is never to modify this file or provide updates. The user will always manually update this file.
+All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.31] - 2025-11-29
+-  added Pathfinder assets (7)
+
+## [33.30] - 2025-11-28
+-  automated public repo obfuscation/update
+-  added publish_game.sh
+-  updated meta files
+-  updated ROADMAP.md
 
 ## [33.25] - 2025-11-27
 -  added Mesa assets (8)
@@ -23309,6 +23319,11 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "path": "./js/data/assets_config.js",
         "role": "DATA_DEFINITION",
         "description": "Configuration for ship asset variants."
+      },
+      "F067": {
+        "path": "./publish_game.sh",
+        "role": "BUILD_TOOL",
+        "description": "Automated deployment script that orchestrates the 'borrow tools -> build -> deploy -> cleanup' workflow for the live OrbitalTrading repository."
       }
     }
   }
@@ -23316,20 +23331,30 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 --- END OF FILE: ./meta/lexicon.json ---
 
 --- START OF FILE: ./meta/ROADMAP.md ---
-## Immediate Concerns, Bugs, Issues
+# ROADMAP
+
+All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## Ongoing, WIP Efforts
+- Creating 5 art assets for all ships in the game
+- Optimzimg ship art asset use
+
+## Immediate Concerns, Bugs
 - n/a
 
-## Planned Ideas
+## Imminent Projects
+- Art assets for commodities
+- Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Station Quirks
+- Ship Attributes
 - Install tailwind CSS resources locally
 
-## Long-Term Ideas
+## Long-Term Goals, Ideas
 - Refine commodities names, identity
 - Reputation system
 - Player age events
 - Player Stations
 - Additional tutorials
-- Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders
 - Storyline
@@ -23568,6 +23593,24 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Guarantees perfect distribution of variants without random number generation quirks.
     * **Pro**: Simplifies testing; a single button press ("Cycle Ship Pics") verifies all asset paths.
     * **Pro**: Decouples the save state from physical file paths; if assets are added/removed, the logic adapts automatically.
+
+---
+
+### ADR-010: Automated "Sibling Repo" Deployment Workflow
+
+* **Status**: Accepted (2025-11-28)
+* **Context**: The project maintains two repositories: a source repo (`Testing`) and a live distribution repo (`OrbitalTrading`). As the asset library grew (specifically ship images), the manual "drag-and-drop" upload method via the GitHub web interface became unviable due to file count/size limits. Additionally, the manual process of moving build tools in and out of the project root to perform obfuscation was error-prone and tedious.
+* **Decision**: A local shell script (`publish_game.sh`) was implemented to automate the entire deployment pipeline.
+    1.  **Tool Borrowing**: Temporarily moves obfuscation tools (`build.js`, `package.json`, etc.) from a sibling directory into the project root.
+    2.  **Build Execution**: Runs `npm run build` to generate the obfuscated `dist` folder.
+    3.  **Sibling Deployment**: Uses `cp -R` to overwrite the contents of the local sibling `OrbitalTrading` repository with the new `dist` files (preserving Xcode configuration files).
+    4.  **Git Automation**: Automatically stages, commits, and pushes the changes in the `OrbitalTrading` repo to GitHub.
+    5.  **Cleanup**: Moves the build tools and the generated `dist` folder back to their storage directory, restoring the source workspace to its clean state.
+* **Consequences**:
+    * **Pro**: Bypasses GitHub web interface limits entirely, allowing for unlimited asset expansion.
+    * **Pro**: Reduces the deployment time from minutes of manual work to seconds.
+    * **Pro**: Eliminates human error in the build/transfer process (e.g., forgetting to move a file).
+    * **Pro**: strict separation of concerns; the "clean" source repo remains free of build artifacts and tooling config files when not actively building.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
