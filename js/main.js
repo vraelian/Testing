@@ -225,18 +225,16 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.render(gameState.getState());
 
             // --- [[START]] PHASE 4: INITIALIZATION POLISH ---
-            // Background preload current ship image shortly after render.
+            // Background preload current ship image immediately.
             // This guarantees the high-res asset is fetched for the active ship
             // even if the lazy-loading intersection observer hasn't fired yet.
-            setTimeout(() => {
-                const state = gameState.getState();
-                if (state.player && state.player.activeShipId) {
-                    const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
-                    // Creating an Image object forces the browser to download and cache the file
-                    const img = new Image();
-                    img.src = src;
-                }
-            }, 2000); 
+            const state = gameState.getState();
+            if (state.player && state.player.activeShipId) {
+                const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
+                // Creating an Image object forces the browser to download and cache the file
+                const img = new Image();
+                img.src = src;
+            }
             // --- [[END]] PHASE 4: INITIALIZATION POLISH ---
         }
         
