@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.32] - 2025-11-30
+-  updated Mule assets
+-  added Odyssey assets (6)
+
 ## [33.31] - 2025-11-29
 -  added Pathfinder assets (7)
 
