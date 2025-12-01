@@ -20,5 +20,6 @@ export const SHIP_VARIANT_COUNTS = {
     'Mesa.Ship': 8,
     'Pathfinder.Ship': 7,
     'Pilgrim.Ship': 8,
-    'Meridian.Ship': 9,
+    'Meridian.Ship': 8,
+    'Raven.Ship': 9,
 };
