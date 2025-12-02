@@ -4,7 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [33.36] - 2025-11-1
 -  updated Warden assets (11)
--  asset loading optimization
+-  ship asset loading optimization
 
 ## [33.35] - 2025-11-1
 -  updated Raven assets (9)

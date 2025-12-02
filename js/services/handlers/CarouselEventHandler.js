@@ -4,9 +4,7 @@
  * hangar/shipyard carousel, providing a smooth drag-and-swipe interface.
  */
 
-// --- [[START]] PHASE 3 IMPORT ---
 import { AssetService } from '../AssetService.js';
-// --- [[END]] PHASE 3 IMPORT ---
 
 export class CarouselEventHandler {
     /**
@@ -19,7 +17,7 @@ export class CarouselEventHandler {
 
         this.isScrolling = false;
         this.scrollTimeout = null;
-        this.rafId = null; // Track the animation frame request
+        this.rafId = null; 
 
         this.state = {
             isDragging: false,
@@ -42,13 +40,26 @@ export class CarouselEventHandler {
         if (this.isScrolling) return;
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
+        
+        // --- [[START]] PREDICTIVE PRELOAD ---
+        // Preload assets in the direction of the scroll BEFORE trigger
+        const currentState = this.gameState.getState();
+        const currentMode = currentState.uiState.hangarShipyardToggleState;
+        const currentIdx = currentMode === 'hangar' 
+            ? (currentState.uiState.hangarActiveIndex || 0) 
+            : (currentState.uiState.shipyardActiveIndex || 0);
+        
+        const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        this._preloadForTarget(targetIdx, currentMode);
+        // --- [[END]] PREDICTIVE PRELOAD ---
+
         this.simulationService.cycleHangarCarousel(direction);
 
         this.isScrolling = true;
         clearTimeout(this.scrollTimeout);
         this.scrollTimeout = setTimeout(() => {
             this.isScrolling = false;
-        }, 300); // Throttle scroll events
+        }, 300); 
     }
 
     /**
@@ -78,7 +89,7 @@ export class CarouselEventHandler {
         this.state.currentTranslate = this.state.startTranslate;
         this.state.moved = false;
 
-        carousel.style.transitionDuration = '0s'; // Make drag instant
+        carousel.style.transitionDuration = '0s'; 
         document.body.style.cursor = 'grabbing';
     }
 
@@ -97,9 +108,6 @@ export class CarouselEventHandler {
         if (Math.abs(diff) > 10) this.state.moved = true;
 
         if (this.state.activeCarousel) {
-            // VIRTUAL WORKBENCH: PERFORMANCE FIX
-            // Use requestAnimationFrame to decouple input from rendering.
-            // This prevents layout thrashing on high-refresh rate displays.
             if (this.rafId) cancelAnimationFrame(this.rafId);
             
             this.rafId = requestAnimationFrame(() => {
@@ -116,7 +124,6 @@ export class CarouselEventHandler {
     handleDragEnd() {
         if (!this.state.isDragging) return;
         
-        // Cancel any pending frame to prevent overwrite after end
         if (this.rafId) cancelAnimationFrame(this.rafId);
 
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.state;
@@ -126,7 +133,7 @@ export class CarouselEventHandler {
 
         if (!activeCarousel) return;
 
-        activeCarousel.style.transitionDuration = ''; // Revert to CSS-defined duration for smooth snap
+        activeCarousel.style.transitionDuration = ''; 
 
         const movedBy = currentTranslate - startTranslate;
         let newIndex = currentIndex;
@@ -139,28 +146,25 @@ export class CarouselEventHandler {
         }
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
+        
+        // --- [[START]] PREDICTIVE PRELOAD ---
+        // Ensure assets are fetched/cached BEFORE we trigger the state update 
+        // that re-renders the DOM in HangarScreen.js
+        this._preloadForTarget(newIndex, mode);
+        // --- [[END]] PREDICTIVE PRELOAD ---
+
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
-        // --- [[START]] PHASE 3: PREDICTIVE PRELOAD ---
-        // Immediately fetch neighbor images so they are ready for the next swipe
-        this._preloadNeighbors(newIndex, mode);
-        // --- [[END]] PHASE 3: PREDICTIVE PRELOAD ---
-
-        // A timeout is used to reset the 'moved' flag, preventing a click event from firing immediately after a drag.
         setTimeout(() => {
             this.state.moved = false;
         }, 50);
     }
 
-    // --- [[START]] PHASE 3: PRELOAD HELPER ---
     /**
-     * Silently fetches images for the ships immediately adjacent to the current index.
-     * This relies on the browser's cache to store the result.
-     * @param {number} centerIndex The current active index.
-     * @param {string} mode 'hangar' or 'shipyard'.
+     * Helper to identify list and trigger asset preloading for a target index.
      * @private
      */
-    _preloadNeighbors(centerIndex, mode) {
+    _preloadForTarget(targetIndex, mode) {
         const state = this.gameState.getState();
         const player = state.player;
         
@@ -168,33 +172,17 @@ export class CarouselEventHandler {
         if (mode === 'hangar') {
             shipList = player.ownedShipIds;
         } else {
-            // Using internal method to stay consistent with HangarScreen.js data source
             if (this.simulationService._getShipyardInventory) {
                 shipList = this.simulationService._getShipyardInventory().map(([id]) => id);
             }
         }
 
-        // Identify neighbors (safe bounds check handled in loop)
-        const indicesToLoad = [centerIndex - 1, centerIndex + 1];
-
-        indicesToLoad.forEach(idx => {
-            if (idx >= 0 && idx < shipList.length) {
-                const shipId = shipList[idx];
-                // Use the player's visual seed to ensure we fetch the CORRECT variant
-                const src = AssetService.getShipImage(shipId, player.visualSeed);
-                if (src) {
-                    const img = new Image();
-                    img.src = src; // Trigger download to cache
-                }
-            }
-        });
+        // Preload visible target + 5 neighbors
+        AssetService.preloadBuffer(shipList, targetIndex, 5, player.visualSeed);
     }
-    // --- [[END]] PHASE 3: PRELOAD HELPER ---
     
     /**
      * Returns whether the carousel was moved during the last drag operation.
-     * Used by EventManager to suppress clicks after a drag.
-     * @returns {boolean}
      */
     wasMoved() {
         return this.state.moved;

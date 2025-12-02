@@ -47,7 +47,7 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
                     <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -84,11 +84,13 @@ function _renderEmptyCarouselPage(isHangarMode) {
  * Renders a single page within the ship carousel.
  * @param {object} gameState The current game state.
  * @param {string} shipId The ID of the ship for this page.
+ * @param {number} itemIndex The index of this ship in the list.
+ * @param {number} activeIndex The currently viewed index.
  * @param {boolean} isHangarMode True if the view is for the player's hangar.
  * @returns {string} The HTML for a single carousel page.
  * @private
  */
-function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
+function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -104,24 +106,40 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- [[START]] MODIFICATION (Smart Loading) ---
-    // Calculate Paths using Modulo Math (via AssetService)
-    const imagePath = AssetService.getShipImage(shipId, player.visualSeed);
+    // --- [[START]] MODIFICATION (Smart Buffer & Garbage Collection) ---
+    // Rule: Load visible + 5 neighbors. Unload (GC) anything > 6 spaces away.
+    const distance = Math.abs(itemIndex - activeIndex);
+    const inBuffer = distance <= 5;
+
+    // Calculate Paths
+    const realPath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
-    const isVariantA = imagePath.endsWith('_A.jpeg');
+    
+    // If in buffer, use real path. If not (GC), use placeholder and store real path in data-src.
+    const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
+    const dataSrc = realPath; // Always store the real path for JS access
+    
+    const isVariantA = realPath.endsWith('_A.jpeg');
+
+    // --- [[START]] MODIFICATION (Clip Fix) ---
+    // If this is the Active Ship, we force it to be visible immediately. 
+    // This prevents the "Hologram Flash" during the re-render caused by boarding.
+    const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
+    const placeholderStyle = isActive ? 'display: none;' : '';
 
     const shipImageHtml = `
         <div class="relative w-full h-full">
-            <img src="${imagePath}" 
+            <img src="${src}" 
+                 data-src="${dataSrc}"
                  class="w-full h-full object-cover rounded-lg relative z-10" 
                  alt="${shipStatic.name}"
-                 loading="lazy" 
+                 loading="${inBuffer ? 'eager' : 'lazy'}" 
                  data-fallback-src="${fallbackPath}"
                  data-is-a="${isVariantA}"
-                 style="opacity: 0; transition: opacity 0.3s ease-in;"
+                 style="${imgStyle}"
                  onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
                  onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
-            <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600">[ SHIP HOLOGRAM ]</span>
+            <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600" style="${placeholderStyle}">[ SHIP HOLOGRAM ]</span>
         </div>
     `;
     // --- [[END]] MODIFICATION ---
@@ -163,10 +181,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
-    // --- [[START]] MODIFICATION (Garbage Collection Hook) ---
-    // Added data-ship-id to the wrapper div
     return `
-        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}">
+        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}" data-index="${itemIndex}">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10">
@@ -177,18 +193,11 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
-    // --- [[END]] MODIFICATION ---
 }
 
 
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
- * @param {object} gameState - The current state of the game.
- * @param {string} shipId - The ID of the ship.
- * @param {object} shipStatic - The static data for the ship.
- * @param {object} shipDynamic - The dynamic state for the ship (hangar only).
- * @param {boolean} isHangarMode - True if rendering the hangar view.
- * @returns {string} The HTML for the info panel.
  * @private
  */
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
@@ -217,7 +226,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         descStyle = 'font-size: 0.8rem; line-height: 1.4;';
     }
     
-    // Enforce one line with whitespace-nowrap and overflow-hidden
     const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
 
     let shadowClass = 'inset-text-shadow'; 
@@ -264,12 +272,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
 
 /**
  * Renders the appropriate action buttons (Hangar or Shipyard).
- * @param {string} shipId - The ID of the ship.
- * @param {object} shipStatic - The static data for the ship.
- * @param {object} player - The player object.
- * @param {boolean} isHangarMode - True if rendering the hangar view.
- * @param {object} tutorials - The current tutorial state.
- * @returns {string} The HTML for the action buttons.
  * @private
  */
 function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
@@ -306,12 +308,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
- * @param {object} shipStatic - The static data for the ship (for max values).
- * @param {object} shipDynamic - The dynamic state (health, fuel). Null for shipyard.
- * @param {object} player - The player object (for cargo).
- * @param {boolean} [isShipyard=false] - Flag to determine style and values.
- * @param {string} shipId - The specific ID of the ship being rendered.
- * @returns {string} HTML for the parameter bars.
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {

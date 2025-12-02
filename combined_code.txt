@@ -5843,7 +5843,7 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
                     <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map(shipId => _renderShipCarouselPage(gameState, shipId, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -5880,11 +5880,13 @@ function _renderEmptyCarouselPage(isHangarMode) {
  * Renders a single page within the ship carousel.
  * @param {object} gameState The current game state.
  * @param {string} shipId The ID of the ship for this page.
+ * @param {number} itemIndex The index of this ship in the list.
+ * @param {number} activeIndex The currently viewed index.
  * @param {boolean} isHangarMode True if the view is for the player's hangar.
  * @returns {string} The HTML for a single carousel page.
  * @private
  */
-function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
+function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -5900,24 +5902,40 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- [[START]] MODIFICATION (Smart Loading) ---
-    // Calculate Paths using Modulo Math (via AssetService)
-    const imagePath = AssetService.getShipImage(shipId, player.visualSeed);
+    // --- [[START]] MODIFICATION (Smart Buffer & Garbage Collection) ---
+    // Rule: Load visible + 5 neighbors. Unload (GC) anything > 6 spaces away.
+    const distance = Math.abs(itemIndex - activeIndex);
+    const inBuffer = distance <= 5;
+
+    // Calculate Paths
+    const realPath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
-    const isVariantA = imagePath.endsWith('_A.jpeg');
+    
+    // If in buffer, use real path. If not (GC), use placeholder and store real path in data-src.
+    const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
+    const dataSrc = realPath; // Always store the real path for JS access
+    
+    const isVariantA = realPath.endsWith('_A.jpeg');
+
+    // --- [[START]] MODIFICATION (Clip Fix) ---
+    // If this is the Active Ship, we force it to be visible immediately. 
+    // This prevents the "Hologram Flash" during the re-render caused by boarding.
+    const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
+    const placeholderStyle = isActive ? 'display: none;' : '';
 
     const shipImageHtml = `
         <div class="relative w-full h-full">
-            <img src="${imagePath}" 
+            <img src="${src}" 
+                 data-src="${dataSrc}"
                  class="w-full h-full object-cover rounded-lg relative z-10" 
                  alt="${shipStatic.name}"
-                 loading="lazy" 
+                 loading="${inBuffer ? 'eager' : 'lazy'}" 
                  data-fallback-src="${fallbackPath}"
                  data-is-a="${isVariantA}"
-                 style="opacity: 0; transition: opacity 0.3s ease-in;"
+                 style="${imgStyle}"
                  onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
                  onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
-            <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600">[ SHIP HOLOGRAM ]</span>
+            <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600" style="${placeholderStyle}">[ SHIP HOLOGRAM ]</span>
         </div>
     `;
     // --- [[END]] MODIFICATION ---
@@ -5959,10 +5977,8 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
         </div>
     `;
 
-    // --- [[START]] MODIFICATION (Garbage Collection Hook) ---
-    // Added data-ship-id to the wrapper div
     return `
-        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}">
+        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}" data-index="${itemIndex}">
             <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10">
@@ -5973,18 +5989,11 @@ function _renderShipCarouselPage(gameState, shipId, isHangarMode) {
             </div>
         </div>
     `;
-    // --- [[END]] MODIFICATION ---
 }
 
 
 /**
  * Renders the appropriate info panel (Hangar or Shipyard).
- * @param {object} gameState - The current state of the game.
- * @param {string} shipId - The ID of the ship.
- * @param {object} shipStatic - The static data for the ship.
- * @param {object} shipDynamic - The dynamic state for the ship (hangar only).
- * @param {boolean} isHangarMode - True if rendering the hangar view.
- * @returns {string} The HTML for the info panel.
  * @private
  */
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
@@ -6013,7 +6022,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         descStyle = 'font-size: 0.8rem; line-height: 1.4;';
     }
     
-    // Enforce one line with whitespace-nowrap and overflow-hidden
     const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
 
     let shadowClass = 'inset-text-shadow'; 
@@ -6060,12 +6068,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
 
 /**
  * Renders the appropriate action buttons (Hangar or Shipyard).
- * @param {string} shipId - The ID of the ship.
- * @param {object} shipStatic - The static data for the ship.
- * @param {object} player - The player object.
- * @param {boolean} isHangarMode - True if rendering the hangar view.
- * @param {object} tutorials - The current tutorial state.
- * @returns {string} The HTML for the action buttons.
  * @private
  */
 function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
@@ -6102,12 +6104,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 
 /**
  * Renders the HULL, CARGO, and FUEL parameter bars.
- * @param {object} shipStatic - The static data for the ship (for max values).
- * @param {object} shipDynamic - The dynamic state (health, fuel). Null for shipyard.
- * @param {object} player - The player object (for cargo).
- * @param {boolean} [isShipyard=false] - Flag to determine style and values.
- * @param {string} shipId - The specific ID of the ship being rendered.
- * @returns {string} HTML for the parameter bars.
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
@@ -12264,18 +12260,22 @@ export class NewsTickerService {
 // js/services/AssetService.js
 /**
  * @fileoverview Centralizes the logic for generating dynamic asset paths.
- * Implements the "Modulo Variant" system for perfect probability distribution.
+ * Implements the "Modulo Variant" system for perfect probability distribution
+ * and manages asset preloading/caching.
  */
 
 import { DB } from '../data/database.js';
 import { DEFAULT_VARIANT_COUNT, SHIP_VARIANT_COUNTS } from '../data/assets_config.js';
 
 export class AssetService {
+    // 1x1 Transparent GIF for garbage collected images
+    static PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
     /**
      * Generates the target image path for a ship based on the player's visual seed.
      * Uses modulo arithmetic to cycle through available variants (A, B, C...) perfectly.
-     * * Naming Convention: assets/images/ships/[Name]/[Name]_[Variant].jpeg
-     * * @param {string} shipId - The GAME ID of the ship (e.g., 'Wanderer.Ship').
+     * Naming Convention: assets/images/ships/[Name]/[Name]_[Variant].jpeg
+     * @param {string} shipId - The GAME ID of the ship (e.g., 'Wanderer.Ship').
      * @param {number} visualSeed - The player's current visual seed integer.
      * @returns {string} The relative path to the image asset.
      */
@@ -12289,15 +12289,12 @@ export class AssetService {
         const variantCount = SHIP_VARIANT_COUNTS[shipId] || DEFAULT_VARIANT_COUNT;
 
         // 2. Calculate the index (0 to Count-1)
-        // The visualSeed increments indefinitely, but modulo keeps the result within bounds.
         const variantIndex = Math.abs(visualSeed) % variantCount;
 
         // 3. Convert index to letter (0='A', 1='B', 2='C', etc.)
-        // String.fromCharCode(65) is 'A'.
         const variantLetter = String.fromCharCode(65 + variantIndex);
 
         // 4. Construct Path
-        // Example: assets/images/ships/Wanderer/Wanderer_B.jpeg
         return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.jpeg`;
     }
 
@@ -12313,6 +12310,46 @@ export class AssetService {
 
         const baseName = shipData.name;
         return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
+    }
+
+    /**
+     * Preloads images for a specific range of ships around a center index.
+     * This ensures assets are hot in the cache before they are displayed.
+     * @param {string[]} shipList - Array of ship IDs.
+     * @param {number} centerIndex - The current active index.
+     * @param {number} range - The number of neighbors to preload (e.g., 5).
+     * @param {number} visualSeed - The player's visual seed.
+     */
+    static preloadBuffer(shipList, centerIndex, range, visualSeed) {
+        const min = Math.max(0, centerIndex - range);
+        const max = Math.min(shipList.length - 1, centerIndex + range);
+
+        for (let i = min; i <= max; i++) {
+            const src = this.getShipImage(shipList[i], visualSeed);
+            // Create a detached Image object to force browser download/cache
+            const img = new Image();
+            img.src = src;
+        }
+    }
+
+    /**
+     * Helper to preload the initial view state.
+     * Should be called on Game Start and Travel Complete.
+     * @param {object} gameState - Current game state.
+     * @param {boolean} isHangarMode - Initial mode.
+     */
+    static performInitialPreload(gameState, isHangarMode) {
+        const { player, market } = gameState;
+        const shipList = isHangarMode 
+            ? player.ownedShipIds 
+            : Object.keys(market.shipyardStock || {}).map(k => k); // Approx list extraction
+        
+        const activeIndex = isHangarMode 
+            ? (gameState.uiState.hangarActiveIndex || 0) 
+            : (gameState.uiState.shipyardActiveIndex || 0);
+
+        // Preload visible + 5 neighbors
+        this.preloadBuffer(shipList, activeIndex, 5, player.visualSeed);
     }
 }
 --- END OF FILE: ./js/services/AssetService.js ---
@@ -21128,9 +21165,7 @@ export class TooltipHandler {
  * hangar/shipyard carousel, providing a smooth drag-and-swipe interface.
  */
 
-// --- [[START]] PHASE 3 IMPORT ---
 import { AssetService } from '../AssetService.js';
-// --- [[END]] PHASE 3 IMPORT ---
 
 export class CarouselEventHandler {
     /**
@@ -21143,7 +21178,7 @@ export class CarouselEventHandler {
 
         this.isScrolling = false;
         this.scrollTimeout = null;
-        this.rafId = null; // Track the animation frame request
+        this.rafId = null; 
 
         this.state = {
             isDragging: false,
@@ -21166,13 +21201,26 @@ export class CarouselEventHandler {
         if (this.isScrolling) return;
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
+        
+        // --- [[START]] PREDICTIVE PRELOAD ---
+        // Preload assets in the direction of the scroll BEFORE trigger
+        const currentState = this.gameState.getState();
+        const currentMode = currentState.uiState.hangarShipyardToggleState;
+        const currentIdx = currentMode === 'hangar' 
+            ? (currentState.uiState.hangarActiveIndex || 0) 
+            : (currentState.uiState.shipyardActiveIndex || 0);
+        
+        const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        this._preloadForTarget(targetIdx, currentMode);
+        // --- [[END]] PREDICTIVE PRELOAD ---
+
         this.simulationService.cycleHangarCarousel(direction);
 
         this.isScrolling = true;
         clearTimeout(this.scrollTimeout);
         this.scrollTimeout = setTimeout(() => {
             this.isScrolling = false;
-        }, 300); // Throttle scroll events
+        }, 300); 
     }
 
     /**
@@ -21202,7 +21250,7 @@ export class CarouselEventHandler {
         this.state.currentTranslate = this.state.startTranslate;
         this.state.moved = false;
 
-        carousel.style.transitionDuration = '0s'; // Make drag instant
+        carousel.style.transitionDuration = '0s'; 
         document.body.style.cursor = 'grabbing';
     }
 
@@ -21221,9 +21269,6 @@ export class CarouselEventHandler {
         if (Math.abs(diff) > 10) this.state.moved = true;
 
         if (this.state.activeCarousel) {
-            // VIRTUAL WORKBENCH: PERFORMANCE FIX
-            // Use requestAnimationFrame to decouple input from rendering.
-            // This prevents layout thrashing on high-refresh rate displays.
             if (this.rafId) cancelAnimationFrame(this.rafId);
             
             this.rafId = requestAnimationFrame(() => {
@@ -21240,7 +21285,6 @@ export class CarouselEventHandler {
     handleDragEnd() {
         if (!this.state.isDragging) return;
         
-        // Cancel any pending frame to prevent overwrite after end
         if (this.rafId) cancelAnimationFrame(this.rafId);
 
         const { activeCarousel, startTranslate, currentTranslate, currentIndex, containerWidth, pageCount } = this.state;
@@ -21250,7 +21294,7 @@ export class CarouselEventHandler {
 
         if (!activeCarousel) return;
 
-        activeCarousel.style.transitionDuration = ''; // Revert to CSS-defined duration for smooth snap
+        activeCarousel.style.transitionDuration = ''; 
 
         const movedBy = currentTranslate - startTranslate;
         let newIndex = currentIndex;
@@ -21263,28 +21307,25 @@ export class CarouselEventHandler {
         }
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
+        
+        // --- [[START]] PREDICTIVE PRELOAD ---
+        // Ensure assets are fetched/cached BEFORE we trigger the state update 
+        // that re-renders the DOM in HangarScreen.js
+        this._preloadForTarget(newIndex, mode);
+        // --- [[END]] PREDICTIVE PRELOAD ---
+
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
-        // --- [[START]] PHASE 3: PREDICTIVE PRELOAD ---
-        // Immediately fetch neighbor images so they are ready for the next swipe
-        this._preloadNeighbors(newIndex, mode);
-        // --- [[END]] PHASE 3: PREDICTIVE PRELOAD ---
-
-        // A timeout is used to reset the 'moved' flag, preventing a click event from firing immediately after a drag.
         setTimeout(() => {
             this.state.moved = false;
         }, 50);
     }
 
-    // --- [[START]] PHASE 3: PRELOAD HELPER ---
     /**
-     * Silently fetches images for the ships immediately adjacent to the current index.
-     * This relies on the browser's cache to store the result.
-     * @param {number} centerIndex The current active index.
-     * @param {string} mode 'hangar' or 'shipyard'.
+     * Helper to identify list and trigger asset preloading for a target index.
      * @private
      */
-    _preloadNeighbors(centerIndex, mode) {
+    _preloadForTarget(targetIndex, mode) {
         const state = this.gameState.getState();
         const player = state.player;
         
@@ -21292,33 +21333,17 @@ export class CarouselEventHandler {
         if (mode === 'hangar') {
             shipList = player.ownedShipIds;
         } else {
-            // Using internal method to stay consistent with HangarScreen.js data source
             if (this.simulationService._getShipyardInventory) {
                 shipList = this.simulationService._getShipyardInventory().map(([id]) => id);
             }
         }
 
-        // Identify neighbors (safe bounds check handled in loop)
-        const indicesToLoad = [centerIndex - 1, centerIndex + 1];
-
-        indicesToLoad.forEach(idx => {
-            if (idx >= 0 && idx < shipList.length) {
-                const shipId = shipList[idx];
-                // Use the player's visual seed to ensure we fetch the CORRECT variant
-                const src = AssetService.getShipImage(shipId, player.visualSeed);
-                if (src) {
-                    const img = new Image();
-                    img.src = src; // Trigger download to cache
-                }
-            }
-        });
+        // Preload visible target + 5 neighbors
+        AssetService.preloadBuffer(shipList, targetIndex, 5, player.visualSeed);
     }
-    // --- [[END]] PHASE 3: PRELOAD HELPER ---
     
     /**
      * Returns whether the carousel was moved during the last drag operation.
-     * Used by EventManager to suppress clicks after a drag.
-     * @returns {boolean}
      */
     wasMoved() {
         return this.state.moved;
@@ -21948,7 +21973,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 ## [33.36] - 2025-11-1
 -  updated Warden assets (11)
--  asset loading optimization
+-  ship asset loading optimization
 
 ## [33.35] - 2025-11-1
 -  updated Raven assets (9)
