@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.36] - 2025-11-4
+-  updated Forerunner assets (9)
+
 ## [33.36] - 2025-11-1
 -  updated Aegis assets (6)
 
