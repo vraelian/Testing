@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.38</title>
+    <title>Orbital Trading 33.39</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.38</p>
+            <p>Version 33.39</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10138,6 +10138,7 @@ export const SHIP_VARIANT_COUNTS = {
     'Warden.Ship': 11,
     'Aegis.Ship': 6,
     'Forerunner.Ship': 9,
+    'Guardian.Ship': 11,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -21972,6 +21973,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.36] - 2025-11-4
+-  updated Guardian assets (11)
 
 ## [33.36] - 2025-11-4
 -  updated Forerunner assets (9)
