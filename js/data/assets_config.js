@@ -26,4 +26,6 @@ export const SHIP_VARIANT_COUNTS = {
     'Aegis.Ship': 6,
     'Forerunner.Ship': 9,
     'Guardian.Ship': 11,
+    'Valiant.Ship': 11,
+    'Eagle.Ship': 12,
 };
