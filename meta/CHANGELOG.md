@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.41] - 2025-11-14
+-  updated Tundra assets (11)
+-  updated Atlas assets (9)
+
 ## [33.39] - 2025-11-7
 -  updated Valiant assets (11)
 -  updated Eagle assets (12)
