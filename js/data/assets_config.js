@@ -33,4 +33,5 @@ export const SHIP_VARIANT_COUNTS = {
     'Vindicator.Ship': 9,
     'Aesudon.Ship': 13,
     'Pterodactyl.Ship': 14,
+    'Sovereign.Ship': 14,
 };

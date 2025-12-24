@@ -2,37 +2,40 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [33.44] - 2025-11-1`
+## [33.45] - 2025-12-23
+-  updated Sovereign assets (14)
+
+## [33.44] - 2025-12-21
 -  updated Pterodactyl assets (14)
 
-## [33.43] - 2025-11-19
+## [33.43] - 2025-12-19
 -  updated Aesudon assets (13)
 
-## [33.42] - 2025-11-14
+## [33.42] - 2025-12-14
 -  updated Vindicator assets (9)
 
-## [33.41] - 2025-11-14
+## [33.41] - 2025-12-14
 -  updated Tundra assets (11)
 -  updated Atlas assets (9)
 
-## [33.39] - 2025-11-7
+## [33.39] - 2025-12-7
 -  updated Valiant assets (11)
 -  updated Eagle assets (12)
 
-## [33.37] - 2025-11-6
+## [33.37] - 2025-12-6
 -  updated Guardian assets (11)
 
-## [33.36] - 2025-11-4
+## [33.36] - 2025-12-4
 -  updated Forerunner assets (9)
 
-## [33.36] - 2025-11-1
+## [33.36] - 2025-12-1
 -  updated Aegis assets (6)
 
-## [33.36] - 2025-11-1
+## [33.36] - 2025-12-1
 -  updated Warden assets (11)
 -  ship asset loading optimization
 
-## [33.35] - 2025-11-1
+## [33.35] - 2025-12-1
 -  updated Raven assets (9)
 
 ## [33.34] - 2025-11-30
