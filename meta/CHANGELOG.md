@@ -2,6 +2,15 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.47] - 2025-12-28
+-  updated Citadel assets (20)
+
+## [33.46] - 2025-12-25 (Merry Christmas!)
+-  updated Behemoth assets (13)
+
+## [33.46] - 2025-12-24
+-  updated Titan assets (11)
+
 ## [33.45] - 2025-12-23
 -  updated Sovereign assets (14)
 
