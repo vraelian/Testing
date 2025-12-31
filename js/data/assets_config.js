@@ -36,4 +36,5 @@ export const SHIP_VARIANT_COUNTS = {
     'Sovereign.Ship': 14,
     'Titan.Ship': 11,
     'Citadel.Ship': 20,
+    'Sophistacles.Ship': 17,
 };

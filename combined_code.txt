@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.45</title>
+    <title>Orbital Trading 33.49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.45</p>
+            <p>Version 33.49</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10147,6 +10147,9 @@ export const SHIP_VARIANT_COUNTS = {
     'Aesudon.Ship': 13,
     'Pterodactyl.Ship': 14,
     'Sovereign.Ship': 14,
+    'Titan.Ship': 11,
+    'Citadel.Ship': 20,
+    'Sophistacles.Ship': 17,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -21981,6 +21984,21 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.49] - 2025-12-31
+-  updated Ouroboros assets (13)
+
+## [33.48] - 2025-12-29
+-  updated Sophistacles assets (17)
+
+## [33.47] - 2025-12-28
+-  updated Citadel assets (20)
+
+## [33.46] - 2025-12-25 (Merry Christmas!)
+-  updated Behemoth assets (13)
+
+## [33.46] - 2025-12-24
+-  updated Titan assets (11)
 
 ## [33.45] - 2025-12-23
 -  updated Sovereign assets (14)
