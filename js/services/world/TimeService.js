@@ -36,6 +36,13 @@ export class TimeService {
      */
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
+
+        // --- NEW: Cycle Art Assets on Time Advance ---
+        // This ensures ships and commodities rotate their visual variants whenever time passes
+        // (Travel or Debug Advance).
+        this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+        // ---------------------------------------------
+
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
                 this.logger.warn('TimeService', 'Advance days aborted: Game is over.');

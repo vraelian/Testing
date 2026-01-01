@@ -1,10 +1,11 @@
 // js/data/assets_config.js
 /**
- * @fileoverview Configuration for ship asset variants.
- * Defines how many visual variants (A, B, C...) exist for each ship.
+ * @fileoverview Configuration for ship and commodity asset variants.
+ * Defines how many visual variants (A, B, C...) exist for each entity.
  */
 
 export const DEFAULT_VARIANT_COUNT = 5;
+export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -38,5 +39,13 @@ export const SHIP_VARIANT_COUNTS = {
     'Citadel.Ship': 20,
     'Sophistacles.Ship': 17,
     'Thalassodromeus.Ship': 13,
-    
+};
+
+/**
+ * A map of Commodity Names to their specific variant counts.
+ * Defines how many background art variants exist for a commodity.
+ * @type {Object<string, number>}
+ */
+export const COMMODITY_VARIANT_COUNTS = {
+    'Water Ice': 5
 };

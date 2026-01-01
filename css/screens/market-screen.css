@@ -662,3 +662,10 @@
 .market-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
+
+/* Custom Art Support */
+.has-custom-art {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

@@ -5,6 +5,7 @@
  * It is responsible for displaying all available commodities for trade.
  */
 import { DB } from '../../data/database.js';
+import { AssetService } from '../../services/AssetService.js';
 import { formatCredits, renderIndicatorPills } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
@@ -54,6 +55,21 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const isMinimized = uiState.marketCardMinimized[good.id];
+
+    // --- ASSET SERVICE INTEGRATION ---
+    // Fetch dynamic art if available. Fallback handled by service (returns empty string).
+    const bgImage = AssetService.getCommodityImage(good.name, player.visualSeed);
+    
+    // If art exists, use the raw image (Option B).
+    // Otherwise, leave empty to allow the CSS class (item-style-X) to show the default gradient.
+    let customBackgroundStyle = '';
+    let customClass = '';
+    
+    if (bgImage) {
+        // Option B: No gradient overlay, just the raw image.
+        customBackgroundStyle = `background-image: url('${bgImage}');`;
+        customClass = ' has-custom-art';
+    }
 
     let cardContentHtml;
     let buttonHtml = ''; 
@@ -134,7 +150,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     return `
     <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         ${buttonHtml}
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+        <div class="rounded-lg border ${good.styleClass}${customClass} transition-colors shadow-md" style="${customBackgroundStyle}">
             ${cardContentHtml}
         </div>
     </div>`;

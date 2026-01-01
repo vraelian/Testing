@@ -6,7 +6,12 @@
  */
 
 import { DB } from '../data/database.js';
-import { DEFAULT_VARIANT_COUNT, SHIP_VARIANT_COUNTS } from '../data/assets_config.js';
+import { 
+    DEFAULT_VARIANT_COUNT, 
+    SHIP_VARIANT_COUNTS, 
+    DEFAULT_COMMODITY_VARIANT_COUNT, 
+    COMMODITY_VARIANT_COUNTS 
+} from '../data/assets_config.js';
 
 export class AssetService {
     // 1x1 Transparent GIF for garbage collected images
@@ -51,6 +56,33 @@ export class AssetService {
 
         const baseName = shipData.name;
         return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
+    }
+
+    /**
+     * Generates the target image path for a commodity based on the player's visual seed.
+     * Naming Convention: assets/images/commodities/[Name]/[Name_With_Underscores]_[Variant].png
+     * @param {string} commodityName - The name of the commodity (e.g., 'Water Ice').
+     * @param {number} visualSeed - The player's current visual seed integer.
+     * @returns {string} The relative path to the image asset.
+     */
+    static getCommodityImage(commodityName, visualSeed = 0) {
+        if (!commodityName) return '';
+
+        // 1. Determine how many variants this commodity has
+        const variantCount = COMMODITY_VARIANT_COUNTS[commodityName] || DEFAULT_COMMODITY_VARIANT_COUNT;
+
+        // 2. Calculate the index
+        const variantIndex = Math.abs(visualSeed) % variantCount;
+
+        // 3. Convert index to letter
+        const variantLetter = String.fromCharCode(65 + variantIndex);
+
+        // 4. Construct Path
+        // Folder preserves spaces: "Water Ice"
+        // Filename uses underscores: "Water_Ice_A.png"
+        const fileNamePrefix = commodityName.replace(/ /g, '_');
+        
+        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
     }
 
     /**

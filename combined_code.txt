@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.50</title>
+    <title>Orbital Trading 33.56</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.50</p>
+            <p>Version 33.56</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3922,6 +3922,13 @@ card.
 .market-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
+
+/* Custom Art Support */
+.has-custom-art {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
 --- END OF FILE: ./css/screens/market-screen.css ---
 
 --- START OF FILE: ./css/screens/intel-screen.css ---
@@ -6766,6 +6773,7 @@ export function _renderMaxCargoModal(good, item) {
  * It is responsible for displaying all available commodities for trade.
  */
 import { DB } from '../../data/database.js';
+import { AssetService } from '../../services/AssetService.js';
 import { formatCredits, renderIndicatorPills } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
@@ -6815,6 +6823,21 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
     const isMinimized = uiState.marketCardMinimized[good.id];
+
+    // --- ASSET SERVICE INTEGRATION ---
+    // Fetch dynamic art if available. Fallback handled by service (returns empty string).
+    const bgImage = AssetService.getCommodityImage(good.name, player.visualSeed);
+    
+    // If art exists, use the raw image (Option B).
+    // Otherwise, leave empty to allow the CSS class (item-style-X) to show the default gradient.
+    let customBackgroundStyle = '';
+    let customClass = '';
+    
+    if (bgImage) {
+        // Option B: No gradient overlay, just the raw image.
+        customBackgroundStyle = `background-image: url('${bgImage}');`;
+        customClass = ' has-custom-art';
+    }
 
     let cardContentHtml;
     let buttonHtml = ''; 
@@ -6895,7 +6918,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     return `
     <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         ${buttonHtml}
-        <div class="rounded-lg border ${good.styleClass} transition-colors shadow-md">
+        <div class="rounded-lg border ${good.styleClass}${customClass} transition-colors shadow-md" style="${customBackgroundStyle}">
             ${cardContentHtml}
         </div>
     </div>`;
@@ -10113,11 +10136,12 @@ export const TUTORIAL_DATA = {
 --- START OF FILE: ./js/data/assets_config.js ---
 // js/data/assets_config.js
 /**
- * @fileoverview Configuration for ship asset variants.
- * Defines how many visual variants (A, B, C...) exist for each ship.
+ * @fileoverview Configuration for ship and commodity asset variants.
+ * Defines how many visual variants (A, B, C...) exist for each entity.
  */
 
 export const DEFAULT_VARIANT_COUNT = 5;
+export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -10151,7 +10175,15 @@ export const SHIP_VARIANT_COUNTS = {
     'Citadel.Ship': 20,
     'Sophistacles.Ship': 17,
     'Thalassodromeus.Ship': 13,
-    
+};
+
+/**
+ * A map of Commodity Names to their specific variant counts.
+ * Defines how many background art variants exist for a commodity.
+ * @type {Object<string, number>}
+ */
+export const COMMODITY_VARIANT_COUNTS = {
+    'Water Ice': 5
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -10918,7 +10950,16 @@ ${logHistory}
                 this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             // --------------------------------------------
-            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
+            
+            // --- MODIFIED: Advance Time now forces refresh using the correct method ---
+            advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
+                this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
+                // Trigger re-render to see new art assets immediately
+                // FIX: Used .render() instead of .renderCurrentScreen()
+                this.uiManager.render(this.gameState);
+            }},
+            // ------------------------------------------------------------------------
+
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
@@ -12281,7 +12322,12 @@ export class NewsTickerService {
  */
 
 import { DB } from '../data/database.js';
-import { DEFAULT_VARIANT_COUNT, SHIP_VARIANT_COUNTS } from '../data/assets_config.js';
+import { 
+    DEFAULT_VARIANT_COUNT, 
+    SHIP_VARIANT_COUNTS, 
+    DEFAULT_COMMODITY_VARIANT_COUNT, 
+    COMMODITY_VARIANT_COUNTS 
+} from '../data/assets_config.js';
 
 export class AssetService {
     // 1x1 Transparent GIF for garbage collected images
@@ -12326,6 +12372,33 @@ export class AssetService {
 
         const baseName = shipData.name;
         return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
+    }
+
+    /**
+     * Generates the target image path for a commodity based on the player's visual seed.
+     * Naming Convention: assets/images/commodities/[Name]/[Name_With_Underscores]_[Variant].png
+     * @param {string} commodityName - The name of the commodity (e.g., 'Water Ice').
+     * @param {number} visualSeed - The player's current visual seed integer.
+     * @returns {string} The relative path to the image asset.
+     */
+    static getCommodityImage(commodityName, visualSeed = 0) {
+        if (!commodityName) return '';
+
+        // 1. Determine how many variants this commodity has
+        const variantCount = COMMODITY_VARIANT_COUNTS[commodityName] || DEFAULT_COMMODITY_VARIANT_COUNT;
+
+        // 2. Calculate the index
+        const variantIndex = Math.abs(visualSeed) % variantCount;
+
+        // 3. Convert index to letter
+        const variantLetter = String.fromCharCode(65 + variantIndex);
+
+        // 4. Construct Path
+        // Folder preserves spaces: "Water Ice"
+        // Filename uses underscores: "Water_Ice_A.png"
+        const fileNamePrefix = commodityName.replace(/ /g, '_');
+        
+        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
     }
 
     /**
@@ -12959,9 +13032,7 @@ export class TravelService {
         // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange();
         
-        // Increment the visual seed. This ensures a predictable cycle through variants (A->B->C->A...).
-        // The AssetService will modulo this number by the variant count for each specific ship.
-        this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+        // REMOVED: Visual seed increment is now handled in TimeService.
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
         // --- [[END]] MODIFICATION ---
@@ -13146,6 +13217,13 @@ export class TimeService {
      */
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
+
+        // --- NEW: Cycle Art Assets on Time Advance ---
+        // This ensures ships and commodities rotate their visual variants whenever time passes
+        // (Travel or Debug Advance).
+        this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+        // ---------------------------------------------
+
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
                 this.logger.warn('TimeService', 'Advance days aborted: Game is over.');
@@ -15655,12 +15733,17 @@ change occurred (like a purchase), it *surgically
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD ---
-                if (!img.hasAttribute('src')) {
-                    const shipId = page.dataset.shipId;
-                    if (shipId) {
-                        const src = AssetService.getShipImage(shipId, player.visualSeed);
-                        img.src = src;
+                // --- RELOAD OR UPDATE ---
+                const shipId = page.dataset.shipId;
+                if (shipId) {
+                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                    // Update if src is missing OR if it doesn't match the new expected path.
+                    // We check if the current src URL contains the new relative path.
+                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
+                        img.src = newSrc;
+                        // Ensure it's visible if we just loaded it
+                        img.onload = () => { img.style.opacity = '1'; };
+                        if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }
@@ -17751,12 +17834,17 @@ change occurred (like a purchase), it *surgically
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD ---
-                if (!img.hasAttribute('src')) {
-                    const shipId = page.dataset.shipId;
-                    if (shipId) {
-                        const src = AssetService.getShipImage(shipId, player.visualSeed);
-                        img.src = src;
+                // --- RELOAD OR UPDATE ---
+                const shipId = page.dataset.shipId;
+                if (shipId) {
+                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                    // Update if src is missing OR if it doesn't match the new expected path.
+                    // We check if the current src URL contains the new relative path.
+                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
+                        img.src = newSrc;
+                        // Ensure it's visible if we just loaded it
+                        img.onload = () => { img.style.opacity = '1'; };
+                        if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }
@@ -21986,6 +22074,13 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.56] - 2026-1-1
+-  updated Water Ice assets (5)
+-  added commodity card background functionality
+-  added commodity card asset cycling
+-  updated general asset cycling each day
+-  added screen redraw to World & Time debug
 
 ## [33.50] - 2025-12-31
 -  updated Thalassodromeus assets (13)

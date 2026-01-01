@@ -675,12 +675,17 @@ change occurred (like a purchase), it *surgically
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD ---
-                if (!img.hasAttribute('src')) {
-                    const shipId = page.dataset.shipId;
-                    if (shipId) {
-                        const src = AssetService.getShipImage(shipId, player.visualSeed);
-                        img.src = src;
+                // --- RELOAD OR UPDATE ---
+                const shipId = page.dataset.shipId;
+                if (shipId) {
+                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                    // Update if src is missing OR if it doesn't match the new expected path.
+                    // We check if the current src URL contains the new relative path.
+                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
+                        img.src = newSrc;
+                        // Ensure it's visible if we just loaded it
+                        img.onload = () => { img.style.opacity = '1'; };
+                        if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }
@@ -2771,12 +2776,17 @@ change occurred (like a purchase), it *surgically
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD ---
-                if (!img.hasAttribute('src')) {
-                    const shipId = page.dataset.shipId;
-                    if (shipId) {
-                        const src = AssetService.getShipImage(shipId, player.visualSeed);
-                        img.src = src;
+                // --- RELOAD OR UPDATE ---
+                const shipId = page.dataset.shipId;
+                if (shipId) {
+                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                    // Update if src is missing OR if it doesn't match the new expected path.
+                    // We check if the current src URL contains the new relative path.
+                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
+                        img.src = newSrc;
+                        // Ensure it's visible if we just loaded it
+                        img.onload = () => { img.style.opacity = '1'; };
+                        if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }

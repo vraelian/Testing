@@ -368,7 +368,16 @@ ${logHistory}
                 this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             // --------------------------------------------
-            advanceTime: { name: 'Advance Days', type: 'button', handler: () => this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance) },
+            
+            // --- MODIFIED: Advance Time now forces refresh using the correct method ---
+            advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
+                this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
+                // Trigger re-render to see new art assets immediately
+                // FIX: Used .render() instead of .renderCurrentScreen()
+                this.uiManager.render(this.gameState);
+            }},
+            // ------------------------------------------------------------------------
+
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
