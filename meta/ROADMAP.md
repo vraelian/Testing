@@ -3,7 +3,7 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- Creating 5 art assets for all ships in the game
+- Creating art assets for all ships in the game
 - Optimzimg ship art asset use
 
 ## Immediate Concerns, Bugs

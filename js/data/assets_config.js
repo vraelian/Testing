@@ -37,4 +37,6 @@ export const SHIP_VARIANT_COUNTS = {
     'Titan.Ship': 11,
     'Citadel.Ship': 20,
     'Sophistacles.Ship': 17,
+    'Thalassodromeus.Ship': 13,
+    
 };
