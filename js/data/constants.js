@@ -66,7 +66,7 @@ export const COMMODITY_IDS = Object.freeze({
     CYBERNETICS: 'cybernetics',
     PROPELLANT: 'propellant',
     PROCESSORS: 'processors',
-    GRAPHENE_LATTICES: 'graphene_lattices',
+    GRAPHENE_LATTICES: 'graphene_lattices', // CHANGED: Replaced GMO_SEEDS
     CRYO_PODS: 'cryo_pods',
     ATMO_PROCESSORS: 'atmos_processors',
     CLONED_ORGANS: 'cloned_organs',

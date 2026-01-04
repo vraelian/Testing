@@ -358,9 +358,9 @@
 }
 /* CHANGED for Graphene Lattices (Industrial/Slate) */
 .item-style-7 {
-    border-color: #94a3b8;
-    --market-card-gradient-color1: #e2e8f0;
-    --market-card-gradient-color2: #475569;
+    border-color: #64748b;
+    --market-card-gradient-color1: #334155;
+    --market-card-gradient-color2: #0f172a;
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #f8fafc;
 }
