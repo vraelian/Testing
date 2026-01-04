@@ -43,9 +43,23 @@ export const SHIP_VARIANT_COUNTS = {
 
 /**
  * A map of Commodity Names to their specific variant counts.
- * Defines how many background art variants exist for a commodity.
- * @type {Object<string, number>}
+ * The Key must match the game Name exactly (e.g., "Water Ice").
+ * The Code automatically looks for "Water_Ice_A.png".
+ * * Update the number to match how many files (A, B, C...) you have created.
  */
 export const COMMODITY_VARIANT_COUNTS = {
-    'Water Ice': 5
+    'Water Ice': 1,           // File: Water_Ice_A.png
+    'Plasteel': 1,            // File: Plasteel_A.png
+    'Hydroponics': 1,         // File: Hydroponics_A.png
+    'Cybernetics': 1,         // File: Cybernetics_A.png
+    'Refined Propellant': 1,  // File: Refined_Propellant_A.png
+    'Neural Processors': 1,   // File: Neural_Processors_A.png
+    'GMO Seed Cultures': 0,   // File: GMO_Seed_Cultures_A.png
+    'Cryo-Sleep Pods': 0,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
+    'Atmo Processors': 0,     // File: Atmo_Processors_A.png
+    'Cloned Organs': 0,       // File: Cloned_Organs_A.png
+    'Xeno-Geologicals': 0,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
+    'Sentient AI Cores': 0,   // File: Sentient_AI_Cores_A.png
+    'Antimatter': 0,          // File: Antimatter_A.png
+    'Folded-Space Drives': 0  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };

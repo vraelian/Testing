@@ -68,16 +68,23 @@ export class AssetService {
     static getCommodityImage(commodityName, visualSeed = 0) {
         if (!commodityName) return '';
 
-        // 1. Determine how many variants this commodity has
-        const variantCount = COMMODITY_VARIANT_COUNTS[commodityName] || DEFAULT_COMMODITY_VARIANT_COUNT;
+        // 1. Determine count. Explicit 0 overrides default.
+        // We check for undefined to allow a commodity to be omitted from config and fallback to default.
+        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName];
+        if (variantCount === undefined) {
+            variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
+        }
 
-        // 2. Calculate the index
+        // 2. Safety Check: If 0 or negative, return empty string (disables custom art)
+        if (variantCount <= 0) return '';
+
+        // 3. Calculate the index
         const variantIndex = Math.abs(visualSeed) % variantCount;
 
-        // 3. Convert index to letter
+        // 4. Convert index to letter
         const variantLetter = String.fromCharCode(65 + variantIndex);
 
-        // 4. Construct Path
+        // 5. Construct Path
         // Folder preserves spaces: "Water Ice"
         // Filename uses underscores: "Water_Ice_A.png"
         const fileNamePrefix = commodityName.replace(/ /g, '_');

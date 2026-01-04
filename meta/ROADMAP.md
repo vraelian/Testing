@@ -5,12 +5,12 @@ All notable plans and desirables for the Orbital Trading project will be documen
 ## Ongoing, WIP Efforts
 - Creating art assets for all ships in the game
 - Optimzimg ship art asset use
+- Art assets for commodities
 
 ## Immediate Concerns, Bugs
-- n/a
+- Apparent, occasional redraw clipping of news scroller
 
 ## Imminent Projects
-- Art assets for commodities
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Station Quirks
 - Ship Attributes

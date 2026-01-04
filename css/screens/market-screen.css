@@ -294,6 +294,8 @@
     align-items: center;
     gap: var(--market-card-indicator-h-spacing);
     text-shadow: none;
+    /* Semi-transparent black border for "dark grey" look */
+    border: 1px solid rgba(0, 0, 0, 0.5);
 }
 
 .indicator-pill.positive {
@@ -354,12 +356,13 @@
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #eff6ff;
 }
+/* CHANGED for Graphene Lattices (Industrial/Slate) */
 .item-style-7 {
-    border-color: #84cc16;
-    --market-card-gradient-color1: #a7f3d0;
-    --market-card-gradient-color2: #4d7c0f;
+    border-color: #94a3b8;
+    --market-card-gradient-color1: #e2e8f0;
+    --market-card-gradient-color2: #475569;
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
-    color: #f0fdf4;
+    color: #f8fafc;
 }
 .item-style-8 {
     border-color: #a5f3fc;
@@ -663,9 +666,52 @@
     display: none; /* For Chrome, Safari, and Opera */
 }
 
-/* Custom Art Support */
+/* --- CUSTOM ART ENHANCEMENTS --- */
+
+/* 1. Set up the parent to handle the overlay */
 .has-custom-art {
+    position: relative;
+    z-index: 0; /* Establish stacking context */
+    /* Optional: Add a subtle inner shadow to frame the art */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+}
+
+/* 2. Create the Scrim (The Gradient Overlay) */
+.has-custom-art::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
+    border-radius: var(--market-card-border-radius);
+    
+    /* LIGHTER SIDE SCRIM */
+    /* Reduced opacity from 0.9 -> 0.6 on edges */
+    /* Reduced opacity from 0.6 -> 0.3 on mid-points */
+    background: linear-gradient(
+        to right, 
+        rgba(0, 0, 0, 0) 0%,   /* Left Edge: 60% Black */
+        rgba(0, 0, 0, 0) 35%,  /* Transition: 30% Black */
+        rgba(0, 0, 0, 0.00) 50%,  /* Center: Transparent */
+        rgba(0, 0, 0, 0.) 65%,  /* Transition: 30% Black */
+        rgba(0, 0, 0, 0.) 100%  /* Right Edge: 60% Black */
+    );
+    pointer-events: none;
+}
+
+/* 3. Enhance Text Shadows for Custom Art Cards */
+/* This makes the text pop even more specifically on art cards */
+.has-custom-art .commodity-name,
+.has-custom-art .price-text,
+.has-custom-art .avail-text, 
+.has-custom-art .effective-price-display {
+    text-shadow: 
+        0 2px 4px rgba(0,0,0,0.9), 
+        0 0 10px rgba(0,0,0,0.7),
+        1px 1px 0 #000; /* Hard edge for readability */
 }

@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.56</title>
+    <title>Orbital Trading 33.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.56</p>
+            <p>Version 33.60</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3554,6 +3554,8 @@ card.
     align-items: center;
     gap: var(--market-card-indicator-h-spacing);
     text-shadow: none;
+    /* Semi-transparent black border for "dark grey" look */
+    border: 1px solid rgba(0, 0, 0, 0.5);
 }
 
 .indicator-pill.positive {
@@ -3614,12 +3616,13 @@ card.
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #eff6ff;
 }
+/* CHANGED for Graphene Lattices (Industrial/Slate) */
 .item-style-7 {
-    border-color: #84cc16;
-    --market-card-gradient-color1: #a7f3d0;
-    --market-card-gradient-color2: #4d7c0f;
+    border-color: #94a3b8;
+    --market-card-gradient-color1: #e2e8f0;
+    --market-card-gradient-color2: #475569;
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
-    color: #f0fdf4;
+    color: #f8fafc;
 }
 .item-style-8 {
     border-color: #a5f3fc;
@@ -3923,11 +3926,54 @@ card.
     display: none; /* For Chrome, Safari, and Opera */
 }
 
-/* Custom Art Support */
+/* --- CUSTOM ART ENHANCEMENTS --- */
+
+/* 1. Set up the parent to handle the overlay */
 .has-custom-art {
+    position: relative;
+    z-index: 0; /* Establish stacking context */
+    /* Optional: Add a subtle inner shadow to frame the art */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+}
+
+/* 2. Create the Scrim (The Gradient Overlay) */
+.has-custom-art::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
+    border-radius: var(--market-card-border-radius);
+    
+    /* LIGHTER SIDE SCRIM */
+    /* Reduced opacity from 0.9 -> 0.6 on edges */
+    /* Reduced opacity from 0.6 -> 0.3 on mid-points */
+    background: linear-gradient(
+        to right, 
+        rgba(0, 0, 0, 0) 0%,   /* Left Edge: 60% Black */
+        rgba(0, 0, 0, 0) 35%,  /* Transition: 30% Black */
+        rgba(0, 0, 0, 0.00) 50%,  /* Center: Transparent */
+        rgba(0, 0, 0, 0.) 65%,  /* Transition: 30% Black */
+        rgba(0, 0, 0, 0.) 100%  /* Right Edge: 60% Black */
+    );
+    pointer-events: none;
+}
+
+/* 3. Enhance Text Shadows for Custom Art Cards */
+/* This makes the text pop even more specifically on art cards */
+.has-custom-art .commodity-name,
+.has-custom-art .price-text,
+.has-custom-art .avail-text, 
+.has-custom-art .effective-price-display {
+    text-shadow: 
+        0 2px 4px rgba(0,0,0,0.9), 
+        0 0 10px rgba(0,0,0,0.7),
+        1px 1px 0 #000; /* Hard edge for readability */
 }
 --- END OF FILE: ./css/screens/market-screen.css ---
 
@@ -7570,7 +7616,7 @@ export const COMMODITY_IDS = Object.freeze({
     CYBERNETICS: 'cybernetics',
     PROPELLANT: 'propellant',
     PROCESSORS: 'processors',
-    GMO_SEEDS: 'gmo_seeds',
+    GRAPHENE_LATTICES: 'graphene_lattices',
     CRYO_PODS: 'cryo_pods',
     ATMO_PROCESSORS: 'atmos_processors',
     CLONED_ORGANS: 'cloned_organs',
@@ -7961,7 +8007,7 @@ export const DB = {
         { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [1200, 3800], volatility: 0.03, canonicalAvailability: [40, 70], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
         { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [14000, 38000], volatility: 0.035, canonicalAvailability: [25, 50], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
         { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [18000, 52000], volatility: 0.045, canonicalAvailability: [25, 50], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
-        { id: COMMODITY_IDS.GMO_SEEDS, name: 'GMO Seed Cultures', tier: 4, licenseId: 't4_license', basePriceRange: [190000, 550000], volatility: 0.06, canonicalAvailability: [15, 30], styleClass: 'item-style-7', lore: 'Patented seeds holding the key to unlocking agricultural wealth on new worlds.', cat: 'AGRI', symbol: 'GMO' },
+        { id: COMMODITY_IDS.GRAPHENE_LATTICES, name: 'Graphene Lattices', tier: 4, licenseId: 't4_license', basePriceRange: [180000, 420000], volatility: 0.05, canonicalAvailability: [20, 40], styleClass: 'item-style-7', lore: 'Ultra-light, diamond-hard carbon sheets produced in zero-G foundries. The structural backbone of every orbital habitat.', cat: 'IND', symbol: 'GRPH' },
         { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [250000, 750000], volatility: 0.075, canonicalAvailability: [15, 30], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
         { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [2800000, 8500000], volatility: 0.08, canonicalAvailability: [10, 20], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
         { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [3500000, 11000000], volatility: 0.09, canonicalAvailability: [10, 20], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
@@ -7983,10 +8029,10 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.VENUS, name: 'Venus', distance: 97, launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", specialty: "Exclusive access to the Venetian Syndicate for high-risk, high-reward intel and missions.", availabilityModifier: { [COMMODITY_IDS.CLONED_ORGANS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 2.0, [COMMODITY_IDS.GMO_SEEDS]: 0.5, [COMMODITY_IDS.SENTIENT_AI]: 0.5 } },
-        { id: LOCATION_IDS.EARTH, name: 'Earth', distance: 180, launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", specialty: "Offers the best sell prices for rare, high-tier goods and is the exclusive source for top-tier ship licenses.", availabilityModifier: { [COMMODITY_IDS.HYDROPONICS]: 2.0, [COMMODITY_IDS.GMO_SEEDS]: 2.0, [COMMODITY_IDS.CLONED_ORGANS]: 0.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', parent: 'loc_earth', distance: 15, launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", specialty: "Offers a slight discount on all ship repairs.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.WATER_ICE]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5 } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', distance: 226, launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", specialty: "Offers a higher-than-average number of colonial supply missions.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.WATER_ICE]: 0.5 } },
+        { id: LOCATION_IDS.VENUS, name: 'Venus', distance: 97, launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", specialty: "Exclusive access to the Venetian Syndicate for high-risk, high-reward intel and missions.", availabilityModifier: { [COMMODITY_IDS.CLONED_ORGANS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 2.0, [COMMODITY_IDS.SENTIENT_AI]: 0.5 } },
+        { id: LOCATION_IDS.EARTH, name: 'Earth', distance: 180, launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", specialty: "Offers the best sell prices for rare, high-tier goods and is the exclusive source for top-tier ship licenses.", availabilityModifier: { [COMMODITY_IDS.HYDROPONICS]: 2.0, [COMMODITY_IDS.CLONED_ORGANS]: 0.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 } },
+        { id: LOCATION_IDS.LUNA, name: 'The Moon', parent: 'loc_earth', distance: 15, launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", specialty: "Offers a slight discount on all ship repairs.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, [COMMODITY_IDS.WATER_ICE]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5 } },
+        { id: LOCATION_IDS.MARS, name: 'Mars', distance: 226, launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", specialty: "Offers a higher-than-average number of colonial supply missions.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.WATER_ICE]: 0.5 } },
         { id: LOCATION_IDS.BELT, name: 'The Belt', distance: 292, launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#a16207' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", specialty: "Increased chance to find rare derelict ships in its shipyards.", availabilityModifier: { [COMMODITY_IDS.WATER_ICE]: 2.0, [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CYBERNETICS]: 0.5 } },
         { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', distance: 309, launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", specialty: "The notorious black market of the outer belt.", availabilityModifier: {} },
         { id: LOCATION_IDS.JUPITER, name: 'Jupiter', distance: 443, launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", specialty: "Fuel is sold at 50% of the galactic average price, making it an essential stop for any long-haul journey.", availabilityModifier: { [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
@@ -10179,11 +10225,25 @@ export const SHIP_VARIANT_COUNTS = {
 
 /**
  * A map of Commodity Names to their specific variant counts.
- * Defines how many background art variants exist for a commodity.
- * @type {Object<string, number>}
+ * The Key must match the game Name exactly (e.g., "Water Ice").
+ * The Code automatically looks for "Water_Ice_A.png".
+ * * Update the number to match how many files (A, B, C...) you have created.
  */
 export const COMMODITY_VARIANT_COUNTS = {
-    'Water Ice': 5
+    'Water Ice': 1,           // File: Water_Ice_A.png
+    'Plasteel': 1,            // File: Plasteel_A.png
+    'Hydroponics': 1,         // File: Hydroponics_A.png
+    'Cybernetics': 1,         // File: Cybernetics_A.png
+    'Refined Propellant': 1,  // File: Refined_Propellant_A.png
+    'Neural Processors': 1,   // File: Neural_Processors_A.png
+    'GMO Seed Cultures': 0,   // File: GMO_Seed_Cultures_A.png
+    'Cryo-Sleep Pods': 0,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
+    'Atmo Processors': 0,     // File: Atmo_Processors_A.png
+    'Cloned Organs': 0,       // File: Cloned_Organs_A.png
+    'Xeno-Geologicals': 0,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
+    'Sentient AI Cores': 0,   // File: Sentient_AI_Cores_A.png
+    'Antimatter': 0,          // File: Antimatter_A.png
+    'Folded-Space Drives': 0  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -12384,16 +12444,23 @@ export class AssetService {
     static getCommodityImage(commodityName, visualSeed = 0) {
         if (!commodityName) return '';
 
-        // 1. Determine how many variants this commodity has
-        const variantCount = COMMODITY_VARIANT_COUNTS[commodityName] || DEFAULT_COMMODITY_VARIANT_COUNT;
+        // 1. Determine count. Explicit 0 overrides default.
+        // We check for undefined to allow a commodity to be omitted from config and fallback to default.
+        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName];
+        if (variantCount === undefined) {
+            variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
+        }
 
-        // 2. Calculate the index
+        // 2. Safety Check: If 0 or negative, return empty string (disables custom art)
+        if (variantCount <= 0) return '';
+
+        // 3. Calculate the index
         const variantIndex = Math.abs(visualSeed) % variantCount;
 
-        // 3. Convert index to letter
+        // 4. Convert index to letter
         const variantLetter = String.fromCharCode(65 + variantIndex);
 
-        // 4. Construct Path
+        // 5. Construct Path
         // Folder preserves spaces: "Water Ice"
         // Filename uses underscores: "Water_Ice_A.png"
         const fileNamePrefix = commodityName.replace(/ /g, '_');
@@ -22075,8 +22142,19 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.60] - 2026-1-2
+-  added Refined Propellant assets
+
+## [33.59] - 2026-1-1
+-  updated AssetService to handle 0 assets
+-  updated assets_config file names
+-  improved contrast of commodity cards
+-  added Plasteel assets
+-  added Hydroponics assets
+-  added Cybernetics assets
+
 ## [33.56] - 2026-1-1
--  updated Water Ice assets (5)
+-  updated Water Ice assets (1)
 -  added commodity card background functionality
 -  added commodity card asset cycling
 -  updated general asset cycling each day
@@ -23536,12 +23614,12 @@ All notable plans and desirables for the Orbital Trading project will be documen
 ## Ongoing, WIP Efforts
 - Creating art assets for all ships in the game
 - Optimzimg ship art asset use
+- Art assets for commodities
 
 ## Immediate Concerns, Bugs
-- n/a
+- Apparent, occasional redraw clipping of news scroller
 
 ## Imminent Projects
-- Art assets for commodities
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
 - Station Quirks
 - Ship Attributes
