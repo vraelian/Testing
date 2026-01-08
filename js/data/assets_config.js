@@ -54,12 +54,12 @@ export const COMMODITY_VARIANT_COUNTS = {
     'Cybernetics': 1,         // File: Cybernetics_A.png
     'Refined Propellant': 1,  // File: Refined_Propellant_A.png
     'Neural Processors': 1,   // File: Neural_Processors_A.png
-    'Graphene Lattices': 0,   // CHANGED: File: Graphene_Lattices_A.png
-    'Cryo-Sleep Pods': 0,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
-    'Atmo Processors': 0,     // File: Atmo_Processors_A.png
-    'Cloned Organs': 0,       // File: Cloned_Organs_A.png
-    'Xeno-Geologicals': 0,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
-    'Sentient AI Cores': 0,   // File: Sentient_AI_Cores_A.png
-    'Antimatter': 0,          // File: Antimatter_A.png
-    'Folded-Space Drives': 0  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
+    'Graphene Lattices': 1,   // File: Graphene_Lattices_A.png
+    'Cryo-Sleep Pods': 1,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
+    'Atmo Processors': 1,     // File: Atmo_Processors_A.png
+    'Cloned Organs': 1,       // File: Cloned_Organs_A.png
+    'Xeno-Geologicals': 1,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
+    'Sentient AI Cores': 1,   // File: Sentient_AI_Cores_A.png
+    'Antimatter': 1,          // File: Antimatter_A.png
+    'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };

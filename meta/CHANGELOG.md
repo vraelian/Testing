@@ -2,19 +2,39 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.69] - 2026-1-7
+-  added Folded-Space Drive asset
+
+## [33.68] - 2026-1-6
+-  added Antimatter asset
+
+## [33.67] - 2026-1-5
+-  added Cloned Organs asset
+-  added Xeno-Geologicals asset
+-  added Sentient AI Cores asset
+
+## [33.64] - 2026-1-4
+-  added Cryo-Sleep Pods asset
+-  added Atmo Processor asset
+
+## [33.62] - 2026-1-3
+-  changed GMO Seed Cultures to Graphene Lattices
+-  added Graphene Lattices asset
+
 ## [33.60] - 2026-1-2
--  added Refined Propellant assets
+-  added Refined Propellant asset
+-  added Neural Processor asset
 
 ## [33.59] - 2026-1-1
 -  updated AssetService to handle 0 assets
 -  updated assets_config file names
 -  improved contrast of commodity cards
--  added Plasteel assets
--  added Hydroponics assets
--  added Cybernetics assets
+-  added Plasteel asset
+-  added Hydroponics asset
+-  added Cybernetics asset
 
 ## [33.56] - 2026-1-1
--  updated Water Ice assets (1)
+-  updated Water Ice asset
 -  added commodity card background functionality
 -  added commodity card asset cycling
 -  updated general asset cycling each day

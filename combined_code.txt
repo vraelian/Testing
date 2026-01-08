@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.60</title>
+    <title>Orbital Trading 33.69</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.60</p>
+            <p>Version 33.69</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3618,9 +3618,9 @@ card.
 }
 /* CHANGED for Graphene Lattices (Industrial/Slate) */
 .item-style-7 {
-    border-color: #94a3b8;
-    --market-card-gradient-color1: #e2e8f0;
-    --market-card-gradient-color2: #475569;
+    border-color: #64748b;
+    --market-card-gradient-color1: #334155;
+    --market-card-gradient-color2: #0f172a;
     background: linear-gradient(var(--market-card-gradient-angle), var(--market-card-gradient-color1), var(--market-card-gradient-color2));
     color: #f8fafc;
 }
@@ -7241,7 +7241,8 @@ const commodityStyleMap = {
     'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
     'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
-    'item-style-7':  { hex: '#84cc16', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+    // CHANGED: Updated item-style-7 from Green (Biological) to Onyx/Slate (Graphene)
+    'item-style-7':  { hex: '#708090', gradient: 'linear-gradient(45deg, #353839, #2c2f30)' }, 
     'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
     'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
@@ -7616,7 +7617,7 @@ export const COMMODITY_IDS = Object.freeze({
     CYBERNETICS: 'cybernetics',
     PROPELLANT: 'propellant',
     PROCESSORS: 'processors',
-    GRAPHENE_LATTICES: 'graphene_lattices',
+    GRAPHENE_LATTICES: 'graphene_lattices', // CHANGED: Replaced GMO_SEEDS
     CRYO_PODS: 'cryo_pods',
     ATMO_PROCESSORS: 'atmos_processors',
     CLONED_ORGANS: 'cloned_organs',
@@ -10236,14 +10237,14 @@ export const COMMODITY_VARIANT_COUNTS = {
     'Cybernetics': 1,         // File: Cybernetics_A.png
     'Refined Propellant': 1,  // File: Refined_Propellant_A.png
     'Neural Processors': 1,   // File: Neural_Processors_A.png
-    'GMO Seed Cultures': 0,   // File: GMO_Seed_Cultures_A.png
-    'Cryo-Sleep Pods': 0,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
-    'Atmo Processors': 0,     // File: Atmo_Processors_A.png
-    'Cloned Organs': 0,       // File: Cloned_Organs_A.png
-    'Xeno-Geologicals': 0,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
-    'Sentient AI Cores': 0,   // File: Sentient_AI_Cores_A.png
-    'Antimatter': 0,          // File: Antimatter_A.png
-    'Folded-Space Drives': 0  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
+    'Graphene Lattices': 1,   // File: Graphene_Lattices_A.png
+    'Cryo-Sleep Pods': 1,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
+    'Atmo Processors': 1,     // File: Atmo_Processors_A.png
+    'Cloned Organs': 1,       // File: Cloned_Organs_A.png
+    'Xeno-Geologicals': 1,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
+    'Sentient AI Cores': 1,   // File: Sentient_AI_Cores_A.png
+    'Antimatter': 1,          // File: Antimatter_A.png
+    'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -17860,84 +17861,6 @@ change occurred (like a purchase), it *surgically
             contentClass: 'text-left' // GDD: Details are paragraphs
         });
     }
-
-    /**
-     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
-     * @param {object} gameState The current game state.
-     * @private
-     */
-    _updateHangarScreen(gameState) {
-        const { uiState, player } = gameState; // Added player for visualSeed
-        const hangarScreenEl = this.cache.hangarScreen;
-        if (!hangarScreenEl) return;
-
-        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
-        if (!carousel) return;
-
-        const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
-        const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
-
-        // Update carousel position
-        carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
-
-        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
-        const SAFE_DISTANCE = 2;
-        const pages = carousel.querySelectorAll('.carousel-page');
-
-        pages.forEach((page, index) => {
-            const distance = Math.abs(activeIndex - index);
-            const img = page.querySelector('img');
-            const placeholder = page.querySelector('span'); // The text placeholder
-
-            if (!img) return;
-
-            if (distance > SAFE_DISTANCE) {
-                // --- UNLOAD ---
-                if (img.hasAttribute('src')) {
-                    img.removeAttribute('src');
-                    img.style.opacity = '0';
-                    // Important: Reset fallback flag so it retries if reloaded
-                    img.removeAttribute('data-tried-fallback'); 
-                    if (placeholder) placeholder.style.display = 'flex';
-                }
-            } else {
-                // --- RELOAD OR UPDATE ---
-                const shipId = page.dataset.shipId;
-                if (shipId) {
-                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                    // Update if src is missing OR if it doesn't match the new expected path.
-                    // We check if the current src URL contains the new relative path.
-                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                        img.src = newSrc;
-                        // Ensure it's visible if we just loaded it
-                        img.onload = () => { img.style.opacity = '1'; };
-                        if (placeholder) placeholder.style.display = 'none';
-                    }
-                }
-            }
-        });
-        // --- [[END]] GARBAGE COLLECTION ---
-
-        // RENDER VIRTUAL PAGINATION
-        this._renderHangarPagination(gameState);
-        // Scroll the pagination container to center the active dot
-        const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
-        const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
-
-        if (paginationWrapper && activeDot) {
-            const wrapperWidth = paginationWrapper.clientWidth;
-            const dotOffsetLeft = activeDot.offsetLeft;
-            const dotWidth = activeDot.offsetWidth;
-
-            // Calculate the target scroll position to center the active dot
-            const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
-
-            paginationWrapper.scrollTo({
-                left: scrollLeft,
-                behavior: 'smooth'
-            });
-        }
-    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -22142,19 +22065,39 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.69] - 2026-1-7
+-  added Folded-Space Drive asset
+
+## [33.68] - 2026-1-6
+-  added Antimatter asset
+
+## [33.67] - 2026-1-5
+-  added Cloned Organs asset
+-  added Xeno-Geologicals asset
+-  added Sentient AI Cores asset
+
+## [33.64] - 2026-1-4
+-  added Cryo-Sleep Pods asset
+-  added Atmo Processor asset
+
+## [33.62] - 2026-1-3
+-  changed GMO Seed Cultures to Graphene Lattices
+-  added Graphene Lattices asset
+
 ## [33.60] - 2026-1-2
--  added Refined Propellant assets
+-  added Refined Propellant asset
+-  added Neural Processor asset
 
 ## [33.59] - 2026-1-1
 -  updated AssetService to handle 0 assets
 -  updated assets_config file names
 -  improved contrast of commodity cards
--  added Plasteel assets
--  added Hydroponics assets
--  added Cybernetics assets
+-  added Plasteel asset
+-  added Hydroponics asset
+-  added Cybernetics asset
 
 ## [33.56] - 2026-1-1
--  updated Water Ice assets (1)
+-  updated Water Ice asset
 -  added commodity card background functionality
 -  added commodity card asset cycling
 -  updated general asset cycling each day
@@ -23612,9 +23555,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- Creating art assets for all ships in the game
-- Optimzimg ship art asset use
-- Art assets for commodities
+
+
 
 ## Immediate Concerns, Bugs
 - Apparent, occasional redraw clipping of news scroller
@@ -23626,7 +23568,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Install tailwind CSS resources locally
 
 ## Long-Term Goals, Ideas
-- Refine commodities names, identity
 - Reputation system
 - Player age events
 - Player Stations

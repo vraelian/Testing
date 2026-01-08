@@ -17,7 +17,8 @@ const commodityStyleMap = {
     'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
     'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
-    'item-style-7':  { hex: '#84cc16', gradient: 'linear-gradient(45deg, #a3e635, #4d7c0f)' },
+    // CHANGED: Updated item-style-7 from Green (Biological) to Onyx/Slate (Graphene)
+    'item-style-7':  { hex: '#708090', gradient: 'linear-gradient(45deg, #353839, #2c2f30)' }, 
     'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
     'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },

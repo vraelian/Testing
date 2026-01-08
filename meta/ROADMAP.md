@@ -3,9 +3,8 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- Creating art assets for all ships in the game
-- Optimzimg ship art asset use
-- Art assets for commodities
+
+
 
 ## Immediate Concerns, Bugs
 - Apparent, occasional redraw clipping of news scroller
@@ -17,7 +16,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Install tailwind CSS resources locally
 
 ## Long-Term Goals, Ideas
-- Refine commodities names, identity
 - Reputation system
 - Player age events
 - Player Stations
