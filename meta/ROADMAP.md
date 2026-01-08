@@ -7,7 +7,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 
 ## Immediate Concerns, Bugs
-- Apparent, occasional redraw clipping of news scroller
+- Optimizing ship art asset use
 
 ## Imminent Projects
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics

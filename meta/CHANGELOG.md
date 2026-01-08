@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.XX] - 2026-1-8
+-  fixed news ticker seamless loop failure
+-  fixed line break ship card sell button
+-  fixed news ticker location relevance failure
+
 ## [33.69] - 2026-1-7
 -  added Folded-Space Drive asset
 

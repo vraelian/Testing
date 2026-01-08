@@ -384,6 +384,9 @@ COMPONENT-SPECIFIC STYLING
     position: relative;
     overflow: visible;
     z-index: 1; 
+    
+    /* VIRTUAL WORKBENCH: CRITICAL FIX - Prevent Line Breaking */
+    white-space: nowrap;
 }
 
 .action-button::before {
@@ -431,6 +434,9 @@ COMPONENT-SPECIFIC STYLING
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
+    
+    /* VIRTUAL WORKBENCH: Safety measure to prevent internal wrapping */
+    white-space: nowrap;
 }
 
 /* Flavor Text Styling */
@@ -599,4 +605,21 @@ COMPONENT-SPECIFIC STYLING
 }
 .glow-text-s {
      text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important;
+}
+
+/* UTILITY: Shrink text to fit (Added for large credit values) */
+/* General shrink for Shipyard Info Panel */
+.text-shrink {
+    font-size: 0.85em !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.05em;
+}
+
+/* Stronger shrink specifically for Hangar Buttons */
+.text-shrink-button {
+    /* VIRTUAL WORKBENCH: UPDATED - Increased from 0.75em to 0.9em for better legibility */
+    font-size: 0.9em !important;
+    white-space: nowrap !important;
+    /* VIRTUAL WORKBENCH: UPDATED - Relaxed from -0.07em to -0.05em */
+    letter-spacing: -0.05em;
 }

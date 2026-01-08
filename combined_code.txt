@@ -4952,6 +4952,9 @@ COMPONENT-SPECIFIC STYLING
     position: relative;
     overflow: visible;
     z-index: 1; 
+    
+    /* VIRTUAL WORKBENCH: CRITICAL FIX - Prevent Line Breaking */
+    white-space: nowrap;
 }
 
 .action-button::before {
@@ -4999,6 +5002,9 @@ COMPONENT-SPECIFIC STYLING
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
+    
+    /* VIRTUAL WORKBENCH: Safety measure to prevent internal wrapping */
+    white-space: nowrap;
 }
 
 /* Flavor Text Styling */
@@ -5167,6 +5173,23 @@ COMPONENT-SPECIFIC STYLING
 }
 .glow-text-s {
      text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important;
+}
+
+/* UTILITY: Shrink text to fit (Added for large credit values) */
+/* General shrink for Shipyard Info Panel */
+.text-shrink {
+    font-size: 0.85em !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.05em;
+}
+
+/* Stronger shrink specifically for Hangar Buttons */
+.text-shrink-button {
+    /* VIRTUAL WORKBENCH: UPDATED - Increased from 0.75em to 0.9em for better legibility */
+    font-size: 0.9em !important;
+    white-space: nowrap !important;
+    /* VIRTUAL WORKBENCH: UPDATED - Relaxed from -0.07em to -0.05em */
+    letter-spacing: -0.05em;
 }
 --- END OF FILE: ./css/screens/hangar-screen.css ---
 
@@ -6099,13 +6122,18 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     } else {
+        // --- [[START]] MODIFICATION (Shrink Text for Shipyard Price) ---
+        // Keep existing logic for Shipyard panel
+        const priceStr = formatCredits(shipStatic.price, true);
+        const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
+        
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
+                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing ${priceClass}">${priceStr}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
                 </div>
@@ -6115,6 +6143,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
             </div>
         `;
+        // --- [[END]] MODIFICATION ---
     }
 }
 
@@ -6129,6 +6158,12 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
         
+        // --- [[START]] MODIFICATION (Shrink Text for Hangar Sell Button) ---
+        const salePriceStr = formatCredits(salePrice, true);
+        // Lowered threshold to > 8 to catch "10.00K" (9 chars)
+        // Changed class to specifically target button styling
+        const salePriceClass = salePriceStr.length > 8 ? 'text-shrink-button' : '';
+
         return `
             <div class="grid grid-cols-2 gap-2">
                 <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
@@ -6136,10 +6171,11 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
                 </button>
                 <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
                     <span class="font-bold z-10 relative">SELL</span>
-                    <span class="action-button-price font-roboto-mono credits-text-pulsing z-10 relative">${formatCredits(salePrice, true)}</span>
+                    <span class="action-button-price font-roboto-mono credits-text-pulsing z-10 relative ${salePriceClass}">${salePriceStr}</span>
                 </button>
             </div>
         `;
+        // --- [[END]] MODIFICATION ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
@@ -12133,13 +12169,15 @@ export class NewsTickerService {
     /**
      * Called by SimulationService when the player arrives at a new location.
      * Rebuilds the entire default message queue.
+     * @param {string|null} locationOverride - The new location ID if called before state update.
      */
-    onLocationChange() {
+    onLocationChange(locationOverride = null) {
         const state = this.gameState.getState();
         // ---
         // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // FIX: Use override if provided to prevent lag.
         // ---
-        const newLocationId = state.currentLocationId;
+        const newLocationId = locationOverride || state.currentLocationId;
 
         // Start with a fresh queue
         this.messageQueue = [];
@@ -12204,9 +12242,12 @@ export class NewsTickerService {
 
         // --- VIRTUAL WORKBENCH: REQUEST B & C (STUTTER/SEPARATOR FIX) ---
         // Append one final separator to the end of the content.
-        // This will be duplicated by UIManager, seamlessly connecting the
-        // end of the loop ([STATUS]) to the start of the next ([INTEL]).
-        return `<div class="news-ticker-content">${messageHtml}${separator}</div>`;
+        const fullContent = `${messageHtml}${separator}`;
+        
+        // Duplicate the content to satisfy the CSS translateX(-50%) infinite loop.
+        // The animation moves the element left by 50% (exactly one fullContent width).
+        // By having two copies, the start of the second copy visually replaces the start of the first.
+        return `<div class="news-ticker-content">${fullContent}${fullContent}</div>`;
         // --- END VIRTUAL WORKBENCH ---
     }
 
@@ -12965,6 +13006,7 @@ export class MarketService {
 
 --- START OF FILE: ./js/services/world/TravelService.js ---
 // js/services/world/TravelService.js
+
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
@@ -13098,7 +13140,7 @@ export class TravelService {
         // Call onLocationChange() *before* setState.
         // This ensures the news ticker data is populated *before* the setState
         // triggers a UI.render(), preventing a re-render on the next click.
-        this.simulationService.newsTickerService.onLocationChange();
+        this.simulationService.newsTickerService.onLocationChange(locationId);
         
         // REMOVED: Visual seed increment is now handled in TimeService.
         
@@ -22065,6 +22107,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.XX] - 2026-1-8
+-  fixed news ticker seamless loop failure
+-  fixed line break ship card sell button
+-  fixed news ticker location relevance failure
+
 ## [33.69] - 2026-1-7
 -  added Folded-Space Drive asset
 
@@ -23559,7 +23606,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 
 ## Immediate Concerns, Bugs
-- Apparent, occasional redraw clipping of news scroller
+- Optimizing ship art asset use
 
 ## Imminent Projects
 - Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics

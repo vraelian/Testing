@@ -250,13 +250,18 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     } else {
+        // --- [[START]] MODIFICATION (Shrink Text for Shipyard Price) ---
+        // Keep existing logic for Shipyard panel
+        const priceStr = formatCredits(shipStatic.price, true);
+        const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
+        
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing">${formatCredits(shipStatic.price, true)}</p>
+                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing ${priceClass}">${priceStr}</p>
                     </div>
                     ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
                 </div>
@@ -266,6 +271,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
             </div>
         `;
+        // --- [[END]] MODIFICATION ---
     }
 }
 
@@ -280,6 +286,12 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
         
+        // --- [[START]] MODIFICATION (Shrink Text for Hangar Sell Button) ---
+        const salePriceStr = formatCredits(salePrice, true);
+        // Lowered threshold to > 8 to catch "10.00K" (9 chars)
+        // Changed class to specifically target button styling
+        const salePriceClass = salePriceStr.length > 8 ? 'text-shrink-button' : '';
+
         return `
             <div class="grid grid-cols-2 gap-2">
                 <button class="action-button" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}" ${isActive ? 'disabled' : ''} style="background-color: ${isActive ? '#374151' : 'var(--ot-cyan-base)'}; color: ${isActive ? 'var(--ot-text-secondary)' : 'var(--ot-bg-dark)'};">
@@ -287,10 +299,11 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
                 </button>
                 <button class="action-button" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''} style="background-color: var(--ot-hangar-red-base);">
                     <span class="font-bold z-10 relative">SELL</span>
-                    <span class="action-button-price font-roboto-mono credits-text-pulsing z-10 relative">${formatCredits(salePrice, true)}</span>
+                    <span class="action-button-price font-roboto-mono credits-text-pulsing z-10 relative ${salePriceClass}">${salePriceStr}</span>
                 </button>
             </div>
         `;
+        // --- [[END]] MODIFICATION ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;

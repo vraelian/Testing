@@ -109,13 +109,15 @@ export class NewsTickerService {
     /**
      * Called by SimulationService when the player arrives at a new location.
      * Rebuilds the entire default message queue.
+     * @param {string|null} locationOverride - The new location ID if called before state update.
      */
-    onLocationChange() {
+    onLocationChange(locationOverride = null) {
         const state = this.gameState.getState();
         // ---
         // BUG FIX (a): The location ID is at the root of the state, not under `player`.
+        // FIX: Use override if provided to prevent lag.
         // ---
-        const newLocationId = state.currentLocationId;
+        const newLocationId = locationOverride || state.currentLocationId;
 
         // Start with a fresh queue
         this.messageQueue = [];
@@ -180,9 +182,12 @@ export class NewsTickerService {
 
         // --- VIRTUAL WORKBENCH: REQUEST B & C (STUTTER/SEPARATOR FIX) ---
         // Append one final separator to the end of the content.
-        // This will be duplicated by UIManager, seamlessly connecting the
-        // end of the loop ([STATUS]) to the start of the next ([INTEL]).
-        return `<div class="news-ticker-content">${messageHtml}${separator}</div>`;
+        const fullContent = `${messageHtml}${separator}`;
+        
+        // Duplicate the content to satisfy the CSS translateX(-50%) infinite loop.
+        // The animation moves the element left by 50% (exactly one fullContent width).
+        // By having two copies, the start of the second copy visually replaces the start of the first.
+        return `<div class="news-ticker-content">${fullContent}${fullContent}</div>`;
         // --- END VIRTUAL WORKBENCH ---
     }
 

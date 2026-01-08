@@ -1,4 +1,5 @@
 // js/services/world/TravelService.js
+
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
@@ -132,7 +133,7 @@ export class TravelService {
         // Call onLocationChange() *before* setState.
         // This ensures the news ticker data is populated *before* the setState
         // triggers a UI.render(), preventing a re-render on the next click.
-        this.simulationService.newsTickerService.onLocationChange();
+        this.simulationService.newsTickerService.onLocationChange(locationId);
         
         // REMOVED: Visual seed increment is now handled in TimeService.
         
