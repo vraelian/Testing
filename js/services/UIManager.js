@@ -2069,6 +2069,7 @@ change occurred (like a purchase), it *surgically
         }
 
         const options = {
+            dismissOutside: true, // Phase 1: Allow dismissal
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
@@ -2114,6 +2115,7 @@ change occurred (like a purchase), it *surgically
 
     _showMissionCompletionModal(mission) {
          const options = {
+            dismissOutside: true, // Phase 1: Allow dismissal
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
