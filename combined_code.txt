@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.69</title>
+    <title>Orbital Trading 33.73</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.69</p>
+            <p>Version 33.73</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4890,28 +4890,51 @@ COMPONENT-SPECIFIC STYLING
     transform: scale(1.15); 
     transform-origin: top right;
 }
+
+/* VIRTUAL WORKBENCH: Replaced Dynamic Layout with Static Anchoring to fix iOS Glitch */
 .param-bar-item {
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
+    /* Removed flex/grid display to stop layout engine recalculation */
+    position: relative;
+    height: 12px;
+    width: 100%;
+    margin-bottom: 0.2rem;
 }
+
 .param-bar-label {
     font-size: 0.65rem;
     color: var(--ot-text-secondary);
     text-transform: uppercase;
-    width: 32px;
     text-align: right;
-    flex-shrink: 0;
+    
+    /* Absolute Anchor: Force exact position */
+    position: absolute;
+    left: 0;
+    /* VIRTUAL WORKBENCH: Replaced transform with line-height for safer rendering */
+    top: 0;
+    /* transform: translateY(-50%); <-- REMOVED (Causing GPU culling) */
+    height: 100%;
+    line-height: 12px; /* Vertically centers text in the 12px container */
+    
+    width: 32px;
+    
+    /* VIRTUAL WORKBENCH: Force Z-Index above sibling elements */
+    z-index: 10;
 }
+
 .param-bar-track {
     height: 12px;
     background-color: rgba(0,0,0,0.3);
-    flex-grow: 1;
     border-radius: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
     overflow: hidden;
-    position: relative;
+    
+    /* Absolute Anchor: Force exact position */
+    position: absolute;
+    left: 36px; /* 32px Label + 4px Gap */
+    right: 0;   /* Fill the rest of the container */
+    top: 0;
 }
+
 .param-bar-fill {
     height: 100%;
     border-radius: 4px;
@@ -5191,6 +5214,13 @@ COMPONENT-SPECIFIC STYLING
     /* VIRTUAL WORKBENCH: UPDATED - Relaxed from -0.07em to -0.05em */
     letter-spacing: -0.05em;
 }
+
+/* MAINTENANCE NOTES FOR STATIC ANCHORING FIX (1/9/26):
+   1. Text Width Tolerance: The 'CARGO' label is near the 32px hard cap; localization or larger system fonts may cause clipping.
+   2. Coordinate Dependency: The .param-bar-track 'left: 36px' value implicitly relies on the .param-bar-label width (32px) plus a 4px gap; both must be updated together.
+   3. Vertical Centering: We use 'line-height: 12px' instead of transforms to prevent iOS rendering glitches, so changing fonts may require manual offset adjustments.
+   4. Z-Index Safety: Labels use 'z-index: 10' to force visibility over the track; ensure all tooltips and modals use a higher index to prevent bleed-through.
+*/
 --- END OF FILE: ./css/screens/hangar-screen.css ---
 
 --- START OF FILE: ./css/screens/navigation-screen.css ---
@@ -22107,10 +22137,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [33.XX] - 2026-1-8
+## [33.73] - 2026-1-9
 -  fixed news ticker seamless loop failure
 -  fixed line break ship card sell button
 -  fixed news ticker location relevance failure
+-  fixed ship card param bar overflow
 
 ## [33.69] - 2026-1-7
 -  added Folded-Space Drive asset
