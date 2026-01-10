@@ -14,13 +14,16 @@ const commodityStyleMap = {
     'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
     'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
     'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-    'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+    // CHANGED: Cybernetics - Darkened from Light Grey to Zinc/Metallic for contrast
+    'item-style-4':  { hex: '#52525b', gradient: 'linear-gradient(45deg, #52525b, #27272a)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-    'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
-    // CHANGED: Updated item-style-7 from Green (Biological) to Onyx/Slate (Graphene)
+    // CHANGED: Neural Processors - Darkened from Light Blue to Deep Royal Blue
+    'item-style-6':  { hex: '#1e3a8a', gradient: 'linear-gradient(45deg, #1d4ed8, #1e3a8a)' },
     'item-style-7':  { hex: '#708090', gradient: 'linear-gradient(45deg, #353839, #2c2f30)' }, 
-    'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
-    'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+    // CHANGED: Cryo-Sleep Pods - Darkened from Cyan to Deep Teal
+    'item-style-8':  { hex: '#155e75', gradient: 'linear-gradient(45deg, #0e7490, #155e75)' },
+    // CHANGED: Atmo Processors - Darkened from Yellow to Dark Bronze/Amber
+    'item-style-9':  { hex: '#78350f', gradient: 'linear-gradient(45deg, #854d0e, #78350f)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
     'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
     'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },

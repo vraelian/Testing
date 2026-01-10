@@ -31,11 +31,21 @@
     align-items: center;
     overflow: hidden;
     position: relative;
+    /* CHANGED: Ensure art assets cover the entire box and are centered */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
+/* CHANGED: Universal update for quantity readability */
 .min-cargo-item .pt-quantity {
-    opacity: 0.85; /* Make the quantity text slightly transparent */
-    color: #a0aec0; /* Change the quantity text color to grey */
+    /* Removed text-gray-400 and opacity: 0.85 */
+    color: #ffffff; 
+    font-size: 1.1rem; /* Increased size (~1.5pt larger than base) */
+    font-weight: bold;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Black Outline */
+    margin-top: 0.25rem;
+    z-index: 10; /* Ensure it stays on top of scrim/background */
 }
 
 .min-cargo-item:hover {

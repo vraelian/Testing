@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.77</title>
+    <title>Orbital Trading 33.79</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.77</p>
+            <p>Version 33.79</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4272,11 +4272,21 @@ WORKBENCH --- */
     align-items: center;
     overflow: hidden;
     position: relative;
+    /* CHANGED: Ensure art assets cover the entire box and are centered */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
+/* CHANGED: Universal update for quantity readability */
 .min-cargo-item .pt-quantity {
-    opacity: 0.85; /* Make the quantity text slightly transparent */
-    color: #a0aec0; /* Change the quantity text color to grey */
+    /* Removed text-gray-400 and opacity: 0.85 */
+    color: #ffffff; 
+    font-size: 1.1rem; /* Increased size (~1.5pt larger than base) */
+    font-weight: bold;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* Black Outline */
+    margin-top: 0.25rem;
+    z-index: 10; /* Ensure it stays on top of scrim/background */
 }
 
 .min-cargo-item:hover {
@@ -6792,6 +6802,7 @@ export function renderServicesScreen(gameState) {
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
+import { AssetService } from '../../services/AssetService.js';
 import { ACTION_IDS } from '../../data/constants.js';
 
 /**
@@ -6804,6 +6815,7 @@ export function renderCargoScreen(gameState) {
     if (!inventory) return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
 
     const ownedGoods = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
+    const visualSeed = gameState.player.visualSeed; // Required for AssetService
 
     if (ownedGoods.length === 0) {
         return '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
@@ -6811,7 +6823,7 @@ export function renderCargoScreen(gameState) {
 
     const cargoItemsHtml = ownedGoods.map(([goodId, item]) => {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        return _renderMinCargoItem(good, item);
+        return _renderMinCargoItem(good, item, visualSeed);
     }).join('');
 
     return `<div class="cargo-scroll-panel"><div class="cargo-grid">${cargoItemsHtml}</div></div>`;
@@ -6821,20 +6833,47 @@ export function renderCargoScreen(gameState) {
  * Renders a single small, clickable cargo item for the grid view.
  * @param {object} good - The static data for the commodity from the database.
  * @param {object} item - The player's inventory data for the item (quantity, avgCost).
+ * @param {number} visualSeed - The player's visual seed for generating consistent art.
  * @returns {string} The HTML for a single min-cargo item.
  * @private
  */
-function _renderMinCargoItem(good, item) {
+function _renderMinCargoItem(good, item, visualSeed) {
     const styles = getCommodityStyle(good.styleClass);
+    const imagePath = AssetService.getCommodityImage(good.name, visualSeed);
+
+    // BACKGROUND STACK: Scrim -> Image -> Fallback Gradient
+    const scrimGradient = 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.8) 100%)';
+    const backgroundStyle = `background: ${scrimGradient}, url('${imagePath}'), ${styles.gradient};`;
+
+    // ABBREVIATION COLOR & CONTRAST LOGIC
+    // Specific overrides for distinct "Very Light" colors + White for legacy support.
+    const abbrevColorMap = {
+        'CRYO': '#a5f3fc', // Very Light Turquoise
+        'ATMO': '#fef08a', // Very Light Gold
+        'CLON': '#fbcfe8', // Very Light Pink
+        'AI':   '#fecaca', // Very Light Red
+        'NPRO': '#ffffff', // White
+        'CYB':  '#ffffff'  // White
+    };
+
+    const targetSymbol = good.symbol.toUpperCase();
+    const isSpecial = abbrevColorMap.hasOwnProperty(targetSymbol);
+
+    const abbrevColor = isSpecial ? abbrevColorMap[targetSymbol] : styles.hex;
+    
+    // Apply robust black outline to special items; standard shadow to others.
+    const abbrevShadow = isSpecial 
+        ? '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' 
+        : '0 0 5px rgba(0,0,0,0.9)';
 
     return `
         <div class="min-cargo-item" 
-             style="background: ${styles.gradient}; border: 2px solid ${styles.hex};"
+             style="${backgroundStyle} border: 2px solid ${styles.hex};"
              data-action="show_cargo_detail" 
              data-good-id="${good.id}">
             
-            <div class="pt-symbol" style="font-size: 2rem; color: ${styles.hex}; text-shadow: 0 0 5px rgba(0,0,0,0.7);">${good.symbol.toUpperCase()}</div>
-            <div class="pt-quantity text-gray-400" style="text-shadow: 1px 1px 3px #000;">(${item.quantity})</div>
+            <div class="pt-symbol" style="font-size: 2rem; color: ${abbrevColor}; text-shadow: ${abbrevShadow};">${targetSymbol}</div>
+            <div class="pt-quantity">(${item.quantity})</div>
         </div>
     `;
 }
@@ -6862,10 +6901,15 @@ export function _renderMaxCargoModal(good, item) {
     const galacticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
     const avgValue = galacticAvg * item.quantity;
 
+    // TIER LINE CONTRAST LOGIC (Universal)
+    // Always use White Text with Black Outline for maximum readability
+    const tierColor = '#ffffff';
+    const tierShadow = '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000';
+
     return `
         <div class="max-cargo-card" style="background: ${styles.gradient}; border-color: ${styles.hex};">
             <h3 class="text-2xl font-orbitron text-center">${good.name}</h3>
-            <p class="text-sm text-center tier-type-line mb-4" style="color: ${styles.hex};">Tier ${good.tier} ${fullCategory}</p>
+            <p class="text-sm text-center tier-type-line mb-4" style="color: ${tierColor}; text-shadow: ${tierShadow};">Tier ${good.tier} ${fullCategory}</p>
             <p class="flavor-text">${good.lore}</p>
             <div class="avg-cost">
                 <div>Avg. Cost: <span class="font-bold credits-text-pulsing">${formatCredits(item.avgCost, true)}</span></div>
@@ -7304,13 +7348,16 @@ const commodityStyleMap = {
     'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
     'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
     'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-    'item-style-4':  { hex: '#e5e5e5', gradient: 'linear-gradient(45deg, #d4d4d4, #737373)' },
+    // CHANGED: Cybernetics - Darkened from Light Grey to Zinc/Metallic for contrast
+    'item-style-4':  { hex: '#52525b', gradient: 'linear-gradient(45deg, #52525b, #27272a)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-    'item-style-6':  { hex: '#93c5fd', gradient: 'linear-gradient(45deg, #60a5fa, #2563eb)' },
-    // CHANGED: Updated item-style-7 from Green (Biological) to Onyx/Slate (Graphene)
+    // CHANGED: Neural Processors - Darkened from Light Blue to Deep Royal Blue
+    'item-style-6':  { hex: '#1e3a8a', gradient: 'linear-gradient(45deg, #1d4ed8, #1e3a8a)' },
     'item-style-7':  { hex: '#708090', gradient: 'linear-gradient(45deg, #353839, #2c2f30)' }, 
-    'item-style-8':  { hex: '#67e8f9', gradient: 'linear-gradient(45deg, #22d3ee, #0891b2)' },
-    'item-style-9':  { hex: '#fcd34d', gradient: 'linear-gradient(45deg, #facc15, #b45309)' },
+    // CHANGED: Cryo-Sleep Pods - Darkened from Cyan to Deep Teal
+    'item-style-8':  { hex: '#155e75', gradient: 'linear-gradient(45deg, #0e7490, #155e75)' },
+    // CHANGED: Atmo Processors - Darkened from Yellow to Dark Bronze/Amber
+    'item-style-9':  { hex: '#78350f', gradient: 'linear-gradient(45deg, #854d0e, #78350f)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
     'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
     'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },
@@ -22256,8 +22303,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [33.77] - 2026-1-10
+## [33.79] - 2026-1-10
 -  fixed missions modal dismissal failure
+-  cargo screen polish
 
 ## [33.77] - 2026-1-9
 -  added confirmation modal to buying/selling ship cards
