@@ -216,9 +216,21 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
-            // Pass negative price and 'true' to formatCredits to get '⌬ -1,234'
-            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
+            // 1. Get dynamic color
+            const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+            
+            // 2. Get glow class
+            let shadowClass = '';
+            if (ship.class === 'Z') shadowClass = 'glow-text-z';
+            else if (ship.class === 'O') shadowClass = 'glow-text-o';
+            else if (ship.class === 'S') shadowClass = 'glow-text-s';
+
+            // 3. Build Styled Span
+            const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+
+            // 4. Use in description
+            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -310,9 +322,21 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
-            // Add '+' sign and pass 'true' to formatCredits to get '+⌬ 12,345'
-            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
+            // 1. Get dynamic color
+            const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+            
+            // 2. Get glow class
+            let shadowClass = '';
+            if (ship.class === 'Z') shadowClass = 'glow-text-z';
+            else if (ship.class === 'O') shadowClass = 'glow-text-o';
+            else if (ship.class === 'S') shadowClass = 'glow-text-s';
+
+            // 3. Build Styled Span
+            const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+
+            // 4. Use in description
+            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
             // --- END VIRTUAL WORKBENCH ---
 

@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.73</title>
+    <title>Orbital Trading 33.75</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.73</p>
+            <p>Version 33.75</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -16522,6 +16522,72 @@ change occurred (like a purchase), it *surgically
         modal.addEventListener('click', closeHandler);
     }
     // [[END]] VIRTUAL WORKBENCH (showEulaModal)
+    
+    // --- VIRTUAL WORKBENCH: PHASE 7 (Refined Ship Confirmation) ---
+    /**
+     * Shows a confirmation modal for buying or selling a ship.
+     * @param {string} shipId - The ID of the ship.
+     * @param {string} transactionType - 'buy' or 'sell'.
+     * @param {Function} onConfirm - Callback to execute on confirmation.
+     */
+    showShipTransactionConfirmation(shipId, transactionType, onConfirm) {
+        const ship = DB.SHIPS[shipId];
+        if (!ship) return;
+
+        // --- Refined Style Logic ---
+        // 1. Get the dynamic color variable from hangar-screen.css
+        const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+        
+        // 2. Determine if a special glow class is needed (matching HangarScreen.js logic)
+        let shadowClass = '';
+        if (ship.class === 'Z') shadowClass = 'glow-text-z';
+        else if (ship.class === 'O') shadowClass = 'glow-text-o';
+        else if (ship.class === 'S') shadowClass = 'glow-text-s';
+        
+        // 3. Construct the styled name span
+        const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+        // --- End Refined Style Logic ---
+
+        let title, description, price, amountStr;
+        
+        if (transactionType === 'buy') {
+            title = "Confirm Purchase";
+            price = ship.price;
+            amountStr = formatCredits(price, true);
+            description = `Are you sure you want to purchase the ${shipNameSpan}?`;
+            description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
+        } else {
+            title = "Confirm Sale";
+            price = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            amountStr = formatCredits(price, true);
+            description = `Are you sure you want to sell the ${shipNameSpan}?`;
+            description += `<br><br>Income: <span class="credits-text-pulsing">+${amountStr}</span>`;
+        }
+
+        this.queueModal('event-modal', title, description, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                btnContainer.innerHTML = `
+                    <button id="confirm-transaction-btn" class="btn btn-pulse-green">Confirm</button>
+                    <button id="cancel-transaction-btn" class="btn">Cancel</button>
+                `;
+                
+                const confirmBtn = modal.querySelector('#confirm-transaction-btn');
+                const cancelBtn = modal.querySelector('#cancel-transaction-btn');
+                
+                confirmBtn.onclick = () => {
+                    closeHandler();
+                    // Small delay to ensure modal is clearing before animation starts
+                    // mostly for visual cleanliness so the glow isn't covered
+                    setTimeout(onConfirm, 50); 
+                };
+                
+                cancelBtn.onclick = closeHandler;
+            }
+        });
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
@@ -20881,15 +20947,45 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.buyShip(shipId, e); // <-- Add await
-                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                
+                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
+                // Capture the button element now, as 'e.target' might be lost/changed
+                // by the time the modal callback fires.
+                const target = e.target; 
+
+                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
+                    // Pass the captured target to the service for the glow animation
+                    // We wrap it in an object to mimic an Event interface if needed, 
+                    // or just pass it as the event argument which SimService expects.
+                    await this.simulationService.buyShip(shipId, { target });
+                    
+                    // Manually trigger the tutorial check here since we are inside a callback
+                    // and the original 'actionData' return at the end of handle() won't happen 
+                    // for this asynchronous flow.
+                    this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
+                });
+                
+                // Original logic removed:
+                // await this.simulationService.buyShip(shipId, e); 
+                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.sellShip(shipId, e); // <-- Add await
+
+                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
+                const target = e.target;
+
+                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
+                    await this.simulationService.sellShip(shipId, { target });
+                });
+                
+                // Original logic removed:
+                // await this.simulationService.sellShip(shipId, e); 
+                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
@@ -21736,9 +21832,21 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
-            // Pass negative price and 'true' to formatCredits to get '⌬ -1,234'
-            const purchaseDescription = `You purchased the ${ship.name} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
+            // 1. Get dynamic color
+            const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+            
+            // 2. Get glow class
+            let shadowClass = '';
+            if (ship.class === 'Z') shadowClass = 'glow-text-z';
+            else if (ship.class === 'O') shadowClass = 'glow-text-o';
+            else if (ship.class === 'S') shadowClass = 'glow-text-s';
+
+            // 3. Build Styled Span
+            const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+
+            // 4. Use in description
+            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -21830,9 +21938,21 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Request B) ---
-            // Add '+' sign and pass 'true' to formatCredits to get '+⌬ 12,345'
-            const saleDescription = `You sold the ${ship.name} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
+            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
+            // 1. Get dynamic color
+            const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+            
+            // 2. Get glow class
+            let shadowClass = '';
+            if (ship.class === 'Z') shadowClass = 'glow-text-z';
+            else if (ship.class === 'O') shadowClass = 'glow-text-o';
+            else if (ship.class === 'S') shadowClass = 'glow-text-s';
+
+            // 3. Build Styled Span
+            const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+
+            // 4. Use in description
+            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
             // --- END VIRTUAL WORKBENCH ---
 
@@ -22136,6 +22256,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.75] - 2026-1-9
+-  added confirmation modal to buying/selling ship cards
+-  added color to ship names in ship card modals
 
 ## [33.73] - 2026-1-9
 -  fixed news ticker seamless loop failure

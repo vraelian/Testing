@@ -41,15 +41,45 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.buyShip(shipId, e); // <-- Add await
-                actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                
+                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
+                // Capture the button element now, as 'e.target' might be lost/changed
+                // by the time the modal callback fires.
+                const target = e.target; 
+
+                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
+                    // Pass the captured target to the service for the glow animation
+                    // We wrap it in an object to mimic an Event interface if needed, 
+                    // or just pass it as the event argument which SimService expects.
+                    await this.simulationService.buyShip(shipId, { target });
+                    
+                    // Manually trigger the tutorial check here since we are inside a callback
+                    // and the original 'actionData' return at the end of handle() won't happen 
+                    // for this asynchronous flow.
+                    this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
+                });
+                
+                // Original logic removed:
+                // await this.simulationService.buyShip(shipId, e); 
+                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
+                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                await this.simulationService.sellShip(shipId, e); // <-- Add await
+
+                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
+                const target = e.target;
+
+                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
+                    await this.simulationService.sellShip(shipId, { target });
+                });
+                
+                // Original logic removed:
+                // await this.simulationService.sellShip(shipId, e); 
+                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---

@@ -1324,6 +1324,72 @@ change occurred (like a purchase), it *surgically
         modal.addEventListener('click', closeHandler);
     }
     // [[END]] VIRTUAL WORKBENCH (showEulaModal)
+    
+    // --- VIRTUAL WORKBENCH: PHASE 7 (Refined Ship Confirmation) ---
+    /**
+     * Shows a confirmation modal for buying or selling a ship.
+     * @param {string} shipId - The ID of the ship.
+     * @param {string} transactionType - 'buy' or 'sell'.
+     * @param {Function} onConfirm - Callback to execute on confirmation.
+     */
+    showShipTransactionConfirmation(shipId, transactionType, onConfirm) {
+        const ship = DB.SHIPS[shipId];
+        if (!ship) return;
+
+        // --- Refined Style Logic ---
+        // 1. Get the dynamic color variable from hangar-screen.css
+        const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
+        
+        // 2. Determine if a special glow class is needed (matching HangarScreen.js logic)
+        let shadowClass = '';
+        if (ship.class === 'Z') shadowClass = 'glow-text-z';
+        else if (ship.class === 'O') shadowClass = 'glow-text-o';
+        else if (ship.class === 'S') shadowClass = 'glow-text-s';
+        
+        // 3. Construct the styled name span
+        const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
+        // --- End Refined Style Logic ---
+
+        let title, description, price, amountStr;
+        
+        if (transactionType === 'buy') {
+            title = "Confirm Purchase";
+            price = ship.price;
+            amountStr = formatCredits(price, true);
+            description = `Are you sure you want to purchase the ${shipNameSpan}?`;
+            description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
+        } else {
+            title = "Confirm Sale";
+            price = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            amountStr = formatCredits(price, true);
+            description = `Are you sure you want to sell the ${shipNameSpan}?`;
+            description += `<br><br>Income: <span class="credits-text-pulsing">+${amountStr}</span>`;
+        }
+
+        this.queueModal('event-modal', title, description, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                btnContainer.innerHTML = `
+                    <button id="confirm-transaction-btn" class="btn btn-pulse-green">Confirm</button>
+                    <button id="cancel-transaction-btn" class="btn">Cancel</button>
+                `;
+                
+                const confirmBtn = modal.querySelector('#confirm-transaction-btn');
+                const cancelBtn = modal.querySelector('#cancel-transaction-btn');
+                
+                confirmBtn.onclick = () => {
+                    closeHandler();
+                    // Small delay to ensure modal is clearing before animation starts
+                    // mostly for visual cleanliness so the glow isn't covered
+                    setTimeout(onConfirm, 50); 
+                };
+                
+                cancelBtn.onclick = closeHandler;
+            }
+        });
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
