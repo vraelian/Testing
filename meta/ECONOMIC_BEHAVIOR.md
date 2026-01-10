@@ -1,6 +1,6 @@
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 10/30/25, ver. 30.80
+Last Edit: 1/9/26, ver. 33.77
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -18,12 +18,10 @@ Exports (Price Reverts Toward a Lower Baseline):
 Cloned Organs
 Neural Processors
 Imports (Price Reverts Toward a Higher Baseline):
-GMO Seed Cultures
 Sentient AI Cores
 Earth
 Exports (Price Reverts Toward a Lower Baseline):
 Hydroponics
-GMO Seed Cultures
 Imports (Price Reverts Toward a Higher Baseline):
 Cloned Organs
 Xeno-Geologicals
@@ -31,6 +29,7 @@ The Moon
 Exports (Price Reverts Toward a Lower Baseline):
 Plasteel
 Refined Propellant
+Graphene Lattices
 Imports (Price Reverts Toward a Higher Baseline):
 Water Ice
 Hydroponics
@@ -41,6 +40,7 @@ Imports (Price Reverts Toward a Higher Baseline):
 Hydroponics
 Cryo-Sleep Pods
 Water Ice
+Graphene Lattices
 The Belt
 Exports (Price Reverts Toward a Lower Baseline):
 Water Ice
@@ -175,10 +175,10 @@ Base Price Range: [18000, 52000]
 Volatility: 0.045 (Medium)
 Canonical Availability: [25, 50] (Uncommon)
 Tier 4: Advanced & Civilian Goods
-GMO Seed Cultures
-Base Price Range: [190000, 550000]
-Volatility: 0.06 (Medium-High)
-Canonical Availability: [15, 30] (Scarce)
+Graphene Lattices
+Base Price Range: [180000, 420000]
+Volatility: 0.05 (Medium)
+Canonical Availability: [20, 40] (Scarce)
 Cryo-Sleep Pods
 Base Price Range: [250000, 750000]
 Volatility: 0.075 (High)
@@ -215,5 +215,3 @@ Based on this data, a clear "full spectrum" pattern emerges:
 Price & Tier: Commodity prices increase exponentially with each tier, establishing a clear progression of value.
 Volatility & Tier: Volatility directly correlates with tier. Low-tier goods are stable and predictable, while high-tier "luxury" or "exotic" goods are highly volatile, making them high-risk, high-reward speculative assets.
 Availability & Tier: Canonical availability is inversely proportional to tier. Tier 1 goods are abundant, while Tier 6 and 7 goods are exceptionally rare, reinforcing their high value.
-
-

@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 1.8
+**Version:** 1.9
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -82,3 +82,4 @@ This document defines the single responsibility of each service in the applicati
 -   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
 -   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
 -   **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market.
+-   **`eulaContent.js`**: Defines the static HTML content for the End-User License Agreement displayed in the modal.
