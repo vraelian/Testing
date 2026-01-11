@@ -372,7 +372,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
 
 
 /**
- * Renders the HULL, CARGO, and FUEL parameter bars.
+ * Renders the HULL, FUEL, and CARGO parameter bars.
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
@@ -426,8 +426,8 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
     return `
         <div class="ship-param-bars ${isShipyard ? 'shipyard-bars' : ''}">
             ${renderBar('HULL', currentHull, shipStatic.maxHealth, hullPct, hullColor)}
-            ${renderBar('CARGO', currentCargo, shipStatic.cargoCapacity, cargoPct, cargoColor)}
             ${renderBar('FUEL', currentFuel, shipStatic.maxFuel, fuelPct, fuelColor)}
+            ${renderBar('CARGO', currentCargo, shipStatic.cargoCapacity, cargoPct, cargoColor)}
         </div>
     `;
 }

@@ -3,17 +3,16 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-
-
+- Optimizing ship art asset use
+- Review trip fuel requirements and ship fuel tanks for balance
+- Rename Shell That Echoes only to Echoing Shell
+- Fix Lore screen loading
 
 ## Immediate Concerns, Bugs
-- Optimizing ship art asset use
+
 
 ## Imminent Projects
-- Design and canonize color themes, Orbital Trading brand, lore, planets, aesthetics
-- Station Quirks
-- Ship Attributes
-- Install tailwind CSS resources locally
+
 
 ## Long-Term Goals, Ideas
 - Reputation system
@@ -25,10 +24,13 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Storyline
 - Storyline Timeline Governor (Mission availability, System States, Features)
 - Design cononical missions
+- * Mango Plasteel Statue mission
+- Missions/contacts reference in-game ships, etc.
 - System states influencing market performance DEFERRED
+- Art design refinement
+- Sound design (Audiomachine?)
+- Install tailwind CSS resources locally
 - Tactile feedback
-- Art design
-- Sound design
 
 ## Far-Future Wishlist Ideas ()
 - Purchasable stations
