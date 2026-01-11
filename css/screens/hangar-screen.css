@@ -91,8 +91,7 @@ COMPONENT-SPECIFIC STYLING
     padding-bottom: 4.0rem;
     
     /* VIRTUAL WORKBENCH: CRITICAL PERFORMANCE FIX (Virtualization-Lite) */
-    /* This tells the browser to SKIP painting anything inside this page if it is off-screen.
-       This massively reduces GPU load for lists > 3 items. */
+    /* UPDATED (1/11/26): Aggressive optimization restored; SVG Atom is immune to culling */
     contain: paint layout style; 
     content-visibility: auto; 
 }
@@ -319,82 +318,40 @@ COMPONENT-SPECIFIC STYLING
     max-width: 85px;
     flex-shrink: 0;
     margin-left: 0.2rem;
+    
     transform: scale(1.15); 
     transform-origin: top right;
 }
 
-/* VIRTUAL WORKBENCH: Replaced Dynamic Layout with Static Anchoring to fix iOS Glitch */
+/* VIRTUAL WORKBENCH: SVG ATOM ARCHITECTURE (1/11/26) */
+/* Replaced modern layout engines with atomic graphics to prevent iOS text culling. */
 .param-bar-item {
-    /* Removed flex/grid display to stop layout engine recalculation */
-    position: relative;
-    height: 12px;
     width: 100%;
+    height: 12px;
     margin-bottom: 0.2rem;
 }
 
-.param-bar-label {
-    font-size: 0.65rem;
-    color: var(--ot-text-secondary);
-    text-transform: uppercase;
-    text-align: right;
-    
-    /* Absolute Anchor: Force exact position */
-    position: absolute;
-    left: 0;
-    /* VIRTUAL WORKBENCH: Replaced transform with line-height for safer rendering */
-    top: 0;
-    /* transform: translateY(-50%); <-- REMOVED (Causing GPU culling) */
+.param-bar-svg {
+    width: 100%;
     height: 100%;
-    line-height: 12px; /* Vertically centers text in the 12px container */
-    
-    width: 32px;
-    
-    /* VIRTUAL WORKBENCH: Force Z-Index above sibling elements */
-    z-index: 10;
+    display: block;
+    overflow: visible; /* Allows shadows to bleed out if needed */
 }
 
-.param-bar-track {
-    height: 12px;
-    background-color: rgba(0,0,0,0.3);
-    border-radius: 4px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-    overflow: hidden;
-    
-    /* Absolute Anchor: Force exact position */
-    position: absolute;
-    left: 36px; /* 32px Label + 4px Gap */
-    right: 0;   /* Fill the rest of the container */
-    top: 0;
+/* Base styles for SVG content, mimicking original Orbitron/Roboto feel */
+.svg-bar-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px; /* Scaled for 12px height in 100px viewBox */
+    font-weight: 700;
 }
 
-.param-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    box-shadow: 0 0 8px var(--bar-color);
-    transition: width 0.4s ease-out;
-    position: relative;
-    z-index: 1;
+.svg-bar-text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 7px;
+    font-weight: 700;
+    /* Optimization: Static shadow for readability on GPU */
+    filter: drop-shadow(0 1px 1px black);
 }
-.param-bar-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    font-size: 0.6rem;
-    font-family: 'Roboto Mono', sans-serif;
-    color: #ffffff;
-    text-shadow: 0 0 2px #000, 0 0 4px #000;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0.9;
-}
-.param-bar-text.max {
-    left: auto;
-    right: 5px;
-    transform: translateY(-50%);
-}
-
 
 /* Action Buttons - GPU Optimized Glows */
 .action-button { 
@@ -647,9 +604,9 @@ COMPONENT-SPECIFIC STYLING
     letter-spacing: -0.05em;
 }
 
-/* MAINTENANCE NOTES FOR STATIC ANCHORING FIX (1/9/26):
-   1. Text Width Tolerance: The 'CARGO' label is near the 32px hard cap; localization or larger system fonts may cause clipping.
-   2. Coordinate Dependency: The .param-bar-track 'left: 36px' value implicitly relies on the .param-bar-label width (32px) plus a 4px gap; both must be updated together.
-   3. Vertical Centering: We use 'line-height: 12px' instead of transforms to prevent iOS rendering glitches, so changing fonts may require manual offset adjustments.
-   4. Z-Index Safety: Labels use 'z-index: 10' to force visibility over the track; ensure all tooltips and modals use a higher index to prevent bleed-through.
+/* MAINTENANCE NOTES FOR SVG ATOM FIX (1/11/26):
+   1. Atomic Graphics: Replaced individual HTML/CSS elements with rigid SVG components to force single-layer rendering.
+   2. Unbreakable Composition: Labels and values are part of the same SVG drawing, preventing the browser from independently culling text.
+   3. Performance Standard: Restored aggressive content-visibility:auto as SVG rendering is highly efficient on iOS.
+   4. Sub-pixel Stability: SVG viewBox coordinates provide mathematical rigidity that survives 3D carousel scaling transforms.
 */

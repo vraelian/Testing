@@ -388,21 +388,37 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
     const cargoColor = '#f59e0b'; 
     const fuelColor = '#3b82f6'; 
 
+    /**
+     * VIRTUAL WORKBENCH: SVG ATOM REFACTOR (1/11/26)
+     * Replaced HTML/CSS bars with rigid SVG components.
+     * This forces atomic rendering, preventing the browser from independently culling text labels
+     * or miscalculating sub-pixel offsets during scaled 3D carousel animations.
+     */
     const renderBar = (label, current, max, percentage, color) => {
         const c = Math.floor(current);
         const m = Math.floor(max);
-        
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
-        const textClass = isMax ? 'max' : 'partial';
+        
+        // SVG dimensions (mapped to 100x12 viewBox):
+        // Label anchor: x=32
+        // Gap: 4px
+        // Bar start: x=36
+        // Bar width: 64px (Total 100 - Label 32 - Gap 4)
+        const trackWidth = 64;
+        const fillWidth = (percentage / 100) * trackWidth;
 
         return `
             <div class="param-bar-item">
-                <span class="param-bar-label">${label}</span>
-                <div class="param-bar-track">
-                    <div class="param-bar-fill" style="width: ${percentage}%; background-color: ${color}; --bar-color: ${color};"></div>
-                    <span class="param-bar-text ${textClass}">${displayText}</span>
-                </div>
+                <svg viewBox="0 0 100 12" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
+                    <text x="32" y="6" text-anchor="end" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
+                    
+                    <rect x="36" y="0" width="${trackWidth}" height="12" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
+                    
+                    <rect x="36" y="0" width="${fillWidth}" height="12" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
+                    
+                    <text x="${36 + (trackWidth/2)}" y="6.5" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
+                </svg>
             </div>
         `;
     };
