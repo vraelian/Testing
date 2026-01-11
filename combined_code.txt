@@ -2615,7 +2615,10 @@ card.
     color: var(--color-text-secondary);
     opacity: 0.7;
     white-space: nowrap;
-    margin: 0 0.75rem;
+    
+    /* MODIFIED: Increased margin to compensate for removal of text spaces.
+       This ensures the visual gap is identical at the loop wrap point. */
+    margin: 0 1rem;
 }
 
 .ticker-message {
@@ -12471,7 +12474,10 @@ export class NewsTickerService {
             this.generateWelcomeMessage();
         }
 
-        const separator = ` <span class="ticker-separator"> // </span> `;
+        // BUG FIX: Removed leading/trailing spaces from the separator. 
+        // HTML whitespace collapsing often hides the trailing space of the entire text block,
+        // causing a visual "jump" when the loop wraps. We now rely solely on CSS margins.
+        const separator = `<span class="ticker-separator">//</span>`;
         
         const messageHtml = this.messageQueue.map(msg => {
             let text = msg.text;
