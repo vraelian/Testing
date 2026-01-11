@@ -56,7 +56,10 @@
     color: var(--color-text-secondary);
     opacity: 0.7;
     white-space: nowrap;
-    margin: 0 0.75rem;
+    
+    /* MODIFIED: Increased margin to compensate for removal of text spaces.
+       This ensures the visual gap is identical at the loop wrap point. */
+    margin: 0 1rem;
 }
 
 .ticker-message {

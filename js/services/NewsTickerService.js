@@ -161,7 +161,10 @@ export class NewsTickerService {
             this.generateWelcomeMessage();
         }
 
-        const separator = ` <span class="ticker-separator"> // </span> `;
+        // BUG FIX: Removed leading/trailing spaces from the separator. 
+        // HTML whitespace collapsing often hides the trailing space of the entire text block,
+        // causing a visual "jump" when the loop wraps. We now rely solely on CSS margins.
+        const separator = `<span class="ticker-separator">//</span>`;
         
         const messageHtml = this.messageQueue.map(msg => {
             let text = msg.text;
