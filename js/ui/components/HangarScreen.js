@@ -411,13 +411,13 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         return `
             <div class="param-bar-item">
                 <svg viewBox="0 0 100 20" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
-                    <text x="50" y="0" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
+                    <text x="50" y="2" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
                     
-                    <rect x="0" y="4.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
+                    <rect x="0" y="8.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
                     
-                    <rect x="0" y="4.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
+                    <rect x="0" y="8.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
                     
-                    <text x="50" y="11.7" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
+                    <text x="50" y="16.4" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
                 </svg>
             </div>
         `;

@@ -353,9 +353,7 @@ COMPONENT-SPECIFIC STYLING
 
 .svg-bar-text {
     font-family: 'Roboto Mono', monospace;
-    /* VIRTUAL WORKBENCH: 2pt SIZE INCREASE (1/11/26) */
-    /* Maintained at 9px for high readability of parameter values */
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 700;
     /* Optimization: Static shadow for readability on GPU */
     filter: drop-shadow(0 1px 1px black);
