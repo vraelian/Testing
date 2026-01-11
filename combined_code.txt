@@ -4893,7 +4893,9 @@ COMPONENT-SPECIFIC STYLING
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    /* VIRTUAL WORKBENCH: GAP ADJUSTMENT (1/11/26) */
+    /* Restored to 0.2rem for better separation between the stacked bars */
+    gap: 0.1rem;
     font-family: 'Roboto Mono', sans-serif;
     width: 25%;
     max-width: 85px;
@@ -4908,7 +4910,9 @@ COMPONENT-SPECIFIC STYLING
 /* Replaced modern layout engines with atomic graphics to prevent iOS text culling. */
 .param-bar-item {
     width: 100%;
-    height: 12px;
+    /* VIRTUAL WORKBENCH: HEIGHT INCREASE (1/11/26) */
+    /* Locked to 20px to support the vertical stack coordinates in the SVG */
+    height: 20px;
     margin-bottom: 0.2rem;
 }
 
@@ -4922,13 +4926,17 @@ COMPONENT-SPECIFIC STYLING
 /* Base styles for SVG content, mimicking original Orbitron/Roboto feel */
 .svg-bar-label {
     font-family: 'Orbitron', sans-serif;
-    font-size: 8px; /* Scaled for 12px height in 100px viewBox */
+    /* VIRTUAL WORKBENCH: FONT SIZE INCREASE (1/11/26) */
+    /* Increased to 9px for high visibility of HULL, CARGO, FUEL labels */
+    font-size: 9px;
     font-weight: 700;
 }
 
 .svg-bar-text {
     font-family: 'Roboto Mono', monospace;
-    font-size: 7px;
+    /* VIRTUAL WORKBENCH: 2pt SIZE INCREASE (1/11/26) */
+    /* Maintained at 9px for high readability of parameter values */
+    font-size: 11px;
     font-weight: 700;
     /* Optimization: Static shadow for readability on GPU */
     filter: drop-shadow(0 1px 1px black);
@@ -6272,24 +6280,24 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
         
-        // SVG dimensions (mapped to 100x12 viewBox):
-        // Label anchor: x=32
-        // Gap: 4px
-        // Bar start: x=36
-        // Bar width: 64px (Total 100 - Label 32 - Gap 4)
-        const trackWidth = 64;
+        // VIRTUAL WORKBENCH: VERTICAL STACK COORDINATE ADJUSTMENT (1/11/26)
+        // viewBox 100x20 provides ample space for centered stacking with padding.
+        // Label: y=4 (Shifted up to restore breathing room)
+        // Bar: y=10, height=10 (Bottom edge is 20)
+        // Value Text: y=15.5 (Vertically centered in the bar)
+        const trackWidth = 100;
         const fillWidth = (percentage / 100) * trackWidth;
 
         return `
             <div class="param-bar-item">
-                <svg viewBox="0 0 100 12" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
-                    <text x="32" y="6" text-anchor="end" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
+                <svg viewBox="0 0 100 20" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
+                    <text x="50" y="0" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
                     
-                    <rect x="36" y="0" width="${trackWidth}" height="12" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
+                    <rect x="0" y="4.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
                     
-                    <rect x="36" y="0" width="${fillWidth}" height="12" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
+                    <rect x="0" y="4.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
                     
-                    <text x="${36 + (trackWidth/2)}" y="6.5" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
+                    <text x="50" y="11.7" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
                 </svg>
             </div>
         `;

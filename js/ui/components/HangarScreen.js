@@ -400,24 +400,24 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
         
-        // SVG dimensions (mapped to 100x12 viewBox):
-        // Label anchor: x=32
-        // Gap: 4px
-        // Bar start: x=36
-        // Bar width: 64px (Total 100 - Label 32 - Gap 4)
-        const trackWidth = 64;
+        // VIRTUAL WORKBENCH: VERTICAL STACK COORDINATE ADJUSTMENT (1/11/26)
+        // viewBox 100x20 provides ample space for centered stacking with padding.
+        // Label: y=4 (Shifted up to restore breathing room)
+        // Bar: y=10, height=10 (Bottom edge is 20)
+        // Value Text: y=15.5 (Vertically centered in the bar)
+        const trackWidth = 100;
         const fillWidth = (percentage / 100) * trackWidth;
 
         return `
             <div class="param-bar-item">
-                <svg viewBox="0 0 100 12" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
-                    <text x="32" y="6" text-anchor="end" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
+                <svg viewBox="0 0 100 20" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
+                    <text x="50" y="0" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
                     
-                    <rect x="36" y="0" width="${trackWidth}" height="12" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
+                    <rect x="0" y="4.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
                     
-                    <rect x="36" y="0" width="${fillWidth}" height="12" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
+                    <rect x="0" y="4.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
                     
-                    <text x="${36 + (trackWidth/2)}" y="6.5" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
+                    <text x="50" y="11.7" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
                 </svg>
             </div>
         `;

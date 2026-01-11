@@ -312,7 +312,9 @@ COMPONENT-SPECIFIC STYLING
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    /* VIRTUAL WORKBENCH: GAP ADJUSTMENT (1/11/26) */
+    /* Restored to 0.2rem for better separation between the stacked bars */
+    gap: 0.1rem;
     font-family: 'Roboto Mono', sans-serif;
     width: 25%;
     max-width: 85px;
@@ -327,7 +329,9 @@ COMPONENT-SPECIFIC STYLING
 /* Replaced modern layout engines with atomic graphics to prevent iOS text culling. */
 .param-bar-item {
     width: 100%;
-    height: 12px;
+    /* VIRTUAL WORKBENCH: HEIGHT INCREASE (1/11/26) */
+    /* Locked to 20px to support the vertical stack coordinates in the SVG */
+    height: 20px;
     margin-bottom: 0.2rem;
 }
 
@@ -341,13 +345,17 @@ COMPONENT-SPECIFIC STYLING
 /* Base styles for SVG content, mimicking original Orbitron/Roboto feel */
 .svg-bar-label {
     font-family: 'Orbitron', sans-serif;
-    font-size: 8px; /* Scaled for 12px height in 100px viewBox */
+    /* VIRTUAL WORKBENCH: FONT SIZE INCREASE (1/11/26) */
+    /* Increased to 9px for high visibility of HULL, CARGO, FUEL labels */
+    font-size: 9px;
     font-weight: 700;
 }
 
 .svg-bar-text {
     font-family: 'Roboto Mono', monospace;
-    font-size: 7px;
+    /* VIRTUAL WORKBENCH: 2pt SIZE INCREASE (1/11/26) */
+    /* Maintained at 9px for high readability of parameter values */
+    font-size: 11px;
     font-weight: 700;
     /* Optimization: Static shadow for readability on GPU */
     filter: drop-shadow(0 1px 1px black);
