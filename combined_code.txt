@@ -5916,6 +5916,35 @@ import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 import { AssetService } from '../../services/AssetService.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
+
+// --- VIRTUAL WORKBENCH: ATTRIBUTE UI CONFIG ---
+// Colors chosen for high readability on solid backgrounds (dark text on bright pastel)
+const ATTRIBUTE_UI_CONFIG = {
+    'ATTR_TRAVELLER': { label: 'SELF-REPAIR', color: '#34d399' }, // Green
+    'ATTR_TRADER': { label: 'TRADER', color: '#facc15' }, // Gold
+    'ATTR_HOT_DELIVERY': { label: 'STASIS', color: '#facc15' }, // Gold
+    'ATTR_RESILIENT': { label: 'RESILIENT', color: '#34d399' }, // Green
+    'ATTR_LUCKY': { label: 'LUCKY', color: '#c084fc' }, // Purple
+    'ATTR_CORP_PARTNER': { label: 'PARTNER', color: '#60a5fa' }, // Blue
+    'ATTR_CRYO_STORAGE': { label: 'CRYO', color: '#38bdf8' }, // Cyan
+    'ATTR_HEAVY': { label: 'HEAVY', color: '#9ca3af' }, // Gray
+    'ATTR_LOYALTY_SATURN': { label: 'SATURN-BORN', color: '#60a5fa' }, // Blue
+    'ATTR_RENOWN': { label: 'RENOWN', color: '#facc15' }, // Gold
+    'ATTR_VIP': { label: 'VIP', color: '#facc15' }, // Gold
+    'ATTR_ENTROPIC': { label: 'ENTROPIC', color: '#f87171' }, // Red
+    'ATTR_FREQUENT_FLYER': { label: 'FQ-FLYER', color: '#34d399' }, // Green
+    'ATTR_SPACE_FOLDING': { label: 'FOLD-DRIVE', color: '#c084fc' }, // Purple
+    'ATTR_XENO_HULL': { label: 'XENO', color: '#34d399' }, // Green
+    'ATTR_FUEL_SCOOP': { label: 'SCOOP', color: '#38bdf8' }, // Cyan
+    'ATTR_SOLAR_SAIL': { label: 'SOLAR', color: '#fbbf24' }, // Amber
+    'ATTR_EFFICIENT': { label: 'EFFICIENT', color: '#a3e635' }, // Lime
+    'ATTR_FAST': { label: 'FAST', color: '#f87171' }, // Red
+    'ATTR_BESPOKE': { label: 'BESPOKE', color: '#e879f9' }, // Pink
+    'ATTR_ADVANCED_COMMS': { label: 'COMMS', color: '#818cf8' }, // Indigo
+    'ATTR_SLEEPER': { label: 'SLEEPER', color: '#94a3b8' }, // Slate
+};
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * Renders the entire Hangar screen UI.
@@ -6011,31 +6040,62 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
     
-    // Optimized: Only inject the glow layer DIV if this specific ship is active.
     const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
 
     if (isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- [[START]] MODIFICATION (Smart Buffer & Garbage Collection) ---
-    // Rule: Load visible + 5 neighbors. Unload (GC) anything > 6 spaces away.
+    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Redesigned) ---
+    const activeAttributes = GameAttributes.getShipAttributes(shipId);
+    let attributesHtml = '';
+    
+    if (activeAttributes && activeAttributes.length > 0) {
+        // We only render the first 2 attributes to prevent overflow
+        const pills = activeAttributes.slice(0, 2).map(attrId => {
+            const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
+            // Style: Solid background, Dark text, No icons, Status-badge shape
+            return `
+                <div class="attribute-pill cursor-pointer" 
+                     data-action="show-attribute-tooltip" 
+                     data-attribute-id="${attrId}"
+                     style="
+                        background-color: ${config.color}; 
+                        color: #1a202c; 
+                        border: 1px solid ${config.color};
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-family: 'Orbitron', sans-serif;
+                        font-size: 0.7rem;
+                        font-weight: 700;
+                        letter-spacing: 0.05em;
+                        pointer-events: auto; /* Ensure clickable over image */
+                     ">
+                    ${config.label}
+                </div>
+            `;
+        }).join('');
+
+        attributesHtml = `
+            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
+                ${pills}
+            </div>
+        `;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     const distance = Math.abs(itemIndex - activeIndex);
     const inBuffer = distance <= 5;
 
-    // Calculate Paths
     const realPath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
     
-    // If in buffer, use real path. If not (GC), use placeholder and store real path in data-src.
     const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
-    const dataSrc = realPath; // Always store the real path for JS access
+    const dataSrc = realPath; 
     
     const isVariantA = realPath.endsWith('_A.jpeg');
 
-    // --- [[START]] MODIFICATION (Clip Fix) ---
-    // If this is the Active Ship, we force it to be visible immediately. 
-    // This prevents the "Hologram Flash" during the re-render caused by boarding.
     const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
     const placeholderStyle = isActive ? 'display: none;' : '';
 
@@ -6052,11 +6112,10 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                  onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
                  onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
             <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600" style="${placeholderStyle}">[ SHIP HOLOGRAM ]</span>
+            ${attributesHtml}
         </div>
     `;
-    // --- [[END]] MODIFICATION ---
 
-    // Conditional rendering for shipyard layout
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
@@ -6162,8 +6221,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     } else {
-        // --- [[START]] MODIFICATION (Shrink Text for Shipyard Price) ---
-        // Keep existing logic for Shipyard panel
         const priceStr = formatCredits(shipStatic.price, true);
         const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
         
@@ -6183,7 +6240,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
             </div>
         `;
-        // --- [[END]] MODIFICATION ---
     }
 }
 
@@ -6198,10 +6254,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
         
-        // --- [[START]] MODIFICATION (Shrink Text for Hangar Sell Button) ---
         const salePriceStr = formatCredits(salePrice, true);
-        // Lowered threshold to > 8 to catch "10.00K" (9 chars)
-        // Changed class to specifically target button styling
         const salePriceClass = salePriceStr.length > 8 ? 'text-shrink-button' : '';
 
         return `
@@ -6215,7 +6268,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
                 </button>
             </div>
         `;
-        // --- [[END]] MODIFICATION ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
@@ -7710,11 +7762,11 @@ export const SHIP_IDS = Object.freeze({
     VINDICATOR: 'Vindicator.Ship',
     AEGIS: 'Aegis.Ship',
     ODYSSEY: 'Odyssey.Ship',
-    MAJESTIC: 'luxury_s2', // Obsolete: Not in new ship_database.js
-    TITAN_HAULER: 'Titan.Ship', // Mapped from 'Titan Hauler' to 'Titan'
-    VOID_CHASER: 'rare_s2', // Obsolete: Not in new ship_database.js
+    MAJESTIC: 'luxury_s2', // Obsolete
+    TITAN_HAULER: 'Titan.Ship',
+    VOID_CHASER: 'rare_s2', // Obsolete
     GUARDIAN: 'Guardian.Ship',
-    STARGAZER: 'rare_s4', // Obsolete: Not in new ship_database.js
+    STARGAZER: 'rare_s4', // Obsolete
     BEHEMOTH: 'Behemoth.Ship',
 });
 // --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
@@ -7730,7 +7782,7 @@ export const COMMODITY_IDS = Object.freeze({
     CYBERNETICS: 'cybernetics',
     PROPELLANT: 'propellant',
     PROCESSORS: 'processors',
-    GRAPHENE_LATTICES: 'graphene_lattices', // CHANGED: Replaced GMO_SEEDS
+    GRAPHENE_LATTICES: 'graphene_lattices',
     CRYO_PODS: 'cryo_pods',
     ATMO_PROCESSORS: 'atmos_processors',
     CLONED_ORGANS: 'cloned_organs',
@@ -7739,6 +7791,7 @@ export const COMMODITY_IDS = Object.freeze({
     ANTIMATTER: 'antimatter',
     FOLDED_DRIVES: 'folded_drives',
 });
+
 /**
  * Unique identifiers for each travel destination (market location).
  * @enum {string}
@@ -7803,32 +7856,30 @@ export const ACTION_IDS = Object.freeze({
  * @enum {string}
  */
 export const TUTORIAL_ACTION_TYPES = Object.freeze({
-    SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
-    ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
-    INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
+    SCREEN_LOAD: 'SCREEN_LOAD',
+    ACTION: 'ACTION',
+    INFO: 'INFO',
+});
+
+/**
+ * Defines the categories of game attribute effects.
+ * Used by GameAttributes.js to classify logic.
+ * @enum {string}
+ */
+export const ATTRIBUTE_TYPES = Object.freeze({
+    MOD_PRICE: 'MOD_PRICE',             // Modifies buy/sell prices
+    MOD_FUEL_COST: 'MOD_FUEL_COST',     // Modifies fuel consumption
+    MOD_TRAVEL_TIME: 'MOD_TRAVEL_TIME', // Modifies travel duration
+    MOD_HULL_DECAY: 'MOD_HULL_DECAY',   // Modifies passive or active hull decay
+    MOD_SERVICE_COST: 'MOD_SERVICE_COST', // Modifies repair/refuel costs
+    TRIGGER_ON_TRAVEL: 'TRIGGER_ON_TRAVEL', // Triggered after a trip
+    TRIGGER_ON_TRADE: 'TRIGGER_ON_TRADE',   // Triggered after a trade
+    PASSIVE_EFFECT: 'PASSIVE_EFFECT',   // Generic passive tag
+    RESTRICTION: 'RESTRICTION'          // Prevents actions (e.g. Bespoke)
 });
 
 /**
  * A collection of core game balance numbers and rules.
- * @property {number} STARTING_CREDITS - The amount of credits the player starts with.
- * @property {number} STARTING_DEBT_INTEREST - The initial monthly interest on the starting debt.
- * @property {number} REPAIR_COST_PER_HP - The credit cost to repair one point of hull damage.
- * @property {number} REPAIR_AMOUNT_PER_TICK - The percentage of max hull repaired per service tick.
- * @property {number} FUEL_SCALAR - A base multiplier used in travel fuel cost calculations.
- * @property {number} INTEREST_INTERVAL - The number of days between interest charges on debt.
- * @property {number} PASSIVE_REPAIR_RATE - The percentage of max hull repaired per day on inactive ships.
- * @property {number} HULL_DECAY_PER_TRAVEL_DAY - The amount of flat hull damage taken per day of travel.
- * @property {number} SHIP_SELL_MODIFIER - The percentage of a ship's base price received when sold.
- * @property {number} RARE_SHIP_CHANCE - The probability (0-1) of a rare ship appearing in the shipyard stock.
- * @property {number} PRICE_HISTORY_LENGTH - The maximum number of daily price entries to store for graphs.
- * @property {number} FINANCE_HISTORY_LENGTH - The maximum number of transactions to display in the finance log.
- * @property {number} DAILY_PRICE_VOLATILITY - The maximum percentage a price can fluctuate daily.
- * @property {number} MEAN_REVERSION_STRENGTH - The strength of the tendency for prices to return to their galactic average.
- * @property {number} MARKET_PRESSURE_DECAY - The weekly decay factor for market pressure (e.g., 0.85 means 15% decay).
- * @property {number} LOCAL_PRICE_MOD_STRENGTH - The strength of the local import/export price modifier (0-1).
- * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
- * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
- * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
  */
 export const GAME_RULES = Object.freeze({
     STARTING_CREDITS: 5000,
@@ -8746,6 +8797,7 @@ const locationMap = {
  * @property {number} spawnChance - The chance for this ship to appear in the shipyard (0-1).
  * @property {string} spawnTrigger - The condition for this ship to appear (e.g., "Tier 3 Unlock").
  * @property {boolean} isRare - (Auto-generated) True if spawn chance is < 1.
+ * @property {string[]} mechanicIds - Array of GameAttribute keys defining special behaviors.
  */
 
 /**
@@ -8780,7 +8832,8 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Stalwart.Ship": {
         name: "Stalwart",
@@ -8815,7 +8868,8 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Mule.Ship": {
         name: "Mule",
@@ -8846,7 +8900,8 @@ It is a bet that you can fill it, sell its contents, and earn your way into a be
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Nomad.Ship": {
         name: "Nomad",
@@ -8873,7 +8928,8 @@ The light hull and modest cargo bay make it an excellent choice for an explorer,
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Rooster.Ship": {
         name: "Rooster",
@@ -8904,7 +8960,8 @@ It’s fast, reliable, and just stylish enough to get you noticed by the kinds o
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Mesa.Ship": {
         name: "Mesa",
@@ -8935,7 +8992,8 @@ It is a tool for the captain who studies manifests, not star charts.`,
         saleLocationId: locationMap["Mars"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Pathfinder.Ship": {
         name: "Pathfinder",
@@ -8963,7 +9021,8 @@ It’s a ship for a pilot who prefers to know the location of the next deal befo
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Odyssey.Ship": {
         name: "Odyssey",
@@ -8991,7 +9050,8 @@ This is a ship for the captain who has graduated from desperation to ambition, a
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Pilgrim.Ship": {
         name: "Pilgrim",
@@ -9020,7 +9080,8 @@ It’s a specialized tool for the trader who intends to profit from the system's
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Meridian.Ship": {
         name: "Meridian",
@@ -9047,7 +9108,8 @@ It's a serious ship for serious work, capable of opening up new routes and disco
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Raven.Ship": {
         name: "Raven",
@@ -9073,7 +9135,8 @@ It's a ship for the captain who has embraced danger and decided that the best de
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Warden.Ship": {
         name: "Warden",
@@ -9103,7 +9166,8 @@ It is a ship for the captain who has transcended the cold trade wars of the inne
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Aegis.Ship": {
         name: "Aegis",
@@ -9132,7 +9196,8 @@ you are a serious operator, capable of undertaking the most demanding, long-term
         saleLocationId: locationMap["Mars"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Forerunner.Ship": {
         name: "Forerunner",
@@ -9160,7 +9225,8 @@ It is the ultimate tool for the captain who must navigate the most dangerous tra
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Guardian.Ship": {
         name: "Guardian",
@@ -9190,7 +9256,8 @@ It is a ship for the merchant prince, a pilot who no longer deals in scraps and 
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Valiant.Ship": {
         name: "Valiant",
@@ -9218,7 +9285,8 @@ To pilot a Valiant is to be at the absolute pinnacle of the class and adventure.
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Eagle.Ship": {
         name: "Eagle",
@@ -9248,7 +9316,8 @@ It is fast, tough, beautiful, and a testament to success.`,
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Tundra.Ship": {
         name: "Tundra",
@@ -9259,7 +9328,7 @@ It is fast, tough, beautiful, and a testament to success.`,
         maxFuel: 170,
         role: "Hauler",
         attribute: "None",
-        description: "A true super-freighter from the Neptune yards, this ship is little more than a powerful engine and a cockpit strapped to a cargo hold of truly colossal proportions.",
+        description: "A true super-freighter from the Neptune yards, this ship is little more than a powerful engine and a cockpit bolted to a cargo hold of truly colossal proportions.",
         lore: `The Tundra is the final word in interplanetary logistics, a colossal hauler built in the deep, cold shipyards of Neptune.
 If the Pilgrim and Warden are the system's long-haul trucks, the Tundra is its supertanker.
 It was designed by a consortium of outer-system corporations who needed a way to move truly staggering quantities of raw materials—ice, methane, and rare minerals—from the Kuiper Belt to the inner system.
@@ -9278,7 +9347,8 @@ This is a ship for the captain who is ready to move beyond a mere cargo manifest
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Atlas.Ship": {
         name: "Atlas",
@@ -9310,7 +9380,8 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_TRAVELLER']
     },
     "Vindicator.Ship": {
         name: "Vindicator",
@@ -9340,7 +9411,8 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         saleLocationId: locationMap["Uranus"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_TRADER']
     },
     "Radiant.Ship": {
         name: "Radiant",
@@ -9368,7 +9440,8 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_HOT_DELIVERY']
     },
     "Aesudon.Ship": {
         name: "Aesudon",
@@ -9397,7 +9470,8 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_RESILIENT']
     },
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
@@ -9426,7 +9500,8 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_LUCKY']
     },
     "Sovereign.Ship": {
         name: "Sovereign",
@@ -9456,7 +9531,8 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_CORP_PARTNER']
     },
     "Titan.Ship": {
         name: "Titan",
@@ -9487,7 +9563,8 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_CRYO_STORAGE']
     },
     "Behemoth.Ship": {
         name: "Behemoth",
@@ -9514,7 +9591,8 @@ It is the ultimate hammer of inevitable logistic.`,
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_HEAVY', 'ATTR_LOYALTY_SATURN']
     },
     "Citadel.Ship": {
         name: "Citadel",
@@ -9541,7 +9619,8 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_RENOWN']
     },
     "Sophistacles.Ship": {
         name: "Sophistacles",
@@ -9569,7 +9648,8 @@ It is a purchase that announces to the system that the new owner has transcended
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_VIP']
     },
     "Ouroboros.Ship": {
         name: "Ouroboros",
@@ -9595,7 +9675,8 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_ENTROPIC', 'ATTR_FREQUENT_FLYER']
     },
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
@@ -9623,7 +9704,8 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SPACE_FOLDING']
     },
     "ShellThatEchoesOnly.Ship": {
         name: "Shell That Echoes Only",
@@ -9643,7 +9725,8 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_XENO_HULL']
     },
     "ParallaxofThought.Ship": {
         name: "Parallax of Thought",
@@ -9665,7 +9748,8 @@ it is a vessel of pure, non-human logic.`,
         saleLocationId: locationMap["Uranus"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_FUEL_SCOOP']
     },
     "AnomalyoftheSong.Ship": {
         name: "Anomaly of the Song",
@@ -9685,7 +9769,8 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SOLAR_SAIL']
     },
     "CausalityofSilence.Ship": {
         name: "Causality of Silence",
@@ -9705,7 +9790,8 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_EFFICIENT']
     },
     "EngineofRecursion.Ship": {
         name: "Engine of Recursion",
@@ -9725,7 +9811,8 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_FAST']
     },
     "FinalityofWhispers.Ship": {
         name: "Finality of Whispers",
@@ -9747,7 +9834,8 @@ It cannot be repaired.`,
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_BESPOKE']
     },
     "TheListener.Ship": {
         name: "The Listener",
@@ -9766,7 +9854,8 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_ADVANCED_COMMS']
     },
     "DriftingCryoPod.Ship": {
         name: "Drifting Cryo-Pod",
@@ -9786,7 +9875,8 @@ Its one advanced, and chilling, piece of technology is a personality upload appa
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.03,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SLEEPER']
     }
 };
 --- END OF FILE: ./js/data/ship_database.js ---
@@ -12723,6 +12813,7 @@ export class AssetService {
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
  * @class MarketService
@@ -12738,50 +12829,51 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
-    // --- VIRTUAL WORKBENCH: ADD NEW METHODS ---
-
     /**
-     * Gets the effective price for a commodity at a location, checking for
-     * active intel deal overrides first.
-     * @param {string} locationId The ID of the location.
+     * Gets the effective price for a commodity at a location.
+     * Can optionally apply Ship Attributes (e.g. VIP, Corp Partner) for UI display.
+     * * @param {string} locationId The ID of the location.
      * @param {string} commodityId The ID of the commodity.
-     * @returns {number} The effective price (either override or market price).
-     * @JSDoc
+     * @param {boolean} [applyModifiers=false] Whether to apply active ship attribute modifiers.
+     * @returns {number} The effective price.
      */
-    getPrice(locationId, commodityId) {
-        const deal = this.gameState.getState().activeIntelDeal;
+    getPrice(locationId, commodityId, applyModifiers = false) {
+        const state = this.gameState.getState();
+        const deal = state.activeIntelDeal;
+        let price = 0;
 
-        // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
+        // 1. Determine Base Price (Market or Intel Override)
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
-            
-            // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
-            // If a deal is active, the price is *read* from the current
-            // market prices, which are being fluctuated daily by evolveMarketPrices.
-            // We no longer return the static deal.overridePrice here, as that
-            // would bypass the daily fluctuation.
-            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
-            // --- END MODIFICATION ---
+            // Use the fluctuating market price if it exists (which was seeded by the deal),
+            // otherwise fallback to the deal's static override.
+            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+        } else {
+            price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
         }
-        // --- END NEW LOGIC ---
 
-        // ... existing price simulation logic ...
-        // Fallback to the standard market price
-        return this.gameState.market.prices[locationId]?.[commodityId] || 0;
+        // 2. Apply Attribute Modifiers (if requested)
+        // This allows the UI to request the "discounted" price for display,
+        // while Services can request the "raw" price if they handle math separately.
+        if (applyModifiers && state.player.activeShipId) {
+            // Note: We only apply 'buy' modifiers here for general price display.
+            // 'Sell' modifiers are context-dependent (cargo age) and usually handled by the seller.
+            const mod = GameAttributes.getPriceModifier(state.player.activeShipId, locationId, 'buy', { commodityId });
+            price = Math.max(1, Math.round(price * mod));
+        }
+
+        return price;
     }
 
     /**
      * Retrieves the pre-calculated galactic average price for a commodity.
      * @param {string} commodityId The ID of the commodity.
      * @returns {number} The galactic average price.
-     * @JSDoc
      */
     getGalacticAverage(commodityId) {
         return this.gameState.market.galacticAverages[commodityId] || 0;
     }
-
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
@@ -12805,30 +12897,23 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
-                // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
                 // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
                      activeDeal.locationId === location.id &&
                      activeDeal.commodityId === commodity.id)
                 {
-                    // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
+                    // Apply 3% fluctuation to the locked price to simulate a "live" but fixed deal
                     const basePrice = activeDeal.overridePrice;
-                    const fluctuation = 0.03; // 3%
+                    const fluctuation = 0.03; 
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
                     
-                    // Generate a random price within the [minPrice, maxPrice] range
                     const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
-                    
-                    // Set the new price, ensuring it's at least 1
                     this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
-                    // --- END MODIFICATION ---
-
-                    // Skip all other evolution logic for this item
-                    return; 
+                    
+                    return; // Skip normal evolution
                 }
-                // --- END VIRTUAL WORKBENCH ---
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
@@ -12836,14 +12921,7 @@ export class MarketService {
 
                 // Determine the local baseline price based on import/export modifiers
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
-
-                // (1.0 - modifier) inverts the logic:
-                // Exporter (mod > 1.0) results in a negative offset (lower price)
-                // Importer (mod < 1.0) results in a positive offset (higher price)
                 const targetPriceOffset = (1.0 - modifier) * avg;
-
-                // The new baseline is the galactic average, pulled towards the local target price
-                // by the strength of the modifier.
                 const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
@@ -12860,13 +12938,10 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
-                // --- NEW: Variable Reversion Delay (Point e) ---
-                // If the player has traded this item recently, a "price lock" is in effect,
-                // stopping mean reversion. The duration is set randomly on transaction.
+                // Price Lock: Stops mean reversion if recently traded
                 if (this.gameState.day < inventoryItem.priceLockEndDay) {
                     reversionEffect = 0;
                 }
-                // --- END CHANGE ---
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
@@ -12880,38 +12955,22 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // [GEMINI] --- MODEL FIX: "DELAYED PRESSURE" ---
-                // This is now the primary, and only, player-driven price force.
-                // It is 0 by default and is only populated by a player trade.
+                // Delayed Supply Pressure: The primary player-driven force
                 let pressureEffect = 0;
-                const PLAYER_PRESSURE_STRENGTH = 0.50; // Tuned strength
+                const PLAYER_PRESSURE_STRENGTH = 0.50; 
                 
-                // Add 1-week delay before player's actions impact price
                 if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    // Check if lastPlayerInteractionTimestamp is > 0 to prevent this from running on Day 7 of a new game
                     if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
                          pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
                     }
                 }
-                // [GEMINI] --- END MODEL FIX ---
 
-
-
-                // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
-                // The availabilityEffect block was removed entirely to fix
-                // the "native crash" bug and the "inverse logic" bug.
-                // --- End Removed Block ---
-
-                // --- NEW: Depletion Price Hike ---
+                // Depletion Price Hike
                 let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
-                    priceHikeMultiplier = 1.5; // 50% more acceleration
-                    // We check depletionDay + 7, so this effect lasts for the whole week
-                    // We reset the flag *after* it's been used in replenishment
+                    priceHikeMultiplier = 1.5; 
                 }
-                // --- End Depletion Price Hike ---
 
-                // [GEMINI] Fixed price calculation. Removed availabilityEffect, restored pressureEffect.
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
@@ -12920,7 +12979,7 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
-                // marketPressure still decays, as this is the "timer" for the pressureEffect
+                // Decay pressure
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
@@ -12946,62 +13005,43 @@ export class MarketService {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
-                    inventoryItem.depletionDay = 0; // Clear depletion day on reset
-                    inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
+                    inventoryItem.depletionDay = 0; 
+                    inventoryItem.priceLockEndDay = 0; 
                 } else {
-                    // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
-                    // Market adaptation: high player selling pressure reduces the target stock.
                     let pressureForAdaptation = inventoryItem.marketPressure;
-                    // If pressure is negative (player buying), delay its effect for 1 week
                     if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                        pressureForAdaptation = 0; // Ignore recouping pressure for the first week
+                        pressureForAdaptation = 0; 
                     }
 
-                    // --- REMOVED BRICK WALL (Point c) ---
-                    // Only allow negative pressure (player buying) to increase target stock.
-                    // Positive pressure (player selling) no longer decreases it.
                     if (pressureForAdaptation > 0) {
                         pressureForAdaptation = 0;
                     }
-                    // --- END CHANGE ---
 
-                    // [GEMINI] Note: This logic is still sound. Player *buying* (negative pressure)
-                    // will correctly increase the targetStock, simulating new demand.
-                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); 
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
-                    // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
+                    const replenishAmount = difference * 0.10; 
                     
-                    // --- NEW: Emergency Stock Boost ---
                     let emergencyStock = 0;
                     if (inventoryItem.isDepleted) {
-                        // If item was depleted, add a small emergency boost
                         emergencyStock = skewedRandom(1, 5);
-                        inventoryItem.isDepleted = false; // Reset depletion flag
-                        // We DO NOT reset depletionDay, as evolveMarketPrices uses it for 7 days
+                        inventoryItem.isDepleted = false; 
                     } else if (inventoryItem.quantity <= 0) {
-                        // Also boost if it just happens to be 0
                         emergencyStock = skewedRandom(1, 5);
                     }
-                    // --- End Emergency Stock Boost ---
 
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
-                
-
-                // Phase 3: Apply Final Visual Fluctuation
-                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
+                const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
                 const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
                 inventoryItem.quantity *= finalFluctuation;
                 
-                // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
                     inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
@@ -13021,8 +13061,6 @@ export class MarketService {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
-        // [GEMINI] This calculation is now the core driver of the price change.
-        // It sets marketPressure, which is used by pressureEffect after 7 days.
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         
         if (transactionType === 'buy') {
@@ -13031,7 +13069,6 @@ export class MarketService {
             inventoryItem.marketPressure += pressureChange;
         }
 
-        // --- NEW: Set Variable Price Lock Duration ---
         const dayOfYear = (this.gameState.day - 1) % 365 + 1;
         let minDuration, maxDuration;
 
@@ -13045,48 +13082,38 @@ export class MarketService {
 
         const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
         inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
-        // --- END CHANGE ---
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
-    // --- VIRTUAL WORKBENCH: NEW METHOD ---
     /**
      * Checks if a purchase triggers a market depletion event.
-     * This logic is called by PlayerActionService when a good's stock reaches <= 0.
      * @param {object} good - The static commodity data (from DB).
      * @param {object} inventoryItem - The dynamic inventory item from gameState.
      * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
      * @param {number} currentDay - The current game day.
-     * @JSDoc
      */
     checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
-        // Calculate target stock to check 8% threshold
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const [minAvail, maxAvail] = good.canonicalAvailability;
         const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
         
         let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
         
         const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
         
         const depletionThreshold = targetStock * 0.08;
-        
-        // The amount purchased was the entire stock that was on hand
         const depletionBuyQuantity = stockBeforeBuy; 
 
-        // (5a) Check if buy quantity was >= 8% target
-        // (5b) Check if 1 year has passed since last bonus
         if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
-            inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
+            inventoryItem.isDepleted = true; 
             inventoryItem.depletionDay = currentDay;
-            inventoryItem.depletionBonusDay = currentDay; // Set cooldown
+            inventoryItem.depletionBonusDay = currentDay; 
         }
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
@@ -13172,8 +13199,9 @@ export class MarketService {
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class TravelService {
     /**
@@ -13220,9 +13248,23 @@ export class TravelService {
         }
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
+        
+        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
+
+        // 2. Apply Ship Attribute Modifiers (e.g., Efficient, Sleeper)
+        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        requiredFuel = Math.round(requiredFuel * attrFuelMod);
+
+        // 3. Handle Special "Space Folding" Case (Increases fuel cost)
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
+            requiredFuel = Math.round(requiredFuel * 1.2);
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         if (activeShip.maxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${activeShip.maxFuel}.`);
@@ -13254,18 +13296,58 @@ export class TravelService {
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
         this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
 
+        const activeShip = this.simulationService._getActiveShip();
+        const activeShipState = this.gameState.player.shipStates[activeShip.id];
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+
+        // --- VIRTUAL WORKBENCH: Attribute Logic (Time & Fuel) ---
+        
+        // 1. Base Perk Modifiers
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
+        // 2. Apply Generic Attribute Modifiers
+        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+
+        // 3. Handle Time Modifiers & Complex Logic
+        shipAttributes.forEach(attrId => {
+            const def = GameAttributes.getDefinition(attrId);
+            
+            // Standard Time Modifiers (Heavy, Fast, Sleeper)
+            if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
+                if (def.value) travelInfo.time *= def.value;
+            }
+            // Sleeper Special Case (Time x 4.5 handled via def.timeMod if structured, or manual here)
+            if (attrId === 'ATTR_SLEEPER') {
+                travelInfo.time *= 4.5;
+                travelInfo.fuelCost = 0; // Ensure 0 fuel
+            }
+            // Space Folding (Fixed 1 day, 1.2x Fuel)
+            if (attrId === 'ATTR_SPACE_FOLDING') {
+                travelInfo.time = 1;
+                travelInfo.fuelCost *= 1.2;
+            }
+        });
+
+        // 4. Handle "Solar Sail" Probability (15% chance: 0 fuel, 2x time)
+        if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
+            if (Math.random() < 0.15) {
+                travelInfo.fuelCost = 0;
+                travelInfo.time *= 2;
+                this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
         travelInfo.time = Math.max(1, Math.round(travelInfo.time));
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost); // Final integer round
 
-        const activeShip = this.simulationService._getActiveShip();
-        const activeShipState = this.gameState.player.shipStates[activeShip.id];
         
         if (activeShip.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShip.fuel)}.`);
@@ -13280,6 +13362,16 @@ export class TravelService {
         }
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
+        
+        // --- VIRTUAL WORKBENCH: Hull Decay Attributes ---
+        // Xeno Hull (No decay) or Resilient (Half decay)
+        if (shipAttributes.includes('ATTR_XENO_HULL')) {
+            travelHullDamage = 0;
+        } else if (shipAttributes.includes('ATTR_RESILIENT')) {
+            travelHullDamage *= 0.5;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         const eventHullDamageValue = activeShip.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
@@ -13298,11 +13390,29 @@ export class TravelService {
         
         // --- [[START]] MODIFICATION ---
         // Call onLocationChange() *before* setState.
-        // This ensures the news ticker data is populated *before* the setState
-        // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange(locationId);
         
-        // REMOVED: Visual seed increment is now handled in TimeService.
+        // --- VIRTUAL WORKBENCH: Post-Travel Triggers ---
+        // Initialize trip count if missing
+        if (typeof this.gameState.player.tripCount === 'undefined') {
+            this.gameState.player.tripCount = 0;
+        }
+        this.gameState.player.tripCount++;
+
+        // 1. ATTR_TRAVELLER (Atlas): Restore hull/fuel every 20 trips
+        if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
+            activeShipState.health = activeShip.maxHealth;
+            activeShipState.fuel = activeShip.maxFuel;
+            this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
+            this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+        }
+
+        // 2. ATTR_FUEL_SCOOP (Parallax): Restore 15% fuel
+        if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
+            const fuelRestore = activeShip.maxFuel * 0.15;
+            activeShipState.fuel = Math.min(activeShip.maxFuel, activeShipState.fuel + fuelRestore);
+        }
+        // --- END VIRTUAL WORKBENCH ---
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
         // --- [[END]] MODIFICATION ---
@@ -13352,9 +13462,19 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
-        if (force === false && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
-
+        // --- VIRTUAL WORKBENCH: Attribute Integration ---
         const activeShip = this.simulationService._getActiveShip();
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
+
+        // ATTR_ADVANCED_COMMS: +25% chance
+        if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
+            eventChance *= 1.25;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (force === false && Math.random() > eventChance) return false;
+
         let event;
 
         if (typeof force === 'number') {
@@ -13455,8 +13575,9 @@ export class TravelService {
  * time-based events like birthdays, debt interest, and market replenishment.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES } from '../../data/constants.js';
+import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class TimeService {
     /**
@@ -13465,12 +13586,11 @@ export class TimeService {
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
      */
-    constructor(gameState, marketService, uiManager, logger) { // MODIFIED: Removed newsTickerService
+    constructor(gameState, marketService, uiManager, logger) { 
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
         
         // --- VIRTUAL WORKBENCH ---
@@ -13479,8 +13599,6 @@ export class TimeService {
         // --- END VIRTUAL WORKBENCH ---
     }
 
-    // REMOVED: setNewsTickerService method
-
     /**
      * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
      * @param {number} days - The integer number of days to advance.
@@ -13488,11 +13606,8 @@ export class TimeService {
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
 
-        // --- NEW: Cycle Art Assets on Time Advance ---
-        // This ensures ships and commodities rotate their visual variants whenever time passes
-        // (Travel or Debug Advance).
+        // Cycle Art Assets on Time Advance
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
-        // ---------------------------------------------
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
@@ -13502,10 +13617,26 @@ export class TimeService {
             }
             this.gameState.day++;
 
-            // MODIFIED: Call facade method on SimulationService
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
+
+            // --- VIRTUAL WORKBENCH: Daily Attribute Effects ---
+            const activeShipId = this.gameState.player.activeShipId;
+            if (activeShipId) {
+                const shipAttrs = GameAttributes.getShipAttributes(activeShipId);
+                shipAttrs.forEach(attrId => {
+                    const def = GameAttributes.getDefinition(attrId);
+                    // Handle 'flat_daily' hull decay (e.g. Ouroboros)
+                    if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
+                        const shipState = this.gameState.player.shipStates[activeShipId];
+                        if (shipState && shipState.health > 1) {
+                            shipState.health = Math.max(1, shipState.health - def.value);
+                        }
+                    }
+                });
+            }
+            // --- END VIRTUAL WORKBENCH ---
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
@@ -13523,23 +13654,18 @@ export class TimeService {
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
-                this.marketService._updateShipyardStock(); // Correctly call the method on MarketService
+                this.marketService._updateShipyardStock(); 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            
-            // --- VIRTUAL WORKBENCH (PHASE 3) ---
-            
-            // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
-            const activeDeal = this.gameState.activeIntelDeal; // Check the live state, not a snapshot
+            // --- INTEL EXPIRATION ---
+            const activeDeal = this.gameState.activeIntelDeal; 
             if (activeDeal && this.gameState.day > activeDeal.expiryDay) {
-                const expiredDeal = activeDeal; // Store for cleanup
+                const expiredDeal = activeDeal;
                 
-                // 1. Clear the active deal
                 this.gameState.activeIntelDeal = null;
                 this.logger.info.system('IntelService', this.gameState.day, 'EXPIRED', 'Active intel deal has expired.');
 
-                // 2. Find and remove the source packet from the intelMarket list
                 if (expiredDeal.sourceSaleLocationId && expiredDeal.sourcePacketId) {
                     const saleLocationMarket = this.gameState.intelMarket[expiredDeal.sourceSaleLocationId];
                     if (saleLocationMarket) {
@@ -13551,13 +13677,10 @@ export class TimeService {
                 }
             }
 
-            // --- NEW LOGIC: CHECK INTEL REFRESH ---
-            // (Runs at the start of day 1, 121, 241, etc.)
+            // --- INTEL REFRESH ---
             if (this.intelService && (this.gameState.day % 120 === 1)) {
                 this.intelService.generateIntelRefresh();
             }
-            
-            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
@@ -13575,7 +13698,6 @@ export class TimeService {
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
 
-            // Apply garnishment must be called daily
             this._applyGarnishment();
         }
         
@@ -13628,7 +13750,6 @@ export class TimeService {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             
-            // Garnishment only happens on the 30-day interval
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) {
                 return;
             }
@@ -13637,8 +13758,6 @@ export class TimeService {
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
                 this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
-                
-                // This is the single, non-performative place to check for game over
                 this.simulationService._checkGameOverConditions(); 
             }
 
@@ -13657,7 +13776,6 @@ export class TimeService {
      * @JSDoc
      */
     getCurrentDay() {
-        // This helper is used by IntelService
         return this.gameState.day;
     }
 }
@@ -15052,6 +15170,346 @@ export class TutorialService {
 }
 --- END OF FILE: ./js/services/TutorialService.js ---
 
+--- START OF FILE: ./js/services/GameAttributes.js ---
+// js/services/GameAttributes.js
+import { LOCATION_IDS, ATTRIBUTE_TYPES, SHIP_IDS } from '../data/constants.js';
+import { SHIP_DATABASE } from '../data/ship_database.js';
+
+/**
+ * @fileoverview Central registry for Game Attributes and Station Quirks.
+ * This service acts as a rule engine, translating static IDs into executable game logic
+ * modifiers for prices, travel costs, and event triggers.
+ */
+
+// ==========================================
+// 1. DEFINITIONS (The Logic)
+// ==========================================
+
+const ATTRIBUTE_DEFINITIONS = {
+    // --- Ship Attributes ---
+    
+    // Atlas: "Traveller: Every 20 trips, completely restore hull and fuel."
+    'ATTR_TRAVELLER': {
+        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
+        description: "Restores hull/fuel every 20 trips.",
+        logic: (gameState, shipState) => {
+            // Logic handled in TravelService
+            return null; 
+        }
+    },
+
+    // Vindicator: "Trader: 15% chance to receive 1 extra unit for free on purchase."
+    'ATTR_TRADER': {
+        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRADE,
+        chance: 0.15,
+        description: "15% chance for +1 bonus unit.",
+        // Logic handled by PlayerActionService
+    },
+
+    // Radiant: "Hot Delivery: Cargo less than 45 days old sells at 5% additional profit."
+    'ATTR_HOT_DELIVERY': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "+5% sell price for fresh cargo (<45 days).",
+        value: 1.05,
+        // Condition checks cargoItem age
+        condition: (ctx) => ctx.cargoItem && ctx.currentDay && (ctx.currentDay - ctx.cargoItem.acquiredDay) < 45 && ctx.type === 'sell'
+    },
+
+    // Aesudon: "Resilient: Hull decays 50% slower."
+    'ATTR_RESILIENT': {
+        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
+        value: 0.5,
+        description: "Hull decays 50% slower."
+    },
+
+    // Pterodactyl: "Lucky: 4% increased profit from trades"
+    'ATTR_LUCKY': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "+4% profit on all trades.",
+        value: 1.04,
+        condition: (ctx) => ctx.type === 'sell' // Applies to selling (profit)
+    },
+
+    // Sovereign: "Corporate Partner: Cargo purchased from Earth is 5% cheaper"
+    'ATTR_CORP_PARTNER': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "5% discount on Earth purchases.",
+        value: 0.95, // 5% off
+        condition: (ctx) => ctx.locationId === LOCATION_IDS.EARTH && ctx.type === 'buy'
+    },
+
+    // Titan: "Cryo-Storage: Cargo older than 1 year sells for 10% more."
+    'ATTR_CRYO_STORAGE': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "+10% sell price for old cargo (>1 year).",
+        value: 1.10,
+        condition: (ctx) => ctx.cargoItem && ctx.currentDay && (ctx.currentDay - ctx.cargoItem.acquiredDay) > 365 && ctx.type === 'sell'
+    },
+
+    // Behemoth: "Heavy: Travel time multiplied by 1.3."
+    'ATTR_HEAVY': {
+        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
+        value: 1.3,
+        description: "Travel takes 30% longer."
+    },
+
+    // Behemoth: "Loyalty: 10% discount on purchases from Saturn."
+    'ATTR_LOYALTY_SATURN': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "10% discount on Saturn purchases.",
+        value: 0.90,
+        condition: (ctx) => ctx.locationId === LOCATION_IDS.SATURN && ctx.type === 'buy'
+    },
+
+    // Citadel: "Renown: 15% discount on refueling."
+    'ATTR_RENOWN': {
+        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
+        targetService: 'refuel',
+        value: 0.85,
+        description: "15% discount on refueling."
+    },
+
+    // Sophistacles: "VIP: 10% better prices at The Exchange."
+    'ATTR_VIP': {
+        type: ATTRIBUTE_TYPES.MOD_PRICE,
+        description: "10% better prices at The Exchange.",
+        value: { buy: 0.9, sell: 1.1 }, // Complex object for dual effect
+        condition: (ctx) => ctx.locationId === LOCATION_IDS.EXCHANGE
+    },
+
+    // Ouroboros: "Entropic: Hull decays by 1 point per day."
+    'ATTR_ENTROPIC': {
+        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
+        mode: 'flat_daily',
+        value: 1,
+        description: "1 hull damage per day."
+    },
+
+    // Ouroboros: "Frequent Flyer: 50% discount on hull repairs."
+    'ATTR_FREQUENT_FLYER': {
+        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
+        targetService: 'repair',
+        value: 0.5,
+        description: "50% discount on repairs."
+    },
+
+    // Thalassodromeus: "Space Folding: Navigation costs only 1 day of travel, but 1.2x fuel."
+    'ATTR_SPACE_FOLDING': {
+        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
+        description: "Travel takes 1 day, +20% fuel cost.",
+    },
+
+    // Shell That Echoes Only: "Xeno Hull: No hull decay from travel."
+    'ATTR_XENO_HULL': {
+        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
+        value: 0,
+        description: "No travel decay."
+    },
+
+    // Parallax of Thought: "Fuel Scoop: Restores 15% fuel after every trip."
+    'ATTR_FUEL_SCOOP': {
+        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
+        description: "Restores 15% fuel post-trip.",
+    },
+
+    // Anomaly of the Song: "Solar Sail: 15% chance to use no fuel at 2x travel time."
+    'ATTR_SOLAR_SAIL': {
+        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
+        chance: 0.15,
+        description: "15% chance for 0 fuel (but 2x time).",
+    },
+
+    // Causality of Silence: "Efficient: 25% reduced fuel consumption."
+    'ATTR_EFFICIENT': {
+        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
+        value: 0.75,
+        description: "25% fuel savings."
+    },
+
+    // Engine of Recursion: "Fast: Travel costs half as much time."
+    'ATTR_FAST': {
+        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
+        value: 0.5,
+        description: "Travel time halved."
+    },
+
+    // Finality of Whispers: "Bespoke: Cannot be repaired."
+    'ATTR_BESPOKE': {
+        type: ATTRIBUTE_TYPES.RESTRICTION,
+        target: 'repair',
+        description: "Cannot be repaired."
+    },
+
+    // The Listener: "Advanced Comms: 25% increased chance to encounter an event."
+    'ATTR_ADVANCED_COMMS': {
+        type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
+        value: 1.25,
+        description: "+25% event chance."
+    },
+    
+    // Drifting Cryo-Pod: "Sleeper: Consumes no fuel, but trips take 4.5x longer."
+    'ATTR_SLEEPER': {
+        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
+        value: 0,
+        timeMod: 4.5,
+        description: "No fuel cost, 4.5x travel time."
+    },
+
+    // --- Station Quirks (Examples for Future Expansion) ---
+    
+    // Jupiter: "Gravity Well: Fuel costs -50% (Abundant He-3)"
+    'QUIRK_JUPITER_FUEL': {
+        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
+        targetService: 'refuel',
+        value: 0.5,
+        description: "Fuel is 50% off."
+    },
+    
+    // Venus: "Syndicate Port: Repair costs +20% (Bribes)"
+    'QUIRK_VENUS_REPAIR': {
+        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
+        targetService: 'repair',
+        value: 1.2,
+        description: "Repairs cost +20%."
+    }
+};
+
+// ==========================================
+// 2. MAPPINGS (Station Data)
+// ==========================================
+
+// Maps Location IDs to Station Quirk Keys
+const STATION_QUIRK_MAP = {
+    [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_FUEL'],
+    [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_REPAIR'],
+    // Add others here as we implement them programmatically
+};
+
+// ==========================================
+// 3. SERVICE EXPORT (The API)
+// ==========================================
+
+export const GameAttributes = {
+    /**
+     * Gets all attributes associated with a specific ship ID.
+     * Looks up the ship in SHIP_DATABASE and retrieves the mechanicIds array.
+     * @param {string} shipId 
+     * @returns {Array<string>} Array of Attribute Keys
+     */
+    getShipAttributes(shipId) {
+        const ship = SHIP_DATABASE[shipId];
+        return ship && ship.mechanicIds ? ship.mechanicIds : [];
+    },
+
+    /**
+     * Gets all quirks associated with a specific location.
+     * @param {string} locationId 
+     * @returns {Array<string>} Array of Quirk Keys
+     */
+    getStationQuirks(locationId) {
+        return STATION_QUIRK_MAP[locationId] || [];
+    },
+
+    /**
+     * Calculates the modifier for service costs (Refuel/Repair).
+     * Combines Ship Attributes AND Station Quirks.
+     * @param {string} shipId 
+     * @param {string} locationId 
+     * @param {string} serviceType 'refuel' or 'repair'
+     * @returns {number} The price multiplier (e.g., 0.5 for 50% off)
+     */
+    getServiceCostModifier(shipId, locationId, serviceType) {
+        let modifier = 1.0;
+
+        // Check Ship Attributes
+        const shipAttrs = this.getShipAttributes(shipId);
+        shipAttrs.forEach(key => {
+            const def = ATTRIBUTE_DEFINITIONS[key];
+            if (def && def.type === ATTRIBUTE_TYPES.MOD_SERVICE_COST && def.targetService === serviceType) {
+                modifier *= def.value;
+            }
+        });
+
+        // Check Station Quirks
+        const stationQuirks = this.getStationQuirks(locationId);
+        stationQuirks.forEach(key => {
+            const def = ATTRIBUTE_DEFINITIONS[key];
+            if (def && def.type === ATTRIBUTE_TYPES.MOD_SERVICE_COST && def.targetService === serviceType) {
+                modifier *= def.value;
+            }
+        });
+
+        return modifier;
+    },
+
+    /**
+     * Calculates the travel fuel cost modifier for a ship.
+     * @param {string} shipId 
+     * @returns {number} Multiplier (e.g., 0.75 for 25% off)
+     */
+    getFuelCostModifier(shipId) {
+        let modifier = 1.0;
+        const shipAttrs = this.getShipAttributes(shipId);
+        
+        shipAttrs.forEach(key => {
+            const def = ATTRIBUTE_DEFINITIONS[key];
+            if (def && def.type === ATTRIBUTE_TYPES.MOD_FUEL_COST) {
+                if (typeof def.value === 'number') {
+                     modifier *= def.value;
+                }
+            }
+        });
+        
+        return modifier;
+    },
+
+    /**
+     * Calculates the price modifier for a trade transaction.
+     * @param {string} shipId - Active Ship ID
+     * @param {string} locationId - Current Location
+     * @param {string} transactionType - 'buy' or 'sell'
+     * @param {object} contextData - Extra data { cargoItem, currentDay, commodityId }
+     * @returns {number} Price multiplier (e.g., 0.95 for 5% discount)
+     */
+    getPriceModifier(shipId, locationId, transactionType, contextData = {}) {
+        let modifier = 1.0;
+        const shipAttrs = this.getShipAttributes(shipId);
+        const ctx = { locationId, type: transactionType, ...contextData };
+
+        shipAttrs.forEach(key => {
+            const def = ATTRIBUTE_DEFINITIONS[key];
+            if (def && def.type === ATTRIBUTE_TYPES.MOD_PRICE) {
+                // If the definition has a 'condition' function, verify it passes
+                if (def.condition && !def.condition(ctx)) {
+                    return;
+                }
+
+                // Apply value
+                if (typeof def.value === 'number') {
+                    modifier *= def.value;
+                } else if (typeof def.value === 'object') {
+                    // Handle complex values like { buy: 0.9, sell: 1.1 }
+                    if (def.value[transactionType]) {
+                        modifier *= def.value[transactionType];
+                    }
+                }
+            }
+        });
+
+        return modifier;
+    },
+
+    /**
+     * Returns the definition object for a specific key.
+     * Useful for UI rendering (tooltips/descriptions).
+     * @param {string} key 
+     */
+    getDefinition(key) {
+        return ATTRIBUTE_DEFINITIONS[key];
+    }
+};
+--- END OF FILE: ./js/services/GameAttributes.js ---
+
 --- START OF FILE: ./js/services/LoggingService.js ---
 // js/services/LoggingService.js
 /**
@@ -15351,8 +15809,9 @@ import { AssetService } from './AssetService.js';
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
-import { EULA_CONTENT } from '../data/eulaContent.js'; // IMPORTED
+import { EULA_CONTENT } from '../data/eulaContent.js'; 
 import { playBlockingAnimation } from './ui/AnimationService.js';
+import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -15381,23 +15840,22 @@ export class UIManager {
         this.activeGenericTooltipAnchor = null;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
-        this.missionService = null; // To be injected
-        this.simulationService = null; // To be injected
-        this.newsTickerService = null; // ADDED
-        this.debugService = null; // To be injected
-        this.marketTransactionState = {}; // To store quantity and mode
-        this.activeHighlightConfig = null; // Stores the config for currently visible highlights
+        this.missionService = null; 
+        this.simulationService = null; 
+        this.newsTickerService = null; 
+        this.debugService = null; 
+        this.marketTransactionState = {}; 
+        this.activeHighlightConfig = null; 
         this.marketScrollPosition = 0;
-        this.popperInstance = null; // Instance for Popper.js
+        this.popperInstance = null; 
         // MODIFIED: Added property to hold injected EventManager
-        this.eventManager = null; // To be injected
+        this.eventManager = null; 
 
         // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
         /** @type {import('./IntelService.js').IntelService | null} */
-        this.intelService = null; // To be injected
+        this.intelService = null; 
         /** @type {IntelMarketRenderer | null} */
         this.intelMarketRenderer = null;
-        // To be instantiated
         // --- END VIRTUAL WORKBENCH ---
 
         this.effectsManager = new EffectsManager();
@@ -15415,7 +15873,6 @@ export class UIManager {
         this.getItemPrice = this.getItemPrice.bind(this);
         // --- END VIRTUAL WORKBENCH ---
 
-        // This remains the correct way to handle orientation changes or desktop resizing.
         window.addEventListener('resize', this._setAppHeight);
     }
 
@@ -15534,11 +15991,6 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
             // [[END]] VIRTUAL WORKBENCH (Cache EULA Modal)
-
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
-            // REMOVED shipInfoModal cache
-            // REMOVED shipInfoModalContent cache
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
 
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
@@ -15744,25 +16196,15 @@ export class UIManager {
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  
- 
-                 // --- VIRTUAL WORKBENCH: BUG FIX ---
-                 // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
-                 // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
-    
                  const action = ACTION_IDS.SET_SCREEN;
     
-                 // --- END VIRTUAL WORKBENCH ---
-
-                 
                  let subStyle = '';
                  if (isSubNavActive) {
                      subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
                  
-                 // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
-            
             
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -15786,9 +16228,6 @@ export class UIManager {
         switch (gameState.activeScreen) {
             case SCREEN_IDS.MAP:
                 this.cache.mapScreen.innerHTML = renderMapScreen();
-                // Defer map initialization until after the browser has painted the new DOM elements,
-    
-                 // ensuring the map container has a valid clientHeight for D3 to use.
                 requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
@@ -15796,7 +16235,6 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
-                // MODIFIED: Bind hold events after rendering the services screen
                 if (this.eventManager) {
                      this.eventManager.holdEventHandler.bindHoldEvents();
                 }
@@ -15831,57 +16269,24 @@ export class UIManager {
                  this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
-                // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
-
-                // --- VIRTUAL WORKBENCH (A) ---
-                // Check if a full render is needed (e.g., first time visiting screen)
                 const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.INTEL;
                 
-                /**
-   
-                 * Only render the static shell of the Intel screen if it's the first time
-                 * navigating to it. This prevents state updates (like purchasing intel)
-                 * from destroying the DOM and resetting the active tab.
-                 */
                 if (needsFullRender) {
-          
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
-                // --- END VIRTUAL WORKBENCH (A) ---
                 
-                /**
-                 * This block runs on *every* render for the INTEL screen.
-                 * If the shell was just built, it populates the content.
-                 * If a state 
-change occurred (like a purchase), it *surgically
-                 * re-renders* the market content, updating button states
-                 * without resetting the active tab.
-                 */
                 if (this.intelMarketRenderer) {
-                    // Find the container for the market tab content
-           
                      const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
                 
-                // --- VIRTUAL WORKBENCH (B) ---
-                
-                // Always call updateIntelTab to ensure the *correct* tab
-                // (Codex or Market) is shown based on the game state.
                 this.updateIntelTab(gameState.uiState.activeIntelTab);
-                // --- END VIRTUAL WORKBENCH (B) ---
-                
                 break;
         }
     }
 
-    /**
-     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
-     * @param {object} gameState The current game state.
-     * @private
-     */
     _updateHangarScreen(gameState) {
         const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
@@ -15893,10 +16298,8 @@ change occurred (like a purchase), it *surgically
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
-        // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
 
-        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
         const SAFE_DISTANCE = 2;
         const pages = carousel.querySelectorAll('.carousel-page');
 
@@ -15908,35 +16311,26 @@ change occurred (like a purchase), it *surgically
             if (!img) return;
 
             if (distance > SAFE_DISTANCE) {
-                // --- UNLOAD ---
                 if (img.hasAttribute('src')) {
                     img.removeAttribute('src');
                     img.style.opacity = '0';
-                    // Important: Reset fallback flag so it retries if reloaded
                     img.removeAttribute('data-tried-fallback'); 
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD OR UPDATE ---
                 const shipId = page.dataset.shipId;
                 if (shipId) {
                     const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                    // Update if src is missing OR if it doesn't match the new expected path.
-                    // We check if the current src URL contains the new relative path.
                     if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
                         img.src = newSrc;
-                        // Ensure it's visible if we just loaded it
                         img.onload = () => { img.style.opacity = '1'; };
                         if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }
         });
-        // --- [[END]] GARBAGE COLLECTION ---
 
-        // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
-        // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
 
@@ -15945,7 +16339,6 @@ change occurred (like a purchase), it *surgically
             const dotOffsetLeft = activeDot.offsetLeft;
             const dotWidth = activeDot.offsetWidth;
 
-            // Calculate the target scroll position to center the active dot
             const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
 
             paginationWrapper.scrollTo({
@@ -15955,12 +16348,6 @@ change occurred (like a purchase), it *surgically
         }
     }
 
-    /**
-     * Renders the virtualized pagination for the hangar/shipyard screen.
-     * It shows a maximum of 6 full dots and up to 2 half-dots as indicators for more items.
-     * @param {object} gameState The current game state.
-     * @private
-     */
     _renderHangarPagination(gameState) {
         const { uiState, player, currentLocationId } = gameState;
         const hangarScreenEl = this.cache.hangarScreen;
@@ -15973,7 +16360,6 @@ change occurred (like a purchase), it *surgically
         const shipList = isHangarMode ? player.ownedShipIds : this.simulationService._getShipyardInventory().map(([id]) => id);
         const totalItems = shipList.length;
 
-        // Hide pagination if there is only one or zero ships.
         if (totalItems <= 1) {
             paginationContainer.innerHTML = '';
             return;
@@ -15981,13 +16367,10 @@ change occurred (like a purchase), it *surgically
 
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
-        // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
-        // Determine the index of the currently boarded ship to mark it specially.
         let boardedIndex = -1;
         if (isHangarMode) {
             boardedIndex = player.ownedShipIds.indexOf(player.activeShipId);
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const theme = location?.navTheme || { borderColor: '#7a9ac0' };
@@ -15995,13 +16378,13 @@ change occurred (like a purchase), it *surgically
         const VISIBLE_FULL_DOTS = 6;
         let dots = [];
 
-        if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
+        if (totalItems <= VISIBLE_FULL_DOTS + 1) { 
             for (let i = 0; i < totalItems; i++) {
                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
-                    isBoarded: i === boardedIndex // Pass boarded status
+                    isBoarded: i === boardedIndex 
                 });
             }
         } else {
@@ -16020,22 +16403,19 @@ change occurred (like a purchase), it *surgically
                 end = activeIndex + Math.ceil(VISIBLE_FULL_DOTS / 2);
             }
 
-            // Add previous indicator if needed
             if (start > 0) {
                 dots.push({ isHalf: true, jump: 'prev' });
             }
 
-             // Add the main window of full dots
             for (let i = start; i < end; i++) {
                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
-                    isBoarded: i === boardedIndex // Pass boarded status
+                    isBoarded: i === boardedIndex 
                 });
             }
 
-            // Add next indicator if needed
             if (end < totalItems) {
                 dots.push({ isHalf: true, jump: 'next' });
             }
@@ -16049,11 +16429,7 @@ change occurred (like a purchase), it *surgically
             if (dot.isHalf) {
                  return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
-                // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
-                // Add 'boarded' class if applicable
                 const boardedClass = dot.isBoarded ? 'boarded' : '';
-                // --- END VIRTUAL WORKBENCH ---
-
                 return `<div class="pagination-dot ${dot.isActive ? 'active' : ''} ${boardedClass}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
@@ -16094,10 +16470,7 @@ change occurred (like a purchase), it *surgically
  
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         
-        // --- [[START]] MODIFICATION ---
-        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
         const marketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); 
-        // --- [[END]] MODIFICATION ---
 
         if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
@@ -16105,15 +16478,11 @@ change occurred (like a purchase), it *surgically
             this.marketScrollPosition = 0;
         }
     
-       
          this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
         
-        // --- [[START]] MODIFICATION ---
-        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel');
-        // --- [[END]] MODIFICATION ---
 
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
@@ -16146,7 +16515,6 @@ change occurred (like a purchase), it *surgically
                 if (qtyInput) {
                      qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
-                    // After restoring state, immediately update the display to reflect it.
                     this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
                 }
             }
@@ -16154,20 +16522,15 @@ change occurred (like a purchase), it *surgically
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
-        // Use the simulationService (which now points to MarketService's getPrice)
-        // to ensure intel overrides are checked.
         if (!this.simulationService || !this.simulationService.marketService) {
-            // Fallback for early load
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
         
-        // Note: The isSelling logic for specialDemand is handled inside the
-        // UIManager's _calculateSaleDetails, not here.
-        // This function just needs to get the *base* price, which
-        // MarketService.getPrice() now does (checking for intel overrides).
-        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
-        // --- END VIRTUAL WORKBENCH ---
+        // Pass `true` to apply modifiers if `isSelling` implies a user-facing price check
+        // However, MarketService.getPrice's 3rd arg is `applyModifiers`. 
+        // We probably want to apply modifiers for display purposes here.
+        // Let's pass `true` to show the modified price in the UI.
+        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId, true);
      }
 
     _calculateSaleDetails(goodId, quantity) {
@@ -16177,44 +16540,13 @@ change occurred (like a purchase), it *surgically
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         
-        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
-        // Pass `true` for isSelling to get the correct base price
         const basePrice = this.getItemPrice(state, goodId, true);
-        // --- END VIRTUAL WORKBENCH ---
 
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
 
-        // --- VIRTUAL WORKBENCH: REMOVE PENALTY ---
-        // Guard against division by zero if market stock is depleted.
-        // if (marketStock <= 0) { // This check is no longer needed as we're not dividing by it
-        //     return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0, reduction: 0 };
-        // }
-        
-        const effectivePrice = basePrice; // Price is always the base price
+        const effectivePrice = basePrice; 
         const totalPrice = Math.floor(effectivePrice * quantity);
-
-        // This block is now simplified as reduction is gone
-        // const threshold = marketStock * 0.1;
-        // if (quantity <= threshold) {
-        //     const totalPrice = basePrice * quantity;
-        //     const totalCost = avgCost * quantity;
-        //     let netProfit = totalPrice - totalCost;
-        //     if (netProfit > 0) {
-        //         let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-        //         netProfit += netProfit * totalBonus;
-        //     }
-        //     return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
-        // }
-        //
-        // const excessRatio = quantity / marketStock;
-        // let reduction = 0;
-        //
-        // [OLD PENALTY LOGIC REMOVED]
-        //
-        // const effectivePrice = basePrice * (1 - reduction);
-        // const totalPrice = Math.floor(effectivePrice * quantity);
-        // --- END VIRTUAL WORKBENCH ---
 
          const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
@@ -16225,7 +16557,7 @@ change occurred (like a purchase), it *surgically
 
         return {
             totalPrice,
-            effectivePricePerUnit: effectivePrice, // This is now just basePrice
+            effectivePricePerUnit: effectivePrice, 
             netProfit
          };
     }
@@ -16259,17 +16591,13 @@ change occurred (like a purchase), it *surgically
         }
 
         if (mode === 'buy') {
-            // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
-            // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
              effectivePriceEl.textContent = '';
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: this.getItemPrice(state, goodId, true),
-                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                  playerItem: playerItem
             });
@@ -16280,10 +16608,7 @@ change occurred (like a purchase), it *surgically
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
-                // --- VIRTUAL WORKBENCH: RE-ADD per user request ---
-                // Show the base price per unit, since there is no penalty
                 effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
-                // --- END VIRTUAL WORKBENCH ---
                 priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
@@ -16293,9 +16618,7 @@ change occurred (like a purchase), it *surgically
 
             indicatorEl.innerHTML = renderIndicatorPills({
                  price: basePrice,
-                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -16331,20 +16654,14 @@ change occurred (like a purchase), it *surgically
             modal.classList.add('dismiss-disabled');
         }
         
-        
-        // --- VIRTUAL WORKBENCH: GDD MODAL THEMING ---
-        // Apply theme data attribute for CSS-based theming (e.g., glowing borders)
         if (options.theme) {
             modal.dataset.theme = options.theme;
         } else {
-            // Remove old theme to avoid stale borders
             delete modal.dataset.theme;
         }
         
-        // GDD: Control dismissal behavior
          modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
-        // --- END VIRTUAL WORKBENCH ---
 
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
@@ -16354,23 +16671,20 @@ change occurred (like a purchase), it *surgically
         if (titleEl) titleEl.innerHTML = title;
         if (descEl) {
             descEl.innerHTML = description;
-            descEl.className = 'my-4 text-gray-300'; // Reset classes
+            descEl.className = 'my-4 text-gray-300'; 
 
             if (modalId !== 'mission-modal') {
                  descEl.classList.add('mb-6', 'text-lg');
             }
 
-            // Default to centered text for generic event modals, which are mostly short notices.
             if (modalId === 'event-modal' || modalId === 'random-event-modal') {
                 descEl.classList.add('text-center');
             }
 
             if (options.contentClass) {
-                // Allow `contentClass` to override the default alignment.
                 if (options.contentClass.includes('text-left') || options.contentClass.includes('text-right') || options.contentClass.includes('text-justify')) {
                      descEl.classList.remove('text-center');
                 }
-                // Add all provided custom classes.
                 descEl.classList.add(...options.contentClass.split(' ').filter(Boolean));
             }
         }
@@ -16387,38 +16701,21 @@ change occurred (like a purchase), it *surgically
             const btnContainer = modal.querySelector('#' + modalId.replace('-modal', '-button-container'));
             let button;
             
-            // --- VIRTUAL WORKBENCH: GDD FOOTER LOGIC ---
             if (options.footer) {
-                // If a custom footer is provided, inject it and attach handlers
                 if (btnContainer) {
                     btnContainer.innerHTML = options.footer;
-                    // Find any buttons *inside* the new footer and attach handlers
                      btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            // --- VIRTUAL WORKBENCH (C) ---
-                            /**
-                             * Check if the action is 'buy_intel'.
-                             * If it is, we *don't* call closeHandler() here.
-                             * We let ActionClickHandler -> UIManager.handleBuyIntel
-                             * manage the modal closing and chaining, preventing a race condition.
-                             */
                             if (btn.dataset.action === 'buy_intel') {
-                                 return; // Let the specific handler do the work
+                                 return; 
                             }
-                            // --- END VIRTUAL WORKBENCH (C) ---
-
-                             // Let the main EventManager handle the action first
-                            // But also ensure the modal closes for all *other* actions.
                             closeHandler();
                         });
                     });
                 }
             } else if (options.footer === null) {
-                // GDD: Explicitly no footer/buttons
                 if (btnContainer) btnContainer.innerHTML = '';
             } else {
-            // --- END VIRTUAL WORKBENCH ---
-                // Original default button logic
                 if (btnContainer) {
                     btnContainer.innerHTML = '';
                     button = document.createElement('button');
@@ -16432,9 +16729,7 @@ change occurred (like a purchase), it *surgically
                     button.innerHTML = options.buttonText || 'Understood';
                     button.onclick = closeHandler;
                 }
-            // --- VIRTUAL WORKBENCH ---
             }
-            // --- END VIRTUAL WORKBENCH ---
         }
 
          modal.classList.remove('hidden');
@@ -16503,12 +16798,10 @@ change occurred (like a purchase), it *surgically
             contentEl.innerHTML = contentHtml;
         }
         
-        // Ensure scroll position is at the top
         contentEl.scrollTop = 0;
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-        // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#lore-modal-content') || e.target.id === 'lore-modal') {
                 this.hideModal('lore-modal');
@@ -16517,18 +16810,7 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
-// js/services/UIManager.js
-// ... (first half of the file)
 
-    // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
-    /**
-     * Displays the new modal for showing ship info text.
-     * @param {string} shipId The ID of the ship to display info for.
-     */
-    // REMOVED showShipInfoModal function
-    // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
-
-    // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**
      * Displays the new modal for showing the EULA.
      * Modeled after showLoreModal for scrollability and dismissal.
@@ -16549,14 +16831,11 @@ change occurred (like a purchase), it *surgically
             contentEl.innerHTML = EULA_CONTENT;
         }
         
-    
-         // Ensure scroll position is at the top
         contentEl.scrollTop = 0;
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
         
-        // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#eula-modal-content') || e.target.id === 'eula-modal') {
                 this.hideModal('eula-modal');
@@ -16565,9 +16844,7 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
-    // [[END]] VIRTUAL WORKBENCH (showEulaModal)
     
-    // --- VIRTUAL WORKBENCH: PHASE 7 (Refined Ship Confirmation) ---
     /**
      * Shows a confirmation modal for buying or selling a ship.
      * @param {string} shipId - The ID of the ship.
@@ -16578,19 +16855,14 @@ change occurred (like a purchase), it *surgically
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
 
-        // --- Refined Style Logic ---
-        // 1. Get the dynamic color variable from hangar-screen.css
         const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
         
-        // 2. Determine if a special glow class is needed (matching HangarScreen.js logic)
         let shadowClass = '';
         if (ship.class === 'Z') shadowClass = 'glow-text-z';
         else if (ship.class === 'O') shadowClass = 'glow-text-o';
         else if (ship.class === 'S') shadowClass = 'glow-text-s';
         
-        // 3. Construct the styled name span
         const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
-        // --- End Refined Style Logic ---
 
         let title, description, price, amountStr;
         
@@ -16622,8 +16894,6 @@ change occurred (like a purchase), it *surgically
                 
                 confirmBtn.onclick = () => {
                     closeHandler();
-                    // Small delay to ensure modal is clearing before animation starts
-                    // mostly for visual cleanliness so the glow isn't covered
                     setTimeout(onConfirm, 50); 
                 };
                 
@@ -16631,7 +16901,6 @@ change occurred (like a purchase), it *surgically
             }
         });
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
@@ -16642,11 +16911,9 @@ change occurred (like a purchase), it *surgically
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 
-                // --- VIRTUAL WORKBENCH: CLEANUP GDD ATTRIBUTES ---
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
-                // --- END VIRTUAL WORKBENCH ---
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
@@ -16816,95 +17083,72 @@ change occurred (like a purchase), it *surgically
         return svg;
     }
 
-    /**
-     * Displays and positions the tutorial toast. Uses either percentage-based positioning
-     * relative to an overlay or Popper.js for element anchoring.
-     * @param {object} options - Configuration for the toast.
-     * @param {object} options.step - The tutorial step data.
-     * @param {function} options.onSkip - Callback for skip.
-     * @param {function} options.onNext - Callback for next.
-     * @param {object} options.gameState - The current game state.
-     */
      showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-        // Use the new overlay if anchor is 'body', otherwise find the element
         const isOverlayAnchor = step.anchorElement === 'body';
         let referenceEl;
         
         if (isOverlayAnchor) {
-            referenceEl = this.cache.tutorialAnchorOverlay; // Use the dedicated overlay
+            referenceEl = this.cache.tutorialAnchorOverlay; 
         } else {
             referenceEl = document.querySelector(step.anchorElement);
             if (!referenceEl) {
                  this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
-                referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
-                // TODO: Decide if we should force isOverlayAnchor = true here?
+                referenceEl = this.cache.tutorialAnchorOverlay; 
             }
         }
         
-        // Cleanup existing Popper instance if any
         if (this.popperInstance) {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
 
-         // --- Update Content ---
         let processedText = step.text;
-        // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
             const activeShipId = gameState.player.activeShipId;
-            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; // Fallback
+            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; 
             processedText = processedText.replace(/{shipName}/g, shipName);
         }
 
-        // c. Fix {playerName} replacement
         if (processedText.includes('{playerName}')) {
-             const playerName = gameState.player.name || 'Captain'; // Fallback
+             const playerName = gameState.player.name || 'Captain'; 
             processedText = processedText.replace(/{playerName}/g, playerName);
         }
 
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        // --- Apply Size ---
         const initialWidth = step.size?.width || 'auto';
         const initialHeight = step.size?.height || 'auto';
         toast.style.width = initialWidth;
         toast.style.height = initialHeight;
         
-        // --- Apply Position ---
         if (isOverlayAnchor) {
-            // Percentage-based positioning
-            const posX = step.positionX ?? 50; // Default to center
-            const posY = step.positionY ?? 50; // Default to center
+            const posX = step.positionX ?? 50; 
+            const posY = step.positionY ?? 50; 
             toast.style.left = `${posX}%`;
             toast.style.top = `${posY}%`;
-            // Ensure Popper-related styles/attributes are cleared/reset if switching modes
-            toast.style.transform = 'translate(-50%, -50%)'; // Center element on the % point
-            arrow.style.display = 'none'; // No arrow for overlay anchor
+            toast.style.transform = 'translate(-50%, -50%)'; 
+            arrow.style.display = 'none'; 
             toast.removeAttribute('data-popper-placement'); 
             
-            // Note: No Popper instance created in this mode
         } else {
-            // Element-anchored positioning using Popper.js
-            toast.style.left = ''; // Clear direct styles
+            toast.style.left = ''; 
             toast.style.top = '';
-            toast.style.transform = ''; // Clear direct transform
+            toast.style.transform = ''; 
             
-            arrow.style.display = 'block'; // Show arrow
+            arrow.style.display = 'block'; 
 
-             // Configure Popper.js
-            const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
+            const defaultOptions = { 
                 placement: 'auto',
                 modifiers: [
-                    { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
+                    { name: 'offset', options: { offset: [0, 10] } }, 
                      { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
              };
             
-             // Merge step-specific Popper options/modifiers
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
             let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
             if (stepOffsetMod) {
@@ -16920,32 +17164,26 @@ change occurred (like a purchase), it *surgically
                 modifiers: baseModifiers
             };
 
-            // Create Popper instance
             this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
         }
 
-        // --- Show Toast & Configure Buttons ---
         toast.classList.remove('hidden');
         const isInfoStep = step.completion.type === 'INFO';
         this.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
         if (isInfoStep) {
             this.cache.tutorialToastNextBtn.onclick = onNext;
         }
-        const showSkipButton = false; // Configure as needed
+        const showSkipButton = false; 
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
         
-        // --- Notify DebugService ---
         if (this.debugService) {
-            this.debugService.setActiveTutorialStep(step); // Pass the raw step data
+            this.debugService.setActiveTutorialStep(step); 
         }
     }
 
 
-    /**
-     * Hides the tutorial toast and destroys the associated Popper.js instance.
-     */
     hideTutorialToast() {
         this.cache.tutorialToastContainer.classList.add('hidden');
         if (this.popperInstance) {
@@ -16954,66 +17192,42 @@ change occurred (like a purchase), it *surgically
         }
         this.applyTutorialHighlight(null);
         
-        // Notify DebugService
         if (this.debugService) {
             this.debugService.clearActiveTutorialStep();
         }
     }
 
-    /**
-     * Updates the active tutorial toast position and size in real-time based on debug controls.
-     * Handles both percentage-based and Popper-based positioning.
-     * @param {object} newOptions - Options from DebugService._handleTutorialTune
-     * @param {boolean} newOptions.isOverlayAnchor - True if using percentage positioning.
-     * @param {number} newOptions.width - New width (0 for 'auto').
-     * @param {number} newOptions.height - New height (0 for 'auto').
-     * @param {number} newOptions.percentX - New X percentage (0-100).
-     * @param {number} newOptions.percentY - New Y percentage (0-100).
-     * @param {string} newOptions.placement - New Popper placement.
-     * @param {number} newOptions.distance - New Popper offset distance.
-     * @param {number} newOptions.skidding - New Popper offset skidding.
-     */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
 
-        // --- Apply Size (Common) ---
-        // Apply size *first* so calculations are based on the new dimensions
         toast.style.width = width > 0 ? `${width}px` : 'auto';
         toast.style.height = height > 0 ? `${height}px` : 'auto';
 
-        // --- Apply Position (Conditional) ---
         if (isOverlayAnchor) {
-            // Using Percentage Positioning
-            
-        
-             // Destroy Popper instance if it exists (switching modes)
             if (this.popperInstance) {
                 this.popperInstance.destroy();
                 this.popperInstance = null;
                  toast.removeAttribute('data-popper-placement'); 
-                 toast.style.transform = ''; // Clear Popper transform
+                 toast.style.transform = ''; 
             }
             
-            // Apply direct percentage styles
             toast.style.left = `${percentX}%`;
             toast.style.top = `${posY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
+            toast.style.transform = 'translate(-50%, -50%)'; 
             arrow.style.display = 'none';
 
         } else {
-            // Using Popper.js Positioning
-            toast.style.left = ''; // Clear direct styles
+            toast.style.left = ''; 
             toast.style.top = ''; 
-            toast.style.transform = ''; // Clear direct transform (Popper will add its own)
+            toast.style.transform = ''; 
             arrow.style.display = 'block';
 
             const popperUpdateOptions = {
                  placement: placement,
                 modifiers: [
                     { name: 'offset', options: { offset: [skidding, distance] } },
-                    // Re-apply other essential modifiers for element anchoring
                     { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
@@ -17021,16 +17235,10 @@ change occurred (like a purchase), it *surgically
             };
 
             if (this.popperInstance) {
-                 // Update existing instance
                  this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
                       this.logger.error('UIManager', 'Error updating Popper options:', e);
                  });
             } else {
-                 // Need to create Popper instance if switching modes or first time
-                 // This requires the original reference element, which isn't passed here.
-                 // Ideally, the DebugService should trigger a full `showTutorialToast`
-                 // when the anchor *type* changes, rather than just `updateTutorialPopper`.
-                 // For now, we'll log a warning.
                  this.logger.warn('UIManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
             }
         }
@@ -17046,7 +17254,7 @@ change occurred (like a purchase), it *surgically
         const overlay = this.cache.tutorialHighlightOverlay;
         if (!overlay) return;
 
-        overlay.innerHTML = ''; // Clear previous highlights
+        overlay.innerHTML = ''; 
         if (!highlightConfig) {
             overlay.classList.add('hidden');
             return;
@@ -17094,7 +17302,6 @@ change occurred (like a purchase), it *surgically
             }
 
             el.innerHTML = content;
-            // Apply dynamic styles to the animated child, not the parent container
             const animatedChild = el.querySelector('svg');
             if (animatedChild && cue.style.animation !== 'None') {
                  animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
@@ -17224,7 +17431,6 @@ change occurred (like a purchase), it *surgically
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
-        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
         const modalContentHtml = `
@@ -17248,7 +17454,6 @@ change occurred (like a purchase), it *surgically
         this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
 
-        // Two-step render for the glow
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
@@ -17259,7 +17464,6 @@ change occurred (like a purchase), it *surgically
             }
         });
 
-        // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
                 this.hideModal('launch-modal');
@@ -17276,15 +17480,11 @@ change occurred (like a purchase), it *surgically
 
         if (!good || !item) return;
 
-        // --- [[START]] VIRTUAL WORKBENCH ---
-        // Refactor to use the queueModal system for standardized dismissal.
         this.queueModal('cargo-detail-modal', null, null, null, {
-            // GDD-compliant dismissal: allow click inside or outside to close
             dismissInside: true,
             dismissOutside: true,
-             footer: null, // No default buttons
+             footer: null, 
 
-            // Custom setup to inject the rendered cargo card
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
                 if (modalContent) {
@@ -17292,16 +17492,10 @@ change occurred (like a purchase), it *surgically
                  }
             }
         });
-        // --- [[END]] VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Finds the currently active carousel page element from the DOM.
-     * @returns {HTMLElement | null} The .carousel-page element or null.
-     * @private
-     */
     _getActiveShipTerminalElement() {
-        const state = this.lastKnownState; // Use lastKnownState for accuracy
+        const state = this.lastKnownState; 
         if (!state) return null;
 
         const hangarScreenEl = this.cache.hangarScreen;
@@ -17318,23 +17512,14 @@ change occurred (like a purchase), it *surgically
         return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
 
-    /**
-     * Finds the correct DOM element for the active ship and runs a
-     * blocking "dematerialize" animation on it.
-     * @param {string} shipId - The ID of the ship, for logging.
-     * @param {string} [animationClass='is-dematerializing'] - The CSS class to apply.
-     * @returns {Promise<void>}
-     * @JSDoc
-     */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
         const elementToAnimate = this._getActiveShipTerminalElement();
 
         if (!elementToAnimate) {
             this.logger.warn('UIManager', `No element to animate for ${shipId}. Skipping animation.`);
-            return; // Resolve immediately if no element
+            return; 
         }
 
-        // Await the generic animation utility
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
 
@@ -17413,12 +17598,10 @@ change occurred (like a purchase), it *surgically
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
-                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                      const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
-                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                      rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -17459,12 +17642,10 @@ change occurred (like a purchase), it *surgically
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
-                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
-                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -17489,61 +17670,38 @@ change occurred (like a purchase), it *surgically
         }
     }
 
-    // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
         if (!modalBackdrop || !modalBackdrop.id || modalBackdrop.classList.contains('dismiss-disabled')) {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH: GDD DISMISSAL LOGIC ---
         const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
         const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
 
         if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
-             // Special case: Allow lore-modal to be dismissed by clicking content
              if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
-            // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
-            // Special case: Allow eula-modal to be dismissed by clicking content
             if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) {
                 return modalBackdrop.id;
             }
-            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
-
-            // --- [[START]] VIRTUAL WORKBENCH: BUG FIX ---
-            // The redundant checks for 'ship-info-modal' have been REMOVED.
-            // Its dismissal is now handled *only* by the local closeHandler
-            // in showShipInfoModal, just like lore-modal and eula-modal.
-
-            // Standard dismissal (backdrop click only)
-            // NOTE: 'ship-info-modal' is removed from this condition.
             if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
-             // Standard dismissal for lore-modal (backdrop click only)
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                  return modalBackdrop.id;
             }
-             // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
-            // Standard dismissal for eula-modal (backdrop click only)
             if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
-            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
             
-            // --- [[END]] VIRTUAL WORKBENCH: BUG FIX ---
-
-            // GDD-compliant dismissal
             return modalBackdrop.id;
         }
     
-         // --- END VIRTUAL WORKBENCH ---
-
         return null;
     }
 
@@ -17562,10 +17720,8 @@ change occurred (like a purchase), it *surgically
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
 
-        // Set height immediately on show
         this._setAppHeight();
 
-        // Set height again on the next animation frame to catch the final, stable value
         requestAnimationFrame(() => {
             this._setAppHeight();
         });
@@ -17587,11 +17743,7 @@ change occurred (like a purchase), it *surgically
         // Apply theme styles
         modalContent.style.background = theme.gradient;
         modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
-        // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
-        // Use the data-theme attribute for CSS-based glowing borders
         modal.dataset.theme = locationId;
-        // --- END VIRTUAL WORKBENCH ---
-
 
         const imports = [];
         const exports = [];
@@ -17617,8 +17769,22 @@ change occurred (like a purchase), it *surgically
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
         ).join('');
 
-        // *** MODIFIED HTML Structure to apply theme color ***
-        // --- VIRTUAL WORKBENCH START: Phase 6 ---
+        // --- VIRTUAL WORKBENCH: DYNAMIC STATION QUIRKS ---
+        // Fetch quirks from GameAttributes instead of using hardcoded specialty
+        const quirks = GameAttributes.getStationQuirks(locationId);
+        let quirksHtml = '';
+        if (quirks.length > 0) {
+            quirksHtml = quirks.map(qId => {
+                const def = GameAttributes.getDefinition(qId);
+                // Use a slightly different style or color to highlight it's a quirk
+                return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
+            }).join('');
+        } else {
+            // Fallback to legacy specialty or "None reported"
+            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>`;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -17632,7 +17798,7 @@ change occurred (like a purchase), it *surgically
                  </div>
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>
+                    ${quirksHtml}
                 </div>
           </div>
 
@@ -17648,28 +17814,22 @@ change occurred (like a purchase), it *surgically
                 </div>
             </div>
         `;
-        // --- VIRTUAL WORKBENCH END: Phase 6 ---
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
         modal.classList.remove('is-glowing');
 
-        // Use requestAnimationFrame to ensure the browser has rendered the modal
-             // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             modal.classList.add('is-glowing');
         });
 
-        // *** MODIFIED: Combined backdrop and content click listeners ***
         const closeHandler = (e) => {
-            // Close if clicking the backdrop OR the content area
             if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
                  this.hideMapDetailModal();
-                modal.removeEventListener('click', closeHandler); // Ensure listener is removed
+                modal.removeEventListener('click', closeHandler); 
             }
         };
-        // Add the listener *after* the modal is made visible
         requestAnimationFrame(() => {
              modal.addEventListener('click', closeHandler);
         });
@@ -17680,10 +17840,7 @@ change occurred (like a purchase), it *surgically
         const modal = this.cache.mapDetailModal;
         if (modal) {
              modal.classList.remove('is-glowing');
-            // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
-            delete modal.dataset.theme; // Clear theme on close
-            // --- END VIRTUAL WORKBENCH ---
-            // Remove the specific click listener if it exists
+            delete modal.dataset.theme; 
             const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
                 modal.removeEventListener('click', existingHandler);
@@ -17694,56 +17851,26 @@ change occurred (like a purchase), it *surgically
         this.hideModal('map-detail-modal');
     }
 
-    // --- VIRTUAL WORKBENCH: ADD INTEL HANDLERS ---
-
-    /**
-     * Handles switching tabs on the Intel screen.
-     * @param {HTMLElement} element - The clicked tab button.
-     * @JSDoc
-     */
     handleSetIntelTab(element) {
         const targetId = element.dataset.target;
         if (!targetId) return;
 
-        // --- VIRTUAL WORKBENCH: REFACTOR FOR SLIDING ANIMATION ---
-        // This function now just updates the state.
-        // The actual DOM manipulation is handled by `updateIntelTab`.
         if (this.simulationService) {
-            // --- VIRTUAL WORKBENCH: TYPO FIX ---
-            // Corrected `setlntelTab` to `setIntelTab`
             this.simulationService.setIntelTab(targetId);
-            // --- END VIRTUAL WORKBENCH ---
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Surgically updates the Intel screen tabs to reflect the current state.
-     * This is called on *every* render of the Intel screen to ensure
-     * the visual state matches the game state, and to apply the
-     * sliding animation class.
-     * @param {string} activeTabId The ID of the active tab (e.g., 'intel-codex-content').
-     * @JSDoc
-     */
     updateIntelTab(activeTabId) {
         const screen = this.cache.intelScreen;
         if (!screen) return;
         
         const subNavBar = screen.querySelector('.sub-nav-bar');
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Add guard clause to prevent error if subNavBar isn't rendered yet.
         if (!subNavBar) {
-            // This can happen if the render loop runs before renderIntelScreen()
-            // has populated the innerHTML.
             return; 
         }
         
-        // --- END VIRTUAL WORKBENCH ---
-
-        // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
-        // Activate the target tab and content
         const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
         const activeContent = screen.querySelector(`#${activeTabId}`);
 
@@ -17755,79 +17882,39 @@ change occurred (like a purchase), it *surgically
             activeContent.classList.add('active');
         }
 
-        // --- VIRTUAL WORKBENCH: SLIDING ANIMATION ---
-        // Apply class to the bar itself for the CSS transition
         if (activeTabId === 'intel-market-content') {
             subNavBar.classList.add('market-active');
         } else {
             subNavBar.classList.remove('market-active');
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
 
-    /**
-     * Finds the specified intel packet from the game state.
-     * @param {string} packetId 
-     * @param {string} locationId 
-     * @returns {object | null} The packet object or null if not found.
-     * @private
-     */
     _findIntelPacket(packetId, locationId) {
         const state = this.lastKnownState;
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // A purchased packet might not be at the current locationId.
-        // We must search all locations if it's a 'show_intel_details' call.
         if (state.intelMarket[locationId]) {
             const packet = state.intelMarket[locationId].find(p => p.id === packetId);
             if (packet) return packet;
         }
 
-        // Fallback: Search all locations for the packet.
-        // This is crucial for 'show_intel_details' of a purchased packet
-        // when viewed from a different location.
         for (const locId of Object.keys(state.intelMarket)) {
             const packet = state.intelMarket[locId].find(p => p.id === packetId);
             if (packet) {
-                 // this.logger.info('UIManager', `_findIntelPacket: Found packet ${packetId} at fallback location ${locId}`);
                 return packet;
             }
         }
         
-        // --- END VIRTUAL WORKBENCH ---
-
         this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} anywhere.`);
         return null;
     }
 
-    /**
-     * Formats an intel "details" string, replacing all GDD placeholders.
-     * @param {string} template - The template string from INTEL_CONTENT.
-     * @param {object} packet - The intelPacket object.
-     * @param {number} price - The calculated price.
-     * @param {boolean} isNewFormat - Flag to determine which duration placeholder to use.
-     * @returns {string} The formatted, player-facing string.
-     * @private
-     * @JSDoc
-     */
     _formatIntelDetails(template, packet, price, isNewFormat) {
-        // --- VIRTUAL WORKBENCH (C) ---
-        // FIX: The "details" modal must show the DEAL location, not the SALE location.
-        // `packet.locationId` is where it's sold. `packet.dealLocationId` is where the deal is.
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
-        // --- END VIRTUAL WORKBENCH ---
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         
-        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
-        // The price for the placeholder is the *price paid*.
-        // Use a fallback for legacy packets that may not have pricePaid.
         const priceStr = price ? formatCredits(-price, true) : '???';
-        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
-
-        // --- VIRTUAL WORKBENCH (Phase 4/5 Refactor) ---
-        // Use packet.expiryDay (added in Phase 1)
         const currentDay = this.intelService.getCurrentDay();
         const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
         
@@ -17845,69 +17932,44 @@ change occurred (like a purchase), it *surgically
              .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr);
-            // [Observed issue]: priceStr replacement is now conditional
 
-        // --- VIRTUAL WORKBENCH (Revert Logic) ---
-        // This logic handles both old save-game packets ("... [durationDays] days")
-        // and new packets ("... in [durationDays].")
-        result = result.replace(/\[durationDays\]\s*days/g, durationStr); // Handles old format
-        result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
-        // --- END VIRTUAL WORKBENCH ---
+        result = result.replace(/\[durationDays\]\s*days/g, durationStr); 
+        result = result.replace(/\[durationDays\]/g, durationStr); 
         
-        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
-        // Handle new packet format (with span)
         result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
-        // Handle old packet format (no span, for save compatibility)
         result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
-        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
          return result;
     }
 
-    /**
-     * Shows the "Sample" modal (the offer) for an intel packet.
-     * @param {HTMLElement} element - The clicked button element.
-     * @JSDoc
-     */
     handleShowIntelOffer(element) {
         const { packetId, locationId, price } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
         
-        // --- VIRTUAL WORKBENCH (C) ---
-        // The "sample" text should refer to the DEAL location, so the player
-        // knows where the deal is before they buy.
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a distant market';
-        // --- END VIRTUAL WORKBENCH ---
         
 
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // Add save-game compatibility for old messageKey packets
         let msg;
         if (packet.messageKey) {
-            // New universal system: Use messageKey
             msg = INTEL_CONTENT[packet.messageKey];
         } else if (packet.messageIndex !== undefined) {
-             // Old location-based system: Use messageIndex (Save Game Compat)
-            let msgArray = INTEL_CONTENT[packet.locationId]; // Use SALE location for message
-            if (packet.fallbackMsg) { // Handle fallback packet
+            let msgArray = INTEL_CONTENT[packet.locationId]; 
+            if (packet.fallbackMsg) { 
                 msgArray = INTEL_CONTENT[packet.fallbackMsgSource];
             }
             if (!msgArray) {
                 this.logger.warn('UIManager', `SaveCompat: No message array for ${packet.locationId}, using fallback.`);
-                // This will likely fail as INTEL_CONTENT is no longer an array, but it's the best we can do.
                 msgArray = INTEL_CONTENT["CORP_FAILURE_01"]; 
             }
             msg = msgArray ? msgArray[packet.messageIndex] : null;
         }
 
         const vagueText = (msg?.sample || "Intel available at [location name].")
-            .replace('[location name]', locationName); // Always replace with DEAL location
-        // --- END VIRTUAL WORKBENCH ---
+            .replace('[location name]', locationName); 
         
         const priceNum = parseInt(price, 10);
         
-        // --- VIRTUAL WORKBENCH START: Phase 5 ---
         const purchaseButtonHTML = `
             <button class="btn btn-module btn-module-credit" 
                     data-action="buy_intel" 
@@ -17916,117 +17978,58 @@ change occurred (like a purchase), it *surgically
                      data-price="${priceNum}">
                 Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
-            theme: locationId, // GDD: Apply location-specific theme
-            dismissOutside: true, // GDD: Allow dismissing outside
-             footer: purchaseButtonHTML // GDD: Use custom footer
+            theme: locationId, 
+            dismissOutside: true, 
+             footer: purchaseButtonHTML 
         });
     }
 
-    /**
-     * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
-     * @param {HTMLElement} element - The clicked "Purchase Intel" button.
-     * @param {Event} e - The click event (for floating text).
-     * @JSDoc
-     */
     handleBuyIntel(element, e) {
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
         const { packetId, locationId, price } = element.dataset;
         const priceNum = parseInt(price, 10);
-        // Call the service to perform the transaction
         const purchasedPacket = this.intelService.purchaseIntel(packetId, locationId, priceNum);
 
         if (purchasedPacket) {
-            // GDD: On success, immediately close "Sample" modal and open "Details" modal
-            this.hideModal('event-modal'); // Close the sample modal
+            this.hideModal('event-modal'); 
             
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
-            // Add floating text
              if(e) {
                 this.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
             }
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
-            // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
-                 // --- VIRTUAL WORKBENCH START: Phase 5 ---
-                // Pass the *stored* pricePaid from the packet
                 this._showIntelDetailsModal(updatedPacket, updatedPacket.pricePaid, locationId);
-                // --- VIRTUAL WORKBENCH END: Phase 5 ---
             }
 
-            // --- VIRTUAL WORKBENCH (B) ---
-            /**
-             * GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
-             * * This manual render call is no longer needed. The setState() in
-             * IntelService.js now triggers renderActiveScreen (via the main
-             * UIManager.render() subscription), which surgically updates 
-             * the market content without a full page reset.
-             */
-             // const intelScreen = document.getElementById('intel-screen');
-            // const marketContentEl = intelScreen?.querySelector('#intel-market-content');
-            // if (marketContentEl && this.intelMarketRenderer) {
-            //     this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
-            // }
-            // --- END VIRTUAL WORKBENCH (B) ---
         } else {
-            // Purchase failed (e.g., already active deal, not enough credits)
-            // The service will log the error. We can optionally show a UI error here.
             this.hideModal('event-modal');
             this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
         }
     }
 
-    /**
-     * Shows the "Details" modal for a purchased packet.
-     * @param {HTMLElement} element - The clicked "View Intel" button.
-     * @JSDoc
-     */
     handleShowIntelDetails(element) {
         const { packetId, locationId } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
 
-        // --- VIRTUAL WORKBENCH START: Phase 5 ---
-        // Use the stored pricePaid if it exists, otherwise fall back to re-calculating
         const price = packet.pricePaid || this.intelService.calculateIntelPrice(packet);
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
-        // --- VIRTUAL WORKBENCH (Revert) ---
-        // Pass the re-calculated price, as the price paid isn't stored on the button.
         this._showIntelDetailsModal(packet, price, locationId);
-        // --- END VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Private helper to show the "Details" modal.
-     * @param {object} packet - The intelPacket object.
-     * @param {number} price - The price (either from purchase or re-calculated).
-     * @param {string} locationId - The locationId for theming.
-     * @private
-     * @JSDoc
-     */
     _showIntelDetailsModal(packet, price, locationId) {
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // Add save-game compatibility logic
         let detailsTemplate;
-        let isNewFormat = false; // Flag for durationDays logic
+        let isNewFormat = false; 
 
         if (packet.messageKey) {
-            // New universal system: Use messageKey
              detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
-            isNewFormat = true; // New packets use the new duration placeholder
+            isNewFormat = true; 
         } else if (packet.messageIndex !== undefined) {
-            // Old location-based system: Use messageIndex (Save Game Compat)
             this.logger.warn('UIManager', `SaveCompat: Found old packet with messageIndex ${packet.messageIndex}`);
-            // This packet is from a save file that used the location-based array.
-            // We can't recover it, so show a generic message.
             detailsTemplate = "Details for this expired intel packet are no longer available in the new system.";
         } else {
-            // This handles the *original* 2-message system, if a save is that old.
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
                  "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
@@ -18035,14 +18038,13 @@ change occurred (like a purchase), it *surgically
         }
 
         const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price, isNewFormat);
-        // --- END VIRTUAL WORKBENCH ---
 
         this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
-            theme: locationId, // GDD: Apply location-specific theme
-            dismissInside: true, // GDD: Dismiss on *any* click
+            theme: locationId, 
+            dismissInside: true, 
             dismissOutside: true,
-            footer: null, // GDD: No buttons
-            contentClass: 'text-left' // GDD: Details are paragraphs
+            footer: null, 
+            contentClass: 'text-left' 
         });
     }
 }
@@ -20960,6 +20962,7 @@ export class HoldEventHandler {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js'; // Added
 
 export class ActionClickHandler {
     /**
@@ -20980,12 +20983,12 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    async handle(e, actionTarget) { // <-- Add async
+    async handle(e, actionTarget) { 
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; // For the TutorialService
+        let actionData = null; 
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -20994,27 +20997,12 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 
-                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
-                // Capture the button element now, as 'e.target' might be lost/changed
-                // by the time the modal callback fires.
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
-                    // Pass the captured target to the service for the glow animation
-                    // We wrap it in an object to mimic an Event interface if needed, 
-                    // or just pass it as the event argument which SimService expects.
                     await this.simulationService.buyShip(shipId, { target });
-                    
-                    // Manually trigger the tutorial check here since we are inside a callback
-                    // and the original 'actionData' return at the end of handle() won't happen 
-                    // for this asynchronous flow.
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
-                
-                // Original logic removed:
-                // await this.simulationService.buyShip(shipId, e); 
-                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
-                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
@@ -21022,34 +21010,45 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
 
-                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
                     await this.simulationService.sellShip(shipId, { target });
                 });
-                
-                // Original logic removed:
-                // await this.simulationService.sellShip(shipId, e); 
-                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
-                e.stopPropagation(); // Prevent any other clicks
-                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                // actionData is now set *inside* SimulationService.boardShip
+                e.stopPropagation(); 
+                await this.simulationService.boardShip(shipId, e); 
+                break;
+            }
+
+            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
+            case 'show-attribute-tooltip': {
+                // IMPORTANT: Stop propagation so the tooltip isn't immediately closed
+                // if there are other listeners (like carousel drag handlers).
+                e.stopPropagation(); 
+                e.preventDefault();
+
+                const attrId = dataset.attributeId;
+                if (!attrId) return;
+
+                const definition = GameAttributes.getDefinition(attrId);
+                if (definition) {
+                    const content = `
+                        <div class="text-center">
+                            <h4 class="font-orbitron text-yellow-300 mb-1" style="font-size: 0.85rem;">SYSTEM INSTALLED</h4>
+                            <p class="font-roboto-mono text-xs text-gray-300">${definition.description}</p>
+                        </div>
+                    `;
+                    this.uiManager.showGenericTooltip(actionTarget, content);
+                }
                 break;
             }
             // --- END VIRTUAL WORKBENCH ---
-
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-            // REMOVED 'show_ship_info' case
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
             
-            // --- [[START]] VIRTUAL WORKBENCH (Access Archives Logic - UPDATED Phase 2) ---
             case 'show_ship_lore': {
                 const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
                 const currentIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
@@ -21059,11 +21058,8 @@ export class ActionClickHandler {
                     const shipList = state.player.ownedShipIds;
                     shipId = shipList[currentIndex] || shipList[0];
                 } else {
-                    // Use internal inventory method if accessible (it is in JS)
-                    // shipList is array of [id, data]
                     const inventory = this.simulationService._getShipyardInventory();
                     if (inventory && inventory.length > 0) {
-                        // Ensure index is safe
                         const safeIndex = Math.min(currentIndex, inventory.length - 1);
                         const shipData = inventory[safeIndex];
                         shipId = shipData ? shipData[0] : null;
@@ -21072,20 +21068,15 @@ export class ActionClickHandler {
 
                 if (shipId && DB.SHIPS[shipId]) {
                     const ship = DB.SHIPS[shipId];
-                    // Format Attribute
                     let attributeHtml = '';
                     if (ship.attribute && ship.attribute !== 'None') {
-                        // Strip brackets if present in raw data (though regex targets display mostly)
-                        // Split by the FIRST colon to separate Title from Description
                         const parts = ship.attribute.split(':');
-                        const title = parts[0].trim().replace(/[\[\]]/g, ''); // Remove brackets from title
-                        const description = parts.slice(1).join(':').trim(); // Re-join rest in case of other colons
+                        const title = parts[0].trim().replace(/[\[\]]/g, ''); 
+                        const description = parts.slice(1).join(':').trim(); 
 
                         attributeHtml = `<div class="ship-lore-attribute">${title}:<br>${description}</div>`;
                     }
                     
-                    // Format Content
-                    // Wrap in the scroll container div with the specific classes
                     const content = `
                         <div class="ship-lore-modal-wrapper">
                             ${attributeHtml}
@@ -21095,8 +21086,6 @@ export class ActionClickHandler {
                         </div>
                     `;
 
-                    // Show modal with 'codex-like' behavior (no footer, dismissible)
-                    // We remove 'contentClass' because we are wrapping the content ourselves now
                     this.uiManager.queueModal('event-modal', ship.name, content, null, {
                         dismissInside: true,
                         dismissOutside: true,
@@ -21106,9 +21095,7 @@ export class ActionClickHandler {
                 }
                 break;
             }
-            // --- [[END]] VIRTUAL WORKBENCH ---
     
-            // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
                     this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
@@ -21122,12 +21109,12 @@ export class ActionClickHandler {
                 const totalItems = shipList.length;
 
                 let newIndex;
-                const JUMP_DISTANCE = 5; // How many pages to jump with half-dots
+                const JUMP_DISTANCE = 5; 
 
                 if (dataset.jumpDirection) {
                     if (dataset.jumpDirection === 'next') {
                         newIndex = Math.min(totalItems - 1, currentIndex + JUMP_DISTANCE);
-                    } else { // 'prev'
+                    } else { 
                         newIndex = Math.max(0, currentIndex - JUMP_DISTANCE);
                     }
                 } else {
@@ -21153,20 +21140,13 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN: {
-                // This is the "smarter" logic you described.
-                // We check if the *actual* click target (e.target) was a sub-nav button.
-                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
-                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
-                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
-                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
@@ -21179,24 +21159,19 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
                 this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
 
-            // --- Modals ---
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
                 actionData = { type: 'ACTION', action: 'show-mission-modal' };
@@ -21214,15 +21189,11 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             
-            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
             case 'show_eula_modal':
                 e.preventDefault();
                 this.uiManager.showEulaModal();
                 break;
-            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
-            
-            // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
@@ -21238,26 +21209,19 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;
 
-            // --- Finance & Licenses ---
-            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
-            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
-                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
-                // The new flow is show_intel_offer -> buy_intel
                 this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);
                 break;
 
-            // --- Market Card Minimization ---
             case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
                 if (dataset.goodId) {
                     this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
@@ -21282,14 +21246,9 @@ export class ActionClickHandler {
         if (!license) return;
 
         if (license.type === 'purchase') {
-            // --- VIRTUAL WORKBENCH START: Phase 2 ---
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
-            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
-                // --- VIRTUAL WORKBENCH: BUG FIX ---
-                // Add dismissOutside: true to allow the modal to be closed
                 dismissOutside: true,
-                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
@@ -21669,6 +21628,7 @@ export class CarouselEventHandler {
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class PlayerActionService {
     /**
@@ -21707,15 +21667,21 @@ export class PlayerActionService {
             return false;
         }
 
-        const price = this.uiManager.getItemPrice(state, goodId);
+        const basePrice = this.uiManager.getItemPrice(state, goodId);
+        
+        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
+        // Apply attributes like 'Corporate Partner' or 'VIP'
+        const priceMod = GameAttributes.getPriceModifier(state.player.activeShipId, state.currentLocationId, 'buy', { commodityId: goodId });
+        const price = Math.max(1, Math.round(basePrice * priceMod));
+        // --- END VIRTUAL WORKBENCH ---
+
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-   
-     const activeShip = this.simulationService._getActiveShip();
+        const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
@@ -21724,21 +21690,28 @@ export class PlayerActionService {
          if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
-        const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
+        const stockBeforeBuy = inventoryItem.quantity; 
         inventoryItem.quantity -= quantity;
 
-        // --- VIRTUAL WORKBENCH: REFACTOR ---
-      
-     // Check for depletion bonus logic
+        // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            // Delegate depletion check to MarketService
             this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
+        }
+
+        // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
+        // Vindicator "Trader": 15% chance to receive 1 extra unit for free
+        let finalQuantity = quantity;
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
+            finalQuantity += 1;
+            this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
+            this.logger.info.player(state.day, 'ATTR_TRIGGER', `Trader perk triggered: +1 ${good.name}.`);
         }
         // --- END VIRTUAL WORKBENCH ---
 
         const playerInvItem = activeInventory[goodId];
-        playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
-        playerInvItem.quantity += quantity;
+        playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + finalQuantity);
+        playerInvItem.quantity += finalQuantity;
 
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
@@ -21748,11 +21721,7 @@ export class PlayerActionService {
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Set timestamp to force UIManager to do a full re-render of HangarScreen
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
-        // --- END VIRTUAL WORKBENCH ---
-
         this.gameState.setState({});
         return true;
     }
@@ -21783,6 +21752,17 @@ export class PlayerActionService {
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
 
+        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
+        // Apply attributes like 'Hot Delivery', 'Cryo-Storage', 'Lucky'
+        const priceMod = GameAttributes.getPriceModifier(
+            state.player.activeShipId, 
+            state.currentLocationId, 
+            'sell', 
+            { commodityId: goodId, cargoItem: item, currentDay: state.day }
+        );
+        totalSaleValue = Math.floor(totalSaleValue * priceMod);
+        // --- END VIRTUAL WORKBENCH ---
+
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
@@ -21791,9 +21771,7 @@ export class PlayerActionService {
 
         totalSaleValue = Math.floor(totalSaleValue);
         
-        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
         this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + totalSaleValue);
-        // --- END VIRTUAL WORKBENCH ---
 
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
@@ -21809,11 +21787,7 @@ export class PlayerActionService {
 
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Set timestamp to force UIManager to do a full re-render of HangarScreen
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
-        // --- END VIRTUAL WORKBENCH ---
-
         this.gameState.setState({});
 
         return totalSaleValue;
@@ -21823,7 +21797,6 @@ export class PlayerActionService {
      * Validates if a ship purchase is possible.
      * @param {string} shipId - The ID of the ship to buy.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
      validateBuyShip(shipId) {
         if (this.isTransactionInProgress) {
@@ -21843,11 +21816,9 @@ export class PlayerActionService {
 
     /**
      * Executes the purchase of a new ship (Assumes validation passed).
-     * This replaces the logic in the original buyShip .
      * @param {string} shipId - The ID of the ship to buy.
      * @param {Event} [event] - The click event for placing floating text.
      * @returns {object|null} - The purchased ship object.
-     * @JSDoc
      */
     executeBuyShip(shipId, event) {
         this.isTransactionInProgress = true;
@@ -21855,7 +21826,6 @@ export class PlayerActionService {
         try {
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                // This check is redundant if validateBuyShip was called, but good practice.
                 this.logger.error('PlayerActionService', `executeBuyShip called with invalid shipId: ${shipId}`);
                 return null;
             }
@@ -21868,7 +21838,6 @@ export class PlayerActionService {
             this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
             this.simulationService.addShipToHangar(shipId);
 
-            // Determine the new active index for the shipyard carousel *after* the purchase.
             const shipyardInventory = this.simulationService._getShipyardInventory();
             const currentShipyardIndex = this.gameState.uiState.shipyardActiveIndex || 0;
             const newShipyardIndex = Math.min(currentShipyardIndex, Math.max(0, shipyardInventory.length - 1));
@@ -21878,34 +21847,28 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
-            // 1. Get dynamic color
             const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
             
-            // 2. Get glow class
             let shadowClass = '';
             if (ship.class === 'Z') shadowClass = 'glow-text-z';
             else if (ship.class === 'O') shadowClass = 'glow-text-o';
             else if (ship.class === 'S') shadowClass = 'glow-text-s';
 
-            // 3. Build Styled Span
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            // 4. Use in description
             const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
-                    shipyardActiveIndex: newShipyardIndex, // Set the corrected index
+                    shipyardActiveIndex: newShipyardIndex,
                     lastTransactionTimestamp: Date.now()
                 }
             });
             return ship;
         } finally {
-            setTimeout(() => { this.isTransactionInProgress = false; }, 100); // Reset guard
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
     }
 
@@ -21913,13 +21876,12 @@ export class PlayerActionService {
      * Validates if a ship sale is possible.
      * @param {string} shipId - The ID of the ship to sell.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
     validateSellShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
         }
-        const state = this.gameState.getState(); // Get fresh state for validation
+        const state = this.gameState.getState();
         if (state.player.ownedShipIds.length <= 1) {
              return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
         }
@@ -21941,11 +21903,9 @@ export class PlayerActionService {
 
     /**
      * Executes the sale of a ship (Assumes validation passed).
-     * This replaces the logic in the original sellShip .
      * @param {string} shipId - The ID of the ship to sell.
      * @param {Event} [event] - The click event for placing floating text.
      * @returns {number|false} - The sale price.
-     * @JSDoc
      */
     executeSellShip(shipId, event) {
         this.isTransactionInProgress = true;
@@ -21953,17 +21913,14 @@ export class PlayerActionService {
         try {
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                // This check is redundant if validateSellShip was called, but good practice.
                 this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
                 return false;
             }
             
          
-     const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             
-            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
             if (event) {
@@ -21984,23 +21941,17 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
-            // 1. Get dynamic color
             const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
             
-            // 2. Get glow class
             let shadowClass = '';
             if (ship.class === 'Z') shadowClass = 'glow-text-z';
             else if (ship.class === 'O') shadowClass = 'glow-text-o';
             else if (ship.class === 'S') shadowClass = 'glow-text-s';
 
-            // 3. Build Styled Span
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            // 4. Use in description
             const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
@@ -22019,7 +21970,6 @@ export class PlayerActionService {
      * Validates if setting a ship as active is possible.
      * @param {string} shipId - The ID of the ship to make active.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
     validateSetActiveShip(shipId) {
         if (this.isTransactionInProgress) {
@@ -22039,13 +21989,11 @@ export class PlayerActionService {
     /**
      * Executes setting the player's currently active ship (Assumes validation passed).
      * @param {string} shipId - The ID of the ship to make active.
-     * @JSDoc
      */
     executeSetActiveShip(shipId) {
-        // --- VIRTUAL WORKBENCH: RENAMED FROM setActiveShip ---
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         
-        this.isTransactionInProgress = true; // Set guard
+        this.isTransactionInProgress = true; 
 
         try {
             this.gameState.player.activeShipId = shipId;
@@ -22056,9 +22004,6 @@ export class PlayerActionService {
 
             this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
             
-            // The tutorial check is now moved to SimulationService.boardShip
-            // after the animation completes.
-
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
@@ -22066,10 +22011,8 @@ export class PlayerActionService {
                 }
             });
         } finally {
-             // Reset guard after a short delay to allow UI to update
             setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
 
@@ -22088,12 +22031,9 @@ export class PlayerActionService {
         const debtAmount = player.debt;
         player.credits -= debtAmount;
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
-      
-             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
+             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171');
         }
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
@@ -22124,15 +22064,11 @@ export class PlayerActionService {
         player.credits -= loanData.fee;
         this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
-        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`+${formatCredits(loanData.amount, false)}`, event.clientX, event.clientY, '#34d399'); // Green
         }
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.simulationService._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
@@ -22141,11 +22077,7 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
-        // Added glowing classes and removed font-roboto-mono for consistency
- 
         const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
-        // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
@@ -22165,13 +22097,9 @@ export class PlayerActionService {
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
         
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // This is the check that was failing. It will now correctly compare
-        // a (potentially huge) number against a number.
         if (player.credits < license.cost) {
             return { success: false, error: 'INSUFFICIENT_FUNDS' };
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
@@ -22229,11 +22157,18 @@ export class PlayerActionService {
         if (!ship || ship.fuel >= ship.maxFuel) return 0; // Check if ship exists
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
+        
+        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // Apply Station Quirks (Jupiter) and Ship Attributes (Citadel Renown)
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-    
              costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
-        costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+        
+        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'refuel');
+        costPerTick *= attrMod;
+        // --- END VIRTUAL WORKBENCH ---
+
+        costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
 
@@ -22241,19 +22176,15 @@ export class PlayerActionService {
         state.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, state.player.shipStates[ship.id].fuel + 5);
         this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
 
-        // --- ADDED: Floating Text ---
         const refuelBtn = document.getElementById('refuel-btn');
         if (refuelBtn) {
             const rect = refuelBtn.getBoundingClientRect();
-            // Calculate center X, top Y for the text origin
-        
              const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-        // --- END ADDED ---
 
-        this.gameState.setState({}); // Notify state change *after* potentially adding text
+        this.gameState.setState({}); 
         return costPerTick;
     }
 
@@ -22266,13 +22197,29 @@ export class PlayerActionService {
         const ship = this.simulationService._getActiveShip();
         if (!ship || ship.health >= ship.maxHealth) return 0; // Check if ship exists
 
+        // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
+        // Check if repairs are blocked (Finality of Whispers)
+        const shipAttributes = GameAttributes.getShipAttributes(ship.id);
+        if (shipAttributes.includes('ATTR_BESPOKE')) {
+            // Cannot be repaired
+            return 0; 
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN__SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
-         costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+
+        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // Apply Station Quirks (Venus) and Ship Attributes (Ouroboros Frequent Flyer)
+        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'repair');
+        costPerTick *= attrMod;
+        // --- END VIRTUAL WORKBENCH ---
+
+         costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
         state.player.credits -= costPerTick;
@@ -22280,19 +22227,15 @@ export class PlayerActionService {
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 
-        // --- ADDED: Floating Text ---
         const repairBtn = document.getElementById('repair-btn');
         if (repairBtn) {
              const rect = repairBtn.getBoundingClientRect();
-             // Calculate center X, top Y for the text origin
             const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-      
-       // --- END ADDED ---
 
-        this.gameState.setState({}); // Notify state change *after* potentially adding text
+        this.gameState.setState({}); 
         return costPerTick;
     }
 }

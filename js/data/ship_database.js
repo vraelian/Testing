@@ -41,6 +41,7 @@ const locationMap = {
  * @property {number} spawnChance - The chance for this ship to appear in the shipyard (0-1).
  * @property {string} spawnTrigger - The condition for this ship to appear (e.g., "Tier 3 Unlock").
  * @property {boolean} isRare - (Auto-generated) True if spawn chance is < 1.
+ * @property {string[]} mechanicIds - Array of GameAttribute keys defining special behaviors.
  */
 
 /**
@@ -75,7 +76,8 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Stalwart.Ship": {
         name: "Stalwart",
@@ -110,7 +112,8 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Mule.Ship": {
         name: "Mule",
@@ -141,7 +144,8 @@ It is a bet that you can fill it, sell its contents, and earn your way into a be
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
-        isRare: false
+        isRare: false,
+        mechanicIds: []
     },
     "Nomad.Ship": {
         name: "Nomad",
@@ -168,7 +172,8 @@ The light hull and modest cargo bay make it an excellent choice for an explorer,
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Rooster.Ship": {
         name: "Rooster",
@@ -199,7 +204,8 @@ It’s fast, reliable, and just stylish enough to get you noticed by the kinds o
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Mesa.Ship": {
         name: "Mesa",
@@ -230,7 +236,8 @@ It is a tool for the captain who studies manifests, not star charts.`,
         saleLocationId: locationMap["Mars"],
         spawnChance: 0.4,
         spawnTrigger: "Always available",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Pathfinder.Ship": {
         name: "Pathfinder",
@@ -258,7 +265,8 @@ It’s a ship for a pilot who prefers to know the location of the next deal befo
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Odyssey.Ship": {
         name: "Odyssey",
@@ -286,7 +294,8 @@ This is a ship for the captain who has graduated from desperation to ambition, a
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Pilgrim.Ship": {
         name: "Pilgrim",
@@ -315,7 +324,8 @@ It’s a specialized tool for the trader who intends to profit from the system's
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Meridian.Ship": {
         name: "Meridian",
@@ -342,7 +352,8 @@ It's a serious ship for serious work, capable of opening up new routes and disco
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Raven.Ship": {
         name: "Raven",
@@ -368,7 +379,8 @@ It's a ship for the captain who has embraced danger and decided that the best de
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Warden.Ship": {
         name: "Warden",
@@ -398,7 +410,8 @@ It is a ship for the captain who has transcended the cold trade wars of the inne
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.3,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Aegis.Ship": {
         name: "Aegis",
@@ -427,7 +440,8 @@ you are a serious operator, capable of undertaking the most demanding, long-term
         saleLocationId: locationMap["Mars"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Forerunner.Ship": {
         name: "Forerunner",
@@ -455,7 +469,8 @@ It is the ultimate tool for the captain who must navigate the most dangerous tra
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Guardian.Ship": {
         name: "Guardian",
@@ -485,7 +500,8 @@ It is a ship for the merchant prince, a pilot who no longer deals in scraps and 
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Valiant.Ship": {
         name: "Valiant",
@@ -513,7 +529,8 @@ To pilot a Valiant is to be at the absolute pinnacle of the class and adventure.
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Eagle.Ship": {
         name: "Eagle",
@@ -543,7 +560,8 @@ It is fast, tough, beautiful, and a testament to success.`,
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Tundra.Ship": {
         name: "Tundra",
@@ -554,7 +572,7 @@ It is fast, tough, beautiful, and a testament to success.`,
         maxFuel: 170,
         role: "Hauler",
         attribute: "None",
-        description: "A true super-freighter from the Neptune yards, this ship is little more than a powerful engine and a cockpit strapped to a cargo hold of truly colossal proportions.",
+        description: "A true super-freighter from the Neptune yards, this ship is little more than a powerful engine and a cockpit bolted to a cargo hold of truly colossal proportions.",
         lore: `The Tundra is the final word in interplanetary logistics, a colossal hauler built in the deep, cold shipyards of Neptune.
 If the Pilgrim and Warden are the system's long-haul trucks, the Tundra is its supertanker.
 It was designed by a consortium of outer-system corporations who needed a way to move truly staggering quantities of raw materials—ice, methane, and rare minerals—from the Kuiper Belt to the inner system.
@@ -573,7 +591,8 @@ This is a ship for the captain who is ready to move beyond a mere cargo manifest
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.2,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: []
     },
     "Atlas.Ship": {
         name: "Atlas",
@@ -605,7 +624,8 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_TRAVELLER']
     },
     "Vindicator.Ship": {
         name: "Vindicator",
@@ -635,7 +655,8 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         saleLocationId: locationMap["Uranus"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_TRADER']
     },
     "Radiant.Ship": {
         name: "Radiant",
@@ -663,7 +684,8 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_HOT_DELIVERY']
     },
     "Aesudon.Ship": {
         name: "Aesudon",
@@ -692,7 +714,8 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_RESILIENT']
     },
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
@@ -721,7 +744,8 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_LUCKY']
     },
     "Sovereign.Ship": {
         name: "Sovereign",
@@ -751,7 +775,8 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_CORP_PARTNER']
     },
     "Titan.Ship": {
         name: "Titan",
@@ -782,7 +807,8 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_CRYO_STORAGE']
     },
     "Behemoth.Ship": {
         name: "Behemoth",
@@ -809,7 +835,8 @@ It is the ultimate hammer of inevitable logistic.`,
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_HEAVY', 'ATTR_LOYALTY_SATURN']
     },
     "Citadel.Ship": {
         name: "Citadel",
@@ -836,7 +863,8 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_RENOWN']
     },
     "Sophistacles.Ship": {
         name: "Sophistacles",
@@ -864,7 +892,8 @@ It is a purchase that announces to the system that the new owner has transcended
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_VIP']
     },
     "Ouroboros.Ship": {
         name: "Ouroboros",
@@ -890,7 +919,8 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_ENTROPIC', 'ATTR_FREQUENT_FLYER']
     },
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
@@ -918,7 +948,8 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SPACE_FOLDING']
     },
     "ShellThatEchoesOnly.Ship": {
         name: "Shell That Echoes Only",
@@ -938,7 +969,8 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_XENO_HULL']
     },
     "ParallaxofThought.Ship": {
         name: "Parallax of Thought",
@@ -960,7 +992,8 @@ it is a vessel of pure, non-human logic.`,
         saleLocationId: locationMap["Uranus"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_FUEL_SCOOP']
     },
     "AnomalyoftheSong.Ship": {
         name: "Anomaly of the Song",
@@ -980,7 +1013,8 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         saleLocationId: locationMap["The Belt"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SOLAR_SAIL']
     },
     "CausalityofSilence.Ship": {
         name: "Causality of Silence",
@@ -1000,7 +1034,8 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_EFFICIENT']
     },
     "EngineofRecursion.Ship": {
         name: "Engine of Recursion",
@@ -1020,7 +1055,8 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_FAST']
     },
     "FinalityofWhispers.Ship": {
         name: "Finality of Whispers",
@@ -1042,7 +1078,8 @@ It cannot be repaired.`,
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_BESPOKE']
     },
     "TheListener.Ship": {
         name: "The Listener",
@@ -1061,7 +1098,8 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         saleLocationId: locationMap["Moon"],
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_ADVANCED_COMMS']
     },
     "DriftingCryoPod.Ship": {
         name: "Drifting Cryo-Pod",
@@ -1081,6 +1119,7 @@ Its one advanced, and chilling, piece of technology is a personality upload appa
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.03,
         spawnTrigger: "Mission (TBD)",
-        isRare: true
+        isRare: true,
+        mechanicIds: ['ATTR_SLEEPER']
     }
 };

@@ -7,6 +7,7 @@
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class PlayerActionService {
     /**
@@ -45,15 +46,21 @@ export class PlayerActionService {
             return false;
         }
 
-        const price = this.uiManager.getItemPrice(state, goodId);
+        const basePrice = this.uiManager.getItemPrice(state, goodId);
+        
+        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
+        // Apply attributes like 'Corporate Partner' or 'VIP'
+        const priceMod = GameAttributes.getPriceModifier(state.player.activeShipId, state.currentLocationId, 'buy', { commodityId: goodId });
+        const price = Math.max(1, Math.round(basePrice * priceMod));
+        // --- END VIRTUAL WORKBENCH ---
+
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-   
-     const activeShip = this.simulationService._getActiveShip();
+        const activeShip = this.simulationService._getActiveShip();
         const activeInventory = this.simulationService._getActiveInventory();
         if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
@@ -62,21 +69,28 @@ export class PlayerActionService {
          if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
-        const stockBeforeBuy = inventoryItem.quantity; // Get stock *before* purchase
+        const stockBeforeBuy = inventoryItem.quantity; 
         inventoryItem.quantity -= quantity;
 
-        // --- VIRTUAL WORKBENCH: REFACTOR ---
-      
-     // Check for depletion bonus logic
+        // Check for depletion bonus logic
         if (inventoryItem.quantity <= 0) {
-            // Delegate depletion check to MarketService
             this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
+        }
+
+        // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
+        // Vindicator "Trader": 15% chance to receive 1 extra unit for free
+        let finalQuantity = quantity;
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
+            finalQuantity += 1;
+            this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
+            this.logger.info.player(state.day, 'ATTR_TRIGGER', `Trader perk triggered: +1 ${good.name}.`);
         }
         // --- END VIRTUAL WORKBENCH ---
 
         const playerInvItem = activeInventory[goodId];
-        playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + quantity);
-        playerInvItem.quantity += quantity;
+        playerInvItem.avgCost = ((playerInvItem.quantity * playerInvItem.avgCost) + totalCost) / (playerInvItem.quantity + finalQuantity);
+        playerInvItem.quantity += finalQuantity;
 
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
@@ -86,11 +100,7 @@ export class PlayerActionService {
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Set timestamp to force UIManager to do a full re-render of HangarScreen
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
-        // --- END VIRTUAL WORKBENCH ---
-
         this.gameState.setState({});
         return true;
     }
@@ -121,6 +131,17 @@ export class PlayerActionService {
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
 
+        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
+        // Apply attributes like 'Hot Delivery', 'Cryo-Storage', 'Lucky'
+        const priceMod = GameAttributes.getPriceModifier(
+            state.player.activeShipId, 
+            state.currentLocationId, 
+            'sell', 
+            { commodityId: goodId, cargoItem: item, currentDay: state.day }
+        );
+        totalSaleValue = Math.floor(totalSaleValue * priceMod);
+        // --- END VIRTUAL WORKBENCH ---
+
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
@@ -129,9 +150,7 @@ export class PlayerActionService {
 
         totalSaleValue = Math.floor(totalSaleValue);
         
-        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
         this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + totalSaleValue);
-        // --- END VIRTUAL WORKBENCH ---
 
         item.quantity -= quantity;
         if (item.quantity === 0) item.avgCost = 0;
@@ -147,11 +166,7 @@ export class PlayerActionService {
 
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Set timestamp to force UIManager to do a full re-render of HangarScreen
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
-        // --- END VIRTUAL WORKBENCH ---
-
         this.gameState.setState({});
 
         return totalSaleValue;
@@ -161,7 +176,6 @@ export class PlayerActionService {
      * Validates if a ship purchase is possible.
      * @param {string} shipId - The ID of the ship to buy.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
      validateBuyShip(shipId) {
         if (this.isTransactionInProgress) {
@@ -181,11 +195,9 @@ export class PlayerActionService {
 
     /**
      * Executes the purchase of a new ship (Assumes validation passed).
-     * This replaces the logic in the original buyShip .
      * @param {string} shipId - The ID of the ship to buy.
      * @param {Event} [event] - The click event for placing floating text.
      * @returns {object|null} - The purchased ship object.
-     * @JSDoc
      */
     executeBuyShip(shipId, event) {
         this.isTransactionInProgress = true;
@@ -193,7 +205,6 @@ export class PlayerActionService {
         try {
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                // This check is redundant if validateBuyShip was called, but good practice.
                 this.logger.error('PlayerActionService', `executeBuyShip called with invalid shipId: ${shipId}`);
                 return null;
             }
@@ -206,7 +217,6 @@ export class PlayerActionService {
             this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
             this.simulationService.addShipToHangar(shipId);
 
-            // Determine the new active index for the shipyard carousel *after* the purchase.
             const shipyardInventory = this.simulationService._getShipyardInventory();
             const currentShipyardIndex = this.gameState.uiState.shipyardActiveIndex || 0;
             const newShipyardIndex = Math.min(currentShipyardIndex, Math.max(0, shipyardInventory.length - 1));
@@ -216,34 +226,28 @@ export class PlayerActionService {
                 this.simulationService.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
             }
 
-            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
-            // 1. Get dynamic color
             const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
             
-            // 2. Get glow class
             let shadowClass = '';
             if (ship.class === 'Z') shadowClass = 'glow-text-z';
             else if (ship.class === 'O') shadowClass = 'glow-text-o';
             else if (ship.class === 'S') shadowClass = 'glow-text-s';
 
-            // 3. Build Styled Span
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            // 4. Use in description
             const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
-                    shipyardActiveIndex: newShipyardIndex, // Set the corrected index
+                    shipyardActiveIndex: newShipyardIndex,
                     lastTransactionTimestamp: Date.now()
                 }
             });
             return ship;
         } finally {
-            setTimeout(() => { this.isTransactionInProgress = false; }, 100); // Reset guard
+            setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
     }
 
@@ -251,13 +255,12 @@ export class PlayerActionService {
      * Validates if a ship sale is possible.
      * @param {string} shipId - The ID of the ship to sell.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
     validateSellShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
         }
-        const state = this.gameState.getState(); // Get fresh state for validation
+        const state = this.gameState.getState();
         if (state.player.ownedShipIds.length <= 1) {
              return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your last remaining ship." };
         }
@@ -279,11 +282,9 @@ export class PlayerActionService {
 
     /**
      * Executes the sale of a ship (Assumes validation passed).
-     * This replaces the logic in the original sellShip .
      * @param {string} shipId - The ID of the ship to sell.
      * @param {Event} [event] - The click event for placing floating text.
      * @returns {number|false} - The sale price.
-     * @JSDoc
      */
     executeSellShip(shipId, event) {
         this.isTransactionInProgress = true;
@@ -291,17 +292,14 @@ export class PlayerActionService {
         try {
             const ship = DB.SHIPS[shipId];
             if (!ship) {
-                // This check is redundant if validateSellShip was called, but good practice.
                 this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
                 return false;
             }
             
          
-     const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
             
-            // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
             if (event) {
@@ -322,23 +320,17 @@ export class PlayerActionService {
                 newActiveIndex = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
             }
 
-            // --- VIRTUAL WORKBENCH: REFINEMENT (Phase 8) ---
-            // 1. Get dynamic color
             const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
             
-            // 2. Get glow class
             let shadowClass = '';
             if (ship.class === 'Z') shadowClass = 'glow-text-z';
             else if (ship.class === 'O') shadowClass = 'glow-text-o';
             else if (ship.class === 'S') shadowClass = 'glow-text-s';
 
-            // 3. Build Styled Span
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            // 4. Use in description
             const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
-            // --- END VIRTUAL WORKBENCH ---
 
             this.gameState.setState({
                 uiState: {
@@ -357,7 +349,6 @@ export class PlayerActionService {
      * Validates if setting a ship as active is possible.
      * @param {string} shipId - The ID of the ship to make active.
      * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     * @JSDoc
      */
     validateSetActiveShip(shipId) {
         if (this.isTransactionInProgress) {
@@ -377,13 +368,11 @@ export class PlayerActionService {
     /**
      * Executes setting the player's currently active ship (Assumes validation passed).
      * @param {string} shipId - The ID of the ship to make active.
-     * @JSDoc
      */
     executeSetActiveShip(shipId) {
-        // --- VIRTUAL WORKBENCH: RENAMED FROM setActiveShip ---
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         
-        this.isTransactionInProgress = true; // Set guard
+        this.isTransactionInProgress = true; 
 
         try {
             this.gameState.player.activeShipId = shipId;
@@ -394,9 +383,6 @@ export class PlayerActionService {
 
             this.logger.info.player(this.gameState.day, 'SET_ACTIVE_SHIP', `Boarded the ${DB.SHIPS[shipId].name}.`);
             
-            // The tutorial check is now moved to SimulationService.boardShip
-            // after the animation completes.
-
             this.gameState.setState({
                 uiState: {
                     ...this.gameState.uiState,
@@ -404,10 +390,8 @@ export class PlayerActionService {
                 }
             });
         } finally {
-             // Reset guard after a short delay to allow UI to update
             setTimeout(() => { this.isTransactionInProgress = false; }, 100);
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
 
@@ -426,12 +410,9 @@ export class PlayerActionService {
         const debtAmount = player.debt;
         player.credits -= debtAmount;
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
-      
-             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171'); // Red
+             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171');
         }
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
         this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
@@ -462,15 +443,11 @@ export class PlayerActionService {
         player.credits -= loanData.fee;
         this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
-        // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
         if (event) {
             this.uiManager.createFloatingText(`+${formatCredits(loanData.amount, false)}`, event.clientX, event.clientY, '#34d399'); // Green
         }
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
 
         this.simulationService._logTransaction('loan', loanData.amount, `Acquired ${formatCredits(loanData.amount)} loan`);
 
@@ -479,11 +456,7 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        // --- VIRTUAL WORKBENCH: REMOVED FONT-ROBOTO-MONO ---
-        // Added glowing classes and removed font-roboto-mono for consistency
- 
         const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
-        // --- END VIRTUAL WORKBENCH ---
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
@@ -503,13 +476,9 @@ export class PlayerActionService {
         if (license.type !== 'purchase') return { success: false, error: 'NOT_FOR_PURCHASE' };
         if (player.unlockedLicenseIds.includes(licenseId)) return { success: false, error: 'ALREADY_OWNED' };
         
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // This is the check that was failing. It will now correctly compare
-        // a (potentially huge) number against a number.
         if (player.credits < license.cost) {
             return { success: false, error: 'INSUFFICIENT_FUNDS' };
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         player.credits -= license.cost;
         player.unlockedLicenseIds.push(licenseId);
@@ -567,11 +536,18 @@ export class PlayerActionService {
         if (!ship || ship.fuel >= ship.maxFuel) return 0; // Check if ship exists
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
+        
+        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // Apply Station Quirks (Jupiter) and Ship Attributes (Citadel Renown)
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-    
              costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
-        costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+        
+        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'refuel');
+        costPerTick *= attrMod;
+        // --- END VIRTUAL WORKBENCH ---
+
+        costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
 
@@ -579,19 +555,15 @@ export class PlayerActionService {
         state.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, state.player.shipStates[ship.id].fuel + 5);
         this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
 
-        // --- ADDED: Floating Text ---
         const refuelBtn = document.getElementById('refuel-btn');
         if (refuelBtn) {
             const rect = refuelBtn.getBoundingClientRect();
-            // Calculate center X, top Y for the text origin
-        
              const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-        // --- END ADDED ---
 
-        this.gameState.setState({}); // Notify state change *after* potentially adding text
+        this.gameState.setState({}); 
         return costPerTick;
     }
 
@@ -604,13 +576,29 @@ export class PlayerActionService {
         const ship = this.simulationService._getActiveShip();
         if (!ship || ship.health >= ship.maxHealth) return 0; // Check if ship exists
 
+        // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
+        // Check if repairs are blocked (Finality of Whispers)
+        const shipAttributes = GameAttributes.getShipAttributes(ship.id);
+        if (shipAttributes.includes('ATTR_BESPOKE')) {
+            // Cannot be repaired
+            return 0; 
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN__SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
-         costPerTick = Math.max(1, Math.round(costPerTick)); // Ensure cost is at least 1
+
+        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // Apply Station Quirks (Venus) and Ship Attributes (Ouroboros Frequent Flyer)
+        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'repair');
+        costPerTick *= attrMod;
+        // --- END VIRTUAL WORKBENCH ---
+
+         costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
         state.player.credits -= costPerTick;
@@ -618,19 +606,15 @@ export class PlayerActionService {
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 
-        // --- ADDED: Floating Text ---
         const repairBtn = document.getElementById('repair-btn');
         if (repairBtn) {
              const rect = repairBtn.getBoundingClientRect();
-             // Calculate center X, top Y for the text origin
             const x = rect.left + rect.width / 2;
             const y = rect.top;
             this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
         }
-      
-       // --- END ADDED ---
 
-        this.gameState.setState({}); // Notify state change *after* potentially adding text
+        this.gameState.setState({}); 
         return costPerTick;
     }
 }

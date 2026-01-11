@@ -4,8 +4,9 @@
  * time-based events like birthdays, debt interest, and market replenishment.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES } from '../../data/constants.js';
+import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class TimeService {
     /**
@@ -14,12 +15,11 @@ export class TimeService {
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
      */
-    constructor(gameState, marketService, uiManager, logger) { // MODIFIED: Removed newsTickerService
+    constructor(gameState, marketService, uiManager, logger) { 
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        // this.newsTickerService = newsTickerService; // REMOVED
         this.simulationService = null; // To be injected
         
         // --- VIRTUAL WORKBENCH ---
@@ -28,8 +28,6 @@ export class TimeService {
         // --- END VIRTUAL WORKBENCH ---
     }
 
-    // REMOVED: setNewsTickerService method
-
     /**
      * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
      * @param {number} days - The integer number of days to advance.
@@ -37,11 +35,8 @@ export class TimeService {
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
 
-        // --- NEW: Cycle Art Assets on Time Advance ---
-        // This ensures ships and commodities rotate their visual variants whenever time passes
-        // (Travel or Debug Advance).
+        // Cycle Art Assets on Time Advance
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
-        // ---------------------------------------------
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
@@ -51,10 +46,26 @@ export class TimeService {
             }
             this.gameState.day++;
 
-            // MODIFIED: Call facade method on SimulationService
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
+
+            // --- VIRTUAL WORKBENCH: Daily Attribute Effects ---
+            const activeShipId = this.gameState.player.activeShipId;
+            if (activeShipId) {
+                const shipAttrs = GameAttributes.getShipAttributes(activeShipId);
+                shipAttrs.forEach(attrId => {
+                    const def = GameAttributes.getDefinition(attrId);
+                    // Handle 'flat_daily' hull decay (e.g. Ouroboros)
+                    if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
+                        const shipState = this.gameState.player.shipStates[activeShipId];
+                        if (shipState && shipState.health > 1) {
+                            shipState.health = Math.max(1, shipState.health - def.value);
+                        }
+                    }
+                });
+            }
+            // --- END VIRTUAL WORKBENCH ---
 
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
@@ -72,23 +83,18 @@ export class TimeService {
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
-                this.marketService._updateShipyardStock(); // Correctly call the method on MarketService
+                this.marketService._updateShipyardStock(); 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            
-            // --- VIRTUAL WORKBENCH (PHASE 3) ---
-            
-            // --- NEW LOGIC: CHECK INTEL EXPIRATION ---
-            const activeDeal = this.gameState.activeIntelDeal; // Check the live state, not a snapshot
+            // --- INTEL EXPIRATION ---
+            const activeDeal = this.gameState.activeIntelDeal; 
             if (activeDeal && this.gameState.day > activeDeal.expiryDay) {
-                const expiredDeal = activeDeal; // Store for cleanup
+                const expiredDeal = activeDeal;
                 
-                // 1. Clear the active deal
                 this.gameState.activeIntelDeal = null;
                 this.logger.info.system('IntelService', this.gameState.day, 'EXPIRED', 'Active intel deal has expired.');
 
-                // 2. Find and remove the source packet from the intelMarket list
                 if (expiredDeal.sourceSaleLocationId && expiredDeal.sourcePacketId) {
                     const saleLocationMarket = this.gameState.intelMarket[expiredDeal.sourceSaleLocationId];
                     if (saleLocationMarket) {
@@ -100,13 +106,10 @@ export class TimeService {
                 }
             }
 
-            // --- NEW LOGIC: CHECK INTEL REFRESH ---
-            // (Runs at the start of day 1, 121, 241, etc.)
+            // --- INTEL REFRESH ---
             if (this.intelService && (this.gameState.day % 120 === 1)) {
                 this.intelService.generateIntelRefresh();
             }
-            
-            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
@@ -124,7 +127,6 @@ export class TimeService {
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
 
-            // Apply garnishment must be called daily
             this._applyGarnishment();
         }
         
@@ -177,7 +179,6 @@ export class TimeService {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             
-            // Garnishment only happens on the 30-day interval
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) {
                 return;
             }
@@ -186,8 +187,6 @@ export class TimeService {
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
                 this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
-                
-                // This is the single, non-performative place to check for game over
                 this.simulationService._checkGameOverConditions(); 
             }
 
@@ -206,7 +205,6 @@ export class TimeService {
      * @JSDoc
      */
     getCurrentDay() {
-        // This helper is used by IntelService
         return this.gameState.day;
     }
 }

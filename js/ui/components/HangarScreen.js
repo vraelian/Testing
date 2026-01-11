@@ -4,6 +4,35 @@ import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 import { AssetService } from '../../services/AssetService.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
+
+// --- VIRTUAL WORKBENCH: ATTRIBUTE UI CONFIG ---
+// Colors chosen for high readability on solid backgrounds (dark text on bright pastel)
+const ATTRIBUTE_UI_CONFIG = {
+    'ATTR_TRAVELLER': { label: 'SELF-REPAIR', color: '#34d399' }, // Green
+    'ATTR_TRADER': { label: 'TRADER', color: '#facc15' }, // Gold
+    'ATTR_HOT_DELIVERY': { label: 'STASIS', color: '#facc15' }, // Gold
+    'ATTR_RESILIENT': { label: 'RESILIENT', color: '#34d399' }, // Green
+    'ATTR_LUCKY': { label: 'LUCKY', color: '#c084fc' }, // Purple
+    'ATTR_CORP_PARTNER': { label: 'PARTNER', color: '#60a5fa' }, // Blue
+    'ATTR_CRYO_STORAGE': { label: 'CRYO', color: '#38bdf8' }, // Cyan
+    'ATTR_HEAVY': { label: 'HEAVY', color: '#9ca3af' }, // Gray
+    'ATTR_LOYALTY_SATURN': { label: 'SATURN-BORN', color: '#60a5fa' }, // Blue
+    'ATTR_RENOWN': { label: 'RENOWN', color: '#facc15' }, // Gold
+    'ATTR_VIP': { label: 'VIP', color: '#facc15' }, // Gold
+    'ATTR_ENTROPIC': { label: 'ENTROPIC', color: '#f87171' }, // Red
+    'ATTR_FREQUENT_FLYER': { label: 'FQ-FLYER', color: '#34d399' }, // Green
+    'ATTR_SPACE_FOLDING': { label: 'FOLD-DRIVE', color: '#c084fc' }, // Purple
+    'ATTR_XENO_HULL': { label: 'XENO', color: '#34d399' }, // Green
+    'ATTR_FUEL_SCOOP': { label: 'SCOOP', color: '#38bdf8' }, // Cyan
+    'ATTR_SOLAR_SAIL': { label: 'SOLAR', color: '#fbbf24' }, // Amber
+    'ATTR_EFFICIENT': { label: 'EFFICIENT', color: '#a3e635' }, // Lime
+    'ATTR_FAST': { label: 'FAST', color: '#f87171' }, // Red
+    'ATTR_BESPOKE': { label: 'BESPOKE', color: '#e879f9' }, // Pink
+    'ATTR_ADVANCED_COMMS': { label: 'COMMS', color: '#818cf8' }, // Indigo
+    'ATTR_SLEEPER': { label: 'SLEEPER', color: '#94a3b8' }, // Slate
+};
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * Renders the entire Hangar screen UI.
@@ -99,31 +128,62 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
     
-    // Optimized: Only inject the glow layer DIV if this specific ship is active.
     const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
 
     if (isHangarMode) {
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- [[START]] MODIFICATION (Smart Buffer & Garbage Collection) ---
-    // Rule: Load visible + 5 neighbors. Unload (GC) anything > 6 spaces away.
+    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Redesigned) ---
+    const activeAttributes = GameAttributes.getShipAttributes(shipId);
+    let attributesHtml = '';
+    
+    if (activeAttributes && activeAttributes.length > 0) {
+        // We only render the first 2 attributes to prevent overflow
+        const pills = activeAttributes.slice(0, 2).map(attrId => {
+            const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
+            // Style: Solid background, Dark text, No icons, Status-badge shape
+            return `
+                <div class="attribute-pill cursor-pointer" 
+                     data-action="show-attribute-tooltip" 
+                     data-attribute-id="${attrId}"
+                     style="
+                        background-color: ${config.color}; 
+                        color: #1a202c; 
+                        border: 1px solid ${config.color};
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-family: 'Orbitron', sans-serif;
+                        font-size: 0.7rem;
+                        font-weight: 700;
+                        letter-spacing: 0.05em;
+                        pointer-events: auto; /* Ensure clickable over image */
+                     ">
+                    ${config.label}
+                </div>
+            `;
+        }).join('');
+
+        attributesHtml = `
+            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
+                ${pills}
+            </div>
+        `;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     const distance = Math.abs(itemIndex - activeIndex);
     const inBuffer = distance <= 5;
 
-    // Calculate Paths
     const realPath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
     
-    // If in buffer, use real path. If not (GC), use placeholder and store real path in data-src.
     const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
-    const dataSrc = realPath; // Always store the real path for JS access
+    const dataSrc = realPath; 
     
     const isVariantA = realPath.endsWith('_A.jpeg');
 
-    // --- [[START]] MODIFICATION (Clip Fix) ---
-    // If this is the Active Ship, we force it to be visible immediately. 
-    // This prevents the "Hologram Flash" during the re-render caused by boarding.
     const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
     const placeholderStyle = isActive ? 'display: none;' : '';
 
@@ -140,11 +200,10 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                  onload="this.style.opacity='1'; this.nextElementSibling.style.display='none';"
                  onerror="if (this.getAttribute('data-tried-fallback') === 'true' || this.getAttribute('data-is-a') === 'true') { this.style.display='none'; this.nextElementSibling.style.display='flex'; } else { this.setAttribute('data-tried-fallback', 'true'); this.src=this.getAttribute('data-fallback-src'); }">
             <span class="text-2xl font-orbitron absolute inset-0 flex items-center justify-center z-0 text-center text-gray-600" style="${placeholderStyle}">[ SHIP HOLOGRAM ]</span>
+            ${attributesHtml}
         </div>
     `;
-    // --- [[END]] MODIFICATION ---
 
-    // Conditional rendering for shipyard layout
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
@@ -250,8 +309,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
             </div>
         `;
     } else {
-        // --- [[START]] MODIFICATION (Shrink Text for Shipyard Price) ---
-        // Keep existing logic for Shipyard panel
         const priceStr = formatCredits(shipStatic.price, true);
         const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
         
@@ -271,7 +328,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                 </div>
             </div>
         `;
-        // --- [[END]] MODIFICATION ---
     }
 }
 
@@ -286,10 +342,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
         
-        // --- [[START]] MODIFICATION (Shrink Text for Hangar Sell Button) ---
         const salePriceStr = formatCredits(salePrice, true);
-        // Lowered threshold to > 8 to catch "10.00K" (9 chars)
-        // Changed class to specifically target button styling
         const salePriceClass = salePriceStr.length > 8 ? 'text-shrink-button' : '';
 
         return `
@@ -303,7 +356,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
                 </button>
             </div>
         `;
-        // --- [[END]] MODIFICATION ---
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
         const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;

@@ -46,11 +46,11 @@ export const SHIP_IDS = Object.freeze({
     VINDICATOR: 'Vindicator.Ship',
     AEGIS: 'Aegis.Ship',
     ODYSSEY: 'Odyssey.Ship',
-    MAJESTIC: 'luxury_s2', // Obsolete: Not in new ship_database.js
-    TITAN_HAULER: 'Titan.Ship', // Mapped from 'Titan Hauler' to 'Titan'
-    VOID_CHASER: 'rare_s2', // Obsolete: Not in new ship_database.js
+    MAJESTIC: 'luxury_s2', // Obsolete
+    TITAN_HAULER: 'Titan.Ship',
+    VOID_CHASER: 'rare_s2', // Obsolete
     GUARDIAN: 'Guardian.Ship',
-    STARGAZER: 'rare_s4', // Obsolete: Not in new ship_database.js
+    STARGAZER: 'rare_s4', // Obsolete
     BEHEMOTH: 'Behemoth.Ship',
 });
 // --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
@@ -66,7 +66,7 @@ export const COMMODITY_IDS = Object.freeze({
     CYBERNETICS: 'cybernetics',
     PROPELLANT: 'propellant',
     PROCESSORS: 'processors',
-    GRAPHENE_LATTICES: 'graphene_lattices', // CHANGED: Replaced GMO_SEEDS
+    GRAPHENE_LATTICES: 'graphene_lattices',
     CRYO_PODS: 'cryo_pods',
     ATMO_PROCESSORS: 'atmos_processors',
     CLONED_ORGANS: 'cloned_organs',
@@ -75,6 +75,7 @@ export const COMMODITY_IDS = Object.freeze({
     ANTIMATTER: 'antimatter',
     FOLDED_DRIVES: 'folded_drives',
 });
+
 /**
  * Unique identifiers for each travel destination (market location).
  * @enum {string}
@@ -139,32 +140,30 @@ export const ACTION_IDS = Object.freeze({
  * @enum {string}
  */
 export const TUTORIAL_ACTION_TYPES = Object.freeze({
-    SCREEN_LOAD: 'SCREEN_LOAD', // Triggered when a specific screen is loaded.
-    ACTION: 'ACTION',           // Triggered by a specific user action (e.g., buying a ship).
-    INFO: 'INFO',               // A purely informational step, completed by clicking "Next".
+    SCREEN_LOAD: 'SCREEN_LOAD',
+    ACTION: 'ACTION',
+    INFO: 'INFO',
+});
+
+/**
+ * Defines the categories of game attribute effects.
+ * Used by GameAttributes.js to classify logic.
+ * @enum {string}
+ */
+export const ATTRIBUTE_TYPES = Object.freeze({
+    MOD_PRICE: 'MOD_PRICE',             // Modifies buy/sell prices
+    MOD_FUEL_COST: 'MOD_FUEL_COST',     // Modifies fuel consumption
+    MOD_TRAVEL_TIME: 'MOD_TRAVEL_TIME', // Modifies travel duration
+    MOD_HULL_DECAY: 'MOD_HULL_DECAY',   // Modifies passive or active hull decay
+    MOD_SERVICE_COST: 'MOD_SERVICE_COST', // Modifies repair/refuel costs
+    TRIGGER_ON_TRAVEL: 'TRIGGER_ON_TRAVEL', // Triggered after a trip
+    TRIGGER_ON_TRADE: 'TRIGGER_ON_TRADE',   // Triggered after a trade
+    PASSIVE_EFFECT: 'PASSIVE_EFFECT',   // Generic passive tag
+    RESTRICTION: 'RESTRICTION'          // Prevents actions (e.g. Bespoke)
 });
 
 /**
  * A collection of core game balance numbers and rules.
- * @property {number} STARTING_CREDITS - The amount of credits the player starts with.
- * @property {number} STARTING_DEBT_INTEREST - The initial monthly interest on the starting debt.
- * @property {number} REPAIR_COST_PER_HP - The credit cost to repair one point of hull damage.
- * @property {number} REPAIR_AMOUNT_PER_TICK - The percentage of max hull repaired per service tick.
- * @property {number} FUEL_SCALAR - A base multiplier used in travel fuel cost calculations.
- * @property {number} INTEREST_INTERVAL - The number of days between interest charges on debt.
- * @property {number} PASSIVE_REPAIR_RATE - The percentage of max hull repaired per day on inactive ships.
- * @property {number} HULL_DECAY_PER_TRAVEL_DAY - The amount of flat hull damage taken per day of travel.
- * @property {number} SHIP_SELL_MODIFIER - The percentage of a ship's base price received when sold.
- * @property {number} RARE_SHIP_CHANCE - The probability (0-1) of a rare ship appearing in the shipyard stock.
- * @property {number} PRICE_HISTORY_LENGTH - The maximum number of daily price entries to store for graphs.
- * @property {number} FINANCE_HISTORY_LENGTH - The maximum number of transactions to display in the finance log.
- * @property {number} DAILY_PRICE_VOLATILITY - The maximum percentage a price can fluctuate daily.
- * @property {number} MEAN_REVERSION_STRENGTH - The strength of the tendency for prices to return to their galactic average.
- * @property {number} MARKET_PRESSURE_DECAY - The weekly decay factor for market pressure (e.g., 0.85 means 15% decay).
- * @property {number} LOCAL_PRICE_MOD_STRENGTH - The strength of the local import/export price modifier (0-1).
- * @property {number} LOAN_GARNISHMENT_DAYS - The number of days after taking a loan before wage garnishment can begin.
- * @property {number} LOAN_GARNISHMENT_PERCENT - The percentage of player credits garnished if their loan is delinquent.
- * @property {number} RANDOM_EVENT_CHANCE - The probability (0-1) of a random event occurring during travel.
  */
 export const GAME_RULES = Object.freeze({
     STARTING_CREDITS: 5000,

@@ -5,8 +5,9 @@
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class TravelService {
     /**
@@ -53,9 +54,23 @@ export class TravelService {
         }
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
+        
+        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
+
+        // 2. Apply Ship Attribute Modifiers (e.g., Efficient, Sleeper)
+        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        requiredFuel = Math.round(requiredFuel * attrFuelMod);
+
+        // 3. Handle Special "Space Folding" Case (Increases fuel cost)
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
+            requiredFuel = Math.round(requiredFuel * 1.2);
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         if (activeShip.maxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${activeShip.maxFuel}.`);
@@ -87,18 +102,58 @@ export class TravelService {
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
         this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
 
+        const activeShip = this.simulationService._getActiveShip();
+        const activeShipState = this.gameState.player.shipStates[activeShip.id];
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+
+        // --- VIRTUAL WORKBENCH: Attribute Logic (Time & Fuel) ---
+        
+        // 1. Base Perk Modifiers
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
+        // 2. Apply Generic Attribute Modifiers
+        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+
+        // 3. Handle Time Modifiers & Complex Logic
+        shipAttributes.forEach(attrId => {
+            const def = GameAttributes.getDefinition(attrId);
+            
+            // Standard Time Modifiers (Heavy, Fast, Sleeper)
+            if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
+                if (def.value) travelInfo.time *= def.value;
+            }
+            // Sleeper Special Case (Time x 4.5 handled via def.timeMod if structured, or manual here)
+            if (attrId === 'ATTR_SLEEPER') {
+                travelInfo.time *= 4.5;
+                travelInfo.fuelCost = 0; // Ensure 0 fuel
+            }
+            // Space Folding (Fixed 1 day, 1.2x Fuel)
+            if (attrId === 'ATTR_SPACE_FOLDING') {
+                travelInfo.time = 1;
+                travelInfo.fuelCost *= 1.2;
+            }
+        });
+
+        // 4. Handle "Solar Sail" Probability (15% chance: 0 fuel, 2x time)
+        if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
+            if (Math.random() < 0.15) {
+                travelInfo.fuelCost = 0;
+                travelInfo.time *= 2;
+                this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
         travelInfo.time = Math.max(1, Math.round(travelInfo.time));
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost); // Final integer round
 
-        const activeShip = this.simulationService._getActiveShip();
-        const activeShipState = this.gameState.player.shipStates[activeShip.id];
         
         if (activeShip.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShip.fuel)}.`);
@@ -113,6 +168,16 @@ export class TravelService {
         }
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
+        
+        // --- VIRTUAL WORKBENCH: Hull Decay Attributes ---
+        // Xeno Hull (No decay) or Resilient (Half decay)
+        if (shipAttributes.includes('ATTR_XENO_HULL')) {
+            travelHullDamage = 0;
+        } else if (shipAttributes.includes('ATTR_RESILIENT')) {
+            travelHullDamage *= 0.5;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         const eventHullDamageValue = activeShip.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
@@ -131,11 +196,29 @@ export class TravelService {
         
         // --- [[START]] MODIFICATION ---
         // Call onLocationChange() *before* setState.
-        // This ensures the news ticker data is populated *before* the setState
-        // triggers a UI.render(), preventing a re-render on the next click.
         this.simulationService.newsTickerService.onLocationChange(locationId);
         
-        // REMOVED: Visual seed increment is now handled in TimeService.
+        // --- VIRTUAL WORKBENCH: Post-Travel Triggers ---
+        // Initialize trip count if missing
+        if (typeof this.gameState.player.tripCount === 'undefined') {
+            this.gameState.player.tripCount = 0;
+        }
+        this.gameState.player.tripCount++;
+
+        // 1. ATTR_TRAVELLER (Atlas): Restore hull/fuel every 20 trips
+        if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
+            activeShipState.health = activeShip.maxHealth;
+            activeShipState.fuel = activeShip.maxFuel;
+            this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
+            this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+        }
+
+        // 2. ATTR_FUEL_SCOOP (Parallax): Restore 15% fuel
+        if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
+            const fuelRestore = activeShip.maxFuel * 0.15;
+            activeShipState.fuel = Math.min(activeShip.maxFuel, activeShipState.fuel + fuelRestore);
+        }
+        // --- END VIRTUAL WORKBENCH ---
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
         // --- [[END]] MODIFICATION ---
@@ -185,9 +268,19 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
-        if (force === false && Math.random() > GAME_RULES.RANDOM_EVENT_CHANCE) return false;
-
+        // --- VIRTUAL WORKBENCH: Attribute Integration ---
         const activeShip = this.simulationService._getActiveShip();
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
+
+        // ATTR_ADVANCED_COMMS: +25% chance
+        if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
+            eventChance *= 1.25;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (force === false && Math.random() > eventChance) return false;
+
         let event;
 
         if (typeof force === 'number') {

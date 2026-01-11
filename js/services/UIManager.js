@@ -23,8 +23,9 @@ import { AssetService } from './AssetService.js';
 // --- VIRTUAL WORKBENCH: IMPORTS ---
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
-import { EULA_CONTENT } from '../data/eulaContent.js'; // IMPORTED
+import { EULA_CONTENT } from '../data/eulaContent.js'; 
 import { playBlockingAnimation } from './ui/AnimationService.js';
+import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -53,23 +54,22 @@ export class UIManager {
         this.activeGenericTooltipAnchor = null;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
-        this.missionService = null; // To be injected
-        this.simulationService = null; // To be injected
-        this.newsTickerService = null; // ADDED
-        this.debugService = null; // To be injected
-        this.marketTransactionState = {}; // To store quantity and mode
-        this.activeHighlightConfig = null; // Stores the config for currently visible highlights
+        this.missionService = null; 
+        this.simulationService = null; 
+        this.newsTickerService = null; 
+        this.debugService = null; 
+        this.marketTransactionState = {}; 
+        this.activeHighlightConfig = null; 
         this.marketScrollPosition = 0;
-        this.popperInstance = null; // Instance for Popper.js
+        this.popperInstance = null; 
         // MODIFIED: Added property to hold injected EventManager
-        this.eventManager = null; // To be injected
+        this.eventManager = null; 
 
         // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
         /** @type {import('./IntelService.js').IntelService | null} */
-        this.intelService = null; // To be injected
+        this.intelService = null; 
         /** @type {IntelMarketRenderer | null} */
         this.intelMarketRenderer = null;
-        // To be instantiated
         // --- END VIRTUAL WORKBENCH ---
 
         this.effectsManager = new EffectsManager();
@@ -87,7 +87,6 @@ export class UIManager {
         this.getItemPrice = this.getItemPrice.bind(this);
         // --- END VIRTUAL WORKBENCH ---
 
-        // This remains the correct way to handle orientation changes or desktop resizing.
         window.addEventListener('resize', this._setAppHeight);
     }
 
@@ -206,11 +205,6 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
             // [[END]] VIRTUAL WORKBENCH (Cache EULA Modal)
-
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 5) ---
-            // REMOVED shipInfoModal cache
-            // REMOVED shipInfoModalContent cache
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 5) ---
 
             // Tutorial Elements
             tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
@@ -416,25 +410,15 @@ export class UIManager {
                  const isDisabled = introSequenceActive || isDisabledByTutorial;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  
- 
-                 // --- VIRTUAL WORKBENCH: BUG FIX ---
-                 // The 'set-intel-tab' action is for the *internal* tabs on the intel screen.
-                 // The *main sub-nav* button must use 'set-screen' to navigate *to* the intel screen.
-    
                  const action = ACTION_IDS.SET_SCREEN;
     
-                 // --- END VIRTUAL WORKBENCH ---
-
-                 
                  let subStyle = '';
                  if (isSubNavActive) {
                      subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
                  
-                 // --- VIRTUAL WORKBENCH: Remove data-target from this button ---
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
-            
             
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -458,9 +442,6 @@ export class UIManager {
         switch (gameState.activeScreen) {
             case SCREEN_IDS.MAP:
                 this.cache.mapScreen.innerHTML = renderMapScreen();
-                // Defer map initialization until after the browser has painted the new DOM elements,
-    
-                 // ensuring the map container has a valid clientHeight for D3 to use.
                 requestAnimationFrame(() => initMap(this));
                 break;
             case SCREEN_IDS.NAVIGATION:
@@ -468,7 +449,6 @@ export class UIManager {
                 break;
             case SCREEN_IDS.SERVICES:
                 this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
-                // MODIFIED: Bind hold events after rendering the services screen
                 if (this.eventManager) {
                      this.eventManager.holdEventHandler.bindHoldEvents();
                 }
@@ -503,57 +483,24 @@ export class UIManager {
                  this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
-                // --- VIRTUAL WORKBENCH: RENDER INTEL SCREEN ---
-
-                // --- VIRTUAL WORKBENCH (A) ---
-                // Check if a full render is needed (e.g., first time visiting screen)
                 const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.INTEL;
                 
-                /**
-   
-                 * Only render the static shell of the Intel screen if it's the first time
-                 * navigating to it. This prevents state updates (like purchasing intel)
-                 * from destroying the DOM and resetting the active tab.
-                 */
                 if (needsFullRender) {
-          
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
-                // --- END VIRTUAL WORKBENCH (A) ---
                 
-                /**
-                 * This block runs on *every* render for the INTEL screen.
-                 * If the shell was just built, it populates the content.
-                 * If a state 
-change occurred (like a purchase), it *surgically
-                 * re-renders* the market content, updating button states
-                 * without resetting the active tab.
-                 */
                 if (this.intelMarketRenderer) {
-                    // Find the container for the market tab content
-           
                      const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
                 }
                 
-                // --- VIRTUAL WORKBENCH (B) ---
-                
-                // Always call updateIntelTab to ensure the *correct* tab
-                // (Codex or Market) is shown based on the game state.
                 this.updateIntelTab(gameState.uiState.activeIntelTab);
-                // --- END VIRTUAL WORKBENCH (B) ---
-                
                 break;
         }
     }
 
-    /**
-     * Surgically updates the Hangar screen for smooth transitions without a full re-render.
-     * @param {object} gameState The current game state.
-     * @private
-     */
     _updateHangarScreen(gameState) {
         const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
@@ -565,10 +512,8 @@ change occurred (like a purchase), it *surgically
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
-        // Update carousel position
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
 
-        // --- [[START]] GARBAGE COLLECTION (Phase 2) ---
         const SAFE_DISTANCE = 2;
         const pages = carousel.querySelectorAll('.carousel-page');
 
@@ -580,35 +525,26 @@ change occurred (like a purchase), it *surgically
             if (!img) return;
 
             if (distance > SAFE_DISTANCE) {
-                // --- UNLOAD ---
                 if (img.hasAttribute('src')) {
                     img.removeAttribute('src');
                     img.style.opacity = '0';
-                    // Important: Reset fallback flag so it retries if reloaded
                     img.removeAttribute('data-tried-fallback'); 
                     if (placeholder) placeholder.style.display = 'flex';
                 }
             } else {
-                // --- RELOAD OR UPDATE ---
                 const shipId = page.dataset.shipId;
                 if (shipId) {
                     const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                    // Update if src is missing OR if it doesn't match the new expected path.
-                    // We check if the current src URL contains the new relative path.
                     if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
                         img.src = newSrc;
-                        // Ensure it's visible if we just loaded it
                         img.onload = () => { img.style.opacity = '1'; };
                         if (placeholder) placeholder.style.display = 'none';
                     }
                 }
             }
         });
-        // --- [[END]] GARBAGE COLLECTION ---
 
-        // RENDER VIRTUAL PAGINATION
         this._renderHangarPagination(gameState);
-        // Scroll the pagination container to center the active dot
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
 
@@ -617,7 +553,6 @@ change occurred (like a purchase), it *surgically
             const dotOffsetLeft = activeDot.offsetLeft;
             const dotWidth = activeDot.offsetWidth;
 
-            // Calculate the target scroll position to center the active dot
             const scrollLeft = dotOffsetLeft - (wrapperWidth / 2) + (dotWidth / 2);
 
             paginationWrapper.scrollTo({
@@ -627,12 +562,6 @@ change occurred (like a purchase), it *surgically
         }
     }
 
-    /**
-     * Renders the virtualized pagination for the hangar/shipyard screen.
-     * It shows a maximum of 6 full dots and up to 2 half-dots as indicators for more items.
-     * @param {object} gameState The current game state.
-     * @private
-     */
     _renderHangarPagination(gameState) {
         const { uiState, player, currentLocationId } = gameState;
         const hangarScreenEl = this.cache.hangarScreen;
@@ -645,7 +574,6 @@ change occurred (like a purchase), it *surgically
         const shipList = isHangarMode ? player.ownedShipIds : this.simulationService._getShipyardInventory().map(([id]) => id);
         const totalItems = shipList.length;
 
-        // Hide pagination if there is only one or zero ships.
         if (totalItems <= 1) {
             paginationContainer.innerHTML = '';
             return;
@@ -653,13 +581,10 @@ change occurred (like a purchase), it *surgically
 
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
-        // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
-        // Determine the index of the currently boarded ship to mark it specially.
         let boardedIndex = -1;
         if (isHangarMode) {
             boardedIndex = player.ownedShipIds.indexOf(player.activeShipId);
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const theme = location?.navTheme || { borderColor: '#7a9ac0' };
@@ -667,13 +592,13 @@ change occurred (like a purchase), it *surgically
         const VISIBLE_FULL_DOTS = 6;
         let dots = [];
 
-        if (totalItems <= VISIBLE_FULL_DOTS + 1) { // If 7 or fewer items, show all as full dots
+        if (totalItems <= VISIBLE_FULL_DOTS + 1) { 
             for (let i = 0; i < totalItems; i++) {
                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
-                    isBoarded: i === boardedIndex // Pass boarded status
+                    isBoarded: i === boardedIndex 
                 });
             }
         } else {
@@ -692,22 +617,19 @@ change occurred (like a purchase), it *surgically
                 end = activeIndex + Math.ceil(VISIBLE_FULL_DOTS / 2);
             }
 
-            // Add previous indicator if needed
             if (start > 0) {
                 dots.push({ isHalf: true, jump: 'prev' });
             }
 
-             // Add the main window of full dots
             for (let i = start; i < end; i++) {
                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
-                    isBoarded: i === boardedIndex // Pass boarded status
+                    isBoarded: i === boardedIndex 
                 });
             }
 
-            // Add next indicator if needed
             if (end < totalItems) {
                 dots.push({ isHalf: true, jump: 'next' });
             }
@@ -721,11 +643,7 @@ change occurred (like a purchase), it *surgically
             if (dot.isHalf) {
                  return `<div class="pagination-dot half" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-jump-direction="${dot.jump}"></div>`;
             } else {
-                // --- VIRTUAL WORKBENCH: QOL UPDATE B ---
-                // Add 'boarded' class if applicable
                 const boardedClass = dot.isBoarded ? 'boarded' : '';
-                // --- END VIRTUAL WORKBENCH ---
-
                 return `<div class="pagination-dot ${dot.isActive ? 'active' : ''} ${boardedClass}" style="${style}" data-action="${ACTION_IDS.SET_HANGAR_PAGE}" data-index="${dot.index}"></div>`;
             }
         }).join('');
@@ -766,10 +684,7 @@ change occurred (like a purchase), it *surgically
  
         if (gameState.activeScreen !== SCREEN_IDS.MARKET) return;
         
-        // --- [[START]] MODIFICATION ---
-        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
         const marketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel'); 
-        // --- [[END]] MODIFICATION ---
 
         if (this.lastKnownState && this.lastKnownState.activeScreen === SCREEN_IDS.MARKET && this.lastKnownState.currentLocationId === gameState.currentLocationId && marketScrollPanel) {
             this.marketScrollPosition = marketScrollPanel.scrollTop;
@@ -777,15 +692,11 @@ change occurred (like a purchase), it *surgically
             this.marketScrollPosition = 0;
         }
     
-       
          this._saveMarketTransactionState();
         this.cache.marketScreen.innerHTML = renderMarketScreen(gameState, this.isMobile, this.getItemPrice, this.marketTransactionState);
         this._restoreMarketTransactionState();
         
-        // --- [[START]] MODIFICATION ---
-        // Changed '.scroll-panel' to '.market-scroll-panel' to match MarketScreen.js
         const newMarketScrollPanel = this.cache.marketScreen.querySelector('.market-scroll-panel');
-        // --- [[END]] MODIFICATION ---
 
         if (newMarketScrollPanel) {
             newMarketScrollPanel.scrollTop = this.marketScrollPosition;
@@ -818,7 +729,6 @@ change occurred (like a purchase), it *surgically
                 if (qtyInput) {
                      qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
-                    // After restoring state, immediately update the display to reflect it.
                     this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
                 }
             }
@@ -826,20 +736,15 @@ change occurred (like a purchase), it *surgically
     }
 
     getItemPrice(gameState, goodId, isSelling = false) {
-        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
-        // Use the simulationService (which now points to MarketService's getPrice)
-        // to ensure intel overrides are checked.
         if (!this.simulationService || !this.simulationService.marketService) {
-            // Fallback for early load
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
         
-        // Note: The isSelling logic for specialDemand is handled inside the
-        // UIManager's _calculateSaleDetails, not here.
-        // This function just needs to get the *base* price, which
-        // MarketService.getPrice() now does (checking for intel overrides).
-        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
-        // --- END VIRTUAL WORKBENCH ---
+        // Pass `true` to apply modifiers if `isSelling` implies a user-facing price check
+        // However, MarketService.getPrice's 3rd arg is `applyModifiers`. 
+        // We probably want to apply modifiers for display purposes here.
+        // Let's pass `true` to show the modified price in the UI.
+        return this.simulationService.marketService.getPrice(gameState.currentLocationId, goodId, true);
      }
 
     _calculateSaleDetails(goodId, quantity) {
@@ -849,44 +754,13 @@ change occurred (like a purchase), it *surgically
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
         
-        // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
-        // Pass `true` for isSelling to get the correct base price
         const basePrice = this.getItemPrice(state, goodId, true);
-        // --- END VIRTUAL WORKBENCH ---
 
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
         const avgCost = playerItem?.avgCost || 0;
 
-        // --- VIRTUAL WORKBENCH: REMOVE PENALTY ---
-        // Guard against division by zero if market stock is depleted.
-        // if (marketStock <= 0) { // This check is no longer needed as we're not dividing by it
-        //     return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0, reduction: 0 };
-        // }
-        
-        const effectivePrice = basePrice; // Price is always the base price
+        const effectivePrice = basePrice; 
         const totalPrice = Math.floor(effectivePrice * quantity);
-
-        // This block is now simplified as reduction is gone
-        // const threshold = marketStock * 0.1;
-        // if (quantity <= threshold) {
-        //     const totalPrice = basePrice * quantity;
-        //     const totalCost = avgCost * quantity;
-        //     let netProfit = totalPrice - totalCost;
-        //     if (netProfit > 0) {
-        //         let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
-        //         netProfit += netProfit * totalBonus;
-        //     }
-        //     return { totalPrice, effectivePricePerUnit: basePrice, netProfit };
-        // }
-        //
-        // const excessRatio = quantity / marketStock;
-        // let reduction = 0;
-        //
-        // [OLD PENALTY LOGIC REMOVED]
-        //
-        // const effectivePrice = basePrice * (1 - reduction);
-        // const totalPrice = Math.floor(effectivePrice * quantity);
-        // --- END VIRTUAL WORKBENCH ---
 
          const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
@@ -897,7 +771,7 @@ change occurred (like a purchase), it *surgically
 
         return {
             totalPrice,
-            effectivePricePerUnit: effectivePrice, // This is now just basePrice
+            effectivePricePerUnit: effectivePrice, 
             netProfit
          };
     }
@@ -931,17 +805,13 @@ change occurred (like a purchase), it *surgically
         }
 
         if (mode === 'buy') {
-            // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
             priceEl.textContent = formatCredits(basePrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
-            // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
              effectivePriceEl.textContent = '';
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
-                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: this.getItemPrice(state, goodId, true),
-                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                  playerItem: playerItem
             });
@@ -952,10 +822,7 @@ change occurred (like a purchase), it *surgically
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
-                // --- VIRTUAL WORKBENCH: RE-ADD per user request ---
-                // Show the base price per unit, since there is no penalty
                 effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
-                // --- END VIRTUAL WORKBENCH ---
                 priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
@@ -965,9 +832,7 @@ change occurred (like a purchase), it *surgically
 
             indicatorEl.innerHTML = renderIndicatorPills({
                  price: basePrice,
-                // --- VIRTUAL WORKBENCH: USE INTEL-AWARE GETPRICE ---
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                // --- END VIRTUAL WORKBENCH ---
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
@@ -1003,20 +868,14 @@ change occurred (like a purchase), it *surgically
             modal.classList.add('dismiss-disabled');
         }
         
-        
-        // --- VIRTUAL WORKBENCH: GDD MODAL THEMING ---
-        // Apply theme data attribute for CSS-based theming (e.g., glowing borders)
         if (options.theme) {
             modal.dataset.theme = options.theme;
         } else {
-            // Remove old theme to avoid stale borders
             delete modal.dataset.theme;
         }
         
-        // GDD: Control dismissal behavior
          modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
-        // --- END VIRTUAL WORKBENCH ---
 
         const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
@@ -1026,23 +885,20 @@ change occurred (like a purchase), it *surgically
         if (titleEl) titleEl.innerHTML = title;
         if (descEl) {
             descEl.innerHTML = description;
-            descEl.className = 'my-4 text-gray-300'; // Reset classes
+            descEl.className = 'my-4 text-gray-300'; 
 
             if (modalId !== 'mission-modal') {
                  descEl.classList.add('mb-6', 'text-lg');
             }
 
-            // Default to centered text for generic event modals, which are mostly short notices.
             if (modalId === 'event-modal' || modalId === 'random-event-modal') {
                 descEl.classList.add('text-center');
             }
 
             if (options.contentClass) {
-                // Allow `contentClass` to override the default alignment.
                 if (options.contentClass.includes('text-left') || options.contentClass.includes('text-right') || options.contentClass.includes('text-justify')) {
                      descEl.classList.remove('text-center');
                 }
-                // Add all provided custom classes.
                 descEl.classList.add(...options.contentClass.split(' ').filter(Boolean));
             }
         }
@@ -1059,38 +915,21 @@ change occurred (like a purchase), it *surgically
             const btnContainer = modal.querySelector('#' + modalId.replace('-modal', '-button-container'));
             let button;
             
-            // --- VIRTUAL WORKBENCH: GDD FOOTER LOGIC ---
             if (options.footer) {
-                // If a custom footer is provided, inject it and attach handlers
                 if (btnContainer) {
                     btnContainer.innerHTML = options.footer;
-                    // Find any buttons *inside* the new footer and attach handlers
                      btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            // --- VIRTUAL WORKBENCH (C) ---
-                            /**
-                             * Check if the action is 'buy_intel'.
-                             * If it is, we *don't* call closeHandler() here.
-                             * We let ActionClickHandler -> UIManager.handleBuyIntel
-                             * manage the modal closing and chaining, preventing a race condition.
-                             */
                             if (btn.dataset.action === 'buy_intel') {
-                                 return; // Let the specific handler do the work
+                                 return; 
                             }
-                            // --- END VIRTUAL WORKBENCH (C) ---
-
-                             // Let the main EventManager handle the action first
-                            // But also ensure the modal closes for all *other* actions.
                             closeHandler();
                         });
                     });
                 }
             } else if (options.footer === null) {
-                // GDD: Explicitly no footer/buttons
                 if (btnContainer) btnContainer.innerHTML = '';
             } else {
-            // --- END VIRTUAL WORKBENCH ---
-                // Original default button logic
                 if (btnContainer) {
                     btnContainer.innerHTML = '';
                     button = document.createElement('button');
@@ -1104,9 +943,7 @@ change occurred (like a purchase), it *surgically
                     button.innerHTML = options.buttonText || 'Understood';
                     button.onclick = closeHandler;
                 }
-            // --- VIRTUAL WORKBENCH ---
             }
-            // --- END VIRTUAL WORKBENCH ---
         }
 
          modal.classList.remove('hidden');
@@ -1175,12 +1012,10 @@ change occurred (like a purchase), it *surgically
             contentEl.innerHTML = contentHtml;
         }
         
-        // Ensure scroll position is at the top
         contentEl.scrollTop = 0;
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
-        // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#lore-modal-content') || e.target.id === 'lore-modal') {
                 this.hideModal('lore-modal');
@@ -1189,18 +1024,7 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
-// js/services/UIManager.js
-// ... (first half of the file)
 
-    // --- [[START]] VIRTUAL WORKBENCH (Phase 4) ---
-    /**
-     * Displays the new modal for showing ship info text.
-     * @param {string} shipId The ID of the ship to display info for.
-     */
-    // REMOVED showShipInfoModal function
-    // --- [[END]] VIRTUAL WORKBENCH (Phase 4) ---
-
-    // [[START]] VIRTUAL WORKBENCH (showEulaModal)
     /**
      * Displays the new modal for showing the EULA.
      * Modeled after showLoreModal for scrollability and dismissal.
@@ -1221,14 +1045,11 @@ change occurred (like a purchase), it *surgically
             contentEl.innerHTML = EULA_CONTENT;
         }
         
-    
-         // Ensure scroll position is at the top
         contentEl.scrollTop = 0;
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
         
-        // Add a one-time click listener to the backdrop *and* content area to close the modal.
         const closeHandler = (e) => {
             if (e.target.closest('#eula-modal-content') || e.target.id === 'eula-modal') {
                 this.hideModal('eula-modal');
@@ -1237,9 +1058,7 @@ change occurred (like a purchase), it *surgically
         };
         modal.addEventListener('click', closeHandler);
     }
-    // [[END]] VIRTUAL WORKBENCH (showEulaModal)
     
-    // --- VIRTUAL WORKBENCH: PHASE 7 (Refined Ship Confirmation) ---
     /**
      * Shows a confirmation modal for buying or selling a ship.
      * @param {string} shipId - The ID of the ship.
@@ -1250,19 +1069,14 @@ change occurred (like a purchase), it *surgically
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
 
-        // --- Refined Style Logic ---
-        // 1. Get the dynamic color variable from hangar-screen.css
         const colorVar = `var(--class-${ship.class.toLowerCase()}-color)`;
         
-        // 2. Determine if a special glow class is needed (matching HangarScreen.js logic)
         let shadowClass = '';
         if (ship.class === 'Z') shadowClass = 'glow-text-z';
         else if (ship.class === 'O') shadowClass = 'glow-text-o';
         else if (ship.class === 'S') shadowClass = 'glow-text-s';
         
-        // 3. Construct the styled name span
         const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
-        // --- End Refined Style Logic ---
 
         let title, description, price, amountStr;
         
@@ -1294,8 +1108,6 @@ change occurred (like a purchase), it *surgically
                 
                 confirmBtn.onclick = () => {
                     closeHandler();
-                    // Small delay to ensure modal is clearing before animation starts
-                    // mostly for visual cleanliness so the glow isn't covered
                     setTimeout(onConfirm, 50); 
                 };
                 
@@ -1303,7 +1115,6 @@ change occurred (like a purchase), it *surgically
             }
         });
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
@@ -1314,11 +1125,9 @@ change occurred (like a purchase), it *surgically
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 
-                // --- VIRTUAL WORKBENCH: CLEANUP GDD ATTRIBUTES ---
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
-                // --- END VIRTUAL WORKBENCH ---
 
                 if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
                     this.processModalQueue();
@@ -1488,95 +1297,72 @@ change occurred (like a purchase), it *surgically
         return svg;
     }
 
-    /**
-     * Displays and positions the tutorial toast. Uses either percentage-based positioning
-     * relative to an overlay or Popper.js for element anchoring.
-     * @param {object} options - Configuration for the toast.
-     * @param {object} options.step - The tutorial step data.
-     * @param {function} options.onSkip - Callback for skip.
-     * @param {function} options.onNext - Callback for next.
-     * @param {object} options.gameState - The current game state.
-     */
      showTutorialToast({ step, onSkip, onNext, gameState }) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
-        // Use the new overlay if anchor is 'body', otherwise find the element
         const isOverlayAnchor = step.anchorElement === 'body';
         let referenceEl;
         
         if (isOverlayAnchor) {
-            referenceEl = this.cache.tutorialAnchorOverlay; // Use the dedicated overlay
+            referenceEl = this.cache.tutorialAnchorOverlay; 
         } else {
             referenceEl = document.querySelector(step.anchorElement);
             if (!referenceEl) {
                  this.logger.error('TutorialService', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
-                referenceEl = this.cache.tutorialAnchorOverlay; // Fallback to overlay
-                // TODO: Decide if we should force isOverlayAnchor = true here?
+                referenceEl = this.cache.tutorialAnchorOverlay; 
             }
         }
         
-        // Cleanup existing Popper instance if any
         if (this.popperInstance) {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
 
-         // --- Update Content ---
         let processedText = step.text;
-        // b. Fix {shipName} replacement
         if (processedText.includes('{shipName}')) {
             const activeShipId = gameState.player.activeShipId;
-            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; // Fallback
+            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; 
             processedText = processedText.replace(/{shipName}/g, shipName);
         }
 
-        // c. Fix {playerName} replacement
         if (processedText.includes('{playerName}')) {
-             const playerName = gameState.player.name || 'Captain'; // Fallback
+             const playerName = gameState.player.name || 'Captain'; 
             processedText = processedText.replace(/{playerName}/g, playerName);
         }
 
         this.cache.tutorialToastText.innerHTML = processedText;
 
-        // --- Apply Size ---
         const initialWidth = step.size?.width || 'auto';
         const initialHeight = step.size?.height || 'auto';
         toast.style.width = initialWidth;
         toast.style.height = initialHeight;
         
-        // --- Apply Position ---
         if (isOverlayAnchor) {
-            // Percentage-based positioning
-            const posX = step.positionX ?? 50; // Default to center
-            const posY = step.positionY ?? 50; // Default to center
+            const posX = step.positionX ?? 50; 
+            const posY = step.positionY ?? 50; 
             toast.style.left = `${posX}%`;
             toast.style.top = `${posY}%`;
-            // Ensure Popper-related styles/attributes are cleared/reset if switching modes
-            toast.style.transform = 'translate(-50%, -50%)'; // Center element on the % point
-            arrow.style.display = 'none'; // No arrow for overlay anchor
+            toast.style.transform = 'translate(-50%, -50%)'; 
+            arrow.style.display = 'none'; 
             toast.removeAttribute('data-popper-placement'); 
             
-            // Note: No Popper instance created in this mode
         } else {
-            // Element-anchored positioning using Popper.js
-            toast.style.left = ''; // Clear direct styles
+            toast.style.left = ''; 
             toast.style.top = '';
-            toast.style.transform = ''; // Clear direct transform
+            toast.style.transform = ''; 
             
-            arrow.style.display = 'block'; // Show arrow
+            arrow.style.display = 'block'; 
 
-             // Configure Popper.js
-            const defaultOptions = { /* ... Popper defaults for element anchor ... */ 
+            const defaultOptions = { 
                 placement: 'auto',
                 modifiers: [
-                    { name: 'offset', options: { offset: [0, 10] } }, // Standard distance
+                    { name: 'offset', options: { offset: [0, 10] } }, 
                      { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
              };
             
-             // Merge step-specific Popper options/modifiers
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
             let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
             if (stepOffsetMod) {
@@ -1592,32 +1378,26 @@ change occurred (like a purchase), it *surgically
                 modifiers: baseModifiers
             };
 
-            // Create Popper instance
             this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
         }
 
-        // --- Show Toast & Configure Buttons ---
         toast.classList.remove('hidden');
         const isInfoStep = step.completion.type === 'INFO';
         this.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
         if (isInfoStep) {
             this.cache.tutorialToastNextBtn.onclick = onNext;
         }
-        const showSkipButton = false; // Configure as needed
+        const showSkipButton = false; 
         this.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
         this.cache.tutorialToastSkipBtn.onclick = onSkip;
         this.cache.tutorialToastText.scrollTop = 0;
         
-        // --- Notify DebugService ---
         if (this.debugService) {
-            this.debugService.setActiveTutorialStep(step); // Pass the raw step data
+            this.debugService.setActiveTutorialStep(step); 
         }
     }
 
 
-    /**
-     * Hides the tutorial toast and destroys the associated Popper.js instance.
-     */
     hideTutorialToast() {
         this.cache.tutorialToastContainer.classList.add('hidden');
         if (this.popperInstance) {
@@ -1626,66 +1406,42 @@ change occurred (like a purchase), it *surgically
         }
         this.applyTutorialHighlight(null);
         
-        // Notify DebugService
         if (this.debugService) {
             this.debugService.clearActiveTutorialStep();
         }
     }
 
-    /**
-     * Updates the active tutorial toast position and size in real-time based on debug controls.
-     * Handles both percentage-based and Popper-based positioning.
-     * @param {object} newOptions - Options from DebugService._handleTutorialTune
-     * @param {boolean} newOptions.isOverlayAnchor - True if using percentage positioning.
-     * @param {number} newOptions.width - New width (0 for 'auto').
-     * @param {number} newOptions.height - New height (0 for 'auto').
-     * @param {number} newOptions.percentX - New X percentage (0-100).
-     * @param {number} newOptions.percentY - New Y percentage (0-100).
-     * @param {string} newOptions.placement - New Popper placement.
-     * @param {number} newOptions.distance - New Popper offset distance.
-     * @param {number} newOptions.skidding - New Popper offset skidding.
-     */
     updateTutorialPopper(newOptions) {
         const toast = this.cache.tutorialToastContainer;
         const arrow = toast.querySelector('#tt-arrow');
         const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
 
-        // --- Apply Size (Common) ---
-        // Apply size *first* so calculations are based on the new dimensions
         toast.style.width = width > 0 ? `${width}px` : 'auto';
         toast.style.height = height > 0 ? `${height}px` : 'auto';
 
-        // --- Apply Position (Conditional) ---
         if (isOverlayAnchor) {
-            // Using Percentage Positioning
-            
-        
-             // Destroy Popper instance if it exists (switching modes)
             if (this.popperInstance) {
                 this.popperInstance.destroy();
                 this.popperInstance = null;
                  toast.removeAttribute('data-popper-placement'); 
-                 toast.style.transform = ''; // Clear Popper transform
+                 toast.style.transform = ''; 
             }
             
-            // Apply direct percentage styles
             toast.style.left = `${percentX}%`;
             toast.style.top = `${posY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; // Re-apply centering transform
+            toast.style.transform = 'translate(-50%, -50%)'; 
             arrow.style.display = 'none';
 
         } else {
-            // Using Popper.js Positioning
-            toast.style.left = ''; // Clear direct styles
+            toast.style.left = ''; 
             toast.style.top = ''; 
-            toast.style.transform = ''; // Clear direct transform (Popper will add its own)
+            toast.style.transform = ''; 
             arrow.style.display = 'block';
 
             const popperUpdateOptions = {
                  placement: placement,
                 modifiers: [
                     { name: 'offset', options: { offset: [skidding, distance] } },
-                    // Re-apply other essential modifiers for element anchoring
                     { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
@@ -1693,16 +1449,10 @@ change occurred (like a purchase), it *surgically
             };
 
             if (this.popperInstance) {
-                 // Update existing instance
                  this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
                       this.logger.error('UIManager', 'Error updating Popper options:', e);
                  });
             } else {
-                 // Need to create Popper instance if switching modes or first time
-                 // This requires the original reference element, which isn't passed here.
-                 // Ideally, the DebugService should trigger a full `showTutorialToast`
-                 // when the anchor *type* changes, rather than just `updateTutorialPopper`.
-                 // For now, we'll log a warning.
                  this.logger.warn('UIManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
             }
         }
@@ -1718,7 +1468,7 @@ change occurred (like a purchase), it *surgically
         const overlay = this.cache.tutorialHighlightOverlay;
         if (!overlay) return;
 
-        overlay.innerHTML = ''; // Clear previous highlights
+        overlay.innerHTML = ''; 
         if (!highlightConfig) {
             overlay.classList.add('hidden');
             return;
@@ -1766,7 +1516,6 @@ change occurred (like a purchase), it *surgically
             }
 
             el.innerHTML = content;
-            // Apply dynamic styles to the animated child, not the parent container
             const animatedChild = el.querySelector('svg');
             if (animatedChild && cue.style.animation !== 'None') {
                  animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
@@ -1896,7 +1645,6 @@ change occurred (like a purchase), it *surgically
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
         const shipState = state.player.shipStates[state.player.activeShipId];
 
-        // If travel isn't possible from the current location, do nothing.
         if (!travelInfo) return;
 
         const modalContentHtml = `
@@ -1920,7 +1668,6 @@ change occurred (like a purchase), it *surgically
         this.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
 
-        // Two-step render for the glow
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
@@ -1931,7 +1678,6 @@ change occurred (like a purchase), it *surgically
             }
         });
 
-        // Add a one-time click listener to the backdrop to close the modal.
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
                 this.hideModal('launch-modal');
@@ -1948,15 +1694,11 @@ change occurred (like a purchase), it *surgically
 
         if (!good || !item) return;
 
-        // --- [[START]] VIRTUAL WORKBENCH ---
-        // Refactor to use the queueModal system for standardized dismissal.
         this.queueModal('cargo-detail-modal', null, null, null, {
-            // GDD-compliant dismissal: allow click inside or outside to close
             dismissInside: true,
             dismissOutside: true,
-             footer: null, // No default buttons
+             footer: null, 
 
-            // Custom setup to inject the rendered cargo card
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
                 if (modalContent) {
@@ -1964,16 +1706,10 @@ change occurred (like a purchase), it *surgically
                  }
             }
         });
-        // --- [[END]] VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Finds the currently active carousel page element from the DOM.
-     * @returns {HTMLElement | null} The .carousel-page element or null.
-     * @private
-     */
     _getActiveShipTerminalElement() {
-        const state = this.lastKnownState; // Use lastKnownState for accuracy
+        const state = this.lastKnownState; 
         if (!state) return null;
 
         const hangarScreenEl = this.cache.hangarScreen;
@@ -1990,23 +1726,14 @@ change occurred (like a purchase), it *surgically
         return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
 
-    /**
-     * Finds the correct DOM element for the active ship and runs a
-     * blocking "dematerialize" animation on it.
-     * @param {string} shipId - The ID of the ship, for logging.
-     * @param {string} [animationClass='is-dematerializing'] - The CSS class to apply.
-     * @returns {Promise<void>}
-     * @JSDoc
-     */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
         const elementToAnimate = this._getActiveShipTerminalElement();
 
         if (!elementToAnimate) {
             this.logger.warn('UIManager', `No element to animate for ${shipId}. Skipping animation.`);
-            return; // Resolve immediately if no element
+            return; 
         }
 
-        // Await the generic animation utility
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
 
@@ -2085,12 +1812,10 @@ change occurred (like a purchase), it *surgically
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
-                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                      const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
-                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                      rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -2131,12 +1856,10 @@ change occurred (like a purchase), it *surgically
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
-                    // --- VIRTUAL WORKBENCH START: Phase 6 ---
                     const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
-                    // --- VIRTUAL WORKBENCH END: Phase 6 ---
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -2161,61 +1884,38 @@ change occurred (like a purchase), it *surgically
         }
     }
 
-    // --- New DOM Abstraction Methods ---
     getModalIdFromEvent(e) {
         const modalBackdrop = e.target.closest('.modal-backdrop');
         if (!modalBackdrop || !modalBackdrop.id || modalBackdrop.classList.contains('dismiss-disabled')) {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH: GDD DISMISSAL LOGIC ---
         const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
         const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
 
         if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
-             // Special case: Allow lore-modal to be dismissed by clicking content
              if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
                  return modalBackdrop.id;
             }
-            // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
-            // Special case: Allow eula-modal to be dismissed by clicking content
             if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) {
                 return modalBackdrop.id;
             }
-            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
 
-
-            // --- [[START]] VIRTUAL WORKBENCH: BUG FIX ---
-            // The redundant checks for 'ship-info-modal' have been REMOVED.
-            // Its dismissal is now handled *only* by the local closeHandler
-            // in showShipInfoModal, just like lore-modal and eula-modal.
-
-            // Standard dismissal (backdrop click only)
-            // NOTE: 'ship-info-modal' is removed from this condition.
             if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
-             // Standard dismissal for lore-modal (backdrop click only)
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
                  return modalBackdrop.id;
             }
-             // [[START]] VIRTUAL WORKBENCH (EULA Dismissal)
-            // Standard dismissal for eula-modal (backdrop click only)
             if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
-            // [[END]] VIRTUAL WORKBENCH (EULA Dismissal)
             
-            // --- [[END]] VIRTUAL WORKBENCH: BUG FIX ---
-
-            // GDD-compliant dismissal
             return modalBackdrop.id;
         }
     
-         // --- END VIRTUAL WORKBENCH ---
-
         return null;
     }
 
@@ -2234,10 +1934,8 @@ change occurred (like a purchase), it *surgically
     showGameContainer() {
         this.cache.gameContainer.classList.remove('hidden');
 
-        // Set height immediately on show
         this._setAppHeight();
 
-        // Set height again on the next animation frame to catch the final, stable value
         requestAnimationFrame(() => {
             this._setAppHeight();
         });
@@ -2259,11 +1957,7 @@ change occurred (like a purchase), it *surgically
         // Apply theme styles
         modalContent.style.background = theme.gradient;
         modalContent.style.setProperty('--theme-glow-color', theme.borderColor);
-        // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
-        // Use the data-theme attribute for CSS-based glowing borders
         modal.dataset.theme = locationId;
-        // --- END VIRTUAL WORKBENCH ---
-
 
         const imports = [];
         const exports = [];
@@ -2289,8 +1983,22 @@ change occurred (like a purchase), it *surgically
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
         ).join('');
 
-        // *** MODIFIED HTML Structure to apply theme color ***
-        // --- VIRTUAL WORKBENCH START: Phase 6 ---
+        // --- VIRTUAL WORKBENCH: DYNAMIC STATION QUIRKS ---
+        // Fetch quirks from GameAttributes instead of using hardcoded specialty
+        const quirks = GameAttributes.getStationQuirks(locationId);
+        let quirksHtml = '';
+        if (quirks.length > 0) {
+            quirksHtml = quirks.map(qId => {
+                const def = GameAttributes.getDefinition(qId);
+                // Use a slightly different style or color to highlight it's a quirk
+                return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
+            }).join('');
+        } else {
+            // Fallback to legacy specialty or "None reported"
+            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>`;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -2304,7 +2012,7 @@ change occurred (like a purchase), it *surgically
                  </div>
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Station Details</h5>
-                    <p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>
+                    ${quirksHtml}
                 </div>
           </div>
 
@@ -2320,28 +2028,22 @@ change occurred (like a purchase), it *surgically
                 </div>
             </div>
         `;
-        // --- VIRTUAL WORKBENCH END: Phase 6 ---
 
         contentContainer.innerHTML = contentHtml;
         modal.classList.remove('hidden');
         modal.classList.remove('is-glowing');
 
-        // Use requestAnimationFrame to ensure the browser has rendered the modal
-             // before we add the class that triggers the animation.
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             modal.classList.add('is-glowing');
         });
 
-        // *** MODIFIED: Combined backdrop and content click listeners ***
         const closeHandler = (e) => {
-            // Close if clicking the backdrop OR the content area
             if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
                  this.hideMapDetailModal();
-                modal.removeEventListener('click', closeHandler); // Ensure listener is removed
+                modal.removeEventListener('click', closeHandler); 
             }
         };
-        // Add the listener *after* the modal is made visible
         requestAnimationFrame(() => {
              modal.addEventListener('click', closeHandler);
         });
@@ -2352,10 +2054,7 @@ change occurred (like a purchase), it *surgically
         const modal = this.cache.mapDetailModal;
         if (modal) {
              modal.classList.remove('is-glowing');
-            // --- VIRTUAL WORKBENCH: GDD MODAL THEME ---
-            delete modal.dataset.theme; // Clear theme on close
-            // --- END VIRTUAL WORKBENCH ---
-            // Remove the specific click listener if it exists
+            delete modal.dataset.theme; 
             const existingHandler = modal.__mapDetailCloseHandler; 
             if(existingHandler) {
                 modal.removeEventListener('click', existingHandler);
@@ -2366,56 +2065,26 @@ change occurred (like a purchase), it *surgically
         this.hideModal('map-detail-modal');
     }
 
-    // --- VIRTUAL WORKBENCH: ADD INTEL HANDLERS ---
-
-    /**
-     * Handles switching tabs on the Intel screen.
-     * @param {HTMLElement} element - The clicked tab button.
-     * @JSDoc
-     */
     handleSetIntelTab(element) {
         const targetId = element.dataset.target;
         if (!targetId) return;
 
-        // --- VIRTUAL WORKBENCH: REFACTOR FOR SLIDING ANIMATION ---
-        // This function now just updates the state.
-        // The actual DOM manipulation is handled by `updateIntelTab`.
         if (this.simulationService) {
-            // --- VIRTUAL WORKBENCH: TYPO FIX ---
-            // Corrected `setlntelTab` to `setIntelTab`
             this.simulationService.setIntelTab(targetId);
-            // --- END VIRTUAL WORKBENCH ---
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Surgically updates the Intel screen tabs to reflect the current state.
-     * This is called on *every* render of the Intel screen to ensure
-     * the visual state matches the game state, and to apply the
-     * sliding animation class.
-     * @param {string} activeTabId The ID of the active tab (e.g., 'intel-codex-content').
-     * @JSDoc
-     */
     updateIntelTab(activeTabId) {
         const screen = this.cache.intelScreen;
         if (!screen) return;
         
         const subNavBar = screen.querySelector('.sub-nav-bar');
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Add guard clause to prevent error if subNavBar isn't rendered yet.
         if (!subNavBar) {
-            // This can happen if the render loop runs before renderIntelScreen()
-            // has populated the innerHTML.
             return; 
         }
         
-        // --- END VIRTUAL WORKBENCH ---
-
-        // Deactivate all
         screen.querySelectorAll('.sub-nav-button').forEach(btn => btn.classList.remove('active'));
         screen.querySelectorAll('.intel-tab-content').forEach(content => content.classList.remove('active'));
-        // Activate the target tab and content
         const activeTabButton = screen.querySelector(`.sub-nav-button[data-target="${activeTabId}"]`);
         const activeContent = screen.querySelector(`#${activeTabId}`);
 
@@ -2427,79 +2096,39 @@ change occurred (like a purchase), it *surgically
             activeContent.classList.add('active');
         }
 
-        // --- VIRTUAL WORKBENCH: SLIDING ANIMATION ---
-        // Apply class to the bar itself for the CSS transition
         if (activeTabId === 'intel-market-content') {
             subNavBar.classList.add('market-active');
         } else {
             subNavBar.classList.remove('market-active');
         }
-        // --- END VIRTUAL WORKBENCH ---
     }
 
 
-    /**
-     * Finds the specified intel packet from the game state.
-     * @param {string} packetId 
-     * @param {string} locationId 
-     * @returns {object | null} The packet object or null if not found.
-     * @private
-     */
     _findIntelPacket(packetId, locationId) {
         const state = this.lastKnownState;
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // A purchased packet might not be at the current locationId.
-        // We must search all locations if it's a 'show_intel_details' call.
         if (state.intelMarket[locationId]) {
             const packet = state.intelMarket[locationId].find(p => p.id === packetId);
             if (packet) return packet;
         }
 
-        // Fallback: Search all locations for the packet.
-        // This is crucial for 'show_intel_details' of a purchased packet
-        // when viewed from a different location.
         for (const locId of Object.keys(state.intelMarket)) {
             const packet = state.intelMarket[locId].find(p => p.id === packetId);
             if (packet) {
-                 // this.logger.info('UIManager', `_findIntelPacket: Found packet ${packetId} at fallback location ${locId}`);
                 return packet;
             }
         }
         
-        // --- END VIRTUAL WORKBENCH ---
-
         this.logger.error('UIManager', `_findIntelPacket: Could not find packet ${packetId} anywhere.`);
         return null;
     }
 
-    /**
-     * Formats an intel "details" string, replacing all GDD placeholders.
-     * @param {string} template - The template string from INTEL_CONTENT.
-     * @param {object} packet - The intelPacket object.
-     * @param {number} price - The calculated price.
-     * @param {boolean} isNewFormat - Flag to determine which duration placeholder to use.
-     * @returns {string} The formatted, player-facing string.
-     * @private
-     * @JSDoc
-     */
     _formatIntelDetails(template, packet, price, isNewFormat) {
-        // --- VIRTUAL WORKBENCH (C) ---
-        // FIX: The "details" modal must show the DEAL location, not the SALE location.
-        // `packet.locationId` is where it's sold. `packet.dealLocationId` is where the deal is.
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
-        // --- END VIRTUAL WORKBENCH ---
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
         
-        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
-        // The price for the placeholder is the *price paid*.
-        // Use a fallback for legacy packets that may not have pricePaid.
         const priceStr = price ? formatCredits(-price, true) : '???';
-        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
-
-        // --- VIRTUAL WORKBENCH (Phase 4/5 Refactor) ---
-        // Use packet.expiryDay (added in Phase 1)
         const currentDay = this.intelService.getCurrentDay();
         const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
         
@@ -2517,69 +2146,44 @@ change occurred (like a purchase), it *surgically
              .replace(/\[location name\]/g, locationName)
             .replace(/\[commodity name\]/g, commodityName)
             .replace(/\[discount amount %\]/g, discountStr);
-            // [Observed issue]: priceStr replacement is now conditional
 
-        // --- VIRTUAL WORKBENCH (Revert Logic) ---
-        // This logic handles both old save-game packets ("... [durationDays] days")
-        // and new packets ("... in [durationDays].")
-        result = result.replace(/\[durationDays\]\s*days/g, durationStr); // Handles old format
-        result = result.replace(/\[durationDays\]/g, durationStr); // Handles new format
-        // --- END VIRTUAL WORKBENCH ---
+        result = result.replace(/\[durationDays\]\s*days/g, durationStr); 
+        result = result.replace(/\[durationDays\]/g, durationStr); 
         
-        // --- VIRTUAL WORKBENCH START: Phase 5/6 ---
-        // Handle new packet format (with span)
         result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
-        // Handle old packet format (no span, for save compatibility)
         result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
-        // --- VIRTUAL WORKBENCH END: Phase 5/6 ---
 
          return result;
     }
 
-    /**
-     * Shows the "Sample" modal (the offer) for an intel packet.
-     * @param {HTMLElement} element - The clicked button element.
-     * @JSDoc
-     */
     handleShowIntelOffer(element) {
         const { packetId, locationId, price } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
         
-        // --- VIRTUAL WORKBENCH (C) ---
-        // The "sample" text should refer to the DEAL location, so the player
-        // knows where the deal is before they buy.
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'a distant market';
-        // --- END VIRTUAL WORKBENCH ---
         
 
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // Add save-game compatibility for old messageKey packets
         let msg;
         if (packet.messageKey) {
-            // New universal system: Use messageKey
             msg = INTEL_CONTENT[packet.messageKey];
         } else if (packet.messageIndex !== undefined) {
-             // Old location-based system: Use messageIndex (Save Game Compat)
-            let msgArray = INTEL_CONTENT[packet.locationId]; // Use SALE location for message
-            if (packet.fallbackMsg) { // Handle fallback packet
+            let msgArray = INTEL_CONTENT[packet.locationId]; 
+            if (packet.fallbackMsg) { 
                 msgArray = INTEL_CONTENT[packet.fallbackMsgSource];
             }
             if (!msgArray) {
                 this.logger.warn('UIManager', `SaveCompat: No message array for ${packet.locationId}, using fallback.`);
-                // This will likely fail as INTEL_CONTENT is no longer an array, but it's the best we can do.
                 msgArray = INTEL_CONTENT["CORP_FAILURE_01"]; 
             }
             msg = msgArray ? msgArray[packet.messageIndex] : null;
         }
 
         const vagueText = (msg?.sample || "Intel available at [location name].")
-            .replace('[location name]', locationName); // Always replace with DEAL location
-        // --- END VIRTUAL WORKBENCH ---
+            .replace('[location name]', locationName); 
         
         const priceNum = parseInt(price, 10);
         
-        // --- VIRTUAL WORKBENCH START: Phase 5 ---
         const purchaseButtonHTML = `
             <button class="btn btn-module btn-module-credit" 
                     data-action="buy_intel" 
@@ -2588,117 +2192,58 @@ change occurred (like a purchase), it *surgically
                      data-price="${priceNum}">
                 Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
         this.queueModal('event-modal', 'Intel Offer', vagueText, null, {
-            theme: locationId, // GDD: Apply location-specific theme
-            dismissOutside: true, // GDD: Allow dismissing outside
-             footer: purchaseButtonHTML // GDD: Use custom footer
+            theme: locationId, 
+            dismissOutside: true, 
+             footer: purchaseButtonHTML 
         });
     }
 
-    /**
-     * Handles the "buy_intel" action, calls the service, and shows the "Details" modal on success.
-     * @param {HTMLElement} element - The clicked "Purchase Intel" button.
-     * @param {Event} e - The click event (for floating text).
-     * @JSDoc
-     */
     handleBuyIntel(element, e) {
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
         const { packetId, locationId, price } = element.dataset;
         const priceNum = parseInt(price, 10);
-        // Call the service to perform the transaction
         const purchasedPacket = this.intelService.purchaseIntel(packetId, locationId, priceNum);
 
         if (purchasedPacket) {
-            // GDD: On success, immediately close "Sample" modal and open "Details" modal
-            this.hideModal('event-modal'); // Close the sample modal
+            this.hideModal('event-modal'); 
             
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
-            // Add floating text
              if(e) {
                 this.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
             }
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
-            // Re-find the packet from the *new* state to ensure we have the purchased copy
             const updatedPacket = this._findIntelPacket(packetId, locationId);
             if (updatedPacket) {
-                 // --- VIRTUAL WORKBENCH START: Phase 5 ---
-                // Pass the *stored* pricePaid from the packet
                 this._showIntelDetailsModal(updatedPacket, updatedPacket.pricePaid, locationId);
-                // --- VIRTUAL WORKBENCH END: Phase 5 ---
             }
 
-            // --- VIRTUAL WORKBENCH (B) ---
-            /**
-             * GDD: Rerender the screen to update button states (e.g., to "View Intel" and disabled)
-             * * This manual render call is no longer needed. The setState() in
-             * IntelService.js now triggers renderActiveScreen (via the main
-             * UIManager.render() subscription), which surgically updates 
-             * the market content without a full page reset.
-             */
-             // const intelScreen = document.getElementById('intel-screen');
-            // const marketContentEl = intelScreen?.querySelector('#intel-market-content');
-            // if (marketContentEl && this.intelMarketRenderer) {
-            //     this.intelMarketRenderer.render(marketContentEl, this.lastKnownState);
-            // }
-            // --- END VIRTUAL WORKBENCH (B) ---
         } else {
-            // Purchase failed (e.g., already active deal, not enough credits)
-            // The service will log the error. We can optionally show a UI error here.
             this.hideModal('event-modal');
             this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
         }
     }
 
-    /**
-     * Shows the "Details" modal for a purchased packet.
-     * @param {HTMLElement} element - The clicked "View Intel" button.
-     * @JSDoc
-     */
     handleShowIntelDetails(element) {
         const { packetId, locationId } = element.dataset;
         const packet = this._findIntelPacket(packetId, locationId);
         if (!packet) return;
 
-        // --- VIRTUAL WORKBENCH START: Phase 5 ---
-        // Use the stored pricePaid if it exists, otherwise fall back to re-calculating
         const price = packet.pricePaid || this.intelService.calculateIntelPrice(packet);
-        // --- VIRTUAL WORKBENCH END: Phase 5 ---
 
-        // --- VIRTUAL WORKBENCH (Revert) ---
-        // Pass the re-calculated price, as the price paid isn't stored on the button.
         this._showIntelDetailsModal(packet, price, locationId);
-        // --- END VIRTUAL WORKBENCH ---
     }
 
-    /**
-     * Private helper to show the "Details" modal.
-     * @param {object} packet - The intelPacket object.
-     * @param {number} price - The price (either from purchase or re-calculated).
-     * @param {string} locationId - The locationId for theming.
-     * @private
-     * @JSDoc
-     */
     _showIntelDetailsModal(packet, price, locationId) {
-        // --- VIRTUAL WORKBENCH (Revert to universal logic) ---
-        // Add save-game compatibility logic
         let detailsTemplate;
-        let isNewFormat = false; // Flag for durationDays logic
+        let isNewFormat = false; 
 
         if (packet.messageKey) {
-            // New universal system: Use messageKey
              detailsTemplate = INTEL_CONTENT[packet.messageKey]?.details || "No details found.";
-            isNewFormat = true; // New packets use the new duration placeholder
+            isNewFormat = true; 
         } else if (packet.messageIndex !== undefined) {
-            // Old location-based system: Use messageIndex (Save Game Compat)
             this.logger.warn('UIManager', `SaveCompat: Found old packet with messageIndex ${packet.messageIndex}`);
-            // This packet is from a save file that used the location-based array.
-            // We can't recover it, so show a generic message.
             detailsTemplate = "Details for this expired intel packet are no longer available in the new system.";
         } else {
-            // This handles the *original* 2-message system, if a save is that old.
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
                  "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
@@ -2707,14 +2252,13 @@ change occurred (like a purchase), it *surgically
         }
 
         const formattedDetails = this._formatIntelDetails(detailsTemplate, packet, price, isNewFormat);
-        // --- END VIRTUAL WORKBENCH ---
 
         this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
-            theme: locationId, // GDD: Apply location-specific theme
-            dismissInside: true, // GDD: Dismiss on *any* click
+            theme: locationId, 
+            dismissInside: true, 
             dismissOutside: true,
-            footer: null, // GDD: No buttons
-            contentClass: 'text-left' // GDD: Details are paragraphs
+            footer: null, 
+            contentClass: 'text-left' 
         });
     }
 }

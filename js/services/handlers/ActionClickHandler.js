@@ -8,6 +8,7 @@
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js'; // Added
 
 export class ActionClickHandler {
     /**
@@ -28,12 +29,12 @@ export class ActionClickHandler {
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    async handle(e, actionTarget) { // <-- Add async
+    async handle(e, actionTarget) { 
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; // For the TutorialService
+        let actionData = null; 
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -42,27 +43,12 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 
-                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
-                // Capture the button element now, as 'e.target' might be lost/changed
-                // by the time the modal callback fires.
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
-                    // Pass the captured target to the service for the glow animation
-                    // We wrap it in an object to mimic an Event interface if needed, 
-                    // or just pass it as the event argument which SimService expects.
                     await this.simulationService.buyShip(shipId, { target });
-                    
-                    // Manually trigger the tutorial check here since we are inside a callback
-                    // and the original 'actionData' return at the end of handle() won't happen 
-                    // for this asynchronous flow.
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
-                
-                // Original logic removed:
-                // await this.simulationService.buyShip(shipId, e); 
-                // actionData = { type: 'ACTION', action: ACTION_IDS.BUY_SHIP };
-                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
             case ACTION_IDS.SELL_SHIP: {
@@ -70,34 +56,45 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
 
-                // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 7) ---
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
                     await this.simulationService.sellShip(shipId, { target });
                 });
-                
-                // Original logic removed:
-                // await this.simulationService.sellShip(shipId, e); 
-                // --- END VIRTUAL WORKBENCH ---
                 break;
             }
-            // --- VIRTUAL WORKBENCH: MODIFICATION (Phase 5) ---
             case ACTION_IDS.SELECT_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
-                e.stopPropagation(); // Prevent any other clicks
-                await this.simulationService.boardShip(shipId, e); // <-- Asynchronous
-                // actionData is now set *inside* SimulationService.boardShip
+                e.stopPropagation(); 
+                await this.simulationService.boardShip(shipId, e); 
+                break;
+            }
+
+            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
+            case 'show-attribute-tooltip': {
+                // IMPORTANT: Stop propagation so the tooltip isn't immediately closed
+                // if there are other listeners (like carousel drag handlers).
+                e.stopPropagation(); 
+                e.preventDefault();
+
+                const attrId = dataset.attributeId;
+                if (!attrId) return;
+
+                const definition = GameAttributes.getDefinition(attrId);
+                if (definition) {
+                    const content = `
+                        <div class="text-center">
+                            <h4 class="font-orbitron text-yellow-300 mb-1" style="font-size: 0.85rem;">SYSTEM INSTALLED</h4>
+                            <p class="font-roboto-mono text-xs text-gray-300">${definition.description}</p>
+                        </div>
+                    `;
+                    this.uiManager.showGenericTooltip(actionTarget, content);
+                }
                 break;
             }
             // --- END VIRTUAL WORKBENCH ---
-
-            // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-            // REMOVED 'show_ship_info' case
-            // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
             
-            // --- [[START]] VIRTUAL WORKBENCH (Access Archives Logic - UPDATED Phase 2) ---
             case 'show_ship_lore': {
                 const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
                 const currentIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
@@ -107,11 +104,8 @@ export class ActionClickHandler {
                     const shipList = state.player.ownedShipIds;
                     shipId = shipList[currentIndex] || shipList[0];
                 } else {
-                    // Use internal inventory method if accessible (it is in JS)
-                    // shipList is array of [id, data]
                     const inventory = this.simulationService._getShipyardInventory();
                     if (inventory && inventory.length > 0) {
-                        // Ensure index is safe
                         const safeIndex = Math.min(currentIndex, inventory.length - 1);
                         const shipData = inventory[safeIndex];
                         shipId = shipData ? shipData[0] : null;
@@ -120,20 +114,15 @@ export class ActionClickHandler {
 
                 if (shipId && DB.SHIPS[shipId]) {
                     const ship = DB.SHIPS[shipId];
-                    // Format Attribute
                     let attributeHtml = '';
                     if (ship.attribute && ship.attribute !== 'None') {
-                        // Strip brackets if present in raw data (though regex targets display mostly)
-                        // Split by the FIRST colon to separate Title from Description
                         const parts = ship.attribute.split(':');
-                        const title = parts[0].trim().replace(/[\[\]]/g, ''); // Remove brackets from title
-                        const description = parts.slice(1).join(':').trim(); // Re-join rest in case of other colons
+                        const title = parts[0].trim().replace(/[\[\]]/g, ''); 
+                        const description = parts.slice(1).join(':').trim(); 
 
                         attributeHtml = `<div class="ship-lore-attribute">${title}:<br>${description}</div>`;
                     }
                     
-                    // Format Content
-                    // Wrap in the scroll container div with the specific classes
                     const content = `
                         <div class="ship-lore-modal-wrapper">
                             ${attributeHtml}
@@ -143,8 +132,6 @@ export class ActionClickHandler {
                         </div>
                     `;
 
-                    // Show modal with 'codex-like' behavior (no footer, dismissible)
-                    // We remove 'contentClass' because we are wrapping the content ourselves now
                     this.uiManager.queueModal('event-modal', ship.name, content, null, {
                         dismissInside: true,
                         dismissOutside: true,
@@ -154,9 +141,7 @@ export class ActionClickHandler {
                 }
                 break;
             }
-            // --- [[END]] VIRTUAL WORKBENCH ---
     
-            // --- Hangar UI ---
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
                     this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
@@ -170,12 +155,12 @@ export class ActionClickHandler {
                 const totalItems = shipList.length;
 
                 let newIndex;
-                const JUMP_DISTANCE = 5; // How many pages to jump with half-dots
+                const JUMP_DISTANCE = 5; 
 
                 if (dataset.jumpDirection) {
                     if (dataset.jumpDirection === 'next') {
                         newIndex = Math.min(totalItems - 1, currentIndex + JUMP_DISTANCE);
-                    } else { // 'prev'
+                    } else { 
                         newIndex = Math.max(0, currentIndex - JUMP_DISTANCE);
                     }
                 } else {
@@ -201,20 +186,13 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- Navigation & Screen Changes ---
             case ACTION_IDS.SET_SCREEN: {
-                // This is the "smarter" logic you described.
-                // We check if the *actual* click target (e.target) was a sub-nav button.
-                // We assume sub-nav buttons are <a> tags inside the main nav's data-action target.
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
-                    // This is a TRUE 2nd-tap on the MAIN nav tab. Toggle the sub-nav.
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
                 } else {
-                    // This is a click on a NEW main nav tab OR a click on ANY sub-nav button.
-                    // In both cases, we want to show the sub-nav and set the screen.
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
@@ -227,24 +205,19 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- VIRTUAL WORKBENCH: ADD INTEL ACTIONS ---
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
             case 'show_intel_offer':
                 this.uiManager.handleShowIntelOffer(actionTarget);
                 break;
-            // --- VIRTUAL WORKBENCH START: Phase 5 ---
             case 'buy_intel':
                 this.uiManager.handleBuyIntel(actionTarget, e);
                 break;
-            // --- VIRTUAL WORKBENCH END: Phase 5 ---
             case 'show_intel_details':
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
 
-            // --- Modals ---
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
                 actionData = { type: 'ACTION', action: 'show-mission-modal' };
@@ -262,15 +235,11 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             
-            // [[START]] VIRTUAL WORKBENCH (EULA Modal)
             case 'show_eula_modal':
                 e.preventDefault();
                 this.uiManager.showEulaModal();
                 break;
-            // [[END]] VIRTUAL WORKBENCH (EULA Modal)
 
-            
-            // --- Mission Actions ---
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
@@ -286,26 +255,19 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;
 
-            // --- Finance & Licenses ---
-            // --- VIRTUAL WORKBENCH: MODIFIED (Point C) ---
-            // Pass the event object 'e' to the service layer
             case ACTION_IDS.PAY_DEBT:
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
-            // --- END VIRTUAL WORKBENCH ---
             case ACTION_IDS.PURCHASE_INTEL:
-                // This is now obsolete, but we'll leave it in case any old UI elements still call it.
-                // The new flow is show_intel_offer -> buy_intel
                 this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);
                 break;
 
-            // --- Market Card Minimization ---
             case ACTION_IDS.TOGGLE_MARKET_CARD_VIEW:
                 if (dataset.goodId) {
                     this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
@@ -330,14 +292,9 @@ export class ActionClickHandler {
         if (!license) return;
 
         if (license.type === 'purchase') {
-            // --- VIRTUAL WORKBENCH START: Phase 2 ---
             const description = `${license.description}<br><br>Cost: <span class="text-glow-red">${formatCredits(-license.cost, true)}</span>`;
-            // --- VIRTUAL WORKBENCH END: Phase 2 ---
             this.uiManager.queueModal('event-modal', `Purchase ${license.name}?`, description, null, {
-                // --- VIRTUAL WORKBENCH: BUG FIX ---
-                // Add dismissOutside: true to allow the modal to be closed
                 dismissOutside: true,
-                // --- END VIRTUAL WORKBENCH ---
                 customSetup: (modal, closeHandler) => {
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = `
