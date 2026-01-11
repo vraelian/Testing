@@ -41,8 +41,7 @@ export class CarouselEventHandler {
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
         
-        // --- [[START]] PREDICTIVE PRELOAD ---
-        // Preload assets in the direction of the scroll BEFORE trigger
+        // Predictive Preload
         const currentState = this.gameState.getState();
         const currentMode = currentState.uiState.hangarShipyardToggleState;
         const currentIdx = currentMode === 'hangar' 
@@ -51,7 +50,6 @@ export class CarouselEventHandler {
         
         const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
         this._preloadForTarget(targetIdx, currentMode);
-        // --- [[END]] PREDICTIVE PRELOAD ---
 
         this.simulationService.cycleHangarCarousel(direction);
 
@@ -70,10 +68,15 @@ export class CarouselEventHandler {
         const carouselContainer = e.target.closest('.carousel-container');
         const carousel = carouselContainer ? carouselContainer.querySelector('#hangar-carousel') : null;
 
-        if (e.target.closest('.action-button') || !carousel || carousel.children.length <= 1) {
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // If the target is an actionable element (button, pill, etc.), do NOT start dragging.
+        // This ensures the click event is allowed to fire for tooltip/action handling.
+        if (e.target.closest('[data-action]') || !carousel || carousel.children.length <= 1) {
             this.state.isDragging = false;
             return;
         }
+        // --- END VIRTUAL WORKBENCH ---
+
         e.preventDefault();
 
         const gameState = this.gameState.getState();
@@ -147,11 +150,8 @@ export class CarouselEventHandler {
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         
-        // --- [[START]] PREDICTIVE PRELOAD ---
-        // Ensure assets are fetched/cached BEFORE we trigger the state update 
-        // that re-renders the DOM in HangarScreen.js
+        // Predictive Preload
         this._preloadForTarget(newIndex, mode);
-        // --- [[END]] PREDICTIVE PRELOAD ---
 
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
@@ -177,7 +177,6 @@ export class CarouselEventHandler {
             }
         }
 
-        // Preload visible target + 5 neighbors
         AssetService.preloadBuffer(shipList, targetIndex, 5, player.visualSeed);
     }
     

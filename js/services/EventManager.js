@@ -37,13 +37,10 @@ export class EventManager {
         // Instantiate all specialized handlers
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        // MODIFIED: Pass the correct service (playerActionService) to the constructor
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
 
-        // --- VIRTUAL WORKBENCH ---
-        // Define the set of actions that should be exclusively handled by the MarketEventHandler.
         this.marketActions = new Set([
             'toggle-trade-mode',
             'confirm-trade',
@@ -51,7 +48,6 @@ export class EventManager {
             ACTION_IDS.INCREMENT,
             ACTION_IDS.DECREMENT
         ]);
-        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -74,12 +70,8 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // --- VIRTUAL WORKBENCH MODIFICATION ---
-        // Renamed 'startDragOrHold' to 'startCarouselDrag' for clarity.
-        // Added a guard clause to prevent starting a carousel drag
-        // when a stepper button is pressed. This allows the HoldEventHandler
-        // to manage stepper holds without conflict.
         const startCarouselDrag = (e) => {
+            this.uiManager.hideGenericTooltip(); // Clear tooltip on drag start
             // IGNORE presses on stepper buttons
             if (e.target.closest('.qty-stepper button')) {
                 return;
@@ -87,26 +79,21 @@ export class EventManager {
             // Proceed with carousel drag start for all other elements
             this.carouselEventHandler.handleDragStart(e);
         };
-        // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
 
-        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
-        // The if condition was modified to add an exception for '.action-button'.
-        // This prevents e.preventDefault() from being called on a tap/touch of
-        // an action button, which was blocking the subsequent 'click' event
-        // from firing on touch devices (like the iOS Simulator).
         document.body.addEventListener('touchstart', (e) => {
-            // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
-            // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || (e.target.closest('.carousel-container') && !e.target.closest('.action-button'))) {
+            const isActionable = e.target.closest('[data-action]');
+            
+            if (
+                (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) 
+                && !isActionable
+            ) {
                  e.preventDefault();
             }
-            startCarouselDrag(e); // Call the modified start function
+            startCarouselDrag(e); 
         }, { passive: false });
-        // --- END MODIFICATION ---
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
             this.carouselEventHandler.handleDragEnd();
         };
@@ -117,7 +104,6 @@ export class EventManager {
 
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
         document.body.addEventListener('touchmove', (e) => {
-            // Prevent default touchmove ONLY if dragging the carousel
              if (this.carouselEventHandler.state.isDragging) {
                  e.preventDefault();
              }
@@ -133,10 +119,7 @@ export class EventManager {
             });
         }
         
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Bind the hold event handlers globally, once, at startup.
         this.holdEventHandler.bindHoldEvents();
-        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -144,10 +127,9 @@ export class EventManager {
      * @param {Event} e The click event object.
      * @private
      */
-    async _handleClick(e) { // <-- Add async
+    async _handleClick(e) { 
         // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
         if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
-             // Reset stepper hold flag after suppressing click
             if (this.holdEventHandler.isStepperHolding) {
                  this.holdEventHandler.isStepperHolding = false;
              }
@@ -172,7 +154,6 @@ export class EventManager {
                 return;
             }
 
-            // --- New Lore Modal Action ---
             if (action === 'show_lore') {
                 e.preventDefault();
                 const loreId = actionTarget.dataset.loreId;
@@ -182,17 +163,12 @@ export class EventManager {
                 return;
             }
 
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            // Route the event to the correct handler instead of broadcasting to all.
-            // This prevents action misfires, like 'acquire-license' (from ActionClickHandler)
-            // firing on a 'confirm-trade' (from MarketEventHandler) click.
             if (this.marketActions.has(action)) {
                 this.marketEventHandler.handleClick(e, actionTarget);
             } else {
-                await this.actionClickHandler.handle(e, actionTarget); // <-- ADD await
+                await this.actionClickHandler.handle(e, actionTarget);
             }
             return;
-            // --- END VIRTUAL WORKBENCH MODIFICATION ---
         }
 
         // --- Fallback Handlers for non-action clicks ---
@@ -205,12 +181,8 @@ export class EventManager {
         // Check for modal dismissal clicks
         const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
         if (modalIdToClose) {
-            // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
-            // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                // *** VIRTUAL WORKBENCH CORRECTION ***
-                this.uiManager.hideModal(modalIdToClose); // Changed modalIdTo-close to modalIdToClose
-                // *** END CORRECTION ***
+                this.uiManager.hideModal(modalIdToClose);
             }
         }
     }

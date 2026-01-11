@@ -8,7 +8,7 @@
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
-import { GameAttributes } from '../../services/GameAttributes.js'; // Added
+import { GameAttributes } from '../../services/GameAttributes.js'; 
 
 export class ActionClickHandler {
     /**
@@ -73,8 +73,6 @@ export class ActionClickHandler {
 
             // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
             case 'show-attribute-tooltip': {
-                // IMPORTANT: Stop propagation so the tooltip isn't immediately closed
-                // if there are other listeners (like carousel drag handlers).
                 e.stopPropagation(); 
                 e.preventDefault();
 
@@ -83,13 +81,12 @@ export class ActionClickHandler {
 
                 const definition = GameAttributes.getDefinition(attrId);
                 if (definition) {
-                    const content = `
-                        <div class="text-center">
-                            <h4 class="font-orbitron text-yellow-300 mb-1" style="font-size: 0.85rem;">SYSTEM INSTALLED</h4>
-                            <p class="font-roboto-mono text-xs text-gray-300">${definition.description}</p>
-                        </div>
-                    `;
-                    this.uiManager.showGenericTooltip(actionTarget, content);
+                    // Minimalist content: Just the description text.
+                    // The UIManager will handle the container styling (width/padding).
+                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                    
+                    // Pass 'top' to request positioning above the pill
+                    this.uiManager.showGenericTooltip(actionTarget, content, 'top');
                 }
                 break;
             }
@@ -143,6 +140,7 @@ export class ActionClickHandler {
             }
     
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
+                this.uiManager.hideGenericTooltip(); // Clear tooltip on mode switch
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
                     this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
                     this.gameState.setState({});
@@ -187,6 +185,7 @@ export class ActionClickHandler {
             }
 
             case ACTION_IDS.SET_SCREEN: {
+                this.uiManager.hideGenericTooltip(); // Clear tooltip on nav
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {

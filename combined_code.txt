@@ -14736,13 +14736,10 @@ export class EventManager {
         // Instantiate all specialized handlers
         this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
-        // MODIFIED: Pass the correct service (playerActionService) to the constructor
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
         this.tooltipHandler = new TooltipHandler(gameState, uiManager);
 
-        // --- VIRTUAL WORKBENCH ---
-        // Define the set of actions that should be exclusively handled by the MarketEventHandler.
         this.marketActions = new Set([
             'toggle-trade-mode',
             'confirm-trade',
@@ -14750,7 +14747,6 @@ export class EventManager {
             ACTION_IDS.INCREMENT,
             ACTION_IDS.DECREMENT
         ]);
-        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -14773,12 +14769,8 @@ export class EventManager {
             }
         }, { passive: false });
 
-        // --- VIRTUAL WORKBENCH MODIFICATION ---
-        // Renamed 'startDragOrHold' to 'startCarouselDrag' for clarity.
-        // Added a guard clause to prevent starting a carousel drag
-        // when a stepper button is pressed. This allows the HoldEventHandler
-        // to manage stepper holds without conflict.
         const startCarouselDrag = (e) => {
+            this.uiManager.hideGenericTooltip(); // Clear tooltip on drag start
             // IGNORE presses on stepper buttons
             if (e.target.closest('.qty-stepper button')) {
                 return;
@@ -14786,26 +14778,21 @@ export class EventManager {
             // Proceed with carousel drag start for all other elements
             this.carouselEventHandler.handleDragStart(e);
         };
-        // --- END MODIFICATION ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
 
-        // --- VIRTUAL WORKBENCH MODIFICATION 10-24-2025 ---
-        // The if condition was modified to add an exception for '.action-button'.
-        // This prevents e.preventDefault() from being called on a tap/touch of
-        // an action button, which was blocking the subsequent 'click' event
-        // from firing on touch devices (like the iOS Simulator).
         document.body.addEventListener('touchstart', (e) => {
-            // Prevent default touch actions ONLY for specific hold targets to allow scrolling elsewhere
-            // (Note: Steppers are intentionally omitted here to allow 'pointerdown' to fire)
-            if (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || (e.target.closest('.carousel-container') && !e.target.closest('.action-button'))) {
+            const isActionable = e.target.closest('[data-action]');
+            
+            if (
+                (e.target.closest('#refuel-btn') || e.target.closest('#repair-btn') || e.target.closest('.carousel-container')) 
+                && !isActionable
+            ) {
                  e.preventDefault();
             }
-            startCarouselDrag(e); // Call the modified start function
+            startCarouselDrag(e); 
         }, { passive: false });
-        // --- END MODIFICATION ---
 
-        // MODIFIED: Removed call to non-existent holdEventHandler.handleHoldEnd
         const endDragOrHold = () => {
             this.carouselEventHandler.handleDragEnd();
         };
@@ -14816,7 +14803,6 @@ export class EventManager {
 
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
         document.body.addEventListener('touchmove', (e) => {
-            // Prevent default touchmove ONLY if dragging the carousel
              if (this.carouselEventHandler.state.isDragging) {
                  e.preventDefault();
              }
@@ -14832,10 +14818,7 @@ export class EventManager {
             });
         }
         
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Bind the hold event handlers globally, once, at startup.
         this.holdEventHandler.bindHoldEvents();
-        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -14843,10 +14826,9 @@ export class EventManager {
      * @param {Event} e The click event object.
      * @private
      */
-    async _handleClick(e) { // <-- Add async
+    async _handleClick(e) { 
         // Suppress click events that are the result of a drag/swipe on the carousel OR a completed hold on a stepper
         if (this.carouselEventHandler.wasMoved() || this.holdEventHandler.isStepperHolding) {
-             // Reset stepper hold flag after suppressing click
             if (this.holdEventHandler.isStepperHolding) {
                  this.holdEventHandler.isStepperHolding = false;
              }
@@ -14871,7 +14853,6 @@ export class EventManager {
                 return;
             }
 
-            // --- New Lore Modal Action ---
             if (action === 'show_lore') {
                 e.preventDefault();
                 const loreId = actionTarget.dataset.loreId;
@@ -14881,17 +14862,12 @@ export class EventManager {
                 return;
             }
 
-            // --- VIRTUAL WORKBENCH MODIFICATION ---
-            // Route the event to the correct handler instead of broadcasting to all.
-            // This prevents action misfires, like 'acquire-license' (from ActionClickHandler)
-            // firing on a 'confirm-trade' (from MarketEventHandler) click.
             if (this.marketActions.has(action)) {
                 this.marketEventHandler.handleClick(e, actionTarget);
             } else {
-                await this.actionClickHandler.handle(e, actionTarget); // <-- ADD await
+                await this.actionClickHandler.handle(e, actionTarget);
             }
             return;
-            // --- END VIRTUAL WORKBENCH MODIFICATION ---
         }
 
         // --- Fallback Handlers for non-action clicks ---
@@ -14904,12 +14880,8 @@ export class EventManager {
         // Check for modal dismissal clicks
         const modalIdToClose = this.uiManager.getModalIdFromEvent(e);
         if (modalIdToClose) {
-            // Note: lore-modal dismissal is handled internally in UIManager.showLoreModal
-            // to allow for content-area clicks.
             if (modalIdToClose !== 'lore-modal') {
-                // *** VIRTUAL WORKBENCH CORRECTION ***
-                this.uiManager.hideModal(modalIdToClose); // Changed modalIdTo-close to modalIdToClose
-                // *** END CORRECTION ***
+                this.uiManager.hideModal(modalIdToClose);
             }
         }
     }
@@ -20962,7 +20934,7 @@ export class HoldEventHandler {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
-import { GameAttributes } from '../../services/GameAttributes.js'; // Added
+import { GameAttributes } from '../../services/GameAttributes.js'; 
 
 export class ActionClickHandler {
     /**
@@ -21027,8 +20999,6 @@ export class ActionClickHandler {
 
             // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
             case 'show-attribute-tooltip': {
-                // IMPORTANT: Stop propagation so the tooltip isn't immediately closed
-                // if there are other listeners (like carousel drag handlers).
                 e.stopPropagation(); 
                 e.preventDefault();
 
@@ -21037,13 +21007,12 @@ export class ActionClickHandler {
 
                 const definition = GameAttributes.getDefinition(attrId);
                 if (definition) {
-                    const content = `
-                        <div class="text-center">
-                            <h4 class="font-orbitron text-yellow-300 mb-1" style="font-size: 0.85rem;">SYSTEM INSTALLED</h4>
-                            <p class="font-roboto-mono text-xs text-gray-300">${definition.description}</p>
-                        </div>
-                    `;
-                    this.uiManager.showGenericTooltip(actionTarget, content);
+                    // Minimalist content: Just the description text.
+                    // The UIManager will handle the container styling (width/padding).
+                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                    
+                    // Pass 'top' to request positioning above the pill
+                    this.uiManager.showGenericTooltip(actionTarget, content, 'top');
                 }
                 break;
             }
@@ -21097,6 +21066,7 @@ export class ActionClickHandler {
             }
     
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
+                this.uiManager.hideGenericTooltip(); // Clear tooltip on mode switch
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
                     this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
                     this.gameState.setState({});
@@ -21141,6 +21111,7 @@ export class ActionClickHandler {
             }
 
             case ACTION_IDS.SET_SCREEN: {
+                this.uiManager.hideGenericTooltip(); // Clear tooltip on nav
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
@@ -21469,8 +21440,7 @@ export class CarouselEventHandler {
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
         
-        // --- [[START]] PREDICTIVE PRELOAD ---
-        // Preload assets in the direction of the scroll BEFORE trigger
+        // Predictive Preload
         const currentState = this.gameState.getState();
         const currentMode = currentState.uiState.hangarShipyardToggleState;
         const currentIdx = currentMode === 'hangar' 
@@ -21479,7 +21449,6 @@ export class CarouselEventHandler {
         
         const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
         this._preloadForTarget(targetIdx, currentMode);
-        // --- [[END]] PREDICTIVE PRELOAD ---
 
         this.simulationService.cycleHangarCarousel(direction);
 
@@ -21498,10 +21467,15 @@ export class CarouselEventHandler {
         const carouselContainer = e.target.closest('.carousel-container');
         const carousel = carouselContainer ? carouselContainer.querySelector('#hangar-carousel') : null;
 
-        if (e.target.closest('.action-button') || !carousel || carousel.children.length <= 1) {
+        // --- VIRTUAL WORKBENCH: BUG FIX ---
+        // If the target is an actionable element (button, pill, etc.), do NOT start dragging.
+        // This ensures the click event is allowed to fire for tooltip/action handling.
+        if (e.target.closest('[data-action]') || !carousel || carousel.children.length <= 1) {
             this.state.isDragging = false;
             return;
         }
+        // --- END VIRTUAL WORKBENCH ---
+
         e.preventDefault();
 
         const gameState = this.gameState.getState();
@@ -21575,11 +21549,8 @@ export class CarouselEventHandler {
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         
-        // --- [[START]] PREDICTIVE PRELOAD ---
-        // Ensure assets are fetched/cached BEFORE we trigger the state update 
-        // that re-renders the DOM in HangarScreen.js
+        // Predictive Preload
         this._preloadForTarget(newIndex, mode);
-        // --- [[END]] PREDICTIVE PRELOAD ---
 
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
@@ -21605,7 +21576,6 @@ export class CarouselEventHandler {
             }
         }
 
-        // Preload visible target + 5 neighbors
         AssetService.preloadBuffer(shipList, targetIndex, 5, player.visualSeed);
     }
     
