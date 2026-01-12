@@ -71,8 +71,48 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP REMOVED ---
-            // Moved to TooltipHandler.js for lifecycle management.
+            // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
+            // Handles the purchase and installation flow for upgrades
+            case 'install_upgrade': {
+                const { upgradeId, cost } = dataset;
+                if (!upgradeId) return;
+                
+                const costNum = parseInt(cost || '0', 10);
+                const player = this.gameState.player;
+                const activeShipId = player.activeShipId;
+                const shipState = player.shipStates[activeShipId];
+
+                // 1. Basic Checks
+                if (player.credits < costNum) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade.');
+                    return;
+                }
+
+                // 2. Trigger Triple-Confirmation Flow
+                this.uiManager.showUpgradeInstallationModal(upgradeId, costNum, shipState, (replaceIndex) => {
+                    
+                    // 3. Execution (Callback)
+                    
+                    // Deduct Credits
+                    if (costNum > 0) {
+                        this.gameState.player.credits -= costNum;
+                        this.uiManager.createFloatingText(`-${formatCredits(costNum, false)}`, e.clientX, e.clientY, '#f87171');
+                    }
+
+                    // Handle Replacement (Dismantle)
+                    if (replaceIndex !== -1) {
+                        // Remove the old upgrade at the selected index
+                        // Note: Direct mutation here as we are in the handler/controller layer
+                        // and about to call the service which will trigger the save/notify
+                        shipState.upgrades.splice(replaceIndex, 1);
+                    }
+
+                    // Install New Upgrade
+                    // This method pushes the new ID and handles logging/notification
+                    this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                });
+                break;
+            }
             // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
@@ -94,23 +134,19 @@ export class ActionClickHandler {
 
                 if (shipId && DB.SHIPS[shipId]) {
                     const ship = DB.SHIPS[shipId];
-                    let attributeHtml = '';
-                    if (ship.attribute && ship.attribute !== 'None') {
-                        const parts = ship.attribute.split(':');
-                        const title = parts[0].trim().replace(/[\[\]]/g, ''); 
-                        const description = parts.slice(1).join(':').trim(); 
-
-                        attributeHtml = `<div class="ship-lore-attribute">${title}:<br>${description}</div>`;
-                    }
+                    
+                    // --- VIRTUAL WORKBENCH: PHASE 1/4 (LORE SANITIZATION) ---
+                    // Removed legacy attribute parsing logic.
+                    // The modal now strictly displays narrative lore.
                     
                     const content = `
                         <div class="ship-lore-modal-wrapper">
-                            ${attributeHtml}
                             <div class="ship-lore-text">
                                 ${ship.lore || ship.description}
                             </div>
                         </div>
                     `;
+                    // --- END VIRTUAL WORKBENCH ---
 
                     this.uiManager.queueModal('event-modal', ship.name, content, null, {
                         dismissInside: true,

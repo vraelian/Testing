@@ -6,33 +6,9 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 import { AssetService } from '../../services/AssetService.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-// --- VIRTUAL WORKBENCH: ATTRIBUTE UI CONFIG ---
-// Colors chosen for high readability on solid backgrounds (dark text on bright pastel)
-const ATTRIBUTE_UI_CONFIG = {
-    'ATTR_TRAVELLER': { label: 'SELF-REPAIR', color: '#34d399' }, // Green
-    'ATTR_TRADER': { label: 'TRADER', color: '#facc15' }, // Gold
-    'ATTR_HOT_DELIVERY': { label: 'STASIS', color: '#facc15' }, // Gold
-    'ATTR_RESILIENT': { label: 'RESILIENT', color: '#34d399' }, // Green
-    'ATTR_LUCKY': { label: 'LUCKY', color: '#c084fc' }, // Purple
-    'ATTR_CORP_PARTNER': { label: 'PARTNER', color: '#60a5fa' }, // Blue
-    'ATTR_CRYO_STORAGE': { label: 'CRYO', color: '#38bdf8' }, // Cyan
-    'ATTR_HEAVY': { label: 'HEAVY', color: '#9ca3af' }, // Gray
-    'ATTR_LOYALTY_SATURN': { label: 'SATURN-BORN', color: '#60a5fa' }, // Blue
-    'ATTR_RENOWN': { label: 'RENOWN', color: '#facc15' }, // Gold
-    'ATTR_VIP': { label: 'VIP', color: '#facc15' }, // Gold
-    'ATTR_ENTROPIC': { label: 'ENTROPIC', color: '#f87171' }, // Red
-    'ATTR_FREQUENT_FLYER': { label: 'FQ-FLYER', color: '#34d399' }, // Green
-    'ATTR_SPACE_FOLDING': { label: 'FOLD-DRIVE', color: '#c084fc' }, // Purple
-    'ATTR_XENO_HULL': { label: 'XENO', color: '#34d399' }, // Green
-    'ATTR_FUEL_SCOOP': { label: 'SCOOP', color: '#38bdf8' }, // Cyan
-    'ATTR_SOLAR_SAIL': { label: 'SOLAR', color: '#fbbf24' }, // Amber
-    'ATTR_EFFICIENT': { label: 'EFFICIENT', color: '#a3e635' }, // Lime
-    'ATTR_FAST': { label: 'FAST', color: '#f87171' }, // Red
-    'ATTR_BESPOKE': { label: 'BESPOKE', color: '#e879f9' }, // Pink
-    'ATTR_ADVANCED_COMMS': { label: 'COMMS', color: '#818cf8' }, // Indigo
-    'ATTR_SLEEPER': { label: 'SLEEPER', color: '#94a3b8' }, // Slate
-};
-// --- END VIRTUAL WORKBENCH ---
+// --- VIRTUAL WORKBENCH: UI CONFIG ---
+// Fallback configuration for upgrade pills if definition is missing color
+const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
 
 /**
  * Renders the entire Hangar screen UI.
@@ -134,28 +110,33 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Semantic Upgrade) ---
-    const activeAttributes = GameAttributes.getShipAttributes(shipId);
+    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL) ---
+    // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
-    if (activeAttributes && activeAttributes.length > 0) {
-        // We only render the first 2 attributes to prevent overflow
-        const pills = activeAttributes.slice(0, 2).map(attrId => {
-            const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
-            const definition = GameAttributes.getDefinition(attrId);
+    // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
+    if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
+        
+        const pills = shipDynamic.upgrades.map(upgradeId => {
+            const definition = GameAttributes.getDefinition(upgradeId);
+            // Default styling if definition missing, usually we'd have a color map but for now we default
+            // In future phases, definitions will likely carry specific colors or we can map them here.
+            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : 'MOD';
             const tooltipText = definition ? definition.description : '';
+            
+            // Standardizing Upgrade Pill Color (Cyan for now, or distinct from old attributes)
+            const pillColor = '#22d3ee'; 
 
-            // Style: Solid background, Dark text, No icons, Status-badge shape
-            // MODIFIED: Changed from 'div' to 'button' for superior mobile interaction.
+            // Semantic Button
             return `
                 <button class="attribute-pill cursor-pointer" 
                      data-action="show-attribute-tooltip" 
-                     data-attribute-id="${attrId}"
+                     data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
                      style="
-                        background-color: ${config.color}; 
-                        color: #1a202c; 
-                        border: 1px solid ${config.color};
+                        background-color: ${pillColor}; 
+                        color: #0f172a; 
+                        border: 1px solid ${pillColor};
                         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
                         padding: 2px 8px;
                         border-radius: 4px;
@@ -163,15 +144,16 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         font-size: 0.7rem;
                         font-weight: 700;
                         letter-spacing: 0.05em;
-                        pointer-events: auto; /* Ensure clickable over image */
+                        pointer-events: auto;
                         touch-action: manipulation;
                         -webkit-tap-highlight-color: transparent;
                      ">
-                    ${config.label}
+                    ${label}
                 </button>
             `;
         }).join('');
 
+        // Centering Rule: justify-center applied to container
         attributesHtml = `
             <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
                 ${pills}

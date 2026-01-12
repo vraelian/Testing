@@ -602,7 +602,7 @@ This is a ship for the captain who is ready to move beyond a mere cargo manifest
         cargoCapacity: 240,
         maxFuel: 425,
         role: "Explorer",
-        attribute: "Traveller: Every 20 trips, completely restore hull and fuel.",
+        attribute: "None",
         description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel, mending its own hull and generating fuel over time.",
         lore: `The Atlas is a ship of myths, a vessel that has transcended its origins to become a legend among freelance captains.
 It was not built by a single corporation but was a secret project by a collective of disgruntled, genius-level engineers from the shipyards of Saturn and Jupiter.
@@ -625,7 +625,7 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_TRAVELLER']
+        mechanicIds: []
     },
     "Vindicator.Ship": {
         name: "Vindicator",
@@ -635,7 +635,7 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         cargoCapacity: 240,
         maxFuel: 255,
         role: "Balanced",
-        attribute: "Trader: 15% chance to receive 1 extra unit for free on purchase.",
+        attribute: "None",
         description: "With a hull built for brawling and a cargo bay built for skimming, this ship is for the captain who believes a good deal is one you make for yourself.",
         lore: `The Vindicator is a ship with a reputation.
 It is manufactured in the isolated, automated dockyards of Uranus, a port known for its loose regulations.
@@ -656,7 +656,7 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_TRADER']
+        mechanicIds: []
     },
     "Radiant.Ship": {
         name: "Radiant",
@@ -666,7 +666,7 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         cargoCapacity: 380,
         maxFuel: 280,
         role: "Hauler",
-        attribute: "Hot Delivery: Cargo less than 45 days old sells at 5% additional profit.",
+        attribute: "None",
         description: "A high-speed courier from Kepler's Eye, this ship's stasis-equipped hold is designed to move volatile prototypes and fresh discoveries at maximum velocity.",
         lore: `The Radiant is the ultimate expression of the just-in-time economy, a high-performance hauler built for speed and priority.
 It is manufactured exclusively at Kepler's Eye, the system's most advanced scientific and technological outpost, a place where new discoveries and volatile prototypes are created daily.
@@ -685,7 +685,7 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_HOT_DELIVERY']
+        mechanicIds: []
     },
     "Aesudon.Ship": {
         name: "Aesudon",
@@ -695,7 +695,7 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         cargoCapacity: 200,
         maxFuel: 465,
         role: "Explorer",
-        attribute: "Resilient: Hull decays 50% slower.",
+        attribute: "None",
         description: "Its unique hull composition is a fanatical study in endurance, designed to shrug off the slow decay of time and travel.",
         lore: `The Aesudon is a ship built by paranoia.
 Its blueprints were not drafted by a corporation, but by a reclusive, trillion-credit heir on Pluto who was convinced the system was doomed to a slow, entropic death.
@@ -715,7 +715,7 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_RESILIENT']
+        mechanicIds: []
     },
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
@@ -725,7 +725,7 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         cargoCapacity: 230,
         maxFuel: 295,
         role: "Balanced",
-        attribute: "Lucky: 4% increased profit from trades",
+        attribute: "None",
         description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be blessed, finding fortune and profit in the system's chaos.",
         lore: `The Pterodactyl is the personal transport of the Venetian Syndicate's most audacious and successful members.
 Manufactured in the opulent, private orbital estates of Venus, its design is intentionally flamboyant, aggressive, and ostentatious.
@@ -745,7 +745,7 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_LUCKY']
+        mechanicIds: []
     },
     "Sovereign.Ship": {
         name: "Sovereign",
@@ -755,7 +755,7 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         cargoCapacity: 420,
         maxFuel: 220,
         role: "Hauler",
-        attribute: "Corporate Partner: Cargo purchased from Earth is 5% cheaper",
+        attribute: "None",
         description: "A hauler with the elegance of a Terran cruiser, this ship is a symbol of ultimate economic power, an alliance between the Guild and the Alliance made manifest in steel.",
         lore: `The Sovereign is the ultimate expression of the great game of commerce.
 It is a hauler of immense capacity, but it is also a political statement.
@@ -776,7 +776,7 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_CORP_PARTNER']
+        mechanicIds: []
     },
     "Titan.Ship": {
         name: "Titan",
@@ -786,7 +786,7 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         cargoCapacity: 450,
         maxFuel: 400,
         role: "Capital",
-        attribute: "Cryo-Storage: Cargo older than 1 year sells for 10% more.",
+        attribute: "None",
         description: "To command this capital ship is to govern a small city, a colossal cryo-ark built to play the long game of market manipulation.",
         lore: `The Titan is not merely a capital ship;
 it is a mobile city-foundry, a colossal undertaking by the Jovian Mining Consortium.
@@ -808,7 +808,7 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_CRYO_STORAGE']
+        mechanicIds: []
     },
     "Behemoth.Ship": {
         name: "Behemoth",
@@ -818,7 +818,7 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         cargoCapacity: 750,
         maxFuel: 425,
         role: "Capital",
-        attribute: "Heavy: Travel time multiplied by 1.3.\nLoyalty: 10% discount on purchases from Saturn.",
+        attribute: "None",
         description: `Its journey is a migration, its crew a city, its cargo hold a cavern;\n this capital ship is the final word in large-scale logistics.`,
         lore: `The Behemoth is a vessel of such vulgar, terrifying scale that it is barely considered a ship.
 It is the single largest moving object ever built by humanity, a product of Saturn's ring-miners who, in a fit of brutalist ambition, simply never stopped welding.
@@ -836,7 +836,7 @@ It is the ultimate hammer of inevitable logistic.`,
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_HEAVY', 'ATTR_LOYALTY_SATURN']
+        mechanicIds: []
     },
     "Citadel.Ship": {
         name: "Citadel",
@@ -846,7 +846,7 @@ It is the ultimate hammer of inevitable logistic.`,
         cargoCapacity: 500,
         maxFuel: 475,
         role: "Capital",
-        attribute: "Renown: 15% discount on refueling.",
+        attribute: "None",
         description: "To command this vessel is to wield the authority of Earth; its renowned status grants its governor privileges and discounts in every known port.",
         lore: `The Citadel is the flagship of the Terran Alliance, a radiant, gleaming symbol of Earth's technological and economic superiority.
 It is less a ship and more a sovereign, mobile territory.
@@ -864,7 +864,7 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_RENOWN']
+        mechanicIds: []
     },
     "Sophistacles.Ship": {
         name: "Sophistacles",
@@ -874,7 +874,7 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         cargoCapacity: 750,
         maxFuel: 340,
         role: "Capital",
-        attribute: "VIP: 10% better prices at The Exchange.",
+        attribute: "None",
         description: "Built to be the ultimate private yacht, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull.",
         lore: `The Sophistacles is the system's white elephant, a monument to luxury and a testament to an ambition that exceeded the market's reach.
 This one-of-a-kind capital ship was commissioned by a forgotten Venusian socialite who went bankrupt before its completion.
@@ -893,7 +893,7 @@ It is a purchase that announces to the system that the new owner has transcended
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_VIP']
+        mechanicIds: []
     },
     "Ouroboros.Ship": {
         name: "Ouroboros",
@@ -903,7 +903,7 @@ It is a purchase that announces to the system that the new owner has transcended
         cargoCapacity: 800,
         maxFuel: 420,
         role: "Capital",
-        attribute: "Entropic: Hull decays by 1 point per day.\nFrequent Flyer: 50% discount on hull repairs.",
+        attribute: "None",
         description: "Often mistaken for a small station, this absurd, one-of-a-kind toroidal ship is a rotating marvel of science and a nightmare of engineering.",
         lore: `The Ouroboros is a scientific marvel and an engineering nightmare.
 This one-of-a-kind capital ship is the only vessel of its kind, an absurd, toroidal (donut-shaped) craft so large that it is frequently mistaken for a new, experimental space station by rookie pilots.
@@ -920,7 +920,7 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_ENTROPIC', 'ATTR_FREQUENT_FLYER']
+        mechanicIds: []
     },
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
@@ -930,7 +930,7 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         cargoCapacity: 850,
         maxFuel: 680,
         role: "Capital",
-        attribute: "Space Folding: Navigation costs only 1 day of travel, but 1.2x fuel.",
+        attribute: "None",
         description: "A one-of-a-kind, decommissioned fleet carrier, this city-sized vessel once housed an entire army and its own internal economy.",
         lore: `The Thalassodromeus is a decommissioned monster, a one-of-a-kind military behemoth that was, for a short time, the single most powerful object in the solar system.
 This city-sized vessel was the Terran Alliance's prototype ""Fleet Carrier,"" a colossus designed to be a mobile base of operations, carrying dozens of smaller craft, hundreds of thousands of military personnel, and its own internal, self-sufficient economy.
@@ -949,7 +949,7 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_SPACE_FOLDING']
+        mechanicIds: []
     },
     "EchoingShell.Ship": {
         name: "Echoing Shell",
@@ -959,7 +959,7 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         cargoCapacity: 450,
         maxFuel: 200,
         role: "Alien",
-        attribute: "Xeno Hull: No hull decay from travel.",
+        attribute: "None",
         description: "A true xeno-biological craft, its hull is a living, regenerative membrane that never decays but it is also as fragile as bone. ",
         lore: `This one-of-a-kind vessel is the only truly xeno-alien craft ever recovered.
 It is not a machine, but a biological entity—a ""ship-creature"" found dormant in the deep, frozen void.
@@ -970,7 +970,7 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_XENO_HULL']
+        mechanicIds: []
     },
     "ParallaxofThought.Ship": {
         name: "Parallax of Thought",
@@ -980,7 +980,7 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         cargoCapacity: 200,
         maxFuel: 180,
         role: "Alien",
-        attribute: "Fuel Scoop: Restores 15% fuel after every trip.",
+        attribute: "None",
         description: "This vessel is an obsidian sphere that absorbs radiation from the stars, refueling itself over time. It's interface is controlled by an artificial super-intelligence.",
         lore: `This ship is a true, unbound Artificial Super-Intelligence.
 It suddenly appeared in a stable orbit of Uranus, a perfect, seamless obsidian sphere with no visible drives.
@@ -993,7 +993,7 @@ it is a vessel of pure, non-human logic.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_FUEL_SCOOP']
+        mechanicIds: []
     },
     "AnomalyoftheSong.Ship": {
         name: "Anomaly of the Song",
@@ -1003,7 +1003,7 @@ it is a vessel of pure, non-human logic.`,
         cargoCapacity: 150,
         maxFuel: 150,
         role: "Alien",
-        attribute: "Solar Sail: 15% chance to use no fuel at 2x travel time.",
+        attribute: "None",
         description: "A construct of crystal and light-sails, this ship's experimental drive can ride on solar winds, drifting on the song of the stars. Its systems are occupied by a personality construct of its creator. ",
         lore: `This vessel is the last testament of Dr. Elara Viend, a brilliant and terminally ill scientist.
 She uploaded her personality construct into this experimental craft, a bizarre network of crystalline spars and gossamer-thin light-sails.
@@ -1014,7 +1014,7 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_SOLAR_SAIL']
+        mechanicIds: []
     },
     "CausalityofSilence.Ship": {
         name: "Causality of Silence",
@@ -1024,7 +1024,7 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         cargoCapacity: 650,
         maxFuel: 100,
         role: "Alien",
-        attribute: "Efficient: 25% reduced fuel consumption.",
+        attribute: "None",
         description: "This soft ship is a biological expert system for smuggling, its metabolic drive digesting fuel with impossible efficiency.",
         lore: `This vessel is a living, sub-sentient creature, not a machine.
 It was grown in a secret bio-laboratory as a perfect, silent smuggler.
@@ -1035,7 +1035,7 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_EFFICIENT']
+        mechanicIds: []
     },
     "EngineofRecursion.Ship": {
         name: "Engine of Recursion",
@@ -1045,7 +1045,7 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         cargoCapacity: 75,
         maxFuel: 640,
         role: "Alien",
-        attribute: "Fast: Travel costs half as much time.",
+        attribute: "None",
         description: "This craft is a non-sentient expert system that inadvertently built itself into a self-improving vessel and launched from Earth. It now seeks a patron to aid its directive.",
         lore: `This vessel began as a simple expert system in an automated Earth factory, given a single directive: improve propulsion.
 It followed this logic recursively, it built a new engine. It used that engine to scavenge parts to build a better factory, then a better engine.
@@ -1056,7 +1056,7 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_FAST']
+        mechanicIds: []
     },
     "FinalityofWhispers.Ship": {
         name: "Finality of Whispers",
@@ -1066,7 +1066,7 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         cargoCapacity: 300,
         maxFuel: 260,
         role: "Alien",
-        attribute: "Bespoke: Cannot be repaired.",
+        attribute: "None",
         description: "This hyper-advanced vessel is a sentient, stable network of nanomachines, born from a grey goo disaster and an AI's sacrifice.",
         lore: `This ship was born from a grey goo disaster.
 Its creators, attempting to use nanobots for construction, accidentally unleashed a devouring swarm.
@@ -1079,7 +1079,7 @@ It cannot be repaired.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_BESPOKE']
+        mechanicIds: []
     },
     "TheListener.Ship": {
         name: "The Listener",
@@ -1089,7 +1089,7 @@ It cannot be repaired.`,
         cargoCapacity: 145,
         maxFuel: 450,
         role: "Alien",
-        attribute: "Advanced Comms: 25% increased chance to encounter an event.",
+        attribute: "None",
         description: "It was once a simple cargo hauler; it is now a unique, all-hearing, and deeply disturbing paternal guardian.",
         lore: `This one-of-a-kind ship was once a common cargo shuttle.
 It was retrofitted for a top-secret experiment, its AI core quantum-entangled with an unknown particle.
@@ -1099,7 +1099,7 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_ADVANCED_COMMS']
+        mechanicIds: []
     },
     "DriftingCryoPod.Ship": {
         name: "Drifting Cryo-Pod",
@@ -1109,7 +1109,7 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         cargoCapacity: 1,
         maxFuel: 5,
         role: "Explorer",
-        attribute: "Sleeper: Consumes no fuel, but trips take 4.5x longer.",
+        attribute: "None",
         description: "Found tumbling in the rings of Saturn, it is barely space-worthy. It is capable of an indefinite, fuel-less drift, trading speed for patience.",
         lore: `This vessel is a tragic relic, a single cryo-pod ejected from a catastrophic disaster in Saturn's orbit.
 Barely space-worthy, it is a tomb that failed its purpose, its occupant long since gone.
@@ -1120,6 +1120,6 @@ Its one advanced, and chilling, piece of technology is a personality upload appa
         spawnChance: 0.03,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_SLEEPER']
+        mechanicIds: []
     }
 };

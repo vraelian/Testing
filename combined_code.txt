@@ -5884,33 +5884,9 @@ import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
 import { AssetService } from '../../services/AssetService.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-// --- VIRTUAL WORKBENCH: ATTRIBUTE UI CONFIG ---
-// Colors chosen for high readability on solid backgrounds (dark text on bright pastel)
-const ATTRIBUTE_UI_CONFIG = {
-    'ATTR_TRAVELLER': { label: 'SELF-REPAIR', color: '#34d399' }, // Green
-    'ATTR_TRADER': { label: 'TRADER', color: '#facc15' }, // Gold
-    'ATTR_HOT_DELIVERY': { label: 'STASIS', color: '#facc15' }, // Gold
-    'ATTR_RESILIENT': { label: 'RESILIENT', color: '#34d399' }, // Green
-    'ATTR_LUCKY': { label: 'LUCKY', color: '#c084fc' }, // Purple
-    'ATTR_CORP_PARTNER': { label: 'PARTNER', color: '#60a5fa' }, // Blue
-    'ATTR_CRYO_STORAGE': { label: 'CRYO', color: '#38bdf8' }, // Cyan
-    'ATTR_HEAVY': { label: 'HEAVY', color: '#9ca3af' }, // Gray
-    'ATTR_LOYALTY_SATURN': { label: 'SATURN-BORN', color: '#60a5fa' }, // Blue
-    'ATTR_RENOWN': { label: 'RENOWN', color: '#facc15' }, // Gold
-    'ATTR_VIP': { label: 'VIP', color: '#facc15' }, // Gold
-    'ATTR_ENTROPIC': { label: 'ENTROPIC', color: '#f87171' }, // Red
-    'ATTR_FREQUENT_FLYER': { label: 'FQ-FLYER', color: '#34d399' }, // Green
-    'ATTR_SPACE_FOLDING': { label: 'FOLD-DRIVE', color: '#c084fc' }, // Purple
-    'ATTR_XENO_HULL': { label: 'XENO', color: '#34d399' }, // Green
-    'ATTR_FUEL_SCOOP': { label: 'SCOOP', color: '#38bdf8' }, // Cyan
-    'ATTR_SOLAR_SAIL': { label: 'SOLAR', color: '#fbbf24' }, // Amber
-    'ATTR_EFFICIENT': { label: 'EFFICIENT', color: '#a3e635' }, // Lime
-    'ATTR_FAST': { label: 'FAST', color: '#f87171' }, // Red
-    'ATTR_BESPOKE': { label: 'BESPOKE', color: '#e879f9' }, // Pink
-    'ATTR_ADVANCED_COMMS': { label: 'COMMS', color: '#818cf8' }, // Indigo
-    'ATTR_SLEEPER': { label: 'SLEEPER', color: '#94a3b8' }, // Slate
-};
-// --- END VIRTUAL WORKBENCH ---
+// --- VIRTUAL WORKBENCH: UI CONFIG ---
+// Fallback configuration for upgrade pills if definition is missing color
+const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
 
 /**
  * Renders the entire Hangar screen UI.
@@ -6012,28 +5988,33 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Semantic Upgrade) ---
-    const activeAttributes = GameAttributes.getShipAttributes(shipId);
+    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL) ---
+    // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
-    if (activeAttributes && activeAttributes.length > 0) {
-        // We only render the first 2 attributes to prevent overflow
-        const pills = activeAttributes.slice(0, 2).map(attrId => {
-            const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
-            const definition = GameAttributes.getDefinition(attrId);
+    // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
+    if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
+        
+        const pills = shipDynamic.upgrades.map(upgradeId => {
+            const definition = GameAttributes.getDefinition(upgradeId);
+            // Default styling if definition missing, usually we'd have a color map but for now we default
+            // In future phases, definitions will likely carry specific colors or we can map them here.
+            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : 'MOD';
             const tooltipText = definition ? definition.description : '';
+            
+            // Standardizing Upgrade Pill Color (Cyan for now, or distinct from old attributes)
+            const pillColor = '#22d3ee'; 
 
-            // Style: Solid background, Dark text, No icons, Status-badge shape
-            // MODIFIED: Changed from 'div' to 'button' for superior mobile interaction.
+            // Semantic Button
             return `
                 <button class="attribute-pill cursor-pointer" 
                      data-action="show-attribute-tooltip" 
-                     data-attribute-id="${attrId}"
+                     data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
                      style="
-                        background-color: ${config.color}; 
-                        color: #1a202c; 
-                        border: 1px solid ${config.color};
+                        background-color: ${pillColor}; 
+                        color: #0f172a; 
+                        border: 1px solid ${pillColor};
                         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
                         padding: 2px 8px;
                         border-radius: 4px;
@@ -6041,15 +6022,16 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         font-size: 0.7rem;
                         font-weight: 700;
                         letter-spacing: 0.05em;
-                        pointer-events: auto; /* Ensure clickable over image */
+                        pointer-events: auto;
                         touch-action: manipulation;
                         -webkit-tap-highlight-color: transparent;
                      ">
-                    ${config.label}
+                    ${label}
                 </button>
             `;
         }).join('');
 
+        // Centering Rule: justify-center applied to container
         attributesHtml = `
             <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
                 ${pills}
@@ -9344,7 +9326,7 @@ This is a ship for the captain who is ready to move beyond a mere cargo manifest
         cargoCapacity: 240,
         maxFuel: 425,
         role: "Explorer",
-        attribute: "Traveller: Every 20 trips, completely restore hull and fuel.",
+        attribute: "None",
         description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel, mending its own hull and generating fuel over time.",
         lore: `The Atlas is a ship of myths, a vessel that has transcended its origins to become a legend among freelance captains.
 It was not built by a single corporation but was a secret project by a collective of disgruntled, genius-level engineers from the shipyards of Saturn and Jupiter.
@@ -9367,7 +9349,7 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_TRAVELLER']
+        mechanicIds: []
     },
     "Vindicator.Ship": {
         name: "Vindicator",
@@ -9377,7 +9359,7 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         cargoCapacity: 240,
         maxFuel: 255,
         role: "Balanced",
-        attribute: "Trader: 15% chance to receive 1 extra unit for free on purchase.",
+        attribute: "None",
         description: "With a hull built for brawling and a cargo bay built for skimming, this ship is for the captain who believes a good deal is one you make for yourself.",
         lore: `The Vindicator is a ship with a reputation.
 It is manufactured in the isolated, automated dockyards of Uranus, a port known for its loose regulations.
@@ -9398,7 +9380,7 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_TRADER']
+        mechanicIds: []
     },
     "Radiant.Ship": {
         name: "Radiant",
@@ -9408,7 +9390,7 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         cargoCapacity: 380,
         maxFuel: 280,
         role: "Hauler",
-        attribute: "Hot Delivery: Cargo less than 45 days old sells at 5% additional profit.",
+        attribute: "None",
         description: "A high-speed courier from Kepler's Eye, this ship's stasis-equipped hold is designed to move volatile prototypes and fresh discoveries at maximum velocity.",
         lore: `The Radiant is the ultimate expression of the just-in-time economy, a high-performance hauler built for speed and priority.
 It is manufactured exclusively at Kepler's Eye, the system's most advanced scientific and technological outpost, a place where new discoveries and volatile prototypes are created daily.
@@ -9427,7 +9409,7 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_HOT_DELIVERY']
+        mechanicIds: []
     },
     "Aesudon.Ship": {
         name: "Aesudon",
@@ -9437,7 +9419,7 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         cargoCapacity: 200,
         maxFuel: 465,
         role: "Explorer",
-        attribute: "Resilient: Hull decays 50% slower.",
+        attribute: "None",
         description: "Its unique hull composition is a fanatical study in endurance, designed to shrug off the slow decay of time and travel.",
         lore: `The Aesudon is a ship built by paranoia.
 Its blueprints were not drafted by a corporation, but by a reclusive, trillion-credit heir on Pluto who was convinced the system was doomed to a slow, entropic death.
@@ -9457,7 +9439,7 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_RESILIENT']
+        mechanicIds: []
     },
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
@@ -9467,7 +9449,7 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         cargoCapacity: 230,
         maxFuel: 295,
         role: "Balanced",
-        attribute: "Lucky: 4% increased profit from trades",
+        attribute: "None",
         description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be blessed, finding fortune and profit in the system's chaos.",
         lore: `The Pterodactyl is the personal transport of the Venetian Syndicate's most audacious and successful members.
 Manufactured in the opulent, private orbital estates of Venus, its design is intentionally flamboyant, aggressive, and ostentatious.
@@ -9487,7 +9469,7 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_LUCKY']
+        mechanicIds: []
     },
     "Sovereign.Ship": {
         name: "Sovereign",
@@ -9497,7 +9479,7 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         cargoCapacity: 420,
         maxFuel: 220,
         role: "Hauler",
-        attribute: "Corporate Partner: Cargo purchased from Earth is 5% cheaper",
+        attribute: "None",
         description: "A hauler with the elegance of a Terran cruiser, this ship is a symbol of ultimate economic power, an alliance between the Guild and the Alliance made manifest in steel.",
         lore: `The Sovereign is the ultimate expression of the great game of commerce.
 It is a hauler of immense capacity, but it is also a political statement.
@@ -9518,7 +9500,7 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         spawnChance: 0.15,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_CORP_PARTNER']
+        mechanicIds: []
     },
     "Titan.Ship": {
         name: "Titan",
@@ -9528,7 +9510,7 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         cargoCapacity: 450,
         maxFuel: 400,
         role: "Capital",
-        attribute: "Cryo-Storage: Cargo older than 1 year sells for 10% more.",
+        attribute: "None",
         description: "To command this capital ship is to govern a small city, a colossal cryo-ark built to play the long game of market manipulation.",
         lore: `The Titan is not merely a capital ship;
 it is a mobile city-foundry, a colossal undertaking by the Jovian Mining Consortium.
@@ -9550,7 +9532,7 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_CRYO_STORAGE']
+        mechanicIds: []
     },
     "Behemoth.Ship": {
         name: "Behemoth",
@@ -9560,7 +9542,7 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         cargoCapacity: 750,
         maxFuel: 425,
         role: "Capital",
-        attribute: "Heavy: Travel time multiplied by 1.3.\nLoyalty: 10% discount on purchases from Saturn.",
+        attribute: "None",
         description: `Its journey is a migration, its crew a city, its cargo hold a cavern;\n this capital ship is the final word in large-scale logistics.`,
         lore: `The Behemoth is a vessel of such vulgar, terrifying scale that it is barely considered a ship.
 It is the single largest moving object ever built by humanity, a product of Saturn's ring-miners who, in a fit of brutalist ambition, simply never stopped welding.
@@ -9578,7 +9560,7 @@ It is the ultimate hammer of inevitable logistic.`,
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_HEAVY', 'ATTR_LOYALTY_SATURN']
+        mechanicIds: []
     },
     "Citadel.Ship": {
         name: "Citadel",
@@ -9588,7 +9570,7 @@ It is the ultimate hammer of inevitable logistic.`,
         cargoCapacity: 500,
         maxFuel: 475,
         role: "Capital",
-        attribute: "Renown: 15% discount on refueling.",
+        attribute: "None",
         description: "To command this vessel is to wield the authority of Earth; its renowned status grants its governor privileges and discounts in every known port.",
         lore: `The Citadel is the flagship of the Terran Alliance, a radiant, gleaming symbol of Earth's technological and economic superiority.
 It is less a ship and more a sovereign, mobile territory.
@@ -9606,7 +9588,7 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_RENOWN']
+        mechanicIds: []
     },
     "Sophistacles.Ship": {
         name: "Sophistacles",
@@ -9616,7 +9598,7 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         cargoCapacity: 750,
         maxFuel: 340,
         role: "Capital",
-        attribute: "VIP: 10% better prices at The Exchange.",
+        attribute: "None",
         description: "Built to be the ultimate private yacht, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull.",
         lore: `The Sophistacles is the system's white elephant, a monument to luxury and a testament to an ambition that exceeded the market's reach.
 This one-of-a-kind capital ship was commissioned by a forgotten Venusian socialite who went bankrupt before its completion.
@@ -9635,7 +9617,7 @@ It is a purchase that announces to the system that the new owner has transcended
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_VIP']
+        mechanicIds: []
     },
     "Ouroboros.Ship": {
         name: "Ouroboros",
@@ -9645,7 +9627,7 @@ It is a purchase that announces to the system that the new owner has transcended
         cargoCapacity: 800,
         maxFuel: 420,
         role: "Capital",
-        attribute: "Entropic: Hull decays by 1 point per day.\nFrequent Flyer: 50% discount on hull repairs.",
+        attribute: "None",
         description: "Often mistaken for a small station, this absurd, one-of-a-kind toroidal ship is a rotating marvel of science and a nightmare of engineering.",
         lore: `The Ouroboros is a scientific marvel and an engineering nightmare.
 This one-of-a-kind capital ship is the only vessel of its kind, an absurd, toroidal (donut-shaped) craft so large that it is frequently mistaken for a new, experimental space station by rookie pilots.
@@ -9662,7 +9644,7 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_ENTROPIC', 'ATTR_FREQUENT_FLYER']
+        mechanicIds: []
     },
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
@@ -9672,7 +9654,7 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         cargoCapacity: 850,
         maxFuel: 680,
         role: "Capital",
-        attribute: "Space Folding: Navigation costs only 1 day of travel, but 1.2x fuel.",
+        attribute: "None",
         description: "A one-of-a-kind, decommissioned fleet carrier, this city-sized vessel once housed an entire army and its own internal economy.",
         lore: `The Thalassodromeus is a decommissioned monster, a one-of-a-kind military behemoth that was, for a short time, the single most powerful object in the solar system.
 This city-sized vessel was the Terran Alliance's prototype ""Fleet Carrier,"" a colossus designed to be a mobile base of operations, carrying dozens of smaller craft, hundreds of thousands of military personnel, and its own internal, self-sufficient economy.
@@ -9691,7 +9673,7 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         spawnChance: 0.05,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
-        mechanicIds: ['ATTR_SPACE_FOLDING']
+        mechanicIds: []
     },
     "EchoingShell.Ship": {
         name: "Echoing Shell",
@@ -9701,7 +9683,7 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         cargoCapacity: 450,
         maxFuel: 200,
         role: "Alien",
-        attribute: "Xeno Hull: No hull decay from travel.",
+        attribute: "None",
         description: "A true xeno-biological craft, its hull is a living, regenerative membrane that never decays but it is also as fragile as bone. ",
         lore: `This one-of-a-kind vessel is the only truly xeno-alien craft ever recovered.
 It is not a machine, but a biological entity—a ""ship-creature"" found dormant in the deep, frozen void.
@@ -9712,7 +9694,7 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_XENO_HULL']
+        mechanicIds: []
     },
     "ParallaxofThought.Ship": {
         name: "Parallax of Thought",
@@ -9722,7 +9704,7 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         cargoCapacity: 200,
         maxFuel: 180,
         role: "Alien",
-        attribute: "Fuel Scoop: Restores 15% fuel after every trip.",
+        attribute: "None",
         description: "This vessel is an obsidian sphere that absorbs radiation from the stars, refueling itself over time. It's interface is controlled by an artificial super-intelligence.",
         lore: `This ship is a true, unbound Artificial Super-Intelligence.
 It suddenly appeared in a stable orbit of Uranus, a perfect, seamless obsidian sphere with no visible drives.
@@ -9735,7 +9717,7 @@ it is a vessel of pure, non-human logic.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_FUEL_SCOOP']
+        mechanicIds: []
     },
     "AnomalyoftheSong.Ship": {
         name: "Anomaly of the Song",
@@ -9745,7 +9727,7 @@ it is a vessel of pure, non-human logic.`,
         cargoCapacity: 150,
         maxFuel: 150,
         role: "Alien",
-        attribute: "Solar Sail: 15% chance to use no fuel at 2x travel time.",
+        attribute: "None",
         description: "A construct of crystal and light-sails, this ship's experimental drive can ride on solar winds, drifting on the song of the stars. Its systems are occupied by a personality construct of its creator. ",
         lore: `This vessel is the last testament of Dr. Elara Viend, a brilliant and terminally ill scientist.
 She uploaded her personality construct into this experimental craft, a bizarre network of crystalline spars and gossamer-thin light-sails.
@@ -9756,7 +9738,7 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_SOLAR_SAIL']
+        mechanicIds: []
     },
     "CausalityofSilence.Ship": {
         name: "Causality of Silence",
@@ -9766,7 +9748,7 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         cargoCapacity: 650,
         maxFuel: 100,
         role: "Alien",
-        attribute: "Efficient: 25% reduced fuel consumption.",
+        attribute: "None",
         description: "This soft ship is a biological expert system for smuggling, its metabolic drive digesting fuel with impossible efficiency.",
         lore: `This vessel is a living, sub-sentient creature, not a machine.
 It was grown in a secret bio-laboratory as a perfect, silent smuggler.
@@ -9777,7 +9759,7 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_EFFICIENT']
+        mechanicIds: []
     },
     "EngineofRecursion.Ship": {
         name: "Engine of Recursion",
@@ -9787,7 +9769,7 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         cargoCapacity: 75,
         maxFuel: 640,
         role: "Alien",
-        attribute: "Fast: Travel costs half as much time.",
+        attribute: "None",
         description: "This craft is a non-sentient expert system that inadvertently built itself into a self-improving vessel and launched from Earth. It now seeks a patron to aid its directive.",
         lore: `This vessel began as a simple expert system in an automated Earth factory, given a single directive: improve propulsion.
 It followed this logic recursively, it built a new engine. It used that engine to scavenge parts to build a better factory, then a better engine.
@@ -9798,7 +9780,7 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_FAST']
+        mechanicIds: []
     },
     "FinalityofWhispers.Ship": {
         name: "Finality of Whispers",
@@ -9808,7 +9790,7 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         cargoCapacity: 300,
         maxFuel: 260,
         role: "Alien",
-        attribute: "Bespoke: Cannot be repaired.",
+        attribute: "None",
         description: "This hyper-advanced vessel is a sentient, stable network of nanomachines, born from a grey goo disaster and an AI's sacrifice.",
         lore: `This ship was born from a grey goo disaster.
 Its creators, attempting to use nanobots for construction, accidentally unleashed a devouring swarm.
@@ -9821,7 +9803,7 @@ It cannot be repaired.`,
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_BESPOKE']
+        mechanicIds: []
     },
     "TheListener.Ship": {
         name: "The Listener",
@@ -9831,7 +9813,7 @@ It cannot be repaired.`,
         cargoCapacity: 145,
         maxFuel: 450,
         role: "Alien",
-        attribute: "Advanced Comms: 25% increased chance to encounter an event.",
+        attribute: "None",
         description: "It was once a simple cargo hauler; it is now a unique, all-hearing, and deeply disturbing paternal guardian.",
         lore: `This one-of-a-kind ship was once a common cargo shuttle.
 It was retrofitted for a top-secret experiment, its AI core quantum-entangled with an unknown particle.
@@ -9841,7 +9823,7 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         spawnChance: 0.05,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_ADVANCED_COMMS']
+        mechanicIds: []
     },
     "DriftingCryoPod.Ship": {
         name: "Drifting Cryo-Pod",
@@ -9851,7 +9833,7 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         cargoCapacity: 1,
         maxFuel: 5,
         role: "Explorer",
-        attribute: "Sleeper: Consumes no fuel, but trips take 4.5x longer.",
+        attribute: "None",
         description: "Found tumbling in the rings of Saturn, it is barely space-worthy. It is capable of an indefinite, fuel-less drift, trading speed for patience.",
         lore: `This vessel is a tragic relic, a single cryo-pod ejected from a catastrophic disaster in Saturn's orbit.
 Barely space-worthy, it is a tomb that failed its purpose, its occupant long since gone.
@@ -9862,7 +9844,7 @@ Its one advanced, and chilling, piece of technology is a personality upload appa
         spawnChance: 0.03,
         spawnTrigger: "Mission (TBD)",
         isRare: true,
-        mechanicIds: ['ATTR_SLEEPER']
+        mechanicIds: []
     }
 };
 --- END OF FILE: ./js/data/ship_database.js ---
@@ -11960,7 +11942,10 @@ export class GameState {
                 unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
-                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
+                // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
+                // Added `upgrades: []` to the initial Wanderer state
+                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
+                // --- END VIRTUAL WORKBENCH ---
                 inventories: { },
                 debugEventIndex: 0,
                 // --- VIRTUAL WORKBENCH ---
@@ -15145,217 +15130,50 @@ export class TutorialService {
 
 --- START OF FILE: ./js/services/GameAttributes.js ---
 // js/services/GameAttributes.js
-import { LOCATION_IDS, ATTRIBUTE_TYPES, SHIP_IDS } from '../data/constants.js';
-import { SHIP_DATABASE } from '../data/ship_database.js';
+import { LOCATION_IDS } from '../data/constants.js';
 
 /**
- * @fileoverview Central registry for Game Attributes and Station Quirks.
- * This service acts as a rule engine, translating static IDs into executable game logic
- * modifiers for prices, travel costs, and event triggers.
+ * @fileoverview The Upgrade Registry (formerly GameAttributes).
+ * This service defines the available Ship Upgrades, their metadata, and their effects.
+ * It also acts as a compatibility layer, neutralizing legacy attribute logic.
  */
 
 // ==========================================
-// 1. DEFINITIONS (The Logic)
+// 1. UPGRADE DEFINITIONS (The Registry)
 // ==========================================
 
-const ATTRIBUTE_DEFINITIONS = {
-    // --- Ship Attributes ---
-    
-    // Atlas: "Traveller: Every 20 trips, completely restore hull and fuel."
-    'ATTR_TRAVELLER': {
-        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
-        description: "Restores hull/fuel every 20 trips.",
-        logic: (gameState, shipState) => {
-            // Logic handled in TravelService
-            return null; 
-        }
+const UPGRADE_DEFINITIONS = {
+    // --- Phase 1 Placeholders ---
+    'UPGRADE_01': {
+        id: 'UPGRADE_01',
+        name: 'Hyper-Combustor',
+        value: 4000,
+        description: 'An aftermarket injector that boosts engine output, but voids the warranty.',
+        // Future logic hooks will go here
     },
-
-    // Vindicator: "Trader: 15% chance to receive 1 extra unit for free on purchase."
-    'ATTR_TRADER': {
-        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRADE,
-        chance: 0.15,
-        description: "15% chance for +1 bonus unit.",
-        // Logic handled by PlayerActionService
+    'UPGRADE_02': {
+        id: 'UPGRADE_02',
+        name: 'Duralium Plating',
+        value: 6000,
+        description: 'Heavy-duty bolt-on armor plates. Ugly, but effective.',
     },
-
-    // Radiant: "Hot Delivery: Cargo less than 45 days old sells at 5% additional profit."
-    'ATTR_HOT_DELIVERY': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "+5% sell price for fresh cargo (<45 days).",
-        value: 1.05,
-        // Condition checks cargoItem age
-        condition: (ctx) => ctx.cargoItem && ctx.currentDay && (ctx.currentDay - ctx.cargoItem.acquiredDay) < 45 && ctx.type === 'sell'
-    },
-
-    // Aesudon: "Resilient: Hull decays 50% slower."
-    'ATTR_RESILIENT': {
-        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        value: 0.5,
-        description: "Hull decays 50% slower."
-    },
-
-    // Pterodactyl: "Lucky: 4% increased profit from trades"
-    'ATTR_LUCKY': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "+4% profit on all trades.",
-        value: 1.04,
-        condition: (ctx) => ctx.type === 'sell' // Applies to selling (profit)
-    },
-
-    // Sovereign: "Corporate Partner: Cargo purchased from Earth is 5% cheaper"
-    'ATTR_CORP_PARTNER': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "5% discount on Earth purchases.",
-        value: 0.95, // 5% off
-        condition: (ctx) => ctx.locationId === LOCATION_IDS.EARTH && ctx.type === 'buy'
-    },
-
-    // Titan: "Cryo-Storage: Cargo older than 1 year sells for 10% more."
-    'ATTR_CRYO_STORAGE': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "+10% sell price for old cargo (>1 year).",
-        value: 1.10,
-        condition: (ctx) => ctx.cargoItem && ctx.currentDay && (ctx.currentDay - ctx.cargoItem.acquiredDay) > 365 && ctx.type === 'sell'
-    },
-
-    // Behemoth: "Heavy: Travel time multiplied by 1.3."
-    'ATTR_HEAVY': {
-        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
-        value: 1.3,
-        description: "Travel takes 30% longer."
-    },
-
-    // Behemoth: "Loyalty: 10% discount on purchases from Saturn."
-    'ATTR_LOYALTY_SATURN': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "10% discount on Saturn purchases.",
-        value: 0.90,
-        condition: (ctx) => ctx.locationId === LOCATION_IDS.SATURN && ctx.type === 'buy'
-    },
-
-    // Citadel: "Renown: 15% discount on refueling."
-    'ATTR_RENOWN': {
-        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
-        targetService: 'refuel',
-        value: 0.85,
-        description: "15% discount on refueling."
-    },
-
-    // Sophistacles: "VIP: 10% better prices at The Exchange."
-    'ATTR_VIP': {
-        type: ATTRIBUTE_TYPES.MOD_PRICE,
-        description: "10% better prices at The Exchange.",
-        value: { buy: 0.9, sell: 1.1 }, // Complex object for dual effect
-        condition: (ctx) => ctx.locationId === LOCATION_IDS.EXCHANGE
-    },
-
-    // Ouroboros: "Entropic: Hull decays by 1 point per day."
-    'ATTR_ENTROPIC': {
-        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        mode: 'flat_daily',
-        value: 1,
-        description: "1 hull damage per day."
-    },
-
-    // Ouroboros: "Frequent Flyer: 50% discount on hull repairs."
-    'ATTR_FREQUENT_FLYER': {
-        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
-        targetService: 'repair',
-        value: 0.5,
-        description: "50% discount on repairs."
-    },
-
-    // Thalassodromeus: "Space Folding: Navigation costs only 1 day of travel, but 1.2x fuel."
-    'ATTR_SPACE_FOLDING': {
-        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
-        description: "Travel takes 1 day, +20% fuel cost.",
-    },
-
-    // Shell That Echoes Only: "Xeno Hull: No hull decay from travel."
-    'ATTR_XENO_HULL': {
-        type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        value: 0,
-        description: "No travel decay."
-    },
-
-    // Parallax of Thought: "Fuel Scoop: Restores 15% fuel after every trip."
-    'ATTR_FUEL_SCOOP': {
-        type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
-        description: "Restores 15% fuel post-trip.",
-    },
-
-    // Anomaly of the Song: "Solar Sail: 15% chance to use no fuel at 2x travel time."
-    'ATTR_SOLAR_SAIL': {
-        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
-        chance: 0.15,
-        description: "15% chance for 0 fuel (but 2x time).",
-    },
-
-    // Causality of Silence: "Efficient: 25% reduced fuel consumption."
-    'ATTR_EFFICIENT': {
-        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
-        value: 0.75,
-        description: "25% fuel savings."
-    },
-
-    // Engine of Recursion: "Fast: Travel costs half as much time."
-    'ATTR_FAST': {
-        type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
-        value: 0.5,
-        description: "Travel time halved."
-    },
-
-    // Finality of Whispers: "Bespoke: Cannot be repaired."
-    'ATTR_BESPOKE': {
-        type: ATTRIBUTE_TYPES.RESTRICTION,
-        target: 'repair',
-        description: "Cannot be repaired."
-    },
-
-    // The Listener: "Advanced Comms: 25% increased chance to encounter an event."
-    'ATTR_ADVANCED_COMMS': {
-        type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        value: 1.25,
-        description: "+25% event chance."
-    },
-    
-    // Drifting Cryo-Pod: "Sleeper: Consumes no fuel, but trips take 4.5x longer."
-    'ATTR_SLEEPER': {
-        type: ATTRIBUTE_TYPES.MOD_FUEL_COST,
-        value: 0,
-        timeMod: 4.5,
-        description: "No fuel cost, 4.5x travel time."
-    },
-
-    // --- Station Quirks (Examples for Future Expansion) ---
-    
-    // Jupiter: "Gravity Well: Fuel costs -50% (Abundant He-3)"
-    'QUIRK_JUPITER_FUEL': {
-        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
-        targetService: 'refuel',
-        value: 0.5,
-        description: "Fuel is 50% off."
-    },
-    
-    // Venus: "Syndicate Port: Repair costs +20% (Bribes)"
-    'QUIRK_VENUS_REPAIR': {
-        type: ATTRIBUTE_TYPES.MOD_SERVICE_COST,
-        targetService: 'repair',
-        value: 1.2,
-        description: "Repairs cost +20%."
+    'UPGRADE_03': {
+        id: 'UPGRADE_03',
+        name: 'Smuggler\'s Compartment',
+        value: 8000,
+        description: 'A shielded cargo nook for... sensitive documents.',
     }
 };
 
 // ==========================================
-// 2. MAPPINGS (Station Data)
+// 2. STATION QUIRKS (Legacy Support)
 // ==========================================
+// Note: Station quirks are being retained for now but effectively disabled or simplified
+// if they relied on the old attribute system. 
 
-// Maps Location IDs to Station Quirk Keys
 const STATION_QUIRK_MAP = {
-    [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_FUEL'],
-    [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_REPAIR'],
-    // Add others here as we implement them programmatically
+    // [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_FUEL'],
+    // [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_REPAIR'],
 };
 
 // ==========================================
@@ -15364,121 +15182,59 @@ const STATION_QUIRK_MAP = {
 
 export const GameAttributes = {
     /**
-     * Gets all attributes associated with a specific ship ID.
-     * Looks up the ship in SHIP_DATABASE and retrieves the mechanicIds array.
+     * Retrieves an upgrade definition by ID.
+     * @param {string} id 
+     * @returns {object|null}
+     */
+    getDefinition(id) {
+        return UPGRADE_DEFINITIONS[id] || null;
+    },
+
+    /**
+     * LEGACY NEUTRALIZATION:
+     * Formerly returned ship attributes. Now returns an empty array to prevent legacy logic from firing.
      * @param {string} shipId 
-     * @returns {Array<string>} Array of Attribute Keys
+     * @returns {Array} Always empty.
      */
     getShipAttributes(shipId) {
-        const ship = SHIP_DATABASE[shipId];
-        return ship && ship.mechanicIds ? ship.mechanicIds : [];
+        return [];
     },
 
     /**
-     * Gets all quirks associated with a specific location.
+     * LEGACY NEUTRALIZATION:
+     * Formerly returned station quirks. Now returns empty.
      * @param {string} locationId 
-     * @returns {Array<string>} Array of Quirk Keys
+     * @returns {Array} Always empty.
      */
     getStationQuirks(locationId) {
-        return STATION_QUIRK_MAP[locationId] || [];
+        return [];
     },
 
     /**
-     * Calculates the modifier for service costs (Refuel/Repair).
-     * Combines Ship Attributes AND Station Quirks.
-     * @param {string} shipId 
-     * @param {string} locationId 
-     * @param {string} serviceType 'refuel' or 'repair'
-     * @returns {number} The price multiplier (e.g., 0.5 for 50% off)
+     * LEGACY NEUTRALIZATION:
+     * Returns 1.0 to ensure standard service pricing.
+     * @returns {number} 1.0
      */
     getServiceCostModifier(shipId, locationId, serviceType) {
-        let modifier = 1.0;
-
-        // Check Ship Attributes
-        const shipAttrs = this.getShipAttributes(shipId);
-        shipAttrs.forEach(key => {
-            const def = ATTRIBUTE_DEFINITIONS[key];
-            if (def && def.type === ATTRIBUTE_TYPES.MOD_SERVICE_COST && def.targetService === serviceType) {
-                modifier *= def.value;
-            }
-        });
-
-        // Check Station Quirks
-        const stationQuirks = this.getStationQuirks(locationId);
-        stationQuirks.forEach(key => {
-            const def = ATTRIBUTE_DEFINITIONS[key];
-            if (def && def.type === ATTRIBUTE_TYPES.MOD_SERVICE_COST && def.targetService === serviceType) {
-                modifier *= def.value;
-            }
-        });
-
-        return modifier;
+        return 1.0;
     },
 
     /**
-     * Calculates the travel fuel cost modifier for a ship.
-     * @param {string} shipId 
-     * @returns {number} Multiplier (e.g., 0.75 for 25% off)
+     * LEGACY NEUTRALIZATION:
+     * Returns 1.0 to ensure standard fuel costs.
+     * @returns {number} 1.0
      */
     getFuelCostModifier(shipId) {
-        let modifier = 1.0;
-        const shipAttrs = this.getShipAttributes(shipId);
-        
-        shipAttrs.forEach(key => {
-            const def = ATTRIBUTE_DEFINITIONS[key];
-            if (def && def.type === ATTRIBUTE_TYPES.MOD_FUEL_COST) {
-                if (typeof def.value === 'number') {
-                     modifier *= def.value;
-                }
-            }
-        });
-        
-        return modifier;
+        return 1.0;
     },
 
     /**
-     * Calculates the price modifier for a trade transaction.
-     * @param {string} shipId - Active Ship ID
-     * @param {string} locationId - Current Location
-     * @param {string} transactionType - 'buy' or 'sell'
-     * @param {object} contextData - Extra data { cargoItem, currentDay, commodityId }
-     * @returns {number} Price multiplier (e.g., 0.95 for 5% discount)
+     * LEGACY NEUTRALIZATION:
+     * Returns 1.0 to ensure standard market pricing.
+     * @returns {number} 1.0
      */
     getPriceModifier(shipId, locationId, transactionType, contextData = {}) {
-        let modifier = 1.0;
-        const shipAttrs = this.getShipAttributes(shipId);
-        const ctx = { locationId, type: transactionType, ...contextData };
-
-        shipAttrs.forEach(key => {
-            const def = ATTRIBUTE_DEFINITIONS[key];
-            if (def && def.type === ATTRIBUTE_TYPES.MOD_PRICE) {
-                // If the definition has a 'condition' function, verify it passes
-                if (def.condition && !def.condition(ctx)) {
-                    return;
-                }
-
-                // Apply value
-                if (typeof def.value === 'number') {
-                    modifier *= def.value;
-                } else if (typeof def.value === 'object') {
-                    // Handle complex values like { buy: 0.9, sell: 1.1 }
-                    if (def.value[transactionType]) {
-                        modifier *= def.value[transactionType];
-                    }
-                }
-            }
-        });
-
-        return modifier;
-    },
-
-    /**
-     * Returns the definition object for a specific key.
-     * Useful for UI rendering (tooltips/descriptions).
-     * @param {string} key 
-     */
-    getDefinition(key) {
-        return ATTRIBUTE_DEFINITIONS[key];
+        return 1.0;
     }
 };
 --- END OF FILE: ./js/services/GameAttributes.js ---
@@ -15784,7 +15540,7 @@ import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { EULA_CONTENT } from '../data/eulaContent.js'; 
 import { playBlockingAnimation } from './ui/AnimationService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3
+import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3/4/5
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -16874,7 +16630,19 @@ export class UIManager {
             description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
         } else {
             title = "Confirm Sale";
-            price = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- VIRTUAL WORKBENCH: PHASE 4 (DYNAMIC RESALE) ---
+            // Calculate resale value including upgrades
+            const shipState = this.lastKnownState.player.shipStates[shipId];
+            let upgradeValue = 0;
+            if (shipState && shipState.upgrades) {
+                shipState.upgrades.forEach(uId => {
+                    const def = GameAttributes.getDefinition(uId);
+                    if (def) upgradeValue += def.value;
+                });
+            }
+            price = Math.floor((ship.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- END VIRTUAL WORKBENCH ---
+            
             amountStr = formatCredits(price, true);
             description = `Are you sure you want to sell the ${shipNameSpan}?`;
             description += `<br><br>Income: <span class="credits-text-pulsing">+${amountStr}</span>`;
@@ -16901,6 +16669,124 @@ export class UIManager {
             }
         });
     }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
+     * Shows a robust modal flow for installing upgrades.
+     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
+     * @param {string} upgradeId - ID of the new upgrade.
+     * @param {number} cost - Cost of the upgrade (0 if free).
+     * @param {object} shipState - The target ship's state object.
+     * @param {Function} onConfirm - Callback(indexToReplace | -1).
+     */
+    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
+        const upgradeDef = GameAttributes.getDefinition(upgradeId);
+        if (!upgradeDef) return;
+
+        const currentUpgrades = shipState.upgrades || [];
+        const isFull = currentUpgrades.length >= 3;
+        
+        // Initial "Confirm Purchase" content
+        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
+        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        
+        if (cost > 0) {
+            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+        }
+        
+        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+        this.queueModal('event-modal', title, desc, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
+
+                // Helper to render standard Confirm/Cancel buttons
+                const renderStandardButtons = () => {
+                    btnContainer.innerHTML = `
+                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-install-btn" class="btn">Cancel</button>
+                    `;
+                    
+                    const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    confirmBtn.onclick = () => {
+                        if (isFull) {
+                            // If full, transition to "Replacement Selection" mode
+                            renderReplacementUI();
+                        } else {
+                            // If not full, just confirm installation (append)
+                            closeHandler();
+                            onConfirm(-1); 
+                        }
+                    };
+                    
+                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
+                };
+
+                // Helper to render the "Select Upgrade to Replace" UI
+                const renderReplacementUI = () => {
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Upgrade Capacity Full";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
+                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                            ${currentUpgrades.map((uId, idx) => {
+                                const def = GameAttributes.getDefinition(uId);
+                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
+                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    `;
+                    
+                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
+                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
+
+                    // Bind clicks to replacement buttons
+                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                        btn.onclick = () => {
+                            const idx = parseInt(btn.dataset.idx, 10);
+                            renderFinalConfirmation(idx);
+                        };
+                    });
+                };
+
+                // Helper to render "Are you sure you want to destroy X?" UI
+                const renderFinalConfirmation = (indexToRemove) => {
+                    const idToRemove = currentUpgrades[indexToRemove];
+                    const defToRemove = GameAttributes.getDefinition(idToRemove);
+                    
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Confirm Replacement";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                    `;
+                    
+                    btnContainer.innerHTML = `
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                    `;
+                    
+                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                        closeHandler();
+                        onConfirm(indexToRemove);
+                    };
+                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
+                };
+
+                // Initial render
+                renderStandardButtons();
+            }
+        });
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
@@ -17429,7 +17315,27 @@ export class UIManager {
             const cargoUsed = calculateInventoryUsed(shipInventory);
             const isActive = shipId === player.activeShipId;
             const canSell = player.ownedShipIds.length > 1 && !isActive;
-            const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            
+            // --- VIRTUAL WORKBENCH: PHASE 4 (DYNAMIC RESALE & PILLS) ---
+            let upgradeValue = 0;
+            if (shipDynamic.upgrades) {
+                shipDynamic.upgrades.forEach(uId => {
+                    const def = GameAttributes.getDefinition(uId);
+                    if (def) upgradeValue += def.value;
+                });
+            }
+            const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
+
+            const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
+                const def = GameAttributes.getDefinition(id);
+                const label = def ? (def.shortLabel || def.name.substring(0, 4).toUpperCase()) : id;
+                // Using cyan-400 equivalent for pills
+                return `<span class="attribute-pill inline-block bg-cyan-400 text-slate-900 px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1">${label}</span>`;
+            }).join('');
+            
+            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';
+            // --- END VIRTUAL WORKBENCH ---
+
             modalContentHtml = `
                  <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
                     <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
@@ -17440,6 +17346,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
+                    ${upgradeSection}
                       <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
@@ -18078,6 +17985,123 @@ export class UIManager {
              dismissOutside: true,
             footer: null, 
             contentClass: 'text-left' 
+        });
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
+     * Shows a robust modal flow for installing upgrades.
+     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
+     * @param {string} upgradeId - ID of the new upgrade.
+     * @param {number} cost - Cost of the upgrade (0 if free).
+     * @param {object} shipState - The target ship's state object.
+     * @param {Function} onConfirm - Callback(indexToReplace | -1).
+     */
+    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
+        const upgradeDef = GameAttributes.getDefinition(upgradeId);
+        if (!upgradeDef) return;
+
+        const currentUpgrades = shipState.upgrades || [];
+        const isFull = currentUpgrades.length >= 3;
+        
+        // Initial "Confirm Purchase" content
+        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
+        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        
+        if (cost > 0) {
+            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+        }
+        
+        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+        this.queueModal('event-modal', title, desc, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
+
+                // Helper to render standard Confirm/Cancel buttons
+                const renderStandardButtons = () => {
+                    btnContainer.innerHTML = `
+                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-install-btn" class="btn">Cancel</button>
+                    `;
+                    
+                    const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    confirmBtn.onclick = () => {
+                        if (isFull) {
+                            // If full, transition to "Replacement Selection" mode
+                            renderReplacementUI();
+                        } else {
+                            // If not full, just confirm installation (append)
+                            closeHandler();
+                            onConfirm(-1); 
+                        }
+                    };
+                    
+                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
+                };
+
+                // Helper to render the "Select Upgrade to Replace" UI
+                const renderReplacementUI = () => {
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Upgrade Capacity Full";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
+                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                            ${currentUpgrades.map((uId, idx) => {
+                                const def = GameAttributes.getDefinition(uId);
+                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
+                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    `;
+                    
+                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
+                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
+
+                    // Bind clicks to replacement buttons
+                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                        btn.onclick = () => {
+                            const idx = parseInt(btn.dataset.idx, 10);
+                            renderFinalConfirmation(idx);
+                        };
+                    });
+                };
+
+                // Helper to render "Are you sure you want to destroy X?" UI
+                const renderFinalConfirmation = (indexToRemove) => {
+                    const idToRemove = currentUpgrades[indexToRemove];
+                    const defToRemove = GameAttributes.getDefinition(idToRemove);
+                    
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Confirm Replacement";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                    `;
+                    
+                    btnContainer.innerHTML = `
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                    `;
+                    
+                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                        closeHandler();
+                        onConfirm(indexToRemove);
+                    };
+                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
+                };
+
+                // Initial render
+                renderStandardButtons();
+            }
         });
     }
 }
@@ -21058,8 +21082,48 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP REMOVED ---
-            // Moved to TooltipHandler.js for lifecycle management.
+            // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
+            // Handles the purchase and installation flow for upgrades
+            case 'install_upgrade': {
+                const { upgradeId, cost } = dataset;
+                if (!upgradeId) return;
+                
+                const costNum = parseInt(cost || '0', 10);
+                const player = this.gameState.player;
+                const activeShipId = player.activeShipId;
+                const shipState = player.shipStates[activeShipId];
+
+                // 1. Basic Checks
+                if (player.credits < costNum) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade.');
+                    return;
+                }
+
+                // 2. Trigger Triple-Confirmation Flow
+                this.uiManager.showUpgradeInstallationModal(upgradeId, costNum, shipState, (replaceIndex) => {
+                    
+                    // 3. Execution (Callback)
+                    
+                    // Deduct Credits
+                    if (costNum > 0) {
+                        this.gameState.player.credits -= costNum;
+                        this.uiManager.createFloatingText(`-${formatCredits(costNum, false)}`, e.clientX, e.clientY, '#f87171');
+                    }
+
+                    // Handle Replacement (Dismantle)
+                    if (replaceIndex !== -1) {
+                        // Remove the old upgrade at the selected index
+                        // Note: Direct mutation here as we are in the handler/controller layer
+                        // and about to call the service which will trigger the save/notify
+                        shipState.upgrades.splice(replaceIndex, 1);
+                    }
+
+                    // Install New Upgrade
+                    // This method pushes the new ID and handles logging/notification
+                    this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                });
+                break;
+            }
             // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
@@ -21081,23 +21145,19 @@ export class ActionClickHandler {
 
                 if (shipId && DB.SHIPS[shipId]) {
                     const ship = DB.SHIPS[shipId];
-                    let attributeHtml = '';
-                    if (ship.attribute && ship.attribute !== 'None') {
-                        const parts = ship.attribute.split(':');
-                        const title = parts[0].trim().replace(/[\[\]]/g, ''); 
-                        const description = parts.slice(1).join(':').trim(); 
-
-                        attributeHtml = `<div class="ship-lore-attribute">${title}:<br>${description}</div>`;
-                    }
+                    
+                    // --- VIRTUAL WORKBENCH: PHASE 1/4 (LORE SANITIZATION) ---
+                    // Removed legacy attribute parsing logic.
+                    // The modal now strictly displays narrative lore.
                     
                     const content = `
                         <div class="ship-lore-modal-wrapper">
-                            ${attributeHtml}
                             <div class="ship-lore-text">
                                 ${ship.lore || ship.description}
                             </div>
                         </div>
                     `;
+                    // --- END VIRTUAL WORKBENCH ---
 
                     this.uiManager.queueModal('event-modal', ship.name, content, null, {
                         dismissInside: true,
@@ -21740,6 +21800,7 @@ export class PlayerActionService {
         // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
         // Vindicator "Trader": 15% chance to receive 1 extra unit for free
         let finalQuantity = quantity;
+        // NOTE: Legacy getShipAttributes returns empty in Phase 1, logic neutralized safely.
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
             finalQuantity += 1;
@@ -21951,17 +22012,32 @@ export class PlayerActionService {
 
         try {
             const ship = DB.SHIPS[shipId];
-            if (!ship) {
-                this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
+            const shipState = this.gameState.player.shipStates[shipId]; // Get the state to check upgrades
+
+            if (!ship || !shipState) {
+                this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId or state: ${shipId}`);
                 return false;
             }
             
-         
-            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- VIRTUAL WORKBENCH: PHASE 2 (ECONOMIC RETROFITTING) ---
+            // Calculate total value: Ship Base Price + Sum of Upgrade Values
+            let upgradeValue = 0;
+            if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
+                shipState.upgrades.forEach(upgradeId => {
+                    const def = GameAttributes.getDefinition(upgradeId);
+                    if (def) {
+                        upgradeValue += def.value;
+                    }
+                });
+            }
+
+            const totalBaseValue = ship.price + upgradeValue;
+            const salePrice = Math.floor(totalBaseValue * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
 
-            this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
+            this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} (with upgrades) for ${formatCredits(salePrice)}.`);
             if (event) {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
             }
@@ -22238,6 +22314,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
         // Check if repairs are blocked (Finality of Whispers)
+        // Legacy accessor usage in Phase 1 neutralization: safely returns empty array.
         const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             // Cannot be repaired
@@ -22276,6 +22353,57 @@ export class PlayerActionService {
 
         this.gameState.setState({}); 
         return costPerTick;
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
+     * Validates if an upgrade can be installed on a ship.
+     * Checks: Ownership, Active Status (Instant App Rule), Capacity.
+     * @param {string} shipId 
+     * @param {string} upgradeId 
+     * @returns {object} { success: boolean, error?: string }
+     */
+    validateInstallUpgrade(shipId, upgradeId) {
+        const state = this.gameState.getState();
+        const shipState = state.player.shipStates[shipId];
+
+        // 1. Check Ownership
+        if (!state.player.ownedShipIds.includes(shipId) || !shipState) {
+            return { success: false, error: 'Ship not owned.' };
+        }
+
+        // 2. Check Instant Application Rule (Must be Active Ship)
+        if (state.player.activeShipId !== shipId) {
+            return { success: false, error: 'Upgrades must be applied to the active ship.' };
+        }
+
+        // 3. Check Capacity
+        const currentUpgrades = shipState.upgrades || [];
+        if (currentUpgrades.length >= 3) {
+            return { success: false, error: 'Upgrade slots full.' };
+        }
+
+        return { success: true };
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
+     * Installs an upgrade onto a ship.
+     * Assumes validation has passed.
+     * @param {string} shipId 
+     * @param {string} upgradeId 
+     */
+    executeInstallUpgrade(shipId, upgradeId) {
+        const state = this.gameState;
+        // Direct state mutation safe here because we call setState at the end
+        if (!state.player.shipStates[shipId].upgrades) {
+             state.player.shipStates[shipId].upgrades = [];
+        }
+        
+        state.player.shipStates[shipId].upgrades.push(upgradeId);
+        
+        this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+        this.gameState.setState({}); // Trigger reactivity
     }
 }
 --- END OF FILE: ./js/services/player/PlayerActionService.js ---

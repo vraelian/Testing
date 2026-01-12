@@ -25,7 +25,7 @@ import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { EULA_CONTENT } from '../data/eulaContent.js'; 
 import { playBlockingAnimation } from './ui/AnimationService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3
+import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3/4/5
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -1115,7 +1115,19 @@ export class UIManager {
             description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
         } else {
             title = "Confirm Sale";
-            price = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- VIRTUAL WORKBENCH: PHASE 4 (DYNAMIC RESALE) ---
+            // Calculate resale value including upgrades
+            const shipState = this.lastKnownState.player.shipStates[shipId];
+            let upgradeValue = 0;
+            if (shipState && shipState.upgrades) {
+                shipState.upgrades.forEach(uId => {
+                    const def = GameAttributes.getDefinition(uId);
+                    if (def) upgradeValue += def.value;
+                });
+            }
+            price = Math.floor((ship.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- END VIRTUAL WORKBENCH ---
+            
             amountStr = formatCredits(price, true);
             description = `Are you sure you want to sell the ${shipNameSpan}?`;
             description += `<br><br>Income: <span class="credits-text-pulsing">+${amountStr}</span>`;
@@ -1142,6 +1154,124 @@ export class UIManager {
             }
         });
     }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
+     * Shows a robust modal flow for installing upgrades.
+     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
+     * @param {string} upgradeId - ID of the new upgrade.
+     * @param {number} cost - Cost of the upgrade (0 if free).
+     * @param {object} shipState - The target ship's state object.
+     * @param {Function} onConfirm - Callback(indexToReplace | -1).
+     */
+    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
+        const upgradeDef = GameAttributes.getDefinition(upgradeId);
+        if (!upgradeDef) return;
+
+        const currentUpgrades = shipState.upgrades || [];
+        const isFull = currentUpgrades.length >= 3;
+        
+        // Initial "Confirm Purchase" content
+        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
+        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        
+        if (cost > 0) {
+            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+        }
+        
+        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+        this.queueModal('event-modal', title, desc, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
+
+                // Helper to render standard Confirm/Cancel buttons
+                const renderStandardButtons = () => {
+                    btnContainer.innerHTML = `
+                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-install-btn" class="btn">Cancel</button>
+                    `;
+                    
+                    const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    confirmBtn.onclick = () => {
+                        if (isFull) {
+                            // If full, transition to "Replacement Selection" mode
+                            renderReplacementUI();
+                        } else {
+                            // If not full, just confirm installation (append)
+                            closeHandler();
+                            onConfirm(-1); 
+                        }
+                    };
+                    
+                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
+                };
+
+                // Helper to render the "Select Upgrade to Replace" UI
+                const renderReplacementUI = () => {
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Upgrade Capacity Full";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
+                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                            ${currentUpgrades.map((uId, idx) => {
+                                const def = GameAttributes.getDefinition(uId);
+                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
+                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    `;
+                    
+                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
+                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
+
+                    // Bind clicks to replacement buttons
+                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                        btn.onclick = () => {
+                            const idx = parseInt(btn.dataset.idx, 10);
+                            renderFinalConfirmation(idx);
+                        };
+                    });
+                };
+
+                // Helper to render "Are you sure you want to destroy X?" UI
+                const renderFinalConfirmation = (indexToRemove) => {
+                    const idToRemove = currentUpgrades[indexToRemove];
+                    const defToRemove = GameAttributes.getDefinition(idToRemove);
+                    
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Confirm Replacement";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                    `;
+                    
+                    btnContainer.innerHTML = `
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                    `;
+                    
+                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                        closeHandler();
+                        onConfirm(indexToRemove);
+                    };
+                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
+                };
+
+                // Initial render
+                renderStandardButtons();
+            }
+        });
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideModal(modalId) {
     
@@ -1670,7 +1800,27 @@ export class UIManager {
             const cargoUsed = calculateInventoryUsed(shipInventory);
             const isActive = shipId === player.activeShipId;
             const canSell = player.ownedShipIds.length > 1 && !isActive;
-            const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            
+            // --- VIRTUAL WORKBENCH: PHASE 4 (DYNAMIC RESALE & PILLS) ---
+            let upgradeValue = 0;
+            if (shipDynamic.upgrades) {
+                shipDynamic.upgrades.forEach(uId => {
+                    const def = GameAttributes.getDefinition(uId);
+                    if (def) upgradeValue += def.value;
+                });
+            }
+            const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
+
+            const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
+                const def = GameAttributes.getDefinition(id);
+                const label = def ? (def.shortLabel || def.name.substring(0, 4).toUpperCase()) : id;
+                // Using cyan-400 equivalent for pills
+                return `<span class="attribute-pill inline-block bg-cyan-400 text-slate-900 px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1">${label}</span>`;
+            }).join('');
+            
+            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';
+            // --- END VIRTUAL WORKBENCH ---
+
             modalContentHtml = `
                  <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
                     <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
@@ -1681,6 +1831,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
+                    ${upgradeSection}
                       <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
@@ -2319,6 +2470,123 @@ export class UIManager {
              dismissOutside: true,
             footer: null, 
             contentClass: 'text-left' 
+        });
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
+     * Shows a robust modal flow for installing upgrades.
+     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
+     * @param {string} upgradeId - ID of the new upgrade.
+     * @param {number} cost - Cost of the upgrade (0 if free).
+     * @param {object} shipState - The target ship's state object.
+     * @param {Function} onConfirm - Callback(indexToReplace | -1).
+     */
+    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
+        const upgradeDef = GameAttributes.getDefinition(upgradeId);
+        if (!upgradeDef) return;
+
+        const currentUpgrades = shipState.upgrades || [];
+        const isFull = currentUpgrades.length >= 3;
+        
+        // Initial "Confirm Purchase" content
+        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
+        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        
+        if (cost > 0) {
+            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+        }
+        
+        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+        this.queueModal('event-modal', title, desc, null, {
+            dismissOutside: true,
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
+
+                // Helper to render standard Confirm/Cancel buttons
+                const renderStandardButtons = () => {
+                    btnContainer.innerHTML = `
+                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
+                        <button id="cancel-install-btn" class="btn">Cancel</button>
+                    `;
+                    
+                    const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    confirmBtn.onclick = () => {
+                        if (isFull) {
+                            // If full, transition to "Replacement Selection" mode
+                            renderReplacementUI();
+                        } else {
+                            // If not full, just confirm installation (append)
+                            closeHandler();
+                            onConfirm(-1); 
+                        }
+                    };
+                    
+                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
+                };
+
+                // Helper to render the "Select Upgrade to Replace" UI
+                const renderReplacementUI = () => {
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Upgrade Capacity Full";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
+                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                            ${currentUpgrades.map((uId, idx) => {
+                                const def = GameAttributes.getDefinition(uId);
+                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
+                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                    `;
+                    
+                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
+                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
+
+                    // Bind clicks to replacement buttons
+                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                        btn.onclick = () => {
+                            const idx = parseInt(btn.dataset.idx, 10);
+                            renderFinalConfirmation(idx);
+                        };
+                    });
+                };
+
+                // Helper to render "Are you sure you want to destroy X?" UI
+                const renderFinalConfirmation = (indexToRemove) => {
+                    const idToRemove = currentUpgrades[indexToRemove];
+                    const defToRemove = GameAttributes.getDefinition(idToRemove);
+                    
+                    const modalTitle = modal.querySelector('#event-title');
+                    modalTitle.textContent = "Confirm Replacement";
+                    
+                    contentEl.innerHTML = `
+                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                    `;
+                    
+                    btnContainer.innerHTML = `
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                    `;
+                    
+                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                        closeHandler();
+                        onConfirm(indexToRemove);
+                    };
+                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
+                };
+
+                // Initial render
+                renderStandardButtons();
+            }
         });
     }
 }

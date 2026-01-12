@@ -80,6 +80,7 @@ export class PlayerActionService {
         // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
         // Vindicator "Trader": 15% chance to receive 1 extra unit for free
         let finalQuantity = quantity;
+        // NOTE: Legacy getShipAttributes returns empty in Phase 1, logic neutralized safely.
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
             finalQuantity += 1;
@@ -291,17 +292,32 @@ export class PlayerActionService {
 
         try {
             const ship = DB.SHIPS[shipId];
-            if (!ship) {
-                this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId: ${shipId}`);
+            const shipState = this.gameState.player.shipStates[shipId]; // Get the state to check upgrades
+
+            if (!ship || !shipState) {
+                this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId or state: ${shipId}`);
                 return false;
             }
             
-         
-            const salePrice = Math.floor(ship.price * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- VIRTUAL WORKBENCH: PHASE 2 (ECONOMIC RETROFITTING) ---
+            // Calculate total value: Ship Base Price + Sum of Upgrade Values
+            let upgradeValue = 0;
+            if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
+                shipState.upgrades.forEach(upgradeId => {
+                    const def = GameAttributes.getDefinition(upgradeId);
+                    if (def) {
+                        upgradeValue += def.value;
+                    }
+                });
+            }
+
+            const totalBaseValue = ship.price + upgradeValue;
+            const salePrice = Math.floor(totalBaseValue * GAME_RULES.SHIP_SELL_MODIFIER);
+            // --- END VIRTUAL WORKBENCH ---
             
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
 
-            this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} for ${formatCredits(salePrice)}.`);
+            this.logger.info.player(this.gameState.day, 'SHIP_SALE', `Sold ${ship.name} (with upgrades) for ${formatCredits(salePrice)}.`);
             if (event) {
                 this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, event.clientX, event.clientY, '#34d399');
             }
@@ -578,6 +594,7 @@ export class PlayerActionService {
 
         // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
         // Check if repairs are blocked (Finality of Whispers)
+        // Legacy accessor usage in Phase 1 neutralization: safely returns empty array.
         const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             // Cannot be repaired
@@ -616,5 +633,56 @@ export class PlayerActionService {
 
         this.gameState.setState({}); 
         return costPerTick;
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
+     * Validates if an upgrade can be installed on a ship.
+     * Checks: Ownership, Active Status (Instant App Rule), Capacity.
+     * @param {string} shipId 
+     * @param {string} upgradeId 
+     * @returns {object} { success: boolean, error?: string }
+     */
+    validateInstallUpgrade(shipId, upgradeId) {
+        const state = this.gameState.getState();
+        const shipState = state.player.shipStates[shipId];
+
+        // 1. Check Ownership
+        if (!state.player.ownedShipIds.includes(shipId) || !shipState) {
+            return { success: false, error: 'Ship not owned.' };
+        }
+
+        // 2. Check Instant Application Rule (Must be Active Ship)
+        if (state.player.activeShipId !== shipId) {
+            return { success: false, error: 'Upgrades must be applied to the active ship.' };
+        }
+
+        // 3. Check Capacity
+        const currentUpgrades = shipState.upgrades || [];
+        if (currentUpgrades.length >= 3) {
+            return { success: false, error: 'Upgrade slots full.' };
+        }
+
+        return { success: true };
+    }
+
+    /**
+     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
+     * Installs an upgrade onto a ship.
+     * Assumes validation has passed.
+     * @param {string} shipId 
+     * @param {string} upgradeId 
+     */
+    executeInstallUpgrade(shipId, upgradeId) {
+        const state = this.gameState;
+        // Direct state mutation safe here because we call setState at the end
+        if (!state.player.shipStates[shipId].upgrades) {
+             state.player.shipStates[shipId].upgrades = [];
+        }
+        
+        state.player.shipStates[shipId].upgrades.push(upgradeId);
+        
+        this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+        this.gameState.setState({}); // Trigger reactivity
     }
 }

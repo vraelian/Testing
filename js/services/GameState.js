@@ -160,7 +160,10 @@ export class GameState {
                 unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
-                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false } } },
+                // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
+                // Added `upgrades: []` to the initial Wanderer state
+                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
+                // --- END VIRTUAL WORKBENCH ---
                 inventories: { },
                 debugEventIndex: 0,
                 // --- VIRTUAL WORKBENCH ---
