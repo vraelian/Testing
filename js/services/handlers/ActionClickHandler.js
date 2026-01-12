@@ -71,25 +71,8 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
-            case 'show-attribute-tooltip': {
-                e.stopPropagation(); 
-                e.preventDefault();
-
-                const attrId = dataset.attributeId;
-                if (!attrId) return;
-
-                const definition = GameAttributes.getDefinition(attrId);
-                if (definition) {
-                    // Minimalist content: Just the description text.
-                    // The UIManager will handle the container styling (width/padding).
-                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                    
-                    // Pass 'top' to request positioning above the pill
-                    this.uiManager.showGenericTooltip(actionTarget, content, 'top');
-                }
-                break;
-            }
+            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP REMOVED ---
+            // Moved to TooltipHandler.js for lifecycle management.
             // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {

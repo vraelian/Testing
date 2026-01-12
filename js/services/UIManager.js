@@ -65,6 +65,10 @@ export class UIManager {
         // MODIFIED: Added property to hold injected EventManager
         this.eventManager = null; 
 
+        // --- VIRTUAL WORKBENCH: TOOLTIP POSITIONING STATE ---
+        this.activeGenericTooltipPosition = 'right';
+        // --- END VIRTUAL WORKBENCH ---
+
         // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
         /** @type {import('./IntelService.js').IntelService | null} */
         this.intelService = null; 
@@ -183,7 +187,7 @@ export class UIManager {
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
             cargoScreen: document.getElementById(`${SCREEN_IDS.CARGO}-screen`),
             hangarScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
-             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
+            missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             graphTooltip: document.getElementById('graph-tooltip'),
@@ -279,7 +283,7 @@ export class UIManager {
             // --- [[START]] MODIFICATION (Reset) ---
             // Handle case where there is no location (e.g., in transit)
             if (this.cache.newsTickerBar) {
-                 this.cache.newsTickerBar.style.backgroundImage = '';
+                this.cache.newsTickerBar.style.backgroundImage = '';
                 this.cache.newsTickerBar.style.borderTopColor = '';
                 this.cache.newsTickerBar.style.borderBottomColor = '';
                 this.cache.newsTickerBar.style.backgroundColor = '';
@@ -369,7 +373,7 @@ export class UIManager {
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
              return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
-                         style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+                          style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -391,7 +395,7 @@ export class UIManager {
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                          <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
-                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
+                    <div class class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
@@ -414,7 +418,7 @@ export class UIManager {
     
                  let subStyle = '';
                  if (isSubNavActive) {
-                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
                  
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
@@ -479,7 +483,6 @@ export class UIManager {
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
-          
                  this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
@@ -490,7 +493,7 @@ export class UIManager {
                 }
                 
                 if (this.intelMarketRenderer) {
-                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
+                    const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
@@ -575,7 +578,7 @@ export class UIManager {
         const totalItems = shipList.length;
 
         if (totalItems <= 1) {
-            paginationContainer.innerHTML = '';
+             paginationContainer.innerHTML = '';
             return;
         }
 
@@ -594,7 +597,7 @@ export class UIManager {
 
         if (totalItems <= VISIBLE_FULL_DOTS + 1) { 
             for (let i = 0; i < totalItems; i++) {
-                dots.push({ 
+                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
@@ -636,7 +639,7 @@ export class UIManager {
         }
 
         const dotsHtml = dots.map(dot => {
-            const style = `
+             const style = `
                 --theme-color-primary: ${theme.borderColor};
                 --theme-glow-color: ${theme.borderColor};
             `;
@@ -666,7 +669,7 @@ export class UIManager {
         const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
         const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
         if (fuelBar && refuelBtn) {
-            const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
+             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
         }
@@ -709,7 +712,7 @@ export class UIManager {
         controls.forEach(control => {
              const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
-            const mode = control.dataset.mode;
+             const mode = control.dataset.mode;
 
             if (qtyInput) {
                 this.marketTransactionState[goodId] = {
@@ -717,7 +720,7 @@ export class UIManager {
                     mode: mode
                  };
             }
-        });
+         });
     }
 
     _restoreMarketTransactionState() {
@@ -735,7 +738,7 @@ export class UIManager {
         }
     }
 
-    getItemPrice(gameState, goodId, isSelling = false) {
+     getItemPrice(gameState, goodId, isSelling = false) {
         if (!this.simulationService || !this.simulationService.marketService) {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
@@ -835,7 +838,7 @@ export class UIManager {
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
-            });
+             });
         }
     }
 
@@ -857,7 +860,7 @@ export class UIManager {
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         if (!modal) {
-            this.logger.error('UIManager', `Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
+             this.logger.error('UIManager', `Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
             return this.processModalQueue();
         }
 
@@ -873,7 +876,7 @@ export class UIManager {
         } else {
             delete modal.dataset.theme;
         }
-        
+
          modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
@@ -892,7 +895,7 @@ export class UIManager {
             }
 
             if (modalId === 'event-modal' || modalId === 'random-event-modal') {
-                descEl.classList.add('text-center');
+                 descEl.classList.add('text-center');
             }
 
             if (options.contentClass) {
@@ -904,7 +907,7 @@ export class UIManager {
         }
 
         const closeHandler = () => {
-            this.hideModal(modalId);
+             this.hideModal(modalId);
             if (callback) callback();
             this.processModalQueue();
         };
@@ -920,11 +923,11 @@ export class UIManager {
                     btnContainer.innerHTML = options.footer;
                      btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            if (btn.dataset.action === 'buy_intel') {
+                             if (btn.dataset.action === 'buy_intel') {
                                  return; 
                             }
                             closeHandler();
-                        });
+                         });
                     });
                 }
             } else if (options.footer === null) {
@@ -951,19 +954,19 @@ export class UIManager {
     }
 
     showRandomEventModal(event, choicesCallback) {
-        this.queueModal('random-event-modal', event.title, event.scenario, null, {
+         this.queueModal('random-event-modal', event.title, event.scenario, null, {
             nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
                 event.choices.forEach((choice, index) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
+                     button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
                     button.innerHTML = choice.title;
                     button.onclick = () => {
                          choicesCallback(event.id, index);
                         closeHandler();
-                    };
+                     };
                     choicesContainer.appendChild(button);
                 });
             }
@@ -979,7 +982,7 @@ export class UIManager {
         btnContainer.innerHTML = '';
         event.choices.forEach(choice => {
             const button = document.createElement('button');
-            button.className = 'perk-button';
+             button.className = 'perk-button';
             button.innerHTML = `<h4>${choice.title}</h4><p>${choice.description}</p>`;
             button.onclick = () => {
                 this.hideModal('age-event-modal');
@@ -1052,7 +1055,7 @@ export class UIManager {
         
         const closeHandler = (e) => {
             if (e.target.closest('#eula-modal-content') || e.target.id === 'eula-modal') {
-                this.hideModal('eula-modal');
+                 this.hideModal('eula-modal');
                 modal.removeEventListener('click', closeHandler);
             }
         };
@@ -1095,20 +1098,20 @@ export class UIManager {
         }
 
         this.queueModal('event-modal', title, description, null, {
-            dismissOutside: true,
+             dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                 const btnContainer = modal.querySelector('#event-button-container');
                 btnContainer.innerHTML = `
                     <button id="confirm-transaction-btn" class="btn btn-pulse-green">Confirm</button>
                     <button id="cancel-transaction-btn" class="btn">Cancel</button>
-                `;
+                 `;
                 
                 const confirmBtn = modal.querySelector('#confirm-transaction-btn');
                 const cancelBtn = modal.querySelector('#cancel-transaction-btn');
                 
                 confirmBtn.onclick = () => {
                     closeHandler();
-                    setTimeout(onConfirm, 50); 
+                     setTimeout(onConfirm, 50); 
                 };
                 
                 cancelBtn.onclick = closeHandler;
@@ -1151,7 +1154,7 @@ export class UIManager {
 
         setTimeout(() => {
             progressBar.style.width = '100%';
-        }, 100);
+         }, 100);
 
         setTimeout(() => {
              statusText.textContent = 'Processing complete!';
@@ -1192,7 +1195,7 @@ export class UIManager {
 
     
      hideGraph() {
-        if (this.activeGraphAnchor) {
+         if (this.activeGraphAnchor) {
             this.cache.graphTooltip.style.display = 'none';
             this.activeGraphAnchor = null;
         }
@@ -1216,13 +1219,22 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    showGenericTooltip(anchorEl, content) {
+    // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 ---
+    /**
+     * Shows a non-graph generic tooltip with customizable positioning.
+     * @param {HTMLElement} anchorEl The element the tooltip should anchor to.
+     * @param {string} content The HTML content to display.
+     * @param {string} [preferredPosition='right'] 'right' or 'top'
+     */
+    showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
         this.activeGenericTooltipAnchor = anchorEl;
+        this.activeGenericTooltipPosition = preferredPosition;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
         tooltip.style.display = 'block';
         this.updateGenericTooltipPosition();
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideGenericTooltip() {
         if (this.activeGenericTooltipAnchor) {
@@ -1231,27 +1243,51 @@ export class UIManager {
         }
     }
 
+    // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 ---
+    /**
+     * Updated position logic to handle 'top' centering with clamping.
+     */
     updateGenericTooltipPosition() {
         if (!this.activeGenericTooltipAnchor) return;
         const tooltip = this.cache.genericTooltip;
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = rect.right + 10;
-        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-        if (topPos < 10) {
-            topPos = rect.bottom + 10;
+        
+        let leftPos, topPos;
+
+        if (this.activeGenericTooltipPosition === 'top') {
+            // Position centered above the element
+            leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+            topPos = rect.top - tooltipHeight - 10;
+
+            // Clamp vertical position if it goes off the top
+            if (topPos < 10) {
+                topPos = rect.bottom + 10;
+            }
+        } else {
+            // Standard 'right' positioning
+            leftPos = rect.right + 10;
+            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+
+            // Clamp vertical position if it goes off the top
+            if (topPos < 10) {
+                topPos = rect.bottom + 10;
+            }
         }
+
+        // Clamp horizontal position for both modes
         if (leftPos < 10) {
             leftPos = 10;
         }
-        if (leftPos + tooltipWidth > window.innerWidth) {
+        if (leftPos + tooltipWidth > window.innerWidth - 10) {
             leftPos = window.innerWidth - tooltipWidth - 10;
         }
 
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     _renderPriceGraph(goodId, gameState, playerItem) {
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
@@ -1347,6 +1383,7 @@ export class UIManager {
             toast.removeAttribute('data-popper-placement'); 
             
         } else {
+     
             toast.style.left = ''; 
             toast.style.top = '';
             toast.style.transform = ''; 
@@ -1366,7 +1403,7 @@ export class UIManager {
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
             let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
             if (stepOffsetMod) {
-                 baseModifiers.push(stepOffsetMod); 
+                  baseModifiers.push(stepOffsetMod); 
             } else {
                  baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
@@ -1404,7 +1441,7 @@ export class UIManager {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
-        this.applyTutorialHighlight(null);
+         this.applyTutorialHighlight(null);
         
         if (this.debugService) {
             this.debugService.clearActiveTutorialStep();
@@ -1428,7 +1465,7 @@ export class UIManager {
             }
             
             toast.style.left = `${percentX}%`;
-            toast.style.top = `${posY}%`;
+            toast.style.top = `${percentY}%`;
             toast.style.transform = 'translate(-50%, -50%)'; 
             arrow.style.display = 'none';
 
@@ -1442,7 +1479,7 @@ export class UIManager {
                  placement: placement,
                 modifiers: [
                     { name: 'offset', options: { offset: [skidding, distance] } },
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                     { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
@@ -1460,7 +1497,7 @@ export class UIManager {
 
 
     applyTutorialHighlight(highlightConfig) {
-        this.activeHighlightConfig = highlightConfig;
+         this.activeHighlightConfig = highlightConfig;
         this._renderHighlightsFromConfig(this.activeHighlightConfig);
     }
 
@@ -1481,7 +1518,7 @@ export class UIManager {
             el.className = 'tutorial-cue';
             el.style.left = `${cue.x}px`;
              el.style.top = `${cue.y}px`;
-            el.style.width = `${cue.width}px`;
+             el.style.width = `${cue.width}px`;
             el.style.height = `${cue.height}px`;
             el.style.transform = `rotate(${cue.rotation}deg)`;
             el.style.opacity = cue.style.opacity;
@@ -1496,21 +1533,21 @@ export class UIManager {
                     <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
                         ${cue.shapeType === 'Rectangle' ?
                              `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
-                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
+                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
                         }
                      </svg>`;
             } else if (cue.type === 'Arrow') {
                 content = `
-                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
+                     <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
                         <defs>
                              <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
                                 <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
-                            </marker>
+                             </marker>
                         </defs>
                          <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
                     </svg>
                 `;
-            } else if (cue.type === 'Spotlight') {
+             } else if (cue.type === 'Spotlight') {
                 el.style.borderRadius = '50%';
                  el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
             }
@@ -1524,7 +1561,7 @@ export class UIManager {
                  animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
             }
 
-            overlay.appendChild(el);
+             overlay.appendChild(el);
         });
     }
 
@@ -1554,7 +1591,7 @@ export class UIManager {
             return;
         }
 
-        list.innerHTML = '';
+         list.innerHTML = '';
 
         if (seenBatches.length === 0) {
             list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
@@ -1563,13 +1600,13 @@ export class UIManager {
                 const batchData = DB.TUTORIAL_DATA[batchId];
                 if (batchData) {
                      const li = document.createElement('li');
-                    li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
+                     li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
                     li.onclick = () => {
                         logModal.classList.remove('visible');
                         onSelect(batchId);
                      };
                     list.appendChild(li);
-                }
+                 }
             });
         }
         logModal.classList.add('visible');
@@ -1590,12 +1627,12 @@ export class UIManager {
                         <div>
                              <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
                             <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
-                        </div>
+                         </div>
                         <div class="text-right">
                              <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
+                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
                         <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
@@ -1611,7 +1648,7 @@ export class UIManager {
             const canSell = player.ownedShipIds.length > 1 && !isActive;
             const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
             modalContentHtml = `
-                <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
+                 <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
                     <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
                     <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
                     <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
@@ -1620,7 +1657,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
-                     <div class="grid grid-cols-2 gap-2 mt-2">
+                      <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
@@ -1651,7 +1688,7 @@ export class UIManager {
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
-                    <p class="flavor-text italic">${location.launchFlavor}</p>
+                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
 
                 <div class="flex-grow flex items-center justify-center">
@@ -1659,7 +1696,7 @@ export class UIManager {
                 </div>
 
                 <div class="travel-info-text">
-                    <p>Travel Time: ${travelInfo.time} Days</p>
+                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
             </div>`;
@@ -1672,7 +1709,7 @@ export class UIManager {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
             if (wrapper) {
-                requestAnimationFrame(() => {
+                 requestAnimationFrame(() => {
                      wrapper.classList.add('is-glowing');
                 });
             }
@@ -1701,7 +1738,7 @@ export class UIManager {
 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
-                if (modalContent) {
+                 if (modalContent) {
                     modalContent.innerHTML = _renderMaxCargoModal(good, item);
                  }
             }
@@ -1720,7 +1757,6 @@ export class UIManager {
 
         const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
-
         const pages = carousel.querySelectorAll('.carousel-page');
         const activePage = pages[activeIndex];
         return activePage ? activePage.querySelector('#ship-terminal') : null;
@@ -1815,7 +1851,7 @@ export class UIManager {
                      const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
-                    }).join(', ');
+                     }).join(', ');
                      rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -1828,7 +1864,7 @@ export class UIManager {
                     const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
-                    buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
+                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
                 }
             }
         };
@@ -1841,7 +1877,7 @@ export class UIManager {
     _showMissionCompletionModal(mission) {
          const options = {
             dismissOutside: true, // Phase 1: Allow dismissal
-            customSetup: (modal, closeHandler) => {
+             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
@@ -1857,7 +1893,7 @@ export class UIManager {
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
@@ -1870,7 +1906,7 @@ export class UIManager {
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
             }
-        };
+         };
         this.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
     }
 
@@ -1890,7 +1926,7 @@ export class UIManager {
             return null;
         }
 
-        const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
+         const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
         const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
@@ -1903,7 +1939,7 @@ export class UIManager {
                 return modalBackdrop.id;
             }
 
-            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
@@ -1915,7 +1951,7 @@ export class UIManager {
             
             return modalBackdrop.id;
         }
-    
+     
         return null;
     }
 
@@ -1964,14 +2000,14 @@ export class UIManager {
 
         if (location.availabilityModifier) {
             for (const [commodityId, modifier] of Object.entries(location.availabilityModifier)) {
-                 const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                  const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
                 if (commodity) {
                     const tag = {
                         name: commodity.name,
                         style: getCommodityStyle(commodity.styleClass)
                     };
                     if (modifier < 1.0) {
-                        imports.push(tag);
+                         imports.push(tag);
                     } else if (modifier > 1.0) {
                         exports.push(tag);
                     }
@@ -1981,7 +2017,7 @@ export class UIManager {
 
         const renderTags = (tagArray) => tagArray.map(tag =>
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
-        ).join('');
+         ).join('');
 
         // --- VIRTUAL WORKBENCH: DYNAMIC STATION QUIRKS ---
         // Fetch quirks from GameAttributes instead of using hardcoded specialty
@@ -1991,7 +2027,7 @@ export class UIManager {
             quirksHtml = quirks.map(qId => {
                 const def = GameAttributes.getDefinition(qId);
                 // Use a slightly different style or color to highlight it's a quirk
-                return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
+                 return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
             }).join('');
         } else {
             // Fallback to legacy specialty or "None reported"
@@ -2018,13 +2054,13 @@ export class UIManager {
 
             
              <div class="text-center">
-                <div>
+                 <div>
                     <h5 class="font-bold imprinted-text">Exports:</h5>
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
                      <h5 class."font-bold imprinted-text">Needs:</h5>
-                    <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
         `;
@@ -2040,7 +2076,7 @@ export class UIManager {
 
         const closeHandler = (e) => {
             if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
-                 this.hideMapDetailModal();
+                  this.hideMapDetailModal();
                 modal.removeEventListener('click', closeHandler); 
             }
         };
@@ -2061,7 +2097,7 @@ export class UIManager {
                 delete modal.__mapDetailCloseHandler;
             }
     
-         }
+        }
         this.hideModal('map-detail-modal');
     }
 
@@ -2089,7 +2125,7 @@ export class UIManager {
         const activeContent = screen.querySelector(`#${activeTabId}`);
 
         if (activeTabButton) {
-            activeTabButton.classList.add('active');
+             activeTabButton.classList.add('active');
         }
   
          if (activeContent) {
@@ -2166,7 +2202,7 @@ export class UIManager {
 
         let msg;
         if (packet.messageKey) {
-            msg = INTEL_CONTENT[packet.messageKey];
+             msg = INTEL_CONTENT[packet.messageKey];
         } else if (packet.messageIndex !== undefined) {
             let msgArray = INTEL_CONTENT[packet.locationId]; 
             if (packet.fallbackMsg) { 
@@ -2189,7 +2225,7 @@ export class UIManager {
                     data-action="buy_intel" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${locationId}" 
-                     data-price="${priceNum}">
+                    data-price="${priceNum}">
                 Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
 
@@ -2221,7 +2257,7 @@ export class UIManager {
             this.hideModal('event-modal');
             this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
         }
-    }
+     }
 
     handleShowIntelDetails(element) {
         const { packetId, locationId } = element.dataset;
@@ -2246,7 +2282,7 @@ export class UIManager {
         } else {
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
-                 "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
+                 "SUPPLY_CHAIN_SHOCK": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
             };
             detailsTemplate = originalContent[packet.messageKey]?.details || "Packet is corrupted. No message data found.";
         }
@@ -2256,7 +2292,7 @@ export class UIManager {
         this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
             theme: locationId, 
             dismissInside: true, 
-            dismissOutside: true,
+             dismissOutside: true,
             footer: null, 
             contentClass: 'text-left' 
         });

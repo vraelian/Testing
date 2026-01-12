@@ -4,6 +4,7 @@
  * and other contextual pop-ups that appear on user interaction (hover or click).
  */
 import { ACTION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js'; // VIRTUAL WORKBENCH: Added import
 
 export class TooltipHandler {
     /**
@@ -35,11 +36,6 @@ export class TooltipHandler {
             this.activeTooltipTarget = null;
             return;
         }
-        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
-        }
         
         // --- Action Handling ---
         if (actionTarget) {
@@ -48,6 +44,28 @@ export class TooltipHandler {
                 case 'toggle-tooltip':
                     this._toggleStatusTooltip(actionTarget);
                     return;
+                
+                // --- VIRTUAL WORKBENCH MODIFICATION: Phase 2 ---
+                case 'show-attribute-tooltip':
+                    e.stopPropagation(); 
+                    e.preventDefault();
+
+                    // Stateful Toggle Logic
+                    if (this.activeTooltipTarget === actionTarget) {
+                        this.uiManager.hideGenericTooltip();
+                        this.activeTooltipTarget = null;
+                    } else {
+                        const attrId = actionTarget.dataset.attributeId;
+                        const definition = GameAttributes.getDefinition(attrId);
+                        if (definition) {
+                            const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'top');
+                            this.activeTooltipTarget = actionTarget;
+                        }
+                    }
+                    return;
+                // --- END VIRTUAL WORKBENCH ---
+
                 case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH:
                     if (this.uiManager.isMobile) {
@@ -62,6 +80,13 @@ export class TooltipHandler {
                     }
                     break;
             }
+        }
+
+        // Only hide if we didn't click another tooltip-triggering element
+        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
+            this.uiManager.hideGraph();
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
         }
         
         if (this.uiManager.isMobile) {

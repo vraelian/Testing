@@ -149,3 +149,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Reduces the deployment time from minutes of manual work to seconds.
     * **Pro**: Eliminates human error in the build/transfer process (e.g., forgetting to move a file).
     * **Pro**: strict separation of concerns; the "clean" source repo remains free of build artifacts and tooling config files when not actively building.
+
+---
+
+### ADR-011: Responsive Mobile Interaction Isolation
+
+* **Status**: Accepted (2026-01-11)
+* **Context**: Small interactive elements (specifically attribute pills) nested within the draggable Carousel component exhibited inconsistent responsiveness. Mobile touch-starts were being misinterpreted as the beginning of a drag operation, and proactive tooltip clearing in the input layer caused a race condition that required double-taps to activate tooltips.
+* **Decision**: A multi-layered interaction isolation strategy was implemented.
+    1.  **Semantic Button Upgrade**: Attribute pills were upgraded from `div` to `<button>` elements to utilize native browser event prioritization for interactive targets.
+    2.  **Input Layer Suppression**: Modified `EventManager.js` to explicitly block the `CarouselEventHandler` from initializing a drag state if an actionable element (`[data-action]`) is targeted.
+    3.  **Contextual Tooltip Cleanup**: Updated the global `touchstart` wrapper to suppress proactive tooltip clearing when touching interactive elements, ensuring the subsequent `click` handler can properly manage the toggle state.
+    4.  **Performance Overrides**: Applied `touch-action: manipulation` and `-webkit-tap-highlight-color: transparent` to all small interactive pills to eliminate the 300ms iOS tap delay.
+* **Consequences**:
+    * **Pro**: Guarantees native-like 1:1 responsiveness for all ship card interactions.
+    * **Pro**: Eliminates "double-tap" logic bugs by stabilizing the tooltip lifecycle.
+    * **Pro**: Prevents carousel jitter and accidental swiping during detailed interaction.
+    * **Pro**: Maintains existing carousel performance for background/non-interactive card areas.

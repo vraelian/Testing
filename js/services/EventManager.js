@@ -70,15 +70,27 @@ export class EventManager {
             }
         }, { passive: false });
 
+        // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 & 3 ---
         const startCarouselDrag = (e) => {
-            this.uiManager.hideGenericTooltip(); // Clear tooltip on drag start
-            // IGNORE presses on stepper buttons
-            if (e.target.closest('.qty-stepper button')) {
+            const actionTarget = e.target.closest('[data-action]');
+            
+            // 1. Only hide tooltips if we touch a "dead" area (background).
+            // This prevents the pill-tap from hiding the tooltip before the click logic can toggle it.
+            if (!actionTarget) {
+                this.uiManager.hideGenericTooltip(); 
+            }
+
+            // 2. ISOLATION: If we are touching an actionable element, do NOT allow the carousel to start a drag.
+            // This mirrors the logic in CarouselEventHandler.handleDragStart but provides a cleaner exit.
+            // Specifically prevents 'jitter' on attribute pills and buttons.
+            if (actionTarget || e.target.closest('.qty-stepper button')) {
                 return;
             }
-            // Proceed with carousel drag start for all other elements
+
+            // Proceed with carousel drag start for valid background/card areas
             this.carouselEventHandler.handleDragStart(e);
         };
+        // --- END VIRTUAL WORKBENCH ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
 
@@ -184,7 +196,7 @@ export class EventManager {
             if (modalIdToClose !== 'lore-modal') {
                 this.uiManager.hideModal(modalIdToClose);
             }
-        }
+       }
     }
 
     /**

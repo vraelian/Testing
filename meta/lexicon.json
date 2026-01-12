@@ -251,6 +251,8 @@
           "triggerEffect": "Initiates a visual effect through the EffectsManager.",
           "showTravelAnimation": "Initiates the travel animation sequence.",
           "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
+          "showGenericTooltip": "Shows a contextual tooltip with dynamic 'right' or 'top' orientation.",
+          "updateGenericTooltipPosition": "Calculates pixel coordinates for tooltips, including 'top' centering logic.",
           "handleShowIntelOffer": "New handler for Intel Market.",
           "handleBuyIntel": "New handler for Intel Market.",
           "handleShowIntelDetails": "New handler for Intel Market.",
@@ -358,13 +360,14 @@
         "mutates_state": []
       },
       "TooltipHandler": {
-        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
+        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups. Now handles ship attribute tooltip state and mobile responsive toggles.",
         "dependencies": [
           "GameState",
-          "UIManager"
+          "UIManager",
+          "js/services/GameAttributes.js"
         ],
         "key_functions": {
-          "handleClick": "Manages tooltip visibility on click.",
+          "handleClick": "Manages tooltip visibility on click, including stateful toggling for attribute pills.",
           "handleMouseOver": "Shows tooltips on hover.",
           "handleMouseOut": "Hides tooltips on hover out."
         },

@@ -134,7 +134,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Redesigned) ---
+    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Semantic Upgrade) ---
     const activeAttributes = GameAttributes.getShipAttributes(shipId);
     let attributesHtml = '';
     
@@ -142,11 +142,16 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         // We only render the first 2 attributes to prevent overflow
         const pills = activeAttributes.slice(0, 2).map(attrId => {
             const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
+            const definition = GameAttributes.getDefinition(attrId);
+            const tooltipText = definition ? definition.description : '';
+
             // Style: Solid background, Dark text, No icons, Status-badge shape
+            // MODIFIED: Changed from 'div' to 'button' for superior mobile interaction.
             return `
-                <div class="attribute-pill cursor-pointer" 
+                <button class="attribute-pill cursor-pointer" 
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${attrId}"
+                     data-tooltip="${tooltipText}"
                      style="
                         background-color: ${config.color}; 
                         color: #1a202c; 
@@ -159,9 +164,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         font-weight: 700;
                         letter-spacing: 0.05em;
                         pointer-events: auto; /* Ensure clickable over image */
+                        touch-action: manipulation;
+                        -webkit-tap-highlight-color: transparent;
                      ">
                     ${config.label}
-                </div>
+                </button>
             `;
         }).join('');
 

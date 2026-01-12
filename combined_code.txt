@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.84</title>
+    <title>Orbital Trading 33.85</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.84</p>
+            <p>Version 33.85</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -6012,7 +6012,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Redesigned) ---
+    // --- VIRTUAL WORKBENCH: ATTRIBUTE PILLS (Semantic Upgrade) ---
     const activeAttributes = GameAttributes.getShipAttributes(shipId);
     let attributesHtml = '';
     
@@ -6020,11 +6020,16 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         // We only render the first 2 attributes to prevent overflow
         const pills = activeAttributes.slice(0, 2).map(attrId => {
             const config = ATTRIBUTE_UI_CONFIG[attrId] || { label: 'SYS', color: '#fff' };
+            const definition = GameAttributes.getDefinition(attrId);
+            const tooltipText = definition ? definition.description : '';
+
             // Style: Solid background, Dark text, No icons, Status-badge shape
+            // MODIFIED: Changed from 'div' to 'button' for superior mobile interaction.
             return `
-                <div class="attribute-pill cursor-pointer" 
+                <button class="attribute-pill cursor-pointer" 
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${attrId}"
+                     data-tooltip="${tooltipText}"
                      style="
                         background-color: ${config.color}; 
                         color: #1a202c; 
@@ -6037,9 +6042,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         font-weight: 700;
                         letter-spacing: 0.05em;
                         pointer-events: auto; /* Ensure clickable over image */
+                        touch-action: manipulation;
+                        -webkit-tap-highlight-color: transparent;
                      ">
                     ${config.label}
-                </div>
+                </button>
             `;
         }).join('');
 
@@ -14754,15 +14761,27 @@ export class EventManager {
             }
         }, { passive: false });
 
+        // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 & 3 ---
         const startCarouselDrag = (e) => {
-            this.uiManager.hideGenericTooltip(); // Clear tooltip on drag start
-            // IGNORE presses on stepper buttons
-            if (e.target.closest('.qty-stepper button')) {
+            const actionTarget = e.target.closest('[data-action]');
+            
+            // 1. Only hide tooltips if we touch a "dead" area (background).
+            // This prevents the pill-tap from hiding the tooltip before the click logic can toggle it.
+            if (!actionTarget) {
+                this.uiManager.hideGenericTooltip(); 
+            }
+
+            // 2. ISOLATION: If we are touching an actionable element, do NOT allow the carousel to start a drag.
+            // This mirrors the logic in CarouselEventHandler.handleDragStart but provides a cleaner exit.
+            // Specifically prevents 'jitter' on attribute pills and buttons.
+            if (actionTarget || e.target.closest('.qty-stepper button')) {
                 return;
             }
-            // Proceed with carousel drag start for all other elements
+
+            // Proceed with carousel drag start for valid background/card areas
             this.carouselEventHandler.handleDragStart(e);
         };
+        // --- END VIRTUAL WORKBENCH ---
 
         document.body.addEventListener('mousedown', startCarouselDrag);
 
@@ -14868,7 +14887,7 @@ export class EventManager {
             if (modalIdToClose !== 'lore-modal') {
                 this.uiManager.hideModal(modalIdToClose);
             }
-        }
+       }
     }
 
     /**
@@ -15808,6 +15827,10 @@ export class UIManager {
         // MODIFIED: Added property to hold injected EventManager
         this.eventManager = null; 
 
+        // --- VIRTUAL WORKBENCH: TOOLTIP POSITIONING STATE ---
+        this.activeGenericTooltipPosition = 'right';
+        // --- END VIRTUAL WORKBENCH ---
+
         // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE/RENDERER ---
         /** @type {import('./IntelService.js').IntelService | null} */
         this.intelService = null; 
@@ -15926,7 +15949,7 @@ export class UIManager {
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
             cargoScreen: document.getElementById(`${SCREEN_IDS.CARGO}-screen`),
             hangarScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
-             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
+            missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             graphTooltip: document.getElementById('graph-tooltip'),
@@ -16022,7 +16045,7 @@ export class UIManager {
             // --- [[START]] MODIFICATION (Reset) ---
             // Handle case where there is no location (e.g., in transit)
             if (this.cache.newsTickerBar) {
-                 this.cache.newsTickerBar.style.backgroundImage = '';
+                this.cache.newsTickerBar.style.backgroundImage = '';
                 this.cache.newsTickerBar.style.borderTopColor = '';
                 this.cache.newsTickerBar.style.borderBottomColor = '';
                 this.cache.newsTickerBar.style.backgroundColor = '';
@@ -16112,7 +16135,7 @@ export class UIManager {
             const isDisabled = introSequenceActive || isDisabledByTutorial;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
              return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
-                         style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
+                          style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
         let statusPodHtml = '';
@@ -16134,7 +16157,7 @@ export class UIManager {
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                          <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
-                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
+                    <div class class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
@@ -16157,7 +16180,7 @@ export class UIManager {
     
                  let subStyle = '';
                  if (isSubNavActive) {
-                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
                  
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
@@ -16222,7 +16245,6 @@ export class UIManager {
                 this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
                 break;
             case SCREEN_IDS.FINANCE:
-          
                  this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
@@ -16233,7 +16255,7 @@ export class UIManager {
                 }
                 
                 if (this.intelMarketRenderer) {
-                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
+                    const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
                         this.intelMarketRenderer.render(marketContentEl, gameState);
                     }
@@ -16318,7 +16340,7 @@ export class UIManager {
         const totalItems = shipList.length;
 
         if (totalItems <= 1) {
-            paginationContainer.innerHTML = '';
+             paginationContainer.innerHTML = '';
             return;
         }
 
@@ -16337,7 +16359,7 @@ export class UIManager {
 
         if (totalItems <= VISIBLE_FULL_DOTS + 1) { 
             for (let i = 0; i < totalItems; i++) {
-                dots.push({ 
+                 dots.push({ 
                     index: i, 
                     isActive: i === activeIndex, 
                     isHalf: false,
@@ -16379,7 +16401,7 @@ export class UIManager {
         }
 
         const dotsHtml = dots.map(dot => {
-            const style = `
+             const style = `
                 --theme-color-primary: ${theme.borderColor};
                 --theme-glow-color: ${theme.borderColor};
             `;
@@ -16409,7 +16431,7 @@ export class UIManager {
         const fuelBar = this.cache.servicesScreen.querySelector('#fuel-bar');
         const refuelBtn = this.cache.servicesScreen.querySelector('#refuel-btn');
         if (fuelBar && refuelBtn) {
-            const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
+             const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
             fuelBar.style.width = `${fuelPct}%`;
             refuelBtn.disabled = shipState.fuel >= shipStatic.maxFuel;
         }
@@ -16452,7 +16474,7 @@ export class UIManager {
         controls.forEach(control => {
              const goodId = control.dataset.goodId;
             const qtyInput = control.querySelector('input');
-            const mode = control.dataset.mode;
+             const mode = control.dataset.mode;
 
             if (qtyInput) {
                 this.marketTransactionState[goodId] = {
@@ -16460,7 +16482,7 @@ export class UIManager {
                     mode: mode
                  };
             }
-        });
+         });
     }
 
     _restoreMarketTransactionState() {
@@ -16478,7 +16500,7 @@ export class UIManager {
         }
     }
 
-    getItemPrice(gameState, goodId, isSelling = false) {
+     getItemPrice(gameState, goodId, isSelling = false) {
         if (!this.simulationService || !this.simulationService.marketService) {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
@@ -16578,7 +16600,7 @@ export class UIManager {
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
                 galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
-            });
+             });
         }
     }
 
@@ -16600,7 +16622,7 @@ export class UIManager {
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         if (!modal) {
-            this.logger.error('UIManager', `Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
+             this.logger.error('UIManager', `Modal element with ID '${modalId}' not found in the DOM. Aborting modal display.`);
             return this.processModalQueue();
         }
 
@@ -16616,7 +16638,7 @@ export class UIManager {
         } else {
             delete modal.dataset.theme;
         }
-        
+
          modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
@@ -16635,7 +16657,7 @@ export class UIManager {
             }
 
             if (modalId === 'event-modal' || modalId === 'random-event-modal') {
-                descEl.classList.add('text-center');
+                 descEl.classList.add('text-center');
             }
 
             if (options.contentClass) {
@@ -16647,7 +16669,7 @@ export class UIManager {
         }
 
         const closeHandler = () => {
-            this.hideModal(modalId);
+             this.hideModal(modalId);
             if (callback) callback();
             this.processModalQueue();
         };
@@ -16663,11 +16685,11 @@ export class UIManager {
                     btnContainer.innerHTML = options.footer;
                      btnContainer.querySelectorAll('button[data-action]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            if (btn.dataset.action === 'buy_intel') {
+                             if (btn.dataset.action === 'buy_intel') {
                                  return; 
                             }
                             closeHandler();
-                        });
+                         });
                     });
                 }
             } else if (options.footer === null) {
@@ -16694,19 +16716,19 @@ export class UIManager {
     }
 
     showRandomEventModal(event, choicesCallback) {
-        this.queueModal('random-event-modal', event.title, event.scenario, null, {
+         this.queueModal('random-event-modal', event.title, event.scenario, null, {
             nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
                 event.choices.forEach((choice, index) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
+                     button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
                     button.innerHTML = choice.title;
                     button.onclick = () => {
                          choicesCallback(event.id, index);
                         closeHandler();
-                    };
+                     };
                     choicesContainer.appendChild(button);
                 });
             }
@@ -16722,7 +16744,7 @@ export class UIManager {
         btnContainer.innerHTML = '';
         event.choices.forEach(choice => {
             const button = document.createElement('button');
-            button.className = 'perk-button';
+             button.className = 'perk-button';
             button.innerHTML = `<h4>${choice.title}</h4><p>${choice.description}</p>`;
             button.onclick = () => {
                 this.hideModal('age-event-modal');
@@ -16795,7 +16817,7 @@ export class UIManager {
         
         const closeHandler = (e) => {
             if (e.target.closest('#eula-modal-content') || e.target.id === 'eula-modal') {
-                this.hideModal('eula-modal');
+                 this.hideModal('eula-modal');
                 modal.removeEventListener('click', closeHandler);
             }
         };
@@ -16838,20 +16860,20 @@ export class UIManager {
         }
 
         this.queueModal('event-modal', title, description, null, {
-            dismissOutside: true,
+             dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                 const btnContainer = modal.querySelector('#event-button-container');
                 btnContainer.innerHTML = `
                     <button id="confirm-transaction-btn" class="btn btn-pulse-green">Confirm</button>
                     <button id="cancel-transaction-btn" class="btn">Cancel</button>
-                `;
+                 `;
                 
                 const confirmBtn = modal.querySelector('#confirm-transaction-btn');
                 const cancelBtn = modal.querySelector('#cancel-transaction-btn');
                 
                 confirmBtn.onclick = () => {
                     closeHandler();
-                    setTimeout(onConfirm, 50); 
+                     setTimeout(onConfirm, 50); 
                 };
                 
                 cancelBtn.onclick = closeHandler;
@@ -16894,7 +16916,7 @@ export class UIManager {
 
         setTimeout(() => {
             progressBar.style.width = '100%';
-        }, 100);
+         }, 100);
 
         setTimeout(() => {
              statusText.textContent = 'Processing complete!';
@@ -16935,7 +16957,7 @@ export class UIManager {
 
     
      hideGraph() {
-        if (this.activeGraphAnchor) {
+         if (this.activeGraphAnchor) {
             this.cache.graphTooltip.style.display = 'none';
             this.activeGraphAnchor = null;
         }
@@ -16959,13 +16981,22 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    showGenericTooltip(anchorEl, content) {
+    // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 ---
+    /**
+     * Shows a non-graph generic tooltip with customizable positioning.
+     * @param {HTMLElement} anchorEl The element the tooltip should anchor to.
+     * @param {string} content The HTML content to display.
+     * @param {string} [preferredPosition='right'] 'right' or 'top'
+     */
+    showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
         this.activeGenericTooltipAnchor = anchorEl;
+        this.activeGenericTooltipPosition = preferredPosition;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
         tooltip.style.display = 'block';
         this.updateGenericTooltipPosition();
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     hideGenericTooltip() {
         if (this.activeGenericTooltipAnchor) {
@@ -16974,27 +17005,51 @@ export class UIManager {
         }
     }
 
+    // --- VIRTUAL WORKBENCH MODIFICATION: Phase 1 ---
+    /**
+     * Updated position logic to handle 'top' centering with clamping.
+     */
     updateGenericTooltipPosition() {
         if (!this.activeGenericTooltipAnchor) return;
         const tooltip = this.cache.genericTooltip;
         const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        let leftPos = rect.right + 10;
-        let topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-        if (topPos < 10) {
-            topPos = rect.bottom + 10;
+        
+        let leftPos, topPos;
+
+        if (this.activeGenericTooltipPosition === 'top') {
+            // Position centered above the element
+            leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+            topPos = rect.top - tooltipHeight - 10;
+
+            // Clamp vertical position if it goes off the top
+            if (topPos < 10) {
+                topPos = rect.bottom + 10;
+            }
+        } else {
+            // Standard 'right' positioning
+            leftPos = rect.right + 10;
+            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+
+            // Clamp vertical position if it goes off the top
+            if (topPos < 10) {
+                topPos = rect.bottom + 10;
+            }
         }
+
+        // Clamp horizontal position for both modes
         if (leftPos < 10) {
             leftPos = 10;
         }
-        if (leftPos + tooltipWidth > window.innerWidth) {
+        if (leftPos + tooltipWidth > window.innerWidth - 10) {
             leftPos = window.innerWidth - tooltipWidth - 10;
         }
 
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     _renderPriceGraph(goodId, gameState, playerItem) {
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
@@ -17090,6 +17145,7 @@ export class UIManager {
             toast.removeAttribute('data-popper-placement'); 
             
         } else {
+     
             toast.style.left = ''; 
             toast.style.top = '';
             toast.style.transform = ''; 
@@ -17109,7 +17165,7 @@ export class UIManager {
             const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
             let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
             if (stepOffsetMod) {
-                 baseModifiers.push(stepOffsetMod); 
+                  baseModifiers.push(stepOffsetMod); 
             } else {
                  baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
             }
@@ -17147,7 +17203,7 @@ export class UIManager {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
-        this.applyTutorialHighlight(null);
+         this.applyTutorialHighlight(null);
         
         if (this.debugService) {
             this.debugService.clearActiveTutorialStep();
@@ -17171,7 +17227,7 @@ export class UIManager {
             }
             
             toast.style.left = `${percentX}%`;
-            toast.style.top = `${posY}%`;
+            toast.style.top = `${percentY}%`;
             toast.style.transform = 'translate(-50%, -50%)'; 
             arrow.style.display = 'none';
 
@@ -17185,7 +17241,7 @@ export class UIManager {
                  placement: placement,
                 modifiers: [
                     { name: 'offset', options: { offset: [skidding, distance] } },
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                     { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
                     { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
                     { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
                 ]
@@ -17203,7 +17259,7 @@ export class UIManager {
 
 
     applyTutorialHighlight(highlightConfig) {
-        this.activeHighlightConfig = highlightConfig;
+         this.activeHighlightConfig = highlightConfig;
         this._renderHighlightsFromConfig(this.activeHighlightConfig);
     }
 
@@ -17224,7 +17280,7 @@ export class UIManager {
             el.className = 'tutorial-cue';
             el.style.left = `${cue.x}px`;
              el.style.top = `${cue.y}px`;
-            el.style.width = `${cue.width}px`;
+             el.style.width = `${cue.width}px`;
             el.style.height = `${cue.height}px`;
             el.style.transform = `rotate(${cue.rotation}deg)`;
             el.style.opacity = cue.style.opacity;
@@ -17239,21 +17295,21 @@ export class UIManager {
                     <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
                         ${cue.shapeType === 'Rectangle' ?
                              `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
-                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
+                             `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
                         }
                      </svg>`;
             } else if (cue.type === 'Arrow') {
                 content = `
-                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
+                     <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
                         <defs>
                              <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
                                 <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
-                            </marker>
+                             </marker>
                         </defs>
                          <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
                     </svg>
                 `;
-            } else if (cue.type === 'Spotlight') {
+             } else if (cue.type === 'Spotlight') {
                 el.style.borderRadius = '50%';
                  el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
             }
@@ -17267,7 +17323,7 @@ export class UIManager {
                  animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
             }
 
-            overlay.appendChild(el);
+             overlay.appendChild(el);
         });
     }
 
@@ -17297,7 +17353,7 @@ export class UIManager {
             return;
         }
 
-        list.innerHTML = '';
+         list.innerHTML = '';
 
         if (seenBatches.length === 0) {
             list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
@@ -17306,13 +17362,13 @@ export class UIManager {
                 const batchData = DB.TUTORIAL_DATA[batchId];
                 if (batchData) {
                      const li = document.createElement('li');
-                    li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
+                     li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
                     li.onclick = () => {
                         logModal.classList.remove('visible');
                         onSelect(batchId);
                      };
                     list.appendChild(li);
-                }
+                 }
             });
         }
         logModal.classList.add('visible');
@@ -17333,12 +17389,12 @@ export class UIManager {
                         <div>
                              <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
                             <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
-                        </div>
+                         </div>
                         <div class="text-right">
                              <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
+                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
                         <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
@@ -17354,7 +17410,7 @@ export class UIManager {
             const canSell = player.ownedShipIds.length > 1 && !isActive;
             const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
             modalContentHtml = `
-                <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
+                 <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
                     <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
                     <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
                     <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
@@ -17363,7 +17419,7 @@ export class UIManager {
                         <div><span class="text-gray-500">Fuel</span><div class="text-sky-400">${Math.floor(shipDynamic.fuel)}/${shipStatic.maxFuel}</div></div>
                         <div><span class="text-gray-500">Cargo</span><div class="text-amber-400">${cargoUsed}/${shipStatic.cargoCapacity}</div></div>
                     </div>
-                     <div class="grid grid-cols-2 gap-2 mt-2">
+                      <div class="grid grid-cols-2 gap-2 mt-2">
                         ${isActive ? '<button class="btn" disabled>ACTIVE</button>' : `<button class="btn" data-action="${ACTION_IDS.SELECT_SHIP}" data-ship-id="${shipId}">Board</button>`}
                         <button class="btn" data-action="${ACTION_IDS.SELL_SHIP}" data-ship-id="${shipId}" ${!canSell ? 'disabled' : ''}>Sell<br>⌬ ${formatCredits(salePrice, false)}</button>
                     </div>
@@ -17394,7 +17450,7 @@ export class UIManager {
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
-                    <p class="flavor-text italic">${location.launchFlavor}</p>
+                     <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
 
                 <div class="flex-grow flex items-center justify-center">
@@ -17402,7 +17458,7 @@ export class UIManager {
                 </div>
 
                 <div class="travel-info-text">
-                    <p>Travel Time: ${travelInfo.time} Days</p>
+                     <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
             </div>`;
@@ -17415,7 +17471,7 @@ export class UIManager {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
             if (wrapper) {
-                requestAnimationFrame(() => {
+                 requestAnimationFrame(() => {
                      wrapper.classList.add('is-glowing');
                 });
             }
@@ -17444,7 +17500,7 @@ export class UIManager {
 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
-                if (modalContent) {
+                 if (modalContent) {
                     modalContent.innerHTML = _renderMaxCargoModal(good, item);
                  }
             }
@@ -17463,7 +17519,6 @@ export class UIManager {
 
         const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
-
         const pages = carousel.querySelectorAll('.carousel-page');
         const activePage = pages[activeIndex];
         return activePage ? activePage.querySelector('#ship-terminal') : null;
@@ -17558,7 +17613,7 @@ export class UIManager {
                      const rewardsHtml = mission.rewards.map(r => {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
-                    }).join(', ');
+                     }).join(', ');
                      rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
                     rewardsEl.style.display = 'block';
                 } else {
@@ -17571,7 +17626,7 @@ export class UIManager {
                     const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
-                    buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
+                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
                 }
             }
         };
@@ -17584,7 +17639,7 @@ export class UIManager {
     _showMissionCompletionModal(mission) {
          const options = {
             dismissOutside: true, // Phase 1: Allow dismissal
-            customSetup: (modal, closeHandler) => {
+             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
@@ -17600,7 +17655,7 @@ export class UIManager {
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                         return r.type.toUpperCase();
                     }).join(', ');
                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
@@ -17613,7 +17668,7 @@ export class UIManager {
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
             }
-        };
+         };
         this.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
     }
 
@@ -17633,7 +17688,7 @@ export class UIManager {
             return null;
         }
 
-        const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
+         const dismissInside = modalBackdrop.dataset.dismissInside === 'true';
         const dismissOutside = modalBackdrop.dataset.dismissOutside === 'true';
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
@@ -17646,7 +17701,7 @@ export class UIManager {
                 return modalBackdrop.id;
             }
 
-            if (modalBackdrop.id !== 'lore-modal' && modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
+            if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
                 return modalBackdrop.id;
             }
             if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
@@ -17658,7 +17713,7 @@ export class UIManager {
             
             return modalBackdrop.id;
         }
-    
+     
         return null;
     }
 
@@ -17707,14 +17762,14 @@ export class UIManager {
 
         if (location.availabilityModifier) {
             for (const [commodityId, modifier] of Object.entries(location.availabilityModifier)) {
-                 const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                  const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
                 if (commodity) {
                     const tag = {
                         name: commodity.name,
                         style: getCommodityStyle(commodity.styleClass)
                     };
                     if (modifier < 1.0) {
-                        imports.push(tag);
+                         imports.push(tag);
                     } else if (modifier > 1.0) {
                         exports.push(tag);
                     }
@@ -17724,7 +17779,7 @@ export class UIManager {
 
         const renderTags = (tagArray) => tagArray.map(tag =>
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
-        ).join('');
+         ).join('');
 
         // --- VIRTUAL WORKBENCH: DYNAMIC STATION QUIRKS ---
         // Fetch quirks from GameAttributes instead of using hardcoded specialty
@@ -17734,7 +17789,7 @@ export class UIManager {
             quirksHtml = quirks.map(qId => {
                 const def = GameAttributes.getDefinition(qId);
                 // Use a slightly different style or color to highlight it's a quirk
-                return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
+                 return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
             }).join('');
         } else {
             // Fallback to legacy specialty or "None reported"
@@ -17761,13 +17816,13 @@ export class UIManager {
 
             
              <div class="text-center">
-                <div>
+                 <div>
                     <h5 class="font-bold imprinted-text">Exports:</h5>
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
                      <h5 class."font-bold imprinted-text">Needs:</h5>
-                    <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                     <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
         `;
@@ -17783,7 +17838,7 @@ export class UIManager {
 
         const closeHandler = (e) => {
             if (e.target.id === 'map-detail-modal' || e.target.closest('.modal-content')) {
-                 this.hideMapDetailModal();
+                  this.hideMapDetailModal();
                 modal.removeEventListener('click', closeHandler); 
             }
         };
@@ -17804,7 +17859,7 @@ export class UIManager {
                 delete modal.__mapDetailCloseHandler;
             }
     
-         }
+        }
         this.hideModal('map-detail-modal');
     }
 
@@ -17832,7 +17887,7 @@ export class UIManager {
         const activeContent = screen.querySelector(`#${activeTabId}`);
 
         if (activeTabButton) {
-            activeTabButton.classList.add('active');
+             activeTabButton.classList.add('active');
         }
   
          if (activeContent) {
@@ -17909,7 +17964,7 @@ export class UIManager {
 
         let msg;
         if (packet.messageKey) {
-            msg = INTEL_CONTENT[packet.messageKey];
+             msg = INTEL_CONTENT[packet.messageKey];
         } else if (packet.messageIndex !== undefined) {
             let msgArray = INTEL_CONTENT[packet.locationId]; 
             if (packet.fallbackMsg) { 
@@ -17932,7 +17987,7 @@ export class UIManager {
                     data-action="buy_intel" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${locationId}" 
-                     data-price="${priceNum}">
+                    data-price="${priceNum}">
                 Purchase Intel (<span class="credits-text-pulsing">${formatCredits(priceNum, true)}</span>)
             </button>`;
 
@@ -17964,7 +18019,7 @@ export class UIManager {
             this.hideModal('event-modal');
             this.queueModal('event-modal', 'Purchase Failed', 'Unable to purchase intel. You may already have an active deal or insufficient credits.');
         }
-    }
+     }
 
     handleShowIntelDetails(element) {
         const { packetId, locationId } = element.dataset;
@@ -17989,7 +18044,7 @@ export class UIManager {
         } else {
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
-                 "SUPPLY_CHAIN_DISRUPTION": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
+                 "SUPPLY_CHAIN_SHOCK": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
             };
             detailsTemplate = originalContent[packet.messageKey]?.details || "Packet is corrupted. No message data found.";
         }
@@ -17999,7 +18054,7 @@ export class UIManager {
         this.queueModal('event-modal', 'Intel Unlocked', formattedDetails, null, {
             theme: locationId, 
             dismissInside: true, 
-            dismissOutside: true,
+             dismissOutside: true,
             footer: null, 
             contentClass: 'text-left' 
         });
@@ -20982,25 +21037,8 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP ---
-            case 'show-attribute-tooltip': {
-                e.stopPropagation(); 
-                e.preventDefault();
-
-                const attrId = dataset.attributeId;
-                if (!attrId) return;
-
-                const definition = GameAttributes.getDefinition(attrId);
-                if (definition) {
-                    // Minimalist content: Just the description text.
-                    // The UIManager will handle the container styling (width/padding).
-                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                    
-                    // Pass 'top' to request positioning above the pill
-                    this.uiManager.showGenericTooltip(actionTarget, content, 'top');
-                }
-                break;
-            }
+            // --- VIRTUAL WORKBENCH: SHIP ATTRIBUTE TOOLTIP REMOVED ---
+            // Moved to TooltipHandler.js for lifecycle management.
             // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
@@ -21240,6 +21278,7 @@ export class ActionClickHandler {
  * and other contextual pop-ups that appear on user interaction (hover or click).
  */
 import { ACTION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js'; // VIRTUAL WORKBENCH: Added import
 
 export class TooltipHandler {
     /**
@@ -21271,11 +21310,6 @@ export class TooltipHandler {
             this.activeTooltipTarget = null;
             return;
         }
-        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
-        }
         
         // --- Action Handling ---
         if (actionTarget) {
@@ -21284,6 +21318,28 @@ export class TooltipHandler {
                 case 'toggle-tooltip':
                     this._toggleStatusTooltip(actionTarget);
                     return;
+                
+                // --- VIRTUAL WORKBENCH MODIFICATION: Phase 2 ---
+                case 'show-attribute-tooltip':
+                    e.stopPropagation(); 
+                    e.preventDefault();
+
+                    // Stateful Toggle Logic
+                    if (this.activeTooltipTarget === actionTarget) {
+                        this.uiManager.hideGenericTooltip();
+                        this.activeTooltipTarget = null;
+                    } else {
+                        const attrId = actionTarget.dataset.attributeId;
+                        const definition = GameAttributes.getDefinition(attrId);
+                        if (definition) {
+                            const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'top');
+                            this.activeTooltipTarget = actionTarget;
+                        }
+                    }
+                    return;
+                // --- END VIRTUAL WORKBENCH ---
+
                 case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH:
                     if (this.uiManager.isMobile) {
@@ -21298,6 +21354,13 @@ export class TooltipHandler {
                     }
                     break;
             }
+        }
+
+        // Only hide if we didn't click another tooltip-triggering element
+        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
+            this.uiManager.hideGraph();
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
         }
         
         if (this.uiManager.isMobile) {
@@ -22200,6 +22263,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [33.85] - 2026-1-11
+-  improved attribute pill performance
+-  updated meta files
 
 ## [33.84] - 2026-1-11
 -  added GameAttribute.js
@@ -23202,6 +23269,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "triggerEffect": "Initiates a visual effect through the EffectsManager.",
           "showTravelAnimation": "Initiates the travel animation sequence.",
           "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
+          "showGenericTooltip": "Shows a contextual tooltip with dynamic 'right' or 'top' orientation.",
+          "updateGenericTooltipPosition": "Calculates pixel coordinates for tooltips, including 'top' centering logic.",
           "handleShowIntelOffer": "New handler for Intel Market.",
           "handleBuyIntel": "New handler for Intel Market.",
           "handleShowIntelDetails": "New handler for Intel Market.",
@@ -23309,13 +23378,14 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "mutates_state": []
       },
       "TooltipHandler": {
-        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups on both desktop (hover) and mobile (click).",
+        "description": "Manages the display and lifecycle of tooltips, price graphs, and other contextual pop-ups. Now handles ship attribute tooltip state and mobile responsive toggles.",
         "dependencies": [
           "GameState",
-          "UIManager"
+          "UIManager",
+          "js/services/GameAttributes.js"
         ],
         "key_functions": {
-          "handleClick": "Manages tooltip visibility on click.",
+          "handleClick": "Manages tooltip visibility on click, including stateful toggling for attribute pills.",
           "handleMouseOver": "Shows tooltips on hover.",
           "handleMouseOut": "Hides tooltips on hover out."
         },
@@ -23755,7 +23825,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 1.9
+**Version:** 2.0
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -23766,8 +23836,8 @@ This document defines the single responsibility of each service in the applicati
 
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
--   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. New data-action handlers (`show_intel_offer`, `buy_intel`, `show_intel_details`) added for the Intel Market modal flow.
+-   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module. Now includes explicit drag-suppression for interactive targets.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. Supports dynamic vertical positioning (right/top) for responsive tooltips.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
 -   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
@@ -23796,11 +23866,11 @@ This document defines the single responsibility of each service in the applicati
 
 ### UI/Event Handlers
 
--   **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes).
+-   **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes). Now passes ship attribute management to `TooltipHandler`.
 -   **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
 -   **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
 -   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
--   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
+-   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click. Now includes ship attribute lifecycle management and stateful toggle logic.
 -   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
 
 ### UI/Renderers
@@ -23993,6 +24063,23 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Reduces the deployment time from minutes of manual work to seconds.
     * **Pro**: Eliminates human error in the build/transfer process (e.g., forgetting to move a file).
     * **Pro**: strict separation of concerns; the "clean" source repo remains free of build artifacts and tooling config files when not actively building.
+
+---
+
+### ADR-011: Responsive Mobile Interaction Isolation
+
+* **Status**: Accepted (2026-01-11)
+* **Context**: Small interactive elements (specifically attribute pills) nested within the draggable Carousel component exhibited inconsistent responsiveness. Mobile touch-starts were being misinterpreted as the beginning of a drag operation, and proactive tooltip clearing in the input layer caused a race condition that required double-taps to activate tooltips.
+* **Decision**: A multi-layered interaction isolation strategy was implemented.
+    1.  **Semantic Button Upgrade**: Attribute pills were upgraded from `div` to `<button>` elements to utilize native browser event prioritization for interactive targets.
+    2.  **Input Layer Suppression**: Modified `EventManager.js` to explicitly block the `CarouselEventHandler` from initializing a drag state if an actionable element (`[data-action]`) is targeted.
+    3.  **Contextual Tooltip Cleanup**: Updated the global `touchstart` wrapper to suppress proactive tooltip clearing when touching interactive elements, ensuring the subsequent `click` handler can properly manage the toggle state.
+    4.  **Performance Overrides**: Applied `touch-action: manipulation` and `-webkit-tap-highlight-color: transparent` to all small interactive pills to eliminate the 300ms iOS tap delay.
+* **Consequences**:
+    * **Pro**: Guarantees native-like 1:1 responsiveness for all ship card interactions.
+    * **Pro**: Eliminates "double-tap" logic bugs by stabilizing the tooltip lifecycle.
+    * **Pro**: Prevents carousel jitter and accidental swiping during detailed interaction.
+    * **Pro**: Maintains existing carousel performance for background/non-interactive card areas.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -24002,7 +24089,7 @@ This document records the key architectural decisions made during the developmen
 
 The application is built on a strict **unidirectional data flow** model. This ensures that the state of the game is always predictable and that data mutations are traceable.
 
--   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions.
+-   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions. Implements explicit drag-suppression for actionable elements to ensure tap responsiveness on mobile.
 -   **Logic Layer (`SimulationService` & Sub-Services)**: Executes the core game logic in response to actions from the input layer. This is the only layer authorized to request a state change.
 -   **State Layer (`GameState`)**: The single source of truth. It holds all mutable game data and notifies the UI layer when changes occur.
 -   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it. *Note: Components (e.g., `HangarScreen`) now utilize helper services like `AssetService` to resolve static resource paths before rendering.*
