@@ -197,7 +197,7 @@ export class GameState {
                 shipyardActiveIndex: 0,
                 // --- VIRTUAL WORKBENCH (A) ---
                 // Add state to track the active intel tab
-                activeIntelTab: 'codex' // 'codex' or 'market'
+                activeIntelTab: 'intel-codex-content' // Matches DOM ID
                 // --- END VIRTUAL WORKBENCH ---
             }
         };

@@ -24,9 +24,6 @@ export function renderIntelScreen() {
         <div class="intel-scroll-panel">
             <div id="intel-codex-content" class="intel-tab-content">
                 <div id="lore-button-container" class="lore-container w-full max-w-md flex flex-col gap-4 p-4">
-                    <button class="btn btn-header" data-action="show_lore" data-lore-id="story_so_far">
-                        Story So Far...
-                    </button>
                     </div>
             </div>
 

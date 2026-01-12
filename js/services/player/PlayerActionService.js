@@ -235,7 +235,7 @@ export class PlayerActionService {
 
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>.`;
+            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>. This ship has been stored in your Hangar.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
 
             this.gameState.setState({

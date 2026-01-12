@@ -951,8 +951,8 @@ It is a ship for an owner who wants to command a small nation, a vessel of such 
         isRare: true,
         mechanicIds: ['ATTR_SPACE_FOLDING']
     },
-    "ShellThatEchoesOnly.Ship": {
-        name: "Shell That Echoes Only",
+    "EchoingShell.Ship": {
+        name: "Echoing Shell",
         class: "Z",
         price: 3500000,
         maxHealth: 30,

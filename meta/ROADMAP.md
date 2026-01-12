@@ -5,8 +5,8 @@ All notable plans and desirables for the Orbital Trading project will be documen
 ## Ongoing, WIP Efforts
 - Optimizing ship art asset use
 - Review trip fuel requirements and ship fuel tanks for balance
-- Rename Shell That Echoes only to Echoing Shell
-- Fix Lore screen loading
+- Expand station quirks
+- Verify effective function of ship attributes
 
 ## Immediate Concerns, Bugs
 

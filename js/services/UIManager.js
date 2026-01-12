@@ -29,17 +29,20 @@ import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3
 // --- END VIRTUAL WORKBENCH ---
 
 /**
- * Stores the lore text content.
+ * Stores the lore text content in a structured format for dynamic rendering.
  * @private
  */
 const LORE_CONTENT = {
-    story_so_far: `
-        <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
-    
-        <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
-        <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
-        <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
-    `
+    story_so_far: {
+        title: "Story So Far...",
+        content: `
+            <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
+        
+            <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
+            <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
+            <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
+        `
+    }
 };
 
 export class UIManager {
@@ -177,7 +180,7 @@ export class UIManager {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
             navBar: document.getElementById('nav-bar'),
-            newsTickerBar: document.getElementById('news-ticker-bar'), // ADDED
+            newsTickerBar: document.getElementById('news-ticker-bar'), 
             topBarContainer: document.getElementById('top-bar-container'),
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
@@ -205,13 +208,12 @@ export class UIManager {
             loreModal: document.getElementById('lore-modal'),
             loreModalContent: document.getElementById('lore-modal-content'),
 
-            // [[START]] VIRTUAL WORKBENCH (Cache EULA Modal)
+            // Cache EULA Modal
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
-            // [[END]] VIRTUAL WORKBENCH (Cache EULA Modal)
 
             // Tutorial Elements
-            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), // NEW
+            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), 
             tutorialToastContainer: document.getElementById('tutorial-toast-container'),
             tutorialToastText: document.getElementById('tutorial-toast-text'),
              tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
@@ -291,7 +293,7 @@ export class UIManager {
             // --- [[END]] MODIFICATION (Reset) ---
         }
 
-        this._renderNewsTicker(); // ADDED
+        this._renderNewsTicker(); 
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         this.updateStickyBar(gameState);
@@ -395,7 +397,7 @@ export class UIManager {
                         <div class="status-bar"><div class="fill fuel-fill" style="width: ${fuelPct}%;"></div></div>
                          <div class="status-tooltip">${Math.floor(activeShipState.fuel)}/${activeShipStatic.maxFuel} Fuel</div>
                     </div>
-                    <div class class="status-bar-group cargo-group" data-action="toggle-tooltip">
+                    <div class="status-bar-group cargo-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">C</span>
                         <div class="status-bar"><div class="fill cargo-fill" style="width: ${cargoPct}%;"></div></div>
                         <div class="status-tooltip">${cargoUsed}/${activeShipStatic.cargoCapacity} Cargo</div>
@@ -492,6 +494,10 @@ export class UIManager {
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
                 
+                // --- VIRTUAL WORKBENCH: DYNAMIC CODEX POPULATION ---
+                this._renderCodexButtons(this.cache.intelScreen);
+                // --- END VIRTUAL WORKBENCH ---
+
                 if (this.intelMarketRenderer) {
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) {
@@ -503,6 +509,24 @@ export class UIManager {
                 break;
         }
     }
+
+    // --- VIRTUAL WORKBENCH: NEW HELPER METHOD ---
+    /**
+     * Dynamically populates the lore menu buttons from LORE_CONTENT.
+     * @param {HTMLElement} screenContainer 
+     * @private
+     */
+    _renderCodexButtons(screenContainer) {
+        const loreContainer = screenContainer.querySelector('#lore-button-container');
+        if (!loreContainer) return;
+        
+        loreContainer.innerHTML = Object.entries(LORE_CONTENT).map(([id, data]) => {
+            return `<button class="btn btn-header" data-action="show_lore" data-lore-id="${id}">
+                        ${data.title}
+                    </button>`;
+        }).join('');
+    }
+    // --- END VIRTUAL WORKBENCH ---
 
     _updateHangarScreen(gameState) {
         const { uiState, player } = gameState; // Added player for visualSeed
@@ -1007,12 +1031,12 @@ export class UIManager {
             return;
         }
 
-        const contentHtml = LORE_CONTENT[loreId];
-        if (!contentHtml) {
+        const loreEntry = LORE_CONTENT[loreId];
+        if (!loreEntry) {
             this.logger.error('UIManager', `No lore content found for ID: ${loreId}`);
             contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
         } else {
-            contentEl.innerHTML = contentHtml;
+            contentEl.innerHTML = loreEntry.content;
         }
         
         contentEl.scrollTop = 0;
@@ -1303,32 +1327,32 @@ export class UIManager {
         const minVal = Math.min(...allValues), maxVal = Math.max(...allValues);
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
 
-        const getX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
-        const getY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
+        const iToX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
+        const vToY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
 
         let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
         svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
-        svg += `<line x1="${padding}" y1="${getY(maxVal)}" x2="${padding}" y2="${height - padding}" /><line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
+        svg += `<line x1="${padding}" y1="${vToY(maxVal)}" x2="${padding}" y2="${height - padding}" /><line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
         svg += `</g>`;
 
-        const staticAvgY = getY(staticAvg);
+        const staticAvgY = vToY(staticAvg);
         svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
         svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
         if (playerBuyPrice) {
-             const buyPriceY = getY(playerBuyPrice);
+             const buyPriceY = vToY(playerBuyPrice);
             svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
             svg += `<text x="${width - padding + 4}" y="${buyPriceY + 3}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid: ${formatCredits(playerBuyPrice, false)}</text>`;
         }
 
-        const pricePoints = history.map((p, i) => `${getX(i)},${getY(p.price)}`).join(' ');
+        const pricePoints = history.map((p, i) => `${iToX(i)},${vToY(p.price)}`).join(' ');
         svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" />`;
 
         const firstDay = history[0].day;
         const lastDay = history[history.length - 1].day;
         svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
         svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
-        svg += `<text x="${padding - 8}" y="${getY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
-        svg += `<text x="${padding - 8}" y="${getY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
         svg += `</svg>`;
         return svg;
     }
