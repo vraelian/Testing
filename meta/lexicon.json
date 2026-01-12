@@ -10,7 +10,8 @@
         "procedural_events",
         "debt_management",
         "wealth_milestones",
-        "deal-on-demand intel"
+        "deal-on-demand intel",
+        "modular_ship_upgrades"
       ],
       "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
     },
@@ -39,7 +40,10 @@
       "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
       "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
       "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
-      "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice."
+      "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
+      "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
+      "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
+      "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund."
     },
     "service_summaries": {
       "GameState": {
@@ -118,7 +122,7 @@
         ]
       },
       "PlayerActionService": {
-        "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+        "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, installing upgrades, and using station services.",
         "dependencies": [
           "GameState",
           "UIManager",
@@ -126,7 +130,8 @@
           "MarketService",
           "TimeService",
           "Logger",
-          "SimulationService (Facade)"
+          "SimulationService (Facade)",
+          "GameAttributes"
         ],
         "key_functions": {
           "buyItem": "Handles the logic for purchasing a commodity.",
@@ -134,8 +139,9 @@
           "validateBuyShip": "Validates if a ship purchase is possible.",
           "executeBuyShip": "Executes the state changes for purchasing a ship.",
           "validateSellShip": "Validates if a ship sale is possible.",
-          "executeSellShip": "Executes the state changes for selling a ship.",
-          "refuelTick": "Processes one 'tick' of refueling."
+          "executeSellShip": "Executes the state changes for selling a ship, including dynamic upgrade value calculation.",
+          "refuelTick": "Processes one 'tick' of refueling.",
+          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the state mutation."
         },
         "mutates_state": [
           "player.credits",
@@ -145,6 +151,16 @@
           "player.ownedShipIds",
           "market.inventory"
         ]
+      },
+      "GameAttributes": {
+        "description": "The Upgrade Registry. Defines the metadata (name, cost, description) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers.",
+        "dependencies": [],
+        "key_functions": {
+          "getDefinition": "Returns the static definition object for a given Upgrade ID.",
+          "getServiceCostModifier": "Calculates service cost multipliers based on installed upgrades.",
+          "getPriceModifier": "Calculates market price modifiers based on installed upgrades."
+        },
+        "mutates_state": []
       },
       "TravelService": {
         "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
@@ -243,6 +259,7 @@
           "NewsTickerService",
           "IntelService",
           "IntelMarketRenderer",
+          "GameAttributes",
           "js/services/ui/AnimationService.js"
         ],
         "key_functions": {
@@ -256,7 +273,8 @@
           "handleShowIntelOffer": "New handler for Intel Market.",
           "handleBuyIntel": "New handler for Intel Market.",
           "handleShowIntelDetails": "New handler for Intel Market.",
-          "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect."
+          "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect.",
+          "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrade purchase and destructive replacement."
         },
         "mutates_state": []
       },
@@ -307,7 +325,7 @@
         "mutates_state": []
       },
       "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions like 'show_intel_offer'.",
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions and Upgrade Installation.",
         "dependencies": [
           "GameState",
           "SimulationService",
@@ -364,7 +382,7 @@
         "dependencies": [
           "GameState",
           "UIManager",
-          "js/services/GameAttributes.js"
+          "GameAttributes"
         ],
         "key_functions": {
           "handleClick": "Manages tooltip visibility on click, including stateful toggling for attribute pills.",
@@ -535,7 +553,8 @@
         "role": "UI_RENDERER",
         "dependencies": [
           "js/services/IntelService.js",
-          "js/ui/renderers/IntelMarketRenderer.js"
+          "js/ui/renderers/IntelMarketRenderer.js",
+          "js/services/GameAttributes.js"
         ]
       },
       "F018": {
@@ -606,7 +625,10 @@
       },
       "F034": {
         "path": "./js/services/player/PlayerActionService.js",
-        "role": "LOGIC_SERVICE"
+        "role": "LOGIC_SERVICE",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F035": {
         "path": "./js/services/world/TimeService.js",
@@ -629,7 +651,10 @@
       },
       "F039": {
         "path": "./js/services/handlers/ActionClickHandler.js",
-        "role": "EVENT_HANDLER"
+        "role": "EVENT_HANDLER",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F040": {
         "path": "./js/services/handlers/MarketEventHandler.js",
@@ -645,7 +670,10 @@
       },
       "F043": {
         "path": "./js/services/handlers/TooltipHandler.js",
-        "role": "EVENT_HANDLER"
+        "role": "EVENT_HANDLER",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F044": {
         "path": "./js/services/ui/TravelAnimationService.js",
@@ -757,6 +785,11 @@
         "path": "./js/data/eulaContent.js",
         "role": "DATA_DEFINITION",
         "description": "Defines the static HTML content for the EULA modal."
+      },
+      "F069": {
+        "path": "./js/services/GameAttributes.js",
+        "role": "LOGIC_SERVICE",
+        "description": "The Upgrade Registry. Defines available upgrades, station quirks, and neutralizing legacy attribute logic."
       }
     }
   }

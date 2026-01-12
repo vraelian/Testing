@@ -166,3 +166,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates "double-tap" logic bugs by stabilizing the tooltip lifecycle.
     * **Pro**: Prevents carousel jitter and accidental swiping during detailed interaction.
     * **Pro**: Maintains existing carousel performance for background/non-interactive card areas.
+
+---
+
+### ADR-012: Modular Ship Upgrades & Destructive Replacement
+
+* **Status**: Accepted (2026-01-11)
+* **Context**: The game's previous system used static "Attributes" hardcoded to specific ship classes. This limited player customization and economic strategy. A more flexible system was needed where upgrades could be acquired, installed, and traded.
+* **Decision**: Transitioned to a "Modular Upgrade" system with a specific "Destructive Replacement" constraint.
+    1.  **Mutable State**: Upgrades are no longer static DB properties but are stored in the `shipState.upgrades` array (max 3).
+    2.  **Economic Integration**: Upgrades have intrinsic credit values. When a ship is sold, the value of its installed upgrades is added to the base price before depreciation is applied.
+    3.  **Destructive Replacement**: To enforce strategic decision-making without complex inventory management, a ship is limited to 3 slots. Installing a 4th upgrade forces the player to select and permanently destroy an existing one.
+    4.  **Registry Pattern**: `GameAttributes.js` was refactored from a static logic map to an `Upgrade Registry`, defining metadata and neutralizing legacy attribute logic.
+* **Consequences**:
+    * **Pro**: Greatly expands player agency and customization options.
+    * **Pro**: Adds a new layer to the economy (upgrading ships to increase resale value).
+    * **Pro**: "Destructive Replacement" creates high-stakes decisions without the UI clutter of a "spare parts" inventory.
+    * **Con**: Requires safeguarding against accidental destruction (mitigated by the Triple-Confirmation modal).

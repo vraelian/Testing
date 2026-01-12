@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.88</title>
+    <title>Orbital Trading 33.89</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.88</p>
+            <p>Version 33.89</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -22413,6 +22413,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [33.89] - 2026-1-11
+-  overhauled ship attribute system
+-  added ship upgrade system
+-  updated meta files
+
 ## [33.88] - 2026-1-11
 -  renamed Echoing Shell ship
 -  fixed codex screen loading delay
@@ -23182,7 +23187,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "procedural_events",
         "debt_management",
         "wealth_milestones",
-        "deal-on-demand intel"
+        "deal-on-demand intel",
+        "modular_ship_upgrades"
       ],
       "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodITIES -> repeats."
     },
@@ -23211,7 +23217,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
       "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
       "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
-      "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice."
+      "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
+      "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
+      "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
+      "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund."
     },
     "service_summaries": {
       "GameState": {
@@ -23290,7 +23299,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         ]
       },
       "PlayerActionService": {
-        "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, and using station services (refuel/repair).",
+        "description": "Manages all direct, player-initiated actions that have an immediate effect, such as buying/selling commodities, purchasing ships, installing upgrades, and using station services.",
         "dependencies": [
           "GameState",
           "UIManager",
@@ -23298,7 +23307,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "MarketService",
           "TimeService",
           "Logger",
-          "SimulationService (Facade)"
+          "SimulationService (Facade)",
+          "GameAttributes"
         ],
         "key_functions": {
           "buyItem": "Handles the logic for purchasing a commodity.",
@@ -23306,8 +23316,9 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "validateBuyShip": "Validates if a ship purchase is possible.",
           "executeBuyShip": "Executes the state changes for purchasing a ship.",
           "validateSellShip": "Validates if a ship sale is possible.",
-          "executeSellShip": "Executes the state changes for selling a ship.",
-          "refuelTick": "Processes one 'tick' of refueling."
+          "executeSellShip": "Executes the state changes for selling a ship, including dynamic upgrade value calculation.",
+          "refuelTick": "Processes one 'tick' of refueling.",
+          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the state mutation."
         },
         "mutates_state": [
           "player.credits",
@@ -23317,6 +23328,16 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "player.ownedShipIds",
           "market.inventory"
         ]
+      },
+      "GameAttributes": {
+        "description": "The Upgrade Registry. Defines the metadata (name, cost, description) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers.",
+        "dependencies": [],
+        "key_functions": {
+          "getDefinition": "Returns the static definition object for a given Upgrade ID.",
+          "getServiceCostModifier": "Calculates service cost multipliers based on installed upgrades.",
+          "getPriceModifier": "Calculates market price modifiers based on installed upgrades."
+        },
+        "mutates_state": []
       },
       "TravelService": {
         "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js`.",
@@ -23415,6 +23436,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "NewsTickerService",
           "IntelService",
           "IntelMarketRenderer",
+          "GameAttributes",
           "js/services/ui/AnimationService.js"
         ],
         "key_functions": {
@@ -23428,7 +23450,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "handleShowIntelOffer": "New handler for Intel Market.",
           "handleBuyIntel": "New handler for Intel Market.",
           "handleShowIntelDetails": "New handler for Intel Market.",
-          "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect."
+          "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect.",
+          "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrade purchase and destructive replacement."
         },
         "mutates_state": []
       },
@@ -23479,7 +23502,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "mutates_state": []
       },
       "ActionClickHandler": {
-        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions like 'show_intel_offer'.",
+        "description": "Handles general `data-action` click events, such as navigation, modal triggers, and simple state changes. Now also handles Intel Market actions and Upgrade Installation.",
         "dependencies": [
           "GameState",
           "SimulationService",
@@ -23536,7 +23559,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "dependencies": [
           "GameState",
           "UIManager",
-          "js/services/GameAttributes.js"
+          "GameAttributes"
         ],
         "key_functions": {
           "handleClick": "Manages tooltip visibility on click, including stateful toggling for attribute pills.",
@@ -23707,7 +23730,8 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "role": "UI_RENDERER",
         "dependencies": [
           "js/services/IntelService.js",
-          "js/ui/renderers/IntelMarketRenderer.js"
+          "js/ui/renderers/IntelMarketRenderer.js",
+          "js/services/GameAttributes.js"
         ]
       },
       "F018": {
@@ -23778,7 +23802,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       },
       "F034": {
         "path": "./js/services/player/PlayerActionService.js",
-        "role": "LOGIC_SERVICE"
+        "role": "LOGIC_SERVICE",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F035": {
         "path": "./js/services/world/TimeService.js",
@@ -23801,7 +23828,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       },
       "F039": {
         "path": "./js/services/handlers/ActionClickHandler.js",
-        "role": "EVENT_HANDLER"
+        "role": "EVENT_HANDLER",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F040": {
         "path": "./js/services/handlers/MarketEventHandler.js",
@@ -23817,7 +23847,10 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
       },
       "F043": {
         "path": "./js/services/handlers/TooltipHandler.js",
-        "role": "EVENT_HANDLER"
+        "role": "EVENT_HANDLER",
+        "dependencies": [
+          "js/services/GameAttributes.js"
+        ]
       },
       "F044": {
         "path": "./js/services/ui/TravelAnimationService.js",
@@ -23929,6 +23962,11 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         "path": "./js/data/eulaContent.js",
         "role": "DATA_DEFINITION",
         "description": "Defines the static HTML content for the EULA modal."
+      },
+      "F069": {
+        "path": "./js/services/GameAttributes.js",
+        "role": "LOGIC_SERVICE",
+        "description": "The Upgrade Registry. Defines available upgrades, station quirks, and neutralizing legacy attribute logic."
       }
     }
   }
@@ -24234,6 +24272,23 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates "double-tap" logic bugs by stabilizing the tooltip lifecycle.
     * **Pro**: Prevents carousel jitter and accidental swiping during detailed interaction.
     * **Pro**: Maintains existing carousel performance for background/non-interactive card areas.
+
+---
+
+### ADR-012: Modular Ship Upgrades & Destructive Replacement
+
+* **Status**: Accepted (2026-01-11)
+* **Context**: The game's previous system used static "Attributes" hardcoded to specific ship classes. This limited player customization and economic strategy. A more flexible system was needed where upgrades could be acquired, installed, and traded.
+* **Decision**: Transitioned to a "Modular Upgrade" system with a specific "Destructive Replacement" constraint.
+    1.  **Mutable State**: Upgrades are no longer static DB properties but are stored in the `shipState.upgrades` array (max 3).
+    2.  **Economic Integration**: Upgrades have intrinsic credit values. When a ship is sold, the value of its installed upgrades is added to the base price before depreciation is applied.
+    3.  **Destructive Replacement**: To enforce strategic decision-making without complex inventory management, a ship is limited to 3 slots. Installing a 4th upgrade forces the player to select and permanently destroy an existing one.
+    4.  **Registry Pattern**: `GameAttributes.js` was refactored from a static logic map to an `Upgrade Registry`, defining metadata and neutralizing legacy attribute logic.
+* **Consequences**:
+    * **Pro**: Greatly expands player agency and customization options.
+    * **Pro**: Adds a new layer to the economy (upgrading ships to increase resale value).
+    * **Pro**: "Destructive Replacement" creates high-stakes decisions without the UI clutter of a "spare parts" inventory.
+    * **Con**: Requires safeguarding against accidental destruction (mitigated by the Triple-Confirmation modal).
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -24280,7 +24335,6 @@ graph TD
 
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
-}
 Detailed Flow Example: Intel Market (Local Data Broker)
 This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
 
@@ -24319,82 +24373,41 @@ graph TD
     end
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Explanation of Intel Market Data Flow
-UI Render: When the 'Intel Market' tab is clicked, IntelMarketRenderer is called. It reads gameState.intelMarket for the current location and calls IntelService.calculateIntelPrice for each packet to get a dynamic price based on player credits.
-
-Player Purchase: Player clicks 'Purchase'. UIManager calls IntelService.purchaseIntel.
-
-Transaction Logic: IntelService validates the purchase, deducts player.credits, sets the packet's isPurchased flag, and (most importantly) creates the gameState.activeIntelDeal object. This object "locks" the market.
-
-Market Override: The MarketService.getPrice function is modified to first check for an activeIntelDeal. If a deal matches the location and commodity, it returns the deal.overridePrice, bypassing all normal simulation logic.
-
-Expiration: The TimeService.pulse function checks daily if the activeIntelDeal has expired. If it has, it sets activeIntelDeal back to null, "unlocking" the Intel Market.
-
-Detailed Flow Example: Market Simulation
-This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.
+Detailed Flow Example: Upgrade Installation (Destructive Replacement)
+This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
 
 Code snippet
 
 graph TD
-    subgraph Player Action (Instant)
-        A[PlayerActionService.buyItem/sellItem] --> B[Sets inventoryItem.lastPlayerInteractionTimestamp];
-        A --> C[Instantly changes inventoryItem.quantity];
-        A --> D[Sets inventoryItem.marketPressure];
+    subgraph Input Layer (ActionClickHandler)
+        A[Click 'Buy Upgrade'] --> B{Check Funds};
+        B -- OK --> C[UIManager.showUpgradeInstallationModal];
     end
 
-    subgraph Weekly Tick (Delayed)
-        E(TimeService.advanceDays) --> F[SimulationService.updateMarket];
-        F --> G[MarketService.evolveMarketPrices];
-        F --> H[MarketService.replenishMarketInventory];
+    subgraph UI Layer (Modal Flow)
+        C --> D{Slots Full? (>=3)};
+        D -- No --> E[Show: Confirm Purchase];
+        D -- Yes --> F[Show: Select Upgrade to Replace];
+        
+        E -- Confirm --> G[Callback: index = -1];
+        F -- Select Item --> H[Show: Confirm Destruction];
+        H -- Confirm --> I[Callback: index = 0..2];
     end
 
-    subgraph Price Logic (evolveMarketPrices)
-        G --> I{Day >= timestamp + 7?};
-        I -- No (Delay Active) --> J[Price change = meanReversion + randomFluctuation];
-        I -- Yes (Delay Over) --> K[Calculate availabilityEffect from quantity];
-        K --> L[Price change = meanReversion + randomFluctuation + availabilityEffect];
-        C -.-> K;
-        B -.-> I;
+    subgraph Logic Layer (PlayerActionService)
+        G & I --> J[executeInstallUpgrade];
+        J -- 1. --> K[Deduct Credits];
+        J -- 2. --> L{Index != -1?};
+        L -- Yes --> M[Splice/Remove Old Upgrade];
+        L -- No --> N[No Removal];
+        M & N --> O[Push New Upgrade ID];
     end
 
-    subgraph Stock Logic (replenishMarketInventory)
-        H --> M[Calculate targetStock];
-        M --> N[Calculate 10% replenishment];
-        H --> O[Reset state if untouched > 120 days];
-        D -.-> M;
+    subgraph State Layer
+        O -- 3. Update --> P((GameState));
     end
 
-    style A fill:#e63946,stroke:#fff
-    style E fill:#457b9d,stroke:#fff
-Explanation of Market Data Flow
-This model ensures player actions have a powerful, delayed effect, preventing same-day abuse.
-
-Instant Player Action: When a player trades, PlayerActionService immediately modifies the GameState:
-
-It changes the item's quantity (e.g., increases it on a sale).
-
-It sets lastPlayerInteractionTimestamp to the current day.
-
-It sets marketPressure (this is only for stock logic, not price).
-
-It activates the priceLockEndDay (this disables meanReversion).
-
-Weekly Price Logic (evolveMarketPrices): On the weekly tick, MarketService runs its price logic:
-
-It checks if the 7-day anti-abuse delay has passed (Day >= timestamp + 7).
-
-If NO (Delay Active): No availabilityEffect is calculated. The price is only affected by natural meanReversion (which is likely disabled by the Price Lock) and randomFluctuation.
-
-If YES (Delay Over): The availabilityEffect is calculated now, using the quantity the player changed days ago. This single effect (tuned to 0.50 strength) creates the large price crash or spike.
-
-Weekly Stock Logic (replenishMarketInventory):
-
-This system runs separately and is not subject to the 7-day price delay.
-
-It uses the marketPressure set by the player to dynamically adjust the targetStock.
-
-It then moves the quantity 10% closer to this targetStock every week, creating the "race" for the player as the market's supply (and thus its price) slowly recovers.
-
+    style P fill:#2a9d8f,stroke:#fff,stroke-width:2px
 Detailed Flow Example: Animated Ship Purchase
 This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
 
@@ -24436,254 +24449,217 @@ graph TD
     style K fill:#f4a261,stroke:#fff,stroke-width:2px
     style F fill:#e76f51,stroke:#fff,stroke-width:2px
     style G fill:#e76f51,stroke:#fff,stroke-width:2px
-Explanation of Animated Ship Purchase Flow
-Async Handling: The EventManager and ActionClickHandler are now async to handle the await keyword.
 
-Orchestration: SimulationService.buyShip acts as the orchestrator.
+### 4. `meta/SERVICES.md`
+**Updates:** Updated `GameAttributes` description to reflect its new role as a Registry. Updated `PlayerActionService` and `UIManager` to include new upgrade-related responsibilities.
 
-Validation: It first calls the synchronous PlayerActionService.validateBuyShip. If this fails, the process stops.
+```markdown
+# Service Responsibility & Dependency Matrix
 
-Blocking Animation: On success, it calls await UIManager.runShipTransactionAnimation. The await keyword pauses the execution of the buyShip function.
+## Core Architecture
+**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
 
-Promise: The UIManager in turn calls await AnimationService.playBlockingAnimation. This service attaches a CSS animation class and returns a Promise that only resolves when the animationend event fires.
+---
 
-Execution: Once the animation Promise resolves, execution resumes in SimulationService.buyShip. It then calls the synchronous PlayerActionService.executeBuyShip.
+### 1. State Management
+* **GameState (F009)**
+    * **Responsibility**: Single source of truth. Holds all mutable data (`player`, `market`, `day`, `ships`).
+    * **Key Behavior**: Emits notifications to subscribers (UIManager) whenever `setState` is called.
+    * **Dependencies**: None (Leaf node).
 
-State Change: executeBuyShip mutates the GameState (deducts credits, adds ship).
+### 2. Game Logic Services
+* **PlayerActionService (F034)**
+    * **Responsibility**: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
+    * **Key Behavior**: Validates actions against player credits/capacity, mutates GameState, logs transactions.
+    * **Dependencies**: `GameState`, `UIManager`, `MissionService`, `MarketService`, `GameAttributes`.
 
-Final Render: The GameState.setState call notifies UIManager.render, which re-renders the Hangar/Shipyard, now showing the newly purchased ship (or its absence from the shipyard list).
+* **GameAttributes (F069)**
+    * **Responsibility**: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
+    * **Key Behavior**: Provides definition objects for Upgrade IDs. Neutralizes legacy attribute calls.
+    * **Dependencies**: None.
+
+* **TravelService (F036)**
+    * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
+    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution.
+    * **Dependencies**: `GameState`, `TimeService`.
+
+* **MarketService (F010)**
+    * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
+    * **Key Behavior**: Implements "Delayed Supply" logic where player actions affect prices 7 days later.
+    * **Dependencies**: `GameState`, `IntelService`.
+
+* **IntelService (F057)**
+    * **Responsibility**: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
+    * **Key Behavior**: Creates temporary `activeIntelDeal` objects in GameState that override market prices.
+    * **Dependencies**: `GameState`.
+
+* **TimeService (F035)**
+    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
+    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
+    * **Dependencies**: `GameState`, `MarketService`.
+
+* **MissionService (F018)**
+    * **Responsibility**: procedural mission generation and tracking.
+    * **Key Behavior**: Checks prerequisites (wealth, location) to offer missions. Tracks completion status.
+    * **Dependencies**: `GameState`.
+
+* **TutorialService (F016)**
+    * **Responsibility**: Manages the interactive tutorial overlay.
+    * **Key Behavior**: Watches GameState for specific triggers to advance steps or lock UI elements.
+    * **Dependencies**: `GameState`, `UIManager`.
+
+---
+
+### 3. UI & Presentation Services
+* **UIManager (F017)**
+    * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
+    * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
+    * **Dependencies**: `GameAttributes`, `IntelService`, `IntelMarketRenderer`, `EffectsManager`.
+
+* **IntelMarketRenderer (F058)**
+    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab.
+    * **Key Behavior**: Separates the complex shop logic from the main `IntelScreen` shell.
+    * **Dependencies**: `IntelService`.
+
+* **NewsTickerService (F053)**
+    * **Responsibility**: Manages the scrolling text bar.
+    * **Key Behavior**: Aggregates flavor text, system alerts, and intel rumors into a seamless loop.
+    * **Dependencies**: `GameState`.
+
+* **AssetService (F065)**
+    * **Responsibility**: path resolution for visual assets.
+    * **Key Behavior**: Uses `visualSeed` to deterministically cycle through ship art variants.
+    * **Dependencies**: `assets_config.js`.
+
+---
+
+### 4. Input & Event Handling
+* **EventManager (F015)**: The root listener. Binds global click/touch events.
+* **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
+* **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
+* **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
+* **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
+* **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
-Orbital Trading - GameState Schema
-Version: 2.4 Source: js/services/GameState.js (see startNewGame method)
-
-This document defines the structure of the central GameState object, which is instantiated in main.js and managed by GameState.js. It is the "source of truth" for all dynamic, mutable data in the application.
-
-day: {number} - The current in-game day.
-
-lastInterestChargeDay: {number} - The day on which player debt interest was last calculated.
-
-lastMarketUpdateDay: {number} - The day on which market prices and inventories were last updated.
-
-currentLocationId: {string} - The LOCATION_ID where the player is currently docked.
-
-activeNav: {string} - The NAV_ID of the currently active main navigation tab (e.g., "ship", "starport").
-
-activeScreen: {string} - The SCREEN_ID of the currently active screen (e.g., "map", "market").
-
-isGameOver: {boolean} - Flag indicating if the game over state has been triggered.
-
-subNavCollapsed: {boolean} - Flag tracking the UI state of the sub-navigation bar.
-
-introSequenceActive: {boolean} - Flag indicating if the introductory tutorial/sequence is active.
-
-lastActiveScreen: {object} - A map storing the last active screen for each main navigation tab.
-
-[NAV_ID: string]: {string} - The SCREEN_ID to return to (e.g., ship: "map").
-
-pendingTravel: {object | null} - If not null, contains details of a travel action interrupted by an event.
-
-destinationId: {string} - The LOCATION_ID the player was traveling to.
-eventHullDamagePercent: {number} - (Optional) Hull damage from an event, applied on arrival.
-travelTimeAdd: {number} - (Optional) Flat number of days added to the trip by an event.
-travelTimeAddPercent: {number} - (Optional) Multiplier to increase travel time from an event.
-setTravelTime: {number} - (Optional) A new, fixed travel time set by an event.
-
-player: {object} - Contains all data specific to the player.
-
-name: {string} - The player's chosen name.
-
-playerTitle: {string} - The player's current title (e.g., "Captain").
-
-playerAge: {number} - The player's current age.
-
-lastBirthdayYear: {number} - The in-game year of the player's last birthday.
-
-birthdayProfitBonus: {number} - A permanent, cumulative profit bonus that increases each birthday.
-
-introStep: {number} - A counter tracking progress through the intro sequence.
-
-credits: {number} - Player's current currency.
-
-debt: {number} - Player's outstanding loan amount.
-
-monthlyInterestAmount: {number} - The amount of interest added to the debt each cycle.
-
-loanStartDate: {number | null} - The day on which the loan was taken.
-
-seenGarnishmentWarning: {boolean} - Flag tracking if the player has been warned about wage garnishment.
-
-revealedTier: {number} - The highest market tier the player has unlocked.
-
-visualSeed: {number} - The integer used to deterministically calculate which visual variant (A, B, C...) is displayed for a ship.
-
-unlockedLicenseIds: {Array<string>} - A list of LICENSE_IDs the player has purchased.
-
-unlockedLocationIds: {Array<string>} - A list of LOCATION_IDs the player is allowed to visit.
-
-seenCommodityMilestones: {Array<string>} - A log of commodity trade value milestones achieved.
-
-financeLog: {Array<object>} - A log of all financial transactions.
-
-{object}:
-
-day: {number} - The day of the transaction.
-
-type: {string} - "buy", "sell", "interest", "loan", "payment", "ship", "fee", "bonus".
-
-amount: {number} - Credits value (positive for income, negative for expense).
-
-description: {string} - Human-readable log (e.g., "Bought 10 Water").
-
-activePerks: {object} - A map of active player perks (e.g., `PERK_IDS.NAVIGATOR: true`).
-
-seenEvents: {Array<string>} - A list of EVENT_IDs the player has already encountered.
-
-activeShipId: {string} - The SHIP_ID of the player's currently active ship.
-
-ownedShipIds: {Array<string>} - A list of SHIP_IDs for all ships the player owns.
-
-shipStates: {object} - A map of the dynamic state for each ship the player owns.
-
-[SHIP_ID: string]: {object}
-
-health: {number} - Current hull integrity.
-
-fuel: {number} - Current fuel units.
-
-hullAlerts: {object} - Flags for triggering hull damage warnings.
-
-one: {boolean} - Flag for first damage warning.
-
-two: {boolean} - Flag for second (critical) damage warning.
-
-inventories: {object} - A map of cargo inventories, keyed by SHIP_ID.
-
-[SHIP_ID: string]: {object}
-
-[COMMODITY_ID: string]: {object}
-
-quantity: {number} - The quantity of the commodity held.
-
-avgCost: {number} - The average purchase price for the units held, for profit tracking.
-
-debugEventIndex: {number} - A developer tool for forcing specific events.
-
-market: {object} - Contains all data related to the galactic economy.
-
-prices: {object} - A map of current commodity prices by location.
-
-[LOCATION_ID: string]: {object}
-
-[COMMODITY_ID: string]: {number} - The current price.
-
-inventory: {object} - A map of current commodity inventory by location.
-
-[LOCATION_ID: string]: {object}
-
-[COMMODITY_ID: string]: {object}
-
-quantity: {number} - The current available quantity.
-
-marketPressure: {number} - A value from -1 to 1 tracking player impact on this item.
-
-lastPlayerInteractionTimestamp: {number} - The day the player last traded this item here.
-
-hoverUntilDay: {number} - The day until which this item's price is artificially modified by an event.
-
-rivalArbitrage: {object} - Tracks AI rival activity.
-
-isActive: {boolean} - Whether a rival is currently targeting this item.
-
-endDay: {number} - The day this rival activity will cease.
-
-priceLockEndDay: {number} - The day until which natural mean reversion is disabled for this item.
-
-isDepleted: {boolean} - Flag indicating if the item was bought out, triggering a price hike.
-
-depletionDay: {number} - The day the depletion event was triggered.
-
-depletionBonusDay: {number} - The day the depletion cooldown was set (prevents spamming).
-
-galacticAverages: {object} - A map of the baseline average price for each commodity.
-
-[COMMODDITY_ID: string]: {number} - The calculated average price.
-
-priceHistory: {object} - A log of the last N prices for charts.
-
-[LOCATION_ID: string]: {object}
-
-[COMMODITY_ID: string]: {Array<number>} - An array of recent prices.
-
-shipyardStock: {object} - A map of ships available for sale at each location.
-
-[LOCATION_ID: string]: {object}
-
-day: {number} - The day the stock was last refreshed.
-
-shipsForSale: {Array<string>} - A list of SHIP_IDs available for purchase.
-
-intelMarket: {object} - The master "inventory" for all Data Brokers, keyed by locationId.
-
-[LOCATION_ID: string]: {Array<object>} - An array of `intelPacket` objects available at this location.
-
-{intelPacket}:
-id: {string} - Unique packet ID.
-locationId: {string} - The location where the packet is SOLD.
-dealLocationId: {string} - The location where the DEAL is.
-commodityId: {string} - The commodity of the deal.
-discountPercent: {float} - The hidden discount (e.g., 0.40).
-durationDays: {integer} - The hidden duration (used for pricing).
-valueMultiplier: {float} - Scaling factor for price calculation.
-messageKey: {string} - Key to look up text in `intelContent.js`.
-isPurchased: {boolean} - State flag, `false` by default.
-pricePaid: {number} - (Set on purchase) The credit amount the player paid.
-expiryDay: {number} - (Set on purchase) The game day the deal expires.
-
-activeIntelDeal: {object | null} - Stores the single active, purchased deal. If `null`, the Intel Market is "unlocked".
-
-locationId: {string} - The location where the deal is active (dealLocationId from packet).
-commodityId: {string} - The commodity affected by the deal.
-overridePrice: {number} - The pre-calculated, locked-in price for the commodity.
-expiryDay: {number} - The game-day this deal expires.
-sourcePacketId: {string} - The ID of the packet that generated this deal.
-sourceSaleLocationId: {string} - The LOCATION_ID of the market where the packet was purchased.
-
-tutorials: {object} - State of the Tutorial Toast System (TTS).
-
-activeBatchId: {string | null} - The ID of the tutorial batch currently being displayed.
-
-activeStepId: {string | null} - The ID of the specific tutorial step currently being displayed.
-
-seenBatchIds: {Array<string>} - A list of tutorial batch IDs the player has already completed.
-
-skippedTutorialBatches: {Array<string>} - A list of batch IDs the player has explicitly skipped.
-
-navLock: {object | null} - If set, locks the UI to a specific NAV_ID or SCREEN_ID (e.g., `{ navId: 'ship', screenId: 'navigation' }`).
-
-missions: {object} - Tracks mission states.
-
-activeMissionId: {string | null} - The MISSION_ID of the player's currently accepted mission.
-
-completedMissionIds: {Array<string>} - A list of MISSION_IDs the player has completed.
-
-missionProgress: {object} - A map for tracking progress on specific mission objectives.
-
-activeMissionObjectivesMet: {boolean} - A flag set to true when all objectives for the active mission are complete.
-
-uiState: {object} - Contains the transient state of various UI components.
-
-marketCardMinimized: {object} - A map tracking the minimized state of market cards.
-
-[COMMODITY_ID: string]: {boolean} - True if the card is minimized.
-
-hangarShipyardToggleState: {string} - The active tab on the Hangar screen ("hangar" or "shipyard").
-
-hangarActiveIndex: {number} - The index of the ship carousel slide in "hangar" mode.
-
-shipyardActiveIndex: {number} - The index of the ship carousel slide in "shipyard" mode.
-
-activeIntelTab: {string} - The active tab on the Intel screen ("codex" or "market").
+# Game State Schema
+
+The `GameState` object is the single source of truth for the application. It is a JSON-serializable object that contains all mutable data.
+
+## Root Structure
+```javascript
+{
+  day: Integer,                // Current game day (starts at 1)
+  currentLocationId: String,   // ID of the player's current location (e.g., "terra")
+  activeNav: String,           // ID of the currently active main nav tab (e.g., "nav-starport")
+  activeScreen: String,        // ID of the currently active screen (e.g., "market")
+  isGameOver: Boolean,         // Flag to block actions if game is lost
+  introSequenceActive: Boolean,// Flag for the tutorial/intro flow
+  
+  player: { ... },             // Player specific data (see below)
+  market: { ... },             // Economy data (prices, inventory)
+  missions: { ... },           // Active and completed missions
+  tutorials: { ... },          // Tutorial progress tracking
+  intelMarket: { ... },        // Available intel packets per location
+  activeIntelDeal: Object,     // The currently active market override (or null)
+  
+  uiState: {                   // Transient UI state (scroll positions, toggle states)
+    hangarShipyardToggleState: "hangar" | "shipyard",
+    hangarActiveIndex: Integer,
+    shipyardActiveIndex: Integer,
+    activeIntelTab: String,
+    marketCardMinimized: { [commodityId]: Boolean }
+  }
+}
+Player State (gameState.player)
+JavaScript
+
+{
+  name: String,
+  credits: Integer,
+  debt: Integer,
+  playerAge: Integer,
+  
+  // Progression
+  revealedTier: Integer,       // Highest commodity tier visible (1-3)
+  unlockedLicenseIds: Array,   // List of owned licenses
+  unlockedLocationIds: Array,  // List of discovered locations
+  
+  // Ships & Assets
+  activeShipId: String,        // ID of the currently boarded ship
+  ownedShipIds: [String],      // Array of IDs of all owned ships
+  visualSeed: Integer,         // Counter for deterministic asset rotation
+  
+  // Ship State Dictionary
+  // Keys are Ship IDs (e.g., "Wanderer.Ship")
+  shipStates: {
+    "Wanderer.Ship": {
+      health: Number,          // Current hull points
+      fuel: Number,            // Current fuel points
+      hullAlerts: Object,      // Tracks if low-health warnings have been shown
+      upgrades: [String]       // Array of Upgrade IDs (Max length 3). e.g., ["UPGRADE_01", "UPGRADE_03"]
+    }
+  },
+  
+  // Inventory Dictionary
+  // Nested by ShipID, then CommodityID
+  inventories: {
+    "Wanderer.Ship": {
+      "food_rations": {
+        quantity: Integer,
+        avgCost: Number
+      }
+    }
+  }
+}
+Market State (gameState.market)
+JavaScript
+
+{
+  // Current Prices (Location -> Commodity -> Price)
+  prices: {
+    "terra": {
+      "food_rations": 105,
+      "electronics": 450
+    }
+  },
+  
+  // Current Inventory (Location -> Commodity -> Data)
+  inventory: {
+    "terra": {
+      "food_rations": {
+        quantity: Integer,
+        marketPressure: Number, // Influence on future stock
+        lastPlayerInteractionTimestamp: Integer // Day of last trade
+      }
+    }
+  },
+  
+  // Shipyard Stock (Location -> Data)
+  shipyardStock: {
+    "terra": {
+      day: Integer,            // Day last updated
+      shipsForSale: [String]   // Array of Ship IDs available
+    }
+  }
+}
+Intel State (gameState.intelMarket)
+JavaScript
+
+{
+  // Keyed by Location ID
+  "terra": [
+    {
+      id: String,              // UUID
+      dealLocationId: String,  // Where the deal is
+      commodityId: String,     // What commodity
+      discountPercent: Number, // e.g., 0.40
+      pricePaid: Number,       // Credits spent to buy this (if purchased)
+      expiryDay: Integer,      // When it disappears from the list
+      isPurchased: Boolean     // True if bought
+    }
+  ]
+}
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 

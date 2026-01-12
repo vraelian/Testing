@@ -41,7 +41,6 @@ graph TD
 
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
-}
 Detailed Flow Example: Intel Market (Local Data Broker)
 This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
 
@@ -80,82 +79,41 @@ graph TD
     end
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Explanation of Intel Market Data Flow
-UI Render: When the 'Intel Market' tab is clicked, IntelMarketRenderer is called. It reads gameState.intelMarket for the current location and calls IntelService.calculateIntelPrice for each packet to get a dynamic price based on player credits.
-
-Player Purchase: Player clicks 'Purchase'. UIManager calls IntelService.purchaseIntel.
-
-Transaction Logic: IntelService validates the purchase, deducts player.credits, sets the packet's isPurchased flag, and (most importantly) creates the gameState.activeIntelDeal object. This object "locks" the market.
-
-Market Override: The MarketService.getPrice function is modified to first check for an activeIntelDeal. If a deal matches the location and commodity, it returns the deal.overridePrice, bypassing all normal simulation logic.
-
-Expiration: The TimeService.pulse function checks daily if the activeIntelDeal has expired. If it has, it sets activeIntelDeal back to null, "unlocking" the Intel Market.
-
-Detailed Flow Example: Market Simulation
-This diagram shows the data flow for the "Delayed Supply" economic model, which is triggered by a player trade and processed during the weekly simulation tick.
+Detailed Flow Example: Upgrade Installation (Destructive Replacement)
+This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
 
 Code snippet
 
 graph TD
-    subgraph Player Action (Instant)
-        A[PlayerActionService.buyItem/sellItem] --> B[Sets inventoryItem.lastPlayerInteractionTimestamp];
-        A --> C[Instantly changes inventoryItem.quantity];
-        A --> D[Sets inventoryItem.marketPressure];
+    subgraph Input Layer (ActionClickHandler)
+        A[Click 'Buy Upgrade'] --> B{Check Funds};
+        B -- OK --> C[UIManager.showUpgradeInstallationModal];
     end
 
-    subgraph Weekly Tick (Delayed)
-        E(TimeService.advanceDays) --> F[SimulationService.updateMarket];
-        F --> G[MarketService.evolveMarketPrices];
-        F --> H[MarketService.replenishMarketInventory];
+    subgraph UI Layer (Modal Flow)
+        C --> D{Slots Full? (>=3)};
+        D -- No --> E[Show: Confirm Purchase];
+        D -- Yes --> F[Show: Select Upgrade to Replace];
+        
+        E -- Confirm --> G[Callback: index = -1];
+        F -- Select Item --> H[Show: Confirm Destruction];
+        H -- Confirm --> I[Callback: index = 0..2];
     end
 
-    subgraph Price Logic (evolveMarketPrices)
-        G --> I{Day >= timestamp + 7?};
-        I -- No (Delay Active) --> J[Price change = meanReversion + randomFluctuation];
-        I -- Yes (Delay Over) --> K[Calculate availabilityEffect from quantity];
-        K --> L[Price change = meanReversion + randomFluctuation + availabilityEffect];
-        C -.-> K;
-        B -.-> I;
+    subgraph Logic Layer (PlayerActionService)
+        G & I --> J[executeInstallUpgrade];
+        J -- 1. --> K[Deduct Credits];
+        J -- 2. --> L{Index != -1?};
+        L -- Yes --> M[Splice/Remove Old Upgrade];
+        L -- No --> N[No Removal];
+        M & N --> O[Push New Upgrade ID];
     end
 
-    subgraph Stock Logic (replenishMarketInventory)
-        H --> M[Calculate targetStock];
-        M --> N[Calculate 10% replenishment];
-        H --> O[Reset state if untouched > 120 days];
-        D -.-> M;
+    subgraph State Layer
+        O -- 3. Update --> P((GameState));
     end
 
-    style A fill:#e63946,stroke:#fff
-    style E fill:#457b9d,stroke:#fff
-Explanation of Market Data Flow
-This model ensures player actions have a powerful, delayed effect, preventing same-day abuse.
-
-Instant Player Action: When a player trades, PlayerActionService immediately modifies the GameState:
-
-It changes the item's quantity (e.g., increases it on a sale).
-
-It sets lastPlayerInteractionTimestamp to the current day.
-
-It sets marketPressure (this is only for stock logic, not price).
-
-It activates the priceLockEndDay (this disables meanReversion).
-
-Weekly Price Logic (evolveMarketPrices): On the weekly tick, MarketService runs its price logic:
-
-It checks if the 7-day anti-abuse delay has passed (Day >= timestamp + 7).
-
-If NO (Delay Active): No availabilityEffect is calculated. The price is only affected by natural meanReversion (which is likely disabled by the Price Lock) and randomFluctuation.
-
-If YES (Delay Over): The availabilityEffect is calculated now, using the quantity the player changed days ago. This single effect (tuned to 0.50 strength) creates the large price crash or spike.
-
-Weekly Stock Logic (replenishMarketInventory):
-
-This system runs separately and is not subject to the 7-day price delay.
-
-It uses the marketPressure set by the player to dynamically adjust the targetStock.
-
-It then moves the quantity 10% closer to this targetStock every week, creating the "race" for the player as the market's supply (and thus its price) slowly recovers.
-
+    style P fill:#2a9d8f,stroke:#fff,stroke-width:2px
 Detailed Flow Example: Animated Ship Purchase
 This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
 
@@ -197,19 +155,94 @@ graph TD
     style K fill:#f4a261,stroke:#fff,stroke-width:2px
     style F fill:#e76f51,stroke:#fff,stroke-width:2px
     style G fill:#e76f51,stroke:#fff,stroke-width:2px
-Explanation of Animated Ship Purchase Flow
-Async Handling: The EventManager and ActionClickHandler are now async to handle the await keyword.
 
-Orchestration: SimulationService.buyShip acts as the orchestrator.
+### 4. `meta/SERVICES.md`
+**Updates:** Updated `GameAttributes` description to reflect its new role as a Registry. Updated `PlayerActionService` and `UIManager` to include new upgrade-related responsibilities.
 
-Validation: It first calls the synchronous PlayerActionService.validateBuyShip. If this fails, the process stops.
+```markdown
+# Service Responsibility & Dependency Matrix
 
-Blocking Animation: On success, it calls await UIManager.runShipTransactionAnimation. The await keyword pauses the execution of the buyShip function.
+## Core Architecture
+**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
 
-Promise: The UIManager in turn calls await AnimationService.playBlockingAnimation. This service attaches a CSS animation class and returns a Promise that only resolves when the animationend event fires.
+---
 
-Execution: Once the animation Promise resolves, execution resumes in SimulationService.buyShip. It then calls the synchronous PlayerActionService.executeBuyShip.
+### 1. State Management
+* **GameState (F009)**
+    * **Responsibility**: Single source of truth. Holds all mutable data (`player`, `market`, `day`, `ships`).
+    * **Key Behavior**: Emits notifications to subscribers (UIManager) whenever `setState` is called.
+    * **Dependencies**: None (Leaf node).
 
-State Change: executeBuyShip mutates the GameState (deducts credits, adds ship).
+### 2. Game Logic Services
+* **PlayerActionService (F034)**
+    * **Responsibility**: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
+    * **Key Behavior**: Validates actions against player credits/capacity, mutates GameState, logs transactions.
+    * **Dependencies**: `GameState`, `UIManager`, `MissionService`, `MarketService`, `GameAttributes`.
 
-Final Render: The GameState.setState call notifies UIManager.render, which re-renders the Hangar/Shipyard, now showing the newly purchased ship (or its absence from the shipyard list).
+* **GameAttributes (F069)**
+    * **Responsibility**: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
+    * **Key Behavior**: Provides definition objects for Upgrade IDs. Neutralizes legacy attribute calls.
+    * **Dependencies**: None.
+
+* **TravelService (F036)**
+    * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
+    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution.
+    * **Dependencies**: `GameState`, `TimeService`.
+
+* **MarketService (F010)**
+    * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
+    * **Key Behavior**: Implements "Delayed Supply" logic where player actions affect prices 7 days later.
+    * **Dependencies**: `GameState`, `IntelService`.
+
+* **IntelService (F057)**
+    * **Responsibility**: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
+    * **Key Behavior**: Creates temporary `activeIntelDeal` objects in GameState that override market prices.
+    * **Dependencies**: `GameState`.
+
+* **TimeService (F035)**
+    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
+    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
+    * **Dependencies**: `GameState`, `MarketService`.
+
+* **MissionService (F018)**
+    * **Responsibility**: procedural mission generation and tracking.
+    * **Key Behavior**: Checks prerequisites (wealth, location) to offer missions. Tracks completion status.
+    * **Dependencies**: `GameState`.
+
+* **TutorialService (F016)**
+    * **Responsibility**: Manages the interactive tutorial overlay.
+    * **Key Behavior**: Watches GameState for specific triggers to advance steps or lock UI elements.
+    * **Dependencies**: `GameState`, `UIManager`.
+
+---
+
+### 3. UI & Presentation Services
+* **UIManager (F017)**
+    * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
+    * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
+    * **Dependencies**: `GameAttributes`, `IntelService`, `IntelMarketRenderer`, `EffectsManager`.
+
+* **IntelMarketRenderer (F058)**
+    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab.
+    * **Key Behavior**: Separates the complex shop logic from the main `IntelScreen` shell.
+    * **Dependencies**: `IntelService`.
+
+* **NewsTickerService (F053)**
+    * **Responsibility**: Manages the scrolling text bar.
+    * **Key Behavior**: Aggregates flavor text, system alerts, and intel rumors into a seamless loop.
+    * **Dependencies**: `GameState`.
+
+* **AssetService (F065)**
+    * **Responsibility**: path resolution for visual assets.
+    * **Key Behavior**: Uses `visualSeed` to deterministically cycle through ship art variants.
+    * **Dependencies**: `assets_config.js`.
+
+---
+
+### 4. Input & Event Handling
+* **EventManager (F015)**: The root listener. Binds global click/touch events.
+* **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
+* **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
+* **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
+* **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
+* **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
