@@ -60,6 +60,15 @@ export const GameAttributes = {
     },
 
     /**
+     * Returns a list of all defined Upgrade IDs.
+     * Useful for debug tools and random generation.
+     * @returns {string[]} Array of Upgrade IDs.
+     */
+    getAllUpgradeIds() {
+        return Object.keys(UPGRADE_DEFINITIONS);
+    },
+
+    /**
      * LEGACY NEUTRALIZATION:
      * Formerly returned ship attributes. Now returns an empty array to prevent legacy logic from firing.
      * @param {string} shipId 

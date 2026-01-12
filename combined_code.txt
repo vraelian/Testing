@@ -10903,8 +10903,9 @@ export async function playBlockingAnimationAndRemove(element, animationClass) {
 import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
-import { calculateInventoryUsed } from '../utils.js';
+import { calculateInventoryUsed, skewedRandom } from '../utils.js'; // Added skewedRandom import if needed, or just use Math
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
+import { GameAttributes } from './GameAttributes.js'; // Added Import
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -10952,6 +10953,7 @@ export class DebugService {
             
             // --- [GEMINI] NEW DEBUG STATE ---
             shipToBoard: null, // Holds the ID of the ship selected in the dropdown
+            selectedUpgrade: null, // Holds the ID of the upgrade to apply
             // -------------------------------
 
             // Tutorial Tuner State
@@ -11218,6 +11220,59 @@ ${logHistory}
         }
     }
 
+    // --- GAME ATTRIBUTES DEBUG METHODS ---
+    
+    installSelectedUpgrade(upgradeId) {
+        if (!upgradeId) return;
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+
+        // Force install (bypass cost check in debugging)
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        if (!shipState.upgrades) shipState.upgrades = [];
+        
+        // Don't duplicate if already exists (unless we want to test stacking, but UI might look weird)
+        // For now, let's allow stacking as per spec "Upgrades are not unique"
+        if (shipState.upgrades.length < 3) {
+            shipState.upgrades.push(upgradeId);
+            this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
+            this.gameState.setState({}); // Re-render
+        } else {
+            this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
+        }
+    }
+
+    applyRandomUpgrades() {
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        
+        // 1. Clear existing
+        shipState.upgrades = [];
+
+        // 2. Pick 3 random
+        const allIds = GameAttributes.getAllUpgradeIds();
+        if (allIds.length === 0) return;
+
+        for (let i = 0; i < 3; i++) {
+            const randomId = allIds[Math.floor(Math.random() * allIds.length)];
+            shipState.upgrades.push(randomId);
+        }
+
+        this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
+        this.gameState.setState({});
+    }
+
+    removeAllUpgrades() {
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        
+        shipState.upgrades = [];
+        this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
+        this.gameState.setState({});
+    }
+
 
     /**
      * @private
@@ -11323,6 +11378,10 @@ ${logHistory}
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
             fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
+
+            // GAME ATTRIBUTES ACTIONS
+            applyRandomUpgrades: { name: 'Apply 3 Random Upgrades', type: 'button', handler: () => this.applyRandomUpgrades() },
+            removeAllUpgrades: { name: 'Remove All Upgrades', type: 'button', handler: () => this.removeAllUpgrades() },
 
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
             generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
@@ -11449,6 +11508,25 @@ ${logHistory}
         shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+
+        // --- GAME ATTRIBUTES FOLDER ---
+        const attributesFolder = this.gui.addFolder('Game Attributes');
+        
+        // Populate Upgrade Dropdown
+        const upgradeIds = GameAttributes.getAllUpgradeIds();
+        const upgradeOptions = upgradeIds.reduce((acc, id) => {
+            const def = GameAttributes.getDefinition(id);
+            acc[def ? def.name : id] = id;
+            return acc;
+        }, {});
+
+        attributesFolder.add(this.debugState, 'selectedUpgrade', upgradeOptions)
+            .name('Install Upgrade')
+            .onChange((id) => this.installSelectedUpgrade(id));
+            
+        attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
+        attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
+        // ------------------------------
 
         const worldFolder = this.gui.addFolder('World & Time');
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
@@ -15188,6 +15266,15 @@ export const GameAttributes = {
      */
     getDefinition(id) {
         return UPGRADE_DEFINITIONS[id] || null;
+    },
+
+    /**
+     * Returns a list of all defined Upgrade IDs.
+     * Useful for debug tools and random generation.
+     * @returns {string[]} Array of Upgrade IDs.
+     */
+    getAllUpgradeIds() {
+        return Object.keys(UPGRADE_DEFINITIONS);
     },
 
     /**
