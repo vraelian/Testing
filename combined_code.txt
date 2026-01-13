@@ -5889,6 +5889,32 @@ import { GameAttributes } from '../../services/GameAttributes.js';
 const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
 
 /**
+ * Helper to programmatically darken/lighten a hex color.
+ * Uses string parsing to prevent channel swapping issues.
+ * @param {string} color - Hex code (e.g., "#3b82f6")
+ * @param {number} amount - Percentage to darken (negative) or lighten (positive) (e.g., -40)
+ * @returns {string} New Hex code
+ */
+function _adjustColor(color, amount) {
+    if (!color || !color.startsWith('#')) return color;
+    
+    // Remove hash
+    const hex = color.replace('#', '');
+    
+    // Parse individual channels
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount));
+
+    // Reconstruct with padding
+    const rr = r.toString(16).padStart(2, '0');
+    const gg = g.toString(16).padStart(2, '0');
+    const bb = b.toString(16).padStart(2, '0');
+
+    return `#${rr}${gg}${bb}`;
+}
+
+/**
  * Renders the entire Hangar screen UI.
  * @param {object} gameState - The current state of the game.
  * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
@@ -5989,7 +6015,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL) ---
+    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL - TIER STYLING) ---
     // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
@@ -5999,23 +6025,39 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         const pills = shipDynamic.upgrades.map(upgradeId => {
             const definition = GameAttributes.getDefinition(upgradeId);
             
-            // Label Logic: ShortLabel > First 4 Chars > 'MOD'
-            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : DEFAULT_UPGRADE_STYLE.label;
+            // 1. Label Logic: Use FULL NAME from Registry (e.g., "Hull Armor II")
+            const label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
-            // Dynamic Color from Registry (or fallback)
-            const pillColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            // 2. Base Color Logic
+            const baseColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            
+            // 3. Tier & Style Logic
+            let tier = 1;
+            if (upgradeId.endsWith('_III')) tier = 3;
+            else if (upgradeId.endsWith('_II')) tier = 2;
+
+            // Generate Darker Border Color (-40% luminance)
+            const borderColor = _adjustColor(baseColor, -40);
+            const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
+            
+            // Generate Background
+            let backgroundStyle = baseColor;
+            if (tier === 3) {
+                // Tier 3: Linear Gradient from Base to Dark
+                backgroundStyle = `linear-gradient(to right, ${baseColor}, ${borderColor})`;
+            }
 
             // Semantic Button
             return `
-                <button class="attribute-pill cursor-pointer" 
+                <button class="attribute-pill cursor-pointer transition-transform hover:scale-105" 
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
                      style="
-                        background-color: ${pillColor}; 
+                        background: ${backgroundStyle}; 
                         color: #0f172a; 
-                        border: 1px solid ${pillColor};
+                        border: ${borderStyle};
                         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
                         padding: 2px 8px;
                         border-radius: 4px;
@@ -6025,6 +6067,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         letter-spacing: 0.05em;
                         pointer-events: auto;
                         touch-action: manipulation;
+                        white-space: nowrap;
                         -webkit-tap-highlight-color: transparent;
                      ">
                     ${label}
@@ -6034,7 +6077,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
 
         // Centering Rule: justify-center applied to container
         attributesHtml = `
-            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
+            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-2 z-20 w-full justify-center pointer-events-none px-4">
                 ${pills}
             </div>
         `;
@@ -7995,18 +8038,19 @@ export const UPGRADE_TYPES = Object.freeze({
     MOD_DEBT_INTEREST: 'MOD_DEBT_INTEREST'      // Syndicate Badge
 });
 
+// VIRTUAL WORKBENCH: Explicit Hex Codes required for gradient calculations
 export const UPGRADE_COLORS = Object.freeze({
-    BLUE: 'var(--color-blue)',
-    CYAN: 'var(--color-cyan)',
-    GREEN: 'var(--color-green)',
-    GOLD: 'var(--color-gold)',
-    GREY: 'var(--color-grey)',
-    INDIGO: 'var(--color-indigo)',
-    EMERALD: 'var(--color-emerald)',
-    SEAFOAM: 'var(--color-teal)',
-    ORANGE: 'var(--color-orange)',
-    RED: 'var(--color-red)',
-    VIOLET: 'var(--color-violet)'
+    BLUE: '#3b82f6',    // Tailwind Blue 500
+    CYAN: '#06b6d4',    // Tailwind Cyan 500
+    GREEN: '#22c55e',   // Tailwind Green 500
+    GOLD: '#eab308',    // Tailwind Yellow 500
+    GREY: '#94a3b8',    // Tailwind Slate 400
+    INDIGO: '#6366f1',  // Tailwind Indigo 500
+    EMERALD: '#10b981', // Tailwind Emerald 500
+    SEAFOAM: '#14b8a6', // Tailwind Teal 500
+    ORANGE: '#f97316',  // Tailwind Orange 500
+    RED: '#ef4444',     // Tailwind Red 500
+    VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
 // --- [[END]] VIRTUAL WORKBENCH ---
 
@@ -13045,6 +13089,9 @@ export class AssetService {
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
+// --- VIRTUAL WORKBENCH: IMPORT ---
+import { GameAttributes } from '../../services/GameAttributes.js';
+// --- END VIRTUAL WORKBENCH ---
 
 /**
  * @class MarketService
@@ -13060,44 +13107,51 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
-    // --- VIRTUAL WORKBENCH: ADD NEW METHODS ---
+    // --- VIRTUAL WORKBENCH: UPDATED getPrice ---
 
     /**
-     * Gets the effective price for a commodity at a location, checking for
-     * active intel deal overrides first.
+     * Gets the effective price for a commodity at a location.
+     * Checks for active intel deal overrides first.
+     * Optionally applies player-specific modifiers (e.g. Signal Hacker).
      * @param {string} locationId The ID of the location.
      * @param {string} commodityId The ID of the commodity.
-     * @returns {number} The effective price (either override or market price).
-     * @JSDoc
+     * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers (Buy Price).
+     * @returns {number} The effective price.
      */
-    getPrice(locationId, commodityId) {
+    getPrice(locationId, commodityId, applyModifiers = false) {
         const deal = this.gameState.getState().activeIntelDeal;
+        let price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
-        // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
+        // 1. Intel Deal Override Check
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             
-            // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
-            // If a deal is active, the price is *read* from the current
-            // market prices, which are being fluctuated daily by evolveMarketPrices.
-            // We no longer return the static deal.overridePrice here, as that
-            // would bypass the daily fluctuation.
-            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
-            // --- END MODIFICATION ---
+            // If a deal is active, use the price (which is being fluctuated daily in evolveMarketPrices 
+            // around the overridePrice).
+            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
         }
-        // --- END NEW LOGIC ---
 
-        // ... existing price simulation logic ...
-        // Fallback to the standard market price
-        return this.gameState.market.prices[locationId]?.[commodityId] || 0;
+        // 2. Upgrade Modifiers (Signal Hacker)
+        if (applyModifiers) {
+             const activeShipId = this.gameState.player.activeShipId;
+             // Safety check: Ensure we have a valid ship state to read upgrades from
+             if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
+                 const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
+                 // Fetch the 'buy' modifier (e.g., 0.97 for Signal Hacker I)
+                 const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
+                 price = price * mod;
+             }
+        }
+
+        // Ensure price never drops below 1
+        return Math.max(1, Math.round(price));
     }
 
     /**
      * Retrieves the pre-calculated galactic average price for a commodity.
      * @param {string} commodityId The ID of the commodity.
      * @returns {number} The galactic average price.
-     * @JSDoc
      */
     getGalacticAverage(commodityId) {
         return this.gameState.market.galacticAverages[commodityId] || 0;
@@ -13217,13 +13271,6 @@ export class MarketService {
                 }
                 // [GEMINI] --- END MODEL FIX ---
 
-
-
-                // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
-                // The availabilityEffect block was removed entirely to fix
-                // the "native crash" bug and the "inverse logic" bug.
-                // --- End Removed Block ---
-
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
@@ -13233,7 +13280,6 @@ export class MarketService {
                 }
                 // --- End Depletion Price Hike ---
 
-                // [GEMINI] Fixed price calculation. Removed availabilityEffect, restored pressureEffect.
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
@@ -13282,16 +13328,13 @@ export class MarketService {
                         pressureForAdaptation = 0; // Ignore recouping pressure for the first week
                     }
 
-                    // --- REMOVED BRICK WALL (Point c) ---
                     // Only allow negative pressure (player buying) to increase target stock.
                     // Positive pressure (player selling) no longer decreases it.
                     if (pressureForAdaptation > 0) {
                         pressureForAdaptation = 0;
                     }
-                    // --- END CHANGE ---
 
-                    // [GEMINI] Note: This logic is still sound. Player *buying* (negative pressure)
-                    // will correctly increase the targetStock, simulating new demand.
+                    // Market adaptation factor
                     const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
@@ -13314,8 +13357,6 @@ export class MarketService {
 
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
-
-                
 
                 // Phase 3: Apply Final Visual Fluctuation
                 const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
@@ -13343,7 +13384,7 @@ export class MarketService {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
-        // [GEMINI] This calculation is now the core driver of the price change.
+        // This calculation is the core driver of the price change.
         // It sets marketPressure, which is used by pressureEffect after 7 days.
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         
@@ -13380,7 +13421,6 @@ export class MarketService {
      * @param {object} inventoryItem - The dynamic inventory item from gameState.
      * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
      * @param {number} currentDay - The current game day.
-     * @JSDoc
      */
     checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
         // Calculate target stock to check 8% threshold
@@ -13400,8 +13440,7 @@ export class MarketService {
         // The amount purchased was the entire stock that was on hand
         const depletionBuyQuantity = stockBeforeBuy; 
 
-        // (5a) Check if buy quantity was >= 8% target
-        // (5b) Check if 1 year has passed since last bonus
+        // Check if buy quantity was >= 8% target and if 1 year has passed since last bonus
         if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
             inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
             inventoryItem.depletionDay = currentDay;
@@ -16338,6 +16377,32 @@ import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3/4/5
 // --- END VIRTUAL WORKBENCH ---
 
 /**
+ * Helper to programmatically darken/lighten a hex color.
+ * Used to generate borders and gradients from the base upgrade color.
+ * @param {string} color - Hex code (e.g., "#3b82f6")
+ * @param {number} amount - Percentage to darken (negative) or lighten (positive) (e.g., -40)
+ * @returns {string} New Hex code
+ */
+function _adjustColor(color, amount) {
+    if (!color || !color.startsWith('#')) return color;
+
+    // Remove hash
+    const hex = color.replace('#', '');
+
+    // Parse individual channels
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount));
+
+    // Reconstruct with padding
+    const rr = r.toString(16).padStart(2, '0');
+    const gg = g.toString(16).padStart(2, '0');
+    const bb = b.toString(16).padStart(2, '0');
+
+    return `#${rr}${gg}${bb}`;
+}
+
+/**
  * Stores the lore text content in a structured format for dynamic rendering.
  * @private
  */
@@ -18122,9 +18187,40 @@ export class UIManager {
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
                 const def = GameAttributes.getDefinition(id);
-                const label = def ? (def.shortLabel || def.name.substring(0, 4).toUpperCase()) : id;
-                // Using cyan-400 equivalent for pills
-                return `<span class="attribute-pill inline-block bg-cyan-400 text-slate-900 px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1">${label}</span>`;
+                
+                // 1. Label Logic: Use FULL NAME from Registry
+                const label = def ? def.name : id; // Use full name from definition
+                const tooltipText = def ? def.description : '';
+
+                // 2. Base Color Logic
+                const baseColor = def ? (def.pillColor || '#94a3b8') : '#94a3b8'; 
+                
+                // 3. Tier & Style Logic
+                let tier = 1;
+                if (id.endsWith('_III')) tier = 3;
+                else if (id.endsWith('_II')) tier = 2;
+
+                // Generate Darker Border Color (-40% luminance) for consistency with the upgrade modal
+                const borderColor = _adjustColor(baseColor, -40);
+                const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
+                
+                // Generate Background
+                let backgroundStyle = baseColor;
+                if (tier === 3) {
+                    // TIER 3 OVERHAUL: High-Contrast Diagonal Gradient
+                    const highlight = _adjustColor(baseColor, 30);
+                    const shadow = _adjustColor(baseColor, -80);
+                    backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 40%, ${shadow} 100%)`;
+                } else if (tier === 2) {
+                    backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${_adjustColor(baseColor, -20)})`;
+                }
+
+                // Semantic Span with inline styles
+                return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
+                              title="${tooltipText}"
+                              style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                            ${label}
+                        </span>`;
             }).join('');
             
             const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';

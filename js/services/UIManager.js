@@ -29,6 +29,32 @@ import { GameAttributes } from './GameAttributes.js'; // Added for Phase 3/4/5
 // --- END VIRTUAL WORKBENCH ---
 
 /**
+ * Helper to programmatically darken/lighten a hex color.
+ * Used to generate borders and gradients from the base upgrade color.
+ * @param {string} color - Hex code (e.g., "#3b82f6")
+ * @param {number} amount - Percentage to darken (negative) or lighten (positive) (e.g., -40)
+ * @returns {string} New Hex code
+ */
+function _adjustColor(color, amount) {
+    if (!color || !color.startsWith('#')) return color;
+
+    // Remove hash
+    const hex = color.replace('#', '');
+
+    // Parse individual channels
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount));
+
+    // Reconstruct with padding
+    const rr = r.toString(16).padStart(2, '0');
+    const gg = g.toString(16).padStart(2, '0');
+    const bb = b.toString(16).padStart(2, '0');
+
+    return `#${rr}${gg}${bb}`;
+}
+
+/**
  * Stores the lore text content in a structured format for dynamic rendering.
  * @private
  */
@@ -1813,9 +1839,40 @@ export class UIManager {
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
                 const def = GameAttributes.getDefinition(id);
-                const label = def ? (def.shortLabel || def.name.substring(0, 4).toUpperCase()) : id;
-                // Using cyan-400 equivalent for pills
-                return `<span class="attribute-pill inline-block bg-cyan-400 text-slate-900 px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1">${label}</span>`;
+                
+                // 1. Label Logic: Use FULL NAME from Registry
+                const label = def ? def.name : id; // Use full name from definition
+                const tooltipText = def ? def.description : '';
+
+                // 2. Base Color Logic
+                const baseColor = def ? (def.pillColor || '#94a3b8') : '#94a3b8'; 
+                
+                // 3. Tier & Style Logic
+                let tier = 1;
+                if (id.endsWith('_III')) tier = 3;
+                else if (id.endsWith('_II')) tier = 2;
+
+                // Generate Darker Border Color (-40% luminance) for consistency with the upgrade modal
+                const borderColor = _adjustColor(baseColor, -40);
+                const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
+                
+                // Generate Background
+                let backgroundStyle = baseColor;
+                if (tier === 3) {
+                    // TIER 3 OVERHAUL: High-Contrast Diagonal Gradient
+                    const highlight = _adjustColor(baseColor, 30);
+                    const shadow = _adjustColor(baseColor, -80);
+                    backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 40%, ${shadow} 100%)`;
+                } else if (tier === 2) {
+                    backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${_adjustColor(baseColor, -20)})`;
+                }
+
+                // Semantic Span with inline styles
+                return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
+                              title="${tooltipText}"
+                              style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                            ${label}
+                        </span>`;
             }).join('');
             
             const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';

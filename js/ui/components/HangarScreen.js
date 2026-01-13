@@ -11,6 +11,32 @@ import { GameAttributes } from '../../services/GameAttributes.js';
 const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
 
 /**
+ * Helper to programmatically darken/lighten a hex color.
+ * Uses string parsing to prevent channel swapping issues.
+ * @param {string} color - Hex code (e.g., "#3b82f6")
+ * @param {number} amount - Percentage to darken (negative) or lighten (positive) (e.g., -40)
+ * @returns {string} New Hex code
+ */
+function _adjustColor(color, amount) {
+    if (!color || !color.startsWith('#')) return color;
+    
+    // Remove hash
+    const hex = color.replace('#', '');
+    
+    // Parse individual channels
+    const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount));
+
+    // Reconstruct with padding
+    const rr = r.toString(16).padStart(2, '0');
+    const gg = g.toString(16).padStart(2, '0');
+    const bb = b.toString(16).padStart(2, '0');
+
+    return `#${rr}${gg}${bb}`;
+}
+
+/**
  * Renders the entire Hangar screen UI.
  * @param {object} gameState - The current state of the game.
  * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
@@ -111,7 +137,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL) ---
+    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL - TIER STYLING) ---
     // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
@@ -121,23 +147,39 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         const pills = shipDynamic.upgrades.map(upgradeId => {
             const definition = GameAttributes.getDefinition(upgradeId);
             
-            // Label Logic: ShortLabel > First 4 Chars > 'MOD'
-            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : DEFAULT_UPGRADE_STYLE.label;
+            // 1. Label Logic: Use FULL NAME from Registry (e.g., "Hull Armor II")
+            const label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
-            // Dynamic Color from Registry (or fallback)
-            const pillColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            // 2. Base Color Logic
+            const baseColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            
+            // 3. Tier & Style Logic
+            let tier = 1;
+            if (upgradeId.endsWith('_III')) tier = 3;
+            else if (upgradeId.endsWith('_II')) tier = 2;
+
+            // Generate Darker Border Color (-40% luminance)
+            const borderColor = _adjustColor(baseColor, -40);
+            const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
+            
+            // Generate Background
+            let backgroundStyle = baseColor;
+            if (tier === 3) {
+                // Tier 3: Linear Gradient from Base to Dark
+                backgroundStyle = `linear-gradient(to right, ${baseColor}, ${borderColor})`;
+            }
 
             // Semantic Button
             return `
-                <button class="attribute-pill cursor-pointer" 
+                <button class="attribute-pill cursor-pointer transition-transform hover:scale-105" 
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
                      style="
-                        background-color: ${pillColor}; 
+                        background: ${backgroundStyle}; 
                         color: #0f172a; 
-                        border: 1px solid ${pillColor};
+                        border: ${borderStyle};
                         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
                         padding: 2px 8px;
                         border-radius: 4px;
@@ -147,6 +189,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         letter-spacing: 0.05em;
                         pointer-events: auto;
                         touch-action: manipulation;
+                        white-space: nowrap;
                         -webkit-tap-highlight-color: transparent;
                      ">
                     ${label}
@@ -156,7 +199,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
 
         // Centering Rule: justify-center applied to container
         attributesHtml = `
-            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 w-full justify-center pointer-events-none">
+            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-2 z-20 w-full justify-center pointer-events-none px-4">
                 ${pills}
             </div>
         `;

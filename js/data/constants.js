@@ -177,18 +177,19 @@ export const UPGRADE_TYPES = Object.freeze({
     MOD_DEBT_INTEREST: 'MOD_DEBT_INTEREST'      // Syndicate Badge
 });
 
+// VIRTUAL WORKBENCH: Explicit Hex Codes required for gradient calculations
 export const UPGRADE_COLORS = Object.freeze({
-    BLUE: 'var(--color-blue)',
-    CYAN: 'var(--color-cyan)',
-    GREEN: 'var(--color-green)',
-    GOLD: 'var(--color-gold)',
-    GREY: 'var(--color-grey)',
-    INDIGO: 'var(--color-indigo)',
-    EMERALD: 'var(--color-emerald)',
-    SEAFOAM: 'var(--color-teal)',
-    ORANGE: 'var(--color-orange)',
-    RED: 'var(--color-red)',
-    VIOLET: 'var(--color-violet)'
+    BLUE: '#3b82f6',    // Tailwind Blue 500
+    CYAN: '#06b6d4',    // Tailwind Cyan 500
+    GREEN: '#22c55e',   // Tailwind Green 500
+    GOLD: '#eab308',    // Tailwind Yellow 500
+    GREY: '#94a3b8',    // Tailwind Slate 400
+    INDIGO: '#6366f1',  // Tailwind Indigo 500
+    EMERALD: '#10b981', // Tailwind Emerald 500
+    SEAFOAM: '#14b8a6', // Tailwind Teal 500
+    ORANGE: '#f97316',  // Tailwind Orange 500
+    RED: '#ef4444',     // Tailwind Red 500
+    VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
 // --- [[END]] VIRTUAL WORKBENCH ---
 
