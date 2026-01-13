@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.00] - 2026-1-12
+-  implemented ship upgrade effects
+-  ship upgrade pill polish
+-  balanced ship upgrades
+-  added ship upgrades to debug menu
+-  updated meta files
+
 ## [33.89] - 2026-1-11
 -  overhauled ship attribute system
 -  added ship upgrade system

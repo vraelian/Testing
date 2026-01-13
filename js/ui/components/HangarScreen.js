@@ -166,8 +166,14 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             // Generate Background
             let backgroundStyle = baseColor;
             if (tier === 3) {
-                // Tier 3: Linear Gradient from Base to Dark
-                backgroundStyle = `linear-gradient(to right, ${baseColor}, ${borderColor})`;
+                // TIER 3 OVERHAUL: High-Gloss Metallic Gradient (Diagonal)
+                // Start Bright (+40), hit Base, end Deep Dark (-80)
+                const highlight = _adjustColor(baseColor, 40);
+                const shadow = _adjustColor(baseColor, -80);
+                backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 45%, ${shadow} 100%)`;
+            } else if (tier === 2) {
+                // Tier 2: Subtle vertical sheen
+                backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${_adjustColor(baseColor, -20)})`;
             }
 
             // Semantic Button

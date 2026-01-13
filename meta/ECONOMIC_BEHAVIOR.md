@@ -1,6 +1,6 @@
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 1/9/26, ver. 33.77
+Last Edit: 1/12/26, ver. 34.00
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -139,79 +139,28 @@ Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to t
 After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
 
 V. Commodity Behavior
-This is the full spectrum of default economic behaviors for all commodities, based on the definitions in js/data/database.js.
-Section 1: Overview of Core Economic Parameters
-This details the three fundamental parameters that define the economic behavior of a commodity before any local market modifiers (like import/export specialties) or system states are applied.
-Base Price Range: This array [min, max] defines the foundational value of a commodity. The game's MarketService uses this range to establish a "Galactic Average" price, which serves as the baseline from which all local prices are derived.
-Volatility: This decimal number represents the commodity's inherent price instability. A higher volatility value means the commodity's price will experience larger and more frequent fluctuations, making it a riskier but potentially more profitable asset.
-Canonical Availability: This array [min, max] defines the default quantity of a commodity that a "neutral" market (one with no specialty modifiers for this item) will attempt to stock. This represents the item's general abundance or scarcity.
-Section 2: Commodity Economic Behavior by Tier
-The following is the complete breakdown of the default economic profiles for every tradable commodity, organized by tier.
-Tier 1: Basic Materials
-Water Ice
-Base Price Range: [15, 80]
-Volatility: 0.01 (Very Low)
-Canonical Availability: [80, 150] (Abundant)
-Plasteel
-Base Price Range: [100, 280]
-Volatility: 0.015 (Very Low)
-Canonical Availability: [80, 150] (Abundant)
-Tier 2: Industrial & Agricultural Goods
-Hydroponics
-Base Price Range: [850, 2400]
-Volatility: 0.025 (Low)
-Canonical Availability: [40, 70] (Common)
-Cybernetics
-Base Price Range: [1200, 3800]
-Volatility: 0.03 (Low)
-Canonical Availability: [40, 70] (Common)
-Tier 3: Refined & Processed Goods
-Refined Propellant
-Base Price Range: [14000, 38000]
-Volatility: 0.035 (Low-Medium)
-Canonical Availability: [25, 50] (Uncommon)
-Neural Processors
-Base Price Range: [18000, 52000]
-Volatility: 0.045 (Medium)
-Canonical Availability: [25, 50] (Uncommon)
-Tier 4: Advanced & Civilian Goods
-Graphene Lattices
-Base Price Range: [180000, 420000]
-Volatility: 0.05 (Medium)
-Canonical Availability: [20, 40] (Scarce)
-Cryo-Sleep Pods
-Base Price Range: [250000, 750000]
-Volatility: 0.075 (High)
-Canonical Availability: [15, 30] (Scarce)
-Tier 5: High-Tech & Bio-Engineering
-Atmo Processors
-Base Price Range: [2800000, 8500000]
-Volatility: 0.08 (High)
-Canonical Availability: [10, 20] (Very Scarce)
-Cloned Organs
-Base Price Range: [3500000, 11000000]
-Volatility: 0.09 (Very High)
-Canonical Availability: [10, 20] (Very Scarce)
-Tier 6: Exotic & Restricted Tech
-Xeno-Geologicals
-Base Price Range: [24000000, 70000000]
-Volatility: 0.1 (Extremely High)
-Canonical Availability: [2, 10] (Rare)
-Sentient AI Cores
-Base Price Range: [32000000, 95000000]
-Volatility: 0.125 (Extremely High)
-Canonical Availability: [2, 10] (Rare)
-Tier 7: "Endgame" & Exotic Matter
-Antimatter
-Base Price Range: [280000000, 800000000]
-Volatility: 0.15 (Hyper-Volatile)
-Canonical Availability: [2, 10] (Exotic)
-Folded-Space Drives
-Base Price Range: [350000000, 1100000000]
-Volatility: 0.15 (Hyper-Volatile)
-Canonical Availability: [2, 10] (Exotic)
-Section 3: Observable Patterns & Logic
-Based on this data, a clear "full spectrum" pattern emerges:
-Price & Tier: Commodity prices increase exponentially with each tier, establishing a clear progression of value.
-Volatility & Tier: Volatility directly correlates with tier. Low-tier goods are stable and predictable, while high-tier "luxury" or "exotic" goods are highly volatile, making them high-risk, high-reward speculative assets.
-Availability & Tier: Canonical availability is inversely proportional to tier. Tier 1 goods are abundant, while Tier 6 and 7 goods are exceptionally rare, reinforcing their high value.
+(See existing file for full Commodity Tier list...)
+
+VI. Ship Upgrade Economy
+The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
+
+1. Tiered Pricing Structure
+Upgrades are categorized into three tiers of rarity and power.
+Tier I (Common): 5,000 Credits. Entry-level modifications.
+Tier II (Rare): 15,000 Credits. Advanced specialized equipment.
+Tier III (Very Rare): 45,000 Credits. Experimental or military-grade technology.
+
+2. Resale Value Logic
+Ships are now valued based on the sum of their hull and their installed components.
+Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
+Depreciation: The total is multiplied by the standard depreciation factor (0.75).
+Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
+Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
+
+3. Economic Modifiers
+Specific upgrades directly alter the player's profit margins and operating costs.
+Signal Hacker (Buy Price): Reduces the purchase price of all commodities by 3% / 5% / 7%.
+Guild Badge (Sell Price): Increases the sell price of all commodities by 3% / 5% / 7%.
+Fuel Pass (Service Cost): Reduces refueling costs by 20% / 50% / 75%.
+Syndicate Badge (Debt): Reduces monthly debt interest by 20% / 30% / 50%.
+Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases fuel consumption by 15% / 30% / 45%.

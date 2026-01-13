@@ -4,7 +4,6 @@ import { LOCATION_IDS, UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '..
 /**
  * @fileoverview The Upgrade Registry (formerly GameAttributes).
  * This service defines the available Ship Upgrades, their metadata, and their effects.
- * It also acts as a compatibility layer, neutralizing legacy attribute logic.
  */
 
 // ==========================================
@@ -18,24 +17,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Engine Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'Calibrated thrusters increase travel speed by 10% with a 5% increase in fuel consumption.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.05 }
+        description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
         id: 'UPGRADE_ENGINE_II',
         name: 'Engine Mod II',
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'High-performance injectors boost ship speed by 20% while requiring 10% more fuel per trip.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.80, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.10 }
+        description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
         id: 'UPGRADE_ENGINE_III',
         name: 'Engine Mod III',
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'Experimental overcharged drives maximize travel speed by 30% for a 15% increase in fuel costs.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.70, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
+        description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
     },
 
     // --- Signal Hackers (Buy Price Discount) ---
@@ -122,24 +121,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Radar Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Enhanced sensors improve long-range detection, increasing random event frequency by 3%.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.03 }
+        description: 'Enhanced sensors improve long-range detection, increasing random event frequency by a flat +3%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.03 } // Flat +3%
     },
     'UPGRADE_RADAR_II': {
         id: 'UPGRADE_RADAR_II',
         name: 'Radar Mod II',
         value: 15000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by 5%.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.05 }
+        description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by a flat +6%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.06 } // Flat +6%
     },
     'UPGRADE_RADAR_III': {
         id: 'UPGRADE_RADAR_III',
         name: 'Radar Mod III',
         value: 45000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Predictive deep-space arrays maximize event discovery with a 10% increase in encounter rates.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.10 }
+        description: 'Predictive deep-space arrays maximize event discovery with a flat +10% increase in encounter rates.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.10 } // Flat +10%
     },
 
     // --- Fuel Pass (Refuel Cost Discount) ---
@@ -148,24 +147,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Fuel Pass',
         value: 5000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'A standard fueling subscription secures a baseline 10% discount at all participating starports.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.90 }
+        description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
         id: 'UPGRADE_FUELPASS_II',
         name: 'Fuel Pass II',
         value: 15000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'This premium fueling membership utilizes encrypted credentials to grant 15% off all propellant purchases.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.85 }
+        description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
         id: 'UPGRADE_FUELPASS_III',
         name: 'Fuel Pass III',
         value: 45000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'Elite system-wide fueling clearance provides a permanent 20% discount on all vessel refueling costs.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
+        description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
     },
 
     // --- Repair Pass (Repair Cost Discount) ---
@@ -174,24 +173,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Repair Pass',
         value: 5000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Standard maintenance coverage grants holders a basic 10% discount on all station repair services.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.90 }
+        description: 'Standard maintenance coverage grants holders a basic 20% discount on all station repair services.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
     },
     'UPGRADE_REPAIRPASS_II': {
         id: 'UPGRADE_REPAIRPASS_II',
         name: 'Repair Pass II',
         value: 15000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Priority dockyard membership utilizes corporate clearance to secure a 15% reduction in repair fees.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.85 }
+        description: 'Priority dockyard membership utilizes corporate clearance to secure a 50% reduction in repair fees.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.50 }
     },
     'UPGRADE_REPAIRPASS_III': {
         id: 'UPGRADE_REPAIRPASS_III',
         name: 'Repair Pass III',
         value: 45000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Ultimate platinum-tier coverage provides total system-wide protection with 20% off all hull maintenance.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
+        description: 'Ultimate platinum-tier coverage provides total system-wide protection with 75% off all hull maintenance.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.25 }
     },
 
     // --- Nano Machines (Passive Repair in Transit) ---
@@ -200,24 +199,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Nano Machines',
         value: 5000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Basic self-repairing drones restore 1% of total hull integrity per day in transit.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.01 } // Additive Rate
+        description: 'Basic self-repairing drones restore 0.3% of total hull integrity per day in transit.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.003 } // Additive Rate
     },
     'UPGRADE_NANO_II': {
         id: 'UPGRADE_NANO_II',
         name: 'Nano Machines II',
         value: 15000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Advanced micro-repair swarms regenerate 2% of the vessel\'s hull daily while traveling.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.02 } // Additive Rate
+        description: 'Advanced micro-repair swarms regenerate 0.7% of the vessel\'s hull daily while traveling.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.007 } // Additive Rate
     },
     'UPGRADE_NANO_III': {
         id: 'UPGRADE_NANO_III',
         name: 'Nano Machines III',
         value: 45000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Superior nanobot hives provide rapid autonomous repair, restoring 3% of hull health daily.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.03 } // Additive Rate
+        description: 'Superior nanobot hives provide rapid autonomous repair, restoring 1.2% of hull health daily.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.012 } // Additive Rate
     },
 
     // --- Auxiliary Storage (Cargo Capacity Increase) ---
@@ -302,9 +301,6 @@ const UPGRADE_DEFINITIONS = {
 // ==========================================
 // 2. STATION QUIRKS (Legacy Support)
 // ==========================================
-// Note: Station quirks are being retained for now but effectively disabled or simplified
-// if they relied on the old attribute system. 
-
 const STATION_QUIRK_MAP = {
     // [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_FUEL'],
     // [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_REPAIR'],
@@ -414,12 +410,13 @@ export const GameAttributes = {
     },
 
     /**
-     * Calculates random event chance modifier (Multiplicative).
+     * Calculates random event chance modifier.
+     * CHANGED: Now uses ADDITIVE logic (Base 0.0 + Bonuses) to support flat % increases.
      * @param {string[]} upgrades 
-     * @returns {number} Multiplier.
+     * @returns {number} Flat bonus amount (e.g. 0.03).
      */
     getEventChanceModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE);
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE, 0.0);
     },
 
     /**

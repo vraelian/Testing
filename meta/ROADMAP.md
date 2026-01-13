@@ -6,7 +6,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Optimizing ship art asset use
 - Review trip fuel requirements and ship fuel tanks for balance
 - Expand station quirks
-- Verify effective function of ship attributes
+- Verify effective function of ship upgrades
 
 ## Immediate Concerns, Bugs
 

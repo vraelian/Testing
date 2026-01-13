@@ -284,11 +284,14 @@ export class TravelService {
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
-        // Apply Upgrade Modifier (e.g. Radar Mod)
+        // Apply Upgrade Modifier (Radar Mod - Additive)
+        // Previous logic was multiplicative (* 1.10). 
+        // New logic is additive (+ 0.10).
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
-        eventChance *= chanceMod;
+        eventChance += chanceMod;
 
-        // ATTR_ADVANCED_COMMS: +25% chance
+        // ATTR_ADVANCED_COMMS: +25% chance (Legacy multiplier, keep or convert?)
+        // Keeping as legacy multiplier for now.
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }

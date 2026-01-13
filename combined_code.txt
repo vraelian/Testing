@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 33.89</title>
+    <title>Orbital Trading 34.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 33.89</p>
+            <p>Version 34.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -6044,8 +6044,14 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             // Generate Background
             let backgroundStyle = baseColor;
             if (tier === 3) {
-                // Tier 3: Linear Gradient from Base to Dark
-                backgroundStyle = `linear-gradient(to right, ${baseColor}, ${borderColor})`;
+                // TIER 3 OVERHAUL: High-Gloss Metallic Gradient (Diagonal)
+                // Start Bright (+40), hit Base, end Deep Dark (-80)
+                const highlight = _adjustColor(baseColor, 40);
+                const shadow = _adjustColor(baseColor, -80);
+                backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 45%, ${shadow} 100%)`;
+            } else if (tier === 2) {
+                // Tier 2: Subtle vertical sheen
+                backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${_adjustColor(baseColor, -20)})`;
             }
 
             // Semantic Button
@@ -13812,11 +13818,14 @@ export class TravelService {
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
-        // Apply Upgrade Modifier (e.g. Radar Mod)
+        // Apply Upgrade Modifier (Radar Mod - Additive)
+        // Previous logic was multiplicative (* 1.10). 
+        // New logic is additive (+ 0.10).
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
-        eventChance *= chanceMod;
+        eventChance += chanceMod;
 
-        // ATTR_ADVANCED_COMMS: +25% chance
+        // ATTR_ADVANCED_COMMS: +25% chance (Legacy multiplier, keep or convert?)
+        // Keeping as legacy multiplier for now.
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }
@@ -15581,7 +15590,6 @@ import { LOCATION_IDS, UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '..
 /**
  * @fileoverview The Upgrade Registry (formerly GameAttributes).
  * This service defines the available Ship Upgrades, their metadata, and their effects.
- * It also acts as a compatibility layer, neutralizing legacy attribute logic.
  */
 
 // ==========================================
@@ -15595,24 +15603,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Engine Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'Calibrated thrusters increase travel speed by 10% with a 5% increase in fuel consumption.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.05 }
+        description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
         id: 'UPGRADE_ENGINE_II',
         name: 'Engine Mod II',
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'High-performance injectors boost ship speed by 20% while requiring 10% more fuel per trip.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.80, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.10 }
+        description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
         id: 'UPGRADE_ENGINE_III',
         name: 'Engine Mod III',
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
-        description: 'Experimental overcharged drives maximize travel speed by 30% for a 15% increase in fuel costs.',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.70, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
+        description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
     },
 
     // --- Signal Hackers (Buy Price Discount) ---
@@ -15699,24 +15707,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Radar Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Enhanced sensors improve long-range detection, increasing random event frequency by 3%.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.03 }
+        description: 'Enhanced sensors improve long-range detection, increasing random event frequency by a flat +3%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.03 } // Flat +3%
     },
     'UPGRADE_RADAR_II': {
         id: 'UPGRADE_RADAR_II',
         name: 'Radar Mod II',
         value: 15000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by 5%.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.05 }
+        description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by a flat +6%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.06 } // Flat +6%
     },
     'UPGRADE_RADAR_III': {
         id: 'UPGRADE_RADAR_III',
         name: 'Radar Mod III',
         value: 45000,
         pillColor: UPGRADE_COLORS.GREY,
-        description: 'Predictive deep-space arrays maximize event discovery with a 10% increase in encounter rates.',
-        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.10 }
+        description: 'Predictive deep-space arrays maximize event discovery with a flat +10% increase in encounter rates.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.10 } // Flat +10%
     },
 
     // --- Fuel Pass (Refuel Cost Discount) ---
@@ -15725,24 +15733,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Fuel Pass',
         value: 5000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'A standard fueling subscription secures a baseline 10% discount at all participating starports.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.90 }
+        description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
         id: 'UPGRADE_FUELPASS_II',
         name: 'Fuel Pass II',
         value: 15000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'This premium fueling membership utilizes encrypted credentials to grant 15% off all propellant purchases.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.85 }
+        description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
         id: 'UPGRADE_FUELPASS_III',
         name: 'Fuel Pass III',
         value: 45000,
         pillColor: UPGRADE_COLORS.INDIGO,
-        description: 'Elite system-wide fueling clearance provides a permanent 20% discount on all vessel refueling costs.',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
+        description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
     },
 
     // --- Repair Pass (Repair Cost Discount) ---
@@ -15751,24 +15759,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Repair Pass',
         value: 5000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Standard maintenance coverage grants holders a basic 10% discount on all station repair services.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.90 }
+        description: 'Standard maintenance coverage grants holders a basic 20% discount on all station repair services.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
     },
     'UPGRADE_REPAIRPASS_II': {
         id: 'UPGRADE_REPAIRPASS_II',
         name: 'Repair Pass II',
         value: 15000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Priority dockyard membership utilizes corporate clearance to secure a 15% reduction in repair fees.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.85 }
+        description: 'Priority dockyard membership utilizes corporate clearance to secure a 50% reduction in repair fees.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.50 }
     },
     'UPGRADE_REPAIRPASS_III': {
         id: 'UPGRADE_REPAIRPASS_III',
         name: 'Repair Pass III',
         value: 45000,
         pillColor: UPGRADE_COLORS.EMERALD,
-        description: 'Ultimate platinum-tier coverage provides total system-wide protection with 20% off all hull maintenance.',
-        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
+        description: 'Ultimate platinum-tier coverage provides total system-wide protection with 75% off all hull maintenance.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.25 }
     },
 
     // --- Nano Machines (Passive Repair in Transit) ---
@@ -15777,24 +15785,24 @@ const UPGRADE_DEFINITIONS = {
         name: 'Nano Machines',
         value: 5000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Basic self-repairing drones restore 1% of total hull integrity per day in transit.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.01 } // Additive Rate
+        description: 'Basic self-repairing drones restore 0.3% of total hull integrity per day in transit.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.003 } // Additive Rate
     },
     'UPGRADE_NANO_II': {
         id: 'UPGRADE_NANO_II',
         name: 'Nano Machines II',
         value: 15000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Advanced micro-repair swarms regenerate 2% of the vessel\'s hull daily while traveling.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.02 } // Additive Rate
+        description: 'Advanced micro-repair swarms regenerate 0.7% of the vessel\'s hull daily while traveling.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.007 } // Additive Rate
     },
     'UPGRADE_NANO_III': {
         id: 'UPGRADE_NANO_III',
         name: 'Nano Machines III',
         value: 45000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
-        description: 'Superior nanobot hives provide rapid autonomous repair, restoring 3% of hull health daily.',
-        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.03 } // Additive Rate
+        description: 'Superior nanobot hives provide rapid autonomous repair, restoring 1.2% of hull health daily.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.012 } // Additive Rate
     },
 
     // --- Auxiliary Storage (Cargo Capacity Increase) ---
@@ -15879,9 +15887,6 @@ const UPGRADE_DEFINITIONS = {
 // ==========================================
 // 2. STATION QUIRKS (Legacy Support)
 // ==========================================
-// Note: Station quirks are being retained for now but effectively disabled or simplified
-// if they relied on the old attribute system. 
-
 const STATION_QUIRK_MAP = {
     // [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_FUEL'],
     // [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_REPAIR'],
@@ -15991,12 +15996,13 @@ export const GameAttributes = {
     },
 
     /**
-     * Calculates random event chance modifier (Multiplicative).
+     * Calculates random event chance modifier.
+     * CHANGED: Now uses ADDITIVE logic (Base 0.0 + Bonuses) to support flat % increases.
      * @param {string[]} upgrades 
-     * @returns {number} Multiplier.
+     * @returns {number} Flat bonus amount (e.g. 0.03).
      */
     getEventChanceModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE);
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE, 0.0);
     },
 
     /**
@@ -23327,6 +23333,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.00] - 2026-1-12
+-  implemented ship upgrade effects
+-  ship upgrade pill polish
+-  balanced ship upgrades
+-  added ship upgrades to debug menu
+-  updated meta files
+
 ## [33.89] - 2026-1-11
 -  overhauled ship attribute system
 -  added ship upgrade system
@@ -23871,7 +23884,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 1/9/26, ver. 33.77
+Last Edit: 1/12/26, ver. 34.00
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -24010,82 +24023,31 @@ Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to t
 After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
 
 V. Commodity Behavior
-This is the full spectrum of default economic behaviors for all commodities, based on the definitions in js/data/database.js.
-Section 1: Overview of Core Economic Parameters
-This details the three fundamental parameters that define the economic behavior of a commodity before any local market modifiers (like import/export specialties) or system states are applied.
-Base Price Range: This array [min, max] defines the foundational value of a commodity. The game's MarketService uses this range to establish a "Galactic Average" price, which serves as the baseline from which all local prices are derived.
-Volatility: This decimal number represents the commodity's inherent price instability. A higher volatility value means the commodity's price will experience larger and more frequent fluctuations, making it a riskier but potentially more profitable asset.
-Canonical Availability: This array [min, max] defines the default quantity of a commodity that a "neutral" market (one with no specialty modifiers for this item) will attempt to stock. This represents the item's general abundance or scarcity.
-Section 2: Commodity Economic Behavior by Tier
-The following is the complete breakdown of the default economic profiles for every tradable commodity, organized by tier.
-Tier 1: Basic Materials
-Water Ice
-Base Price Range: [15, 80]
-Volatility: 0.01 (Very Low)
-Canonical Availability: [80, 150] (Abundant)
-Plasteel
-Base Price Range: [100, 280]
-Volatility: 0.015 (Very Low)
-Canonical Availability: [80, 150] (Abundant)
-Tier 2: Industrial & Agricultural Goods
-Hydroponics
-Base Price Range: [850, 2400]
-Volatility: 0.025 (Low)
-Canonical Availability: [40, 70] (Common)
-Cybernetics
-Base Price Range: [1200, 3800]
-Volatility: 0.03 (Low)
-Canonical Availability: [40, 70] (Common)
-Tier 3: Refined & Processed Goods
-Refined Propellant
-Base Price Range: [14000, 38000]
-Volatility: 0.035 (Low-Medium)
-Canonical Availability: [25, 50] (Uncommon)
-Neural Processors
-Base Price Range: [18000, 52000]
-Volatility: 0.045 (Medium)
-Canonical Availability: [25, 50] (Uncommon)
-Tier 4: Advanced & Civilian Goods
-Graphene Lattices
-Base Price Range: [180000, 420000]
-Volatility: 0.05 (Medium)
-Canonical Availability: [20, 40] (Scarce)
-Cryo-Sleep Pods
-Base Price Range: [250000, 750000]
-Volatility: 0.075 (High)
-Canonical Availability: [15, 30] (Scarce)
-Tier 5: High-Tech & Bio-Engineering
-Atmo Processors
-Base Price Range: [2800000, 8500000]
-Volatility: 0.08 (High)
-Canonical Availability: [10, 20] (Very Scarce)
-Cloned Organs
-Base Price Range: [3500000, 11000000]
-Volatility: 0.09 (Very High)
-Canonical Availability: [10, 20] (Very Scarce)
-Tier 6: Exotic & Restricted Tech
-Xeno-Geologicals
-Base Price Range: [24000000, 70000000]
-Volatility: 0.1 (Extremely High)
-Canonical Availability: [2, 10] (Rare)
-Sentient AI Cores
-Base Price Range: [32000000, 95000000]
-Volatility: 0.125 (Extremely High)
-Canonical Availability: [2, 10] (Rare)
-Tier 7: "Endgame" & Exotic Matter
-Antimatter
-Base Price Range: [280000000, 800000000]
-Volatility: 0.15 (Hyper-Volatile)
-Canonical Availability: [2, 10] (Exotic)
-Folded-Space Drives
-Base Price Range: [350000000, 1100000000]
-Volatility: 0.15 (Hyper-Volatile)
-Canonical Availability: [2, 10] (Exotic)
-Section 3: Observable Patterns & Logic
-Based on this data, a clear "full spectrum" pattern emerges:
-Price & Tier: Commodity prices increase exponentially with each tier, establishing a clear progression of value.
-Volatility & Tier: Volatility directly correlates with tier. Low-tier goods are stable and predictable, while high-tier "luxury" or "exotic" goods are highly volatile, making them high-risk, high-reward speculative assets.
-Availability & Tier: Canonical availability is inversely proportional to tier. Tier 1 goods are abundant, while Tier 6 and 7 goods are exceptionally rare, reinforcing their high value.
+(See existing file for full Commodity Tier list...)
+
+VI. Ship Upgrade Economy
+The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
+
+1. Tiered Pricing Structure
+Upgrades are categorized into three tiers of rarity and power.
+Tier I (Common): 5,000 Credits. Entry-level modifications.
+Tier II (Rare): 15,000 Credits. Advanced specialized equipment.
+Tier III (Very Rare): 45,000 Credits. Experimental or military-grade technology.
+
+2. Resale Value Logic
+Ships are now valued based on the sum of their hull and their installed components.
+Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
+Depreciation: The total is multiplied by the standard depreciation factor (0.75).
+Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
+Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
+
+3. Economic Modifiers
+Specific upgrades directly alter the player's profit margins and operating costs.
+Signal Hacker (Buy Price): Reduces the purchase price of all commodities by 3% / 5% / 7%.
+Guild Badge (Sell Price): Increases the sell price of all commodities by 3% / 5% / 7%.
+Fuel Pass (Service Cost): Reduces refueling costs by 20% / 50% / 75%.
+Syndicate Badge (Debt): Reduces monthly debt interest by 20% / 30% / 50%.
+Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases fuel consumption by 15% / 30% / 45%.
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
@@ -24232,7 +24194,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "validateSellShip": "Validates if a ship sale is possible.",
           "executeSellShip": "Executes the state changes for selling a ship, including dynamic upgrade value calculation.",
           "refuelTick": "Processes one 'tick' of refueling.",
-          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the state mutation."
+          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the Destructive Replacement logic and state mutation."
         },
         "mutates_state": [
           "player.credits",
@@ -24244,12 +24206,13 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         ]
       },
       "GameAttributes": {
-        "description": "The Upgrade Registry. Defines the metadata (name, cost, description) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers.",
+        "description": "The Upgrade Registry. Defines the metadata (name, cost, description, visual style) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers, supporting both Additive (Capacity) and Multiplicative (Rate) logic.",
         "dependencies": [],
         "key_functions": {
           "getDefinition": "Returns the static definition object for a given Upgrade ID.",
           "getServiceCostModifier": "Calculates service cost multipliers based on installed upgrades.",
-          "getPriceModifier": "Calculates market price modifiers based on installed upgrades."
+          "getPriceModifier": "Calculates market price modifiers based on installed upgrades.",
+          "getEventChanceModifier": "Calculates flat additive bonuses to event probability."
         },
         "mutates_state": []
       },
@@ -24300,7 +24263,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
         ]
       },
       "MarketService": {
-        "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides.",
+        "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
         "dependencies": [
           "GameState",
           "IntelService"
@@ -24310,7 +24273,7 @@ Availability & Tier: Canonical availability is inversely proportional to tier. T
           "replenishMarketInventory": "Handles the weekly restocking of all markets.",
           "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
           "_updateShipyardStock": "Updates the available ships for sale at each location.",
-          "getPrice": "Gets the price, checking for Intel overrides first."
+          "getPrice": "Gets the price, checking for Intel overrides and applying Upgrade modifiers."
         },
         "mutates_state": [
           "market.prices",
@@ -24896,7 +24859,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Optimizing ship art asset use
 - Review trip fuel requirements and ship fuel tanks for balance
 - Expand station quirks
-- Verify effective function of ship attributes
+- Verify effective function of ship upgrades
 
 ## Immediate Concerns, Bugs
 
@@ -24931,7 +24894,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 2.0
+**Version:** 2.1
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -24951,16 +24914,17 @@ This document defines the single responsibility of each service in the applicati
 
 #### Player
 
--   **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, use services).
+-   **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, install upgrades, use services). Handles the validation of "Effective Stats" (e.g. checking cargo space against upgraded capacity).
 
 #### World
 
 -   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. Calls `IntelService.generateIntelRefresh()` and checks for `activeIntelDeal` expiration. **Uses:** `js/data/age_events.js`.
--   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. **Uses:** `js/data/events.js` (via `eventEffectResolver`).
+-   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. Applies modifiers from installed upgrades (e.g. Engine Mod, Radar Mod). **Uses:** `js/data/events.js` (via `eventEffectResolver`).
 
 #### Simulation
 
--   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels, which in turn creates a single, powerful `availabilityEffect` on price that is *delayed by 7 days* to prevent abuse. Checks for an `activeIntelDeal` override before calculating its normal prices.
+-   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels.
+    * **Price Logic**: `getPrice` checks for `activeIntelDeal` overrides first. It also accepts an `applyModifiers` flag to apply player-specific discounts (e.g. Signal Hacker) for display and transactions.
 -   **`IntelService.js`**: The "brain" of the Intel Market system. Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic. **Uses:** `js/data/intelContent.js`.
 -   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
 
@@ -24968,15 +24932,16 @@ This document defines the single responsibility of each service in the applicati
 
 -   **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
 -   **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
--   **`AssetService.js`**: Centralizes the logic for generating dynamic asset paths (specifically for ships). Implements the "Modulo Variant" system to deterministically select visual variants (A, B, C...) based on the player's `visualSeed`. **Uses:** `js/data/assets_config.js`.
+-   **`AssetService.js`**: Centralizes the logic for generating dynamic asset paths (specifically for ships). Implements the "Modulo Variant" system to deterministically select visual variants based on the player's `visualSeed`. **Uses:** `js/data/assets_config.js`.
+-   **`GameAttributes.js`**: The **Upgrade Registry**. Defines the metadata (name, cost, description, color) for all Ship Upgrades and Station Quirks. Acts as the central rule engine for modifiers, distinguishing between **Additive** logic (Capacities, Repair Rate, Event Chance) and **Multiplicative** logic (Costs, Prices, Time). **Dependencies**: None.
 
 ### UI/Event Handlers
 
--   **`ActionClickHandler.js`**: Handles general `data-action` click events (navigation, simple modals, basic state changes). Now passes ship attribute management to `TooltipHandler`.
+-   **`ActionClickHandler.js`**: Handles general `data-action` click events. Now handles the "Upgrade Installation" flow.
 -   **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
 -   **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
 -   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
--   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click. Now includes ship attribute lifecycle management and stateful toggle logic.
+-   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
 -   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
 
 ### UI/Renderers
@@ -24996,25 +24961,25 @@ This document defines the single responsibility of each service in the applicati
 
 ### Debug & Automation
 
--   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Now includes tools for asset validation (`cycleShipPics`, `boardShip`) and Tutorial Tuning.
--   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy by simulating an advanced, market-manipulating player.
+-   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
+-   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy.
 
 ---
 
 ### Static Data Files (`js/data/`)
 
--   **`database.js`**: Aggregates and exports static game data imported from other modules (constants, commodities, ships, markets, etc.).
--   **`ship_database.js`**: Defines the static data for all player-tradable ships, including stats, lore, and pricing. This is imported by `database.js`.
--   **`assets_config.js`**: Defines configuration for ship asset variants (e.g., how many variants exist for each ship ID).
--   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules).
--   **`age_events.js`**: Defines static data for narrative events triggered by game progression (e.g., player age, wealth).
+-   **`database.js`**: Aggregates and exports static game data imported from other modules.
+-   **`ship_database.js`**: Defines the static data for all player-tradable ships.
+-   **`assets_config.js`**: Defines configuration for ship asset variants.
+-   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
+-   **`age_events.js`**: Defines static data for narrative events triggered by game progression.
 -   **`events.js`**: Defines static data for random events encountered during travel.
 -   **`missions.js`**: Defines static data for all player missions.
 -   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 -   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
--   **`intelMessages.js`**: Defines message templates for free and purchased market intel displayed on the news ticker.
--   **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets in the Intel Market.
--   **`eulaContent.js`**: Defines the static HTML content for the End-User License Agreement displayed in the modal.
+-   **`intelMessages.js`**: Defines message templates for free and purchased market intel.
+-   **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
+-   **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

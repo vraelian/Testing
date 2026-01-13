@@ -141,7 +141,7 @@
           "validateSellShip": "Validates if a ship sale is possible.",
           "executeSellShip": "Executes the state changes for selling a ship, including dynamic upgrade value calculation.",
           "refuelTick": "Processes one 'tick' of refueling.",
-          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the state mutation."
+          "executeInstallUpgrade": "Installs an upgrade to the active ship, handling the Destructive Replacement logic and state mutation."
         },
         "mutates_state": [
           "player.credits",
@@ -153,12 +153,13 @@
         ]
       },
       "GameAttributes": {
-        "description": "The Upgrade Registry. Defines the metadata (name, cost, description) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers.",
+        "description": "The Upgrade Registry. Defines the metadata (name, cost, description, visual style) for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers, supporting both Additive (Capacity) and Multiplicative (Rate) logic.",
         "dependencies": [],
         "key_functions": {
           "getDefinition": "Returns the static definition object for a given Upgrade ID.",
           "getServiceCostModifier": "Calculates service cost multipliers based on installed upgrades.",
-          "getPriceModifier": "Calculates market price modifiers based on installed upgrades."
+          "getPriceModifier": "Calculates market price modifiers based on installed upgrades.",
+          "getEventChanceModifier": "Calculates flat additive bonuses to event probability."
         },
         "mutates_state": []
       },
@@ -209,7 +210,7 @@
         ]
       },
       "MarketService": {
-        "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides.",
+        "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
         "dependencies": [
           "GameState",
           "IntelService"
@@ -219,7 +220,7 @@
           "replenishMarketInventory": "Handles the weekly restocking of all markets.",
           "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
           "_updateShipyardStock": "Updates the available ships for sale at each location.",
-          "getPrice": "Gets the price, checking for Intel overrides first."
+          "getPrice": "Gets the price, checking for Intel overrides and applying Upgrade modifiers."
         },
         "mutates_state": [
           "market.prices",
