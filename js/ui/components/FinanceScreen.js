@@ -7,6 +7,7 @@
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 // --- VIRTUAL WORKBENCH START: Phase 1 ---
 // This function is now REMOVED as the global formatCredits handles all logic.
@@ -42,6 +43,36 @@ export function renderFinanceScreen(gameState) {
                 garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
             }
         }
+
+        // --- UPGRADE SYSTEM: INTEREST DISPLAY ---
+        const activeShipId = player.activeShipId;
+        const shipState = player.shipStates[activeShipId];
+        const upgrades = shipState ? (shipState.upgrades || []) : [];
+        
+        // Calculate effective interest
+        const interestMod = GameAttributes.getInterestModifier(upgrades);
+        const effectiveInterest = Math.floor(player.monthlyInterestAmount * interestMod);
+        
+        // Only show if modified
+        let interestHtml = '';
+        if (interestMod < 1.0) {
+            interestHtml = `
+                <div class="mt-2 text-xs text-gray-400">
+                    Monthly Interest: <span class="text-green-400">${formatCredits(effectiveInterest)}</span> 
+                    <span class="line-through text-gray-600">${formatCredits(player.monthlyInterestAmount)}</span>
+                </div>
+            `;
+        } else {
+             // Optional: Show standard interest if desired, or keep hidden as per original design.
+             // Adding standard display for consistency if they have debt.
+             interestHtml = `
+                <div class="mt-2 text-xs text-gray-400">
+                    Monthly Interest: <span class="text-red-400">${formatCredits(player.monthlyInterestAmount)}</span>
+                </div>
+            `;
+        }
+        // ----------------------------------------
+
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         loanHtml = `
             <div>
@@ -52,6 +83,7 @@ export function renderFinanceScreen(gameState) {
                     <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
                     </button>
+                    ${interestHtml}
                     ${garnishmentTimerHtml}
                 </div>
             </div>`;

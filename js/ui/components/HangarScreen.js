@@ -52,7 +52,7 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
                     <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -92,10 +92,11 @@ function _renderEmptyCarouselPage(isHangarMode) {
  * @param {number} itemIndex The index of this ship in the list.
  * @param {number} activeIndex The currently viewed index.
  * @param {boolean} isHangarMode True if the view is for the player's hangar.
+ * @param {object} simulationService The simulation service for calculating effective stats.
  * @returns {string} The HTML for a single carousel page.
  * @private
  */
-function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode) {
+function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -119,13 +120,13 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         
         const pills = shipDynamic.upgrades.map(upgradeId => {
             const definition = GameAttributes.getDefinition(upgradeId);
-            // Default styling if definition missing, usually we'd have a color map but for now we default
-            // In future phases, definitions will likely carry specific colors or we can map them here.
-            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : 'MOD';
+            
+            // Label Logic: ShortLabel > First 4 Chars > 'MOD'
+            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
-            // Standardizing Upgrade Pill Color (Cyan for now, or distinct from old attributes)
-            const pillColor = '#22d3ee'; 
+            // Dynamic Color from Registry (or fallback)
+            const pillColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
 
             // Semantic Button
             return `
@@ -193,6 +194,9 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         </div>
     `;
 
+    // Pass simulationService to info panel
+    const infoPanel = _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService);
+
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
@@ -203,7 +207,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             </div>
         </div>
         <div class="col-span-2 flex flex-col justify-between">
-            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode)}
+            ${infoPanel}
             <div class="action-buttons-container pt-2">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
@@ -212,7 +216,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
 
     const hangarLayout = `
         <div class="col-span-2 flex flex-col justify-between">
-            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode)}
+            ${infoPanel}
         </div>
 
         <div class="col-span-3 flex flex-col justify-between">
@@ -248,7 +252,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
  * Renders the appropriate info panel (Hangar or Shipyard).
  * @private
  */
-function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
+function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService) {
     const shipClassLower = shipStatic.class.toLowerCase();
     const len = shipStatic.name.length;
     let nameClass = 'text-xl'; 
@@ -281,6 +285,9 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     else if (shipStatic.class === 'O') shadowClass = 'glow-text-o';
     else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
 
+    // Pass simulationService to param bars
+    const paramBars = _renderParamBars(shipStatic, shipDynamic, gameState.player, !isHangarMode, shipId, simulationService);
+
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -289,7 +296,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
+                    ${paramBars}
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -309,7 +316,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing ${priceClass}">${priceStr}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
+                    ${paramBars}
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -364,14 +371,25 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * Renders the HULL, FUEL, and CARGO parameter bars.
  * @private
  */
-function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
+function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId, simulationService) {
+    // --- UPGRADE SYSTEM: Effective Stats Display ---
+    // If we are in Hangar mode (owned ship), we must use the Effective Stats 
+    // to show the boosted capacities (e.g., from Aux Tanks or Hull Armor).
+    // If in Shipyard, we default to the static base stats from the DB.
+    let effectiveStats = shipStatic;
+    
+    if (!isShipyard && simulationService) {
+        effectiveStats = simulationService.getEffectiveShipStats(shipId) || shipStatic;
+    }
+
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
-    const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
-    const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
-    const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
+    // Use Effective Max for percentage calculations
+    const hullPct = effectiveStats.maxHealth > 0 ? (currentHull / effectiveStats.maxHealth) * 100 : 0;
+    const cargoPct = effectiveStats.cargoCapacity > 0 ? (currentCargo / effectiveStats.cargoCapacity) * 100 : 0;
+    const fuelPct = effectiveStats.maxFuel > 0 ? (currentFuel / effectiveStats.maxFuel) * 100 : 0;
     
     const hullColor = 'var(--ot-green-accent)';
     const cargoColor = '#f59e0b'; 
@@ -414,9 +432,9 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
 
     return `
         <div class="ship-param-bars ${isShipyard ? 'shipyard-bars' : ''}">
-            ${renderBar('HULL', currentHull, shipStatic.maxHealth, hullPct, hullColor)}
-            ${renderBar('FUEL', currentFuel, shipStatic.maxFuel, fuelPct, fuelColor)}
-            ${renderBar('CARGO', currentCargo, shipStatic.cargoCapacity, cargoPct, cargoColor)}
+            ${renderBar('HULL', currentHull, effectiveStats.maxHealth, hullPct, hullColor)}
+            ${renderBar('FUEL', currentFuel, effectiveStats.maxFuel, fuelPct, fuelColor)}
+            ${renderBar('CARGO', currentCargo, effectiveStats.cargoCapacity, cargoPct, cargoColor)}
         </div>
     `;
 }

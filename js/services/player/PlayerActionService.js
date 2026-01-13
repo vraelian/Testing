@@ -47,12 +47,15 @@ export class PlayerActionService {
         }
 
         const basePrice = this.uiManager.getItemPrice(state, goodId);
+        const activeShipId = state.player.activeShipId;
+        const shipState = state.player.shipStates[activeShipId];
+        const upgrades = shipState.upgrades || [];
         
-        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
-        // Apply attributes like 'Corporate Partner' or 'VIP'
-        const priceMod = GameAttributes.getPriceModifier(state.player.activeShipId, state.currentLocationId, 'buy', { commodityId: goodId });
+        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
+        // Apply Signal Hacker or other buy attributes
+        const priceMod = GameAttributes.getPriceModifier(upgrades, 'buy');
         const price = Math.max(1, Math.round(basePrice * priceMod));
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -60,12 +63,17 @@ export class PlayerActionService {
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-        const activeShip = this.simulationService._getActiveShip();
+        // --- UPGRADE SYSTEM: EFFECTIVE STATS CHECK ---
+        // Check capacity against the "Effective" stats (includes Aux Storage)
+        const activeShipStats = this.simulationService.getEffectiveShipStats(activeShipId);
         const activeInventory = this.simulationService._getActiveInventory();
-        if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
+        
+        if (calculateInventoryUsed(activeInventory) + quantity > activeShipStats.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
             return false;
         }
+        // --- END UPGRADE SYSTEM ---
+
          if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
@@ -80,8 +88,8 @@ export class PlayerActionService {
         // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
         // Vindicator "Trader": 15% chance to receive 1 extra unit for free
         let finalQuantity = quantity;
-        // NOTE: Legacy getShipAttributes returns empty in Phase 1, logic neutralized safely.
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        // Legacy access safely returns empty if not used, preserving logic structure
+        const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
             finalQuantity += 1;
             this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
@@ -129,19 +137,18 @@ export class PlayerActionService {
             return 0;
         }
 
+        const activeShipId = state.player.activeShipId;
+        const shipState = state.player.shipStates[activeShipId];
+        const upgrades = shipState.upgrades || [];
+
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
 
-        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
-        // Apply attributes like 'Hot Delivery', 'Cryo-Storage', 'Lucky'
-        const priceMod = GameAttributes.getPriceModifier(
-            state.player.activeShipId, 
-            state.currentLocationId, 
-            'sell', 
-            { commodityId: goodId, cargoItem: item, currentDay: state.day }
-        );
+        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
+        // Apply Guild Badge or other sell attributes
+        const priceMod = GameAttributes.getPriceModifier(upgrades, 'sell');
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
@@ -299,7 +306,7 @@ export class PlayerActionService {
                 return false;
             }
             
-            // --- VIRTUAL WORKBENCH: PHASE 2 (ECONOMIC RETROFITTING) ---
+            // --- UPGRADE SYSTEM: ECONOMIC RETROFITTING ---
             // Calculate total value: Ship Base Price + Sum of Upgrade Values
             let upgradeValue = 0;
             if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
@@ -313,7 +320,7 @@ export class PlayerActionService {
 
             const totalBaseValue = ship.price + upgradeValue;
             const salePrice = Math.floor(totalBaseValue * GAME_RULES.SHIP_SELL_MODIFIER);
-            // --- END VIRTUAL WORKBENCH ---
+            // --- END UPGRADE SYSTEM ---
             
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
 
@@ -549,26 +556,37 @@ export class PlayerActionService {
     refuelTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (!ship || ship.fuel >= ship.maxFuel) return 0; // Check if ship exists
+        if (!ship) return 0;
+
+        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
+        // Use Effective Max Fuel to prevent overfilling beyond upgraded capacity
+        const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
+        if (state.player.shipStates[ship.id].fuel >= effectiveStats.maxFuel) return 0;
+        // --- END UPGRADE SYSTEM ---
+
+        const shipState = state.player.shipStates[ship.id];
+        const upgrades = shipState.upgrades || [];
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         
-        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
         // Apply Station Quirks (Jupiter) and Ship Attributes (Citadel Renown)
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
              costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         
-        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'refuel');
+        // Apply Fuel Pass Discount
+        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
         costPerTick *= attrMod;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
 
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, state.player.shipStates[ship.id].fuel + 5);
+        // Use effectiveStats.maxFuel
+        state.player.shipStates[ship.id].fuel = Math.min(effectiveStats.maxFuel, state.player.shipStates[ship.id].fuel + 5);
         this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
 
         const refuelBtn = document.getElementById('refuel-btn');
@@ -590,36 +608,43 @@ export class PlayerActionService {
     repairTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (!ship || ship.health >= ship.maxHealth) return 0; // Check if ship exists
+        if (!ship) return 0;
 
-        // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
-        // Check if repairs are blocked (Finality of Whispers)
-        // Legacy accessor usage in Phase 1 neutralization: safely returns empty array.
+        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
+        // Use Effective Max Health
+        const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
+        if (state.player.shipStates[ship.id].health >= effectiveStats.maxHealth) return 0;
+        // --- END UPGRADE SYSTEM ---
+
+        const shipState = state.player.shipStates[ship.id];
+        const upgrades = shipState.upgrades || [];
+
+        // Legacy check
         const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             // Cannot be repaired
             return 0; 
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
+        // Repair calculation based on Effective Max Health
+        const repairAmount = effectiveStats.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
 
-        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
-        // Apply Station Quirks (Venus) and Ship Attributes (Ouroboros Frequent Flyer)
-        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'repair');
+        // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
+        // Apply Repair Pass Discount
+        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
         costPerTick *= attrMod;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
          costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
+        state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 
@@ -636,7 +661,6 @@ export class PlayerActionService {
     }
 
     /**
-     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
      * Validates if an upgrade can be installed on a ship.
      * Checks: Ownership, Active Status (Instant App Rule), Capacity.
      * @param {string} shipId 
@@ -653,6 +677,7 @@ export class PlayerActionService {
         }
 
         // 2. Check Instant Application Rule (Must be Active Ship)
+        // This constraint ensures we don't have to recalculate effective stats for inactive ships in background
         if (state.player.activeShipId !== shipId) {
             return { success: false, error: 'Upgrades must be applied to the active ship.' };
         }
@@ -667,7 +692,6 @@ export class PlayerActionService {
     }
 
     /**
-     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
      * Installs an upgrade onto a ship.
      * Assumes validation has passed.
      * @param {string} shipId 

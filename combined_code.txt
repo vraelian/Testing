@@ -5930,7 +5930,7 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative">
                     <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -5970,10 +5970,11 @@ function _renderEmptyCarouselPage(isHangarMode) {
  * @param {number} itemIndex The index of this ship in the list.
  * @param {number} activeIndex The currently viewed index.
  * @param {boolean} isHangarMode True if the view is for the player's hangar.
+ * @param {object} simulationService The simulation service for calculating effective stats.
  * @returns {string} The HTML for a single carousel page.
  * @private
  */
-function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode) {
+function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -5997,13 +5998,13 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         
         const pills = shipDynamic.upgrades.map(upgradeId => {
             const definition = GameAttributes.getDefinition(upgradeId);
-            // Default styling if definition missing, usually we'd have a color map but for now we default
-            // In future phases, definitions will likely carry specific colors or we can map them here.
-            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : 'MOD';
+            
+            // Label Logic: ShortLabel > First 4 Chars > 'MOD'
+            const label = definition ? (definition.shortLabel || definition.name.substring(0, 4).toUpperCase()) : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
-            // Standardizing Upgrade Pill Color (Cyan for now, or distinct from old attributes)
-            const pillColor = '#22d3ee'; 
+            // Dynamic Color from Registry (or fallback)
+            const pillColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
 
             // Semantic Button
             return `
@@ -6071,6 +6072,9 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         </div>
     `;
 
+    // Pass simulationService to info panel
+    const infoPanel = _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService);
+
     const shipyardLayout = `
         <div class="col-span-3 flex flex-col justify-between">
             <div class="ship-display-area flex-grow flex items-center justify-center relative">
@@ -6081,7 +6085,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             </div>
         </div>
         <div class="col-span-2 flex flex-col justify-between">
-            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode)}
+            ${infoPanel}
             <div class="action-buttons-container pt-2">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
             </div>
@@ -6090,7 +6094,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
 
     const hangarLayout = `
         <div class="col-span-2 flex flex-col justify-between">
-            ${_renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode)}
+            ${infoPanel}
         </div>
 
         <div class="col-span-3 flex flex-col justify-between">
@@ -6126,7 +6130,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
  * Renders the appropriate info panel (Hangar or Shipyard).
  * @private
  */
-function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode) {
+function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService) {
     const shipClassLower = shipStatic.class.toLowerCase();
     const len = shipStatic.name.length;
     let nameClass = 'text-xl'; 
@@ -6159,6 +6163,9 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     else if (shipStatic.class === 'O') shadowClass = 'glow-text-o';
     else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
 
+    // Pass simulationService to param bars
+    const paramBars = _renderParamBars(shipStatic, shipDynamic, gameState.player, !isHangarMode, shipId, simulationService);
+
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
@@ -6167,7 +6174,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, false, shipId)}
+                    ${paramBars}
                 </div>
                 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -6187,7 +6194,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
                         <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing ${priceClass}">${priceStr}</p>
                     </div>
-                    ${_renderParamBars(shipStatic, shipDynamic, gameState.player, true, shipId)}
+                    ${paramBars}
                 </div>
 
                 <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
@@ -6242,14 +6249,25 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
  * Renders the HULL, FUEL, and CARGO parameter bars.
  * @private
  */
-function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId) {
+function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId, simulationService) {
+    // --- UPGRADE SYSTEM: Effective Stats Display ---
+    // If we are in Hangar mode (owned ship), we must use the Effective Stats 
+    // to show the boosted capacities (e.g., from Aux Tanks or Hull Armor).
+    // If in Shipyard, we default to the static base stats from the DB.
+    let effectiveStats = shipStatic;
+    
+    if (!isShipyard && simulationService) {
+        effectiveStats = simulationService.getEffectiveShipStats(shipId) || shipStatic;
+    }
+
     const currentHull = isShipyard ? shipStatic.maxHealth : shipDynamic?.health ?? 0;
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
-    const hullPct = shipStatic.maxHealth > 0 ? (currentHull / shipStatic.maxHealth) * 100 : 0;
-    const cargoPct = shipStatic.cargoCapacity > 0 ? (currentCargo / shipStatic.cargoCapacity) * 100 : 0;
-    const fuelPct = shipStatic.maxFuel > 0 ? (currentFuel / shipStatic.maxFuel) * 100 : 0;
+    // Use Effective Max for percentage calculations
+    const hullPct = effectiveStats.maxHealth > 0 ? (currentHull / effectiveStats.maxHealth) * 100 : 0;
+    const cargoPct = effectiveStats.cargoCapacity > 0 ? (currentCargo / effectiveStats.cargoCapacity) * 100 : 0;
+    const fuelPct = effectiveStats.maxFuel > 0 ? (currentFuel / effectiveStats.maxFuel) * 100 : 0;
     
     const hullColor = 'var(--ot-green-accent)';
     const cargoColor = '#f59e0b'; 
@@ -6292,9 +6310,9 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
 
     return `
         <div class="ship-param-bars ${isShipyard ? 'shipyard-bars' : ''}">
-            ${renderBar('HULL', currentHull, shipStatic.maxHealth, hullPct, hullColor)}
-            ${renderBar('FUEL', currentFuel, shipStatic.maxFuel, fuelPct, fuelColor)}
-            ${renderBar('CARGO', currentCargo, shipStatic.cargoCapacity, cargoPct, cargoColor)}
+            ${renderBar('HULL', currentHull, effectiveStats.maxHealth, hullPct, hullColor)}
+            ${renderBar('FUEL', currentFuel, effectiveStats.maxFuel, fuelPct, fuelColor)}
+            ${renderBar('CARGO', currentCargo, effectiveStats.cargoCapacity, cargoPct, cargoColor)}
         </div>
     `;
 }
@@ -6339,30 +6357,18 @@ export function renderIntelScreen() {
 
 --- START OF FILE: ./js/ui/components/NavigationScreen.js ---
 // js/ui/components/NavigationScreen.js
-/**
- * @fileoverview This file contains the rendering logic for the Navigation screen.
- * It displays the available travel destinations as interactive cards, showing the
- * fuel and time costs for each potential journey.
- */
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
-/**
- * Renders the entire Navigation screen UI.
- * @param {object} gameState - The current state of the game.
- * @returns {string} The HTML content for the Navigation screen.
- */
 export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
     const { navLock } = tutorials;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
-
-    // Check if a tutorial is active and has locked navigation.
     const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
     const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
 
-    // Efficiently parse the enabled location ID from the query selector string.
     let enabledLocationId = null;
     if (enabledElementQuery) {
         const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
@@ -6370,7 +6376,34 @@ export function renderNavigationScreen(gameState) {
             enabledLocationId = match[1];
         }
     }
-    
+
+    // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
+    const activeShipId = player.activeShipId;
+    const shipState = player.shipStates[activeShipId];
+    const upgrades = shipState ? (shipState.upgrades || []) : [];
+
+    // 1. Fuel Modifiers (Perk * Upgrade)
+    let fuelMod = 1.0;
+    if (player.activePerks[PERK_IDS.NAVIGATOR]) {
+        fuelMod *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
+    }
+    // Apply Engine Mod / Fuel Pass
+    fuelMod *= GameAttributes.getFuelCostModifier(upgrades);
+
+    // 2. Time Modifiers (Perk * Upgrade)
+    let timeMod = 1.0;
+    if (player.activePerks[PERK_IDS.NAVIGATOR]) {
+        timeMod *= DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod;
+    }
+    // Apply Engine Mod
+    timeMod *= GameAttributes.getTravelTimeModifier(upgrades);
+
+    // 3. Legacy Attributes
+    const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
+    const hasSpaceFolding = shipAttributes.includes('ATTR_SPACE_FOLDING');
+    const hasSleeper = shipAttributes.includes('ATTR_SLEEPER');
+    // ---------------------------------------------
+
     return `
         <div class="scroll-panel navigation-scroll-panel">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -6378,17 +6411,35 @@ export function renderNavigationScreen(gameState) {
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
-                    const travelInfo = isCurrent ? null : TRAVEL_DATA[currentLocationId][location.id];
+                    
+                    let displayTime = 0;
+                    let displayFuel = 0;
+                    
+                    if (!isCurrent) {
+                        const baseData = TRAVEL_DATA[currentLocationId][location.id];
+                        
+                        // Apply Time Logic (Mod * Base)
+                        displayTime = Math.max(1, Math.round(baseData.time * timeMod));
+                        
+                        // Legacy Overrides
+                        if (hasSpaceFolding) displayTime = 1;
+                        if (hasSleeper) displayTime = Math.round(displayTime * 4.5); // Sleeper adds time
 
-                    // Determine if this card should be disabled due to a tutorial lock.
+                        // Apply Fuel Logic (Mod * Base)
+                        displayFuel = Math.round(baseData.fuelCost * fuelMod);
+                        
+                        // Legacy Overrides
+                        if (hasSpaceFolding) displayFuel = Math.round(baseData.fuelCost * 1.2); // Override/Penalty
+                        if (hasSleeper) displayFuel = 0; // Sleeper is free
+                    }
+
                     const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
                     const disabledClass = isDisabled ? 'disabled-location' : '';
                     
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-
                     return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                 data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
+                                     data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -6396,15 +6447,15 @@ export function renderNavigationScreen(gameState) {
                             : `<div class="flex justify-around items-center text-center">
                                    <div class="flex items-center space-x-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
-                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.time}</span><span class="block text-xs text-gray-400">Days</span></div>
+                                        <div><span class="font-bold font-roboto-mono text-lg">${displayTime}</span><span class="block text-xs text-gray-400">Days</span></div>
                                    </div>
                                    <div class="flex items-center space-x-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                       <div><span class="font-bold font-roboto-mono text-lg">${travelInfo.fuelCost}</span><span class="block text-xs text-gray-400">Fuel</span></div>
+                                        <div><span class="font-bold font-roboto-mono text-lg">${displayFuel}</span><span class="block text-xs text-gray-400">Fuel</span></div>
                                    </div>
                                </div>`
                         }
-                      </div>
+                        </div>
                       </div>`;
                 }).join('')
             }
@@ -6515,6 +6566,7 @@ export function renderMissionsScreen(gameState, missionService) {
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 // --- VIRTUAL WORKBENCH START: Phase 1 ---
 // This function is now REMOVED as the global formatCredits handles all logic.
@@ -6550,6 +6602,36 @@ export function renderFinanceScreen(gameState) {
                 garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
             }
         }
+
+        // --- UPGRADE SYSTEM: INTEREST DISPLAY ---
+        const activeShipId = player.activeShipId;
+        const shipState = player.shipStates[activeShipId];
+        const upgrades = shipState ? (shipState.upgrades || []) : [];
+        
+        // Calculate effective interest
+        const interestMod = GameAttributes.getInterestModifier(upgrades);
+        const effectiveInterest = Math.floor(player.monthlyInterestAmount * interestMod);
+        
+        // Only show if modified
+        let interestHtml = '';
+        if (interestMod < 1.0) {
+            interestHtml = `
+                <div class="mt-2 text-xs text-gray-400">
+                    Monthly Interest: <span class="text-green-400">${formatCredits(effectiveInterest)}</span> 
+                    <span class="line-through text-gray-600">${formatCredits(player.monthlyInterestAmount)}</span>
+                </div>
+            `;
+        } else {
+             // Optional: Show standard interest if desired, or keep hidden as per original design.
+             // Adding standard display for consistency if they have debt.
+             interestHtml = `
+                <div class="mt-2 text-xs text-gray-400">
+                    Monthly Interest: <span class="text-red-400">${formatCredits(player.monthlyInterestAmount)}</span>
+                </div>
+            `;
+        }
+        // ----------------------------------------
+
         // --- VIRTUAL WORKBENCH START: Phase 2 ---
         loanHtml = `
             <div>
@@ -6560,6 +6642,7 @@ export function renderFinanceScreen(gameState) {
                     <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
                     </button>
+                    ${interestHtml}
                     ${garnishmentTimerHtml}
                 </div>
             </div>`;
@@ -6644,13 +6727,15 @@ export function renderFinanceScreen(gameState) {
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
  * Renders the entire Services screen UI.
  * @param {object} gameState - The current state of the game.
+ * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
  * @returns {string} The HTML content for the Services screen.
  */
-export function renderServicesScreen(gameState) {
+export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
 
     // VIRTUAL WORKBENCH: Added Starport Name map (Request B)
@@ -6706,28 +6791,54 @@ export function renderServicesScreen(gameState) {
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
     const shipName = shipStatic?.name || 'NO ACTIVE SHIP'; // VIRTUAL WORKBENCH: Get ship name
+    const upgrades = shipState.upgrades || [];
 
-    // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
+    // --- UPGRADE SYSTEM: Effective Stats ---
+    // Use SimulationService to get stats with modifiers (e.g. +20% Fuel from Tanks)
+    // If simulationService is missing (legacy safety), fallback to static stats
+    let effectiveMaxHealth = shipStatic.maxHealth;
+    let effectiveMaxFuel = shipStatic.maxFuel;
+
+    if (simulationService && simulationService.getEffectiveShipStats) {
+        const stats = simulationService.getEffectiveShipStats(player.activeShipId);
+        if (stats) {
+            effectiveMaxHealth = stats.maxHealth;
+            effectiveMaxFuel = stats.maxFuel;
+        }
+    }
+
+    // --- Calculate Refuel Cost ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
+    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    fuelCostPerTick = Math.round(fuelCostPerTick);
+    // 2. Upgrade Modifier (Fuel Pass)
+    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
+    fuelCostPerTick *= fuelAttrMod;
+    
+    fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
 
-    // --- Calculate Repair Cost (logic mirrored from PlayerActionService.repairTick) ---
-    let repairCostPerTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    // --- Calculate Repair Cost ---
+    // Base cost is derived from Effective Max Health
+    let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
-    repairCostPerTick = Math.round(repairCostPerTick);
+    // 2. Upgrade Modifier (Repair Pass)
+    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
+    repairCostPerTick *= repairAttrMod;
 
-    // --- Calculate Percentages ---
-    const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-    const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+    repairCostPerTick = Math.max(1, Math.round(repairCostPerTick));
+
+    // --- Calculate Percentages (Using Effective Max) ---
+    const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
+    const healthPct = (shipState.health / effectiveMaxHealth) * 100;
 
     // --- Determine UI States ---
-    const isFuelFull = shipState.fuel >= shipStatic.maxFuel;
-    const isHealthFull = shipState.health >= shipStatic.maxHealth;
+    const isFuelFull = shipState.fuel >= effectiveMaxFuel;
+    const isHealthFull = shipState.health >= effectiveMaxHealth;
 
     const canAffordRefuel = player.credits >= fuelCostPerTick;
     const canAffordRepair = player.credits >= repairCostPerTick;
@@ -6758,7 +6869,7 @@ export function renderServicesScreen(gameState) {
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                               <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
-                                ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
+                                ${Math.round(shipState.fuel)} / ${effectiveMaxFuel}
                               </span>
                             </div>
                             <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
@@ -6786,7 +6897,7 @@ export function renderServicesScreen(gameState) {
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                                <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
-                                ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
+                                ${Math.round(shipState.health)} / ${effectiveMaxHealth}
                               </span>
                             </div>
                             <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
@@ -6794,7 +6905,7 @@ export function renderServicesScreen(gameState) {
                           </div>
                         <div class="control-deck flex justify-center items-center gap-4">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
-                            <span class.price-label text-sm engraved-text">COST</span>
+                            <span class="price-label text-sm engraved-text">COST</span>
                             <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
@@ -6942,162 +7053,395 @@ export function _renderMaxCargoModal(good, item) {
 --- END OF FILE: ./js/ui/components/CargoScreen.js ---
 
 --- START OF FILE: ./js/ui/components/MarketScreen.js ---
-// js/ui/components/MarketScreen.js
+// js/services/simulation/MarketService.js
 /**
- * @fileoverview
- * This file contains the rendering logic for the Market screen.
- * It is responsible for displaying all available commodities for trade.
+ * @fileoverview This file contains the MarketService class, which handles the simulation
+ * of the in-game economy. This includes evolving commodity prices over time based on
+ * volatility and market pressure, replenishing market inventories with persistence,
+ * and managing system-wide economic states.
  */
+import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
-import { AssetService } from '../../services/AssetService.js';
-import { formatCredits, renderIndicatorPills } from '../../utils.js';
-import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
+import { skewedRandom } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
- * Renders the entire Market screen, adapting for mobile or desktop layouts.
- * @param {object} gameState - The current state of the game.
- * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
- * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
- * @param {object} marketTransactionState - The saved state of the transaction modules.
- * @returns {string} The HTML content for the Market screen.
+ * @class MarketService
+ * @description Manages the economic simulation aspects of the game.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState) {
-    const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
-    const marketHtml = availableCommodities.map(good => {
-        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
-    }).join('');
-
-    // MODIFIED: Changed 'scroll-panel' to 'market-scroll-panel' to match CSS file
-    return `<div class="market-scroll-panel">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
-            </div>`;
-}
-
-/**
- * Generates the HTML for a single commodity card on the market screen.
- * @param {object} good - The commodity data from the database.
- * @param {object} gameState - The current game state.
- * @param {function} getItemPrice - A function to calculate the item's current price.
- * @param {object} marketTransactionState - The saved state of the transaction modules.
- * @returns {string} The HTML string for the commodity card.
- * @private
- */
-function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials, uiState } = gameState;
-    const playerItem = player.inventories[player.activeShipId]?.[good.id];
-    const price = getItemPrice(gameState, good.id);
-    const sellPrice = getItemPrice(gameState, good.id, true);
-    const galacticAvg = market.galacticAverages[good.id];
-    const marketStock = market.inventory[currentLocationId]?.[good.id];
-
-    const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
-
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
-    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
-
-    const nameTooltip = `data-tooltip="${good.lore}"`;
-    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
-    const isMinimized = uiState.marketCardMinimized[good.id];
-
-    // --- ASSET SERVICE INTEGRATION ---
-    // Fetch dynamic art if available. Fallback handled by service (returns empty string).
-    const bgImage = AssetService.getCommodityImage(good.name, player.visualSeed);
-    
-    // If art exists, use the raw image (Option B).
-    // Otherwise, leave empty to allow the CSS class (item-style-X) to show the default gradient.
-    let customBackgroundStyle = '';
-    let customClass = '';
-    
-    if (bgImage) {
-        // Option B: No gradient overlay, just the raw image.
-        customBackgroundStyle = `background-image: url('${bgImage}');`;
-        customClass = ' has-custom-art';
+export class MarketService {
+    /**
+     * @param {import('../GameState.js').GameState} gameState The central game state object.
+     */
+    constructor(gameState) {
+        this.gameState = gameState;
+        this._currentSystemState = null;
+        this._systemStateExpirationDay = 0;
     }
 
-    let cardContentHtml;
-    let buttonHtml = ''; 
+    /**
+     * Gets the effective price for a commodity at a location.
+     * Can optionally apply Ship Attributes (e.g. VIP, Corp Partner) for UI display.
+     * * @param {string} locationId The ID of the location.
+     * @param {string} commodityId The ID of the commodity.
+     * @param {boolean} [applyModifiers=false] Whether to apply active ship attribute modifiers.
+     * @returns {number} The effective price.
+     */
+    getPrice(locationId, commodityId, applyModifiers = false) {
+        const state = this.gameState.getState();
+        const deal = state.activeIntelDeal;
+        let price = 0;
 
-    if (hasLicense) {
-        // --- This is the STANDARD (unlocked) card content ---
-        const indicatorHtml = renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem });
-        const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
-        const initialMode = marketTransactionState[good.id]?.mode || 'buy';
+        // 1. Determine Base Price (Market or Intel Override)
+        if (deal &&
+            deal.locationId === locationId &&
+            deal.commodityId === commodityId) {
+            // Use the fluctuating market price if it exists (which was seeded by the deal),
+            // otherwise fallback to the deal's static override.
+            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+        } else {
+            price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
+        }
 
-        const transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
-                <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
-                    <div class="toggle-thumb"></div>
-                    <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
-                </div>
-                <div class="qty-stepper">
-                    <button class="qty-down" data-action="decrement" data-good-id="${good.id}">▼</button>
-                    <input type="number" value="0" id="qty-${good.id}" min="0">
-                    <button class="qty-up" data-action="increment" data-good-id="${good.id}">▲</button>
-                </div>
-                <div class="action-group">
-                    <button class="btn confirm-btn" data-action="confirm-trade" data-good-id="${good.id}">Confirm</button>
-                    <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
-                </div>
-            </div>`;
+        // 2. Apply Attribute Modifiers (if requested)
+        // This allows the UI to request the "discounted" price for display,
+        // while Services can request the "raw" price if they handle math separately.
+        if (applyModifiers && state.player.activeShipId) {
+            const shipState = this.gameState.player.shipStates[state.player.activeShipId];
+            const upgrades = shipState ? (shipState.upgrades || []) : [];
 
-        const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
+            // --- UPGRADE SYSTEM: Apply Buy Modifiers ---
+            // Calculate Multiplicative Modifier (e.g. 0.97 for 3% off)
+            const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
+            price = Math.max(1, Math.round(price * mod));
+            // --- END UPGRADE SYSTEM ---
+        }
 
-        buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
-        
-        // --- VIRTUAL WORKBENCH START: Phase 4 (Revert) ---
-        cardContentHtml = `
-            <div class="max-view-content">
-                <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
-                <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
-                
-                <p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${price}">${formatCredits(price)}</p>
-                
-                <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
-                
-                <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
-
-                ${avgCostHtml}
-
-                ${transactionControlsHtml}
-            </div>
-
-            <div class="min-view-content">
-                <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
-                <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
-            </div>
-        `;
-        // --- VIRTUAL WORKBENCH END: Phase 4 (Revert) ---
-
-    } else {
-        // --- [[START]] MODIFIED (locked) card content ---
-        
-        // Change c: Set text to 'TIER X LICENSE'
-        const lockedText = `TIER ${good.tier} LICENSE`;
-
-        // Add the data-action and data-license-id to the container to make it clickable
-        cardContentHtml = `
-            <div class="license-locked-content" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">
-                <div class="license-locked-tier-watermark">TIER ${good.tier}</div>
-                
-                <div class="sci-fi-lock-badge">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                    </svg>
-                </div>
-                 <p class="license-required-text">${lockedText}</p>
-            </div>
-        `;
-        // --- [[END]] MODIFIED (locked) card content ---
+        return price;
     }
 
-    return `
-    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
-        ${buttonHtml}
-        <div class="rounded-lg border ${good.styleClass}${customClass} transition-colors shadow-md" style="${customBackgroundStyle}">
-            ${cardContentHtml}
-        </div>
-    </div>`;
+    /**
+     * Retrieves the pre-calculated galactic average price for a commodity.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The galactic average price.
+     */
+    getGalacticAverage(commodityId) {
+        return this.gameState.market.galacticAverages[commodityId] || 0;
+    }
+
+    /**
+     * Checks if the current system-wide economic state should change and applies a new one if necessary.
+     */
+    checkForSystemStateChange() {
+        if (this.gameState.day > this._systemStateExpirationDay) {
+            const systemStates = Object.keys(DB.SYSTEM_STATES);
+            const selectedStateKey = systemStates[Math.floor(Math.random() * systemStates.length)];
+            this._currentSystemState = DB.SYSTEM_STATES[selectedStateKey];
+            this._systemStateExpirationDay = this.gameState.day + this._currentSystemState.duration;
+        }
+    }
+
+    /**
+     * Simulates one week of market price changes for all commodities at all locations.
+     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
+     * and player-driven market pressure.
+     */
+    evolveMarketPrices() {
+        DB.MARKETS.forEach(location => {
+            DB.COMMODITIES.forEach(commodity => {
+                if (commodity.tier > this.gameState.player.revealedTier) return;
+
+                // Enforce Intel Price Lock
+                const activeDeal = this.gameState.activeIntelDeal;
+                if (activeDeal &&
+                     activeDeal.locationId === location.id &&
+                     activeDeal.commodityId === commodity.id)
+                {
+                    // Apply 3% fluctuation to the locked price to simulate a "live" but fixed deal
+                    const basePrice = activeDeal.overridePrice;
+                    const fluctuation = 0.03; 
+                    const minPrice = basePrice * (1 - fluctuation);
+                    const maxPrice = basePrice * (1 + fluctuation);
+                    
+                    const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
+                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    
+                    return; // Skip normal evolution
+                }
+
+                const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
+                const price = this.gameState.market.prices[location.id][commodity.id];
+                const avg = this.gameState.market.galacticAverages[commodity.id];
+
+                // Determine the local baseline price based on import/export modifiers
+                const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
+                const targetPriceOffset = (1.0 - modifier) * avg;
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+
+                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
+                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+
+                const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
+                if (commodityMods) {
+                    if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
+                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
+                }
+
+                const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
+                const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
+                
+                let reversionEffect = (localBaseline - price) * meanReversion;
+
+                // Price Lock: Stops mean reversion if recently traded
+                if (this.gameState.day < inventoryItem.priceLockEndDay) {
+                    reversionEffect = 0;
+                }
+
+                if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
+                    reversionEffect = (localBaseline - price) * 0.20;
+                } else if (inventoryItem.rivalArbitrage.isActive) {
+                    inventoryItem.rivalArbitrage.isActive = false;
+                }
+
+                if (inventoryItem.hoverUntilDay > this.gameState.day) {
+                     reversionEffect *= 0.1;
+                } else if (inventoryItem.hoverUntilDay > 0) {
+                    inventoryItem.hoverUntilDay = 0;
+                }
+
+                // Delayed Supply Pressure: The primary player-driven force
+                let pressureEffect = 0;
+                const PLAYER_PRESSURE_STRENGTH = 0.50; 
+                
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                         pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                    }
+                }
+
+                // Depletion Price Hike
+                let priceHikeMultiplier = 1.0;
+                if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
+                    priceHikeMultiplier = 1.5; 
+                }
+
+                let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
+                
+                if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
+                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
+                }
+                
+                this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
+
+                // Decay pressure
+                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
+                if (Math.abs(inventoryItem.marketPressure) < 0.001) {
+                    inventoryItem.marketPressure = 0;
+                }
+            });
+            this._recordPriceHistory(location.id);
+        });
+    }
+    
+    /**
+     * Simulates the weekly replenishment of commodity stock using a hybrid model.
+     * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
+     */
+    replenishMarketInventory() {
+        DB.MARKETS.forEach(market => {
+            DB.COMMODITIES.forEach(c => {
+                if (c.tier > this.gameState.player.revealedTier) return;
+
+                const inventoryItem = this.gameState.market.inventory[market.id][c.id];
+
+                // Market Memory: Reset if untouched for 120 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                    inventoryItem.lastPlayerInteractionTimestamp = 0;
+                    inventoryItem.marketPressure = 0;
+                    inventoryItem.depletionDay = 0; 
+                    inventoryItem.priceLockEndDay = 0; 
+                } else {
+                    const [minAvail, maxAvail] = c.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
+                    
+                    let pressureForAdaptation = inventoryItem.marketPressure;
+                    if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                        pressureForAdaptation = 0; 
+                    }
+
+                    if (pressureForAdaptation > 0) {
+                        pressureForAdaptation = 0;
+                    }
+
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); 
+                    const targetStock = baseMeanStock * marketAdaptationFactor;
+
+                    const difference = targetStock - inventoryItem.quantity;
+                    const replenishAmount = difference * 0.10; 
+                    
+                    let emergencyStock = 0;
+                    if (inventoryItem.isDepleted) {
+                        emergencyStock = skewedRandom(1, 5);
+                        inventoryItem.isDepleted = false; 
+                    } else if (inventoryItem.quantity <= 0) {
+                        emergencyStock = skewedRandom(1, 5);
+                    }
+
+                    inventoryItem.quantity += (replenishAmount + emergencyStock);
+                }
+
+                const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
+                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
+                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
+                inventoryItem.quantity *= finalFluctuation;
+                
+                if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
+                    inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
+                }
+                
+                inventoryItem.quantity = Math.max(0, Math.round(inventoryItem.quantity));
+            });
+        });
+    }
+
+    /**
+     * Applies a dynamic price adjustment to a commodity based on the volume of a player's transaction.
+     * @param {string} goodId - The ID of the commodity traded.
+     * @param {number} quantity - The amount traded.
+     * @param {string} transactionType - 'buy' or 'sell'.
+     */
+    applyMarketImpact(goodId, quantity, transactionType) {
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+        
+        const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
+        
+        if (transactionType === 'buy') {
+            inventoryItem.marketPressure -= pressureChange;
+        } else { // 'sell'
+            inventoryItem.marketPressure += pressureChange;
+        }
+
+        const dayOfYear = (this.gameState.day - 1) % 365 + 1;
+        let minDuration, maxDuration;
+
+        if (dayOfYear <= 182) { // First half of the year
+            minDuration = 75; // 2.5 months
+            maxDuration = 120; // 4 months
+        } else { // Second half of the year
+            minDuration = 105; // 3.5 months
+            maxDuration = 195; // 6.5 months
+        }
+
+        const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
+        inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+    }
+
+    /**
+     * Checks if a purchase triggers a market depletion event.
+     * @param {object} good - The static commodity data (from DB).
+     * @param {object} inventoryItem - The dynamic inventory item from gameState.
+     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
+     * @param {number} currentDay - The current game day.
+     */
+    checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        const [minAvail, maxAvail] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
+        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+        
+        let pressureForAdaptation = inventoryItem.marketPressure;
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
+        
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
+        
+        const depletionThreshold = targetStock * 0.08;
+        const depletionBuyQuantity = stockBeforeBuy; 
+
+        if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
+            inventoryItem.isDepleted = true; 
+            inventoryItem.depletionDay = currentDay;
+            inventoryItem.depletionBonusDay = currentDay; 
+        }
+    }
+
+    /**
+     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
+     * @param {object} market - The market object from the database.
+     * @param {object} commodity - The commodity object from the database.
+     * @returns {number} The calculated baseline stock quantity.
+     * @private
+     */
+    _calculateBaselineStock(market, commodity) {
+        const [min, max] = commodity.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
+        return Math.floor(skewedRandom(min, max) * modifier);
+    }
+
+    /**
+     * Records the current day's price for each commodity to its historical data log for graphing.
+     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
+     * @private
+     */
+    _recordPriceHistory(marketId = null) {
+        if (!this.gameState || !this.gameState.market) return;
+        const targetMarketId = marketId || this.gameState.currentLocationId;
+
+        if (!this.gameState.market.priceHistory[targetMarketId]) {
+            this.gameState.market.priceHistory[targetMarketId] = {};
+        }
+
+        DB.COMMODITIES.forEach(good => {
+            if (good.tier > this.gameState.player.revealedTier) return;
+            if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
+                this.gameState.market.priceHistory[targetMarketId][good.id] = [];
+            }
+
+            const history = this.gameState.market.priceHistory[targetMarketId][good.id];
+            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
+
+            const lastEntry = history[history.length - 1];
+            if (lastEntry && lastEntry.day === this.gameState.day) {
+                if (lastEntry.price !== currentPrice) {
+                    lastEntry.price = currentPrice;
+                }
+            } else {
+                history.push({ day: this.gameState.day, price: currentPrice });
+            }
+
+            while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
+                history.shift();
+            }
+        });
+    }
+
+    /**
+     * Updates the shipyard stock for all unlocked locations on a weekly basis.
+     * @private
+     */
+    _updateShipyardStock() {
+        const { player } = this.gameState;
+        player.unlockedLocationIds.forEach(locationId => {
+            const stock = this.gameState.market.shipyardStock[locationId];
+            if (stock && stock.day === this.gameState.day) return;
+            const commonShips = Object.entries(DB.SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
+            const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
+            const shipsForSaleIds = [...commonShips.map(entry => entry[0])];
+            rareShips.forEach(([id, ship]) => {
+                if (Math.random() < GAME_RULES.RARE_SHIP_CHANCE) {
+                    shipsForSaleIds.push(id);
+                }
+            });
+            this.gameState.market.shipyardStock[locationId] = {
+                day: this.gameState.day,
+                shipsForSale: shipsForSaleIds
+            };
+        });
+    }
 }
 --- END OF FILE: ./js/ui/components/MarketScreen.js ---
 
@@ -7845,6 +8189,36 @@ export const ATTRIBUTE_TYPES = Object.freeze({
     PASSIVE_EFFECT: 'PASSIVE_EFFECT',   // Generic passive tag
     RESTRICTION: 'RESTRICTION'          // Prevents actions (e.g. Bespoke)
 });
+
+// --- [[START]] VIRTUAL WORKBENCH: SHIP UPGRADE SYSTEM (Phase 1) ---
+export const UPGRADE_TYPES = Object.freeze({
+    MOD_TRAVEL_SPEED: 'MOD_TRAVEL_SPEED',       // Engine Mods
+    MOD_FUEL_COST: 'MOD_FUEL_COST',             // Engine Mods (Penalty), Fuel Pass (Bonus)
+    MOD_BUY_PRICE: 'MOD_BUY_PRICE',             // Signal Hacker
+    MOD_SELL_PRICE: 'MOD_SELL_PRICE',           // Guild Badge
+    MOD_MAX_HULL: 'MOD_MAX_HULL',               // Hull Armor
+    MOD_MAX_FUEL: 'MOD_MAX_FUEL',               // Aux Tank
+    MOD_MAX_CARGO: 'MOD_MAX_CARGO',             // Aux Storage
+    MOD_EVENT_CHANCE: 'MOD_EVENT_CHANCE',       // Radar Mod
+    MOD_REPAIR_COST: 'MOD_REPAIR_COST',         // Repair Pass
+    MOD_PASSIVE_REPAIR: 'MOD_PASSIVE_REPAIR',   // Nano Machines
+    MOD_DEBT_INTEREST: 'MOD_DEBT_INTEREST'      // Syndicate Badge
+});
+
+export const UPGRADE_COLORS = Object.freeze({
+    BLUE: 'var(--color-blue)',
+    CYAN: 'var(--color-cyan)',
+    GREEN: 'var(--color-green)',
+    GOLD: 'var(--color-gold)',
+    GREY: 'var(--color-grey)',
+    INDIGO: 'var(--color-indigo)',
+    EMERALD: 'var(--color-emerald)',
+    SEAFOAM: 'var(--color-teal)',
+    ORANGE: 'var(--color-orange)',
+    RED: 'var(--color-red)',
+    VIOLET: 'var(--color-violet)'
+});
+// --- [[END]] VIRTUAL WORKBENCH ---
 
 /**
  * A collection of core game balance numbers and rules.
@@ -12139,6 +12513,22 @@ export class GameState {
             });
         });
     }
+
+    /**
+     * Helper to generate a fresh state object for a new ship.
+     * Ensures all dynamic properties (including upgrades) are initialized.
+     * @param {string} shipId 
+     * @returns {object}
+     */
+    _getInitialShipState(shipId) {
+        const ship = DB.SHIPS[shipId];
+        return {
+            health: ship ? ship.maxHealth : 100,
+            fuel: ship ? ship.maxFuel : 40,
+            hullAlerts: { one: false, two: false },
+            upgrades: [] // Initialize empty upgrades array
+        };
+    }
 }
 --- END OF FILE: ./js/services/GameState.js ---
 
@@ -12865,7 +13255,6 @@ export class AssetService {
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
-import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
  * @class MarketService
@@ -12881,51 +13270,50 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
-    /**
-     * Gets the effective price for a commodity at a location.
-     * Can optionally apply Ship Attributes (e.g. VIP, Corp Partner) for UI display.
-     * * @param {string} locationId The ID of the location.
-     * @param {string} commodityId The ID of the commodity.
-     * @param {boolean} [applyModifiers=false] Whether to apply active ship attribute modifiers.
-     * @returns {number} The effective price.
-     */
-    getPrice(locationId, commodityId, applyModifiers = false) {
-        const state = this.gameState.getState();
-        const deal = state.activeIntelDeal;
-        let price = 0;
+    // --- VIRTUAL WORKBENCH: ADD NEW METHODS ---
 
-        // 1. Determine Base Price (Market or Intel Override)
+    /**
+     * Gets the effective price for a commodity at a location, checking for
+     * active intel deal overrides first.
+     * @param {string} locationId The ID of the location.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The effective price (either override or market price).
+     * @JSDoc
+     */
+    getPrice(locationId, commodityId) {
+        const deal = this.gameState.getState().activeIntelDeal;
+
+        // --- NEW LOGIC: CHECK FOR OVERRIDE FIRST ---
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
-            // Use the fluctuating market price if it exists (which was seeded by the deal),
-            // otherwise fallback to the deal's static override.
-            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
-        } else {
-            price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
+            
+            // --- VIRTUAL WORKBENCH MODIFICATION (User Request) ---
+            // If a deal is active, the price is *read* from the current
+            // market prices, which are being fluctuated daily by evolveMarketPrices.
+            // We no longer return the static deal.overridePrice here, as that
+            // would bypass the daily fluctuation.
+            return this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            // --- END MODIFICATION ---
         }
+        // --- END NEW LOGIC ---
 
-        // 2. Apply Attribute Modifiers (if requested)
-        // This allows the UI to request the "discounted" price for display,
-        // while Services can request the "raw" price if they handle math separately.
-        if (applyModifiers && state.player.activeShipId) {
-            // Note: We only apply 'buy' modifiers here for general price display.
-            // 'Sell' modifiers are context-dependent (cargo age) and usually handled by the seller.
-            const mod = GameAttributes.getPriceModifier(state.player.activeShipId, locationId, 'buy', { commodityId });
-            price = Math.max(1, Math.round(price * mod));
-        }
-
-        return price;
+        // ... existing price simulation logic ...
+        // Fallback to the standard market price
+        return this.gameState.market.prices[locationId]?.[commodityId] || 0;
     }
 
     /**
      * Retrieves the pre-calculated galactic average price for a commodity.
      * @param {string} commodityId The ID of the commodity.
      * @returns {number} The galactic average price.
+     * @JSDoc
      */
     getGalacticAverage(commodityId) {
         return this.gameState.market.galacticAverages[commodityId] || 0;
     }
+
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Checks if the current system-wide economic state should change and applies a new one if necessary.
@@ -12949,23 +13337,30 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
+                // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
                 // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
                      activeDeal.locationId === location.id &&
                      activeDeal.commodityId === commodity.id)
                 {
-                    // Apply 3% fluctuation to the locked price to simulate a "live" but fixed deal
+                    // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
                     const basePrice = activeDeal.overridePrice;
-                    const fluctuation = 0.03; 
+                    const fluctuation = 0.03; // 3%
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
                     
+                    // Generate a random price within the [minPrice, maxPrice] range
                     const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
-                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
                     
-                    return; // Skip normal evolution
+                    // Set the new price, ensuring it's at least 1
+                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    // --- END MODIFICATION ---
+
+                    // Skip all other evolution logic for this item
+                    return; 
                 }
+                // --- END VIRTUAL WORKBENCH ---
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
@@ -12973,7 +13368,14 @@ export class MarketService {
 
                 // Determine the local baseline price based on import/export modifiers
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
+
+                // (1.0 - modifier) inverts the logic:
+                // Exporter (mod > 1.0) results in a negative offset (lower price)
+                // Importer (mod < 1.0) results in a positive offset (higher price)
                 const targetPriceOffset = (1.0 - modifier) * avg;
+
+                // The new baseline is the galactic average, pulled towards the local target price
+                // by the strength of the modifier.
                 const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
@@ -12990,10 +13392,13 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
-                // Price Lock: Stops mean reversion if recently traded
+                // --- NEW: Variable Reversion Delay (Point e) ---
+                // If the player has traded this item recently, a "price lock" is in effect,
+                // stopping mean reversion. The duration is set randomly on transaction.
                 if (this.gameState.day < inventoryItem.priceLockEndDay) {
                     reversionEffect = 0;
                 }
+                // --- END CHANGE ---
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
@@ -13007,22 +13412,38 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // Delayed Supply Pressure: The primary player-driven force
+                // [GEMINI] --- MODEL FIX: "DELAYED PRESSURE" ---
+                // This is now the primary, and only, player-driven price force.
+                // It is 0 by default and is only populated by a player trade.
                 let pressureEffect = 0;
-                const PLAYER_PRESSURE_STRENGTH = 0.50; 
+                const PLAYER_PRESSURE_STRENGTH = 0.50; // Tuned strength
                 
+                // Add 1-week delay before player's actions impact price
                 if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    // Check if lastPlayerInteractionTimestamp is > 0 to prevent this from running on Day 7 of a new game
                     if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
                          pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
                     }
                 }
+                // [GEMINI] --- END MODEL FIX ---
 
-                // Depletion Price Hike
+
+
+                // [GEMINI] --- REMOVED "Availability-Based Price Pressure" ---
+                // The availabilityEffect block was removed entirely to fix
+                // the "native crash" bug and the "inverse logic" bug.
+                // --- End Removed Block ---
+
+                // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
-                    priceHikeMultiplier = 1.5; 
+                    priceHikeMultiplier = 1.5; // 50% more acceleration
+                    // We check depletionDay + 7, so this effect lasts for the whole week
+                    // We reset the flag *after* it's been used in replenishment
                 }
+                // --- End Depletion Price Hike ---
 
+                // [GEMINI] Fixed price calculation. Removed availabilityEffect, restored pressureEffect.
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
@@ -13031,7 +13452,7 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
-                // Decay pressure
+                // marketPressure still decays, as this is the "timer" for the pressureEffect
                 inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
@@ -13057,43 +13478,62 @@ export class MarketService {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
-                    inventoryItem.depletionDay = 0; 
-                    inventoryItem.priceLockEndDay = 0; 
+                    inventoryItem.depletionDay = 0; // Clear depletion day on reset
+                    inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
                 } else {
+                    // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
+                    // Market adaptation: high player selling pressure reduces the target stock.
                     let pressureForAdaptation = inventoryItem.marketPressure;
+                    // If pressure is negative (player buying), delay its effect for 1 week
                     if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                        pressureForAdaptation = 0; 
+                        pressureForAdaptation = 0; // Ignore recouping pressure for the first week
                     }
 
+                    // --- REMOVED BRICK WALL (Point c) ---
+                    // Only allow negative pressure (player buying) to increase target stock.
+                    // Positive pressure (player selling) no longer decreases it.
                     if (pressureForAdaptation > 0) {
                         pressureForAdaptation = 0;
                     }
+                    // --- END CHANGE ---
 
-                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); 
+                    // [GEMINI] Note: This logic is still sound. Player *buying* (negative pressure)
+                    // will correctly increase the targetStock, simulating new demand.
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     const targetStock = baseMeanStock * marketAdaptationFactor;
 
+                    // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.10; 
+                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
                     
+                    // --- NEW: Emergency Stock Boost ---
                     let emergencyStock = 0;
                     if (inventoryItem.isDepleted) {
+                        // If item was depleted, add a small emergency boost
                         emergencyStock = skewedRandom(1, 5);
-                        inventoryItem.isDepleted = false; 
+                        inventoryItem.isDepleted = false; // Reset depletion flag
+                        // We DO NOT reset depletionDay, as evolveMarketPrices uses it for 7 days
                     } else if (inventoryItem.quantity <= 0) {
+                        // Also boost if it just happens to be 0
                         emergencyStock = skewedRandom(1, 5);
                     }
+                    // --- End Emergency Stock Boost ---
 
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
                 }
 
-                const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
+                
+
+                // Phase 3: Apply Final Visual Fluctuation
+                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                 const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
                 const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
                 inventoryItem.quantity *= finalFluctuation;
                 
+                // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
                     inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
@@ -13113,6 +13553,8 @@ export class MarketService {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        // [GEMINI] This calculation is now the core driver of the price change.
+        // It sets marketPressure, which is used by pressureEffect after 7 days.
         const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
         
         if (transactionType === 'buy') {
@@ -13121,6 +13563,7 @@ export class MarketService {
             inventoryItem.marketPressure += pressureChange;
         }
 
+        // --- NEW: Set Variable Price Lock Duration ---
         const dayOfYear = (this.gameState.day - 1) % 365 + 1;
         let minDuration, maxDuration;
 
@@ -13134,38 +13577,48 @@ export class MarketService {
 
         const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
         inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+        // --- END CHANGE ---
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
+    // --- VIRTUAL WORKBENCH: NEW METHOD ---
     /**
      * Checks if a purchase triggers a market depletion event.
+     * This logic is called by PlayerActionService when a good's stock reaches <= 0.
      * @param {object} good - The static commodity data (from DB).
      * @param {object} inventoryItem - The dynamic inventory item from gameState.
      * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
      * @param {number} currentDay - The current game day.
+     * @JSDoc
      */
     checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+        // Calculate target stock to check 8% threshold
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const [minAvail, maxAvail] = good.canonicalAvailability;
         const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
         
         let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
         
         const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
         
         const depletionThreshold = targetStock * 0.08;
+        
+        // The amount purchased was the entire stock that was on hand
         const depletionBuyQuantity = stockBeforeBuy; 
 
+        // (5a) Check if buy quantity was >= 8% target
+        // (5b) Check if 1 year has passed since last bonus
         if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
-            inventoryItem.isDepleted = true; 
+            inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
             inventoryItem.depletionDay = currentDay;
-            inventoryItem.depletionBonusDay = currentDay; 
+            inventoryItem.depletionBonusDay = currentDay; // Set cooldown
         }
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
@@ -13298,17 +13751,27 @@ export class TravelService {
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
+
+        // --- UPGRADE SYSTEM: DYNAMIC STATS FETCH ---
+        // Get effective stats (includes upgrades like Aux Tanks)
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+        const effectiveMaxFuel = effectiveStats.maxFuel;
+        // ---------------------------
+
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // --- UPGRADE SYSTEM: COST MODIFIERS ---
+        const shipState = state.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
+
         // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
-        // 2. Apply Ship Attribute Modifiers (e.g., Efficient, Sleeper)
-        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        // 2. Apply Attribute/Upgrade Modifier
+        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
 
         // 3. Handle Special "Space Folding" Case (Increases fuel cost)
@@ -13316,14 +13779,14 @@ export class TravelService {
         if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
             requiredFuel = Math.round(requiredFuel * 1.2);
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
-        if (activeShip.maxFuel < requiredFuel) {
-            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${activeShip.maxFuel}.`);
+        if (effectiveMaxFuel < requiredFuel) {
+            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
             return;
         }
-        if (activeShip.fuel < requiredFuel) {
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(activeShip.fuel)}.`);
+        if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
+            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
             return;
         }
 
@@ -13351,8 +13814,9 @@ export class TravelService {
         const activeShip = this.simulationService._getActiveShip();
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const upgrades = activeShipState.upgrades || [];
 
-        // --- VIRTUAL WORKBENCH: Attribute Logic (Time & Fuel) ---
+        // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
         
         // 1. Base Perk Modifiers
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
@@ -13360,11 +13824,14 @@ export class TravelService {
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
-        // 2. Apply Generic Attribute Modifiers
-        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        // 2. Apply Generic Attribute Modifiers (Multiplicative)
+        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
+        
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+        travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
-        // 3. Handle Time Modifiers & Complex Logic
+        // 3. Handle Time Modifiers & Complex Logic (Legacy)
         shipAttributes.forEach(attrId => {
             const def = GameAttributes.getDefinition(attrId);
             
@@ -13401,8 +13868,8 @@ export class TravelService {
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost); // Final integer round
 
         
-        if (activeShip.fuel < travelInfo.fuelCost) {
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShip.fuel)}.`);
+        if (activeShipState.fuel < travelInfo.fuelCost) {
+            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
             this.logger.warn('TravelService', `Travel to ${locationId} aborted due to insufficient fuel after event mods.`);
             return;
         }
@@ -13415,17 +13882,18 @@ export class TravelService {
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
         
-        // --- VIRTUAL WORKBENCH: Hull Decay Attributes ---
-        // Xeno Hull (No decay) or Resilient (Half decay)
+        // --- Hull Decay Attributes ---
         if (shipAttributes.includes('ATTR_XENO_HULL')) {
             travelHullDamage = 0;
         } else if (shipAttributes.includes('ATTR_RESILIENT')) {
             travelHullDamage *= 0.5;
         }
-        // --- END VIRTUAL WORKBENCH ---
-
+        
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
-        const eventHullDamageValue = activeShip.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
+        
+        // Use Effective Max Health for percentage calculation
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+        const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
         activeShipState.health -= totalHullDamageValue;
@@ -13440,34 +13908,27 @@ export class TravelService {
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
-        // --- [[START]] MODIFICATION ---
-        // Call onLocationChange() *before* setState.
         this.simulationService.newsTickerService.onLocationChange(locationId);
         
-        // --- VIRTUAL WORKBENCH: Post-Travel Triggers ---
-        // Initialize trip count if missing
         if (typeof this.gameState.player.tripCount === 'undefined') {
             this.gameState.player.tripCount = 0;
         }
         this.gameState.player.tripCount++;
 
-        // 1. ATTR_TRAVELLER (Atlas): Restore hull/fuel every 20 trips
+        // Legacy: Traveller Perk
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
-            activeShipState.health = activeShip.maxHealth;
-            activeShipState.fuel = activeShip.maxFuel;
+            activeShipState.health = effectiveStats.maxHealth;
+            activeShipState.fuel = effectiveStats.maxFuel;
             this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
-
-        // 2. ATTR_FUEL_SCOOP (Parallax): Restore 15% fuel
+        // Legacy: Fuel Scoop
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
-            const fuelRestore = activeShip.maxFuel * 0.15;
-            activeShipState.fuel = Math.min(activeShip.maxFuel, activeShipState.fuel + fuelRestore);
+            const fuelRestore = effectiveStats.maxFuel * 0.15;
+            activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
         }
-        // --- END VIRTUAL WORKBENCH ---
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
-        // --- [[END]] MODIFICATION ---
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -13478,7 +13939,7 @@ export class TravelService {
             return;
         }
 
-        const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
+        const totalHullDamagePercentForDisplay = (totalHullDamageValue / effectiveStats.maxHealth) * 100;
         
         this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
             fuelUsed: travelInfo.fuelCost,
@@ -13514,16 +13975,23 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
-        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // --- UPGRADE SYSTEM: Event Modifier ---
         const activeShip = this.simulationService._getActiveShip();
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
+
+        // Apply Upgrade Modifier (e.g. Radar Mod)
+        const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
+        eventChance *= chanceMod;
 
         // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         if (force === false && Math.random() > eventChance) return false;
 
@@ -13622,10 +14090,6 @@ export class TravelService {
 
 --- START OF FILE: ./js/services/world/TimeService.js ---
 // js/services/world/TimeService.js
-/**
- * @fileoverview Responsible for advancing the game clock and triggering all
- * time-based events like birthdays, debt interest, and market replenishment.
- */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
@@ -13638,71 +14102,88 @@ export class TimeService {
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
      */
-    constructor(gameState, marketService, uiManager, logger) { 
+    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // Received newsTickerService from SimService
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.simulationService = null; // To be injected
-        
-        // --- VIRTUAL WORKBENCH ---
-        /** @type {import('../IntelService.js').IntelService | null} */
-        this.intelService = null; // To be injected by SimulationService
-        // --- END VIRTUAL WORKBENCH ---
+        this.newsTickerService = newsTickerService;
+        this.simulationService = null; // Injected by SimulationService
+        this.intelService = null;      // Injected by SimulationService
     }
 
     /**
-     * Advances game time by a specified number of days, triggering daily, weekly, and monthly events.
-     * @param {number} days - The integer number of days to advance.
+     * Advances the game world by a specified number of days.
+     * detailed mechanics like passive repairs, interest, and random events are handled here.
+     * @param {number} days - The number of days to advance.
      */
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
-
-        // Cycle Art Assets on Time Advance
+        
+        // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
+
+        // Pre-fetch active ship data for the loop
+        const activeShipId = this.gameState.player.activeShipId;
+        const activeShipState = this.gameState.player.shipStates[activeShipId];
+        const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
-                this.logger.warn('TimeService', 'Advance days aborted: Game is over.');
                 this.logger.groupEnd();
                 return;
             }
             this.gameState.day++;
 
+            // Pulse News Ticker
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
 
-            // --- VIRTUAL WORKBENCH: Daily Attribute Effects ---
-            const activeShipId = this.gameState.player.activeShipId;
-            if (activeShipId) {
-                const shipAttrs = GameAttributes.getShipAttributes(activeShipId);
-                shipAttrs.forEach(attrId => {
-                    const def = GameAttributes.getDefinition(attrId);
-                    // Handle 'flat_daily' hull decay (e.g. Ouroboros)
-                    if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
-                        const shipState = this.gameState.player.shipStates[activeShipId];
-                        if (shipState && shipState.health > 1) {
-                            shipState.health = Math.max(1, shipState.health - def.value);
-                        }
-                    }
-                });
+            // --- UPGRADE SYSTEM: Passive Repair (Nano Machines) ---
+            // Only applies to the ACTIVE ship while traveling (advanceDays is driven by travel)
+            // Use Additive Rate (e.g. 0.01 + 0.02 = 0.03)
+            const passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
+            
+            if (passiveRepairRate > 0 && this.simulationService) {
+                const effectiveStats = this.simulationService.getEffectiveShipStats(activeShipId);
+                if (activeShipState.health < effectiveStats.maxHealth) {
+                    const healAmount = effectiveStats.maxHealth * passiveRepairRate;
+                    activeShipState.health = Math.min(
+                        effectiveStats.maxHealth, 
+                        activeShipState.health + healAmount
+                    );
+                }
             }
-            // --- END VIRTUAL WORKBENCH ---
+            // --- END UPGRADE SYSTEM ---
 
+            // --- Legacy Attribute Support (Flat Decay) ---
+            // Keeps compatibility for any old "Flat Daily" decay attributes if they exist
+            const shipAttrs = GameAttributes.getShipAttributes(activeShipId); 
+            shipAttrs.forEach(attrId => {
+                const def = GameAttributes.getDefinition(attrId);
+                if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
+                    if (activeShipState.health > 1) {
+                        activeShipState.health = Math.max(1, activeShipState.health - def.value);
+                    }
+                }
+            });
+
+            // Age & Milestone Checks
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
-
+            
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.playerAge++;
-                this.gameState.player.birthdayProfitBonus += 0.01;
+                this.gameState.player.birthdayProfitBonus += 0.01; // 1% extra profit per year
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.logger.info.state(this.gameState.day, 'BIRTHDAY', `Player is now age ${this.gameState.player.playerAge}. Profit bonus increased.`);
+                this.uiManager.queueModal('event-modal', 'Happy Birthday!', `You turned ${this.gameState.player.playerAge}. Your experience grants you a permanent +1% profit bonus on all trades.`);
             }
 
             this._checkAgeEvents();
             this.marketService.evolveMarketPrices();
 
+            // Weekly Market Updates
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
@@ -13710,45 +14191,58 @@ export class TimeService {
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
-            // --- INTEL EXPIRATION ---
+            // Intel Expiration
             const activeDeal = this.gameState.activeIntelDeal; 
             if (activeDeal && this.gameState.day > activeDeal.expiryDay) {
                 const expiredDeal = activeDeal;
-                
                 this.gameState.activeIntelDeal = null;
-                this.logger.info.system('IntelService', this.gameState.day, 'EXPIRED', 'Active intel deal has expired.');
-
+                // Remove the expired packet from the source market to prevent re-buying immediately
                 if (expiredDeal.sourceSaleLocationId && expiredDeal.sourcePacketId) {
                     const saleLocationMarket = this.gameState.intelMarket[expiredDeal.sourceSaleLocationId];
                     if (saleLocationMarket) {
                         this.gameState.intelMarket[expiredDeal.sourceSaleLocationId] = saleLocationMarket.filter(
                             packet => packet.id !== expiredDeal.sourcePacketId
                         );
-                        this.logger.info.system('IntelService', this.gameState.day, 'PACKET_CLEANUP', `Removed expired packet ${expiredDeal.sourcePacketId} from ${expiredDeal.sourceSaleLocationId}.`);
                     }
                 }
+                this.simulationService.pushNewsMessage(`Intel on ${DB.COMMODITIES.find(c => c.id === expiredDeal.commodityId).name} at ${DB.MARKETS.find(m => m.id === expiredDeal.targetMarketId).name} has expired.`, 'INTEL');
             }
 
-            // --- INTEL REFRESH ---
+            // Periodic Intel Generation
             if (this.intelService && (this.gameState.day % 120 === 1)) {
                 this.intelService.generateIntelRefresh();
             }
             
+            // Passive Repair for INACTIVE ships (Hangar)
+            // Stored ships repair slowly over time (Base Game Rule)
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
-                    const ship = DB.SHIPS[shipId];
+                    const ship = DB.SHIPS[shipId]; 
+                    // Inactive ships use base stats for simplicity/performance
                     const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
                 }
             });
 
+            // --- UPGRADE SYSTEM: Debt Interest (Syndicate Badge) ---
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
-                const interest = this.gameState.player.monthlyInterestAmount;
-                this.gameState.player.debt += interest;
-                this.simulationService._logTransaction('loan', interest, 'Monthly interest charge');
-                this.logger.info.system('Finance', this.gameState.day, 'INTEREST', `Charged ${formatCredits(interest)} interest on debt.`);
+                const rawInterest = this.gameState.player.monthlyInterestAmount;
+                
+                // Apply Multiplicative Modifier (e.g. 0.80 for 20% off)
+                const interestMod = GameAttributes.getInterestModifier(activeUpgrades);
+                const finalInterest = Math.floor(rawInterest * interestMod);
+
+                this.gameState.player.debt += finalInterest;
+                
+                // Log the transaction
+                if (this.simulationService) {
+                    this.simulationService._logTransaction('loan', finalInterest, 'Monthly interest charge');
+                }
+                
+                this.logger.info.system('Finance', this.gameState.day, 'INTEREST', `Charged ${formatCredits(finalInterest)} interest on debt (Base: ${rawInterest}, Mod: ${interestMod}).`);
                 this.gameState.lastInterestChargeDay = this.gameState.day;
             }
+            // --- END UPGRADE SYSTEM ---
 
             this._applyGarnishment();
         }
@@ -13757,76 +14251,71 @@ export class TimeService {
         this.gameState.setState({});
     }
 
-    /**
-     * Checks for and triggers age-based narrative events based on game progression.
-     * @private
-     */
     _checkAgeEvents() {
         DB.AGE_EVENTS.forEach(event => {
             if (this.gameState.player.seenEvents.includes(event.id)) return;
-            if ((event.trigger.day && this.gameState.day >= event.trigger.day) || (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
+
+            // Trigger conditions
+            if ((event.trigger.day && this.gameState.day >= event.trigger.day) || 
+                (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
+                
                 this.gameState.player.seenEvents.push(event.id);
-                this.logger.info.state(this.gameState.day, 'AGE_EVENT', `Triggered age event: ${event.title}`);
-                this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
+                this.uiManager.showAgeEventModal(event, (choice) => {
+                    if (this.simulationService) {
+                        this.simulationService._applyPerk(choice);
+                    }
+                });
             }
         });
     }
 
-    /**
-     * Checks if the player's wealth has reached a new milestone, revealing the next tier of commodities.
-     * @private
-     */
     _checkMilestones() {
         const { credits, revealedTier } = this.gameState.player;
         let currentTier = revealedTier;
+        
+        // Find the next milestone
         let nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
-
+        
+        // Check if we passed it (and potentially subsequent ones)
         while (nextMilestone && credits >= nextMilestone.threshold) {
             this.gameState.player.revealedTier = nextMilestone.revealsTier;
-            this.logger.info.state(this.gameState.day, 'MILESTONE', `Unlocked Tier ${nextMilestone.revealsTier} commodities.`);
+            
+            // Notify
+            this.logger.info.player(this.gameState.day, 'MILESTONE', `Wealth milestone reached! Tier ${nextMilestone.revealsTier} commodities unlocked.`);
+            this.uiManager.queueModal('event-modal', 'Market Update', `Your increasing wealth has granted you access to Tier ${nextMilestone.revealsTier} commodities.`);
             
             currentTier = nextMilestone.revealsTier;
             nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
         }
-
+        
         if (this.gameState.player.revealedTier !== revealedTier) {
             this.gameState.setState({});
         }
     }
 
-    /**
-     * Applies a monthly credit garnishment if the player's loan is delinquent.
-     * @private
-     */
     _applyGarnishment() {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
-            
-            if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) {
-                return;
-            }
+            // Apply garnishment on the same cycle as interest
+            if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) return;
 
             const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
             if (garnishedAmount > 0) {
                 player.credits -= garnishedAmount;
-                this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
-                this.simulationService._checkGameOverConditions(); 
+                if (this.simulationService) {
+                    this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
+                    this.simulationService._checkGameOverConditions(); 
+                }
             }
 
             if (!player.seenGarnishmentWarning) {
                 const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits monthly until the debt is paid.";
                 this.uiManager.queueModal('event-modal', "Credit Garnishment Notice", msg, null, { buttonClass: 'bg-red-800/80' });
                 player.seenGarnishmentWarning = true;
-                this.logger.warn('Finance', `Loan delinquent. Garnishment of ${GAME_RULES.LOAN_GARNISHMENT_PERCENT * 100}% initiated.`);
             }
         }
     }
-
-    /**
-     * Gets the current game day.
-     * @returns {number} The current day.
-     * @JSDoc
-     */
+    
     getCurrentDay() {
         return this.gameState.day;
     }
@@ -14105,6 +14594,7 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 // --- VIRTUAL WORKBENCH: IMPORT ---
 import { IntelService } from './IntelService.js';
+import { GameAttributes } from './GameAttributes.js'; // Added for Upgrade Logic
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -14494,11 +14984,49 @@ export class SimulationService {
     // --- HELPER & PRIVATE METHODS (SHARED) ---
     // These are kept here to be accessible by the specialized services that need them.
 
+    /**
+     * Calculates ship stats including upgrade modifiers (e.g. Max Fuel + 20%).
+     * This is the single source of truth for "Effective Stats".
+     * @param {string} shipId 
+     * @returns {object} The ship definition with modified stats.
+     */
+    getEffectiveShipStats(shipId) {
+        const ship = DB.SHIPS[shipId];
+        if (!ship) return null;
+
+        const state = this.gameState.getState();
+        const shipState = state.player.shipStates[shipId];
+        
+        // If not owned or no upgrades, return base stats (defensive copy)
+        if (!shipState || !shipState.upgrades) return { ...ship };
+
+        const upgrades = shipState.upgrades;
+        // Calculate Additive Modifiers (1.0 + 0.1 + 0.1 = 1.2)
+        const hullMod = GameAttributes.getMaxHullModifier(upgrades);
+        const fuelMod = GameAttributes.getMaxFuelModifier(upgrades);
+        const cargoMod = GameAttributes.getMaxCargoModifier(upgrades);
+
+        return {
+            ...ship,
+            maxHealth: Math.round(ship.maxHealth * hullMod),
+            maxFuel: Math.round(ship.maxFuel * fuelMod),
+            cargoCapacity: Math.round(ship.cargoCapacity * cargoMod)
+        };
+    }
+
     addShipToHangar(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
-        this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
+        
+        // --- UPGRADE SYSTEM UPDATE: Initialize with empty upgrades ---
+        this.gameState.player.shipStates[shipId] = { 
+            health: ship.maxHealth, 
+            fuel: ship.maxFuel, 
+            hullAlerts: { one: false, two: false },
+            upgrades: [] // Added upgrade array
+        };
+        
         if (!this.gameState.player.inventories[shipId]) {
             this.gameState.player.inventories[shipId] = {};
             DB.COMMODITIES.forEach(c => {
@@ -14522,7 +15050,15 @@ export class SimulationService {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
-        return { id: activeId, ...DB.SHIPS[activeId], ...state.player.shipStates[activeId] };
+        
+        // --- UPGRADE SYSTEM UPDATE: Return Effective Stats ---
+        // Merge the calculated Max/Capacities with the current state (Health/Fuel values)
+        const effectiveStats = this.getEffectiveShipStats(activeId);
+        return { 
+            id: activeId, 
+            ...effectiveStats, 
+            ...state.player.shipStates[activeId] 
+        };
     }
 
     _getActiveInventory() {
@@ -14532,8 +15068,11 @@ export class SimulationService {
     
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
-        const shipStatic = DB.SHIPS[shipId];
-        const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+        // Use Effective Stats for percentage calculation
+        const effectiveStats = this.getEffectiveShipStats(shipId);
+        
+        const healthPct = (shipState.health / effectiveStats.maxHealth) * 100;
+        
         if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;
@@ -15208,7 +15747,7 @@ export class TutorialService {
 
 --- START OF FILE: ./js/services/GameAttributes.js ---
 // js/services/GameAttributes.js
-import { LOCATION_IDS } from '../data/constants.js';
+import { LOCATION_IDS, UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '../data/constants.js';
 
 /**
  * @fileoverview The Upgrade Registry (formerly GameAttributes).
@@ -15221,25 +15760,290 @@ import { LOCATION_IDS } from '../data/constants.js';
 // ==========================================
 
 const UPGRADE_DEFINITIONS = {
-    // --- Phase 1 Placeholders ---
-    'UPGRADE_01': {
-        id: 'UPGRADE_01',
-        name: 'Hyper-Combustor',
-        value: 4000,
-        description: 'An aftermarket injector that boosts engine output, but voids the warranty.',
-        // Future logic hooks will go here
+    // --- Engine Mods (Speed vs Fuel) ---
+    'UPGRADE_ENGINE_I': {
+        id: 'UPGRADE_ENGINE_I',
+        name: 'Engine Mod',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.BLUE,
+        description: 'Calibrated thrusters increase travel speed by 10% with a 5% increase in fuel consumption.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.05 }
     },
-    'UPGRADE_02': {
-        id: 'UPGRADE_02',
-        name: 'Duralium Plating',
-        value: 6000,
-        description: 'Heavy-duty bolt-on armor plates. Ugly, but effective.',
+    'UPGRADE_ENGINE_II': {
+        id: 'UPGRADE_ENGINE_II',
+        name: 'Engine Mod II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.BLUE,
+        description: 'High-performance injectors boost ship speed by 20% while requiring 10% more fuel per trip.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.80, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.10 }
     },
-    'UPGRADE_03': {
-        id: 'UPGRADE_03',
-        name: 'Smuggler\'s Compartment',
-        value: 8000,
-        description: 'A shielded cargo nook for... sensitive documents.',
+    'UPGRADE_ENGINE_III': {
+        id: 'UPGRADE_ENGINE_III',
+        name: 'Engine Mod III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.BLUE,
+        description: 'Experimental overcharged drives maximize travel speed by 30% for a 15% increase in fuel costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.70, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
+    },
+
+    // --- Signal Hackers (Buy Price Discount) ---
+    'UPGRADE_SIGNAL_I': {
+        id: 'UPGRADE_SIGNAL_I',
+        name: 'Signal Hacker',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.CYAN,
+        description: 'A basic encryption bypass grants a 3% discount on all commodity purchases.',
+        modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.97 }
+    },
+    'UPGRADE_SIGNAL_II': {
+        id: 'UPGRADE_SIGNAL_II',
+        name: 'Signal Hacker II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.CYAN,
+        description: 'Advanced market spoofing protocols reduce the cost of all purchased goods by 5%.',
+        modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.95 }
+    },
+    'UPGRADE_SIGNAL_III': {
+        id: 'UPGRADE_SIGNAL_III',
+        name: 'Signal Hacker III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.CYAN,
+        description: 'Military-grade signal interceptors secure a 7% reduction in market buy prices system-wide.',
+        modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.93 }
+    },
+
+    // --- Hull Armor (Max Hull Increase) ---
+    'UPGRADE_ARMOR_I': {
+        id: 'UPGRADE_ARMOR_I',
+        name: 'Hull Armor',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.GREEN,
+        description: 'Reinforced duralium plating increases the vessel\'s maximum hull capacity by 10%.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.10 } // Additive +10%
+    },
+    'UPGRADE_ARMOR_II': {
+        id: 'UPGRADE_ARMOR_II',
+        name: 'Hull Armor II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.GREEN,
+        description: 'Multi-layered composite shielding provides a significant 20% boost to maximum hull integrity.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.20 } // Additive +20%
+    },
+    'UPGRADE_ARMOR_III': {
+        id: 'UPGRADE_ARMOR_III',
+        name: 'Hull Armor III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.GREEN,
+        description: 'Advanced reactive nanoweave armor maximizes ship survivability with a 30% hull capacity increase.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.30 } // Additive +30%
+    },
+
+    // --- Auxiliary Tanks (Max Fuel Increase) ---
+    'UPGRADE_TANK_I': {
+        id: 'UPGRADE_TANK_I',
+        name: 'Auxiliary Tank',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.GOLD,
+        description: 'External fuel pods extend the ship\'s maximum range by 10% capacity.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.10 } // Additive +10%
+    },
+    'UPGRADE_TANK_II': {
+        id: 'UPGRADE_TANK_II',
+        name: 'Auxiliary Tank II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.GOLD,
+        description: 'Internal pressurized reservoirs provide a 20% increase to total fuel storage efficiency.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.20 } // Additive +20%
+    },
+    'UPGRADE_TANK_III': {
+        id: 'UPGRADE_TANK_III',
+        name: 'Auxiliary Tank III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.GOLD,
+        description: 'High-capacity cryo-storage cells expand the vessel\'s fuel reserves by 30%.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.30 } // Additive +30%
+    },
+
+    // --- Radar Mods (Event Chance Increase) ---
+    'UPGRADE_RADAR_I': {
+        id: 'UPGRADE_RADAR_I',
+        name: 'Radar Mod',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.GREY,
+        description: 'Enhanced sensors improve long-range detection, increasing random event frequency by 3%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.03 }
+    },
+    'UPGRADE_RADAR_II': {
+        id: 'UPGRADE_RADAR_II',
+        name: 'Radar Mod II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.GREY,
+        description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by 5%.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.05 }
+    },
+    'UPGRADE_RADAR_III': {
+        id: 'UPGRADE_RADAR_III',
+        name: 'Radar Mod III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.GREY,
+        description: 'Predictive deep-space arrays maximize event discovery with a 10% increase in encounter rates.',
+        modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 1.10 }
+    },
+
+    // --- Fuel Pass (Refuel Cost Discount) ---
+    'UPGRADE_FUELPASS_I': {
+        id: 'UPGRADE_FUELPASS_I',
+        name: 'Fuel Pass',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.INDIGO,
+        description: 'A standard fueling subscription secures a baseline 10% discount at all participating starports.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.90 }
+    },
+    'UPGRADE_FUELPASS_II': {
+        id: 'UPGRADE_FUELPASS_II',
+        name: 'Fuel Pass II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.INDIGO,
+        description: 'This premium fueling membership utilizes encrypted credentials to grant 15% off all propellant purchases.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.85 }
+    },
+    'UPGRADE_FUELPASS_III': {
+        id: 'UPGRADE_FUELPASS_III',
+        name: 'Fuel Pass III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.INDIGO,
+        description: 'Elite system-wide fueling clearance provides a permanent 20% discount on all vessel refueling costs.',
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
+    },
+
+    // --- Repair Pass (Repair Cost Discount) ---
+    'UPGRADE_REPAIRPASS_I': {
+        id: 'UPGRADE_REPAIRPASS_I',
+        name: 'Repair Pass',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.EMERALD,
+        description: 'Standard maintenance coverage grants holders a basic 10% discount on all station repair services.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.90 }
+    },
+    'UPGRADE_REPAIRPASS_II': {
+        id: 'UPGRADE_REPAIRPASS_II',
+        name: 'Repair Pass II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.EMERALD,
+        description: 'Priority dockyard membership utilizes corporate clearance to secure a 15% reduction in repair fees.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.85 }
+    },
+    'UPGRADE_REPAIRPASS_III': {
+        id: 'UPGRADE_REPAIRPASS_III',
+        name: 'Repair Pass III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.EMERALD,
+        description: 'Ultimate platinum-tier coverage provides total system-wide protection with 20% off all hull maintenance.',
+        modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
+    },
+
+    // --- Nano Machines (Passive Repair in Transit) ---
+    'UPGRADE_NANO_I': {
+        id: 'UPGRADE_NANO_I',
+        name: 'Nano Machines',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.SEAFOAM,
+        description: 'Basic self-repairing drones restore 1% of total hull integrity per day in transit.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.01 } // Additive Rate
+    },
+    'UPGRADE_NANO_II': {
+        id: 'UPGRADE_NANO_II',
+        name: 'Nano Machines II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.SEAFOAM,
+        description: 'Advanced micro-repair swarms regenerate 2% of the vessel\'s hull daily while traveling.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.02 } // Additive Rate
+    },
+    'UPGRADE_NANO_III': {
+        id: 'UPGRADE_NANO_III',
+        name: 'Nano Machines III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.SEAFOAM,
+        description: 'Superior nanobot hives provide rapid autonomous repair, restoring 3% of hull health daily.',
+        modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.03 } // Additive Rate
+    },
+
+    // --- Auxiliary Storage (Cargo Capacity Increase) ---
+    'UPGRADE_STORAGE_I': {
+        id: 'UPGRADE_STORAGE_I',
+        name: 'Auxiliary Storage',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.ORANGE,
+        description: 'Modular storage racks expand the ship\'s total cargo capacity by 10%.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.10 } // Additive +10%
+    },
+    'UPGRADE_STORAGE_II': {
+        id: 'UPGRADE_STORAGE_II',
+        name: 'Auxiliary Storage II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.ORANGE,
+        description: 'High-density pallet systems increase the vessel\'s available cargo space by 20%.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.20 } // Additive +20%
+    },
+    'UPGRADE_STORAGE_III': {
+        id: 'UPGRADE_STORAGE_III',
+        name: 'Auxiliary Storage III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.ORANGE,
+        description: 'Advanced sub-spatial folding technology maximizes cargo capacity with a 30% increase.',
+        modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.30 } // Additive +30%
+    },
+
+    // --- Guild Badge (Sell Price Bonus) ---
+    'UPGRADE_GUILD_I': {
+        id: 'UPGRADE_GUILD_I',
+        name: 'Guild Badge',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.RED,
+        description: 'Merchant\'s Guild recognition increases the resale value of all commodities by 3%.',
+        modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.03 }
+    },
+    'UPGRADE_GUILD_II': {
+        id: 'UPGRADE_GUILD_II',
+        name: 'Guild Badge II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.RED,
+        description: 'Senior Guild credentials secure a 5% bonus on all goods sold at market.',
+        modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.05 }
+    },
+    'UPGRADE_GUILD_III': {
+        id: 'UPGRADE_GUILD_III',
+        name: 'Guild Badge III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.RED,
+        description: 'Elite Guild partnership status maximizes profits with a 7% increase to sell prices.',
+        modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.07 }
+    },
+
+    // --- Syndicate Badge (Debt Interest Reduction) ---
+    'UPGRADE_SYNDICATE_I': {
+        id: 'UPGRADE_SYNDICATE_I',
+        name: 'Syndicate Badge',
+        value: 5000,
+        pillColor: UPGRADE_COLORS.VIOLET,
+        description: 'Syndicate influence reduces the monthly interest rate on your debt by 20%.',
+        modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.80 } // -20%
+    },
+    'UPGRADE_SYNDICATE_II': {
+        id: 'UPGRADE_SYNDICATE_II',
+        name: 'Syndicate Badge II',
+        value: 15000,
+        pillColor: UPGRADE_COLORS.VIOLET,
+        description: 'Established Syndicate connections secure a 30% reduction in monthly interest accrual.',
+        modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.70 } // -30%
+    },
+    'UPGRADE_SYNDICATE_III': {
+        id: 'UPGRADE_SYNDICATE_III',
+        name: 'Syndicate Badge III',
+        value: 45000,
+        pillColor: UPGRADE_COLORS.VIOLET,
+        description: 'Deep Syndicate ties provide a 50% discount on all monthly debt interest charges.',
+        modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.50 } // -50%
     }
 };
 
@@ -15297,31 +16101,144 @@ export const GameAttributes = {
         return [];
     },
 
+    // --- LOGIC HELPERS ---
+
     /**
-     * LEGACY NEUTRALIZATION:
-     * Returns 1.0 to ensure standard service pricing.
-     * @returns {number} 1.0
+     * Generic helper to calculate multiplicative modifiers.
+     * @param {string[]} upgrades - Array of upgrade IDs.
+     * @param {string} type - The modifier type key.
+     * @returns {number} Multiplier (default 1.0).
+     * @private
      */
-    getServiceCostModifier(shipId, locationId, serviceType) {
-        return 1.0;
+    _getMultiplicativeModifier(upgrades, type) {
+        let modifier = 1.0;
+        upgrades.forEach(id => {
+            const def = this.getDefinition(id);
+            if (def && def.modifiers && def.modifiers[type] !== undefined) {
+                modifier *= def.modifiers[type];
+            }
+        });
+        return modifier;
     },
 
     /**
-     * LEGACY NEUTRALIZATION:
-     * Returns 1.0 to ensure standard fuel costs.
-     * @returns {number} 1.0
+     * Generic helper to calculate additive modifiers.
+     * @param {string[]} upgrades - Array of upgrade IDs.
+     * @param {string} type - The modifier type key.
+     * @param {number} baseValue - The starting value (e.g. 1.0 for capacity, 0.0 for rates).
+     * @returns {number} Total value (base + sum of modifiers).
+     * @private
      */
-    getFuelCostModifier(shipId) {
-        return 1.0;
+    _getAdditiveModifier(upgrades, type, baseValue) {
+        let total = baseValue;
+        upgrades.forEach(id => {
+            const def = this.getDefinition(id);
+            if (def && def.modifiers && def.modifiers[type] !== undefined) {
+                total += def.modifiers[type];
+            }
+        });
+        return total;
+    },
+
+    // --- Specific Modifiers ---
+
+    /**
+     * Calculates fuel cost modifier based on installed upgrades (Multiplicative).
+     * Used for both Travel burn and Station refuel price if logic requires.
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    getFuelCostModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_COST);
     },
 
     /**
-     * LEGACY NEUTRALIZATION:
-     * Returns 1.0 to ensure standard market pricing.
-     * @returns {number} 1.0
+     * Calculates travel time modifier (Multiplicative).
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
      */
-    getPriceModifier(shipId, locationId, transactionType, contextData = {}) {
-        return 1.0;
+    getTravelTimeModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_TRAVEL_SPEED);
+    },
+
+    /**
+     * Calculates random event chance modifier (Multiplicative).
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    getEventChanceModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE);
+    },
+
+    /**
+     * Calculates price modifier for buying/selling (Multiplicative).
+     * @param {string[]} upgrades 
+     * @param {string} transactionType - 'buy' or 'sell'
+     * @returns {number} Multiplier.
+     */
+    getPriceModifier(upgrades = [], transactionType) {
+        const modType = transactionType === 'buy' ? UPGRADE_TYPES.MOD_BUY_PRICE : UPGRADE_TYPES.MOD_SELL_PRICE;
+        return this._getMultiplicativeModifier(upgrades, modType);
+    },
+
+    /**
+     * Calculates service cost modifier (Repair/Refuel) (Multiplicative).
+     * @param {string[]} upgrades 
+     * @param {string} serviceType - 'repair' or 'refuel'
+     * @returns {number} Multiplier.
+     */
+    getServiceCostModifier(upgrades = [], serviceType) {
+        const modType = serviceType === 'refuel' ? UPGRADE_TYPES.MOD_FUEL_COST : UPGRADE_TYPES.MOD_REPAIR_COST;
+        return this._getMultiplicativeModifier(upgrades, modType);
+    },
+
+    /**
+     * Calculates Max Hull Capacity Modifier (Additive).
+     * Base 1.0 + Bonuses.
+     * @param {string[]} upgrades 
+     * @returns {number} Total Multiplier (e.g. 1.20 for +20%).
+     */
+    getMaxHullModifier(upgrades = []) {
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_HULL, 1.0);
+    },
+
+    /**
+     * Calculates Max Fuel Capacity Modifier (Additive).
+     * Base 1.0 + Bonuses.
+     * @param {string[]} upgrades 
+     * @returns {number} Total Multiplier.
+     */
+    getMaxFuelModifier(upgrades = []) {
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_FUEL, 1.0);
+    },
+
+    /**
+     * Calculates Max Cargo Capacity Modifier (Additive).
+     * Base 1.0 + Bonuses.
+     * @param {string[]} upgrades 
+     * @returns {number} Total Multiplier.
+     */
+    getMaxCargoModifier(upgrades = []) {
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_CARGO, 1.0);
+    },
+
+    /**
+     * Calculates Debt Interest Modifier (Multiplicative).
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    getInterestModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_DEBT_INTEREST);
+    },
+
+    /**
+     * Calculates Passive Repair Rate (Additive).
+     * Base 0.0 + Bonuses.
+     * @param {string[]} upgrades 
+     * @returns {number} Daily Repair % (e.g. 0.03 for 3%).
+     */
+    getPassiveRepairRate(upgrades = []) {
+        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_PASSIVE_REPAIR, 0.0);
     }
 };
 --- END OF FILE: ./js/services/GameAttributes.js ---
@@ -21854,12 +22771,15 @@ export class PlayerActionService {
         }
 
         const basePrice = this.uiManager.getItemPrice(state, goodId);
+        const activeShipId = state.player.activeShipId;
+        const shipState = state.player.shipStates[activeShipId];
+        const upgrades = shipState.upgrades || [];
         
-        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
-        // Apply attributes like 'Corporate Partner' or 'VIP'
-        const priceMod = GameAttributes.getPriceModifier(state.player.activeShipId, state.currentLocationId, 'buy', { commodityId: goodId });
+        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
+        // Apply Signal Hacker or other buy attributes
+        const priceMod = GameAttributes.getPriceModifier(upgrades, 'buy');
         const price = Math.max(1, Math.round(basePrice * priceMod));
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         const totalCost = price * quantity;
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
@@ -21867,12 +22787,17 @@ export class PlayerActionService {
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-        const activeShip = this.simulationService._getActiveShip();
+        // --- UPGRADE SYSTEM: EFFECTIVE STATS CHECK ---
+        // Check capacity against the "Effective" stats (includes Aux Storage)
+        const activeShipStats = this.simulationService.getEffectiveShipStats(activeShipId);
         const activeInventory = this.simulationService._getActiveInventory();
-        if (calculateInventoryUsed(activeInventory) + quantity > activeShip.cargoCapacity) {
+        
+        if (calculateInventoryUsed(activeInventory) + quantity > activeShipStats.cargoCapacity) {
              this.uiManager.queueModal('event-modal', "Cargo Hold Full", "You don't have enough space.");
             return false;
         }
+        // --- END UPGRADE SYSTEM ---
+
          if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
@@ -21887,8 +22812,8 @@ export class PlayerActionService {
         // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
         // Vindicator "Trader": 15% chance to receive 1 extra unit for free
         let finalQuantity = quantity;
-        // NOTE: Legacy getShipAttributes returns empty in Phase 1, logic neutralized safely.
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        // Legacy access safely returns empty if not used, preserving logic structure
+        const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
             finalQuantity += 1;
             this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
@@ -21936,19 +22861,18 @@ export class PlayerActionService {
             return 0;
         }
 
+        const activeShipId = state.player.activeShipId;
+        const shipState = state.player.shipStates[activeShipId];
+        const upgrades = shipState.upgrades || [];
+
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
 
-        // --- VIRTUAL WORKBENCH: PRICE MODIFIERS ---
-        // Apply attributes like 'Hot Delivery', 'Cryo-Storage', 'Lucky'
-        const priceMod = GameAttributes.getPriceModifier(
-            state.player.activeShipId, 
-            state.currentLocationId, 
-            'sell', 
-            { commodityId: goodId, cargoItem: item, currentDay: state.day }
-        );
+        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
+        // Apply Guild Badge or other sell attributes
+        const priceMod = GameAttributes.getPriceModifier(upgrades, 'sell');
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
@@ -22106,7 +23030,7 @@ export class PlayerActionService {
                 return false;
             }
             
-            // --- VIRTUAL WORKBENCH: PHASE 2 (ECONOMIC RETROFITTING) ---
+            // --- UPGRADE SYSTEM: ECONOMIC RETROFITTING ---
             // Calculate total value: Ship Base Price + Sum of Upgrade Values
             let upgradeValue = 0;
             if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
@@ -22120,7 +23044,7 @@ export class PlayerActionService {
 
             const totalBaseValue = ship.price + upgradeValue;
             const salePrice = Math.floor(totalBaseValue * GAME_RULES.SHIP_SELL_MODIFIER);
-            // --- END VIRTUAL WORKBENCH ---
+            // --- END UPGRADE SYSTEM ---
             
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
 
@@ -22356,26 +23280,37 @@ export class PlayerActionService {
     refuelTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (!ship || ship.fuel >= ship.maxFuel) return 0; // Check if ship exists
+        if (!ship) return 0;
+
+        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
+        // Use Effective Max Fuel to prevent overfilling beyond upgraded capacity
+        const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
+        if (state.player.shipStates[ship.id].fuel >= effectiveStats.maxFuel) return 0;
+        // --- END UPGRADE SYSTEM ---
+
+        const shipState = state.player.shipStates[ship.id];
+        const upgrades = shipState.upgrades || [];
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         
-        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
+        // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
         // Apply Station Quirks (Jupiter) and Ship Attributes (Citadel Renown)
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
              costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         
-        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'refuel');
+        // Apply Fuel Pass Discount
+        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
         costPerTick *= attrMod;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
 
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].fuel = Math.min(ship.maxFuel, state.player.shipStates[ship.id].fuel + 5);
+        // Use effectiveStats.maxFuel
+        state.player.shipStates[ship.id].fuel = Math.min(effectiveStats.maxFuel, state.player.shipStates[ship.id].fuel + 5);
         this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
 
         const refuelBtn = document.getElementById('refuel-btn');
@@ -22397,36 +23332,43 @@ export class PlayerActionService {
     repairTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
-        if (!ship || ship.health >= ship.maxHealth) return 0; // Check if ship exists
+        if (!ship) return 0;
 
-        // --- VIRTUAL WORKBENCH: ATTR_BESPOKE ---
-        // Check if repairs are blocked (Finality of Whispers)
-        // Legacy accessor usage in Phase 1 neutralization: safely returns empty array.
+        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
+        // Use Effective Max Health
+        const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
+        if (state.player.shipStates[ship.id].health >= effectiveStats.maxHealth) return 0;
+        // --- END UPGRADE SYSTEM ---
+
+        const shipState = state.player.shipStates[ship.id];
+        const upgrades = shipState.upgrades || [];
+
+        // Legacy check
         const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             // Cannot be repaired
             return 0; 
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        const repairAmount = ship.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
+        // Repair calculation based on Effective Max Health
+        const repairAmount = effectiveStats.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
 
-        // --- VIRTUAL WORKBENCH: SERVICE ATTRIBUTES ---
-        // Apply Station Quirks (Venus) and Ship Attributes (Ouroboros Frequent Flyer)
-        const attrMod = GameAttributes.getServiceCostModifier(ship.id, state.currentLocationId, 'repair');
+        // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
+        // Apply Repair Pass Discount
+        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
         costPerTick *= attrMod;
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
          costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
         state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].health = Math.min(ship.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
+        state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
         this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 
@@ -22443,7 +23385,6 @@ export class PlayerActionService {
     }
 
     /**
-     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
      * Validates if an upgrade can be installed on a ship.
      * Checks: Ownership, Active Status (Instant App Rule), Capacity.
      * @param {string} shipId 
@@ -22460,6 +23401,7 @@ export class PlayerActionService {
         }
 
         // 2. Check Instant Application Rule (Must be Active Ship)
+        // This constraint ensures we don't have to recalculate effective stats for inactive ships in background
         if (state.player.activeShipId !== shipId) {
             return { success: false, error: 'Upgrades must be applied to the active ship.' };
         }
@@ -22474,7 +23416,6 @@ export class PlayerActionService {
     }
 
     /**
-     * --- VIRTUAL WORKBENCH: PHASE 3 (LOGIC HOOKS) ---
      * Installs an upgrade onto a ship.
      * Assumes validation has passed.
      * @param {string} shipId 

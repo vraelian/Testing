@@ -162,6 +162,36 @@ export const ATTRIBUTE_TYPES = Object.freeze({
     RESTRICTION: 'RESTRICTION'          // Prevents actions (e.g. Bespoke)
 });
 
+// --- [[START]] VIRTUAL WORKBENCH: SHIP UPGRADE SYSTEM (Phase 1) ---
+export const UPGRADE_TYPES = Object.freeze({
+    MOD_TRAVEL_SPEED: 'MOD_TRAVEL_SPEED',       // Engine Mods
+    MOD_FUEL_COST: 'MOD_FUEL_COST',             // Engine Mods (Penalty), Fuel Pass (Bonus)
+    MOD_BUY_PRICE: 'MOD_BUY_PRICE',             // Signal Hacker
+    MOD_SELL_PRICE: 'MOD_SELL_PRICE',           // Guild Badge
+    MOD_MAX_HULL: 'MOD_MAX_HULL',               // Hull Armor
+    MOD_MAX_FUEL: 'MOD_MAX_FUEL',               // Aux Tank
+    MOD_MAX_CARGO: 'MOD_MAX_CARGO',             // Aux Storage
+    MOD_EVENT_CHANCE: 'MOD_EVENT_CHANCE',       // Radar Mod
+    MOD_REPAIR_COST: 'MOD_REPAIR_COST',         // Repair Pass
+    MOD_PASSIVE_REPAIR: 'MOD_PASSIVE_REPAIR',   // Nano Machines
+    MOD_DEBT_INTEREST: 'MOD_DEBT_INTEREST'      // Syndicate Badge
+});
+
+export const UPGRADE_COLORS = Object.freeze({
+    BLUE: 'var(--color-blue)',
+    CYAN: 'var(--color-cyan)',
+    GREEN: 'var(--color-green)',
+    GOLD: 'var(--color-gold)',
+    GREY: 'var(--color-grey)',
+    INDIGO: 'var(--color-indigo)',
+    EMERALD: 'var(--color-emerald)',
+    SEAFOAM: 'var(--color-teal)',
+    ORANGE: 'var(--color-orange)',
+    RED: 'var(--color-red)',
+    VIOLET: 'var(--color-violet)'
+});
+// --- [[END]] VIRTUAL WORKBENCH ---
+
 /**
  * A collection of core game balance numbers and rules.
  */

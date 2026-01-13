@@ -279,4 +279,20 @@ export class GameState {
             });
         });
     }
+
+    /**
+     * Helper to generate a fresh state object for a new ship.
+     * Ensures all dynamic properties (including upgrades) are initialized.
+     * @param {string} shipId 
+     * @returns {object}
+     */
+    _getInitialShipState(shipId) {
+        const ship = DB.SHIPS[shipId];
+        return {
+            health: ship ? ship.maxHealth : 100,
+            fuel: ship ? ship.maxFuel : 40,
+            hullAlerts: { one: false, two: false },
+            upgrades: [] // Initialize empty upgrades array
+        };
+    }
 }

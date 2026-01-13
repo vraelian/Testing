@@ -7,13 +7,15 @@
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
  * Renders the entire Services screen UI.
  * @param {object} gameState - The current state of the game.
+ * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
  * @returns {string} The HTML content for the Services screen.
  */
-export function renderServicesScreen(gameState) {
+export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
 
     // VIRTUAL WORKBENCH: Added Starport Name map (Request B)
@@ -69,28 +71,54 @@ export function renderServicesScreen(gameState) {
     const shipStatic = DB.SHIPS[player.activeShipId];
     const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
     const shipName = shipStatic?.name || 'NO ACTIVE SHIP'; // VIRTUAL WORKBENCH: Get ship name
+    const upgrades = shipState.upgrades || [];
 
-    // --- Calculate Refuel Cost (logic mirrored from PlayerActionService.refuelTick) ---
+    // --- UPGRADE SYSTEM: Effective Stats ---
+    // Use SimulationService to get stats with modifiers (e.g. +20% Fuel from Tanks)
+    // If simulationService is missing (legacy safety), fallback to static stats
+    let effectiveMaxHealth = shipStatic.maxHealth;
+    let effectiveMaxFuel = shipStatic.maxFuel;
+
+    if (simulationService && simulationService.getEffectiveShipStats) {
+        const stats = simulationService.getEffectiveShipStats(player.activeShipId);
+        if (stats) {
+            effectiveMaxHealth = stats.maxHealth;
+            effectiveMaxFuel = stats.maxFuel;
+        }
+    }
+
+    // --- Calculate Refuel Cost ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
+    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    fuelCostPerTick = Math.round(fuelCostPerTick);
+    // 2. Upgrade Modifier (Fuel Pass)
+    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
+    fuelCostPerTick *= fuelAttrMod;
+    
+    fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
 
-    // --- Calculate Repair Cost (logic mirrored from PlayerActionService.repairTick) ---
-    let repairCostPerTick = (shipStatic.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    // --- Calculate Repair Cost ---
+    // Base cost is derived from Effective Max Health
+    let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
-    repairCostPerTick = Math.round(repairCostPerTick);
+    // 2. Upgrade Modifier (Repair Pass)
+    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
+    repairCostPerTick *= repairAttrMod;
 
-    // --- Calculate Percentages ---
-    const fuelPct = (shipState.fuel / shipStatic.maxFuel) * 100;
-    const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+    repairCostPerTick = Math.max(1, Math.round(repairCostPerTick));
+
+    // --- Calculate Percentages (Using Effective Max) ---
+    const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
+    const healthPct = (shipState.health / effectiveMaxHealth) * 100;
 
     // --- Determine UI States ---
-    const isFuelFull = shipState.fuel >= shipStatic.maxFuel;
-    const isHealthFull = shipState.health >= shipStatic.maxHealth;
+    const isFuelFull = shipState.fuel >= effectiveMaxFuel;
+    const isHealthFull = shipState.health >= effectiveMaxHealth;
 
     const canAffordRefuel = player.credits >= fuelCostPerTick;
     const canAffordRepair = player.credits >= repairCostPerTick;
@@ -121,7 +149,7 @@ export function renderServicesScreen(gameState) {
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                               <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
-                                ${Math.round(shipState.fuel)} / ${shipStatic.maxFuel}
+                                ${Math.round(shipState.fuel)} / ${effectiveMaxFuel}
                               </span>
                             </div>
                             <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
@@ -149,7 +177,7 @@ export function renderServicesScreen(gameState) {
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                                <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
-                                ${Math.round(shipState.health)} / ${shipStatic.maxHealth}
+                                ${Math.round(shipState.health)} / ${effectiveMaxHealth}
                               </span>
                             </div>
                             <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
@@ -157,7 +185,7 @@ export function renderServicesScreen(gameState) {
                           </div>
                         <div class="control-deck flex justify-center items-center gap-4">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
-                            <span class.price-label text-sm engraved-text">COST</span>
+                            <span class="price-label text-sm engraved-text">COST</span>
                             <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>

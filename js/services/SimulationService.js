@@ -17,6 +17,7 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 // --- VIRTUAL WORKBENCH: IMPORT ---
 import { IntelService } from './IntelService.js';
+import { GameAttributes } from './GameAttributes.js'; // Added for Upgrade Logic
 // --- END VIRTUAL WORKBENCH ---
 
 /**
@@ -406,11 +407,49 @@ export class SimulationService {
     // --- HELPER & PRIVATE METHODS (SHARED) ---
     // These are kept here to be accessible by the specialized services that need them.
 
+    /**
+     * Calculates ship stats including upgrade modifiers (e.g. Max Fuel + 20%).
+     * This is the single source of truth for "Effective Stats".
+     * @param {string} shipId 
+     * @returns {object} The ship definition with modified stats.
+     */
+    getEffectiveShipStats(shipId) {
+        const ship = DB.SHIPS[shipId];
+        if (!ship) return null;
+
+        const state = this.gameState.getState();
+        const shipState = state.player.shipStates[shipId];
+        
+        // If not owned or no upgrades, return base stats (defensive copy)
+        if (!shipState || !shipState.upgrades) return { ...ship };
+
+        const upgrades = shipState.upgrades;
+        // Calculate Additive Modifiers (1.0 + 0.1 + 0.1 = 1.2)
+        const hullMod = GameAttributes.getMaxHullModifier(upgrades);
+        const fuelMod = GameAttributes.getMaxFuelModifier(upgrades);
+        const cargoMod = GameAttributes.getMaxCargoModifier(upgrades);
+
+        return {
+            ...ship,
+            maxHealth: Math.round(ship.maxHealth * hullMod),
+            maxFuel: Math.round(ship.maxFuel * fuelMod),
+            cargoCapacity: Math.round(ship.cargoCapacity * cargoMod)
+        };
+    }
+
     addShipToHangar(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
-        this.gameState.player.shipStates[shipId] = { health: ship.maxHealth, fuel: ship.maxFuel, hullAlerts: { one: false, two: false } };
+        
+        // --- UPGRADE SYSTEM UPDATE: Initialize with empty upgrades ---
+        this.gameState.player.shipStates[shipId] = { 
+            health: ship.maxHealth, 
+            fuel: ship.maxFuel, 
+            hullAlerts: { one: false, two: false },
+            upgrades: [] // Added upgrade array
+        };
+        
         if (!this.gameState.player.inventories[shipId]) {
             this.gameState.player.inventories[shipId] = {};
             DB.COMMODITIES.forEach(c => {
@@ -434,7 +473,15 @@ export class SimulationService {
         const state = this.gameState;
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
-        return { id: activeId, ...DB.SHIPS[activeId], ...state.player.shipStates[activeId] };
+        
+        // --- UPGRADE SYSTEM UPDATE: Return Effective Stats ---
+        // Merge the calculated Max/Capacities with the current state (Health/Fuel values)
+        const effectiveStats = this.getEffectiveShipStats(activeId);
+        return { 
+            id: activeId, 
+            ...effectiveStats, 
+            ...state.player.shipStates[activeId] 
+        };
     }
 
     _getActiveInventory() {
@@ -444,8 +491,11 @@ export class SimulationService {
     
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
-        const shipStatic = DB.SHIPS[shipId];
-        const healthPct = (shipState.health / shipStatic.maxHealth) * 100;
+        // Use Effective Stats for percentage calculation
+        const effectiveStats = this.getEffectiveShipStats(shipId);
+        
+        const healthPct = (shipState.health / effectiveStats.maxHealth) * 100;
+        
         if (healthPct <= 15 && !shipState.hullAlerts.two) { shipState.hullAlerts.two = true; } 
         else if (healthPct <= 30 && !shipState.hullAlerts.one) { shipState.hullAlerts.one = true; }
         if (healthPct > 30) shipState.hullAlerts.one = false;

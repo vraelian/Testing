@@ -52,17 +52,27 @@ export class TravelService {
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
+
+        // --- UPGRADE SYSTEM: DYNAMIC STATS FETCH ---
+        // Get effective stats (includes upgrades like Aux Tanks)
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+        const effectiveMaxFuel = effectiveStats.maxFuel;
+        // ---------------------------
+
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // --- UPGRADE SYSTEM: COST MODIFIERS ---
+        const shipState = state.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
+
         // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
-        // 2. Apply Ship Attribute Modifiers (e.g., Efficient, Sleeper)
-        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        // 2. Apply Attribute/Upgrade Modifier
+        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
 
         // 3. Handle Special "Space Folding" Case (Increases fuel cost)
@@ -70,14 +80,14 @@ export class TravelService {
         if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
             requiredFuel = Math.round(requiredFuel * 1.2);
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
-        if (activeShip.maxFuel < requiredFuel) {
-            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${activeShip.maxFuel}.`);
+        if (effectiveMaxFuel < requiredFuel) {
+            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
             return;
         }
-        if (activeShip.fuel < requiredFuel) {
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(activeShip.fuel)}.`);
+        if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
+            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
             return;
         }
 
@@ -105,8 +115,9 @@ export class TravelService {
         const activeShip = this.simulationService._getActiveShip();
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const upgrades = activeShipState.upgrades || [];
 
-        // --- VIRTUAL WORKBENCH: Attribute Logic (Time & Fuel) ---
+        // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
         
         // 1. Base Perk Modifiers
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
@@ -114,11 +125,14 @@ export class TravelService {
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
-        // 2. Apply Generic Attribute Modifiers
-        const attrFuelMod = GameAttributes.getFuelCostModifier(activeShip.id);
+        // 2. Apply Generic Attribute Modifiers (Multiplicative)
+        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
+        
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+        travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
-        // 3. Handle Time Modifiers & Complex Logic
+        // 3. Handle Time Modifiers & Complex Logic (Legacy)
         shipAttributes.forEach(attrId => {
             const def = GameAttributes.getDefinition(attrId);
             
@@ -155,8 +169,8 @@ export class TravelService {
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost); // Final integer round
 
         
-        if (activeShip.fuel < travelInfo.fuelCost) {
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShip.fuel)}.`);
+        if (activeShipState.fuel < travelInfo.fuelCost) {
+            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
             this.logger.warn('TravelService', `Travel to ${locationId} aborted due to insufficient fuel after event mods.`);
             return;
         }
@@ -169,17 +183,18 @@ export class TravelService {
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
         
-        // --- VIRTUAL WORKBENCH: Hull Decay Attributes ---
-        // Xeno Hull (No decay) or Resilient (Half decay)
+        // --- Hull Decay Attributes ---
         if (shipAttributes.includes('ATTR_XENO_HULL')) {
             travelHullDamage = 0;
         } else if (shipAttributes.includes('ATTR_RESILIENT')) {
             travelHullDamage *= 0.5;
         }
-        // --- END VIRTUAL WORKBENCH ---
-
+        
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
-        const eventHullDamageValue = activeShip.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
+        
+        // Use Effective Max Health for percentage calculation
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+        const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
         activeShipState.health -= totalHullDamageValue;
@@ -194,34 +209,27 @@ export class TravelService {
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
-        // --- [[START]] MODIFICATION ---
-        // Call onLocationChange() *before* setState.
         this.simulationService.newsTickerService.onLocationChange(locationId);
         
-        // --- VIRTUAL WORKBENCH: Post-Travel Triggers ---
-        // Initialize trip count if missing
         if (typeof this.gameState.player.tripCount === 'undefined') {
             this.gameState.player.tripCount = 0;
         }
         this.gameState.player.tripCount++;
 
-        // 1. ATTR_TRAVELLER (Atlas): Restore hull/fuel every 20 trips
+        // Legacy: Traveller Perk
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
-            activeShipState.health = activeShip.maxHealth;
-            activeShipState.fuel = activeShip.maxFuel;
+            activeShipState.health = effectiveStats.maxHealth;
+            activeShipState.fuel = effectiveStats.maxFuel;
             this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
-
-        // 2. ATTR_FUEL_SCOOP (Parallax): Restore 15% fuel
+        // Legacy: Fuel Scoop
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
-            const fuelRestore = activeShip.maxFuel * 0.15;
-            activeShipState.fuel = Math.min(activeShip.maxFuel, activeShipState.fuel + fuelRestore);
+            const fuelRestore = effectiveStats.maxFuel * 0.15;
+            activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
         }
-        // --- END VIRTUAL WORKBENCH ---
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
-        // --- [[END]] MODIFICATION ---
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -232,7 +240,7 @@ export class TravelService {
             return;
         }
 
-        const totalHullDamagePercentForDisplay = (totalHullDamageValue / activeShip.maxHealth) * 100;
+        const totalHullDamagePercentForDisplay = (totalHullDamageValue / effectiveStats.maxHealth) * 100;
         
         this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
             fuelUsed: travelInfo.fuelCost,
@@ -268,16 +276,23 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
-        // --- VIRTUAL WORKBENCH: Attribute Integration ---
+        // --- UPGRADE SYSTEM: Event Modifier ---
         const activeShip = this.simulationService._getActiveShip();
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
+
+        // Apply Upgrade Modifier (e.g. Radar Mod)
+        const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
+        eventChance *= chanceMod;
 
         // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }
-        // --- END VIRTUAL WORKBENCH ---
+        // --- END UPGRADE SYSTEM ---
 
         if (force === false && Math.random() > eventChance) return false;
 
