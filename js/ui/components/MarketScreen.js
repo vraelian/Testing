@@ -1,390 +1,180 @@
-// js/services/simulation/MarketService.js
+// js/ui/components/MarketScreen.js
 /**
- * @fileoverview This file contains the MarketService class, which handles the simulation
- * of the in-game economy. This includes evolving commodity prices over time based on
- * volatility and market pressure, replenishing market inventories with persistence,
- * and managing system-wide economic states.
+ * @fileoverview
+ * This file contains the rendering logic for the Market screen.
+ * It is responsible for displaying all available commodities for trade.
  */
-import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
-import { skewedRandom } from '../../utils.js';
-import { GameAttributes } from '../../services/GameAttributes.js';
+import { AssetService } from '../../services/AssetService.js';
+import { formatCredits, renderIndicatorPills } from '../../utils.js';
+import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
- * @class MarketService
- * @description Manages the economic simulation aspects of the game.
+ * Renders the entire Market screen, adapting for mobile or desktop layouts.
+ * @param {object} gameState - The current state of the game.
+ * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
+ * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
+ * @returns {string} The HTML content for the Market screen.
  */
-export class MarketService {
-    /**
-     * @param {import('../GameState.js').GameState} gameState The central game state object.
-     */
-    constructor(gameState) {
-        this.gameState = gameState;
-        this._currentSystemState = null;
-        this._systemStateExpirationDay = 0;
-    }
+export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState) {
+    const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
+    const marketHtml = availableCommodities.map(good => {
+        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
+    }).join('');
 
-    /**
-     * Gets the effective price for a commodity at a location.
-     * Can optionally apply Ship Attributes (e.g. VIP, Corp Partner) for UI display.
-     * * @param {string} locationId The ID of the location.
-     * @param {string} commodityId The ID of the commodity.
-     * @param {boolean} [applyModifiers=false] Whether to apply active ship attribute modifiers.
-     * @returns {number} The effective price.
-     */
-    getPrice(locationId, commodityId, applyModifiers = false) {
-        const state = this.gameState.getState();
-        const deal = state.activeIntelDeal;
-        let price = 0;
+    // MODIFIED: Changed 'scroll-panel' to 'market-scroll-panel' to match CSS file
+    return `<div class="market-scroll-panel">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${marketHtml}</div>
+            </div>`;
+}
 
-        // 1. Determine Base Price (Market or Intel Override)
-        if (deal &&
-            deal.locationId === locationId &&
-            deal.commodityId === commodityId) {
-            // Use the fluctuating market price if it exists (which was seeded by the deal),
-            // otherwise fallback to the deal's static override.
-            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
-        } else {
-            price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
-        }
-
-        // 2. Apply Attribute Modifiers (if requested)
-        // This allows the UI to request the "discounted" price for display,
-        // while Services can request the "raw" price if they handle math separately.
-        if (applyModifiers && state.player.activeShipId) {
-            const shipState = this.gameState.player.shipStates[state.player.activeShipId];
-            const upgrades = shipState ? (shipState.upgrades || []) : [];
-
-            // --- UPGRADE SYSTEM: Apply Buy Modifiers ---
-            // Calculate Multiplicative Modifier (e.g. 0.97 for 3% off)
-            const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
-            price = Math.max(1, Math.round(price * mod));
-            // --- END UPGRADE SYSTEM ---
-        }
-
-        return price;
-    }
-
-    /**
-     * Retrieves the pre-calculated galactic average price for a commodity.
-     * @param {string} commodityId The ID of the commodity.
-     * @returns {number} The galactic average price.
-     */
-    getGalacticAverage(commodityId) {
-        return this.gameState.market.galacticAverages[commodityId] || 0;
-    }
-
-    /**
-     * Checks if the current system-wide economic state should change and applies a new one if necessary.
-     */
-    checkForSystemStateChange() {
-        if (this.gameState.day > this._systemStateExpirationDay) {
-            const systemStates = Object.keys(DB.SYSTEM_STATES);
-            const selectedStateKey = systemStates[Math.floor(Math.random() * systemStates.length)];
-            this._currentSystemState = DB.SYSTEM_STATES[selectedStateKey];
-            this._systemStateExpirationDay = this.gameState.day + this._currentSystemState.duration;
-        }
-    }
-
-    /**
-     * Simulates one week of market price changes for all commodities at all locations.
-     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
-     * and player-driven market pressure.
-     */
-    evolveMarketPrices() {
-        DB.MARKETS.forEach(location => {
-            DB.COMMODITIES.forEach(commodity => {
-                if (commodity.tier > this.gameState.player.revealedTier) return;
-
-                // Enforce Intel Price Lock
-                const activeDeal = this.gameState.activeIntelDeal;
-                if (activeDeal &&
-                     activeDeal.locationId === location.id &&
-                     activeDeal.commodityId === commodity.id)
-                {
-                    // Apply 3% fluctuation to the locked price to simulate a "live" but fixed deal
-                    const basePrice = activeDeal.overridePrice;
-                    const fluctuation = 0.03; 
-                    const minPrice = basePrice * (1 - fluctuation);
-                    const maxPrice = basePrice * (1 + fluctuation);
-                    
-                    const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
-                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
-                    
-                    return; // Skip normal evolution
-                }
-
-                const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
-                const price = this.gameState.market.prices[location.id][commodity.id];
-                const avg = this.gameState.market.galacticAverages[commodity.id];
-
-                // Determine the local baseline price based on import/export modifiers
-                const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
-                const targetPriceOffset = (1.0 - modifier) * avg;
-                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
-
-                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
-                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
-
-                const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
-                if (commodityMods) {
-                    if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
-                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
-                }
-
-                const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
-                const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
-                
-                let reversionEffect = (localBaseline - price) * meanReversion;
-
-                // Price Lock: Stops mean reversion if recently traded
-                if (this.gameState.day < inventoryItem.priceLockEndDay) {
-                    reversionEffect = 0;
-                }
-
-                if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
-                    reversionEffect = (localBaseline - price) * 0.20;
-                } else if (inventoryItem.rivalArbitrage.isActive) {
-                    inventoryItem.rivalArbitrage.isActive = false;
-                }
-
-                if (inventoryItem.hoverUntilDay > this.gameState.day) {
-                     reversionEffect *= 0.1;
-                } else if (inventoryItem.hoverUntilDay > 0) {
-                    inventoryItem.hoverUntilDay = 0;
-                }
-
-                // Delayed Supply Pressure: The primary player-driven force
-                let pressureEffect = 0;
-                const PLAYER_PRESSURE_STRENGTH = 0.50; 
-                
-                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                    if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                         pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
-                    }
-                }
-
-                // Depletion Price Hike
-                let priceHikeMultiplier = 1.0;
-                if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
-                    priceHikeMultiplier = 1.5; 
-                }
-
-                let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
-                
-                if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
-                     newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
-                }
-                
-                this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
-
-                // Decay pressure
-                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
-                if (Math.abs(inventoryItem.marketPressure) < 0.001) {
-                    inventoryItem.marketPressure = 0;
-                }
-            });
-            this._recordPriceHistory(location.id);
-        });
-    }
+/**
+ * Generates the HTML for a single commodity card on the market screen.
+ * @param {object} good - The commodity data from the database.
+ * @param {object} gameState - The current game state.
+ * @param {function} getItemPrice - A function to calculate the item's current price.
+ * @param {object} marketTransactionState - The saved state of the transaction modules.
+ * @returns {string} The HTML string for the commodity card.
+ * @private
+ */
+function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
+    const { player, market, currentLocationId, tutorials, uiState } = gameState;
+    const playerItem = player.inventories[player.activeShipId]?.[good.id];
     
-    /**
-     * Simulates the weekly replenishment of commodity stock using a hybrid model.
-     * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
-     */
-    replenishMarketInventory() {
-        DB.MARKETS.forEach(market => {
-            DB.COMMODITIES.forEach(c => {
-                if (c.tier > this.gameState.player.revealedTier) return;
+    // --- UPGRADE SYSTEM: DUAL PRICE FETCH ---
+    // Fetch Base Price (Raw Market) vs Effective Price (After Upgrades like Signal Hacker)
+    const basePrice = getItemPrice(gameState, good.id, false);
+    const effectivePrice = getItemPrice(gameState, good.id, true);
+    
+    // Sell price usually includes sell modifiers by default in getItemPrice logic if we pass 'sell'
+    // But keeping your original structure, we assume 'sellPrice' applies modifiers if needed.
+    const sellPrice = getItemPrice(gameState, good.id, true); 
+    
+    const galacticAvg = market.galacticAverages[good.id];
+    const marketStock = market.inventory[currentLocationId]?.[good.id];
 
-                const inventoryItem = this.gameState.market.inventory[market.id][c.id];
+    const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
 
-                // Market Memory: Reset if untouched for 120 days.
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
-                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
-                    inventoryItem.lastPlayerInteractionTimestamp = 0;
-                    inventoryItem.marketPressure = 0;
-                    inventoryItem.depletionDay = 0; 
-                    inventoryItem.priceLockEndDay = 0; 
-                } else {
-                    const [minAvail, maxAvail] = c.canonicalAvailability;
-                    const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
-                    
-                    let pressureForAdaptation = inventoryItem.marketPressure;
-                    if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                        pressureForAdaptation = 0; 
-                    }
+    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
+    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
+    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
-                    if (pressureForAdaptation > 0) {
-                        pressureForAdaptation = 0;
-                    }
+    const nameTooltip = `data-tooltip="${good.lore}"`;
+    const playerInvDisplay = playerItem && playerItem.quantity > 0 ? playerItem.quantity : '0';
+    const isMinimized = uiState.marketCardMinimized[good.id];
 
-                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); 
-                    const targetStock = baseMeanStock * marketAdaptationFactor;
+    // --- ASSET SERVICE INTEGRATION ---
+    // Fetch dynamic art if available. Fallback handled by service (returns empty string).
+    const bgImage = AssetService.getCommodityImage(good.name, player.visualSeed);
+    
+    // If art exists, use the raw image (Option B).
+    // Otherwise, leave empty to allow the CSS class (item-style-X) to show the default gradient.
+    let customBackgroundStyle = '';
+    let customClass = '';
+    
+    if (bgImage) {
+        // Option B: No gradient overlay, just the raw image.
+        customBackgroundStyle = `background-image: url('${bgImage}');`;
+        customClass = ' has-custom-art';
+    }
 
-                    const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.10; 
-                    
-                    let emergencyStock = 0;
-                    if (inventoryItem.isDepleted) {
-                        emergencyStock = skewedRandom(1, 5);
-                        inventoryItem.isDepleted = false; 
-                    } else if (inventoryItem.quantity <= 0) {
-                        emergencyStock = skewedRandom(1, 5);
-                    }
+    let cardContentHtml;
+    let buttonHtml = ''; 
 
-                    inventoryItem.quantity += (replenishAmount + emergencyStock);
-                }
+    if (hasLicense) {
+        // --- UPGRADE SYSTEM: PRICE DISPLAY LOGIC ---
+        let priceDisplayHtml;
+        
+        if (effectivePrice < basePrice) {
+            // Discount Active: Show Strikethrough Base + Green Effective
+            priceDisplayHtml = `
+                <div class="price-container flex flex-col justify-center h-full">
+                     <span class="text-xs text-gray-400 line-through text-right leading-none" style="opacity: 0.7;">${formatCredits(basePrice)}</span>
+                     <p id="price-display-${good.id}" class="font-roboto-mono font-bold text-green-400 text-right leading-tight" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${effectivePrice}">${formatCredits(effectivePrice)}</p>
+                </div>
+            `;
+        } else {
+            // Standard Price (Preserving your original ID and classes)
+            priceDisplayHtml = `<p id="price-display-${good.id}" class="font-roboto-mono font-bold price-text" data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}" data-good-id="${good.id}" data-base-price="${effectivePrice}">${formatCredits(effectivePrice)}</p>`;
+        }
+        // -------------------------------------------
 
-                const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
-                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
-                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
-                inventoryItem.quantity *= finalFluctuation;
+        const indicatorHtml = renderIndicatorPills({ price: effectivePrice, sellPrice, galacticAvg, playerItem });
+        const avgCostHtml = playerItem && playerItem.quantity > 0 ? `<div class="avg-cost-display" id="avg-cost-${good.id}">Avg. Cost: ${formatCredits(playerItem.avgCost, false)}</div>` : '';
+        const initialMode = marketTransactionState[good.id]?.mode || 'buy';
+
+        const transactionControlsHtml = `
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+                <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
+                    <div class="toggle-thumb"></div>
+                    <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
+                </div>
+                <div class="qty-stepper">
+                    <button class="qty-down" data-action="decrement" data-good-id="${good.id}">▼</button>
+                    <input type="number" value="0" id="qty-${good.id}" min="0">
+                    <button class="qty-up" data-action="increment" data-good-id="${good.id}">▲</button>
+                </div>
+                <div class="action-group">
+                    <button class="btn confirm-btn" data-action="confirm-trade" data-good-id="${good.id}">Confirm</button>
+                    <button class="btn max-btn" data-action="set-max-trade" data-good-id="${good.id}">Max</button>
+                </div>
+            </div>`;
+
+        const ownedQtyText = playerItem?.quantity > 0 ? ` (${playerItem.quantity})` : '';
+
+        buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
+        
+        // --- This is the STANDARD (unlocked) card content ---
+        cardContentHtml = `
+            <div class="max-view-content">
+                <p class="font-bold commodity-name"><span class="commodity-name-tooltip" ${nameTooltip}>${good.name}</span></p>
+                <p class="avail-text">Avail: <span id="m-stock-${good.id}">${marketStock.quantity}</span>, Own: <span id="p-inv-${good.id}">${playerInvDisplay}</span></p>
                 
-                if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
-                    inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
-                }
+                ${priceDisplayHtml}
                 
-                inventoryItem.quantity = Math.max(0, Math.round(inventoryItem.quantity));
-            });
-        });
-    }
+                <div id="effective-price-display-${good.id}" class="effective-price-display"></div>
+                
+                <div class="indicator-container" id="indicators-${good.id}">${indicatorHtml}</div>
 
-    /**
-     * Applies a dynamic price adjustment to a commodity based on the volume of a player's transaction.
-     * @param {string} goodId - The ID of the commodity traded.
-     * @param {number} quantity - The amount traded.
-     * @param {string} transactionType - 'buy' or 'sell'.
-     */
-    applyMarketImpact(goodId, quantity, transactionType) {
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
+                ${avgCostHtml}
+
+                ${transactionControlsHtml}
+            </div>
+
+            <div class="min-view-content">
+                <p class="font-bold commodity-name-min">${good.name}${ownedQtyText}</p>
+                <p class="tier-text-min">Tier ${good.tier} | ${good.cat}</p>
+            </div>
+        `;
+
+    } else {
+        // --- [[START]] MODIFIED (locked) card content ---
         
-        const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
-        
-        if (transactionType === 'buy') {
-            inventoryItem.marketPressure -= pressureChange;
-        } else { // 'sell'
-            inventoryItem.marketPressure += pressureChange;
-        }
+        // Change c: Set text to 'TIER X LICENSE'
+        const lockedText = `TIER ${good.tier} LICENSE`;
 
-        const dayOfYear = (this.gameState.day - 1) % 365 + 1;
-        let minDuration, maxDuration;
-
-        if (dayOfYear <= 182) { // First half of the year
-            minDuration = 75; // 2.5 months
-            maxDuration = 120; // 4 months
-        } else { // Second half of the year
-            minDuration = 105; // 3.5 months
-            maxDuration = 195; // 6.5 months
-        }
-
-        const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
-        inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
-
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+        // Add the data-action and data-license-id to the container to make it clickable
+        cardContentHtml = `
+            <div class="license-locked-content" data-action="${ACTION_IDS.ACQUIRE_LICENSE}" data-license-id="${good.licenseId}">
+                <div class="license-locked-tier-watermark">TIER ${good.tier}</div>
+                
+                <div class="sci-fi-lock-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+                 <p class="license-required-text">${lockedText}</p>
+            </div>
+        `;
+        // --- [[END]] MODIFIED (locked) card content ---
     }
 
-    /**
-     * Checks if a purchase triggers a market depletion event.
-     * @param {object} good - The static commodity data (from DB).
-     * @param {object} inventoryItem - The dynamic inventory item from gameState.
-     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
-     * @param {number} currentDay - The current game day.
-     */
-    checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
-        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
-        const [minAvail, maxAvail] = good.canonicalAvailability;
-        const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
-        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-        
-        let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
-        
-        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
-        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
-        
-        const depletionThreshold = targetStock * 0.08;
-        const depletionBuyQuantity = stockBeforeBuy; 
-
-        if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
-            inventoryItem.isDepleted = true; 
-            inventoryItem.depletionDay = currentDay;
-            inventoryItem.depletionBonusDay = currentDay; 
-        }
-    }
-
-    /**
-     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
-     * @param {object} market - The market object from the database.
-     * @param {object} commodity - The commodity object from the database.
-     * @returns {number} The calculated baseline stock quantity.
-     * @private
-     */
-    _calculateBaselineStock(market, commodity) {
-        const [min, max] = commodity.canonicalAvailability;
-        const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
-        return Math.floor(skewedRandom(min, max) * modifier);
-    }
-
-    /**
-     * Records the current day's price for each commodity to its historical data log for graphing.
-     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
-     * @private
-     */
-    _recordPriceHistory(marketId = null) {
-        if (!this.gameState || !this.gameState.market) return;
-        const targetMarketId = marketId || this.gameState.currentLocationId;
-
-        if (!this.gameState.market.priceHistory[targetMarketId]) {
-            this.gameState.market.priceHistory[targetMarketId] = {};
-        }
-
-        DB.COMMODITIES.forEach(good => {
-            if (good.tier > this.gameState.player.revealedTier) return;
-            if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
-                this.gameState.market.priceHistory[targetMarketId][good.id] = [];
-            }
-
-            const history = this.gameState.market.priceHistory[targetMarketId][good.id];
-            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
-
-            const lastEntry = history[history.length - 1];
-            if (lastEntry && lastEntry.day === this.gameState.day) {
-                if (lastEntry.price !== currentPrice) {
-                    lastEntry.price = currentPrice;
-                }
-            } else {
-                history.push({ day: this.gameState.day, price: currentPrice });
-            }
-
-            while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
-                history.shift();
-            }
-        });
-    }
-
-    /**
-     * Updates the shipyard stock for all unlocked locations on a weekly basis.
-     * @private
-     */
-    _updateShipyardStock() {
-        const { player } = this.gameState;
-        player.unlockedLocationIds.forEach(locationId => {
-            const stock = this.gameState.market.shipyardStock[locationId];
-            if (stock && stock.day === this.gameState.day) return;
-            const commonShips = Object.entries(DB.SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
-            const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
-            const shipsForSaleIds = [...commonShips.map(entry => entry[0])];
-            rareShips.forEach(([id, ship]) => {
-                if (Math.random() < GAME_RULES.RARE_SHIP_CHANCE) {
-                    shipsForSaleIds.push(id);
-                }
-            });
-            this.gameState.market.shipyardStock[locationId] = {
-                day: this.gameState.day,
-                shipsForSale: shipsForSaleIds
-            };
-        });
-    }
+    return `
+    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
+        ${buttonHtml}
+        <div class="rounded-lg border ${good.styleClass}${customClass} transition-colors shadow-md" style="${customBackgroundStyle}">
+            ${cardContentHtml}
+        </div>
+    </div>`;
 }
