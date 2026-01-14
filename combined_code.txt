@@ -2554,6 +2554,21 @@ card.
     text-align: center; /* Center-align text */
     width: 100%;       /* Ensure element spans modal width for centering */
 }
+
+/* --- [[START]] EVENT BUTTON CONTAINER ALIGNMENT --- */
+#event-button-container {
+    display: flex;
+    justify-content: center; /* Centers buttons */
+    gap: 1rem;
+    width: 100%;
+}
+/* --- [[END]] EVENT BUTTON CONTAINER ALIGNMENT --- */
+
+/* --- [[START]] MODAL COST TEXT --- */
+.modal-cost-text {
+    font-size: 1.1rem; /* Approx 1.5pt larger than 0.875rem */
+}
+/* --- [[END]] MODAL COST TEXT --- */
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
