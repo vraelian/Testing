@@ -5887,6 +5887,23 @@ import { GameAttributes } from '../../services/GameAttributes.js';
 // --- VIRTUAL WORKBENCH: UI CONFIG ---
 // Fallback configuration for upgrade pills if definition is missing color
 const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
+// Safe character limit for the pill container before clipping likely occurs
+// User Report: 54 chars is ~4 chars too long. Max visible is ~50. 
+// Setting safe limit to 38 to ensure comfortable padding.
+const PILL_CONTAINER_SAFE_CHARS = 38;
+
+// Universal list of generic words to strip when abbreviation is active.
+// This allows "Signal Hacker" -> "Signal", "Hull Armor" -> "Armor", etc.
+const ABBREVIATION_STOP_WORDS = [
+    'Auxiliary', 
+    'Standard', 
+    'Badge', 
+    'Pass', 
+    'Mod', 
+    'Hacker', 
+    'Machines', 
+    'Hull' // "Hull Armor" -> "Armor" to save space
+];
 
 /**
  * Helper to programmatically darken/lighten a hex color.
@@ -5912,6 +5929,24 @@ function _adjustColor(color, amount) {
     const bb = b.toString(16).padStart(2, '0');
 
     return `#${rr}${gg}${bb}`;
+}
+
+/**
+ * Helper to abbreviate upgrade labels to prevent clipping.
+ * Universal Logic: Filters out generic stop words defined in ABBREVIATION_STOP_WORDS.
+ * @param {string} label - The full name of the upgrade
+ * @returns {string} The abbreviated label
+ */
+function _getAbbreviatedLabel(label) {
+    if (!label) return '';
+    
+    // Split into words, filter out stop words, and rejoin
+    const abbreviated = label.split(/\s+/)
+        .filter(word => !ABBREVIATION_STOP_WORDS.includes(word))
+        .join(' ');
+
+    // Fallback: If we stripped everything (unlikely), return original to avoid empty pill
+    return abbreviated.length > 0 ? abbreviated : label;
 }
 
 /**
@@ -6022,17 +6057,51 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
     if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
         
-        const pills = shipDynamic.upgrades.map(upgradeId => {
-            const definition = GameAttributes.getDefinition(upgradeId);
+        // --- VIRTUAL WORKBENCH: SORTING LOGIC (1/13/26) ---
+        // Requirement: Sort by Tier (I -> II -> III) ascending, then by ID for stability.
+        const sortedUpgrades = [...shipDynamic.upgrades].sort((a, b) => {
+            const getTier = (id) => {
+                if (id.endsWith('_III')) return 3;
+                if (id.endsWith('_II')) return 2;
+                return 1; // Default to Tier 1 for _I or suffix-less
+            };
             
-            // 1. Label Logic: Use FULL NAME from Registry (e.g., "Hull Armor II")
-            const label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
+            const tierA = getTier(a);
+            const tierB = getTier(b);
+            
+            if (tierA !== tierB) {
+                return tierA - tierB; // Low to High (I, II, III)
+            }
+            // Secondary Sort: ID (Alphabetical) to group types
+            return a.localeCompare(b);
+        });
+
+        // 1. Pre-Calculation Phase: Check for Clipping Risk
+        // Map SORTED upgrades to definitions first to get the labels
+        const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
+        
+        // Sum total characters of all labels to determine "Visual Weight"
+        const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
+        
+        // If total length exceeds safe limit, trigger abbreviation mode for ALL pills
+        const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
+
+        // Use sortedUpgrades for rendering loop
+        const pills = sortedUpgrades.map((upgradeId, idx) => {
+            const definition = upgradeDefinitions[idx];
+            
+            // 2. Label Logic: Choose Full or Abbreviated based on pre-calculation
+            let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
-            // 2. Base Color Logic
+            if (useAbbreviation) {
+                label = _getAbbreviatedLabel(label);
+            }
+
+            // 3. Base Color Logic
             const baseColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
             
-            // 3. Tier & Style Logic
+            // 4. Tier & Style Logic
             let tier = 1;
             if (upgradeId.endsWith('_III')) tier = 3;
             else if (upgradeId.endsWith('_II')) tier = 2;
@@ -6065,12 +6134,12 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                         color: #0f172a; 
                         border: ${borderStyle};
                         box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                        padding: 2px 8px;
+                        padding: 1px 5px;
                         border-radius: 4px;
                         font-family: 'Orbitron', sans-serif;
-                        font-size: 0.7rem;
+                        font-size: 0.64rem;
                         font-weight: 700;
-                        letter-spacing: 0.05em;
+                        letter-spacing: 0.02em;
                         pointer-events: auto;
                         touch-action: manipulation;
                         white-space: nowrap;
@@ -6082,8 +6151,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         }).join('');
 
         // Centering Rule: justify-center applied to container
+        // VIRTUAL WORKBENCH: LAYOUT FIX (1/12/26)
+        // Replaced flex-wrap with flex-nowrap to enforce single row
+        // Reduced gap-2 to gap-1 and px-4 to px-1 for tighter packing
         attributesHtml = `
-            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-2 z-20 w-full justify-center pointer-events-none px-4">
+            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
                 ${pills}
             </div>
         `;
@@ -23332,6 +23404,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.02] - 2026-1-13
+-  added upgrade pill sorting logic
+-  added upgrade pill abbreviation logic
 
 ## [34.00] - 2026-1-12
 -  implemented ship upgrade effects
