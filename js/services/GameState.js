@@ -200,7 +200,8 @@ export class GameState {
                 shipyardActiveIndex: 0,
                 // --- VIRTUAL WORKBENCH (A) ---
                 // Add state to track the active intel tab
-                activeIntelTab: 'intel-codex-content' // Matches DOM ID
+                activeIntelTab: 'intel-codex-content', // Matches DOM ID
+                servicesTab: 'supply' // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
                 // --- END VIRTUAL WORKBENCH ---
             }
         };

@@ -1199,7 +1199,9 @@ export class UIManager {
         
         // Initial "Confirm Purchase" content
         let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
-        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        // MODIFIED: Apply specific upgrade color to name in bold
+        const nameColor = upgradeDef.pillColor || '#fff';
+        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
         
         if (cost > 0) {
             desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
@@ -1240,17 +1242,22 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Upgrade Capacity Full";
                     
+                    // MODIFIED: Colored list items
+                    const upgradesList = currentUpgrades.map((uId, idx) => {
+                        const def = GameAttributes.getDefinition(uId);
+                        const pColor = def ? (def.pillColor || '#fff') : '#fff';
+                        const uName = def ? def.name : uId;
+                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                </button>`;
+                    }).join('');
+
                     contentEl.innerHTML = `
                         <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
                         <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
                         <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
-                            ${currentUpgrades.map((uId, idx) => {
-                                const def = GameAttributes.getDefinition(uId);
-                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
-                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
-                                        </button>`;
-                            }).join('')}
+                            ${upgradesList}
                         </div>
                     `;
                     
@@ -1274,15 +1281,21 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Confirm Replacement";
                     
+                    const removeNameColor = defToRemove ? (defToRemove.pillColor || '#fff') : '#fff';
+                    const removeName = defToRemove ? defToRemove.name : idToRemove;
+
+                    // MODIFIED: Color the replacement name, Bold/Red 'permanently'
                     contentEl.innerHTML = `
                         <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
                         <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
                     `;
                     
+                    // MODIFIED: Equal sized buttons using flex-1
+                    btnContainer.className = "flex gap-4 w-full mt-4";
                     btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
                     `;
                     
                     modal.querySelector('#final-confirm-btn').onclick = () => {
@@ -2548,7 +2561,9 @@ export class UIManager {
         
         // Initial "Confirm Purchase" content
         let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
-        let desc = `<p class="mb-2">Install <span class="text-cyan-300 font-bold">${upgradeDef.name}</span>?</p>`;
+        // MODIFIED: Apply specific upgrade color to name in bold
+        const nameColor = upgradeDef.pillColor || '#fff';
+        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
         
         if (cost > 0) {
             desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
@@ -2589,17 +2604,22 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Upgrade Capacity Full";
                     
+                    // MODIFIED: Colored list items
+                    const upgradesList = currentUpgrades.map((uId, idx) => {
+                        const def = GameAttributes.getDefinition(uId);
+                        const pColor = def ? (def.pillColor || '#fff') : '#fff';
+                        const uName = def ? def.name : uId;
+                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
+                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                                </button>`;
+                    }).join('');
+
                     contentEl.innerHTML = `
                         <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
                         <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
                         <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
-                            ${currentUpgrades.map((uId, idx) => {
-                                const def = GameAttributes.getDefinition(uId);
-                                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                            <span class="font-bold text-gray-200">${def ? def.name : uId}</span>
-                                            <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
-                                        </button>`;
-                            }).join('')}
+                            ${upgradesList}
                         </div>
                     `;
                     
@@ -2623,15 +2643,21 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Confirm Replacement";
                     
+                    const removeNameColor = defToRemove ? (defToRemove.pillColor || '#fff') : '#fff';
+                    const removeName = defToRemove ? defToRemove.name : idToRemove;
+
+                    // MODIFIED: Color the replacement name, Bold/Red 'permanently'
                     contentEl.innerHTML = `
                         <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="text-white">${defToRemove ? defToRemove.name : idToRemove}</span> will permanently destroy it.</p>
+                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
                         <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
                     `;
                     
+                    // MODIFIED: Equal sized buttons using flex-1
+                    btnContainer.className = "flex gap-4 w-full mt-4";
                     btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full mb-2">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn w-full">Cancel</button>
+                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
+                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
                     `;
                     
                     modal.querySelector('#final-confirm-btn').onclick = () => {

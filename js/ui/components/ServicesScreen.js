@@ -6,7 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
-import { GAME_RULES, PERK_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, PERK_IDS, LOCATION_IDS, UPGRADE_COLORS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
@@ -17,8 +17,8 @@ import { GameAttributes } from '../../services/GameAttributes.js';
  */
 export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
+    const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
 
-    // VIRTUAL WORKBENCH: Added Starport Name map (Request B)
     const STARPORT_NAMES = {
         [LOCATION_IDS.VENUS]: "Venetian Cloudport",
         [LOCATION_IDS.EARTH]: "Earth Starport",
@@ -41,14 +41,40 @@ export function renderServicesScreen(gameState, simulationService) {
         --theme-text-color: ${theme.textColor}; 
         --theme-border-color: ${theme.borderColor};
     `;
-    // VIRTUAL WORKBENCH: Use new name map
     const locationName = STARPORT_NAMES[currentLocationId] || 'UNKNOWN STARPORT';
 
-    // --- Crash Fix: Check if activeShipId exists and its state data is available ---
-    if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
-        // VIRTUAL WORKBENCH: Updated header fallback
+    // --- Sub-Nav Render ---
+    const supplyActive = servicesTab === 'supply' ? 'active' : '';
+    const tuningActive = servicesTab === 'tuning' ? 'active' : '';
+    
+    const supplyStyle = servicesTab === 'supply' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
+    const tuningStyle = servicesTab === 'tuning' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
+
+    const subNavHtml = `
+        <div class="sub-nav-bar" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; justify-content: center;">
+            <button class="sub-nav-button ${supplyActive}" ${supplyStyle} data-action="set-services-tab" data-target="supply">SUPPLY</button>
+            <button class="sub-nav-button ${tuningActive}" ${tuningStyle} data-action="set-services-tab" data-target="tuning">TUNING</button>
+        </div>
+    `;
+
+    // --- View Routing ---
+    if (servicesTab === 'tuning') {
         return `
             <div class="flex flex-col h-full">
+                ${subNavHtml}
+                <div class="themed-header-bar mb-4" style="${themeStyleVars}">
+                    <div class="themed-header-title">${locationName}</div>
+                </div>
+                ${_renderTuningView(gameState)}
+            </div>
+        `;
+    }
+
+    // --- Fallback / Default View (Supply) ---
+    if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
+        return `
+            <div class="flex flex-col h-full">
+                ${subNavHtml}
                 <div class="themed-header-bar mb-4" style="${themeStyleVars}">
                     <div class="themed-header-title">${locationName}</div>
                 </div>
@@ -64,18 +90,15 @@ export function renderServicesScreen(gameState, simulationService) {
                 </div>
             </div>
         `;
-        // --- END VIRTUAL WORKBENCH ---
     }
-    // --- End Crash Fix ---
 
     const shipStatic = DB.SHIPS[player.activeShipId];
-    const shipState = gameState.player.shipStates[player.activeShipId]; // Now safe to access
-    const shipName = shipStatic?.name || 'NO ACTIVE SHIP'; // VIRTUAL WORKBENCH: Get ship name
+    const shipState = gameState.player.shipStates[player.activeShipId];
+    const shipName = shipStatic?.name || 'NO ACTIVE SHIP';
     const upgrades = shipState.upgrades || [];
+    const shipClassColorVar = shipStatic ? `var(--class-${shipStatic.class.toLowerCase()}-color)` : '#f0f0f0';
 
     // --- UPGRADE SYSTEM: Effective Stats ---
-    // Use SimulationService to get stats with modifiers (e.g. +20% Fuel from Tanks)
-    // If simulationService is missing (legacy safety), fallback to static stats
     let effectiveMaxHealth = shipStatic.maxHealth;
     let effectiveMaxFuel = shipStatic.maxFuel;
 
@@ -87,48 +110,37 @@ export function renderServicesScreen(gameState, simulationService) {
         }
     }
 
-    // --- Calculate Refuel Cost ---
+    // --- Calculate Costs ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
-    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    // 2. Upgrade Modifier (Fuel Pass)
     const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
     fuelCostPerTick *= fuelAttrMod;
-    
     fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
 
-    // --- Calculate Repair Cost ---
-    // Base cost is derived from Effective Max Health
     let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
-    // 1. Perk Modifier
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
-    // 2. Upgrade Modifier (Repair Pass)
     const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
     repairCostPerTick *= repairAttrMod;
-
     repairCostPerTick = Math.max(1, Math.round(repairCostPerTick));
 
-    // --- Calculate Percentages (Using Effective Max) ---
+    // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
     const healthPct = (shipState.health / effectiveMaxHealth) * 100;
 
-    // --- Determine UI States ---
     const isFuelFull = shipState.fuel >= effectiveMaxFuel;
     const isHealthFull = shipState.health >= effectiveMaxHealth;
-
     const canAffordRefuel = player.credits >= fuelCostPerTick;
     const canAffordRepair = player.credits >= repairCostPerTick;
-
     const isDisabledRefuel = isFuelFull || !canAffordRefuel;
     const isDisabledRepair = isHealthFull || !canAffordRepair;
     
-    // VIRTUAL WORKBENCH: Wrapped in flex container, updated header, added new ship header
     return `
         <div class="flex flex-col h-full">
+            ${subNavHtml}
             <div class="themed-header-bar mb-4" style="${themeStyleVars}">
                 <div class="themed-header-title">${locationName}</div>
             </div>
@@ -136,16 +148,13 @@ export function renderServicesScreen(gameState, simulationService) {
                 
                 <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
                     <div class="themed-header-bar">
-                        <div class="ship-header-title">${shipName}</div>
+                        <div class="ship-header-title" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>
                     </div>
 
                     <div class="flex flex-col md:flex-row justify-center items-center gap-8 p-4 md:p-8">
-                      <div
-                        class="service-module w-full max-w-sm"
-                        style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6; --ot-cyan-base: #08d9d6;"
-                      >
+                      <div class="service-module w-full max-w-sm" style="--resource-color-rgb: 8, 217, 214; --resource-color: #08d9d6; --ot-cyan-base: #08d9d6;">
                         <div class="bar-housing">
-                          <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                          <div class="progress-bar-container w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                               <span class="font-electrolize font-bold tracking-wider uppercase text-cyan-300 text-outline" style="--glow-color: #08d9d6;">Fuel</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: #08d9d6;">
@@ -165,15 +174,12 @@ export function renderServicesScreen(gameState, simulationService) {
                           <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
                             <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
                           </button>
-                          </div>
+                        </div>
                       </div>
 
-                      <div
-                        class="service-module w-full max-w-sm"
-                        style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;"
-                      >
+                      <div class="service-module w-full max-w-sm" style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;">
                         <div class="bar-housing">
-                          <div class="progress-bar-container w-full h-20 rounded-lg border border-gray-800 overflow-hidden relative">
+                          <div class="progress-bar-container w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                                <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
@@ -182,7 +188,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             </div>
                             <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                           </div>
-                          </div>
+                        </div>
                         <div class="control-deck flex justify-center items-center gap-4">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                             <span class="price-label text-sm engraved-text">COST</span>
@@ -193,11 +199,115 @@ export function renderServicesScreen(gameState, simulationService) {
                           <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
                               <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
                           </button>
-                          </div>
+                        </div>
                       </div>
                     </div>
                 </div>
             </div>
+        </div>
+    `;
+}
+
+/**
+ * Deterministically filters the available upgrades based on Day and Location.
+ * Implements "Exploration Economy" rates: Tier 1 (30%), Tier 2 (15%), Tier 3 (8%).
+ * @param {object} gameState
+ * @returns {string[]} Array of available upgrade IDs.
+ */
+function _getDailyStock(gameState) {
+    const { day, currentLocationId } = gameState;
+    const allIds = GameAttributes.getAllUpgradeIds();
+
+    return allIds.filter(id => {
+        // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
+        if (id.includes('GUILD') || id.includes('SYNDICATE')) return false;
+
+        // 2. Determine Chance based on Tier Suffix
+        let threshold = 0.30; // Tier 1 Default
+        if (id.endsWith('_II')) threshold = 0.15;
+        if (id.endsWith('_III')) threshold = 0.08;
+
+        // 3. Deterministic Hashing (Day + Location + UpgradeID)
+        const seedString = `${day}_${currentLocationId}_${id}`;
+        
+        // Simple hash function to generate a pseudo-random number 0-1
+        let hash = 0;
+        for (let i = 0; i < seedString.length; i++) {
+            hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        const random = (Math.abs(hash) % 1000) / 1000;
+        
+        return random < threshold;
+    });
+}
+
+/**
+ * Renders the "Tuning" view (Upgrade Shop).
+ * @param {object} gameState
+ * @returns {string} HTML content
+ * @private
+ */
+function _renderTuningView(gameState) {
+    const availableUpgradeIds = _getDailyStock(gameState);
+    
+    // Sort slightly for nicer presentation (Tier I -> II -> III, then alphabetical)
+    availableUpgradeIds.sort();
+
+    if (availableUpgradeIds.length === 0) {
+        return `
+            <div class="services-scroll-panel flex-grow min-h-0 flex items-center justify-center">
+                <p class="text-gray-500 text-lg">No upgrades available in stock today.</p>
+            </div>
+        `;
+    }
+
+    const upgradesHtml = availableUpgradeIds.map(id => {
+        const def = GameAttributes.getDefinition(id);
+        if (!def) return '';
+
+        const baseColor = def.pillColor || UPGRADE_COLORS.GREY;
+        const styleVars = `
+            --item-color: ${baseColor};
+            --item-glow: ${baseColor}80;
+        `;
+
+        const canAfford = gameState.player.credits >= def.value;
+        
+        return `
+            <div class="service-module upgrade-shop-item" style="${styleVars}">
+                <div class="flex flex-row items-center gap-4 h-full">
+                    <div class="upgrade-icon-strip h-full w-2" style="background-color: var(--item-color); box-shadow: 0 0 8px var(--item-glow);"></div>
+                    
+                    <div class="flex-grow flex flex-col justify-center overflow-hidden">
+                        <div class="font-orbitron font-bold text-lg engraved-text truncate" 
+                             style="color: var(--item-color); text-shadow: 0 0 5px var(--item-glow);">
+                             ${def.name}
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1 leading-tight">${def.description}</div>
+                    </div>
+
+                    <div class="flex flex-col items-end gap-2 min-w-[100px]">
+                        <div class="font-mono text-cyan-300 credits-text-pulsing text-2xl">${formatCredits(def.value, true)}</div>
+                        <button class="btn btn-sm w-full font-bold uppercase tracking-wider"
+                                style="border: 1px solid var(--item-color); color: ${canAfford ? '#fff' : '#666'};"
+                                data-action="install_upgrade"
+                                data-upgrade-id="${id}"
+                                data-cost="${def.value}"
+                                ${!canAfford ? 'disabled' : ''}>
+                            INSTALL
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="tuning-scroll-panel services-scroll-panel flex-grow min-h-0">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto p-2 pb-8">
+                ${upgradesHtml}
+             </div>
         </div>
     `;
 }

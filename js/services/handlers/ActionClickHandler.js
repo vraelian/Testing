@@ -71,12 +71,28 @@ export class ActionClickHandler {
                 break;
             }
 
+            // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION (PHASE 1) ---
+            case 'set-services-tab': {
+                const tabId = dataset.target;
+                if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
+                    this.gameState.setState({
+                        uiState: {
+                            ...state.uiState,
+                            servicesTab: tabId
+                        }
+                    });
+                }
+                break;
+            }
+            // --- END VIRTUAL WORKBENCH ---
+
             // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
             // Handles the purchase and installation flow for upgrades
             case 'install_upgrade': {
                 const { upgradeId, cost } = dataset;
                 if (!upgradeId) return;
                 
+                const upgradeDef = GameAttributes.getDefinition(upgradeId);
                 const costNum = parseInt(cost || '0', 10);
                 const player = this.gameState.player;
                 const activeShipId = player.activeShipId;
@@ -101,15 +117,21 @@ export class ActionClickHandler {
 
                     // Handle Replacement (Dismantle)
                     if (replaceIndex !== -1) {
-                        // Remove the old upgrade at the selected index
-                        // Note: Direct mutation here as we are in the handler/controller layer
-                        // and about to call the service which will trigger the save/notify
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
                     // Install New Upgrade
-                    // This method pushes the new ID and handles logging/notification
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+
+                    // REQUEST D: Post-purchase Navigation Switch
+                    // Switch to Hangar, lock to 'hangar' (owned ships) view, and focus the active ship
+                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                    
+                    // Ensure the carousel index points to the active ship so the player sees the new pill immediately
+                    const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
+                    this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                    
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                 });
                 break;
             }
@@ -134,11 +156,6 @@ export class ActionClickHandler {
 
                 if (shipId && DB.SHIPS[shipId]) {
                     const ship = DB.SHIPS[shipId];
-                    
-                    // --- VIRTUAL WORKBENCH: PHASE 1/4 (LORE SANITIZATION) ---
-                    // Removed legacy attribute parsing logic.
-                    // The modal now strictly displays narrative lore.
-                    
                     const content = `
                         <div class="ship-lore-modal-wrapper">
                             <div class="ship-lore-text">
@@ -146,8 +163,6 @@ export class ActionClickHandler {
                             </div>
                         </div>
                     `;
-                    // --- END VIRTUAL WORKBENCH ---
-
                     this.uiManager.queueModal('event-modal', ship.name, content, null, {
                         dismissInside: true,
                         dismissOutside: true,
@@ -159,7 +174,7 @@ export class ActionClickHandler {
             }
     
             case ACTION_IDS.TOGGLE_HANGAR_MODE:
-                this.uiManager.hideGenericTooltip(); // Clear tooltip on mode switch
+                this.uiManager.hideGenericTooltip(); 
                 if (dataset.mode && this.gameState.uiState.hangarShipyardToggleState !== dataset.mode) {
                     this.gameState.uiState.hangarShipyardToggleState = dataset.mode;
                     this.gameState.setState({});
@@ -204,7 +219,7 @@ export class ActionClickHandler {
             }
 
             case ACTION_IDS.SET_SCREEN: {
-                this.uiManager.hideGenericTooltip(); // Clear tooltip on nav
+                this.uiManager.hideGenericTooltip(); 
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
@@ -299,12 +314,6 @@ export class ActionClickHandler {
         }
     }
 
-    /**
-     * Handles the UI flow for acquiring a trade license.
-     * @param {string} licenseId The ID of the license to acquire.
-     * @param {Event} [e] The original click event for positioning floating text.
-     * @private
-     */
     _handleAcquireLicense(licenseId, e) {
         const license = DB.LICENSES[licenseId];
         if (!license) return;

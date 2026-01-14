@@ -287,3 +287,52 @@
 #repair-btn .engraved-text {
   color: var(--ot-green-accent, #16a34a);
 }
+
+/* --- VIRTUAL WORKBENCH: SUB-NAVIGATION STYLES (TUNING SHOP) --- */
+.sub-nav-button {
+    padding: 0.5rem 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #1f2937; /* Default dark bg */
+    border: 1px solid #4b5563; /* Default gray border */
+    color: #9ca3af; /* Default text color */
+    border-radius: 0.25rem;
+    transition: all 0.2s ease-in-out;
+    opacity: 0.7;
+}
+
+.sub-nav-button:hover {
+    background: #374151;
+    color: #e5e7eb;
+    opacity: 1;
+}
+
+.sub-nav-button.active {
+    font-weight: 700;
+    opacity: 1;
+    /* Note: Dynamic background/border colors are applied inline by the JS based on location theme */
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* --- TUNING SHOP: LARGE PILL STYLES --- */
+.upgrade-shop-item {
+    /* Inherits .service-module basic styling */
+    min-height: 100px;
+    padding: 0.75rem;
+    background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
+    border-left: 1px solid var(--item-color);
+    box-shadow: inset 10px 0 20px -10px var(--item-glow), 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.upgrade-shop-item button {
+    transition: all 0.2s;
+}
+
+.upgrade-shop-item button:hover:not(:disabled) {
+    background-color: var(--item-color);
+    color: #000 !important; /* Force black text on hover */
+    box-shadow: 0 0 10px var(--item-glow);
+}
