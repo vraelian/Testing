@@ -896,8 +896,6 @@ export class UIManager {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
 
-
-
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
@@ -1181,137 +1179,6 @@ export class UIManager {
         });
     }
 
-    /**
-     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
-     * Shows a robust modal flow for installing upgrades.
-     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
-     * @param {string} upgradeId - ID of the new upgrade.
-     * @param {number} cost - Cost of the upgrade (0 if free).
-     * @param {object} shipState - The target ship's state object.
-     * @param {Function} onConfirm - Callback(indexToReplace | -1).
-     */
-    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
-        const upgradeDef = GameAttributes.getDefinition(upgradeId);
-        if (!upgradeDef) return;
-
-        const currentUpgrades = shipState.upgrades || [];
-        const isFull = currentUpgrades.length >= 3;
-        
-        // Initial "Confirm Purchase" content
-        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
-        // MODIFIED: Apply specific upgrade color to name in bold
-        const nameColor = upgradeDef.pillColor || '#fff';
-        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
-        
-        if (cost > 0) {
-            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
-        }
-        
-        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
-
-        this.queueModal('event-modal', title, desc, null, {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const btnContainer = modal.querySelector('#event-button-container');
-                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
-
-                // Helper to render standard Confirm/Cancel buttons
-                const renderStandardButtons = () => {
-                    btnContainer.innerHTML = `
-                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
-                        <button id="cancel-install-btn" class="btn">Cancel</button>
-                    `;
-                    
-                    const confirmBtn = modal.querySelector('#confirm-install-btn');
-                    confirmBtn.onclick = () => {
-                        if (isFull) {
-                            // If full, transition to "Replacement Selection" mode
-                            renderReplacementUI();
-                        } else {
-                            // If not full, just confirm installation (append)
-                            closeHandler();
-                            onConfirm(-1); 
-                        }
-                    };
-                    
-                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
-                };
-
-                // Helper to render the "Select Upgrade to Replace" UI
-                const renderReplacementUI = () => {
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Upgrade Capacity Full";
-                    
-                    // MODIFIED: Colored list items
-                    const upgradesList = currentUpgrades.map((uId, idx) => {
-                        const def = GameAttributes.getDefinition(uId);
-                        const pColor = def ? (def.pillColor || '#fff') : '#fff';
-                        const uName = def ? def.name : uId;
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
-                                </button>`;
-                    }).join('');
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
-                            ${upgradesList}
-                        </div>
-                    `;
-                    
-                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
-                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
-
-                    // Bind clicks to replacement buttons
-                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
-                        btn.onclick = () => {
-                            const idx = parseInt(btn.dataset.idx, 10);
-                            renderFinalConfirmation(idx);
-                        };
-                    });
-                };
-
-                // Helper to render "Are you sure you want to destroy X?" UI
-                const renderFinalConfirmation = (indexToRemove) => {
-                    const idToRemove = currentUpgrades[indexToRemove];
-                    const defToRemove = GameAttributes.getDefinition(idToRemove);
-                    
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Confirm Replacement";
-                    
-                    const removeNameColor = defToRemove ? (defToRemove.pillColor || '#fff') : '#fff';
-                    const removeName = defToRemove ? defToRemove.name : idToRemove;
-
-                    // MODIFIED: Color the replacement name, Bold/Red 'permanently'
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
-                    `;
-                    
-                    // MODIFIED: Equal sized buttons using flex-1
-                    btnContainer.className = "flex gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
-                    `;
-                    
-                    modal.querySelector('#final-confirm-btn').onclick = () => {
-                        closeHandler();
-                        onConfirm(indexToRemove);
-                    };
-                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
-                };
-
-                // Initial render
-                renderStandardButtons();
-            }
-        });
-    }
-    // --- END VIRTUAL WORKBENCH ---
-
     hideModal(modalId) {
     
          const modal = document.getElementById(modalId);
@@ -1522,6 +1389,45 @@ export class UIManager {
         svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
         svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
         svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `</svg>`;
+        return svg;
+    }
+    _renderFinanceGraph(gameState) {
+        // Reconstructed Finance Graph Logic
+        const history = gameState.player.creditHistory || [];
+        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Financial Data Available</div>`;
+
+        const width = 280, height = 140, padding = 35;
+        const values = history.map(h => h.value);
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
+
+        const iToX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
+        const vToY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
+
+        let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
+        
+        // Grid
+        svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
+        svg += `<line x1="${padding}" y1="${vToY(maxVal)}" x2="${padding}" y2="${height - padding}" />`;
+        svg += `<line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
+        svg += `</g>`;
+
+        // Line
+        const points = history.map((h, i) => `${iToX(i)},${vToY(h.value)}`).join(' ');
+        svg += `<polyline fill="none" stroke="#10b981" stroke-width="2" points="${points}" />`; // Emerald green for money
+
+        // Labels
+        const firstDay = history[0].day;
+        const lastDay = history[history.length - 1].day;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+        
+        // Y-Axis Labels (Compact Credits)
+        svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        
         svg += `</svg>`;
         return svg;
     }
@@ -2566,7 +2472,8 @@ export class UIManager {
         let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
         
         if (cost > 0) {
-            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+            // MODIFIED: Increased font size for cost line (Req D)
+            desc += `<p class="text-base text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
         }
         
         desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
@@ -2579,6 +2486,8 @@ export class UIManager {
 
                 // Helper to render standard Confirm/Cancel buttons
                 const renderStandardButtons = () => {
+                    // MODIFIED: Explicitly force centering (Req C)
+                    btnContainer.className = "flex justify-center gap-4 w-full mt-4";
                     btnContainer.innerHTML = `
                         <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
                         <button id="cancel-install-btn" class="btn">Cancel</button>
@@ -2604,21 +2513,30 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Upgrade Capacity Full";
                     
-                    // MODIFIED: Colored list items
+                    // MODIFIED: Enhanced List Item UI (Req A & B)
                     const upgradesList = currentUpgrades.map((uId, idx) => {
                         const def = GameAttributes.getDefinition(uId);
                         const pColor = def ? (def.pillColor || '#fff') : '#fff';
                         const uName = def ? def.name : uId;
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                        const statText = def ? (def.statText || 'Unknown Effect') : 'Unknown Effect';
+                        const valText = def ? formatCredits(def.value, true) : '0';
+
+                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center" data-idx="${idx}">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                        <span class="text-xs text-gray-400 mt-1">${statText}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs text-gray-500 block">Value</span>
+                                        <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                                    </div>
                                 </button>`;
                     }).join('');
 
                     contentEl.innerHTML = `
                         <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
                         <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                        <div class="flex flex-col gap-2 w-full max-w-sm mx-auto">
                             ${upgradesList}
                         </div>
                     `;

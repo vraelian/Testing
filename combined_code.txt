@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.02</title>
+    <title>Orbital Trading 34.04</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.02</p>
+            <p>Version 34.04</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -15851,6 +15851,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
+        statText: 'Travel Speed +5%, Fuel Cost +15%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
@@ -15859,6 +15860,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
+        statText: 'Travel Speed +10%, Fuel Cost +30%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
@@ -15867,6 +15869,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
+        statText: 'Travel Speed +25%, Fuel Cost +45%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
     },
 
@@ -15877,6 +15880,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'A basic encryption bypass grants a 3% discount on all commodity purchases.',
+        statText: 'Market Buy Price -3%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.97 }
     },
     'UPGRADE_SIGNAL_II': {
@@ -15885,6 +15889,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'Advanced market spoofing protocols reduce the cost of all purchased goods by 5%.',
+        statText: 'Market Buy Price -5%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.95 }
     },
     'UPGRADE_SIGNAL_III': {
@@ -15893,6 +15898,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'Military-grade signal interceptors secure a 7% reduction in market buy prices system-wide.',
+        statText: 'Market Buy Price -7%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.93 }
     },
 
@@ -15903,6 +15909,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Reinforced duralium plating increases the vessel\'s maximum hull capacity by 10%.',
+        statText: 'Max Hull +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.10 } // Additive +10%
     },
     'UPGRADE_ARMOR_II': {
@@ -15911,6 +15918,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Multi-layered composite shielding provides a significant 20% boost to maximum hull integrity.',
+        statText: 'Max Hull +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.20 } // Additive +20%
     },
     'UPGRADE_ARMOR_III': {
@@ -15919,6 +15927,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Advanced reactive nanoweave armor maximizes ship survivability with a 30% hull capacity increase.',
+        statText: 'Max Hull +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.30 } // Additive +30%
     },
 
@@ -15929,6 +15938,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'External fuel pods extend the ship\'s maximum range by 10% capacity.',
+        statText: 'Max Fuel +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.10 } // Additive +10%
     },
     'UPGRADE_TANK_II': {
@@ -15937,6 +15947,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'Internal pressurized reservoirs provide a 20% increase to total fuel storage efficiency.',
+        statText: 'Max Fuel +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.20 } // Additive +20%
     },
     'UPGRADE_TANK_III': {
@@ -15945,6 +15956,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'High-capacity cryo-storage cells expand the vessel\'s fuel reserves by 30%.',
+        statText: 'Max Fuel +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.30 } // Additive +30%
     },
 
@@ -15955,6 +15967,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Enhanced sensors improve long-range detection, increasing random event frequency by a flat +3%.',
+        statText: 'Event Chance +3%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.03 } // Flat +3%
     },
     'UPGRADE_RADAR_II': {
@@ -15963,6 +15976,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by a flat +6%.',
+        statText: 'Event Chance +6%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.06 } // Flat +6%
     },
     'UPGRADE_RADAR_III': {
@@ -15971,6 +15985,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Predictive deep-space arrays maximize event discovery with a flat +10% increase in encounter rates.',
+        statText: 'Event Chance +10%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.10 } // Flat +10%
     },
 
@@ -15981,6 +15996,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
+        statText: 'Refuel Cost -20%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
@@ -15989,6 +16005,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
+        statText: 'Refuel Cost -50%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
@@ -15997,6 +16014,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
+        statText: 'Refuel Cost -75%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
     },
 
@@ -16007,6 +16025,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Standard maintenance coverage grants holders a basic 20% discount on all station repair services.',
+        statText: 'Repair Cost -20%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
     },
     'UPGRADE_REPAIRPASS_II': {
@@ -16015,6 +16034,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Priority dockyard membership utilizes corporate clearance to secure a 50% reduction in repair fees.',
+        statText: 'Repair Cost -50%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.50 }
     },
     'UPGRADE_REPAIRPASS_III': {
@@ -16023,6 +16043,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Ultimate platinum-tier coverage provides total system-wide protection with 75% off all hull maintenance.',
+        statText: 'Repair Cost -75%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.25 }
     },
 
@@ -16033,6 +16054,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Basic self-repairing drones restore 0.3% of total hull integrity per day in transit.',
+        statText: 'Daily Hull Repair +0.3%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.003 } // Additive Rate
     },
     'UPGRADE_NANO_II': {
@@ -16041,6 +16063,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Advanced micro-repair swarms regenerate 0.7% of the vessel\'s hull daily while traveling.',
+        statText: 'Daily Hull Repair +0.7%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.007 } // Additive Rate
     },
     'UPGRADE_NANO_III': {
@@ -16049,6 +16072,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Superior nanobot hives provide rapid autonomous repair, restoring 1.2% of hull health daily.',
+        statText: 'Daily Hull Repair +1.2%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.012 } // Additive Rate
     },
 
@@ -16059,6 +16083,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'Modular storage racks expand the ship\'s total cargo capacity by 10%.',
+        statText: 'Max Cargo +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.10 } // Additive +10%
     },
     'UPGRADE_STORAGE_II': {
@@ -16067,6 +16092,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'High-density pallet systems increase the vessel\'s available cargo space by 20%.',
+        statText: 'Max Cargo +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.20 } // Additive +20%
     },
     'UPGRADE_STORAGE_III': {
@@ -16075,6 +16101,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'Advanced sub-spatial folding technology maximizes cargo capacity with a 30% increase.',
+        statText: 'Max Cargo +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.30 } // Additive +30%
     },
 
@@ -16085,6 +16112,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Merchant\'s Guild recognition increases the resale value of all commodities by 3%.',
+        statText: 'Market Sell Price +3%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.03 }
     },
     'UPGRADE_GUILD_II': {
@@ -16093,6 +16121,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Senior Guild credentials secure a 5% bonus on all goods sold at market.',
+        statText: 'Market Sell Price +5%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.05 }
     },
     'UPGRADE_GUILD_III': {
@@ -16101,6 +16130,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Elite Guild partnership status maximizes profits with a 7% increase to sell prices.',
+        statText: 'Market Sell Price +7%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.07 }
     },
 
@@ -16111,6 +16141,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Syndicate influence reduces the monthly interest rate on your debt by 20%.',
+        statText: 'Debt Interest -20%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.80 } // -20%
     },
     'UPGRADE_SYNDICATE_II': {
@@ -16119,6 +16150,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Established Syndicate connections secure a 30% reduction in monthly interest accrual.',
+        statText: 'Debt Interest -30%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.70 } // -30%
     },
     'UPGRADE_SYNDICATE_III': {
@@ -16127,6 +16159,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Deep Syndicate ties provide a 50% discount on all monthly debt interest charges.',
+        statText: 'Debt Interest -50%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.50 } // -50%
     }
 };
@@ -17497,8 +17530,6 @@ export class UIManager {
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
 
-
-
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
@@ -17782,137 +17813,6 @@ export class UIManager {
         });
     }
 
-    /**
-     * --- VIRTUAL WORKBENCH: PHASE 5 (REPLACEMENT DIALOG SYSTEM) ---
-     * Shows a robust modal flow for installing upgrades.
-     * Handles both the simple "Buy" case and the "Overwrite" case if slots are full.
-     * @param {string} upgradeId - ID of the new upgrade.
-     * @param {number} cost - Cost of the upgrade (0 if free).
-     * @param {object} shipState - The target ship's state object.
-     * @param {Function} onConfirm - Callback(indexToReplace | -1).
-     */
-    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
-        const upgradeDef = GameAttributes.getDefinition(upgradeId);
-        if (!upgradeDef) return;
-
-        const currentUpgrades = shipState.upgrades || [];
-        const isFull = currentUpgrades.length >= 3;
-        
-        // Initial "Confirm Purchase" content
-        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
-        // MODIFIED: Apply specific upgrade color to name in bold
-        const nameColor = upgradeDef.pillColor || '#fff';
-        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
-        
-        if (cost > 0) {
-            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
-        }
-        
-        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
-
-        this.queueModal('event-modal', title, desc, null, {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const btnContainer = modal.querySelector('#event-button-container');
-                const contentEl = modal.querySelector('#event-description'); // Dynamic content area
-
-                // Helper to render standard Confirm/Cancel buttons
-                const renderStandardButtons = () => {
-                    btnContainer.innerHTML = `
-                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
-                        <button id="cancel-install-btn" class="btn">Cancel</button>
-                    `;
-                    
-                    const confirmBtn = modal.querySelector('#confirm-install-btn');
-                    confirmBtn.onclick = () => {
-                        if (isFull) {
-                            // If full, transition to "Replacement Selection" mode
-                            renderReplacementUI();
-                        } else {
-                            // If not full, just confirm installation (append)
-                            closeHandler();
-                            onConfirm(-1); 
-                        }
-                    };
-                    
-                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
-                };
-
-                // Helper to render the "Select Upgrade to Replace" UI
-                const renderReplacementUI = () => {
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Upgrade Capacity Full";
-                    
-                    // MODIFIED: Colored list items
-                    const upgradesList = currentUpgrades.map((uId, idx) => {
-                        const def = GameAttributes.getDefinition(uId);
-                        const pColor = def ? (def.pillColor || '#fff') : '#fff';
-                        const uName = def ? def.name : uId;
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
-                                </button>`;
-                    }).join('');
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
-                            ${upgradesList}
-                        </div>
-                    `;
-                    
-                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
-                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
-
-                    // Bind clicks to replacement buttons
-                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
-                        btn.onclick = () => {
-                            const idx = parseInt(btn.dataset.idx, 10);
-                            renderFinalConfirmation(idx);
-                        };
-                    });
-                };
-
-                // Helper to render "Are you sure you want to destroy X?" UI
-                const renderFinalConfirmation = (indexToRemove) => {
-                    const idToRemove = currentUpgrades[indexToRemove];
-                    const defToRemove = GameAttributes.getDefinition(idToRemove);
-                    
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Confirm Replacement";
-                    
-                    const removeNameColor = defToRemove ? (defToRemove.pillColor || '#fff') : '#fff';
-                    const removeName = defToRemove ? defToRemove.name : idToRemove;
-
-                    // MODIFIED: Color the replacement name, Bold/Red 'permanently'
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
-                    `;
-                    
-                    // MODIFIED: Equal sized buttons using flex-1
-                    btnContainer.className = "flex gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
-                    `;
-                    
-                    modal.querySelector('#final-confirm-btn').onclick = () => {
-                        closeHandler();
-                        onConfirm(indexToRemove);
-                    };
-                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
-                };
-
-                // Initial render
-                renderStandardButtons();
-            }
-        });
-    }
-    // --- END VIRTUAL WORKBENCH ---
-
     hideModal(modalId) {
     
          const modal = document.getElementById(modalId);
@@ -18123,6 +18023,45 @@ export class UIManager {
         svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
         svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
         svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `</svg>`;
+        return svg;
+    }
+    _renderFinanceGraph(gameState) {
+        // Reconstructed Finance Graph Logic
+        const history = gameState.player.creditHistory || [];
+        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Financial Data Available</div>`;
+
+        const width = 280, height = 140, padding = 35;
+        const values = history.map(h => h.value);
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
+
+        const iToX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
+        const vToY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
+
+        let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
+        
+        // Grid
+        svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
+        svg += `<line x1="${padding}" y1="${vToY(maxVal)}" x2="${padding}" y2="${height - padding}" />`;
+        svg += `<line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
+        svg += `</g>`;
+
+        // Line
+        const points = history.map((h, i) => `${iToX(i)},${vToY(h.value)}`).join(' ');
+        svg += `<polyline fill="none" stroke="#10b981" stroke-width="2" points="${points}" />`; // Emerald green for money
+
+        // Labels
+        const firstDay = history[0].day;
+        const lastDay = history[history.length - 1].day;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+        
+        // Y-Axis Labels (Compact Credits)
+        svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        
         svg += `</svg>`;
         return svg;
     }
@@ -19167,7 +19106,8 @@ export class UIManager {
         let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
         
         if (cost > 0) {
-            desc += `<p class="text-sm text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+            // MODIFIED: Increased font size for cost line (Req D)
+            desc += `<p class="text-base text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
         }
         
         desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
@@ -19180,6 +19120,8 @@ export class UIManager {
 
                 // Helper to render standard Confirm/Cancel buttons
                 const renderStandardButtons = () => {
+                    // MODIFIED: Explicitly force centering (Req C)
+                    btnContainer.className = "flex justify-center gap-4 w-full mt-4";
                     btnContainer.innerHTML = `
                         <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
                         <button id="cancel-install-btn" class="btn">Cancel</button>
@@ -19205,21 +19147,30 @@ export class UIManager {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Upgrade Capacity Full";
                     
-                    // MODIFIED: Colored list items
+                    // MODIFIED: Enhanced List Item UI (Req A & B)
                     const upgradesList = currentUpgrades.map((uId, idx) => {
                         const def = GameAttributes.getDefinition(uId);
                         const pColor = def ? (def.pillColor || '#fff') : '#fff';
                         const uName = def ? def.name : uId;
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 text-left px-4 py-3 bg-gray-800" data-idx="${idx}">
-                                    <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                    <span class="block text-xs text-red-400 mt-1">Click to Replace</span>
+                        const statText = def ? (def.statText || 'Unknown Effect') : 'Unknown Effect';
+                        const valText = def ? formatCredits(def.value, true) : '0';
+
+                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center" data-idx="${idx}">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                        <span class="text-xs text-gray-400 mt-1">${statText}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs text-gray-500 block">Value</span>
+                                        <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                                    </div>
                                 </button>`;
                     }).join('');
 
                     contentEl.innerHTML = `
                         <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
                         <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-xs mx-auto">
+                        <div class="flex flex-col gap-2 w-full max-w-sm mx-auto">
                             ${upgradesList}
                         </div>
                     `;
@@ -23614,6 +23565,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.04] - 2026-1-14
+-  tuning screen polish
+-  upgrade replacement modal polish
 
 ## [34.02] - 2026-1-13
 -  added upgrade pill sorting logic

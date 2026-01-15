@@ -18,6 +18,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
+        statText: 'Travel Speed +5%, Fuel Cost +15%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
@@ -26,6 +27,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
+        statText: 'Travel Speed +10%, Fuel Cost +30%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
@@ -34,6 +36,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
+        statText: 'Travel Speed +25%, Fuel Cost +45%',
         modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
     },
 
@@ -44,6 +47,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'A basic encryption bypass grants a 3% discount on all commodity purchases.',
+        statText: 'Market Buy Price -3%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.97 }
     },
     'UPGRADE_SIGNAL_II': {
@@ -52,6 +56,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'Advanced market spoofing protocols reduce the cost of all purchased goods by 5%.',
+        statText: 'Market Buy Price -5%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.95 }
     },
     'UPGRADE_SIGNAL_III': {
@@ -60,6 +65,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.CYAN,
         description: 'Military-grade signal interceptors secure a 7% reduction in market buy prices system-wide.',
+        statText: 'Market Buy Price -7%',
         modifiers: { [UPGRADE_TYPES.MOD_BUY_PRICE]: 0.93 }
     },
 
@@ -70,6 +76,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Reinforced duralium plating increases the vessel\'s maximum hull capacity by 10%.',
+        statText: 'Max Hull +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.10 } // Additive +10%
     },
     'UPGRADE_ARMOR_II': {
@@ -78,6 +85,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Multi-layered composite shielding provides a significant 20% boost to maximum hull integrity.',
+        statText: 'Max Hull +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.20 } // Additive +20%
     },
     'UPGRADE_ARMOR_III': {
@@ -86,6 +94,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GREEN,
         description: 'Advanced reactive nanoweave armor maximizes ship survivability with a 30% hull capacity increase.',
+        statText: 'Max Hull +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_HULL]: 0.30 } // Additive +30%
     },
 
@@ -96,6 +105,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'External fuel pods extend the ship\'s maximum range by 10% capacity.',
+        statText: 'Max Fuel +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.10 } // Additive +10%
     },
     'UPGRADE_TANK_II': {
@@ -104,6 +114,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'Internal pressurized reservoirs provide a 20% increase to total fuel storage efficiency.',
+        statText: 'Max Fuel +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.20 } // Additive +20%
     },
     'UPGRADE_TANK_III': {
@@ -112,6 +123,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GOLD,
         description: 'High-capacity cryo-storage cells expand the vessel\'s fuel reserves by 30%.',
+        statText: 'Max Fuel +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_FUEL]: 0.30 } // Additive +30%
     },
 
@@ -122,6 +134,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Enhanced sensors improve long-range detection, increasing random event frequency by a flat +3%.',
+        statText: 'Event Chance +3%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.03 } // Flat +3%
     },
     'UPGRADE_RADAR_II': {
@@ -130,6 +143,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Wide-spectrum scanning arrays boost the chance of encountering space-faring events by a flat +6%.',
+        statText: 'Event Chance +6%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.06 } // Flat +6%
     },
     'UPGRADE_RADAR_III': {
@@ -138,6 +152,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.GREY,
         description: 'Predictive deep-space arrays maximize event discovery with a flat +10% increase in encounter rates.',
+        statText: 'Event Chance +10%',
         modifiers: { [UPGRADE_TYPES.MOD_EVENT_CHANCE]: 0.10 } // Flat +10%
     },
 
@@ -148,6 +163,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
+        statText: 'Refuel Cost -20%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
@@ -156,6 +172,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
+        statText: 'Refuel Cost -50%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
@@ -164,6 +181,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
+        statText: 'Refuel Cost -75%',
         modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
     },
 
@@ -174,6 +192,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Standard maintenance coverage grants holders a basic 20% discount on all station repair services.',
+        statText: 'Repair Cost -20%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.80 }
     },
     'UPGRADE_REPAIRPASS_II': {
@@ -182,6 +201,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Priority dockyard membership utilizes corporate clearance to secure a 50% reduction in repair fees.',
+        statText: 'Repair Cost -50%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.50 }
     },
     'UPGRADE_REPAIRPASS_III': {
@@ -190,6 +210,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.EMERALD,
         description: 'Ultimate platinum-tier coverage provides total system-wide protection with 75% off all hull maintenance.',
+        statText: 'Repair Cost -75%',
         modifiers: { [UPGRADE_TYPES.MOD_REPAIR_COST]: 0.25 }
     },
 
@@ -200,6 +221,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Basic self-repairing drones restore 0.3% of total hull integrity per day in transit.',
+        statText: 'Daily Hull Repair +0.3%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.003 } // Additive Rate
     },
     'UPGRADE_NANO_II': {
@@ -208,6 +230,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Advanced micro-repair swarms regenerate 0.7% of the vessel\'s hull daily while traveling.',
+        statText: 'Daily Hull Repair +0.7%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.007 } // Additive Rate
     },
     'UPGRADE_NANO_III': {
@@ -216,6 +239,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.SEAFOAM,
         description: 'Superior nanobot hives provide rapid autonomous repair, restoring 1.2% of hull health daily.',
+        statText: 'Daily Hull Repair +1.2%',
         modifiers: { [UPGRADE_TYPES.MOD_PASSIVE_REPAIR]: 0.012 } // Additive Rate
     },
 
@@ -226,6 +250,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'Modular storage racks expand the ship\'s total cargo capacity by 10%.',
+        statText: 'Max Cargo +10%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.10 } // Additive +10%
     },
     'UPGRADE_STORAGE_II': {
@@ -234,6 +259,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'High-density pallet systems increase the vessel\'s available cargo space by 20%.',
+        statText: 'Max Cargo +20%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.20 } // Additive +20%
     },
     'UPGRADE_STORAGE_III': {
@@ -242,6 +268,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.ORANGE,
         description: 'Advanced sub-spatial folding technology maximizes cargo capacity with a 30% increase.',
+        statText: 'Max Cargo +30%',
         modifiers: { [UPGRADE_TYPES.MOD_MAX_CARGO]: 0.30 } // Additive +30%
     },
 
@@ -252,6 +279,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Merchant\'s Guild recognition increases the resale value of all commodities by 3%.',
+        statText: 'Market Sell Price +3%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.03 }
     },
     'UPGRADE_GUILD_II': {
@@ -260,6 +288,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Senior Guild credentials secure a 5% bonus on all goods sold at market.',
+        statText: 'Market Sell Price +5%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.05 }
     },
     'UPGRADE_GUILD_III': {
@@ -268,6 +297,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.RED,
         description: 'Elite Guild partnership status maximizes profits with a 7% increase to sell prices.',
+        statText: 'Market Sell Price +7%',
         modifiers: { [UPGRADE_TYPES.MOD_SELL_PRICE]: 1.07 }
     },
 
@@ -278,6 +308,7 @@ const UPGRADE_DEFINITIONS = {
         value: 5000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Syndicate influence reduces the monthly interest rate on your debt by 20%.',
+        statText: 'Debt Interest -20%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.80 } // -20%
     },
     'UPGRADE_SYNDICATE_II': {
@@ -286,6 +317,7 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Established Syndicate connections secure a 30% reduction in monthly interest accrual.',
+        statText: 'Debt Interest -30%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.70 } // -30%
     },
     'UPGRADE_SYNDICATE_III': {
@@ -294,6 +326,7 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.VIOLET,
         description: 'Deep Syndicate ties provide a 50% discount on all monthly debt interest charges.',
+        statText: 'Debt Interest -50%',
         modifiers: { [UPGRADE_TYPES.MOD_DEBT_INTEREST]: 0.50 } // -50%
     }
 };
