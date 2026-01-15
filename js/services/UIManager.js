@@ -337,35 +337,50 @@ export class UIManager {
         // Only re-render if content has changed
         if (!this.newsTickerService.isDirty) return; 
     
-        // 1. Get the content DIV string from the service
-        const tickerHtml = this.newsTickerService.getTickerContentHtml();
-        if (!tickerHtml) {
+        // 1. Get the SINGLE content block from the service.
+        const singleContentHtml = this.newsTickerService.getTickerContentHtml();
+
+        if (!singleContentHtml) {
             this.cache.newsTickerBar.innerHTML = '';
             this.newsTickerService.isDirty = false;
             return;
         }
 
-        // 2. Set it to measure the *single* width
-        this.cache.newsTickerBar.innerHTML = tickerHtml;
+        // =========================================================================
+        // ARCHITECTURAL WARNING: INFINITE SCROLL GEOMETRY
+        // =========================================================================
+        // Do NOT change this implementation without reading ADR-013.
+        //
+        // Problem: JS width calculation causes sub-pixel errors vs CSS % transforms.
+        // Solution: Use CSS Flexbox to strictly define the layout.
+        //
+        // 1. Wrap content in a .ticker-block (flex item).
+        // 2. Duplicate that EXACT block.
+        // 3. Result: [Block A][Block B] inside a flex container.
+        // 4. CSS: translateX(-50%).
+        //
+        // Because Block A and Block B are identical DOM nodes, the browser guarantees
+        // that Width(Parent) = 2 * Width(Block). Therefore, moving -50% of the
+        // Parent is GUARANTEED to move exactly 1x Width(Block).
+        // =========================================================================
+
+        const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
+        
+        // Temporarily render ONE block to measure its width solely for speed calculation.
+        // This measurement does NOT affect the layout geometry (which is pure CSS).
+        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         
         if (contentElement) {
-             const innerHtml = contentElement.innerHTML;
+            const rect = contentElement.getBoundingClientRect();
+            const blockWidth = rect.width;
             
-            // 3. Measure the width of the single block of content
-            // We do this *before* duplicating
-            const singleContentWidth = contentElement.scrollWidth;
-
-            // 4. **Duplicate the inner HTML** for the seamless loop
-            contentElement.innerHTML = innerHtml + innerHtml;
+            // DUPLICATE THE BLOCK structure for the infinite loop.
+            contentElement.innerHTML = wrappedContent + wrappedContent;
             
-            // 5. Calculate duration based on the *single* width
+            // Calculate Duration (Constant Speed)
             const PIXELS_PER_SECOND = 50;
-            // The distance to scroll is one "block" of content
-            const totalScrollDistance = singleContentWidth;
-            
-            // Set a minimum duration to prevent extremely fast scrolls on short text
-            const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
+            const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
             
             contentElement.style.animationDuration = `${duration}s`;
         }
@@ -703,8 +718,6 @@ export class UIManager {
 
         paginationContainer.innerHTML = dotsHtml;
     }
-
-
     updateStickyBar(gameState) {
         this.cache.stickyBar.innerHTML = '';
         this.cache.topBarContainer.classList.remove('has-sticky-bar');

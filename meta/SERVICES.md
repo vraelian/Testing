@@ -1,5 +1,5 @@
 # Orbital Trading - Service Responsibilities
-**Version:** 2.1
+**Version:** 2.2
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -11,9 +11,9 @@ This document defines the single responsibility of each service in the applicati
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module. Now includes explicit drag-suppression for interactive targets.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. Supports dynamic vertical positioning (right/top) for responsive tooltips.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. **Crucially**, handles the layout duplication for infinite scrolling components (News Ticker) to ensure CSS geometry integrity.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue. **Strictly Single-Source**: It aggregates messages into a single sequence but does *not* handle the duplication required for the infinite loop effect (this is a UI concern). **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 

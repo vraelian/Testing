@@ -2593,9 +2593,15 @@ card.
 }
 
 .news-ticker-content {
-    display: block;
-    white-space: nowrap; /* Prevents text from wrapping */
+    /* JITTER FIX: Use Flexbox layout */
+    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: fit-content'.
+       This structure ensures that the container width is exactly equal to the 
+       sum of its children, guaranteeing that -50% is exactly one child width. */
+    display: flex;
+    width: fit-content; 
+    white-space: nowrap;
     position: absolute;
+    will-change: transform;
     
     /* MODIFIED: Animation properties separated */
     animation-name: scroll-ticker;
@@ -2614,10 +2620,23 @@ card.
     animation-play-state: paused; /* Pause scroll on hover */
 }
 
+/* JITTER FIX: Wrapper for the content blocks */
+.ticker-block {
+    flex: 0 0 auto; /* Do not shrink or grow */
+    display: flex;  /* Keep internal spans in line */
+    align-items: center;
+    /* BLINK FIX: Hardware Acceleration for the block itself */
+    /* Prevents repainting when the loop resets at 0px */
+    transform: translate3d(0,0,0);
+    backface-visibility: hidden;
+}
+
 /*
  * The scrolling animation. 
- * MODIFIED: Starts at 0 and moves left by 50% of its (now duplicated) width
- * to create a seamless loop.
+ * JITTER FIX: Reverted to simple -50%.
+ * Because we now use two identical .ticker-block flex items,
+ * the container width is mathematically guaranteed to be 2x the block width.
+ * Therefore, -50% is guaranteed to be exactly 1x block width.
  */
 @keyframes scroll-ticker {
     0%   { transform: translateX(0); }
@@ -2630,9 +2649,6 @@ card.
     color: var(--color-text-secondary);
     opacity: 0.7;
     white-space: nowrap;
-    
-    /* MODIFIED: Increased margin to compensate for removal of text spaces.
-       This ensures the visual gap is identical at the loop wrap point. */
     margin: 0 1rem;
 }
 
@@ -13019,14 +13035,12 @@ export class NewsTickerService {
             return `<span class="ticker-message" data-type="${msg.type}" ${style}>${text}</span>`;
         }).join(separator);
 
-        // --- VIRTUAL WORKBENCH: REQUEST B & C (STUTTER/SEPARATOR FIX) ---
-        // Append one final separator to the end of the content.
-        const fullContent = `${messageHtml}${separator}`;
-        
-        // Duplicate the content to satisfy the CSS translateX(-50%) infinite loop.
-        // The animation moves the element left by 50% (exactly one fullContent width).
-        // By having two copies, the start of the second copy visually replaces the start of the first.
-        return `<div class="news-ticker-content">${fullContent}${fullContent}</div>`;
+        // --- VIRTUAL WORKBENCH: SINGLE SOURCE REFACTOR ---
+        // We strictly return a SINGLE copy of the content string.
+        // The UIManager is responsible for measuring this single block
+        // and then duplicating it to create the infinite loop effect.
+        // DO NOT DUPLICATE CONTENT HERE.
+        return `${messageHtml}${separator}`;
         // --- END VIRTUAL WORKBENCH ---
     }
 
@@ -16971,35 +16985,50 @@ export class UIManager {
         // Only re-render if content has changed
         if (!this.newsTickerService.isDirty) return; 
     
-        // 1. Get the content DIV string from the service
-        const tickerHtml = this.newsTickerService.getTickerContentHtml();
-        if (!tickerHtml) {
+        // 1. Get the SINGLE content block from the service.
+        const singleContentHtml = this.newsTickerService.getTickerContentHtml();
+
+        if (!singleContentHtml) {
             this.cache.newsTickerBar.innerHTML = '';
             this.newsTickerService.isDirty = false;
             return;
         }
 
-        // 2. Set it to measure the *single* width
-        this.cache.newsTickerBar.innerHTML = tickerHtml;
+        // =========================================================================
+        // ARCHITECTURAL WARNING: INFINITE SCROLL GEOMETRY
+        // =========================================================================
+        // Do NOT change this implementation without reading ADR-013.
+        //
+        // Problem: JS width calculation causes sub-pixel errors vs CSS % transforms.
+        // Solution: Use CSS Flexbox to strictly define the layout.
+        //
+        // 1. Wrap content in a .ticker-block (flex item).
+        // 2. Duplicate that EXACT block.
+        // 3. Result: [Block A][Block B] inside a flex container.
+        // 4. CSS: translateX(-50%).
+        //
+        // Because Block A and Block B are identical DOM nodes, the browser guarantees
+        // that Width(Parent) = 2 * Width(Block). Therefore, moving -50% of the
+        // Parent is GUARANTEED to move exactly 1x Width(Block).
+        // =========================================================================
+
+        const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
+        
+        // Temporarily render ONE block to measure its width solely for speed calculation.
+        // This measurement does NOT affect the layout geometry (which is pure CSS).
+        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         
         if (contentElement) {
-             const innerHtml = contentElement.innerHTML;
+            const rect = contentElement.getBoundingClientRect();
+            const blockWidth = rect.width;
             
-            // 3. Measure the width of the single block of content
-            // We do this *before* duplicating
-            const singleContentWidth = contentElement.scrollWidth;
-
-            // 4. **Duplicate the inner HTML** for the seamless loop
-            contentElement.innerHTML = innerHtml + innerHtml;
+            // DUPLICATE THE BLOCK structure for the infinite loop.
+            contentElement.innerHTML = wrappedContent + wrappedContent;
             
-            // 5. Calculate duration based on the *single* width
+            // Calculate Duration (Constant Speed)
             const PIXELS_PER_SECOND = 50;
-            // The distance to scroll is one "block" of content
-            const totalScrollDistance = singleContentWidth;
-            
-            // Set a minimum duration to prevent extremely fast scrolls on short text
-            const duration = Math.max(20, totalScrollDistance / PIXELS_PER_SECOND); 
+            const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
             
             contentElement.style.animationDuration = `${duration}s`;
         }
@@ -17337,8 +17366,6 @@ export class UIManager {
 
         paginationContainer.innerHTML = dotsHtml;
     }
-
-
     updateStickyBar(gameState) {
         this.cache.stickyBar.innerHTML = '';
         this.cache.topBarContainer.classList.remove('has-sticky-bar');
@@ -23566,6 +23593,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.05] - 2026-1-15
+-  fixed news ticker redraw for the third time
+-  updated meta files
+
 ## [34.04] - 2026-1-14
 -  tuning screen polish
 -  upgrade replacement modal polish
@@ -25135,7 +25166,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 --- START OF FILE: ./meta/SERVICES.md ---
 # Orbital Trading - Service Responsibilities
-**Version:** 2.1
+**Version:** 2.2
 **Source:** `js/services/` directory structure and `js/data/` structure
 
 This document defines the single responsibility of each service in the application and notes key static data dependencies.
@@ -25147,9 +25178,9 @@ This document defines the single responsibility of each service in the applicati
 -   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
 -   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
 -   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module. Now includes explicit drag-suppression for interactive targets.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. Supports dynamic vertical positioning (right/top) for responsive tooltips.
+-   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. **Crucially**, handles the layout duplication for infinite scrolling components (News Ticker) to ensure CSS geometry integrity.
 -   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue for the scrolling news ticker. Handles different message types (SYSTEM, INTEL, FLAVOR, ALERT, STATUS), rebuilds the queue on location change, and pulls data from various sources. Is a primary driver for the Intel system. **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+-   **`NewsTickerService.js`**: Manages the dynamic message queue. **Strictly Single-Source**: It aggregates messages into a single sequence but does *not* handle the duplication required for the infinite loop effect (this is a UI concern). **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
 
 ### Game Logic Services
 
@@ -25409,6 +25440,23 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Adds a new layer to the economy (upgrading ships to increase resale value).
     * **Pro**: "Destructive Replacement" creates high-stakes decisions without the UI clutter of a "spare parts" inventory.
     * **Con**: Requires safeguarding against accidental destruction (mitigated by the Triple-Confirmation modal).
+
+---
+
+### ADR-013: CSS-Driven News Ticker Layout (Infinite Loop)
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: The scrolling news ticker exhibited persistent "jitters" (pixel jumps) and "blinks" (layer repaints) at the end of each animation loop. This was caused by sub-pixel discrepancies between JavaScript width calculations and CSS `%` transforms, as well as hardware compositing issues on WebKit.
+* **Decision**: Enforce a strict CSS-driven layout strategy.
+    1.  **Single Source of Truth**: `NewsTickerService` returns a single, non-duplicated string.
+    2.  **Flexbox Wrapper**: Content is wrapped in a dedicated `.ticker-block` flex item.
+    3.  **CSS Duplication**: The UI creates a specific DOM structure `[Block A][Block B]`. This guarantees that `Width(Parent) === 2 * Width(Block)`.
+    4.  **Blind Animation**: The CSS animation moves `translateX(-50%)`. Because of the rigid DOM structure, `-50%` is mathematically guaranteed to equal the exact width of Block A, ensuring a seamless visual loop without sub-pixel rounding errors.
+    5.  **Hardware Acceleration**: Strict use of `will-change: transform` and `backface-visibility: hidden` to prevent layout thrashing and repaints.
+* **Consequences**:
+    * **Pro**: Eliminates visual jitter caused by JS/CSS measurement mismatches.
+    * **Pro**: Prevents "blinking" on loop reset by keeping the layer promoted to the GPU.
+    * **Con**: Creates a slightly more complex DOM structure (`.news-ticker-content > .ticker-block`).
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---

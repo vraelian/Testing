@@ -183,3 +183,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Adds a new layer to the economy (upgrading ships to increase resale value).
     * **Pro**: "Destructive Replacement" creates high-stakes decisions without the UI clutter of a "spare parts" inventory.
     * **Con**: Requires safeguarding against accidental destruction (mitigated by the Triple-Confirmation modal).
+
+---
+
+### ADR-013: CSS-Driven News Ticker Layout (Infinite Loop)
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: The scrolling news ticker exhibited persistent "jitters" (pixel jumps) and "blinks" (layer repaints) at the end of each animation loop. This was caused by sub-pixel discrepancies between JavaScript width calculations and CSS `%` transforms, as well as hardware compositing issues on WebKit.
+* **Decision**: Enforce a strict CSS-driven layout strategy.
+    1.  **Single Source of Truth**: `NewsTickerService` returns a single, non-duplicated string.
+    2.  **Flexbox Wrapper**: Content is wrapped in a dedicated `.ticker-block` flex item.
+    3.  **CSS Duplication**: The UI creates a specific DOM structure `[Block A][Block B]`. This guarantees that `Width(Parent) === 2 * Width(Block)`.
+    4.  **Blind Animation**: The CSS animation moves `translateX(-50%)`. Because of the rigid DOM structure, `-50%` is mathematically guaranteed to equal the exact width of Block A, ensuring a seamless visual loop without sub-pixel rounding errors.
+    5.  **Hardware Acceleration**: Strict use of `will-change: transform` and `backface-visibility: hidden` to prevent layout thrashing and repaints.
+* **Consequences**:
+    * **Pro**: Eliminates visual jitter caused by JS/CSS measurement mismatches.
+    * **Pro**: Prevents "blinking" on loop reset by keeping the layer promoted to the GPU.
+    * **Con**: Creates a slightly more complex DOM structure (`.news-ticker-content > .ticker-block`).

@@ -19,9 +19,15 @@
 }
 
 .news-ticker-content {
-    display: block;
-    white-space: nowrap; /* Prevents text from wrapping */
+    /* JITTER FIX: Use Flexbox layout */
+    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: fit-content'.
+       This structure ensures that the container width is exactly equal to the 
+       sum of its children, guaranteeing that -50% is exactly one child width. */
+    display: flex;
+    width: fit-content; 
+    white-space: nowrap;
     position: absolute;
+    will-change: transform;
     
     /* MODIFIED: Animation properties separated */
     animation-name: scroll-ticker;
@@ -40,10 +46,23 @@
     animation-play-state: paused; /* Pause scroll on hover */
 }
 
+/* JITTER FIX: Wrapper for the content blocks */
+.ticker-block {
+    flex: 0 0 auto; /* Do not shrink or grow */
+    display: flex;  /* Keep internal spans in line */
+    align-items: center;
+    /* BLINK FIX: Hardware Acceleration for the block itself */
+    /* Prevents repainting when the loop resets at 0px */
+    transform: translate3d(0,0,0);
+    backface-visibility: hidden;
+}
+
 /*
  * The scrolling animation. 
- * MODIFIED: Starts at 0 and moves left by 50% of its (now duplicated) width
- * to create a seamless loop.
+ * JITTER FIX: Reverted to simple -50%.
+ * Because we now use two identical .ticker-block flex items,
+ * the container width is mathematically guaranteed to be 2x the block width.
+ * Therefore, -50% is guaranteed to be exactly 1x block width.
  */
 @keyframes scroll-ticker {
     0%   { transform: translateX(0); }
@@ -56,9 +75,6 @@
     color: var(--color-text-secondary);
     opacity: 0.7;
     white-space: nowrap;
-    
-    /* MODIFIED: Increased margin to compensate for removal of text spaces.
-       This ensures the visual gap is identical at the loop wrap point. */
     margin: 0 1rem;
 }
 

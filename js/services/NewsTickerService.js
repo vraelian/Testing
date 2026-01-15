@@ -183,14 +183,12 @@ export class NewsTickerService {
             return `<span class="ticker-message" data-type="${msg.type}" ${style}>${text}</span>`;
         }).join(separator);
 
-        // --- VIRTUAL WORKBENCH: REQUEST B & C (STUTTER/SEPARATOR FIX) ---
-        // Append one final separator to the end of the content.
-        const fullContent = `${messageHtml}${separator}`;
-        
-        // Duplicate the content to satisfy the CSS translateX(-50%) infinite loop.
-        // The animation moves the element left by 50% (exactly one fullContent width).
-        // By having two copies, the start of the second copy visually replaces the start of the first.
-        return `<div class="news-ticker-content">${fullContent}${fullContent}</div>`;
+        // --- VIRTUAL WORKBENCH: SINGLE SOURCE REFACTOR ---
+        // We strictly return a SINGLE copy of the content string.
+        // The UIManager is responsible for measuring this single block
+        // and then duplicating it to create the infinite loop effect.
+        // DO NOT DUPLICATE CONTENT HERE.
+        return `${messageHtml}${separator}`;
         // --- END VIRTUAL WORKBENCH ---
     }
 

@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.05] - 2026-1-15
+-  fixed news ticker redraw for the third time
+-  updated meta files
+
 ## [34.04] - 2026-1-14
 -  tuning screen polish
 -  upgrade replacement modal polish
