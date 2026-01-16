@@ -72,14 +72,10 @@ export class TravelService {
         }
 
         // 2. Apply Attribute/Upgrade Modifier
-        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
+        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
 
-        // 3. Handle Special "Space Folding" Case (Increases fuel cost)
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
-        if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
-            requiredFuel = Math.round(requiredFuel * 1.2);
-        }
         // --- END UPGRADE SYSTEM ---
 
         if (effectiveMaxFuel < requiredFuel) {
@@ -126,7 +122,8 @@ export class TravelService {
         }
 
         // 2. Apply Generic Attribute Modifiers (Multiplicative)
-        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
+        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
         
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
@@ -144,11 +141,6 @@ export class TravelService {
             if (attrId === 'ATTR_SLEEPER') {
                 travelInfo.time *= 4.5;
                 travelInfo.fuelCost = 0; // Ensure 0 fuel
-            }
-            // Space Folding (Fixed 1 day, 1.2x Fuel)
-            if (attrId === 'ATTR_SPACE_FOLDING') {
-                travelInfo.time = 1;
-                travelInfo.fuelCost *= 1.2;
             }
         });
 

@@ -7,9 +7,8 @@ import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
-import { NewsTickerService } from './services/NewsTickerService.js'; // IMPORT
+import { NewsTickerService } from './services/NewsTickerService.js';
 
-// Import the new service shells
 import { IntroService } from './services/game/IntroService.js';
 import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
@@ -17,6 +16,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 // --- [[START]] PHASE 4 IMPORT ---
 import { AssetService } from './services/AssetService.js';
+import { SHIP_IDS } from './data/constants.js'; 
 // --- [[END]] PHASE 4 IMPORT ---
 
 /**
@@ -64,6 +64,12 @@ const setAppHeight = () => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- [[START]] PHASE 4: BACKGROUND ASSET HYDRATION ---
+    // Initialize the Asset Locker immediately.
+    // By the time the user clicks "Start", critical assets will likely be loaded.
+    AssetService.init().catch(err => console.warn("[Main] Asset Locker failed to initialize:", err));
+    // --- [[END]] PHASE 4: BACKGROUND ASSET HYDRATION ---
+
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
@@ -223,19 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- [[END]] MODIFICATION ---
 
             uiManager.render(gameState.getState());
-
-            // --- [[START]] PHASE 4: INITIALIZATION POLISH ---
-            // Background preload current ship image immediately.
-            // This guarantees the high-res asset is fetched for the active ship
-            // even if the lazy-loading intersection observer hasn't fired yet.
-            const state = gameState.getState();
-            if (state.player && state.player.activeShipId) {
-                const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
-                // Creating an Image object forces the browser to download and cache the file
-                const img = new Image();
-                img.src = src;
-            }
-            // --- [[END]] PHASE 4: INITIALIZATION POLISH ---
         }
         
         // --- [[START]] MODIFICATION ---
@@ -243,5 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- [[END]] MODIFICATION ---
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
+
+        // --- [[START]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
+        // Now that GameState is loaded/initialized, we trigger the comprehensive
+        // hydration logic. It will intelligently prioritize critical assets (Current Ship, Tier)
+        // and background load the rest (Future Ships, Locked Tiers).
+        const state = gameState.getState();
+        AssetService.hydrateGameAssets(state.player);
+        // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
     }
 });

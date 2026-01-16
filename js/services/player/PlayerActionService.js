@@ -576,7 +576,8 @@ export class PlayerActionService {
         }
         
         // Apply Fuel Pass Discount
-        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
+        // Changed to use getFuelPriceModifier (Mod Fuel Price)
+        const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
         costPerTick *= attrMod;
         // --- END UPGRADE SYSTEM ---
 

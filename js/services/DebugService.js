@@ -9,6 +9,7 @@ import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; // Added skewedRandom import if needed, or just use Math
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; // Added Import
+import { AssetService } from './AssetService.js'; // IMPORT ADDED
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -185,6 +186,12 @@ ${logHistory}
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        
+        // HYDRATION: Pre-load EVERYTHING for testing purposes
+        const seed = this.gameState.player.visualSeed;
+        AssetService.hydrateAllShips(seed);
+        AssetService.hydrateAllCommodities(seed);
+
         this.uiManager.showGameContainer();
         this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
         this.simulationService.timeService.advanceDays(7);
@@ -414,6 +421,8 @@ ${logHistory}
                          this.simulationService.addShipToHangar(shipId);
                     }
                 });
+                // HYDRATION: Ensure all added ships are loaded
+                AssetService.hydrateAllShips(this.gameState.player.visualSeed);
                 this.gameState.setState({});
             }},
             // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
@@ -429,7 +438,7 @@ ${logHistory}
                 this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
                 // Trigger re-render to see new art assets immediately
                 // FIX: Used .render() instead of .renderCurrentScreen()
-                this.uiManager.render(this.gameState);
+                this.uiManager.render(this.gameState.getState());
             }},
             // ------------------------------------------------------------------------
 
@@ -592,7 +601,9 @@ ${logHistory}
                 // 3. Navigate to Hangar to see it
                 this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                 this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                // 4. Refresh
+                // 4. Hydrate the newly boarded ship immediately
+                AssetService.hydrateAssets([{ type: 'ship', id: shipId, seed: this.gameState.player.visualSeed }]);
+                // 5. Refresh
                 this.gameState.setState({});
                 this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
             });

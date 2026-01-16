@@ -200,3 +200,33 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates visual jitter caused by JS/CSS measurement mismatches.
     * **Pro**: Prevents "blinking" on loop reset by keeping the layer promoted to the GPU.
     * **Con**: Creates a slightly more complex DOM structure (`.news-ticker-content > .ticker-block`).
+
+---
+
+### ADR-014: Persistent Asset Architecture (IndexedDB "Locker")
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: On iOS devices (the primary target), the OS aggressively evicts web cache to save space. This resulted in persistent "pop-in" or missing assets for the player, breaking immersion. Standard browser caching was unreliable.
+* **Decision**: Implemented a manual "Locker" system using **IndexedDB**.
+    1.  **`AssetStorageService`**: A low-level wrapper handles reading/writing raw `Blob` data to an IndexedDB store named `OrbitalAssetsDB`.
+    2.  **Hydration**: On game start (and key events like travel), `AssetService` "hydrates" critical assets. It checks IDB first. If missing, it fetches from the network, saves the Blob to IDB, and creates a `blob:` URL.
+    3.  **Memory Cache**: `AssetService` maintains a `Map` of file paths to `blob:` URLs for instant, synchronous access during rendering.
+* **Consequences**:
+    * **Pro**: Assets act like "installed" data (`Documents & Data` on iOS) and are protected from cache eviction.
+    * **Pro**: Zero-latency rendering for hydrated assets (no network request, even to localhost).
+    * **Pro**: Enables seamless offline play after initial load.
+    * **Con**: Increases initial memory usage slightly due to Blob URLs. Requires manual management of the asset lifecycle.
+
+---
+
+### ADR-015: Split Fuel Economy Logic
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: The `MOD_FUEL_COST` attribute was overloading two distinct mechanics: travel efficiency (burn rate) and service cost (station prices). This meant "Engine Mods" (which increase burn) inadvertently made refueling more expensive per unit, creating a "double tax" on the player.
+* **Decision**: The logic was split into two distinct attribute types:
+    1.  **`MOD_FUEL_BURN`**: Multiplies the amount of fuel consumed during travel (TravelService). Affected by Engine Mods.
+    2.  **`MOD_FUEL_PRICE`**: Multiplies the credit cost of purchasing fuel at a station (PlayerActionService). Affected by Fuel Pass.
+* **Consequences**:
+    * **Pro**: Decouples mechanics, allowing for finer balance control.
+    * **Pro**: Fixes the "Double Tax" bug, making Engine Mods a fair trade-off (Speed vs. Efficiency) rather than a pure penalty.
+    * **Pro**: Clarifies the UI stats for the player.

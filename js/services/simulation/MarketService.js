@@ -8,9 +8,8 @@
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
-// --- VIRTUAL WORKBENCH: IMPORT ---
 import { GameAttributes } from '../../services/GameAttributes.js';
-// --- END VIRTUAL WORKBENCH ---
+import { AssetService } from '../../services/AssetService.js'; // IMPORT ADDED
 
 /**
  * @class MarketService
@@ -439,6 +438,13 @@ export class MarketService {
                 day: this.gameState.day,
                 shipsForSale: shipsForSaleIds
             };
+
+            // --- [[START]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
+            // Whenever new stock is generated (e.g. during travel), immediately 
+            // hydrate those specific ships so they are ready when the user visits the shipyard.
+            const spawnRequests = shipsForSaleIds.map(shipId => ({ type: 'ship', id: shipId, seed: player.visualSeed }));
+            AssetService.hydrateAssets(spawnRequests);
+            // --- [[END]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
         });
     }
 }

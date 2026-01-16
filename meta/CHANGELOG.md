@@ -2,9 +2,16 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.09] - 2026-1-15
+-  optimized art asset loading
+-  tuned fuel scaler from 3 to 2.5
+-  raised starter ship fuel capacity
+-  fixed engine mod miscalculation
+-  updated meta files
+
 ## [34.05] - 2026-1-15
 -  fixed news ticker redraw for the third time
--  updated meta files
+-  updated meta files. 
 
 ## [34.04] - 2026-1-14
 -  tuning screen polish

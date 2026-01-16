@@ -11,15 +11,16 @@ import { LOCATION_IDS, UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '..
 // ==========================================
 
 const UPGRADE_DEFINITIONS = {
-    // --- Engine Mods (Speed vs Fuel) ---
+    // --- Engine Mods (Speed vs Fuel Burn) ---
+    // NOTE: These now affect MOD_FUEL_BURN (Travel Efficiency), not MOD_FUEL_PRICE (Station Cost).
     'UPGRADE_ENGINE_I': {
         id: 'UPGRADE_ENGINE_I',
         name: 'Engine Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
-        statText: 'Travel Speed +5%, Fuel Cost +15%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
+        statText: 'Travel Speed +5%, Fuel Burn +15%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
         id: 'UPGRADE_ENGINE_II',
@@ -27,8 +28,8 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
-        statText: 'Travel Speed +10%, Fuel Cost +30%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
+        statText: 'Travel Speed +10%, Fuel Burn +30%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
         id: 'UPGRADE_ENGINE_III',
@@ -36,8 +37,8 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
-        statText: 'Travel Speed +25%, Fuel Cost +45%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
+        statText: 'Travel Speed +25%, Fuel Burn +45%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.45 }
     },
 
     // --- Signal Hackers (Buy Price Discount) ---
@@ -157,6 +158,7 @@ const UPGRADE_DEFINITIONS = {
     },
 
     // --- Fuel Pass (Refuel Cost Discount) ---
+    // NOTE: These now affect MOD_FUEL_PRICE (Station Price), avoiding double-tax interaction with Engine Mods.
     'UPGRADE_FUELPASS_I': {
         id: 'UPGRADE_FUELPASS_I',
         name: 'Fuel Pass',
@@ -164,7 +166,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
         statText: 'Refuel Cost -20%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
         id: 'UPGRADE_FUELPASS_II',
@@ -173,7 +175,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
         statText: 'Refuel Cost -50%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
         id: 'UPGRADE_FUELPASS_III',
@@ -182,7 +184,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
         statText: 'Refuel Cost -75%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.25 }
     },
 
     // --- Repair Pass (Repair Cost Discount) ---
@@ -424,13 +426,23 @@ export const GameAttributes = {
     // --- Specific Modifiers ---
 
     /**
-     * Calculates fuel cost modifier based on installed upgrades (Multiplicative).
-     * Used for both Travel burn and Station refuel price if logic requires.
+     * Calculates fuel burn modifier based on installed upgrades (Multiplicative).
+     * Used for Travel consumption.
      * @param {string[]} upgrades 
      * @returns {number} Multiplier.
      */
-    getFuelCostModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_COST);
+    getFuelBurnModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_BURN);
+    },
+
+    /**
+     * Calculates fuel PRICE modifier based on installed upgrades (Multiplicative).
+     * Used for station refueling cost.
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    getFuelPriceModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_PRICE);
     },
 
     /**
@@ -470,8 +482,11 @@ export const GameAttributes = {
      * @returns {number} Multiplier.
      */
     getServiceCostModifier(upgrades = [], serviceType) {
-        const modType = serviceType === 'refuel' ? UPGRADE_TYPES.MOD_FUEL_COST : UPGRADE_TYPES.MOD_REPAIR_COST;
-        return this._getMultiplicativeModifier(upgrades, modType);
+        if (serviceType === 'refuel') {
+            return this.getFuelPriceModifier(upgrades);
+        } else {
+            return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_REPAIR_COST);
+        }
     },
 
     /**

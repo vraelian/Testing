@@ -152,7 +152,8 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  */
 export const ATTRIBUTE_TYPES = Object.freeze({
     MOD_PRICE: 'MOD_PRICE',             // Modifies buy/sell prices
-    MOD_FUEL_COST: 'MOD_FUEL_COST',     // Modifies fuel consumption
+    MOD_FUEL_BURN: 'MOD_FUEL_BURN',     // Modifies fuel consumption (Travel)
+    MOD_FUEL_PRICE: 'MOD_FUEL_PRICE',   // Modifies fuel cost (Station)
     MOD_TRAVEL_TIME: 'MOD_TRAVEL_TIME', // Modifies travel duration
     MOD_HULL_DECAY: 'MOD_HULL_DECAY',   // Modifies passive or active hull decay
     MOD_SERVICE_COST: 'MOD_SERVICE_COST', // Modifies repair/refuel costs
@@ -165,7 +166,8 @@ export const ATTRIBUTE_TYPES = Object.freeze({
 // --- [[START]] VIRTUAL WORKBENCH: SHIP UPGRADE SYSTEM (Phase 1) ---
 export const UPGRADE_TYPES = Object.freeze({
     MOD_TRAVEL_SPEED: 'MOD_TRAVEL_SPEED',       // Engine Mods
-    MOD_FUEL_COST: 'MOD_FUEL_COST',             // Engine Mods (Penalty), Fuel Pass (Bonus)
+    MOD_FUEL_BURN: 'MOD_FUEL_BURN',             // Engine Mods (Penalty) - Travel Consumption
+    MOD_FUEL_PRICE: 'MOD_FUEL_PRICE',           // Fuel Pass (Bonus) - Station Price
     MOD_BUY_PRICE: 'MOD_BUY_PRICE',             // Signal Hacker
     MOD_SELL_PRICE: 'MOD_SELL_PRICE',           // Guild Badge
     MOD_MAX_HULL: 'MOD_MAX_HULL',               // Hull Armor
@@ -201,7 +203,7 @@ export const GAME_RULES = Object.freeze({
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,
-    FUEL_SCALAR: 3,
+    FUEL_SCALAR: 2.5, // CHANGED from 3 to 2.5
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
     HULL_DECAY_PER_TRAVEL_DAY: 1 / 7,

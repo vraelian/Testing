@@ -56,7 +56,7 @@ export const SHIP_DATABASE = {
         price: 25000,
         maxHealth: 30,
         cargoCapacity: 30,
-        maxFuel: 130,
+        maxFuel: 150, // CHANGED: 130 -> 150
         role: "Explorer",
         attribute: "None",
         description: "Its oversized fuel tank betrays its past as a survey ship, built for pilots who value the range over all else. ",
@@ -85,7 +85,7 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         price: 25000,
         maxHealth: 70,
         cargoCapacity: 45,
-        maxFuel: 90,
+        maxFuel: 110, // CHANGED: 90 -> 110
         role: "Balanced",
         attribute: "None",
         description: "It lacks the range of an explorer, but its reinforced hull promises a steady hand through the system's most turbulent trade routes.",
@@ -121,7 +121,7 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         price: 25000,
         maxHealth: 45,
         cargoCapacity: 70,
-        maxFuel: 70,
+        maxFuel: 90, // CHANGED: 70 -> 90
         role: "Hauler",
         attribute: "None",
         description: "Little more than a cockpit bolted to a high-capacity cargo container, this ship was designed for slow but profitable journeys between orbital stations, one ton at a time.",

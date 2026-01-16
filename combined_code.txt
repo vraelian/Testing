@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.04</title>
+    <title>Orbital Trading 34.09</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.04</p>
+            <p>Version 34.09</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -6588,8 +6588,9 @@ export function renderNavigationScreen(gameState) {
     if (player.activePerks[PERK_IDS.NAVIGATOR]) {
         fuelMod *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
     }
-    // Apply Engine Mod / Fuel Pass
-    fuelMod *= GameAttributes.getFuelCostModifier(upgrades);
+    // Apply Engine Mod (Fuel Burn)
+    // FIX: Updated method name from getFuelCostModifier to getFuelBurnModifier
+    fuelMod *= GameAttributes.getFuelBurnModifier(upgrades);
 
     // 2. Time Modifiers (Perk * Upgrade)
     let timeMod = 1.0;
@@ -6601,7 +6602,7 @@ export function renderNavigationScreen(gameState) {
 
     // 3. Legacy Attributes
     const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
-    const hasSpaceFolding = shipAttributes.includes('ATTR_SPACE_FOLDING');
+    // FIX: Removed ATTR_SPACE_FOLDING legacy check
     const hasSleeper = shipAttributes.includes('ATTR_SLEEPER');
     // ---------------------------------------------
 
@@ -6623,14 +6624,12 @@ export function renderNavigationScreen(gameState) {
                         displayTime = Math.max(1, Math.round(baseData.time * timeMod));
                         
                         // Legacy Overrides
-                        if (hasSpaceFolding) displayTime = 1;
                         if (hasSleeper) displayTime = Math.round(displayTime * 4.5); // Sleeper adds time
 
                         // Apply Fuel Logic (Mod * Base)
                         displayFuel = Math.round(baseData.fuelCost * fuelMod);
                         
                         // Legacy Overrides
-                        if (hasSpaceFolding) displayFuel = Math.round(baseData.fuelCost * 1.2); // Override/Penalty
                         if (hasSleeper) displayFuel = 0; // Sleeper is free
                     }
 
@@ -7556,9 +7555,8 @@ import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
-import { NewsTickerService } from './services/NewsTickerService.js'; // IMPORT
+import { NewsTickerService } from './services/NewsTickerService.js';
 
-// Import the new service shells
 import { IntroService } from './services/game/IntroService.js';
 import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
@@ -7566,6 +7564,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 // --- [[START]] PHASE 4 IMPORT ---
 import { AssetService } from './services/AssetService.js';
+import { SHIP_IDS } from './data/constants.js'; 
 // --- [[END]] PHASE 4 IMPORT ---
 
 /**
@@ -7613,6 +7612,12 @@ const setAppHeight = () => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- [[START]] PHASE 4: BACKGROUND ASSET HYDRATION ---
+    // Initialize the Asset Locker immediately.
+    // By the time the user clicks "Start", critical assets will likely be loaded.
+    AssetService.init().catch(err => console.warn("[Main] Asset Locker failed to initialize:", err));
+    // --- [[END]] PHASE 4: BACKGROUND ASSET HYDRATION ---
+
     // --- App Initialization ---
     const splashScreen = document.getElementById('splash-screen');
     const startButton = document.getElementById('start-game-btn');
@@ -7772,19 +7777,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- [[END]] MODIFICATION ---
 
             uiManager.render(gameState.getState());
-
-            // --- [[START]] PHASE 4: INITIALIZATION POLISH ---
-            // Background preload current ship image immediately.
-            // This guarantees the high-res asset is fetched for the active ship
-            // even if the lazy-loading intersection observer hasn't fired yet.
-            const state = gameState.getState();
-            if (state.player && state.player.activeShipId) {
-                const src = AssetService.getShipImage(state.player.activeShipId, state.player.visualSeed);
-                // Creating an Image object forces the browser to download and cache the file
-                const img = new Image();
-                img.src = src;
-            }
-            // --- [[END]] PHASE 4: INITIALIZATION POLISH ---
         }
         
         // --- [[START]] MODIFICATION ---
@@ -7792,6 +7784,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- [[END]] MODIFICATION ---
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
+
+        // --- [[START]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
+        // Now that GameState is loaded/initialized, we trigger the comprehensive
+        // hydration logic. It will intelligently prioritize critical assets (Current Ship, Tier)
+        // and background load the rest (Future Ships, Locked Tiers).
+        const state = gameState.getState();
+        AssetService.hydrateGameAssets(state.player);
+        // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
     }
 });
 --- END OF FILE: ./js/main.js ---
@@ -8281,7 +8281,8 @@ export const TUTORIAL_ACTION_TYPES = Object.freeze({
  */
 export const ATTRIBUTE_TYPES = Object.freeze({
     MOD_PRICE: 'MOD_PRICE',             // Modifies buy/sell prices
-    MOD_FUEL_COST: 'MOD_FUEL_COST',     // Modifies fuel consumption
+    MOD_FUEL_BURN: 'MOD_FUEL_BURN',     // Modifies fuel consumption (Travel)
+    MOD_FUEL_PRICE: 'MOD_FUEL_PRICE',   // Modifies fuel cost (Station)
     MOD_TRAVEL_TIME: 'MOD_TRAVEL_TIME', // Modifies travel duration
     MOD_HULL_DECAY: 'MOD_HULL_DECAY',   // Modifies passive or active hull decay
     MOD_SERVICE_COST: 'MOD_SERVICE_COST', // Modifies repair/refuel costs
@@ -8294,7 +8295,8 @@ export const ATTRIBUTE_TYPES = Object.freeze({
 // --- [[START]] VIRTUAL WORKBENCH: SHIP UPGRADE SYSTEM (Phase 1) ---
 export const UPGRADE_TYPES = Object.freeze({
     MOD_TRAVEL_SPEED: 'MOD_TRAVEL_SPEED',       // Engine Mods
-    MOD_FUEL_COST: 'MOD_FUEL_COST',             // Engine Mods (Penalty), Fuel Pass (Bonus)
+    MOD_FUEL_BURN: 'MOD_FUEL_BURN',             // Engine Mods (Penalty) - Travel Consumption
+    MOD_FUEL_PRICE: 'MOD_FUEL_PRICE',           // Fuel Pass (Bonus) - Station Price
     MOD_BUY_PRICE: 'MOD_BUY_PRICE',             // Signal Hacker
     MOD_SELL_PRICE: 'MOD_SELL_PRICE',           // Guild Badge
     MOD_MAX_HULL: 'MOD_MAX_HULL',               // Hull Armor
@@ -8330,7 +8332,7 @@ export const GAME_RULES = Object.freeze({
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,
-    FUEL_SCALAR: 3,
+    FUEL_SCALAR: 2.5, // CHANGED from 3 to 2.5
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
     HULL_DECAY_PER_TRAVEL_DAY: 1 / 7,
@@ -9256,7 +9258,7 @@ export const SHIP_DATABASE = {
         price: 25000,
         maxHealth: 30,
         cargoCapacity: 30,
-        maxFuel: 130,
+        maxFuel: 150, // CHANGED: 130 -> 150
         role: "Explorer",
         attribute: "None",
         description: "Its oversized fuel tank betrays its past as a survey ship, built for pilots who value the range over all else. ",
@@ -9285,7 +9287,7 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         price: 25000,
         maxHealth: 70,
         cargoCapacity: 45,
-        maxFuel: 90,
+        maxFuel: 110, // CHANGED: 90 -> 110
         role: "Balanced",
         attribute: "None",
         description: "It lacks the range of an explorer, but its reinforced hull promises a steady hand through the system's most turbulent trade routes.",
@@ -9321,7 +9323,7 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         price: 25000,
         maxHealth: 45,
         cargoCapacity: 70,
-        maxFuel: 70,
+        maxFuel: 90, // CHANGED: 70 -> 90
         role: "Hauler",
         attribute: "None",
         description: "Little more than a cockpit bolted to a high-capacity cargo container, this ship was designed for slow but profitable journeys between orbital stations, one ton at a time.",
@@ -11370,6 +11372,102 @@ export async function playBlockingAnimationAndRemove(element, animationClass) {
 // --- [[END]] VIRTUAL WORKBENCH ---
 --- END OF FILE: ./js/services/ui/AnimationService.js ---
 
+--- START OF FILE: ./js/services/AssetStorageService.js ---
+// js/services/AssetStorageService.js
+/**
+ * @fileoverview Low-level wrapper for IndexedDB to manage persistent asset storage.
+ * This acts as the "Locker" preventing iOS cache eviction.
+ */
+
+export class AssetStorageService {
+    static DB_NAME = 'OrbitalAssetsDB';
+    static STORE_NAME = 'assets';
+    static VERSION = 1;
+    static db = null;
+
+    /**
+     * Opens the database connection.
+     * @returns {Promise<void>}
+     */
+    static async initDB() {
+        if (this.db) return;
+
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.DB_NAME, this.VERSION);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                    db.createObjectStore(this.STORE_NAME);
+                }
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
+
+            request.onerror = (event) => {
+                console.error("AssetStorageService: DB Open Error", event);
+                reject(event);
+            };
+        });
+    }
+
+    /**
+     * Saves a raw Blob to the database under a specific key (file path).
+     * @param {string} key - The unique path/ID of the asset.
+     * @param {Blob} blob - The image data.
+     * @returns {Promise<void>}
+     */
+    static async saveAsset(key, blob) {
+        if (!this.db) await this.initDB();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([this.STORE_NAME], 'readwrite');
+            const store = tx.objectStore(this.STORE_NAME);
+            const request = store.put(blob, key);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e);
+        });
+    }
+
+    /**
+     * Retrieves a Blob from the database.
+     * @param {string} key 
+     * @returns {Promise<Blob|undefined>}
+     */
+    static async getAsset(key) {
+        if (!this.db) await this.initDB();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([this.STORE_NAME], 'readonly');
+            const store = tx.objectStore(this.STORE_NAME);
+            const request = store.get(key);
+
+            request.onsuccess = (event) => resolve(event.target.result);
+            request.onerror = (e) => reject(e);
+        });
+    }
+    
+    /**
+     * Checks if an asset exists in the database.
+     * @param {string} key 
+     * @returns {Promise<boolean>}
+     */
+    static async hasAsset(key) {
+        if (!this.db) await this.initDB();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([this.STORE_NAME], 'readonly');
+            const store = tx.objectStore(this.STORE_NAME);
+            const request = store.count(key);
+
+            request.onsuccess = (event) => resolve(event.target.result > 0);
+            request.onerror = (e) => reject(e);
+        });
+    }
+}
+--- END OF FILE: ./js/services/AssetStorageService.js ---
+
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
 /**
@@ -11382,6 +11480,7 @@ import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; // Added skewedRandom import if needed, or just use Math
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; // Added Import
+import { AssetService } from './AssetService.js'; // IMPORT ADDED
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -11558,6 +11657,12 @@ ${logHistory}
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
+        
+        // HYDRATION: Pre-load EVERYTHING for testing purposes
+        const seed = this.gameState.player.visualSeed;
+        AssetService.hydrateAllShips(seed);
+        AssetService.hydrateAllCommodities(seed);
+
         this.uiManager.showGameContainer();
         this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
         this.simulationService.timeService.advanceDays(7);
@@ -11787,6 +11892,8 @@ ${logHistory}
                          this.simulationService.addShipToHangar(shipId);
                     }
                 });
+                // HYDRATION: Ensure all added ships are loaded
+                AssetService.hydrateAllShips(this.gameState.player.visualSeed);
                 this.gameState.setState({});
             }},
             // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
@@ -11802,7 +11909,7 @@ ${logHistory}
                 this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
                 // Trigger re-render to see new art assets immediately
                 // FIX: Used .render() instead of .renderCurrentScreen()
-                this.uiManager.render(this.gameState);
+                this.uiManager.render(this.gameState.getState());
             }},
             // ------------------------------------------------------------------------
 
@@ -11965,7 +12072,9 @@ ${logHistory}
                 // 3. Navigate to Hangar to see it
                 this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                 this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                // 4. Refresh
+                // 4. Hydrate the newly boarded ship immediately
+                AssetService.hydrateAssets([{ type: 'ship', id: shipId, seed: this.gameState.player.visualSeed }]);
+                // 5. Refresh
                 this.gameState.setState({});
                 this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
             });
@@ -13213,7 +13322,7 @@ export class NewsTickerService {
 /**
  * @fileoverview Centralizes the logic for generating dynamic asset paths.
  * Implements the "Modulo Variant" system for perfect probability distribution
- * and manages asset preloading/caching.
+ * and manages persistent asset hydration via Blob Storage.
  */
 
 import { DB } from '../data/database.js';
@@ -13223,123 +13332,254 @@ import {
     DEFAULT_COMMODITY_VARIANT_COUNT, 
     COMMODITY_VARIANT_COUNTS 
 } from '../data/assets_config.js';
+import { AssetStorageService } from './AssetStorageService.js';
+import { SHIP_IDS } from '../data/constants.js';
 
 export class AssetService {
     // 1x1 Transparent GIF for garbage collected images
     static PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    
+    // In-Memory Cache: Maps FilePath -> BlobURL (e.g. "blob:http://localhost/...")
+    static blobCache = new Map();
 
     /**
-     * Generates the target image path for a ship based on the player's visual seed.
-     * Uses modulo arithmetic to cycle through available variants (A, B, C...) perfectly.
-     * Naming Convention: assets/images/ships/[Name]/[Name]_[Variant].jpeg
-     * @param {string} shipId - The GAME ID of the ship (e.g., 'Wanderer.Ship').
-     * @param {number} visualSeed - The player's current visual seed integer.
-     * @returns {string} The relative path to the image asset.
+     * Initializes the storage backend.
+     */
+    static async init() {
+        await AssetStorageService.initDB();
+    }
+
+    // --- Path Generators (Private Helpers) ---
+
+    static _generateShipPath(shipId, visualSeed) {
+        const shipData = DB.SHIPS[shipId];
+        if (!shipData) return null;
+        const baseName = shipData.name; 
+        const variantCount = SHIP_VARIANT_COUNTS[shipId] || DEFAULT_VARIANT_COUNT;
+        const variantIndex = Math.abs(visualSeed) % variantCount;
+        const variantLetter = String.fromCharCode(65 + variantIndex);
+        return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.jpeg`;
+    }
+
+    static _generateCommodityPath(commodityName, visualSeed) {
+        if (!commodityName) return null;
+        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName];
+        if (variantCount === undefined) variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
+        if (variantCount <= 0) return null;
+        const variantIndex = Math.abs(visualSeed) % variantCount;
+        const variantLetter = String.fromCharCode(65 + variantIndex);
+        const fileNamePrefix = commodityName.replace(/ /g, '_');
+        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
+    }
+
+    // --- Public API ---
+
+    /**
+     * Generates the target image URL for a ship.
+     * Prefers a cached Blob URL (instant/offline) if available.
+     * Falls back to the relative network path.
      */
     static getShipImage(shipId, visualSeed = 0) {
-        const shipData = DB.SHIPS[shipId];
-        if (!shipData) return '';
-
-        const baseName = shipData.name; 
+        const path = this._generateShipPath(shipId, visualSeed);
+        if (!path) return '';
         
-        // 1. Determine how many variants this ship has
-        const variantCount = SHIP_VARIANT_COUNTS[shipId] || DEFAULT_VARIANT_COUNT;
-
-        // 2. Calculate the index (0 to Count-1)
-        const variantIndex = Math.abs(visualSeed) % variantCount;
-
-        // 3. Convert index to letter (0='A', 1='B', 2='C', etc.)
-        const variantLetter = String.fromCharCode(65 + variantIndex);
-
-        // 4. Construct Path
-        return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.jpeg`;
+        if (this.blobCache.has(path)) {
+            return this.blobCache.get(path);
+        }
+        return path;
     }
 
     /**
      * Generates the guaranteed fallback path (Variant A).
-     * Used by the UI if a specific file is missing/broken.
-     * @param {string} shipId 
-     * @returns {string}
      */
     static getFallbackImage(shipId) {
         const shipData = DB.SHIPS[shipId];
         if (!shipData) return '';
-
         const baseName = shipData.name;
+        // Fallback images are rarely cached as blobs since they are emergency assets, 
+        // but we could extend hydration to them if needed.
         return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
     }
 
     /**
-     * Generates the target image path for a commodity based on the player's visual seed.
-     * Naming Convention: assets/images/commodities/[Name]/[Name_With_Underscores]_[Variant].png
-     * @param {string} commodityName - The name of the commodity (e.g., 'Water Ice').
-     * @param {number} visualSeed - The player's current visual seed integer.
-     * @returns {string} The relative path to the image asset.
+     * Generates the target image URL for a commodity.
+     * Prefers a cached Blob URL.
      */
     static getCommodityImage(commodityName, visualSeed = 0) {
-        if (!commodityName) return '';
+        const path = this._generateCommodityPath(commodityName, visualSeed);
+        if (!path) return '';
 
-        // 1. Determine count. Explicit 0 overrides default.
-        // We check for undefined to allow a commodity to be omitted from config and fallback to default.
-        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName];
-        if (variantCount === undefined) {
-            variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
+        if (this.blobCache.has(path)) {
+            return this.blobCache.get(path);
         }
-
-        // 2. Safety Check: If 0 or negative, return empty string (disables custom art)
-        if (variantCount <= 0) return '';
-
-        // 3. Calculate the index
-        const variantIndex = Math.abs(visualSeed) % variantCount;
-
-        // 4. Convert index to letter
-        const variantLetter = String.fromCharCode(65 + variantIndex);
-
-        // 5. Construct Path
-        // Folder preserves spaces: "Water Ice"
-        // Filename uses underscores: "Water_Ice_A.png"
-        const fileNamePrefix = commodityName.replace(/ /g, '_');
-        
-        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
+        return path;
     }
 
     /**
-     * Preloads images for a specific range of ships around a center index.
-     * This ensures assets are hot in the cache before they are displayed.
-     * @param {string[]} shipList - Array of ship IDs.
-     * @param {number} centerIndex - The current active index.
-     * @param {number} range - The number of neighbors to preload (e.g., 5).
-     * @param {number} visualSeed - The player's visual seed.
+     * Hydrates (Fetches, Stores, and Caches) a list of assets.
+     * This replaces the old "new Image()" preloading.
+     * @param {Array<{type: 'ship'|'commodity'|'location', id: string, seed?: number, path?: string}>} assetRequests 
+     */
+    static async hydrateAssets(assetRequests) {
+        const uniquePaths = new Set();
+        
+        // 1. Resolve logical paths
+        assetRequests.forEach(req => {
+            let path = null;
+            if (req.type === 'ship') {
+                path = this._generateShipPath(req.id, req.seed || 0);
+            } else if (req.type === 'commodity') {
+                const name = DB.COMMODITIES.find(c => c.id === req.id)?.name;
+                if (name) path = this._generateCommodityPath(name, req.seed || 0);
+            } else if (req.type === 'location') {
+                // Future-proofing: If DB.MARKETS has image properties
+                if (req.path) path = req.path; 
+            }
+            if (path) uniquePaths.add(path);
+        });
+
+        // 2. Process hydration
+        const promises = Array.from(uniquePaths).map(async (path) => {
+            // A. Check Memory Cache
+            if (this.blobCache.has(path)) return;
+
+            // B. Check Persistent Storage (IndexedDB)
+            try {
+                const storedBlob = await AssetStorageService.getAsset(path);
+                if (storedBlob) {
+                    const url = URL.createObjectURL(storedBlob);
+                    this.blobCache.set(path, url);
+                    return;
+                }
+            } catch (err) {
+                console.warn(`AssetService: DB read error for ${path}`, err);
+            }
+
+            // C. Fetch from Network (if not in DB)
+            try {
+                const response = await fetch(path);
+                if (!response.ok) throw new Error(`Network error ${response.status}`);
+                const blob = await response.blob();
+
+                // Save to DB for next time (Fire & Forget/Await)
+                await AssetStorageService.saveAsset(path, blob);
+
+                // Update Memory Cache
+                const url = URL.createObjectURL(blob);
+                this.blobCache.set(path, url);
+            } catch (err) {
+                // Warning suppressed for missing optional assets
+                // console.warn(`AssetService: Failed to hydrate ${path}`, err);
+            }
+        });
+
+        // Wait for all to complete (or fail gracefully)
+        await Promise.all(promises);
+    }
+
+    /**
+     * INTELLIGENT GLOBAL HYDRATOR
+     * Orchestrates the loading of the entire game in two phases: Critical and Background.
+     * @param {object} playerState - The current player state object.
+     */
+    static async hydrateGameAssets(playerState) {
+        const seed = playerState?.visualSeed || 0;
+        const currentTier = playerState?.revealedTier || 1;
+        const ownedShips = playerState?.ownedShipIds || [];
+        const activeShip = playerState?.activeShipId;
+
+        // --- BATCH 1: CRITICAL ASSETS (Immediate) ---
+        // These are required for the very first screen the player sees.
+        const criticalQueue = [];
+
+        // 1. Starter Ships (Always safe to load)
+        [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].forEach(id => {
+            criticalQueue.push({ type: 'ship', id, seed });
+        });
+
+        // 2. Player's Owned Ships (if loaded game)
+        if (activeShip) criticalQueue.push({ type: 'ship', id: activeShip, seed });
+        ownedShips.forEach(id => criticalQueue.push({ type: 'ship', id, seed }));
+
+        // 3. Current Tier Commodities (Visible in Market)
+        DB.COMMODITIES.forEach(c => {
+            if (c.tier <= currentTier) {
+                criticalQueue.push({ type: 'commodity', id: c.id, seed });
+            }
+        });
+
+        console.log(`[AssetService] Hydrating ${criticalQueue.length} Critical Assets...`);
+        await this.hydrateAssets(criticalQueue); // Await this one
+
+        // --- BATCH 2: BACKGROUND ASSETS (Deferred) ---
+        // These load silently while the player is reading Intro or browsing.
+        setTimeout(() => {
+            this.hydrateAllShips(seed);
+            this.hydrateAllCommodities(seed);
+            
+            // Future Location Art
+            const locationQueue = [];
+            DB.MARKETS.forEach(m => {
+                if (m.bgImage) locationQueue.push({ type: 'location', path: m.bgImage });
+                if (m.imagePath) locationQueue.push({ type: 'location', path: m.imagePath });
+            });
+            if (locationQueue.length > 0) this.hydrateAssets(locationQueue);
+
+        }, 2000); // 2 second delay to let UI thread settle
+    }
+
+    /**
+     * Helper: Queues hydration for EVERY ship in the database.
+     * Useful for Debug Mode or background caching.
+     * @param {number} seed 
+     */
+    static hydrateAllShips(seed = 0) {
+        const queue = Object.keys(DB.SHIPS).map(id => ({ type: 'ship', id, seed }));
+        console.log(`[AssetService] Background hydrating all ${queue.length} ships...`);
+        this.hydrateAssets(queue);
+    }
+
+    /**
+     * Helper: Queues hydration for EVERY commodity in the database.
+     * @param {number} seed 
+     */
+    static hydrateAllCommodities(seed = 0) {
+        const queue = DB.COMMODITIES.map(c => ({ type: 'commodity', id: c.id, seed }));
+        console.log(`[AssetService] Background hydrating all ${queue.length} commodities...`);
+        this.hydrateAssets(queue);
+    }
+
+    /**
+     * Legacy Adapter: Preloads images for a specific range of ships.
+     * Now routes to hydrateAssets.
      */
     static preloadBuffer(shipList, centerIndex, range, visualSeed) {
         const min = Math.max(0, centerIndex - range);
         const max = Math.min(shipList.length - 1, centerIndex + range);
-
+        
+        const requests = [];
         for (let i = min; i <= max; i++) {
-            const src = this.getShipImage(shipList[i], visualSeed);
-            // Create a detached Image object to force browser download/cache
-            const img = new Image();
-            img.src = src;
+            requests.push({ type: 'ship', id: shipList[i], seed: visualSeed });
         }
+        
+        // Trigger hydration in background
+        this.hydrateAssets(requests);
     }
 
     /**
-     * Helper to preload the initial view state.
-     * Should be called on Game Start and Travel Complete.
-     * @param {object} gameState - Current game state.
-     * @param {boolean} isHangarMode - Initial mode.
+     * Legacy Adapter: Initial preload helper.
      */
     static performInitialPreload(gameState, isHangarMode) {
+        // This is largely redundant due to hydrateGameAssets but kept for carousel-specific logic
         const { player, market } = gameState;
         const shipList = isHangarMode 
             ? player.ownedShipIds 
-            : Object.keys(market.shipyardStock || {}).map(k => k); // Approx list extraction
+            : Object.keys(market.shipyardStock || {}).map(k => k);
         
         const activeIndex = isHangarMode 
             ? (gameState.uiState.hangarActiveIndex || 0) 
             : (gameState.uiState.shipyardActiveIndex || 0);
 
-        // Preload visible + 5 neighbors
         this.preloadBuffer(shipList, activeIndex, 5, player.visualSeed);
     }
 }
@@ -13356,9 +13596,8 @@ export class AssetService {
 import { GAME_RULES } from '../../data/constants.js';
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
-// --- VIRTUAL WORKBENCH: IMPORT ---
 import { GameAttributes } from '../../services/GameAttributes.js';
-// --- END VIRTUAL WORKBENCH ---
+import { AssetService } from '../../services/AssetService.js'; // IMPORT ADDED
 
 /**
  * @class MarketService
@@ -13787,6 +14026,13 @@ export class MarketService {
                 day: this.gameState.day,
                 shipsForSale: shipsForSaleIds
             };
+
+            // --- [[START]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
+            // Whenever new stock is generated (e.g. during travel), immediately 
+            // hydrate those specific ships so they are ready when the user visits the shipyard.
+            const spawnRequests = shipsForSaleIds.map(shipId => ({ type: 'ship', id: shipId, seed: player.visualSeed }));
+            AssetService.hydrateAssets(spawnRequests);
+            // --- [[END]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
         });
     }
 }
@@ -13867,14 +14113,10 @@ export class TravelService {
         }
 
         // 2. Apply Attribute/Upgrade Modifier
-        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
+        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
 
-        // 3. Handle Special "Space Folding" Case (Increases fuel cost)
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
-        if (shipAttributes.includes('ATTR_SPACE_FOLDING')) {
-            requiredFuel = Math.round(requiredFuel * 1.2);
-        }
         // --- END UPGRADE SYSTEM ---
 
         if (effectiveMaxFuel < requiredFuel) {
@@ -13921,7 +14163,8 @@ export class TravelService {
         }
 
         // 2. Apply Generic Attribute Modifiers (Multiplicative)
-        const attrFuelMod = GameAttributes.getFuelCostModifier(upgrades);
+        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
+        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
         
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
@@ -13939,11 +14182,6 @@ export class TravelService {
             if (attrId === 'ATTR_SLEEPER') {
                 travelInfo.time *= 4.5;
                 travelInfo.fuelCost = 0; // Ensure 0 fuel
-            }
-            // Space Folding (Fixed 1 day, 1.2x Fuel)
-            if (attrId === 'ATTR_SPACE_FOLDING') {
-                travelInfo.time = 1;
-                travelInfo.fuelCost *= 1.2;
             }
         });
 
@@ -15858,15 +16096,16 @@ import { LOCATION_IDS, UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '..
 // ==========================================
 
 const UPGRADE_DEFINITIONS = {
-    // --- Engine Mods (Speed vs Fuel) ---
+    // --- Engine Mods (Speed vs Fuel Burn) ---
+    // NOTE: These now affect MOD_FUEL_BURN (Travel Efficiency), not MOD_FUEL_PRICE (Station Cost).
     'UPGRADE_ENGINE_I': {
         id: 'UPGRADE_ENGINE_I',
         name: 'Engine Mod',
         value: 5000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Calibrated thrusters increase travel speed by 5% with a 15% increase in fuel consumption.',
-        statText: 'Travel Speed +5%, Fuel Cost +15%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.15 }
+        statText: 'Travel Speed +5%, Fuel Burn +15%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.95, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.15 }
     },
     'UPGRADE_ENGINE_II': {
         id: 'UPGRADE_ENGINE_II',
@@ -15874,8 +16113,8 @@ const UPGRADE_DEFINITIONS = {
         value: 15000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'High-performance injectors boost ship speed by 10% while requiring 30% more fuel per trip.',
-        statText: 'Travel Speed +10%, Fuel Cost +30%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.30 }
+        statText: 'Travel Speed +10%, Fuel Burn +30%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.90, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.30 }
     },
     'UPGRADE_ENGINE_III': {
         id: 'UPGRADE_ENGINE_III',
@@ -15883,8 +16122,8 @@ const UPGRADE_DEFINITIONS = {
         value: 45000,
         pillColor: UPGRADE_COLORS.BLUE,
         description: 'Experimental overcharged drives maximize travel speed by 25% for a 45% increase in fuel costs.',
-        statText: 'Travel Speed +25%, Fuel Cost +45%',
-        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_COST]: 1.45 }
+        statText: 'Travel Speed +25%, Fuel Burn +45%',
+        modifiers: { [UPGRADE_TYPES.MOD_TRAVEL_SPEED]: 0.75, [UPGRADE_TYPES.MOD_FUEL_BURN]: 1.45 }
     },
 
     // --- Signal Hackers (Buy Price Discount) ---
@@ -16004,6 +16243,7 @@ const UPGRADE_DEFINITIONS = {
     },
 
     // --- Fuel Pass (Refuel Cost Discount) ---
+    // NOTE: These now affect MOD_FUEL_PRICE (Station Price), avoiding double-tax interaction with Engine Mods.
     'UPGRADE_FUELPASS_I': {
         id: 'UPGRADE_FUELPASS_I',
         name: 'Fuel Pass',
@@ -16011,7 +16251,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'A standard fueling subscription secures a baseline 20% discount at all participating starports.',
         statText: 'Refuel Cost -20%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.80 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.80 }
     },
     'UPGRADE_FUELPASS_II': {
         id: 'UPGRADE_FUELPASS_II',
@@ -16020,7 +16260,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'This premium fueling membership utilizes encrypted credentials to grant 50% off all propellant purchases.',
         statText: 'Refuel Cost -50%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.50 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.50 }
     },
     'UPGRADE_FUELPASS_III': {
         id: 'UPGRADE_FUELPASS_III',
@@ -16029,7 +16269,7 @@ const UPGRADE_DEFINITIONS = {
         pillColor: UPGRADE_COLORS.INDIGO,
         description: 'Elite system-wide fueling clearance provides a permanent 75% discount on all vessel refueling costs.',
         statText: 'Refuel Cost -75%',
-        modifiers: { [UPGRADE_TYPES.MOD_FUEL_COST]: 0.25 }
+        modifiers: { [UPGRADE_TYPES.MOD_FUEL_PRICE]: 0.25 }
     },
 
     // --- Repair Pass (Repair Cost Discount) ---
@@ -16271,13 +16511,23 @@ export const GameAttributes = {
     // --- Specific Modifiers ---
 
     /**
-     * Calculates fuel cost modifier based on installed upgrades (Multiplicative).
-     * Used for both Travel burn and Station refuel price if logic requires.
+     * Calculates fuel burn modifier based on installed upgrades (Multiplicative).
+     * Used for Travel consumption.
      * @param {string[]} upgrades 
      * @returns {number} Multiplier.
      */
-    getFuelCostModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_COST);
+    getFuelBurnModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_BURN);
+    },
+
+    /**
+     * Calculates fuel PRICE modifier based on installed upgrades (Multiplicative).
+     * Used for station refueling cost.
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    getFuelPriceModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_PRICE);
     },
 
     /**
@@ -16317,8 +16567,11 @@ export const GameAttributes = {
      * @returns {number} Multiplier.
      */
     getServiceCostModifier(upgrades = [], serviceType) {
-        const modType = serviceType === 'refuel' ? UPGRADE_TYPES.MOD_FUEL_COST : UPGRADE_TYPES.MOD_REPAIR_COST;
-        return this._getMultiplicativeModifier(upgrades, modType);
+        if (serviceType === 'refuel') {
+            return this.getFuelPriceModifier(upgrades);
+        } else {
+            return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_REPAIR_COST);
+        }
     },
 
     /**
@@ -23452,7 +23705,8 @@ export class PlayerActionService {
         }
         
         // Apply Fuel Pass Discount
-        const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
+        // Changed to use getFuelPriceModifier (Mod Fuel Price)
+        const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
         costPerTick *= attrMod;
         // --- END UPGRADE SYSTEM ---
 
@@ -23593,9 +23847,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.09] - 2026-1-15
+-  optimized art asset loading
+-  tuned fuel scaler from 3 to 2.5
+-  raised starter ship fuel capacity
+-  fixed engine mod miscalculation
+-  updated meta files
+
 ## [34.05] - 2026-1-15
 -  fixed news ticker redraw for the third time
--  updated meta files
+-  updated meta files. 
 
 ## [34.04] - 2026-1-14
 -  tuning screen polish
@@ -25128,10 +25389,7 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- Optimizing ship art asset use
-- Review trip fuel requirements and ship fuel tanks for balance
 - Expand station quirks
-- Verify effective function of ship upgrades
 
 ## Immediate Concerns, Bugs
 
@@ -25165,93 +25423,135 @@ All notable plans and desirables for the Orbital Trading project will be documen
 --- END OF FILE: ./meta/ROADMAP.md ---
 
 --- START OF FILE: ./meta/SERVICES.md ---
-# Orbital Trading - Service Responsibilities
-**Version:** 2.2
-**Source:** `js/services/` directory structure and `js/data/` structure
+# Service Responsibility & Dependency Matrix
 
-This document defines the single responsibility of each service in the application and notes key static data dependencies.
+## Core Architecture
+**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
 
 ---
 
-### Core Services
+### 1. State Management
+* **GameState (F009)**
+    * **Responsibility**: Single source of truth. Holds all mutable data (`player`, `market`, `day`, `ships`).
+    * **Key Behavior**: Emits notifications to subscribers (UIManager) whenever `setState` is called.
+    * **Dependencies**: None (Leaf node).
 
--   **`GameState.js`**: Manages the central `state` object, provides load/save/reset functionality, and allows other services to subscribe to state changes.
--   **`SimulationService.js`**: Acts as the main game loop "heartbeat" (facade), triggering simulation ticks for all other time-based services (Time, Market) and delegating player actions and UI messages (e.g., to the `NewsTickerService`).
--   **`EventManager.js`**: Instantiates specialized handlers, binds global listeners, and delegates event handling to the appropriate module. Now includes explicit drag-suppression for interactive targets.
--   **`UIManager.js`**: Manages all DOM manipulation, screen rendering, UI state (modals, toasts), and data-binding updates based on GameState changes. **Crucially**, handles the layout duplication for infinite scrolling components (News Ticker) to ensure CSS geometry integrity.
--   **`LoggingService.js`**: Provides a centralized service for logging debug, info, warn, and error messages to the console.
--   **`NewsTickerService.js`**: Manages the dynamic message queue. **Strictly Single-Source**: It aggregates messages into a single sequence but does *not* handle the duplication required for the infinite loop effect (this is a UI concern). **Uses:** `js/data/flavorAds.js`, `js/data/intelMessages.js`, `js/data/database.js`.
+### 2. Game Logic Services
+* **PlayerActionService (F034)**
+    * **Responsibility**: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
+    * **Key Behavior**: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses `MOD_FUEL_PRICE` for refueling costs.
+    * **Dependencies**: `GameState`, `UIManager`, `MissionService`, `MarketService`, `GameAttributes`.
 
-### Game Logic Services
+* **GameAttributes (F069)**
+    * **Responsibility**: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
+    * **Key Behavior**: Provides definition objects for Upgrade IDs. Distinguishes between `MOD_FUEL_BURN` (Travel) and `MOD_FUEL_PRICE` (Station).
+    * **Dependencies**: None.
 
-#### Player
+* **TravelService (F036)**
+    * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
+    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. Uses `MOD_FUEL_BURN` for consumption logic.
+    * **Dependencies**: `GameState`, `TimeService`.
 
--   **`PlayerActionService.js`**: Contains all business logic for player-initiated actions with immediate effects (buy/sell items/ships, install upgrades, use services). Handles the validation of "Effective Stats" (e.g. checking cargo space against upgraded capacity).
+* **MarketService (F010)**
+    * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
+    * **Key Behavior**: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Triggers asset hydration when new ships are spawned in shipyards.
+    * **Dependencies**: `GameState`, `IntelService`, `AssetService`.
 
-#### World
+* **IntelService (F057)**
+    * **Responsibility**: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
+    * **Key Behavior**: Creates temporary `activeIntelDeal` objects in GameState that override market prices.
+    * **Dependencies**: `GameState`.
 
--   **`TimeService.js`**: Manages the in-game clock, advancing the `GameState.day` and triggering time-based events (birthdays, interest, market updates) via the `SimulationService` facade. Calls `IntelService.generateIntelRefresh()` and checks for `activeIntelDeal` expiration. **Uses:** `js/data/age_events.js`.
--   **`TravelService.js`**: Handles the business logic for player travel, initiating trips, calculating costs/time, and managing random events. Applies modifiers from installed upgrades (e.g. Engine Mod, Radar Mod). **Uses:** `js/data/events.js` (via `eventEffectResolver`).
+* **TimeService (F035)**
+    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
+    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
+    * **Dependencies**: `GameState`, `MarketService`.
 
-#### Simulation
+* **MissionService (F018)**
+    * **Responsibility**: procedural mission generation and tracking.
+    * **Key Behavior**: Checks prerequisites (wealth, location) to offer missions. Tracks completion status.
+    * **Dependencies**: `GameState`.
 
--   **`MarketService.js`**: Simulates the galactic economy. Manages all price evolution (mean reversion, volatility) and inventory replenishment. It implements a "Delayed Supply" model where player actions (buy/sell) change stock levels.
-    * **Price Logic**: `getPrice` checks for `activeIntelDeal` overrides first. It also accepts an `applyModifiers` flag to apply player-specific discounts (e.g. Signal Hacker) for display and transactions.
--   **`IntelService.js`**: The "brain" of the Intel Market system. Manages the entire lifecycle of intel: procedural generation, persistence, dynamic pricing, and the core purchase logic. **Uses:** `js/data/intelContent.js`.
--   **`MissionService.js`**: Manages the state of player missions, checking objective progress and updating `GameState.missions` when criteria are met. **Uses:** `js/data/missions.js`.
+* **TutorialService (F016)**
+    * **Responsibility**: Manages the interactive tutorial overlay.
+    * **Key Behavior**: Watches GameState for specific triggers to advance steps or lock UI elements.
+    * **Dependencies**: `GameState`, `UIManager`.
 
-#### Game & Assets
+---
 
--   **`IntroService.js`**: Manages the logic for the one-time introductory sequence and splash screen.
--   **`TutorialService.js`**: Controls the flow of the tutorial, managing steps and dispatching tutorial-specific UI events. **Uses:** `js/data/tutorials.js`.
--   **`AssetService.js`**: Centralizes the logic for generating dynamic asset paths (specifically for ships). Implements the "Modulo Variant" system to deterministically select visual variants based on the player's `visualSeed`. **Uses:** `js/data/assets_config.js`.
--   **`GameAttributes.js`**: The **Upgrade Registry**. Defines the metadata (name, cost, description, color) for all Ship Upgrades and Station Quirks. Acts as the central rule engine for modifiers, distinguishing between **Additive** logic (Capacities, Repair Rate, Event Chance) and **Multiplicative** logic (Costs, Prices, Time). **Dependencies**: None.
+### 3. UI & Presentation Services
+* **UIManager (F017)**
+    * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
+    * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
+    * **Dependencies**: `GameAttributes`, `IntelService`, `IntelMarketRenderer`, `EffectsManager`.
 
-### UI/Event Handlers
+* **IntelMarketRenderer (F058)**
+    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab.
+    * **Key Behavior**: Separates the complex shop logic from the main `IntelScreen` shell.
+    * **Dependencies**: `IntelService`.
 
--   **`ActionClickHandler.js`**: Handles general `data-action` click events. Now handles the "Upgrade Installation" flow.
--   **`MarketEventHandler.js`**: Manages complex UI interactions specific to the Market screen commodity cards.
--   **`HoldEventHandler.js`**: Implements the "click-and-hold" functionality for buttons (e.g., refuel/repair, market quantity steppers).
--   **`CarouselEventHandler.js`**: Manages the swipe/drag/wheel logic for carousel components (e.g., Hangar ship selector).
--   **`TooltipHandler.js`**: Attaches and manages global listeners to show/hide tooltips, price graphs, etc., on hover/click.
--   **`TravelAnimationService.js`**: Controls the visual "travel animation" modal when the player travels.
+* **NewsTickerService (F053)**
+    * **Responsibility**: Manages the scrolling text bar.
+    * **Key Behavior**: Aggregates flavor text, system alerts, and intel rumors into a seamless loop.
+    * **Dependencies**: `GameState`.
+
+* **AssetService (F065)**
+    * **Responsibility**: Centralized path resolution and "Hydration" for visual assets.
+    * **Key Behavior**: Acts as a high-level manager for the "Asset Locker". Checks memory cache first, then `AssetStorageService`, then network. Converts Blobs to URLs.
+    * **Dependencies**: `AssetStorageService`, `assets_config.js`.
+
+* **AssetStorageService (F070)**
+    * **Responsibility**: Low-level IndexedDB wrapper.
+    * **Key Behavior**: Manages the `OrbitalAssetsDB`. Stores raw `Blob` data to prevent iOS cache eviction.
+    * **Dependencies**: None (Native IndexedDB API).
+
+---
+
+### 4. Input & Event Handling
+* **EventManager (F015)**: The root listener. Binds global click/touch events.
+* **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
+* **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
+* **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
+* **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
+* **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
+* **TravelAnimationService.js**: Controls the visual "travel animation" modal when the player travels.
 
 ### UI/Renderers
 
--   **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
+* **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
 
 ### Event Effects
 
--   **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
--   **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
--   **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
+* **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
+* **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
+* **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
 
--   **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
--   **`BaseEffect.js`**: The abstract base class for all visual effects.
+* **`EffectsManager.js`**: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
+* **`BaseEffect.js`**: The abstract base class for all visual effects.
 
 ### Debug & Automation
 
--   **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities.
--   **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy.
+* **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Triggers asset hydration for debug actions.
+* **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy.
 
 ---
 
 ### Static Data Files (`js/data/`)
 
--   **`database.js`**: Aggregates and exports static game data imported from other modules.
--   **`ship_database.js`**: Defines the static data for all player-tradable ships.
--   **`assets_config.js`**: Defines configuration for ship asset variants.
--   **`constants.js`**: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
--   **`age_events.js`**: Defines static data for narrative events triggered by game progression.
--   **`events.js`**: Defines static data for random events encountered during travel.
--   **`missions.js`**: Defines static data for all player missions.
--   **`tutorials.js`**: Defines static data for all tutorial batches and steps.
--   **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
--   **`intelMessages.js`**: Defines message templates for free and purchased market intel.
--   **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
--   **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
+* **`database.js`**: Aggregates and exports static game data imported from other modules.
+* **`ship_database.js`**: Defines the static data for all player-tradable ships.
+* **`assets_config.js`**: Defines configuration for ship asset variants.
+* **`constants.js`**: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
+* **`age_events.js`**: Defines static data for narrative events triggered by game progression.
+* **`events.js`**: Defines static data for random events encountered during travel.
+* **`missions.js`**: Defines static data for all player missions.
+* **`tutorials.js`**: Defines static data for all tutorial batches and steps.
+* **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
+* **`intelMessages.js`**: Defines message templates for free and purchased market intel.
+* **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
+* **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -25457,6 +25757,36 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Eliminates visual jitter caused by JS/CSS measurement mismatches.
     * **Pro**: Prevents "blinking" on loop reset by keeping the layer promoted to the GPU.
     * **Con**: Creates a slightly more complex DOM structure (`.news-ticker-content > .ticker-block`).
+
+---
+
+### ADR-014: Persistent Asset Architecture (IndexedDB "Locker")
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: On iOS devices (the primary target), the OS aggressively evicts web cache to save space. This resulted in persistent "pop-in" or missing assets for the player, breaking immersion. Standard browser caching was unreliable.
+* **Decision**: Implemented a manual "Locker" system using **IndexedDB**.
+    1.  **`AssetStorageService`**: A low-level wrapper handles reading/writing raw `Blob` data to an IndexedDB store named `OrbitalAssetsDB`.
+    2.  **Hydration**: On game start (and key events like travel), `AssetService` "hydrates" critical assets. It checks IDB first. If missing, it fetches from the network, saves the Blob to IDB, and creates a `blob:` URL.
+    3.  **Memory Cache**: `AssetService` maintains a `Map` of file paths to `blob:` URLs for instant, synchronous access during rendering.
+* **Consequences**:
+    * **Pro**: Assets act like "installed" data (`Documents & Data` on iOS) and are protected from cache eviction.
+    * **Pro**: Zero-latency rendering for hydrated assets (no network request, even to localhost).
+    * **Pro**: Enables seamless offline play after initial load.
+    * **Con**: Increases initial memory usage slightly due to Blob URLs. Requires manual management of the asset lifecycle.
+
+---
+
+### ADR-015: Split Fuel Economy Logic
+
+* **Status**: Accepted (2026-01-15)
+* **Context**: The `MOD_FUEL_COST` attribute was overloading two distinct mechanics: travel efficiency (burn rate) and service cost (station prices). This meant "Engine Mods" (which increase burn) inadvertently made refueling more expensive per unit, creating a "double tax" on the player.
+* **Decision**: The logic was split into two distinct attribute types:
+    1.  **`MOD_FUEL_BURN`**: Multiplies the amount of fuel consumed during travel (TravelService). Affected by Engine Mods.
+    2.  **`MOD_FUEL_PRICE`**: Multiplies the credit cost of purchasing fuel at a station (PlayerActionService). Affected by Fuel Pass.
+* **Consequences**:
+    * **Pro**: Decouples mechanics, allowing for finer balance control.
+    * **Pro**: Fixes the "Double Tax" bug, making Engine Mods a fair trade-off (Speed vs. Efficiency) rather than a pure penalty.
+    * **Pro**: Clarifies the UI stats for the player.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -25469,7 +25799,8 @@ The application is built on a strict **unidirectional data flow** model. This en
 -   **Input Layer (`EventManager` & Handlers)**: Captures all user interactions and translates them into specific, semantic game actions. Implements explicit drag-suppression for actionable elements to ensure tap responsiveness on mobile.
 -   **Logic Layer (`SimulationService` & Sub-Services)**: Executes the core game logic in response to actions from the input layer. This is the only layer authorized to request a state change.
 -   **State Layer (`GameState`)**: The single source of truth. It holds all mutable game data and notifies the UI layer when changes occur.
--   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it. *Note: Components (e.g., `HangarScreen`) now utilize helper services like `AssetService` to resolve static resource paths before rendering.*
+-   **Output Layer (`UIManager`)**: Renders the UI based on the current data from the `GameState`. It is a "dumb" layer that only reads state and displays it.
+-   **Asset Layer (`AssetService` & `AssetStorageService`)**: A new persistent layer. Manages the hydration of visual assets from network to IndexedDB ("Locker") to Memory Cache (`blob:` URLs) to ensure zero-latency rendering.
 
 ---
 
@@ -25503,8 +25834,35 @@ graph TD
 
     style F fill:#2a9d8f,stroke:#fff,stroke-width:2px
     style G fill:#f4a261,stroke:#fff,stroke-width:2px
-Detailed Flow Example: Intel Market (Local Data Broker)
-This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
+Asset Hydration Flow (Persistent Architecture)
+This flow ensures assets are loaded and "locked" into device storage to prevent iOS cache eviction and pop-in.
+
+Code snippet
+
+graph TD
+    subgraph Init / Event
+        A[Game Start / Travel / Debug] --> B[AssetService.hydrateAssets(list)];
+    end
+
+    subgraph Asset Logic
+        B --> C{In Memory Cache?};
+        C -- Yes --> D[Return blob: URL];
+        C -- No --> E{In IndexedDB?};
+        
+        E -- Yes --> F[Read Blob];
+        F --> G[Create blob: URL];
+        G --> H[Update Memory Cache];
+        
+        E -- No --> I[Fetch from Network];
+        I --> J[Save Blob to IndexedDB];
+        J --> G;
+    end
+
+    subgraph Render
+        D & H --> K[UIManager / DOM];
+        K --> L[Image Element src="blob:..."];
+    end
+Detailed Flow Example: Intel Market (Local Data Broker) This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
 
 Code snippet
 
@@ -25541,8 +25899,7 @@ graph TD
     end
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Detailed Flow Example: Upgrade Installation (Destructive Replacement)
-This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
+Detailed Flow Example: Upgrade Installation (Destructive Replacement) This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
 
 Code snippet
 
@@ -25576,8 +25933,7 @@ graph TD
     end
 
     style P fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Detailed Flow Example: Animated Ship Purchase
-This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
+Detailed Flow Example: Animated Ship Purchase This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
 
 Code snippet
 
@@ -25618,96 +25974,176 @@ graph TD
     style F fill:#e76f51,stroke:#fff,stroke-width:2px
     style G fill:#e76f51,stroke:#fff,stroke-width:2px
 
-### 4. `meta/SERVICES.md`
-**Updates:** Updated `GameAttributes` description to reflect its new role as a Registry. Updated `PlayerActionService` and `UIManager` to include new upgrade-related responsibilities.
+### 4. `meta/ECONOMIC_BEHAVIOR.md`
+**Updates:** Updated Ship Upgrade Economy section to clarify the split fuel logic.
 
 ```markdown
-# Service Responsibility & Dependency Matrix
+CURRENT ECONOMIC BEHAVIOR
+Orbital Trading Gameplay Data
+Last Edit: 1/15/26, ver. 35.00
+This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
-## Core Architecture
-**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
+I. Core Price Mechanics Explained
+These are the foundational rules that establish the baseline price of a commodity before any player actions are taken.
+Galactic Average: This is the foundational, system-wide average price for a commodity. Think of it as the "default" price before any local factors.
+Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
+An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
+An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
+Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This new system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes.
 
----
+II. Local Price Influences by Location
+This is the full list of price influences for every market.
+Venus
+Exports (Price Reverts Toward a Lower Baseline):
+Cloned Organs
+Neural Processors
+Imports (Price Reverts Toward a Higher Baseline):
+Sentient AI Cores
+Earth
+Exports (Price Reverts Toward a Lower Baseline):
+Hydroponics
+Imports (Price Reverts Toward a Higher Baseline):
+Cloned Organs
+Xeno-Geologicals
+The Moon
+Exports (Price Reverts Toward a Lower Baseline):
+Plasteel
+Refined Propellant
+Graphene Lattices
+Imports (Price Reverts Toward a Higher Baseline):
+Water Ice
+Hydroponics
+Mars
+Exports (Price Reverts Toward a Lower Baseline):
+Plasteel
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cryo-Sleep Pods
+Water Ice
+Graphene Lattices
+The Belt
+Exports (Price Reverts Toward a Lower Baseline):
+Water Ice
+Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cybernetics
+The Exchange
+Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Jupiter
+Exports (Price Reverts Toward a Lower Baseline):
+Refined Propellant
+Atmo Processors
+Imports (Price Reverts Toward a Higher Baseline):
+Neural Processors
+Saturn
+Imports (Price Reverts Toward a Higher Baseline):
+Cryo-Sleep Pods
+Cloned Organs
+Uranus
+Exports (Price Reverts Toward a Lower Baseline):
+Atmo Processors
+Imports (Price Reverts Toward a Higher Baseline):
+Sentient AI Cores
+Neural Processors
+Neptune
+Imports (Price Reverts Toward a Higher Baseline):
+Plasteel (Note: This is a strong import with a 0.1 modifier, so prices will trend very high)
+Refined Propellant
+Kepler's Eye
+Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Pluto
+Exports (Price Reverts Toward a Lower Baseline):
+Water Ice
+Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline):
+Hydroponics
+Cybernetics
+Cloned Organs
 
-### 1. State Management
-* **GameState (F009)**
-    * **Responsibility**: Single source of truth. Holds all mutable data (`player`, `market`, `day`, `ships`).
-    * **Key Behavior**: Emits notifications to subscribers (UIManager) whenever `setState` is called.
-    * **Dependencies**: None (Leaf node).
+III. Player-Driven Market Dynamics & Simulation
+Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
+1. Force: Availability Pressure (The Delayed Market Shock)
+This is the new, unified force that replaces the old "Player Pressure" and "Scarcity Pressure." It is the primary driver of all player-initiated price changes.
+Mechanic: This force directly simulates supply and demand. When a player buys or sells, they immediately change the item's quantity at that market. This change in stock is the only thing that drives the price change.
+Technical Detail: In evolveMarketPrices, the system calculates an availabilityRatio (current quantity / targetStock). This ratio is used to create an availabilityEffect.
+The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game checks if 7 days have passed since the lastPlayerInteractionTimestamp. The availabilityEffect is only calculated after this 7-day window, preventing players from manipulating a price and exploiting it in the same visit.
+The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
+Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to crash by 50% after the 7-day delay.
+Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
+2. Force: Price Lock (The Core Loop)
+This is the system that makes market manipulation viable.
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 4% pull back to the local average) is disabled for a long duration.
+Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
+Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
+Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
+Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade, allowing them to travel and return to exploit the price they created.
+3. Force: Depletion Bonus (The Panic)
+A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
+Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
+Trigger: When a purchase reduces inventoryItem.quantity to <= 0.
+Threshold Check: The game checks if the amount purchased was >= 8% of the item's calculated targetStock.
+Cooldown Check: It then checks if 365 days have passed since the last bonus (depletionBonusDay).
+Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 days, evolveMarketPrices applies a 1.5x priceHikeMultiplier to the availabilityEffect, causing the price to rise 50% faster than normal.
+4. Force: Inventory Replenishment (The Bottleneck)
+The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
+Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
+Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week.
+Effect: This slow 10% rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
+Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
+5. Force: Market Memory (The Reset)
+The passive fail-safe that prevents the universe from being permanently altered.
+Mechanic: This is the "garbage collector" for markets the player abandons.
+Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 120 days.
+Effect: If the player has not traded that specific item at that specific location for 120 days, the item's state is completely reset.
+marketPressure is reset to 0.
+priceLockEndDay is reset to 0, re-enabling Mean Reversion.
+depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
 
-### 2. Game Logic Services
-* **PlayerActionService (F034)**
-    * **Responsibility**: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-    * **Key Behavior**: Validates actions against player credits/capacity, mutates GameState, logs transactions.
-    * **Dependencies**: `GameState`, `UIManager`, `MissionService`, `MarketService`, `GameAttributes`.
+IV. How The Market Behaves (Simple Terms)
+Here is a simple breakdown of those forces with examples.
+Availability Pressure (The Shock): You sell 1,000 "Plasteel" on Mars, doubling its stock.
+For the next 7 days, nothing happens to the price (this prevents you from buying it right back).
+On Day 7, the price crashes by 50%.
+Price Lock (Your Loop): You sell 1,000 "Plasteel" on Mars, crashing the price.
+That price will stay crashed (it won't recover from natural Mean Reversion) for a random 3-6 months.
+This allows you to travel, then return to buy it back at the low price you created.
+Depletion Bonus (The Panic): You buy the entire large stock of "Cybernetics" (e.g., 50 units) on Earth.
+For the next 7 days, the price for "Cybernetics" on Earth will rise 50% faster than normal.
+This won't happen if you just buy the last 2 units, and it can only happen once per year.
+Replenishment (The Bottleneck): A market wants 1,000 "Plasteel" but has 1,200 (a surplus of 200).
+It will not shed 200 units at once.
+It will only shed 10% of the 200-unit gap, losing 20 units per week.
+This is the "race": the price crash from your sale slowly gets weaker each week as the surplus shrinks.
+Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to the outer system and don't come back.
+After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
 
-* **GameAttributes (F069)**
-    * **Responsibility**: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
-    * **Key Behavior**: Provides definition objects for Upgrade IDs. Neutralizes legacy attribute calls.
-    * **Dependencies**: None.
+V. Commodity Behavior
+(See existing file for full Commodity Tier list...)
 
-* **TravelService (F036)**
-    * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
-    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution.
-    * **Dependencies**: `GameState`, `TimeService`.
+VI. Ship Upgrade Economy
+The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
 
-* **MarketService (F010)**
-    * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-    * **Key Behavior**: Implements "Delayed Supply" logic where player actions affect prices 7 days later.
-    * **Dependencies**: `GameState`, `IntelService`.
+1. Tiered Pricing Structure
+Upgrades are categorized into three tiers of rarity and power.
+Tier I (Common): 5,000 Credits. Entry-level modifications.
+Tier II (Rare): 15,000 Credits. Advanced specialized equipment.
+Tier III (Very Rare): 45,000 Credits. Experimental or military-grade technology.
 
-* **IntelService (F057)**
-    * **Responsibility**: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
-    * **Key Behavior**: Creates temporary `activeIntelDeal` objects in GameState that override market prices.
-    * **Dependencies**: `GameState`.
+2. Resale Value Logic
+Ships are now valued based on the sum of their hull and their installed components.
+Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
+Depreciation: The total is multiplied by the standard depreciation factor (0.75).
+Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
+Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
 
-* **TimeService (F035)**
-    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
-    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
-    * **Dependencies**: `GameState`, `MarketService`.
-
-* **MissionService (F018)**
-    * **Responsibility**: procedural mission generation and tracking.
-    * **Key Behavior**: Checks prerequisites (wealth, location) to offer missions. Tracks completion status.
-    * **Dependencies**: `GameState`.
-
-* **TutorialService (F016)**
-    * **Responsibility**: Manages the interactive tutorial overlay.
-    * **Key Behavior**: Watches GameState for specific triggers to advance steps or lock UI elements.
-    * **Dependencies**: `GameState`, `UIManager`.
-
----
-
-### 3. UI & Presentation Services
-* **UIManager (F017)**
-    * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
-    * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
-    * **Dependencies**: `GameAttributes`, `IntelService`, `IntelMarketRenderer`, `EffectsManager`.
-
-* **IntelMarketRenderer (F058)**
-    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab.
-    * **Key Behavior**: Separates the complex shop logic from the main `IntelScreen` shell.
-    * **Dependencies**: `IntelService`.
-
-* **NewsTickerService (F053)**
-    * **Responsibility**: Manages the scrolling text bar.
-    * **Key Behavior**: Aggregates flavor text, system alerts, and intel rumors into a seamless loop.
-    * **Dependencies**: `GameState`.
-
-* **AssetService (F065)**
-    * **Responsibility**: path resolution for visual assets.
-    * **Key Behavior**: Uses `visualSeed` to deterministically cycle through ship art variants.
-    * **Dependencies**: `assets_config.js`.
-
----
-
-### 4. Input & Event Handling
-* **EventManager (F015)**: The root listener. Binds global click/touch events.
-* **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
-* **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
-* **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
-* **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
-* **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
+3. Economic Modifiers
+Specific upgrades directly alter the player's profit margins and operating costs.
+Signal Hacker (Buy Price): Reduces the purchase price of all commodities by 3% / 5% / 7%.
+Guild Badge (Sell Price): Increases the sell price of all commodities by 3% / 5% / 7%.
+Fuel Pass (Service Cost): Reduces refueling costs at stations by 20% / 50% / 75%. Note: This does NOT affect travel consumption.
+Syndicate Badge (Debt): Reduces monthly debt interest by 20% / 30% / 50%.
+Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases fuel consumption (burn rate) by 15% / 30% / 45%. Note: This does NOT increase the station price of fuel, only the amount burned.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---

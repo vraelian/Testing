@@ -29,8 +29,9 @@ export function renderNavigationScreen(gameState) {
     if (player.activePerks[PERK_IDS.NAVIGATOR]) {
         fuelMod *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
     }
-    // Apply Engine Mod / Fuel Pass
-    fuelMod *= GameAttributes.getFuelCostModifier(upgrades);
+    // Apply Engine Mod (Fuel Burn)
+    // FIX: Updated method name from getFuelCostModifier to getFuelBurnModifier
+    fuelMod *= GameAttributes.getFuelBurnModifier(upgrades);
 
     // 2. Time Modifiers (Perk * Upgrade)
     let timeMod = 1.0;
@@ -42,7 +43,7 @@ export function renderNavigationScreen(gameState) {
 
     // 3. Legacy Attributes
     const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
-    const hasSpaceFolding = shipAttributes.includes('ATTR_SPACE_FOLDING');
+    // FIX: Removed ATTR_SPACE_FOLDING legacy check
     const hasSleeper = shipAttributes.includes('ATTR_SLEEPER');
     // ---------------------------------------------
 
@@ -64,14 +65,12 @@ export function renderNavigationScreen(gameState) {
                         displayTime = Math.max(1, Math.round(baseData.time * timeMod));
                         
                         // Legacy Overrides
-                        if (hasSpaceFolding) displayTime = 1;
                         if (hasSleeper) displayTime = Math.round(displayTime * 4.5); // Sleeper adds time
 
                         // Apply Fuel Logic (Mod * Base)
                         displayFuel = Math.round(baseData.fuelCost * fuelMod);
                         
                         // Legacy Overrides
-                        if (hasSpaceFolding) displayFuel = Math.round(baseData.fuelCost * 1.2); // Override/Penalty
                         if (hasSleeper) displayFuel = 0; // Sleeper is free
                     }
 
