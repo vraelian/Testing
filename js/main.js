@@ -66,8 +66,11 @@ const setAppHeight = () => {
 document.addEventListener('DOMContentLoaded', () => {
     // --- [[START]] PHASE 4: BACKGROUND ASSET HYDRATION ---
     // Initialize the Asset Locker immediately.
-    // By the time the user clicks "Start", critical assets will likely be loaded.
-    AssetService.init().catch(err => console.warn("[Main] Asset Locker failed to initialize:", err));
+    AssetService.init().then(() => {
+        // Phase 1 Optimization: Start loading Commodity/Location art 
+        // immediately on Boot (Title Screen).
+        AssetService.hydrateBootAssets();
+    }).catch(err => console.warn("[Main] Asset Locker failed to initialize:", err));
     // --- [[END]] PHASE 4: BACKGROUND ASSET HYDRATION ---
 
     // --- App Initialization ---
@@ -124,8 +127,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Stop the function
         }
 
-        // EULA is checked, proceed with game start
+        // --- [[START]] PRE-FLIGHT HYDRATION ---
+        // Optimization: Kick off critical asset loading NOW (async),
+        // but DO NOT block the UI thread with the full game initialization yet.
+        try {
+            const tempState = new GameState();
+            // We only hydrate if there's a save to read preferences/ships from.
+            // If it's a new game, the defaults (Boot Assets) are usually sufficient.
+            if (tempState.loadGame()) {
+                AssetService.hydrateGameAssets(tempState.getState());
+            }
+        } catch (e) {
+            console.warn("[Main] Pre-flight hydration warning:", e);
+        }
+        // --- [[END]] PRE-FLIGHT HYDRATION ---
+
+        // EULA is checked, trigger fade animation
         splashScreen.classList.add('splash-screen-hiding');
+        
+        // Wait for the animation to finish before starting the heavy game loop.
+        // This ensures the 2-second fade is smooth and visually complete.
         splashScreen.addEventListener('animationend', () => {
             splashScreen.style.display = 'none';
             startFn();
@@ -239,10 +260,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- [[START]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
         // Now that GameState is loaded/initialized, we trigger the comprehensive
-        // hydration logic. It will intelligently prioritize critical assets (Current Ship, Tier)
-        // and background load the rest (Future Ships, Locked Tiers).
-        const state = gameState.getState();
-        AssetService.hydrateGameAssets(state.player);
+        // hydration logic again. This is redundant but safe (cache hits) and handles 
+        // any new state created during startNewGame.
+        AssetService.hydrateGameAssets(gameState.getState());
         // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
     }
 });

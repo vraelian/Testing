@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.10] - 2026-1-16
+-  optimized load order
+
 ## [34.09] - 2026-1-15
 -  optimized art asset loading
 -  tuned fuel scaler from 3 to 2.5

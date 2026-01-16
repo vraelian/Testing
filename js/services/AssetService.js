@@ -119,6 +119,8 @@ export class AssetService {
         });
 
         // 2. Process hydration
+        // NOTE: Mapping the array creates Promises immediately, effectively starting the fetch.
+        // The order of the `assetRequests` array determines the order requests are queued by the browser.
         const promises = Array.from(uniquePaths).map(async (path) => {
             // A. Check Memory Cache
             if (this.blobCache.has(path)) return;
@@ -158,54 +160,104 @@ export class AssetService {
     }
 
     /**
-     * INTELLIGENT GLOBAL HYDRATOR
-     * Orchestrates the loading of the entire game in two phases: Critical and Background.
-     * @param {object} playerState - The current player state object.
+     * BOOT PHASE HYDRATION (Title Screen)
+     * Loads high-priority UI assets that are needed immediately upon entering the game.
+     * - All Commodity Icons (used in Market cards)
+     * - All Location Backgrounds (used in Screen backgrounds)
      */
-    static async hydrateGameAssets(playerState) {
-        const seed = playerState?.visualSeed || 0;
-        const currentTier = playerState?.revealedTier || 1;
-        const ownedShips = playerState?.ownedShipIds || [];
-        const activeShip = playerState?.activeShipId;
+    static async hydrateBootAssets() {
+        console.log("[AssetService] Starting Boot Phase Hydration...");
+        const bootQueue = [];
 
-        // --- BATCH 1: CRITICAL ASSETS (Immediate) ---
-        // These are required for the very first screen the player sees.
+        // 1. All Commodities
+        DB.COMMODITIES.forEach(c => {
+            bootQueue.push({ type: 'commodity', id: c.id, seed: 0 }); // Seed 0 is default for icons
+        });
+
+        // 2. Location/Travel Art
+        DB.MARKETS.forEach(m => {
+            if (m.bgImage) bootQueue.push({ type: 'location', path: m.bgImage });
+            if (m.imagePath) bootQueue.push({ type: 'location', path: m.imagePath });
+        });
+
+        await this.hydrateAssets(bootQueue);
+        console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
+    }
+
+    /**
+     * GAME START HYDRATION
+     * Context-aware loader that prioritizes assets based on the player's current view.
+     * @param {object} gameState - The full GameState object.
+     */
+    static async hydrateGameAssets(gameState) {
+        if (!gameState || !gameState.player) return;
+
+        const player = gameState.player;
+        const uiState = gameState.uiState || {};
+        const seed = player.visualSeed || 0;
+        
+        console.log("[AssetService] Starting Game Phase Hydration...");
         const criticalQueue = [];
 
-        // 1. Starter Ships (Always safe to load)
-        [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].forEach(id => {
+        // 1. Prioritize Hangar (Owned Ships)
+        // Sort by distance from the last active index
+        const ownedShips = player.ownedShipIds || [];
+        const activeHangarIndex = uiState.hangarActiveIndex || 0;
+        const sortedOwnedShips = this._sortByDistance(ownedShips, activeHangarIndex);
+        
+        sortedOwnedShips.forEach(id => {
             criticalQueue.push({ type: 'ship', id, seed });
         });
 
-        // 2. Player's Owned Ships (if loaded game)
-        if (activeShip) criticalQueue.push({ type: 'ship', id: activeShip, seed });
-        ownedShips.forEach(id => criticalQueue.push({ type: 'ship', id, seed }));
+        // 2. Prioritize Shipyard (Stock)
+        // Sort by distance from the last active index
+        const shipyardStock = gameState.market && gameState.market.shipyardStock 
+            ? Object.keys(gameState.market.shipyardStock) 
+            : [];
+        const activeShipyardIndex = uiState.shipyardActiveIndex || 0;
+        const sortedShipyardStock = this._sortByDistance(shipyardStock, activeShipyardIndex);
 
-        // 3. Current Tier Commodities (Visible in Market)
-        DB.COMMODITIES.forEach(c => {
-            if (c.tier <= currentTier) {
-                criticalQueue.push({ type: 'commodity', id: c.id, seed });
-            }
+        sortedShipyardStock.forEach(id => {
+            criticalQueue.push({ type: 'ship', id, seed });
         });
 
-        console.log(`[AssetService] Hydrating ${criticalQueue.length} Critical Assets...`);
-        await this.hydrateAssets(criticalQueue); // Await this one
+        // 3. Fallback: Active Ship (Double check to ensure it's loaded if not in lists)
+        if (player.activeShipId) {
+            criticalQueue.push({ type: 'ship', id: player.activeShipId, seed });
+        }
+
+        // Execute Critical Batch
+        console.log(`[AssetService] Hydrating ${criticalQueue.length} Context-Critical Assets...`);
+        await this.hydrateAssets(criticalQueue);
 
         // --- BATCH 2: BACKGROUND ASSETS (Deferred) ---
-        // These load silently while the player is reading Intro or browsing.
+        // Load everything else that might have been missed
         setTimeout(() => {
             this.hydrateAllShips(seed);
-            this.hydrateAllCommodities(seed);
-            
-            // Future Location Art
-            const locationQueue = [];
-            DB.MARKETS.forEach(m => {
-                if (m.bgImage) locationQueue.push({ type: 'location', path: m.bgImage });
-                if (m.imagePath) locationQueue.push({ type: 'location', path: m.imagePath });
-            });
-            if (locationQueue.length > 0) this.hydrateAssets(locationQueue);
+        }, 2000); 
+    }
 
-        }, 2000); // 2 second delay to let UI thread settle
+    /**
+     * Helper: Sorts an array of items based on their index distance from a center point.
+     * Emulates "Carousel" priority (Center -> Left/Right 1 -> Left/Right 2...).
+     * @param {Array} list - The array of IDs.
+     * @param {number} centerIndex - The focus index.
+     * @returns {Array} - The sorted array.
+     */
+    static _sortByDistance(list, centerIndex) {
+        if (!list || list.length === 0) return [];
+        
+        // Map items to a temporary object containing their original distance
+        const mapped = list.map((item, index) => {
+            const distance = Math.abs(index - centerIndex);
+            return { item, distance };
+        });
+
+        // Sort by distance ascending
+        mapped.sort((a, b) => a.distance - b.distance);
+
+        // Unwrap
+        return mapped.map(x => x.item);
     }
 
     /**
@@ -227,39 +279,5 @@ export class AssetService {
         const queue = DB.COMMODITIES.map(c => ({ type: 'commodity', id: c.id, seed }));
         console.log(`[AssetService] Background hydrating all ${queue.length} commodities...`);
         this.hydrateAssets(queue);
-    }
-
-    /**
-     * Legacy Adapter: Preloads images for a specific range of ships.
-     * Now routes to hydrateAssets.
-     */
-    static preloadBuffer(shipList, centerIndex, range, visualSeed) {
-        const min = Math.max(0, centerIndex - range);
-        const max = Math.min(shipList.length - 1, centerIndex + range);
-        
-        const requests = [];
-        for (let i = min; i <= max; i++) {
-            requests.push({ type: 'ship', id: shipList[i], seed: visualSeed });
-        }
-        
-        // Trigger hydration in background
-        this.hydrateAssets(requests);
-    }
-
-    /**
-     * Legacy Adapter: Initial preload helper.
-     */
-    static performInitialPreload(gameState, isHangarMode) {
-        // This is largely redundant due to hydrateGameAssets but kept for carousel-specific logic
-        const { player, market } = gameState;
-        const shipList = isHangarMode 
-            ? player.ownedShipIds 
-            : Object.keys(market.shipyardStock || {}).map(k => k);
-        
-        const activeIndex = isHangarMode 
-            ? (gameState.uiState.hangarActiveIndex || 0) 
-            : (gameState.uiState.shipyardActiveIndex || 0);
-
-        this.preloadBuffer(shipList, activeIndex, 5, player.visualSeed);
     }
 }
