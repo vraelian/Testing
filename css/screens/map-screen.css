@@ -289,3 +289,25 @@
     border-style: solid;
     margin: 0.25rem;
 }
+
+/* --- VIRTUAL WORKBENCH: NEW NAVIGATE BUTTON --- */
+.map-navigate-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--ot-cyan-base, #22d3ee);
+    text-shadow: 0 0 5px var(--ot-cyan-glow, #67e8f9);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 50;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.map-navigate-btn:hover {
+    text-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
+    transform: scale(1.05);
+}

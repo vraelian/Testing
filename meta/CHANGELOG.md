@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.12] - 2026-1-16
+-  added navigation link to map POI modals
+-  map POI polish
+
 ## [34.10] - 2026-1-16
 -  optimized load order
 

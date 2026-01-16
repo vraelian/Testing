@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.09</title>
+    <title>Orbital Trading 34.11</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.09</p>
+            <p>Version 34.11</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3337,6 +3337,28 @@ card.
     border-width: 1px;
     border-style: solid;
     margin: 0.25rem;
+}
+
+/* --- VIRTUAL WORKBENCH: NEW NAVIGATE BUTTON --- */
+.map-navigate-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--ot-cyan-base, #22d3ee);
+    text-shadow: 0 0 5px var(--ot-cyan-glow, #67e8f9);
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 50;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.map-navigate-btn:hover {
+    text-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
+    transform: scale(1.05);
 }
 --- END OF FILE: ./css/screens/map-screen.css ---
 
@@ -17739,8 +17761,7 @@ export class UIManager {
             }
         }
     }
-
-     getItemPrice(gameState, goodId, isSelling = false) {
+    getItemPrice(gameState, goodId, isSelling = false) {
         if (!this.simulationService || !this.simulationService.marketService) {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
@@ -19138,7 +19159,13 @@ export class UIManager {
         }
         // --- END VIRTUAL WORKBENCH ---
 
+        // --- VIRTUAL WORKBENCH: INJECT NAVIGATE BUTTON ---
+        // Phase 2: Create button with absolute positioning
+        const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
+        // --- END VIRTUAL WORKBENCH ---
+
         const contentHtml = `
+            ${navigateBtnHtml}
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                  <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
@@ -19146,7 +19173,7 @@ export class UIManager {
 
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
-                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
+                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel Price</h5>
                     <p class="font-roboto-mono imprinted-text-embedded"><span class="credits-text-pulsing">${formatCredits(location.fuelPrice, true)}</span>/unit</p>
                  </div>
                 <div class="map-intel-block">
@@ -19162,7 +19189,7 @@ export class UIManager {
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                     <h5 class."font-bold imprinted-text">Needs:</h5>
+                     <h5 class="font-bold imprinted-text">Needs:</h5>
                      <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
@@ -22687,6 +22714,30 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
+            // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
+            // New case for fast-tracking from Map Modal to Navigation/Launch
+            case 'navigate-to-poi': {
+                const { locationId } = dataset;
+                if (!locationId) return;
+
+                // 1. Close the map modal
+                this.uiManager.hideMapDetailModal();
+
+                // 2. Switch to Navigation Screen
+                // Explicitly navigate to Ship -> Navigation
+                this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+
+                // 3. Fast-track to Launch Modal
+                // Slight delay ensures the screen transition logic (if any) is processed
+                // before the modal logic triggers.
+                setTimeout(() => {
+                    this.uiManager.showLaunchModal(locationId);
+                }, 100);
+                
+                break;
+            }
+            // --- END VIRTUAL WORKBENCH ---
+
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
@@ -23884,6 +23935,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.12] - 2026-1-16
+-  added navigation link to map POI modals
+-  map POI polish
 
 ## [34.10] - 2026-1-16
 -  optimized load order

@@ -238,6 +238,30 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
+            // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
+            // New case for fast-tracking from Map Modal to Navigation/Launch
+            case 'navigate-to-poi': {
+                const { locationId } = dataset;
+                if (!locationId) return;
+
+                // 1. Close the map modal
+                this.uiManager.hideMapDetailModal();
+
+                // 2. Switch to Navigation Screen
+                // Explicitly navigate to Ship -> Navigation
+                this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+
+                // 3. Fast-track to Launch Modal
+                // Slight delay ensures the screen transition logic (if any) is processed
+                // before the modal logic triggers.
+                setTimeout(() => {
+                    this.uiManager.showLaunchModal(locationId);
+                }, 100);
+                
+                break;
+            }
+            // --- END VIRTUAL WORKBENCH ---
+
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;

@@ -800,8 +800,7 @@ export class UIManager {
             }
         }
     }
-
-     getItemPrice(gameState, goodId, isSelling = false) {
+    getItemPrice(gameState, goodId, isSelling = false) {
         if (!this.simulationService || !this.simulationService.marketService) {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
@@ -2199,7 +2198,13 @@ export class UIManager {
         }
         // --- END VIRTUAL WORKBENCH ---
 
+        // --- VIRTUAL WORKBENCH: INJECT NAVIGATE BUTTON ---
+        // Phase 2: Create button with absolute positioning
+        const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
+        // --- END VIRTUAL WORKBENCH ---
+
         const contentHtml = `
+            ${navigateBtnHtml}
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                  <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
@@ -2207,7 +2212,7 @@ export class UIManager {
 
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
-                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel</h5>
+                    <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel Price</h5>
                     <p class="font-roboto-mono imprinted-text-embedded"><span class="credits-text-pulsing">${formatCredits(location.fuelPrice, true)}</span>/unit</p>
                  </div>
                 <div class="map-intel-block">
@@ -2223,7 +2228,7 @@ export class UIManager {
                     <div>${exports.length > 0 ? renderTags(exports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
                 <div class="mt-2">
-                     <h5 class."font-bold imprinted-text">Needs:</h5>
+                     <h5 class="font-bold imprinted-text">Needs:</h5>
                      <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
                 </div>
             </div>
