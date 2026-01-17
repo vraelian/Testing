@@ -5,11 +5,11 @@
  * volatility and market pressure, replenishing market inventories with persistence,
  * and managing system-wide economic states.
  */
-import { GAME_RULES } from '../../data/constants.js';
+import { GAME_RULES, COMMODITY_IDS, LOCATION_IDS } from '../../data/constants.js'; 
 import { DB } from '../../data/database.js';
 import { skewedRandom } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
-import { AssetService } from '../../services/AssetService.js'; // IMPORT ADDED
+import { AssetService } from '../../services/AssetService.js'; 
 
 /**
  * @class MarketService
@@ -49,6 +49,32 @@ export class MarketService {
             // around the overridePrice).
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
         }
+
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (PRICE BOOSTS) ---
+        // Earth Quirk: +10% Sell Price for Cloned Organs & Xeno-Geologicals
+        if (locationId === LOCATION_IDS.EARTH && 
+            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            price = price * 1.10;
+        }
+
+        // Mars Quirk: +10% Sell Price for Water Ice & Hydroponics
+        if (locationId === LOCATION_IDS.MARS &&
+            (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
+            price = price * 1.10;
+        }
+
+        // Saturn Quirk: +20% Sell Price for Cloned Organs & Cryo-Sleep Pods
+        if (locationId === LOCATION_IDS.SATURN &&
+            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
+            price = price * 1.20;
+        }
+
+        // Pluto Quirk: +25% Sell Price for Cybernetics & Antimatter
+        if (locationId === LOCATION_IDS.PLUTO &&
+            (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
+            price = price * 1.25;
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         // 2. Upgrade Modifiers (Signal Hacker)
         if (applyModifiers) {
@@ -141,6 +167,13 @@ export class MarketService {
                 const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
+                
+                // --- VIRTUAL WORKBENCH: EXCHANGE QUIRK (VOLATILITY) ---
+                if (location.id === LOCATION_IDS.EXCHANGE) {
+                    volatility *= 3.0; // 3x Price Volatility at The Exchange
+                }
+                // --- END VIRTUAL WORKBENCH ---
+
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];

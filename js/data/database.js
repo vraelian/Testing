@@ -31,29 +31,6 @@ export const SYSTEM_STATES = {
         description: "Standard space-faring conditions. Markets are operating under normal parameters.",
         modifiers: {} // No economic deviations
     },
-    /* // Example of a disruptive economic state. More can be added here.
-    'CORPORATE_WAR': {
-        name: 'Corporate War',
-        duration: 28,
-        description: "Rival corporations have escalated to open conflict, creating high demand for military-grade materials. The Plasteel and Cybernetics markets are in turmoil.",
-        modifiers: {
-            commodity: {
-                'cybernetics': {
-                    availability: 0.6,
-                    price: 1.4,
-                    volatility_mult: 2.5,
-                    mean_reversion_mult: 0.3
-                },
-                'plasteel': {
-                    availability: 0.7,
-                    price: 1.3,
-                    volatility_mult: 2.0,
-                    mean_reversion_mult: 0.5
-                }
-            }
-        }
-    }
-    */
 };
 
 export const DB = {
@@ -202,18 +179,231 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
-        { id: LOCATION_IDS.VENUS, name: 'Venus', distance: 97, launchFlavor: "Floating cities hide scientific marvels and secrets.", navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, description: 'A scientific enclave hungry for research data and processors.', color: 'border-yellow-400', bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', fuelPrice: 400, arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", specialty: "Exclusive access to the Venetian Syndicate for high-risk, high-reward intel and missions.", availabilityModifier: { [COMMODITY_IDS.CLONED_ORGANS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 2.0, [COMMODITY_IDS.SENTIENT_AI]: 0.5 } },
-        { id: LOCATION_IDS.EARTH, name: 'Earth', distance: 180, launchFlavor: "The bustling heart of the Sol system.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', color: 'border-cyan-500', bg: 'bg-gradient-to-br from-blue-900 to-slate-900', fuelPrice: 250, arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", specialty: "Offers the best sell prices for rare, high-tier goods and is the exclusive source for top-tier ship licenses.", availabilityModifier: { [COMMODITY_IDS.HYDROPONICS]: 2.0, [COMMODITY_IDS.CLONED_ORGANS]: 0.5, [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 } },
-        { id: LOCATION_IDS.LUNA, name: 'The Moon', parent: 'loc_earth', distance: 15, launchFlavor: "An industrial powerhouse built on grey dust.", navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, description: 'An industrial proving ground. Exports propellant and basic materials.', color: 'border-gray-400', bg: 'bg-gradient-to-br from-gray-700 to-slate-900', fuelPrice: 350, arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", specialty: "Offers a slight discount on all ship repairs.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, [COMMODITY_IDS.WATER_ICE]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5 } },
-        { id: LOCATION_IDS.MARS, name: 'Mars', distance: 226, launchFlavor: "The red frontier, ripe with opportunity.", navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, description: 'A growing colony. Needs processors and materials for expansion.', color: 'border-orange-600', bg: 'bg-gradient-to-br from-orange-900 to-slate-900', fuelPrice: 450, arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", specialty: "Offers a higher-than-average number of colonial supply missions.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 2.0, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.WATER_ICE]: 0.5 } },
-        { id: LOCATION_IDS.BELT, name: 'The Belt', distance: 292, launchFlavor: "A lawless expanse of rock and riches.", navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#a16207' }, description: 'A lawless frontier. Rich in raw minerals and water ice.', color: 'border-amber-700', bg: 'bg-gradient-to-br from-stone-800 to-slate-900', fuelPrice: 600, arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", specialty: "Increased chance to find rare derelict ships in its shipyards.", availabilityModifier: { [COMMODITY_IDS.WATER_ICE]: 2.0, [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, [COMMODITY_IDS.HYDROPONICS]: 0.5, [COMMODITY_IDS.CYBERNETICS]: 0.5 } },
-        { id: LOCATION_IDS.EXCHANGE, name: 'The Exchange', distance: 309, launchFlavor: "The notorious black market of the outer belt.", navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', color: 'border-purple-500', bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', fuelPrice: 1200, arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", specialty: "The notorious black market of the outer belt.", availabilityModifier: {} },
-        { id: LOCATION_IDS.JUPITER, name: 'Jupiter', distance: 443, launchFlavor: "Vast refineries harvest fuel from the giant.", navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', color: 'border-orange-400', bg: 'bg-gradient-to-br from-orange-800 to-stone-900', fuelPrice: 150, arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", specialty: "Fuel is sold at 50% of the galactic average price, making it an essential stop for any long-haul journey.", availabilityModifier: { [COMMODITY_IDS.PROPELLANT]: 2.0, [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
-        { id: LOCATION_IDS.SATURN, name: 'Saturn', distance: 618, launchFlavor: "Opulent stations drift among majestic rings.", navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, description: 'A tourism hub. Demands luxury goods and bio-wares.', color: 'border-yellow-200', bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', fuelPrice: 550, arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", specialty: "Offers the highest sell prices for luxury and bio-tech goods.", availabilityModifier: { [COMMODITY_IDS.CRYO_PODS]: 0.5, [COMMODITY_IDS.CLONED_ORGANS]: 0.5 } },
-        { id: LOCATION_IDS.URANUS, name: 'Uranus', distance: 775, launchFlavor: "A silent, ice-cold world of strange science.", navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', color: 'border-cyan-200', bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', fuelPrice: 700, arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", specialty: "A unique R&D service to temporarily \"overclock\" ship components.", availabilityModifier: { [COMMODITY_IDS.ATMO_PROCESSORS]: 2.0, [COMMODITY_IDS.SENTIENT_AI]: 0.5, [COMMODITY_IDS.PROCESSORS]: 0.5 } },
-        { id: LOCATION_IDS.NEPTUNE, name: 'Neptune', distance: 877, launchFlavor: "The stormy edge of military-controlled space.", navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, description: 'A dark, stormy world, home to secretive military bases and shipyards.', color: 'border-blue-400', bg: 'bg-gradient-to-br from-blue-900 to-black', fuelPrice: 650, arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", specialty: "A military surplus shipyard that occasionally sells damaged, high-tier frigates.", availabilityModifier: { [COMMODITY_IDS.PLASTEEL]: 0.1, [COMMODITY_IDS.PROPELLANT]: 0.5 } },
-        { id: LOCATION_IDS.KEPLER, name: "Kepler's Eye", distance: 903, launchFlavor: "A colossal lens staring into the infinite void.", navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, description: 'A massive deep-space observatory that consumes vast amounts of processing power.', color: 'border-fuchsia-500', bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', fuelPrice: 800, arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", specialty: "A colossal lens staring into the infinite void.", availabilityModifier: {} },
-        { id: LOCATION_IDS.PLUTO, name: 'Pluto', distance: 1080, launchFlavor: "A haven for outcasts at the system's fringe.", navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', color: 'border-indigo-400', bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', fuelPrice: 900, arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", specialty: "A haven for outcasts at the system's fringe.", availabilityModifier: { 'water_ice': 2.0, 'hydroponics': 0.5, 'cybernetics': 0.5, 'cloned_organs': 0.5, 'xeno_geologicals': 2.0 } }
+        { 
+            id: LOCATION_IDS.VENUS, 
+            name: 'Venus', 
+            distance: 97, 
+            launchFlavor: "Floating cities hide scientific marvels and secrets.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, 
+            description: 'A scientific enclave hungry for research data and processors.', 
+            color: 'border-yellow-400', 
+            bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
+            fuelPrice: 400, 
+            arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
+            specialty: "Pending Declassification...", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
+                [COMMODITY_IDS.PROCESSORS]: 2.0, 
+                [COMMODITY_IDS.SENTIENT_AI]: 0.5,
+                [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
+            } 
+        },
+        { 
+            id: LOCATION_IDS.EARTH, 
+            name: 'Earth', 
+            distance: 180, 
+            launchFlavor: "The bustling heart of the Sol system.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, 
+            description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', 
+            color: 'border-cyan-500', 
+            bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
+            fuelPrice: 250, 
+            arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
+            specialty: "The cradle of humanity and the hub of power. Wealthy elites pay a premium for exotic goods and life-extending biotechnology. <b>+10% Sell Price for Cloned Organs & Xeno-Geologicals.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.HYDROPONICS]: 2.0, 
+                [COMMODITY_IDS.CYBERNETICS]: 2.0, 
+                [COMMODITY_IDS.CLONED_ORGANS]: 0.5, 
+                [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.LUNA, 
+            name: 'The Moon', 
+            parent: 'loc_earth', 
+            distance: 15, 
+            launchFlavor: "An industrial powerhouse built on grey dust.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, 
+            description: 'An industrial proving ground. Exports propellant and basic materials.', 
+            color: 'border-gray-400', 
+            bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
+            fuelPrice: 350, 
+            arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
+            specialty: "An industrial powerhouse built on grey dust. It serves as the primary shipyard and drydock for the inner system. <b>20% discount on all ship repairs.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.PLASTEEL]: 2.0, 
+                [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
+                [COMMODITY_IDS.WATER_ICE]: 0.5, 
+                [COMMODITY_IDS.HYDROPONICS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.MARS, 
+            name: 'Mars', 
+            distance: 226, 
+            launchFlavor: "The red frontier, ripe with opportunity.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, 
+            description: 'A growing colony. Needs processors and materials for expansion.', 
+            color: 'border-orange-600', 
+            bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
+            fuelPrice: 450, 
+            arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
+            specialty: "The Red Planet is thirsty. The colonial government heavily subsidizes the import of water and biomass to accelerate the greening of the planet. <b>+10% Sell Price for Water Ice and Hydroponics.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.PLASTEEL]: 2.0, 
+                [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
+                [COMMODITY_IDS.WATER_ICE]: 0.5, 
+                [COMMODITY_IDS.HYDROPONICS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.BELT, 
+            name: 'The Belt', 
+            distance: 292, 
+            launchFlavor: "A lawless expanse of rock and riches.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#a16207' }, 
+            description: 'A lawless frontier. Rich in raw minerals and water ice.', 
+            color: 'border-amber-700', 
+            bg: 'bg-gradient-to-br from-stone-800 to-slate-900', 
+            fuelPrice: 600, 
+            arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", 
+            specialty: "Pending Declassification...", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.WATER_ICE]: 2.0, 
+                [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
+                [COMMODITY_IDS.HYDROPONICS]: 0.5, 
+                [COMMODITY_IDS.CYBERNETICS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.EXCHANGE, 
+            name: 'The Exchange', 
+            distance: 309, 
+            launchFlavor: "The notorious black market of the outer belt.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, 
+            description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', 
+            color: 'border-purple-500', 
+            bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
+            fuelPrice: 1200, 
+            arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
+            specialty: "The black market never sleeps, and prices can be volatile. <b>Prices fluctuate dramatically.</b>", 
+            availabilityModifier: {
+                [COMMODITY_IDS.SENTIENT_AI]: 2.0,
+                [COMMODITY_IDS.CLONED_ORGANS]: 2.0,
+                [COMMODITY_IDS.ANTIMATTER]: 0.5,
+                [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5
+            } 
+        },
+        { 
+            id: LOCATION_IDS.JUPITER, 
+            name: 'Jupiter', 
+            distance: 443, 
+            launchFlavor: "Vast refineries harvest fuel from the giant.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, 
+            description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', 
+            color: 'border-orange-400', 
+            bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
+            fuelPrice: 150, 
+            arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
+            specialty: "The gas giant's gravity well is teeming with automated refineries, making it the cheapest refueling stop in the system. <b>Fuel is sold at a 50% discount.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.PROPELLANT]: 2.0, 
+                [COMMODITY_IDS.PLASTEEL]: 0.5, 
+                [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.SATURN, 
+            name: 'Saturn', 
+            distance: 618, 
+            launchFlavor: "Opulent stations drift among majestic rings.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, 
+            description: 'A tourism hub. Demands luxury goods and bio-wares.', 
+            color: 'border-yellow-200', 
+            bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
+            fuelPrice: 550, 
+            arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
+            specialty: "A playground for the ultra-rich. They pay top credit for life-extending biotech, but the docking fees for \"common\" freighters are exorbitant to keep out the riff-raff. <b>+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.CYBERNETICS]: 2.0,
+                [COMMODITY_IDS.CRYO_PODS]: 0.5, 
+                [COMMODITY_IDS.CLONED_ORGANS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.URANUS, 
+            name: 'Uranus', 
+            distance: 775, 
+            launchFlavor: "A silent, ice-cold world of strange science.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, 
+            description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', 
+            color: 'border-cyan-200', 
+            bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
+            fuelPrice: 700, 
+            arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
+            specialty: "The R&D labs here are constantly churning out prototype ship components. <b>Increased chance for advanced ship upgrades to appear in the tuning shop.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.PROCESSORS]: 2.0, 
+                [COMMODITY_IDS.SENTIENT_AI]: 0.5, 
+                [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.NEPTUNE, 
+            name: 'Neptune', 
+            distance: 877, 
+            launchFlavor: "The stormy edge of military-controlled space.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, 
+            description: 'A dark, stormy world, home to secretive military bases and shipyards.', 
+            color: 'border-blue-400', 
+            bg: 'bg-gradient-to-br from-blue-900 to-black', 
+            fuelPrice: 650, 
+            arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
+            specialty: "A restricted military zone. They are desperate for raw materials to maintain the fleet and are willing to offload surplus military-grade fuel to keep logistics moving. <b>Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.CRYO_PODS]: 2.0,
+                [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0,
+                [COMMODITY_IDS.PLASTEEL]: 0.5, 
+                [COMMODITY_IDS.PROPELLANT]: 0.5 
+            } 
+        },
+        { 
+            id: LOCATION_IDS.KEPLER, 
+            name: "Kepler's Eye", 
+            distance: 903, 
+            launchFlavor: "A colossal lens staring into the infinite void.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, 
+            description: 'A massive deep-space observatory that consumes vast amounts of processing power.', 
+            color: 'border-fuchsia-500', 
+            bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
+            fuelPrice: 800, 
+            arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
+            specialty: "Pending Declassification...", 
+            availabilityModifier: {
+                [COMMODITY_IDS.ANTIMATTER]: 2.0,
+                [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
+                [COMMODITY_IDS.PROCESSORS]: 0.5
+            } 
+        },
+        { 
+            id: LOCATION_IDS.PLUTO, 
+            name: 'Pluto', 
+            distance: 1080, 
+            launchFlavor: "A haven for outcasts at the system's fringe.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, 
+            description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', 
+            color: 'border-indigo-400', 
+            bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
+            fuelPrice: 900, 
+            arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
+            specialty: "The end of the line. Supply ships are rare. If you have essential tech to keep their life-support running, they will pay anything. <b>+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.</b>", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
+                [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
+                [COMMODITY_IDS.ANTIMATTER]: 0.5,
+                [COMMODITY_IDS.CYBERNETICS]: 0.5
+            } 
+        }
     ],
 
     // --- Mission Data ---

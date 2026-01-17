@@ -6,7 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
-import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class PlayerActionService {
@@ -57,7 +57,19 @@ export class PlayerActionService {
         const price = Math.max(1, Math.round(basePrice * priceMod));
         // --- END UPGRADE SYSTEM ---
 
-        const totalCost = price * quantity;
+        let totalCost = price * quantity;
+
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE BULK DISCOUNT) ---
+        // Neptune Quirk: Buying > 50 units of Propellant or Plasteel grants 10% discount.
+        if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
+            (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
+            quantity > 50) {
+            
+            totalCost = Math.floor(totalCost * 0.90);
+            this.uiManager.createFloatingText("BULK DISCOUNT APPLIED", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
@@ -569,8 +581,13 @@ export class PlayerActionService {
 
         let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
         
-        // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
-        // Apply Station Quirks (Jupiter) and Ship Attributes (Citadel Renown)
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
+        // Saturn & Pluto Quirk: 200% Cost
+        if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
+            costPerTick *= 2.0;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
              costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
@@ -630,6 +647,17 @@ export class PlayerActionService {
         // Repair calculation based on Effective Max Health
         const repairAmount = effectiveStats.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
         let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
+
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
+        // Moon Quirk: 20% Discount
+        if (state.currentLocationId === LOCATION_IDS.LUNA) {
+            costPerTick *= 0.8; 
+        }
+        // Saturn & Pluto Quirk: 200% Cost
+        if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
+            costPerTick *= 2.0;
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);

@@ -14,16 +14,17 @@ const commodityStyleMap = {
     'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
     'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
     'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-    // CHANGED: Cybernetics - Darkened from Light Grey to Zinc/Metallic for contrast
-    'item-style-4':  { hex: '#52525b', gradient: 'linear-gradient(45deg, #52525b, #27272a)' },
+    // CHANGED: Cybernetics - Brightened to Light Zinc for readability on dark backgrounds
+    'item-style-4':  { hex: '#a1a1aa', gradient: 'linear-gradient(45deg, #a1a1aa, #52525b)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-    // CHANGED: Neural Processors - Darkened from Light Blue to Deep Royal Blue
-    'item-style-6':  { hex: '#1e3a8a', gradient: 'linear-gradient(45deg, #1d4ed8, #1e3a8a)' },
-    'item-style-7':  { hex: '#708090', gradient: 'linear-gradient(45deg, #353839, #2c2f30)' }, 
-    // CHANGED: Cryo-Sleep Pods - Darkened from Cyan to Deep Teal
-    'item-style-8':  { hex: '#155e75', gradient: 'linear-gradient(45deg, #0e7490, #155e75)' },
-    // CHANGED: Atmo Processors - Darkened from Yellow to Dark Bronze/Amber
-    'item-style-9':  { hex: '#78350f', gradient: 'linear-gradient(45deg, #854d0e, #78350f)' },
+    // CHANGED: Neural Processors - Brightened to Electric Indigo for contrast
+    'item-style-6':  { hex: '#818cf8', gradient: 'linear-gradient(45deg, #6366f1, #4338ca)' },
+    // CHANGED: Graphene Lattices - Brightened to Steel Grey/Slate 300
+    'item-style-7':  { hex: '#cbd5e1', gradient: 'linear-gradient(45deg, #94a3b8, #475569)' }, 
+    // CHANGED: Cryo-Sleep Pods - Brightened to Neon Cyan for contrast
+    'item-style-8':  { hex: '#22d3ee', gradient: 'linear-gradient(45deg, #06b6d4, #155e75)' },
+    // CHANGED: Atmo Processors - Brightened to Bright Amber/Bronze
+    'item-style-9':  { hex: '#f59e0b', gradient: 'linear-gradient(45deg, #d97706, #b45309)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
     'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
     'item-style-12': { hex: '#f87171', gradient: 'linear-gradient(45deg, #ef4444, #7f1d1d)' },

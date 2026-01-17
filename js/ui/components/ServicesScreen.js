@@ -112,6 +112,14 @@ export function renderServicesScreen(gameState, simulationService) {
 
     // --- Calculate Costs ---
     let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
+    
+    // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
+    // Saturn & Pluto Quirk: 200% Cost for Refueling & Repairs
+    if (currentLocationId === LOCATION_IDS.SATURN || currentLocationId === LOCATION_IDS.PLUTO) {
+        fuelCostPerTick *= 2.0;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
@@ -120,6 +128,18 @@ export function renderServicesScreen(gameState, simulationService) {
     fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
 
     let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    
+    // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
+    // Moon Quirk: 20% Discount
+    if (currentLocationId === LOCATION_IDS.LUNA) {
+        repairCostPerTick *= 0.8; 
+    }
+    // Saturn & Pluto Quirk: 200% Cost
+    if (currentLocationId === LOCATION_IDS.SATURN || currentLocationId === LOCATION_IDS.PLUTO) {
+        repairCostPerTick *= 2.0;
+    }
+    // --- END VIRTUAL WORKBENCH ---
+
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
         repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
@@ -225,7 +245,15 @@ function _getDailyStock(gameState) {
         // 2. Determine Chance based on Tier Suffix
         let threshold = 0.30; // Tier 1 Default
         if (id.endsWith('_II')) threshold = 0.15;
-        if (id.endsWith('_III')) threshold = 0.08;
+        if (id.endsWith('_III')) {
+            threshold = 0.08;
+            
+            // --- VIRTUAL WORKBENCH: STATION QUIRKS (URANUS TECH BOOST) ---
+            if (currentLocationId === LOCATION_IDS.URANUS) {
+                threshold *= 2; // 2x Chance for Tier 3 items on Uranus
+            }
+            // --- END VIRTUAL WORKBENCH ---
+        }
 
         // 3. Deterministic Hashing (Day + Location + UpgradeID)
         const seedString = `${day}_${currentLocationId}_${id}`;
