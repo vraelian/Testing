@@ -436,21 +436,32 @@ export class PlayerActionService {
      */
     payOffDebt(event) {
         if (this.gameState.isGameOver) return;
-        const { player } = this.gameState;
-        if (player.credits < player.debt) {
-            this.uiManager.queueModal('event-modal', "Insufficient Funds", "You can't afford to pay off your entire debt.");
+        const { player, currentLocationId } = this.gameState;
+        
+        let paymentRequired = player.debt;
+        
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
+        // Kepler's Eye Quirk: 30% Discount on debt repayment.
+        if (currentLocationId === LOCATION_IDS.KEPLER) {
+            paymentRequired = Math.floor(player.debt * 0.7);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (player.credits < paymentRequired) {
+            const extraText = (currentLocationId === LOCATION_IDS.KEPLER) ? 
+                ` Even with the Kepler discount (${formatCredits(paymentRequired)}), you are short.` : "";
+            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay off your entire debt.${extraText}`);
             return;
         }
 
-        const debtAmount = player.debt;
-        player.credits -= debtAmount;
+        player.credits -= paymentRequired;
 
         if (event) {
-             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171');
+             this.uiManager.createFloatingText(`-${formatCredits(paymentRequired, false)}`, event.clientX, event.clientY, '#f87171');
         }
 
-        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
-        this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
+        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(player.debt)} in debt (Cost: ${formatCredits(paymentRequired)}).`);
+        this.simulationService._logTransaction('loan', -paymentRequired, `Paid off debt`);
         player.debt = 0;
         player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
@@ -465,18 +476,28 @@ export class PlayerActionService {
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) {
-        const { player, day } = this.gameState;
+        const { player, day, currentLocationId } = this.gameState;
         if (player.debt > 0) {
             this.uiManager.queueModal('event-modal', "Loan Unavailable", `You must pay off your existing debt first.`);
             return;
         }
-        if (player.credits < loanData.fee) {
-            this.uiManager.queueModal('event-modal', "Unable to Secure Loan", `The financing fee is ${formatCredits(loanData.fee)}, but you only have ${formatCredits(player.credits)}.`);
+        
+        let finalFee = loanData.fee;
+        
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER FINANCING DISCOUNT) ---
+        // Kepler's Eye Quirk: 30% Discount on financing fees.
+        if (currentLocationId === LOCATION_IDS.KEPLER) {
+            finalFee = Math.floor(loanData.fee * 0.7);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (player.credits < finalFee) {
+            this.uiManager.queueModal('event-modal', "Unable to Secure Loan", `The financing fee is ${formatCredits(finalFee)}, but you only have ${formatCredits(player.credits)}.`);
             return;
         }
 
-        player.credits -= loanData.fee;
-        this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        player.credits -= finalFee;
+        this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
 
@@ -491,7 +512,7 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.`;
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);

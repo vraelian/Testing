@@ -190,7 +190,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
             fuelPrice: 400, 
             arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
-            specialty: "Pending Declassification...", 
+            specialty: "Intel is 50% cheaper and lasts twice as long.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
@@ -209,7 +209,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
             fuelPrice: 250, 
             arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
-            specialty: "The cradle of humanity and the hub of power. Wealthy elites pay a premium for exotic goods and life-extending biotechnology. <b>+10% Sell Price for Cloned Organs & Xeno-Geologicals.</b>", 
+            specialty: "Cloned Organs & Xeno-Geologicals sell for 10% more.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.HYDROPONICS]: 2.0, 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0, 
@@ -229,7 +229,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
             fuelPrice: 350, 
             arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
-            specialty: "An industrial powerhouse built on grey dust. It serves as the primary shipyard and drydock for the inner system. <b>20% discount on all ship repairs.</b>", 
+            specialty: "20% discount on all ship repairs.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
@@ -248,7 +248,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
             fuelPrice: 450, 
             arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
-            specialty: "The Red Planet is thirsty. The colonial government heavily subsidizes the import of water and biomass to accelerate the greening of the planet. <b>+10% Sell Price for Water Ice and Hydroponics.</b>", 
+            specialty: "+10% Sell Price for Water Ice and Hydroponics.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
@@ -286,7 +286,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
             fuelPrice: 1200, 
             arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
-            specialty: "The black market never sleeps, and prices can be volatile. <b>Prices fluctuate dramatically.</b>", 
+            specialty: "Prices fluctuate dramatically.", 
             availabilityModifier: {
                 [COMMODITY_IDS.SENTIENT_AI]: 2.0,
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0,
@@ -305,7 +305,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
             fuelPrice: 150, 
             arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
-            specialty: "The gas giant's gravity well is teeming with automated refineries, making it the cheapest refueling stop in the system. <b>Fuel is sold at a 50% discount.</b>", 
+            specialty: "Fuel is sold at a 50% discount.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROPELLANT]: 2.0, 
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
@@ -323,7 +323,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
             fuelPrice: 550, 
             arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
-            specialty: "A playground for the ultra-rich. They pay top credit for life-extending biotech, but the docking fees for \"common\" freighters are exorbitant to keep out the riff-raff. <b>+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.</b>", 
+            specialty: "+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0,
                 [COMMODITY_IDS.CRYO_PODS]: 0.5, 
@@ -341,7 +341,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
             fuelPrice: 700, 
             arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
-            specialty: "The R&D labs here are constantly churning out prototype ship components. <b>Increased chance for advanced ship upgrades to appear in the tuning shop.</b>", 
+            specialty: "Increased chance for advanced ship upgrades to appear in the tuning shop.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5, 
@@ -359,7 +359,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-black', 
             fuelPrice: 650, 
             arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
-            specialty: "A restricted military zone. They are desperate for raw materials to maintain the fleet and are willing to offload surplus military-grade fuel to keep logistics moving. <b>Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.</b>", 
+            specialty: "Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CRYO_PODS]: 2.0,
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0,
@@ -378,7 +378,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
             arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
-            specialty: "Pending Declassification...", 
+            specialty: "30% Discount on all financing and debt payments.", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
                 [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
@@ -396,7 +396,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
             fuelPrice: 900, 
             arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
-            specialty: "The end of the line. Supply ships are rare. If you have essential tech to keep their life-support running, they will pay anything. <b>+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.</b>", 
+            specialty: "+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 

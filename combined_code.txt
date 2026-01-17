@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.11</title>
+    <title>Orbital Trading 34.16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.11</p>
+            <p>Version 34.16</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -8699,7 +8699,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
             fuelPrice: 400, 
             arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
-            specialty: "Pending Declassification...", 
+            specialty: "Intel is 50% cheaper and lasts twice as long.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
@@ -8718,7 +8718,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
             fuelPrice: 250, 
             arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
-            specialty: "The cradle of humanity and the hub of power. Wealthy elites pay a premium for exotic goods and life-extending biotechnology. <b>+10% Sell Price for Cloned Organs & Xeno-Geologicals.</b>", 
+            specialty: "Cloned Organs & Xeno-Geologicals sell for 10% more.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.HYDROPONICS]: 2.0, 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0, 
@@ -8738,7 +8738,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
             fuelPrice: 350, 
             arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
-            specialty: "An industrial powerhouse built on grey dust. It serves as the primary shipyard and drydock for the inner system. <b>20% discount on all ship repairs.</b>", 
+            specialty: "20% discount on all ship repairs.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
@@ -8757,7 +8757,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
             fuelPrice: 450, 
             arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
-            specialty: "The Red Planet is thirsty. The colonial government heavily subsidizes the import of water and biomass to accelerate the greening of the planet. <b>+10% Sell Price for Water Ice and Hydroponics.</b>", 
+            specialty: "+10% Sell Price for Water Ice and Hydroponics.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
@@ -8795,7 +8795,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
             fuelPrice: 1200, 
             arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
-            specialty: "The black market never sleeps, and prices can be volatile. <b>Prices fluctuate dramatically.</b>", 
+            specialty: "Prices fluctuate dramatically.", 
             availabilityModifier: {
                 [COMMODITY_IDS.SENTIENT_AI]: 2.0,
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0,
@@ -8814,7 +8814,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
             fuelPrice: 150, 
             arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
-            specialty: "The gas giant's gravity well is teeming with automated refineries, making it the cheapest refueling stop in the system. <b>Fuel is sold at a 50% discount.</b>", 
+            specialty: "Fuel is sold at a 50% discount.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROPELLANT]: 2.0, 
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
@@ -8832,7 +8832,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
             fuelPrice: 550, 
             arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
-            specialty: "A playground for the ultra-rich. They pay top credit for life-extending biotech, but the docking fees for \"common\" freighters are exorbitant to keep out the riff-raff. <b>+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.</b>", 
+            specialty: "+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0,
                 [COMMODITY_IDS.CRYO_PODS]: 0.5, 
@@ -8850,7 +8850,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
             fuelPrice: 700, 
             arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
-            specialty: "The R&D labs here are constantly churning out prototype ship components. <b>Increased chance for advanced ship upgrades to appear in the tuning shop.</b>", 
+            specialty: "Increased chance for advanced ship upgrades to appear in the tuning shop.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5, 
@@ -8868,7 +8868,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-black', 
             fuelPrice: 650, 
             arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
-            specialty: "A restricted military zone. They are desperate for raw materials to maintain the fleet and are willing to offload surplus military-grade fuel to keep logistics moving. <b>Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.</b>", 
+            specialty: "Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CRYO_PODS]: 2.0,
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0,
@@ -8887,7 +8887,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
             arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
-            specialty: "Pending Declassification...", 
+            specialty: "30% Discount on all financing and debt payments.", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
                 [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
@@ -8905,7 +8905,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
             fuelPrice: 900, 
             arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
-            specialty: "The end of the line. Supply ships are rare. If you have essential tech to keep their life-support running, they will pay anything. <b>+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.</b>", 
+            specialty: "+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
@@ -21619,8 +21619,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Added PERK_IDS import
-import { PERK_IDS } from '../data/constants.js';
+// VIRTUAL WORKBENCH: Added PERK_IDS & LOCATION_IDS import
+import { PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 
 /**
  * @class IntelService
@@ -21782,9 +21782,18 @@ export class IntelService {
      * @JSDoc
      */
     calculateIntelPrice(packet) {
-        const playerCredits = this.gameState.getState().player.credits;
+        const state = this.gameState.getState();
+        const playerCredits = state.player.credits;
+        const currentLocationId = state.currentLocationId;
         
-        const base = playerCredits * (0.10 + Math.random() * 0.10); 
+        let base = playerCredits * (0.10 + Math.random() * 0.10); 
+        
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK (CHEAPER INTEL) ---
+        if (currentLocationId === LOCATION_IDS.VENUS) {
+            base *= 0.5; // 50% discount at Venus
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const finalPrice = base * packet.valueMultiplier;
         
         return Math.floor(finalPrice / 100) * 100;
@@ -21854,10 +21863,17 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        const newDurationDays = Math.ceil(travelTime * 1.9);
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK (LONGER DURATION) ---
+        let durationMultiplier = 1.9; // Base multiplier
+        if (currentLocationId === LOCATION_IDS.VENUS) {
+            durationMultiplier *= 2.0; // Double duration at Venus
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
 
         // 8. Mutate the live packet object again.
         packet.expiryDay = expiryDay; 
@@ -23906,21 +23922,32 @@ export class PlayerActionService {
      */
     payOffDebt(event) {
         if (this.gameState.isGameOver) return;
-        const { player } = this.gameState;
-        if (player.credits < player.debt) {
-            this.uiManager.queueModal('event-modal', "Insufficient Funds", "You can't afford to pay off your entire debt.");
+        const { player, currentLocationId } = this.gameState;
+        
+        let paymentRequired = player.debt;
+        
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
+        // Kepler's Eye Quirk: 30% Discount on debt repayment.
+        if (currentLocationId === LOCATION_IDS.KEPLER) {
+            paymentRequired = Math.floor(player.debt * 0.7);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (player.credits < paymentRequired) {
+            const extraText = (currentLocationId === LOCATION_IDS.KEPLER) ? 
+                ` Even with the Kepler discount (${formatCredits(paymentRequired)}), you are short.` : "";
+            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay off your entire debt.${extraText}`);
             return;
         }
 
-        const debtAmount = player.debt;
-        player.credits -= debtAmount;
+        player.credits -= paymentRequired;
 
         if (event) {
-             this.uiManager.createFloatingText(`-${formatCredits(debtAmount, false)}`, event.clientX, event.clientY, '#f87171');
+             this.uiManager.createFloatingText(`-${formatCredits(paymentRequired, false)}`, event.clientX, event.clientY, '#f87171');
         }
 
-        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(debtAmount)} in debt.`);
-        this.simulationService._logTransaction('loan', -debtAmount, `Paid off ${formatCredits(debtAmount)} debt`);
+        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(player.debt)} in debt (Cost: ${formatCredits(paymentRequired)}).`);
+        this.simulationService._logTransaction('loan', -paymentRequired, `Paid off debt`);
         player.debt = 0;
         player.monthlyInterestAmount = 0;
         player.loanStartDate = null;
@@ -23935,18 +23962,28 @@ export class PlayerActionService {
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) {
-        const { player, day } = this.gameState;
+        const { player, day, currentLocationId } = this.gameState;
         if (player.debt > 0) {
             this.uiManager.queueModal('event-modal', "Loan Unavailable", `You must pay off your existing debt first.`);
             return;
         }
-        if (player.credits < loanData.fee) {
-            this.uiManager.queueModal('event-modal', "Unable to Secure Loan", `The financing fee is ${formatCredits(loanData.fee)}, but you only have ${formatCredits(player.credits)}.`);
+        
+        let finalFee = loanData.fee;
+        
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER FINANCING DISCOUNT) ---
+        // Kepler's Eye Quirk: 30% Discount on financing fees.
+        if (currentLocationId === LOCATION_IDS.KEPLER) {
+            finalFee = Math.floor(loanData.fee * 0.7);
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        if (player.credits < finalFee) {
+            this.uiManager.queueModal('event-modal', "Unable to Secure Loan", `The financing fee is ${formatCredits(finalFee)}, but you only have ${formatCredits(player.credits)}.`);
             return;
         }
 
-        player.credits -= loanData.fee;
-        this.simulationService._logTransaction('loan', -loanData.fee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        player.credits -= finalFee;
+        this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
         
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
 
@@ -23961,7 +23998,7 @@ export class PlayerActionService {
         player.loanStartDate = day;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-loanData.fee, true)}</span> was deducted.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.`;
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
         this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
@@ -24215,6 +24252,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.16] - 2026-1-16
+-  added additional station quirks
+-  balanced station exports/imports
+-  map screen POI modal polish
+-  overhauled most station quirks
 
 ## [34.12] - 2026-1-16
 -  added navigation link to map POI modals
@@ -25765,7 +25808,9 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- Expand station quirks
+- Expand station quirks (Asteroid Belt)
+- Add Sun station
+- Add Mercury station
 
 ## Immediate Concerns, Bugs
 

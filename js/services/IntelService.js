@@ -9,8 +9,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Added PERK_IDS import
-import { PERK_IDS } from '../data/constants.js';
+// VIRTUAL WORKBENCH: Added PERK_IDS & LOCATION_IDS import
+import { PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 
 /**
  * @class IntelService
@@ -172,9 +172,18 @@ export class IntelService {
      * @JSDoc
      */
     calculateIntelPrice(packet) {
-        const playerCredits = this.gameState.getState().player.credits;
+        const state = this.gameState.getState();
+        const playerCredits = state.player.credits;
+        const currentLocationId = state.currentLocationId;
         
-        const base = playerCredits * (0.10 + Math.random() * 0.10); 
+        let base = playerCredits * (0.10 + Math.random() * 0.10); 
+        
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK (CHEAPER INTEL) ---
+        if (currentLocationId === LOCATION_IDS.VENUS) {
+            base *= 0.5; // 50% discount at Venus
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const finalPrice = base * packet.valueMultiplier;
         
         return Math.floor(finalPrice / 100) * 100;
@@ -244,10 +253,17 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        const newDurationDays = Math.ceil(travelTime * 1.9);
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK (LONGER DURATION) ---
+        let durationMultiplier = 1.9; // Base multiplier
+        if (currentLocationId === LOCATION_IDS.VENUS) {
+            durationMultiplier *= 2.0; // Double duration at Venus
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Travel: ${travelTime} days * 2.8). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
 
         // 8. Mutate the live packet object again.
         packet.expiryDay = expiryDay; 
