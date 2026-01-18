@@ -307,7 +307,7 @@ It’s a specialized tool for the trader who intends to profit from the system's
         maxFuel: 230,
         role: "Explorer",
         attribute: "None",
-        description: "With a massive fuel reserve and a robust sensor array, the Meridian is a self-sufficient explorer, capable of operating for months in the uncharted deep.",
+        description: "With a robust sensor array and impressive fuel reserve, the Meridian is a self-sufficient explorer, capable of operating for months in the uncharted deep.",
         lore: `The Meridian is a product of Jupiter's massive, corporate-run industrial machine.
 It was designed as a high-endurance survey and exploration vessel for the Jovian Mining Consortium, a powerful corporate state that is constantly seeking to expand its resource claims.
 The name ""Meridian"" refers to its purpose: to chart new boundaries and map the vast, resource-rich, and dangerous territory of Jupiter's moons.
@@ -452,7 +452,7 @@ It is the ultimate tool for the captain who must navigate the most dangerous tra
         maxFuel: 165,
         role: "Hauler",
         attribute: "None",
-        description: "The pride of Saturn's merchant fleet, this \"\"merchant cruiser\"\" was designed to haul and protect vast fortunes of refined ring-ice and exotic gases.",
+        description: "The pride of Saturn's merchant fleet, this \"merchant cruiser\" was designed to haul vast fortunes of high value goods.",
         lore: `The Guardian is the pride of Saturn's ring-cities, a merchant cruiser that represents the pinnacle of defensible commerce.
 Manufactured in the zero-G shipyards of Titan, it was designed for the powerful merchant houses of the Saturn system, who needed to move vast quantities of high-value goods (like refined Helium-3 or exotic atmospheric compounds) over long, exposed routes.
 It is a hauler that redefines the term, blending capacity with fortitude.
@@ -543,7 +543,7 @@ It is fast, tough, beautiful, and a testament to success.`,
         maxFuel: 170,
         role: "Hauler",
         attribute: "None",
-        description: "A true super-freighter from the Neptune yards, this ship is little more than a powerful engine and a cockpit bolted to a cargo hold of truly colossal proportions.",
+        description: "A true super-freighter from the Neptune yards, this ship possesses multi-tiered cargo holds.",
         lore: `The Tundra is the final word in interplanetary logistics, a colossal hauler built in the deep, cold shipyards of Neptune.
 If the Pilgrim and Warden are the system's long-haul trucks, the Tundra is its supertanker.
 It was designed by a consortium of outer-system corporations who needed a way to move truly staggering quantities of raw materials—ice, methane, and rare minerals—from the Kuiper Belt to the inner system.
@@ -558,7 +558,7 @@ A single, fully-laden Tundra can represent a significant percentage of a smaller
 Their captains are master logisticians, more concerned with fuel-to-mass ratios and orbital mechanics than with docking gossip.
 To see a Tundra for sale on Neptune is to see an opportunity of immense scale.
 These ships are rarely decommissioned; they are simply too valuable.
-This is a ship for the captain who is ready to move beyond a mere cargo manifest and start thinking in terms of global economic influence.`,
+This is a ship for the captain who has graduated from desperation to ambition, a solid, reliable, and powerful tool for taking on more dangerous and lucrative contracts across the system.`,
         saleLocationId: locationMap["Neptune"],
         spawnChance: 1,
         spawnTrigger: "Tier 5 Unlock",
@@ -574,24 +574,12 @@ This is a ship for the captain who is ready to move beyond a mere cargo manifest
         maxFuel: 425,
         role: "Explorer",
         attribute: "None",
-        description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel, mending its own hull and generating fuel over time.",
-        lore: `The Atlas is a ship of myths, a vessel that has transcended its origins to become a legend among freelance captains.
-It was not built by a single corporation but was a secret project by a collective of disgruntled, genius-level engineers from the shipyards of Saturn and Jupiter.
-They were tired of the Ship-Divide and the planned obsolescence of corporate hardware.
-Their goal was to build a ""forever ship,"" a vessel that could truly bear the weight of the heavens on its shoulders.
-They pooled their resources and requisitioned proprietary components, including a one-of-a-kind, self-calibrating folded-space drive.
-The ship's most remarkable feature is an experimental, non-standard energy core linked to the drive.
-Every time the ship pierces spacetime, the core builds a resonant charge, and on the 20th cycle, it purges this energy, flash-repairing the hull's micro-fractures and re-ionizing the fuel supply.
-It is a ship that heals itself with travel.
+        description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel.",
+        lore: `The Atlas is a ship of legend among freelance captains. It was not built by a single corporation but was a secret project by a collective of disgruntled, genius-level engineers from the shipyards of Saturn and Jupiter. They were tired of the Ship-Divide and the planned obsolescence of corporate hardware. Their goal was to build a formidable ship that could bear the weight of the years of hard travel and look stylish doing so.
 
-The prototype was a staggering success, far exceeding its designers' expectations.
-It became a ship that could truly wander indefinitely. Its massive fuel tank and robust hull are secondary to its unique core.
-The original Atlas vanished into the void, rumored to be piloted by its creators on a one-way trip to the stars.
-The blueprints were thought lost, but they eventually surfaced, sold by a shadowy broker on Saturn.
-Now, a handful of these vessels are painstakingly recreated by a master shipwright who caters to the system's wealthiest clientele.
-To own an Atlas is to own a piece of engineering folklore.
-It is a ship for the true explorer, the captain who feels the pull of the Solar Boundary and wishes to see what lies beyond.
-It is less a tool of commerce and more a philosophical statement: a vessel that travels endlessly.`,
+The prototype was a staggering success, far exceeding its designers' expectations. Its massive fuel tank and robust hull are prized for their resilience in long journeys. The original Atlas vanished into the void, rumored to be piloted by its creators on a one-way trip to the stars. The blueprints were thought lost, but they eventually surfaced, sold by a shadowy broker on Saturn. Now, a handful of these vessels are painstakingly recreated by a master shipwright who caters to the system's wealthiest clientele.
+
+To own an Atlas is to own a piece of engineering folklore. It is a ship for the true explorer, the captain who feels the pull of the Solar Boundary and wishes to see what lies beyond. It is less a tool of commerce and more a philosophical statement: a vessel that travels endlessly.`,
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -607,22 +595,12 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
         maxFuel: 255,
         role: "Balanced",
         attribute: "None",
-        description: "With a hull built for brawling and a cargo bay built for skimming, this ship is for the captain who believes a good deal is one you make for yourself.",
-        lore: `The Vindicator is a ship with a reputation.
-It is manufactured in the isolated, automated dockyards of Uranus, a port known for its loose regulations.
-The ship's design was commissioned by a powerful, semi-legitimate trading consortium that specialized in aggressive procurement.
-Its core design is that of a balanced heavy freighter, with a powerful engine and a truly formidable hull.
-It is, in essence, a blockade runner and a privateer's vessel, designed to force its way into a market, secure a deal, and force its way back out.
-Its very presence is an act of intimidation, a vindication of its owner's right to trade, by any means necessary.
-The ship's unique attribute is a series of hidden, illegal subsystems.
-It includes high-speed cargo slicers for automated loading docks, ghost-loaders that add extra, un-logged containers, and sophisticated AI-driven rounding errors for digital manifests.
-It is a ship built to cheat the system, an infamous tool for navigating market manipulation.
-These ships are the terror of the outer-system trade routes.
-The Merchant's Guild publicly decries their use, but many illicit traders are rumored to use them for their most deniable operations.
-A Vindicator is not just a ship; it is a license to steal, provided you are smart enough not to get caught.
-Purchasing a Vindicator is a massive investment and a dangerous statement.
-It tells the system you are a sneaky player in the economic game, and you are not above tipping the scales in your favor.
-It is the perfect ship for the ruthless captain for whom wealth is not just a motto, but an absolute.`,
+        description: "With a hull built for brawling and a cargo bay built for weight, this ship is for the captain who believes a good deal is one you make for yourself.",
+        lore: `The Vindicator is a ship with a reputation. It is manufactured in the isolated, automated dockyards of Uranus, a port known for its loose regulations. The ship's design was commissioned by a powerful, semi-legitimate trading consortium that specialized in aggressive procurement.
+
+Its core design is that of a balanced heavy freighter, with a powerful engine and a truly formidable hull. It is, in essence, a blockade runner and a privateer's vessel, designed to force its way into a market, secure a deal, and force its way back out. Its very presence is an act of intimidation, a vindication of its owner's right to trade, by any means necessary.
+
+Purchasing a Vindicator is a massive investment and a dangerous statement. It tells the system you are a fierce player in the economic game, and you are not above tipping the scales in your favor. It is the perfect ship for the ruthless captain for whom wealth is not just a motto, but an absolute.`,
         saleLocationId: locationMap["Uranus"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -639,19 +617,15 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
         role: "Hauler",
         attribute: "None",
         description: "A high-speed courier from Kepler's Eye, this ship's stasis-equipped hold is designed to move volatile prototypes and fresh discoveries at maximum velocity.",
-        lore: `The Radiant is the ultimate expression of the just-in-time economy, a high-performance hauler built for speed and priority.
-It is manufactured exclusively at Kepler's Eye, the system's most advanced scientific and technological outpost, a place where new discoveries and volatile prototypes are created daily.
-These high-value items often have a short shelf-life, requiring immediate, rapid transport to clients in the inner system.
-The Radiant was designed to meet this need. It is a hauler with a massive cargo bay that thinks it's an explorer, boasting a high-performance engine and a specialized, stasis-equipped cargo bay.
-Its name, Radiant, refers to the bright, fleeting glow of its high-velocity engine burn, as well as the high-energy, often radioactive, prototypes it was designed to carry.
-Its cargo holds are equipped with advanced temporal stabilizers and status-monitors, which preserve the freshness of volatile goods, from rare isotopes to cloned organs.
-This guarantees a premium price for cargo that is delivered quickly, rewarding the captain for speed and efficiency.
-These ships are the prized possession of the system's most elite couriers.
-They are the only vessels trusted to move new artifacts or newly-synthesized compounds.
-A Radiant streaking across the system is a common sight for astronomers, a hot delivery that is likely worth more than a C-class station.
-To own a Radiant is to be in the business of speed.
-It is a ship for the captain who understands that in the 22nd century, the razor's edge is not just about what you carry, but how fast you carry it.
-It is the perfect tool for the get-it-there-yesterday contracts that pay a fortune.`,
+        lore: `The Radiant is the ultimate expression of the just-in-time economy, a high-performance hauler built for speed and priority. It is manufactured exclusively at Kepler's Eye, the system's most advanced scientific and technological outpost, a place where new discoveries and volatile prototypes are created daily.
+
+The Radiant was designed to meet all needs. It is a hauler with a massive cargo bay that thinks it's an explorer, boasting a high-performance engine and a specialized, stasis-equipped cargo bay. Its name, Radiant, refers to the bright, fleeting glow of its high-velocity engine burn, as well as the high-energy, often radioactive, prototypes it was designed to carry.
+
+Its cargo holds are equipped with advanced temporal stabilizers and status-monitors, which preserve the freshness of volatile goods, from rare isotopes to cloned organs. This guarantees a premium price for cargo that is delivered quickly, rewarding the captain for speed and efficiency.
+
+These ships are the prized possession of the system's most elite couriers. They are the only vessels trusted to move new artifacts or newly-synthesized compounds. A Radiant streaking across the system is a common sight for astronomers, a hot delivery that is likely worth more than a C-class station.
+
+To own a Radiant is to be in the business of speed. It is a ship for the captain who understands that in the 22nd century, the razor's edge is not just about what you carry, but how fast you carry it. It is the perfect tool for the get-it-there-yesterday contracts that pay a fortune.`,
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -668,20 +642,14 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
         role: "Explorer",
         attribute: "None",
         description: "Its unique hull composition is a fanatical study in endurance, designed to shrug off the slow decay of time and travel.",
-        lore: `The Aesudon is a ship built by paranoia.
-Its blueprints were not drafted by a corporation, but by a reclusive, trillion-credit heir on Pluto who was convinced the system was doomed to a slow, entropic death.
-This heir spent their entire fortune on a single goal: to build a vessel that could simply outlast the apocalypse, a personal ark that could drift in the void for a countless years.
-This ship's construction is a legend of the Pluto shipyards where construction on the vessel lasted decades.
-Its hull is not a standard alloy, but a laminated composite of exotic, deep-space materials, layered and pressure-treated to be uniquely resistant to the micro-fractures and stresses of long-term void exposure.
-It takes on wear slower than any other ship, not because it is alien, but because it was obsessively, fanatically over-engineered.
-Aesudon's massive fuel tanks were designed to be filled once, allowing it to coast on a single burn for a years.
-The original owner, upon its completion, provisioned the vessel, boarded it, and was last seen heading for the Kuiper Belt.
-They were never heard from again. The ship, however, reappeared fifty years later, its transponder dark, its fuel tanks still half-full, and its log wiped.
-It was recovered by a Merchant's Guild patrol and brought to Pluto, a ghost ship whose resilience is proven.
-It is a ship built for any long, quiet, and lonely journey.
-Its internal systems are spartan but redundant on a scale that borders on the insane, with triple-backups for every core function.
-To acquire the Aesudon is to buy a masterpiece of engineering.
-It is a ship for the captain who trusts no one and nothing but the integrity of their own hull, a vessel designed to endure when all others have turned to dust.`,
+        lore: `The Aesudon is a ship built by paranoia. Its blueprints were not drafted by a corporation, but by a reclusive, trillion-credit heir on Pluto who was convinced the system was doomed to a slow, entropic death. This heir spent their entire fortune on a single goal: to build a vessel that could simply outlast the apocalypse, a personal ark that could drift in the void for a countless years.
+
+This ship's construction is a legend of the Pluto shipyards where construction on the vessel lasted decades. Its hull is not a standard alloy, but a laminated composite of exotic, deep-space materials, layered and pressure-treated to be uniquely resistant to the micro-fractures and stresses of long-term void exposure. It takes on wear slower than any other ship, not because it is alien, but because it was obsessively, fanatically over-engineered.
+Aesudon's massive fuel tanks were designed to be filled once, allowing it to coast on a single burn for a years. The original owner, upon its completion, provisioned the vessel, boarded it, and was last seen heading for the Kuiper Belt. They were never heard from again. The ship, however, reappeared fifty years later, its transponder dark, its fuel tanks still half-full, and its log wiped.
+
+It was recovered by a Merchant's Guild patrol and brought to Pluto, a ghost ship whose resilience is proven. It is a ship built for any long, quiet, and lonely journey. Its internal systems are spacious and redundant on a scale that borders on the insane, with triple-backups for every core function.
+
+To acquire the Aesudon is to buy a masterpiece of engineering. It is a ship for the captain who trusts no one and nothing but the integrity of their own hull, a vessel designed to endure when all others have turned to dust.`,
         saleLocationId: locationMap["Pluto"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -697,21 +665,14 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
         maxFuel: 295,
         role: "Balanced",
         attribute: "None",
-        description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be blessed, finding fortune and profit in the system's chaos.",
-        lore: `The Pterodactyl is the personal transport of the Venetian Syndicate's most audacious and successful members.
-Manufactured in the opulent, private orbital estates of Venus, its design is intentionally flamboyant, aggressive, and ostentatious.
-Its wings, which house the main thrusters, give it a unique, reptilian silhouette, earning it the name Pterodactyl.
-This ship is a pure expression of ambition. It is a high-performance machine for high-stakes players.
-Its powerful engine and massive hull make it a formidable opponent in any situation, a ship that can get into and out of trouble with equal ease.
-The ship's lucky reputation is the talk of the system.
-It is not luck, but a suite of the most advanced probability-analysis and social-engineering software in existence.
-This special core runs constant, subtle simulations, predicting and manipulating outcomes.
-It suggests the right comms frequency for a random distress call, advises the captain to take a specific route that happens to intercept a high-value derelict, and scrubs Guild records to ensure the credit reward is... generous.
-These ships are rarely sold but instead are granted. They are given to Syndicate members who have provided the most compromising information and proven their loyalty.
-To see one on the open market on Venus means its previous owner has been retired. Permanently.
-To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate.
-It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself.
-It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
+        description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be lucky, finding fortune and profit in the system's chaos.",
+        lore: `The Pterodactyl is the personal transport of the Venetian Syndicate's most audacious and successful members. Manufactured in the opulent, private orbital estates of Venus, its design is intentionally flamboyant, aggressive, and ostentatious.
+
+This ship is a pure expression of ambition. It is a high-performance machine for high-stakes players. Its powerful engines and massive hull make it a formidable opponent in any situation, a ship that can get into and out of trouble with equal ease.
+
+These ships are rarely sold but instead are granted. They are given to Syndicate members who have provided the most compromising and lucrative information and have repeatedly proven their loyalty. To see one on the open market on Venus means its previous owner has been retired. Permanently.
+
+To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate. It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself. It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -728,21 +689,15 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
         role: "Hauler",
         attribute: "None",
         description: "A hauler with the elegance of a Terran cruiser, this ship is a symbol of ultimate economic power, an alliance between the Guild and the Alliance made manifest in steel.",
-        lore: `The Sovereign is the ultimate expression of the great game of commerce.
-It is a hauler of immense capacity, but it is also a political statement.
-This ship is the result of an exclusive, back-room deal between the Terran Alliance and the Merchant's Guild, manufactured only at the neutral hub of The Exchange.
-It is the ship of a true merchant prince.
+        lore: `The Sovereign is the ultimate expression of the great game of commerce. It is a hauler of immense capacity, but it is also a political statement. This ship is the result of an exclusive, back-room deal between the Terran Alliance and the Merchant's Guild, manufactured only at the neutral hub of The Exchange. It is the ship of a true merchant prince.
 
-Its design is a hybrid of Earth's clean manufacturing and the Guild's ruthless pragmatism.
-It has the massive capacity of a hauler, but the high-efficiency engine of a Terran cruiser.
-Its hull is thick, not with armor, but with the advanced, proprietary components that only Earth can provide.
-The ship's corporate partnership is its entire reason for being. It is a physical manifestation of a trade pact.
-Its identification and transponder codes are hard-coded into the Terran Alliance's central economic computer.
-When this ship docks specifically at Earth, it is given Alliance-partner status, granting its owner an automatic, non-negotiable discount on all purchases, a benefit worth millions.
-The Sovereign is the personal vessel of the Merchant's Guild's most powerful and trusted human agents, and the corporate lords of the Corporate States.
-It is the ship of the elite, a tool that solidifies their power and wealth by giving them an insurmountable edge in the system's most foundational market: home world Earth.
-To be offered a Sovereign at The Exchange is a great privilege.
-It is an invitation to join the ruling class. It is the ship that wields real, systemic economic power.`,
+Its design is a hybrid of Earth's clean manufacturing and the Guild's ruthless pragmatism. It has the massive capacity of a hauler, but the high-efficiency engine of a Terran cruiser. Its hull is thick, not with armor, but with the advanced, proprietary components that only Earth can provide.
+
+The ship's corporate partnership is its entire reason for being. It is a physical manifestation of a trade pact. Its identification and transponder codes are hard-coded into the Terran Alliance's central economic computer.
+
+The Sovereign is the personal vessel of the Merchant's Guild's most powerful and trusted human agents, and the corporate lords of the Corporate States. It is the ship of the elite, a tool that solidifies their power and wealth by giving them an insurmountable edge in the system's most foundational market: home world Earth.
+
+To be offered a Sovereign at The Exchange is a great privilege. It is an invitation to join the ruling class. It is the ship that wields real, systemic economic power.`,
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -758,23 +713,14 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
         maxFuel: 400,
         role: "Capital",
         attribute: "None",
-        description: "To command this capital ship is to govern a small city, a colossal cryo-ark built to play the long game of market manipulation.",
-        lore: `The Titan is not merely a capital ship;
-it is a mobile city-foundry, a colossal undertaking by the Jovian Mining Consortium.
-Its construction took a full decade in the high-orbit shipyards of Jupiter, requiring the resources of a small moon.
-It is a vessel with a crew of over five thousand, a self-contained ecosystem of engineers, technicians, navigators, and security personnel.
-It is the very definition of a Capital ship.
+        description: "To command this capital ship is to govern a small city, a colossal ark built to play the long game of market manipulation and house hundreds of thousands.",
+        lore: `The Titan is not merely a capital ship; it is a mobile city-foundry, a colossal undertaking by the Jovian Mining Consortium. Its construction took a full decade in the high-orbit shipyards of Jupiter, requiring the resources of a small moon. It is a vessel with a crew of many thousands, a self-contained ecosystem of citizens, engineers, technicians, navigators, and security personnel. It is the very definition of a Capital ship.
 
-Its purpose is not trade as lesser ships know it;
-it is the market. The Titan was built to execute a strategy of economic patience.
-Its core is a cryo-storage facility the size of a stadium, a technological marvel that flash-freezes entire harvests, mining yields, or manufacturing runs, stopping time for its cargo.
-Its massive crew operates the vast, complex systems required to load, maintain, and eventually thaw this colossal bounty.
-This capital ship moves with the slow, inevitable grace of a tectonic plate.
-Its captain is not a pilot, but a governor, dictating policy to a population of thousands.
-Its bridge is a command center, and its captain's quarters are a sprawling administrative suite.
-When the Titan enters orbit, it does not dock; it anchors, and a fleet of smaller freighters swarms its hull to offload its time-locked cargo.
-To acquire thee Titan is to buy a floating, crewed, operational headquarters.
-It is a capital ship for the tycoon who no longer thinks in days, but in fiscal eras.`,
+The Titan was built to execute a strategy of economic patience. Its core is a storage facility the size of a stadium, a technological marvel that houses entire harvests of resources. Its massive crew operates the vast, complex systems required to load and maintain it's colossal bounties.
+
+This capital ship moves with the slow, inevitable grace of a tectonic plate. Its captain is not a pilot, but a governor, dictating policy to a population of innumerable passengers. Its bridge is a command center, and its captain's quarters are a sprawling administrative suite. 
+
+When the Titan enters high orbit, it does not dock; it anchors, and a fleet of smaller freighters swarms its hull to offload its time-locked cargo. To acquire the Titan is to buy a floating, crewed, operational headquarters. It is a capital ship for the tycoon who no longer thinks in days, but in fiscal eras.`,
         saleLocationId: locationMap["Jupiter"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
@@ -791,18 +737,13 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
         role: "Capital",
         attribute: "None",
         description: `Its journey is a migration, its crew a city, its cargo hold a cavern;\n this capital ship is the final word in large-scale logistics.`,
-        lore: `The Behemoth is a vessel of such vulgar, terrifying scale that it is barely considered a ship.
-It is the single largest moving object ever built by humanity, a product of Saturn's ring-miners who, in a fit of brutalist ambition, simply never stopped welding.
-Its construction was more akin to the creation of an artificial moon, a decade-long project that employed over ten thousand engineers and laborers.
-This vessel is itself a stellar supply line. Its crew complement is a city, a permanent population of technicians, security forces, and navigators who live their entire lives aboard.
-Its cargo hold is not a bay; it is a region, a vast, pressurized cavern that can transport the entire, unprocessed output of a major mining colony in a single, lumbering journey.
-Its engines, the size of skyscrapers, nearly struggle with the extreme mass of the vessel and as such it travels considerably slower than other ship.
-Its fuel tanks are vast, and its gargantuan engines are a controlled industrial cataclysm.
+        lore: `The Behemoth is a vessel of such vulgar, terrifying scale that it is barely considered a ship. It is likely the single largest moving object ever built by humanity, a product of Saturn's ring-miners who, in a fit of brutalist ambition, simply never stopped welding. Its construction is more akin to the creation of an artificial moon, a decade-long project that employed over tens of thousands of engineers and laborers.
 
-The Behemoth does not travel;
-it migrates. Its captain is an admiral, a logistician who commands a population and a moving territory.
-To acquire this capital ship is not a purchase, but an appointment to lead and govern a small onboard economy.
-It is the ultimate hammer of inevitable logistic.`,
+This vessel is itself a stellar supply line. Its crew complement is a city, a permanent population of technicians, security forces, and navigators who live their entire lives aboard. Its cargo hold is not a bay; it is a region - a vast, pressurized cavern that can transport the entire, unprocessed output of a major mining colony in a single, lumbering journey.
+
+Its engines, the size of skyscrapers, nearly struggle with the extreme mass of the vessel. Its fuel tanks are vast, and its gargantuan engines are a controlled industrial cataclysm.
+
+The Behemoth does not travel; it migrates. Its captain is an admiral, a logistician who commands a population and a moving territory. To acquire this capital ship is not a purchase, but an appointment to lead and govern a small onboard economy. It is the ultimate hammer of inevitable logistic.`,
         saleLocationId: locationMap["Saturn"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
@@ -818,19 +759,14 @@ It is the ultimate hammer of inevitable logistic.`,
         maxFuel: 475,
         role: "Capital",
         attribute: "None",
-        description: "To command this vessel is to wield the authority of Earth; its renowned status grants its governor privileges and discounts in every known port.",
-        lore: `The Citadel is the flagship of the Terran Alliance, a radiant, gleaming symbol of Earth's technological and economic superiority.
-It is less a ship and more a sovereign, mobile territory.
-Its construction was the work of Earth's greatest AI-Human collaborative teams, a vessel so advanced and so resource-intensive that only the cradle of humanity could build it.
-This Capital ship is a floating diplomatic city, with a permanent crew and staff of eight thousand.
-It houses embassies, advanced research labs, sprawling hydroponic gardens, and the command-and-control centers for an entire sector of the Alliance fleet.
-Its hull is not mere metal, but a gleaming, clean alloy that is the envy of the system, and its internal systems are managed by a sophisticated, near-sentient AI custodian.
-Most impressive of all is its insane capacity for storage;
-a cavernous space so vast that it can shelter numerous smaller ships.
-The renowned Citadel is not just a capital ship; it is a presence. Its arrival is a diplomatic event.
-Its transponder code is the highest-priority signal in the system, granting it immediate, non-negotiable access to all ports and a permanent, system-wide discount on all fuel.
-To be granted command of the Citadel is to be anointed by the Alliance itself.
-The ship, its crew, and its power are leased to the captain, a sign that they are no longer a simple trader, but a major, system-shaping power, an extension of Earth's own will.`,
+        description: "To command this vessel is to wield the authority of Earth itself.",
+        lore: `The Citadel is the flagship of the Terran Alliance, a radiant, gleaming symbol of Earth's technological and economic supremacy. It is less a ship and more a sovereign, mobile territory. Its construction was the work of Earth's greatest AI-Human collaborative teams, a vessel so advanced and so resource-intensive that only the cradle of humanity could build it.
+
+This Capital ship is a floating diplomatic city, with a permanent crew and staff of eighty thousand. It houses embassies, advanced research labs, hydroponic gardens, and the command-and-control centers for an entire sector of the Alliance fleet. Its hull is not mere metal, but a gleaming, clean alloy that is the envy of the system, and its internal systems are managed by a sophisticated, near-sentient AI custodian. Most impressive of all is its insane capacity for storage; a cavernous space so vast that it can shelter numerous smaller ships. 
+
+The renowned Citadel is not just a capital ship; it is a presence. Its arrival is a diplomatic event. Its transponder code is the highest-priority signal in the system, granting it immediate, non-negotiable access to all ports.
+
+To be granted command of the Citadel is to be anointed by the Alliance itself. The ship, its crew, and its power are leased to the captain, a sign that they are no longer a simple trader, but a major, system-shaping power, an extension of Earth's own will.`,
         saleLocationId: locationMap["Earth"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
@@ -846,20 +782,14 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
         maxFuel: 340,
         role: "Capital",
         attribute: "None",
-        description: "Built to be the ultimate private yacht, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull.",
-        lore: `The Sophistacles is the system's white elephant, a monument to luxury and a testament to an ambition that exceeded the market's reach.
-This one-of-a-kind capital ship was commissioned by a forgotten Venusian socialite who went bankrupt before its completion.
-It was designed to be the largest, most opulent private ""yacht"" ever built, a ""cruise ship"" for a single billionaire and ten thousand of their closest friends.
-Its construction took fifteen years in a private, high-orbit dock above The Exchange, and the final cost was so astronomical that no one has ever been able to afford it.
-It is a vessel of breathtaking, absurd luxury. Its hull is plated with a gleaming, pearlescent alloy that has no military value but costs more than a small fleet.
-Its interior decks contain sprawling ballrooms, multi-level hydroponic gardens, concert halls, and private suites that are larger than most C-class ships.
-Its crew of five thousand is a skeleton staff, a tiny fraction of the attendants it was designed to hold, kept on retainer by the Merchant's Guild just to maintain the ship's systems.
-It has sat docked at The Exchange for a decade, a gleaming, silent testament to hubris.
-The Guild, which now owns it through foreclosure, has been trying to sell it ever since.
-It is a robust, powerful capital ship, its engines pristine and its cargo bays (originally designed for luxury vehicles and art) immense.
-It is a palace waiting for a king, a ship so fancy and so expensive that its very existence is a legend among traders.
-To acquire the Sophistacles is not just to buy a ship, but to buy a legend.
-It is a purchase that announces to the system that the new owner has transcended the mere pursuit of wealth and is now in the business of pure, unadulterated status.`,
+        description: "Built to be the ultimate private habitat, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull design.",
+        lore: `The Sophistacles is the system's white elephant, a monument to luxury and a testament to an ambition that exceeded the market's reach. This one-of-a-kind capital ship was commissioned by a forgotten Venusian socialite who went bankrupt before its completion. It was designed to be the largest, most opulent private "yacht" ever built, a "cruise ship" for a single billionaire and ten thousand of their closest friends. Its construction took fifteen years in a private, high-orbit dock above The Exchange, and the final cost was so astronomical that no one has ever been able to afford it.
+
+It is a vessel of breathtaking, absurd luxury. Its hull is plated with a gleaming, pearlescent alloy that has no military value but costs more than a large fleet. Its interior decks contain sprawling ballrooms, multi-level hydroponic gardens, concert halls, and private suites that are larger than most C-class ships. Its crew of thousands is a skeleton staff, a tiny fraction of the attendants it was designed to hold, kept on retainer by the Merchant's Guild just to maintain the ship's systems and three opulant habitat domes.
+
+It has sat docked at The Exchange for a decade, a gleaming, silent testament to hubris. The Guild, which now owns it through foreclosure, has been trying to sell it ever since. It is a robust, powerful capital ship, its engines pristine and its cargo bays (originally designed for luxury vehicles and art) immense. It is a palace waiting for a king, a ship so fancy and so expensive that its very existence is a legend among traders.
+
+To acquire the Sophistacles is not just to buy a ship, but to buy a legend. It is a purchase that announces to the system that the new owner has transcended the mere pursuit of wealth and is now in the business of pure, unadulterated status.`,
         saleLocationId: locationMap["The Exchange"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
@@ -876,17 +806,13 @@ It is a purchase that announces to the system that the new owner has transcended
         role: "Capital",
         attribute: "None",
         description: "Often mistaken for a small station, this absurd, one-of-a-kind toroidal ship is a rotating marvel of science and a nightmare of engineering.",
-        lore: `The Ouroboros is a scientific marvel and an engineering nightmare.
-This one-of-a-kind capital ship is the only vessel of its kind, an absurd, toroidal (donut-shaped) craft so large that it is frequently mistaken for a new, experimental space station by rookie pilots.
-It was built at Kepler's Eye as a ""proof of concept"" for a self-contained, rotating habitat that could also serve as a long-duration exploration vessel.
-Its core design is a massive, gently spinning ring, kilometers in diameter, which provides artificial gravity for its thousands of crew.
-This design, however, makes the ship a maintenance hog. The advanced, fiendishly complex systems required to manage its rotation, balance its mass, and maintain its structural integrity are a constant drain on resources.
-Its proprietary drive is woven through the toroidal hull, meaning a simple repair can require a week of system-wide shutdowns.
-The ship is a legend among engineers, a ""cursed"" commission that no one wants to work on.
-Its operational costs are ruinous, and its specialized components can only be fabricated at Kepler's Eye.
-Its original scientific mission was cut short after its systems proved too complex to manage, and it has been sitting in a high-orbit dock ever since, its gentle spin the only sign of life.
-The station is now selling it for a fraction of its build cost, desperate to unload the financial burden.
-To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piece of technology, a ship that offers the comfort of a station but demands the attention of a needy god.`,
+        lore: `The Ouroboros is a scientific marvel and an engineering nightmare. This one-of-a-kind capital ship is the only vessel of its kind, an absurd, toroidal (donut-shaped) craft so large that it is frequently mistaken for a new, experimental space station by rookie pilots. It was built at Kepler's Eye as a "proof of concept" for a self-contained, rotating habitat that could also serve as a long-duration exploration vessel.
+
+Its core design is a massive, gently spinning ring, kilometers in diameter, which provides artificial gravity for its thousands of crew. This design, however, makes the ship a maintenance hog. The advanced, fiendishly complex systems required to manage its rotation, balance its mass, and maintain its structural integrity are a constant drain on resources. Its proprietary drives line the outside of the toroidal hull, meaning a simple repair can require a week of system-wide shutdowns.
+
+The ship is a legend among engineers, a "cursed" commission that no one wants to work on. Its operational costs are ruinous, and its specialized components can only be fabricated at Kepler's Eye. Its original scientific mission was cut short after its systems proved too complex to manage, and it has been sitting in a high-orbit dock ever since, its gentle spin the only sign of life.
+
+The station is now selling it for a fraction of its build cost, desperate to unload the financial burden. To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piece of technology, a ship that offers the comfort of a station but demands the attention of a needy god.`,
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
@@ -903,19 +829,11 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
         role: "Capital",
         attribute: "None",
         description: "A one-of-a-kind, decommissioned fleet carrier, this city-sized vessel once housed an entire army and its own internal economy.",
-        lore: `The Thalassodromeus is a decommissioned monster, a one-of-a-kind military behemoth that was, for a short time, the single most powerful object in the solar system.
-This city-sized vessel was the Terran Alliance's prototype ""Fleet Carrier,"" a colossus designed to be a mobile base of operations, carrying dozens of smaller craft, hundreds of thousands of military personnel, and its own internal, self-sufficient economy.
-Its scale is terrifying. It is a moving mountain of armor and decommissioned weapon ports.
-Its interior is a labyrinth of hangar bays, troop barracks, command centers, and fabrication plants.
-Its crew of twenty thousand was a permanent, floating population. This ship was not built for trade;
-it was built to end wars.
+        lore: `The Thalassodromeus is a decommissioned monster, a one-of-a-kind military behemoth that was, for a short time, the single most powerful object in the solar system. This city-sized vessel was the Terran Alliance's prototype "Fleet Carrier," a colossus designed to be a mobile base of operations, carrying dozens of smaller craft, hundreds of thousands of military personnel, and its own internal, self-sufficient economy.
 
-Its most valuable, and secret, component is its drive.
-It houses the first and only military-grade, prototype instant-jump folded-space drive, an engine that could move this entire city-sized mass to any point in the system in a single, gut-wrenching instant.
-The drive was deemed too powerful and too destabilizing, and the entire ship class was canceled.
-Now, after decades of service, the Alliance is auctioning off this lone giant from its Neptune anchorage.
-Its armaments have been stripped, but the invaluable, city-sized hull and its one-of-a-kind prototype drive remain.
-It is a ship for an owner who wants to command a small nation, a vessel of such colossal scale that its new purpose will reshape the system.`,
+Its scale is terrifying. It is a moving mountain of armor and decommissioned weapon ports. Its interior is a labyrinth of hangar bays, troop barracks, command centers, and fabrication plants. Its crew of twenty thousand was a permanent, floating population. This ship was not built for trade; it was built to end trade wars.
+
+Now, after decades of service, the Alliance is auctioning off this lone giant from its Neptune anchorage. The invaluable, city-sized hull and its one-of-a-kind prototype drive remain the talk of any economy. It is a ship for an owner who wants to command a small nation, a vessel of such colossal scale that its new purpose will reshape the system's economy with it's mere movements.`,
         saleLocationId: locationMap["Neptune"],
         spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",

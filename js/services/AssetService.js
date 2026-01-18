@@ -280,4 +280,33 @@ export class AssetService {
         console.log(`[AssetService] Background hydrating all ${queue.length} commodities...`);
         this.hydrateAssets(queue);
     }
+
+    /**
+     * Preloads a buffer of assets around a specific index in a list.
+     * Called by CarouselEventHandler to ensure smooth scrolling.
+     * @param {Array<string>} shipList - List of Ship IDs.
+     * @param {number} targetIndex - The index we are scrolling to/near.
+     * @param {number} bufferRadius - The number of items to load on either side (e.g. 5).
+     * @param {number} seed - The player's visual seed.
+     */
+    static preloadBuffer(shipList, targetIndex, bufferRadius, seed) {
+        if (!shipList || shipList.length === 0) return;
+
+        const queue = [];
+        // Calculate bounds, clamping to the array limits to prevent out-of-bounds errors
+        const start = Math.max(0, targetIndex - bufferRadius);
+        const end = Math.min(shipList.length - 1, targetIndex + bufferRadius);
+
+        for (let i = start; i <= end; i++) {
+            const shipId = shipList[i];
+            if (shipId) {
+                queue.push({ type: 'ship', id: shipId, seed: seed });
+            }
+        }
+
+        // Trigger hydration (Fire and forget; we don't need to await this for the UI to continue)
+        if (queue.length > 0) {
+            this.hydrateAssets(queue).catch(e => console.warn('[AssetService] Buffer preload warning:', e));
+        }
+    }
 }
