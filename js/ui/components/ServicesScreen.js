@@ -232,7 +232,7 @@ export function renderServicesScreen(gameState, simulationService) {
 
 /**
  * Deterministically filters the available upgrades based on Day and Location.
- * Implements "Exploration Economy" rates: Tier 1 (30%), Tier 2 (15%), Tier 3 (8%).
+ * Implements "Exploration Economy" rates: Tier 1 (15%), Tier 2 (10%), Tier 3 (5%).
  * @param {object} gameState
  * @returns {string[]} Array of available upgrade IDs.
  */
@@ -244,20 +244,19 @@ function _getDailyStock(gameState) {
         // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
         if (id.includes('GUILD') || id.includes('SYNDICATE')) return false;
 
-        // 2. Determine Chance based on Tier Suffix
-        let threshold = 0.30; // Tier 1 Default
-        if (id.endsWith('_II')) threshold = 0.15;
-        if (id.endsWith('_III')) {
-            threshold = 0.08;
-            
-            // --- VIRTUAL WORKBENCH: STATION QUIRKS (URANUS TECH BOOST) ---
-            if (currentLocationId === LOCATION_IDS.URANUS) {
-                threshold *= 2; // 2x Chance for Tier 3 items on Uranus
-            }
-            // --- END VIRTUAL WORKBENCH ---
+        // 2. Determine Base Chance based on Tier Suffix
+        // REVISED BASE RATES: T1=15%, T2=10%, T3=5%
+        let threshold = 0.15; // Tier 1 Default
+        if (id.endsWith('_II')) threshold = 0.10;
+        if (id.endsWith('_III')) threshold = 0.05;
+
+        // 3. Apply Uranus Station Quirk (2x Multiplier for ALL tiers)
+        // REVISED URANUS RATES: T1=30%, T2=20%, T3=10%
+        if (currentLocationId === LOCATION_IDS.URANUS) {
+            threshold *= 2; 
         }
 
-        // 3. Deterministic Hashing (Day + Location + UpgradeID)
+        // 4. Deterministic Hashing (Day + Location + UpgradeID)
         const seedString = `${day}_${currentLocationId}_${id}`;
         
         // Simple hash function to generate a pseudo-random number 0-1

@@ -56,7 +56,7 @@ export const SHIP_DATABASE = {
         price: 25000,
         maxHealth: 30,
         cargoCapacity: 30,
-        maxFuel: 150, // CHANGED: 130 -> 150
+        maxFuel: 150, 
         role: "Explorer",
         attribute: "None",
         description: "Its oversized fuel tank betrays its past as a survey ship, built for pilots who value the range over all else. ",
@@ -85,7 +85,7 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         price: 25000,
         maxHealth: 70,
         cargoCapacity: 45,
-        maxFuel: 110, // CHANGED: 90 -> 110
+        maxFuel: 110, 
         role: "Balanced",
         attribute: "None",
         description: "It lacks the range of an explorer, but its reinforced hull promises a steady hand through the system's most turbulent trade routes.",
@@ -121,7 +121,7 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         price: 25000,
         maxHealth: 45,
         cargoCapacity: 70,
-        maxFuel: 90, // CHANGED: 70 -> 90
+        maxFuel: 90, 
         role: "Hauler",
         attribute: "None",
         description: "Little more than a cockpit bolted to a high-capacity cargo container, this ship was designed for slow but profitable journeys between orbital stations, one ton at a time.",
@@ -150,7 +150,7 @@ It is a bet that you can fill it, sell its contents, and earn your way into a be
     "Nomad.Ship": {
         name: "Nomad",
         class: "C",
-        price: 40000,
+        price: 42000,
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
@@ -170,15 +170,15 @@ This particular Nomad has likely been hot-swapped multiple times in back-alley d
 Its transponder codes are clean, but its engine housing has tool marks that suggest hasty, non-standard modifications.
 The light hull and modest cargo bay make it an excellent choice for an explorer, a courier, or someone who needs to be somewhere they aren't supposed to be.`,
         saleLocationId: locationMap["Moon"],
-        spawnChance: 0.4,
+        spawnChance: 1,
         spawnTrigger: "Always available",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Rooster.Ship": {
         name: "Rooster",
         class: "C",
-        price: 42000,
+        price: 45000,
         maxHealth: 100,
         cargoCapacity: 65,
         maxFuel: 110,
@@ -194,7 +194,7 @@ It was known for crowing its priority codes, demanding immediate docking clearan
 Its solid hull and balanced systems were a mark of its quality, built to protect its valuable cargo and passengers at all costs.
 As a balanced ship, it's a master of none but a jack-of-all-trades.
 It has enough speed to be interesting, enough armor to be reassuring, and a cargo bay large enough for specialized, high-profit goods.
-It's a ship for a captain who wants to maintain a low-level of corporate-style professionalism.
+It's a ship for the captain who wants to maintain a low-level of corporate-style professionalism.
 This hull was likely part of a corporate fleet that was cycled out after only a few years of service to make way for a newer model.
 On Earth, technology iterates quickly, and yesterday's luxury transport is today's surplus.
 It was sold on the open market, its new ship smell barely faded, representing a significant step up for any independent captain.
@@ -202,15 +202,15 @@ Owning a Rooster is a sign that a pilot has moved beyond simple survival.
 It’s a ship that implies a certain level of success and discretion.
 It’s fast, reliable, and just stylish enough to get you noticed by the kinds of clients who pay well for a captain who looks the part.`,
         saleLocationId: locationMap["Earth"],
-        spawnChance: 0.4,
+        spawnChance: 1,
         spawnTrigger: "Always available",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Mesa.Ship": {
         name: "Mesa",
         class: "C",
-        price: 44000,
+        price: 55000,
         maxHealth: 50,
         cargoCapacity: 100,
         maxFuel: 70,
@@ -234,15 +234,15 @@ To pilot a Mesa is to embrace a life of pure profit-driven logistics.
 It’s a slow, lumbering beast that handles like a brick, but its ability to haul cargo makes it one of the most profitable ships in its class.
 It is a tool for the captain who studies manifests, not star charts.`,
         saleLocationId: locationMap["Mars"],
-        spawnChance: 0.4,
+        spawnChance: 1,
         spawnTrigger: "Always available",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Pathfinder.Ship": {
         name: "Pathfinder",
         class: "B",
-        price: 145000,
+        price: 210000,
         maxHealth: 40,
         cargoCapacity: 50,
         maxFuel: 260,
@@ -263,15 +263,15 @@ Its light hull is a liability, but the ship was never intended to be in harm's w
 Purchasing a Pathfinder is a significant investment. Captains who buy them are often those who understand that in the cold war fought with cargo manifests, information is the most valuable commodity.
 It’s a ship for a pilot who prefers to know the location of the next deal before they ever engage the drive.`,
         saleLocationId: locationMap["Venus"],
-        spawnChance: 0.3,
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Odyssey.Ship": {
         name: "Odyssey",
         class: "B",
-        price: 150000,
+        price: 265000,
         maxHealth: 120,
         cargoCapacity: 110,
         maxFuel: 120,
@@ -292,15 +292,15 @@ This particular craft has been well-maintained, its armor patched and its engine
 The interior is professional and clean, with a small but secure brig and a dedicated, shielded strongbox for high-value goods, betraying its past in corporate security.
 This is a ship for the captain who has graduated from desperation to ambition, a solid, reliable, and powerful tool for taking on more dangerous and lucrative contracts across the system.`,
         saleLocationId: locationMap["Moon"],
-        spawnChance: 0.3,
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Pilgrim.Ship": {
         name: "Pilgrim",
         class: "B",
-        price: 150000,
+        price: 285000,
         maxHealth: 60,
         cargoCapacity: 175,
         maxFuel: 90,
@@ -322,15 +322,15 @@ It's a ship that represents a massive gamble on the cold, impartial logic of the
 To captain a Pilgrim is to commit to a life of high-stakes logistics.
 It’s a specialized tool for the trader who intends to profit from the system's most distant and demanding routes, where the only things that matter are the cargo capacity and the long, silent countdown to arrival.`,
         saleLocationId: locationMap["Neptune"],
-        spawnChance: 0.3,
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Meridian.Ship": {
         name: "Meridian",
         class: "B",
-        price: 155000,
+        price: 245000,
         maxHealth: 100,
         cargoCapacity: 70,
         maxFuel: 230,
@@ -350,15 +350,15 @@ It's a ship for a captain who wants to take on serious, high-paying contracts.
 Owning a Meridian signifies that a pilot has crossed the line from freelancer to professional.
 It's a serious ship for serious work, capable of opening up new routes and discovering the resources that fuel the entire system-wide technological dependency.`,
         saleLocationId: locationMap["Jupiter"],
-        spawnChance: 0.3,
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Raven.Ship": {
         name: "Raven",
         class: "B",
-        price: 160000,
+        price: 230000,
         maxHealth: 210,
         cargoCapacity: 80,
         maxFuel: 110,
@@ -376,16 +376,16 @@ This particular ship is a typical Belter vessel. The hull is a patchwork of diff
 The interior is purely functional with little crew comforts. The air smells of recycled oxygen and the faint, coppery tang of spent energy cells.
 Buying a Raven in The Belt is an admission that you are operating in a place where law is a distant concept.
 It's a ship for the captain who has embraced danger and decided that the best defense is a hull that simply refuses to break.`,
-        saleLocationId: locationMap["The Belt"],
-        spawnChance: 0.3,
+        saleLocationId: locationMap["Uranus"],
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Warden.Ship": {
         name: "Warden",
         class: "B",
-        price: 165000,
+        price: 310000,
         maxHealth: 70,
         cargoCapacity: 160,
         maxFuel: 160,
@@ -408,15 +408,15 @@ A Warden for sale on Pluto is a rare and serious purchase.
 It is the key to some of the system's most dangerous and most profitable long-haul routes.
 It is a ship for the captain who has transcended the cold trade wars of the inner system and chosen to do business with the unforgiving void itself.`,
         saleLocationId: locationMap["Pluto"],
-        spawnChance: 0.3,
+        spawnChance: 1,
         spawnTrigger: "Tier 3 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Aegis.Ship": {
         name: "Aegis",
         class: "A",
-        price: 590000,
+        price: 1750000,
         maxHealth: 200,
         cargoCapacity: 100,
         maxFuel: 300,
@@ -438,15 +438,15 @@ To acquire an Aegis is to purchase a piece of corporate-military hardware.
 It is a ship that tells the system you are no longer just a trader;
 you are a serious operator, capable of undertaking the most demanding, long-term contracts that the Merchant's Guild or a corporate state can offer.`,
         saleLocationId: locationMap["Mars"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Forerunner.Ship": {
         name: "Forerunner",
         class: "A",
-        price: 600000,
+        price: 1600000,
         maxHealth: 290,
         cargoCapacity: 160,
         maxFuel: 150,
@@ -467,15 +467,15 @@ The interior is cramped, sacrificing crew comfort for storage and reinforced bul
 To buy a Forerunner is to buy a reputation. It is a ship that sends a clear message in every port it visits: Do not interfere.
 It is the ultimate tool for the captain who must navigate the most dangerous trade lanes and is willing to brute force their way through any asteroid field to ensure their cargo—and their life—reaches its destination.`,
         saleLocationId: locationMap["The Belt"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Guardian.Ship": {
         name: "Guardian",
         class: "A",
-        price: 590000,
+        price: 2600000,
         maxHealth: 130,
         cargoCapacity: 230,
         maxFuel: 165,
@@ -498,15 +498,15 @@ The cockpit is professional, with redundant navigation and communication systems
 Owning a Guardian is a sign that a captain has reached the big leagues.
 It is a ship for the merchant prince, a pilot who no longer deals in scraps and single contracts, but in massive, long-term manifests that are the lifeblood of the entire system.`,
         saleLocationId: locationMap["Saturn"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 4 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Valiant.Ship": {
         name: "Valiant",
         class: "A",
-        price: 580000,
+        price: 1950000,
         maxHealth: 100,
         cargoCapacity: 125,
         maxFuel: 375,
@@ -527,15 +527,15 @@ The name itself is a piece of corporate propaganda, meant to inspire tales of he
 This ship is pristine, its systems far in advance of standard military tech.
 To pilot a Valiant is to be at the absolute pinnacle of the class and adventure.`,
         saleLocationId: locationMap["Jupiter"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Eagle.Ship": {
         name: "Eagle",
         class: "A",
-        price: 630000,
+        price: 2400000,
         maxHealth: 210,
         cargoCapacity: 200,
         maxFuel: 220,
@@ -558,15 +558,15 @@ The interior is luxurious, the controls are seamless, and the ship's integrated 
 To own an Eagle is to have obtained the ultimate status symbol for a freelance captain, a ship that grants access to exclusive markets and the respect of the system's greatest powers.
 It is fast, tough, beautiful, and a testament to success.`,
         saleLocationId: locationMap["Earth"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Tundra.Ship": {
         name: "Tundra",
         class: "A",
-        price: 620000,
+        price: 3200000,
         maxHealth: 100,
         cargoCapacity: 330,
         maxFuel: 170,
@@ -589,15 +589,15 @@ To see a Tundra for sale on Neptune is to see an opportunity of immense scale.
 These ships are rarely decommissioned; they are simply too valuable.
 This is a ship for the captain who is ready to move beyond a mere cargo manifest and start thinking in terms of global economic influence.`,
         saleLocationId: locationMap["Neptune"],
-        spawnChance: 0.2,
+        spawnChance: 1,
         spawnTrigger: "Tier 5 Unlock",
-        isRare: true,
+        isRare: false,
         mechanicIds: []
     },
     "Atlas.Ship": {
         name: "Atlas",
         class: "S",
-        price: 1850000,
+        price: 34000000,
         maxHealth: 180,
         cargoCapacity: 240,
         maxFuel: 425,
@@ -622,7 +622,7 @@ To own an Atlas is to own a piece of engineering folklore.
 It is a ship for the true explorer, the captain who feels the pull of the Solar Boundary and wishes to see what lies beyond.
 It is less a tool of commerce and more a philosophical statement: a vessel that travels endlessly.`,
         saleLocationId: locationMap["Saturn"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -630,7 +630,7 @@ It is less a tool of commerce and more a philosophical statement: a vessel that 
     "Vindicator.Ship": {
         name: "Vindicator",
         class: "S",
-        price: 1200000,
+        price: 38000000,
         maxHealth: 400,
         cargoCapacity: 240,
         maxFuel: 255,
@@ -653,7 +653,7 @@ Purchasing a Vindicator is a massive investment and a dangerous statement.
 It tells the system you are a sneaky player in the economic game, and you are not above tipping the scales in your favor.
 It is the perfect ship for the ruthless captain for whom wealth is not just a motto, but an absolute.`,
         saleLocationId: locationMap["Uranus"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -661,7 +661,7 @@ It is the perfect ship for the ruthless captain for whom wealth is not just a mo
     "Radiant.Ship": {
         name: "Radiant",
         class: "S",
-        price: 1750000,
+        price: 48000000,
         maxHealth: 170,
         cargoCapacity: 380,
         maxFuel: 280,
@@ -682,7 +682,7 @@ To own a Radiant is to be in the business of speed.
 It is a ship for the captain who understands that in the 22nd century, the razor's edge is not just about what you carry, but how fast you carry it.
 It is the perfect tool for the get-it-there-yesterday contracts that pay a fortune.`,
         saleLocationId: locationMap["Kepler's Eye"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -690,7 +690,7 @@ It is the perfect tool for the get-it-there-yesterday contracts that pay a fortu
     "Aesudon.Ship": {
         name: "Aesudon",
         class: "S",
-        price: 1700000,
+        price: 28000000,
         maxHealth: 250,
         cargoCapacity: 200,
         maxFuel: 465,
@@ -712,7 +712,7 @@ Its internal systems are spartan but redundant on a scale that borders on the in
 To acquire the Aesudon is to buy a masterpiece of engineering.
 It is a ship for the captain who trusts no one and nothing but the integrity of their own hull, a vessel designed to endure when all others have turned to dust.`,
         saleLocationId: locationMap["Pluto"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -720,7 +720,7 @@ It is a ship for the captain who trusts no one and nothing but the integrity of 
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
         class: "S",
-        price: 1970000,
+        price: 42000000,
         maxHealth: 300,
         cargoCapacity: 230,
         maxFuel: 295,
@@ -742,7 +742,7 @@ To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate.
 It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself.
 It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
         saleLocationId: locationMap["Venus"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -750,7 +750,7 @@ It is the ultimate gambler's vessel, for the captain who knows that in the great
     "Sovereign.Ship": {
         name: "Sovereign",
         class: "S",
-        price: 2130000,
+        price: 55000000,
         maxHealth: 250,
         cargoCapacity: 420,
         maxFuel: 220,
@@ -773,7 +773,7 @@ It is the ship of the elite, a tool that solidifies their power and wealth by gi
 To be offered a Sovereign at The Exchange is a great privilege.
 It is an invitation to join the ruling class. It is the ship that wields real, systemic economic power.`,
         saleLocationId: locationMap["The Exchange"],
-        spawnChance: 0.15,
+        spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
         mechanicIds: []
@@ -781,7 +781,7 @@ It is an invitation to join the ruling class. It is the ship that wields real, s
     "Titan.Ship": {
         name: "Titan",
         class: "O",
-        price: 95000000,
+        price: 250000000,
         maxHealth: 250,
         cargoCapacity: 450,
         maxFuel: 400,
@@ -805,7 +805,7 @@ When the Titan enters orbit, it does not dock; it anchors, and a fleet of smalle
 To acquire thee Titan is to buy a floating, crewed, operational headquarters.
 It is a capital ship for the tycoon who no longer thinks in days, but in fiscal eras.`,
         saleLocationId: locationMap["Jupiter"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
@@ -813,7 +813,7 @@ It is a capital ship for the tycoon who no longer thinks in days, but in fiscal 
     "Behemoth.Ship": {
         name: "Behemoth",
         class: "O",
-        price: 145000000,
+        price: 450000000,
         maxHealth: 260,
         cargoCapacity: 750,
         maxFuel: 425,
@@ -833,7 +833,7 @@ it migrates. Its captain is an admiral, a logistician who commands a population 
 To acquire this capital ship is not a purchase, but an appointment to lead and govern a small onboard economy.
 It is the ultimate hammer of inevitable logistic.`,
         saleLocationId: locationMap["Saturn"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
@@ -841,7 +841,7 @@ It is the ultimate hammer of inevitable logistic.`,
     "Citadel.Ship": {
         name: "Citadel",
         class: "O",
-        price: 165000000,
+        price: 600000000,
         maxHealth: 270,
         cargoCapacity: 500,
         maxFuel: 475,
@@ -861,7 +861,7 @@ Its transponder code is the highest-priority signal in the system, granting it i
 To be granted command of the Citadel is to be anointed by the Alliance itself.
 The ship, its crew, and its power are leased to the captain, a sign that they are no longer a simple trader, but a major, system-shaping power, an extension of Earth's own will.`,
         saleLocationId: locationMap["Earth"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
@@ -869,7 +869,7 @@ The ship, its crew, and its power are leased to the captain, a sign that they ar
     "Sophistacles.Ship": {
         name: "Sophistacles",
         class: "O",
-        price: 390000000,
+        price: 850000000,
         maxHealth: 280,
         cargoCapacity: 750,
         maxFuel: 340,
@@ -890,7 +890,7 @@ It is a palace waiting for a king, a ship so fancy and so expensive that its ver
 To acquire the Sophistacles is not just to buy a ship, but to buy a legend.
 It is a purchase that announces to the system that the new owner has transcended the mere pursuit of wealth and is now in the business of pure, unadulterated status.`,
         saleLocationId: locationMap["The Exchange"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
@@ -898,7 +898,7 @@ It is a purchase that announces to the system that the new owner has transcended
     "Ouroboros.Ship": {
         name: "Ouroboros",
         class: "O",
-        price: 480000000,
+        price: 1000000000,
         maxHealth: 350,
         cargoCapacity: 800,
         maxFuel: 420,
@@ -917,7 +917,7 @@ Its original scientific mission was cut short after its systems proved too compl
 The station is now selling it for a fraction of its build cost, desperate to unload the financial burden.
 To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piece of technology, a ship that offers the comfort of a station but demands the attention of a needy god.`,
         saleLocationId: locationMap["Kepler's Eye"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
@@ -925,7 +925,7 @@ To buy the Ouroboros is to purchase a brilliant, flawed, and utterly unique piec
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
         class: "O",
-        price: 780000000,
+        price: 1500000000,
         maxHealth: 300,
         cargoCapacity: 850,
         maxFuel: 680,
@@ -946,7 +946,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
 Its armaments have been stripped, but the invaluable, city-sized hull and its one-of-a-kind prototype drive remain.
 It is a ship for an owner who wants to command a small nation, a vessel of such colossal scale that its new purpose will reshape the system.`,
         saleLocationId: locationMap["Neptune"],
-        spawnChance: 0.05,
+        spawnChance: 0.15,
         spawnTrigger: "Tier 7 Unlock",
         isRare: true,
         mechanicIds: []
