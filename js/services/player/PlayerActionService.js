@@ -59,7 +59,7 @@ export class PlayerActionService {
 
         let totalCost = price * quantity;
 
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE BULK DISCOUNT) ---
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE & BELT DISCOUNT) ---
         // Neptune Quirk: Buying > 50 units of Propellant or Plasteel grants 10% discount.
         if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
             (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
@@ -67,6 +67,14 @@ export class PlayerActionService {
             
             totalCost = Math.floor(totalCost * 0.90);
             this.uiManager.createFloatingText("BULK DISCOUNT APPLIED", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
+        }
+
+        // Belt Quirk: 10% Discount on Water Ice & Xeno-Geologicals
+        if (state.currentLocationId === LOCATION_IDS.BELT &&
+            (goodId === COMMODITY_IDS.WATER_ICE || goodId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            
+            totalCost = Math.floor(totalCost * 0.90);
+            this.uiManager.createFloatingText("MINER'S DISCOUNT", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
         }
         // --- END VIRTUAL WORKBENCH ---
 

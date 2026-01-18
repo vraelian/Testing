@@ -85,6 +85,8 @@ export const LOCATION_IDS = Object.freeze({
     LUNA: 'loc_luna',
     MARS: 'loc_mars',
     VENUS: 'loc_venus',
+    MERCURY: 'loc_mercury',
+    SUN: 'loc_sun',
     BELT: 'loc_belt',
     SATURN: 'loc_saturn',
     JUPITER: 'loc_jupiter',

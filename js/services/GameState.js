@@ -157,7 +157,12 @@ export class GameState {
                 loanStartDate: null, seenGarnishmentWarning: false,
                 revealedTier: 1,
                 unlockedLicenseIds: [],
-                unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => id !== LOCATION_IDS.EXCHANGE && id !== LOCATION_IDS.KEPLER),
+                unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => 
+                    id !== LOCATION_IDS.EXCHANGE && 
+                    id !== LOCATION_IDS.KEPLER &&
+                    id !== LOCATION_IDS.SUN && 
+                    id !== LOCATION_IDS.MERCURY
+                ),
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---

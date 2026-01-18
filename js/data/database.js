@@ -1,11 +1,4 @@
 // js/data/database.js
-/**
- * @fileoverview
- * This file serves as the central database for all static game data.
- * It consolidates information from previous data, config, and content files
- * into a single, authoritative source. This improves maintainability and clarity
- * by providing a unified structure for all core game content and configuration.
- */
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
 import { MISSIONS } from './missions.js';
 import { RANDOM_EVENTS } from './events.js';
@@ -110,13 +103,16 @@ export const DB = {
         [LOCATION_IDS.NEPTUNE]: '🟣',
         [LOCATION_IDS.PLUTO]: '🪩',
         [LOCATION_IDS.EXCHANGE]: '🏴‍☠️',
-        [LOCATION_IDS.KEPLER]: '👁️'
+        [LOCATION_IDS.KEPLER]: '👁️',
+        [LOCATION_IDS.SUN]: '☀️',
+        [LOCATION_IDS.MERCURY]: '🥵'
     },
 
     TRAVEL_VISUALS: {
         zones: {
             inner_sphere: {
-                locations: [LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
+                // [[UPDATED]]: Added SUN and MERCURY to the inner sphere zone
+                locations: [LOCATION_IDS.SUN, LOCATION_IDS.MERCURY, LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
                 gradient: ['#0f172a', '#1e3a8a']
             },
             outer_reaches: {
@@ -179,6 +175,41 @@ export const DB = {
 
     // --- Market and Location Data ---
     MARKETS: [
+        { 
+            id: LOCATION_IDS.SUN, 
+            name: 'Sol Station', 
+            distance: 45, 
+            launchFlavor: "Staring into the eye of the god.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
+            description: 'A masterwork of shielding and courage, harvesting raw solar output. Consumes structural materials to maintain integrity.', 
+            color: 'border-yellow-500', 
+            bg: 'bg-gradient-to-br from-yellow-600 to-orange-900', 
+            fuelPrice: 50, 
+            arrivalLore: "The glare is blinding even through the blast shields. The station's hull groans audibly under the immense thermal stress.", 
+            specialty: "+25% Sell Price for Graphene Lattices & Plasteel.", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5,
+                [COMMODITY_IDS.PLASTEEL]: 0.5,
+                [COMMODITY_IDS.ANTIMATTER]: 2.0
+            } 
+        },
+        { 
+            id: LOCATION_IDS.MERCURY, 
+            name: 'Mercury', 
+            distance: 58, 
+            launchFlavor: "The scorched anvil of the system.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #7f1d1d, #44403c)', textColor: '#e7e5e4', borderColor: '#a8a29e' }, 
+            description: 'A mining outpost baking in the solar glare. Desperate for water to sustain its subterranean workforce.', 
+            color: 'border-stone-400', 
+            bg: 'bg-gradient-to-br from-stone-600 to-red-900', 
+            fuelPrice: 500, 
+            arrivalLore: "Cratered grey rock stretches endlessly, scorched by the relentless sun. The heat warnings on your dashboard are constant.", 
+            specialty: "Pays 40% more for Water Ice.", 
+            availabilityModifier: { 
+                [COMMODITY_IDS.WATER_ICE]: 0.1,
+                [COMMODITY_IDS.PLASTEEL]: 2.0
+            } 
+        },
         { 
             id: LOCATION_IDS.VENUS, 
             name: 'Venus', 

@@ -102,6 +102,8 @@ function _drawMap(container, svgLayer, htmlLayer, uiManager) {
  */
 function _calculatePOIData(containerWidth, uiManager, centerX) {
     const sizeModifiers = {
+        [LOCATION_IDS.SUN]: 0.85,
+        [LOCATION_IDS.MERCURY]: 0.80,
         [LOCATION_IDS.VENUS]: 1.035,
         [LOCATION_IDS.EARTH]: 1.035,
         [LOCATION_IDS.LUNA]: 0.805,

@@ -415,6 +415,15 @@ ${logHistory}
                 this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
                 this.gameState.setState({});
             }},
+            // --- [[START]] PHASE 3: NEW UNLOCK BUTTONS ---
+            unlockSolarCore: { name: 'Unlock Solar Core (Sun/Mercury)', type: 'button', handler: () => {
+                const currentUnlocks = this.gameState.player.unlockedLocationIds;
+                if (!currentUnlocks.includes(LOCATION_IDS.SUN)) currentUnlocks.push(LOCATION_IDS.SUN);
+                if (!currentUnlocks.includes(LOCATION_IDS.MERCURY)) currentUnlocks.push(LOCATION_IDS.MERCURY);
+                this.gameState.setState({});
+                this.uiManager.createFloatingText('Solar Core Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
+            }},
+            // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
                     if (!this.gameState.player.ownedShipIds.includes(shipId)) {
@@ -648,7 +657,10 @@ ${logHistory}
 
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock Tiers/Locations');
+        this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // [[PHASE 3]]
+        this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
+        // [[END]]
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});

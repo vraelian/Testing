@@ -74,6 +74,18 @@ export class MarketService {
             (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
             price = price * 1.25;
         }
+
+        // Sol Station Quirk: +25% Sell Price for Graphene Lattices & Plasteel
+        if (locationId === LOCATION_IDS.SUN &&
+            (commodityId === COMMODITY_IDS.GRAPHENE_LATTICES || commodityId === COMMODITY_IDS.PLASTEEL)) {
+            price = price * 1.25;
+        }
+
+        // Mercury Quirk: +40% Sell Price for Water Ice
+        if (locationId === LOCATION_IDS.MERCURY &&
+            commodityId === COMMODITY_IDS.WATER_ICE) {
+            price = price * 1.40;
+        }
         // --- END VIRTUAL WORKBENCH ---
 
         // 2. Upgrade Modifiers (Signal Hacker)
