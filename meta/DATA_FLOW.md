@@ -70,7 +70,8 @@ graph TD
         D & H --> K[UIManager / DOM];
         K --> L[Image Element src="blob:..."];
     end
-Detailed Flow Example: Intel Market (Local Data Broker) This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
+Detailed Flow Example: Intel Market (Local Data Broker)
+This diagram shows the data flow for the "Local Data Broker" feature, from rendering the shop to the activeIntelDeal affecting market prices.
 
 Code snippet
 
@@ -107,7 +108,8 @@ graph TD
     end
 
     style L fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Detailed Flow Example: Upgrade Installation (Destructive Replacement) This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
+Detailed Flow Example: Upgrade Installation (Destructive Replacement)
+This diagram illustrates the complex UI/Logic handshake required to handle the 3-slot limit and destructive replacement of ship upgrades.
 
 Code snippet
 
@@ -141,7 +143,8 @@ graph TD
     end
 
     style P fill:#2a9d8f,stroke:#fff,stroke-width:2px
-Detailed Flow Example: Animated Ship Purchase This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
+Detailed Flow Example: Animated Ship Purchase
+This diagram illustrates the asynchronous event flow for purchasing a ship, which includes a blocking animation.
 
 Code snippet
 
@@ -181,174 +184,63 @@ graph TD
     style K fill:#f4a261,stroke:#fff,stroke-width:2px
     style F fill:#e76f51,stroke:#fff,stroke-width:2px
     style G fill:#e76f51,stroke:#fff,stroke-width:2px
+Automated Stress Test Flow (The Bot)
+This diagram illustrates how the AutomatedPlayerService bypasses the Input Layer to stress-test the economy directly via the Logic Layer.
 
-### 4. `meta/ECONOMIC_BEHAVIOR.md`
-**Updates:** Updated Ship Upgrade Economy section to clarify the split fuel logic.
+Code snippet
 
-```markdown
-CURRENT ECONOMIC BEHAVIOR
-Orbital Trading Gameplay Data
-Last Edit: 1/15/26, ver. 35.00
-This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
+graph TD
+    subgraph Bot Layer
+        A[Bot Loop Start] --> B[State Machine Decision];
+        B -- "Find Trade" --> C[Analyze Market Prices];
+        C --> D[Determine Best Route];
+    end
 
-I. Core Price Mechanics Explained
-These are the foundational rules that establish the baseline price of a commodity before any player actions are taken.
-Galactic Average: This is the foundational, system-wide average price for a commodity. Think of it as the "default" price before any local factors.
-Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
-An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
-An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
-Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This new system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes.
+    subgraph Bypass
+        D -.-> |Direct Call| E[SimulationService.playerActionService];
+        D -.-> |Direct Call| F[SimulationService.travelService];
+    end
 
-II. Local Price Influences by Location
-This is the full list of price influences for every market.
-Venus
-Exports (Price Reverts Toward a Lower Baseline):
-Cloned Organs
-Neural Processors
-Imports (Price Reverts Toward a Higher Baseline):
-Sentient AI Cores
-Earth
-Exports (Price Reverts Toward a Lower Baseline):
-Hydroponics
-Imports (Price Reverts Toward a Higher Baseline):
-Cloned Organs
-Xeno-Geologicals
-The Moon
-Exports (Price Reverts Toward a Lower Baseline):
-Plasteel
-Refined Propellant
-Graphene Lattices
-Imports (Price Reverts Toward a Higher Baseline):
-Water Ice
-Hydroponics
-Mars
-Exports (Price Reverts Toward a Lower Baseline):
-Plasteel
-Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
-Cryo-Sleep Pods
-Water Ice
-Graphene Lattices
-The Belt
-Exports (Price Reverts Toward a Lower Baseline):
-Water Ice
-Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
-Cybernetics
-The Exchange
-Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
-Jupiter
-Exports (Price Reverts Toward a Lower Baseline):
-Refined Propellant
-Atmo Processors
-Imports (Price Reverts Toward a Higher Baseline):
-Neural Processors
-Saturn
-Imports (Price Reverts Toward a Higher Baseline):
-Cryo-Sleep Pods
-Cloned Organs
-Uranus
-Exports (Price Reverts Toward a Lower Baseline):
-Atmo Processors
-Imports (Price Reverts Toward a Higher Baseline):
-Sentient AI Cores
-Neural Processors
-Neptune
-Imports (Price Reverts Toward a Higher Baseline):
-Plasteel (Note: This is a strong import with a 0.1 modifier, so prices will trend very high)
-Refined Propellant
-Kepler's Eye
-Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
-Pluto
-Exports (Price Reverts Toward a Lower Baseline):
-Water Ice
-Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
-Cybernetics
-Cloned Organs
+    subgraph Logic Layer
+        E --> G[Execute Buy/Sell];
+        F --> H[Execute Travel];
+    end
 
-III. Player-Driven Market Dynamics & Simulation
-Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
-1. Force: Availability Pressure (The Delayed Market Shock)
-This is the new, unified force that replaces the old "Player Pressure" and "Scarcity Pressure." It is the primary driver of all player-initiated price changes.
-Mechanic: This force directly simulates supply and demand. When a player buys or sells, they immediately change the item's quantity at that market. This change in stock is the only thing that drives the price change.
-Technical Detail: In evolveMarketPrices, the system calculates an availabilityRatio (current quantity / targetStock). This ratio is used to create an availabilityEffect.
-The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game checks if 7 days have passed since the lastPlayerInteractionTimestamp. The availabilityEffect is only calculated after this 7-day window, preventing players from manipulating a price and exploiting it in the same visit.
-The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
-Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to crash by 50% after the 7-day delay.
-Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
-2. Force: Price Lock (The Core Loop)
-This is the system that makes market manipulation viable.
-Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 4% pull back to the local average) is disabled for a long duration.
-Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
-Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
-Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
-Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade, allowing them to travel and return to exploit the price they created.
-3. Force: Depletion Bonus (The Panic)
-A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
-Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
-Trigger: When a purchase reduces inventoryItem.quantity to <= 0.
-Threshold Check: The game checks if the amount purchased was >= 8% of the item's calculated targetStock.
-Cooldown Check: It then checks if 365 days have passed since the last bonus (depletionBonusDay).
-Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 days, evolveMarketPrices applies a 1.5x priceHikeMultiplier to the availabilityEffect, causing the price to rise 50% faster than normal.
-4. Force: Inventory Replenishment (The Bottleneck)
-The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
-Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
-Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week.
-Effect: This slow 10% rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
-Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
-5. Force: Market Memory (The Reset)
-The passive fail-safe that prevents the universe from being permanently altered.
-Mechanic: This is the "garbage collector" for markets the player abandons.
-Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 120 days.
-Effect: If the player has not traded that specific item at that specific location for 120 days, the item's state is completely reset.
-marketPressure is reset to 0.
-priceLockEndDay is reset to 0, re-enabling Mean Reversion.
-depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
+    subgraph State Layer
+        G & H --> I((GameState));
+    end
 
-IV. How The Market Behaves (Simple Terms)
-Here is a simple breakdown of those forces with examples.
-Availability Pressure (The Shock): You sell 1,000 "Plasteel" on Mars, doubling its stock.
-For the next 7 days, nothing happens to the price (this prevents you from buying it right back).
-On Day 7, the price crashes by 50%.
-Price Lock (Your Loop): You sell 1,000 "Plasteel" on Mars, crashing the price.
-That price will stay crashed (it won't recover from natural Mean Reversion) for a random 3-6 months.
-This allows you to travel, then return to buy it back at the low price you created.
-Depletion Bonus (The Panic): You buy the entire large stock of "Cybernetics" (e.g., 50 units) on Earth.
-For the next 7 days, the price for "Cybernetics" on Earth will rise 50% faster than normal.
-This won't happen if you just buy the last 2 units, and it can only happen once per year.
-Replenishment (The Bottleneck): A market wants 1,000 "Plasteel" but has 1,200 (a surplus of 200).
-It will not shed 200 units at once.
-It will only shed 10% of the 200-unit gap, losing 20 units per week.
-This is the "race": the price crash from your sale slowly gets weaker each week as the surplus shrinks.
-Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to the outer system and don't come back.
-After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
+    subgraph Feedback Loop
+        I -- State Update --> A;
+    end
 
-V. Commodity Behavior
-(See existing file for full Commodity Tier list...)
+    style I fill:#2a9d8f,stroke:#fff,stroke-width:2px
+Travel Sequence Flow (Visual + Logic Handoff)
+This diagram illustrates the asynchronous handoff between the instant logic calculation and the delayed visual presentation.
 
-VI. Ship Upgrade Economy
-The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
+Code snippet
 
-1. Tiered Pricing Structure
-Upgrades are categorized into three tiers of rarity and power.
-Tier I (Common): 5,000 Credits. Entry-level modifications.
-Tier II (Rare): 15,000 Credits. Advanced specialized equipment.
-Tier III (Very Rare): 45,000 Credits. Experimental or military-grade technology.
+graph TD
+    subgraph Input
+        A[Player clicks 'Launch'] --> B[UIManager.showLaunchModal];
+        B -- Confirm --> C[SimulationService.handleTravel];
+    end
 
-2. Resale Value Logic
-Ships are now valued based on the sum of their hull and their installed components.
-Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
-Depreciation: The total is multiplied by the standard depreciation factor (0.75).
-Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
-Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
+    subgraph Logic Layer (Instant)
+        C --> D[TravelService.calculateTrip];
+        D --> E[Deduct Fuel/Time];
+        E --> F[Determine Random Event];
+        F --> G[Return TravelResult];
+    end
 
-3. Economic Modifiers
-Specific upgrades directly alter the player's profit margins and operating costs.
-Signal Hacker (Buy Price): Reduces the purchase price of all commodities by 3% / 5% / 7%.
-Guild Badge (Sell Price): Increases the sell price of all commodities by 3% / 5% / 7%.
-Fuel Pass (Service Cost): Reduces refueling costs at stations by 20% / 50% / 75%. Note: This does NOT affect travel consumption.
-Syndicate Badge (Debt): Reduces monthly debt interest by 20% / 30% / 50%.
-Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases fuel consumption (burn rate) by 15% / 30% / 45%. Note: This does NOT increase the station price of fuel, only the amount burned.
+    subgraph Presentation Layer (Delayed)
+        G --> H[UIManager.showTravelAnimation];
+        H --> I[TravelAnimationService (Canvas Overlay)];
+        I -- 2.5s Animation --> J{Animation Complete};
+        
+        J --> K[Execute Final Callback];
+        K --> L[UIManager.render(New Location)];
+        K --> M[Show Event Modal (if any)];
+    end
+
+    style I fill:#e76f51,stroke:#fff,stroke-width:2px

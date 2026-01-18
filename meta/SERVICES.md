@@ -80,6 +80,11 @@
     * **Key Behavior**: Manages the `OrbitalAssetsDB`. Stores raw `Blob` data to prevent iOS cache eviction.
     * **Dependencies**: None (Native IndexedDB API).
 
+* **TravelAnimationService.js**
+    * **Responsibility**: Manages the high-fidelity visual transition during travel.
+    * **Key Behavior**: Renders starfields and particles to an HTML5 Canvas overlay. Blocks UI interaction during the sequence.
+    * **Dependencies**: `DB` (Travel Visuals).
+
 ---
 
 ### 4. Input & Event Handling
@@ -89,7 +94,6 @@
 * **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
 * **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
 * **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
-* **TravelAnimationService.js**: Controls the visual "travel animation" modal when the player travels.
 
 ### UI/Renderers
 
@@ -109,7 +113,7 @@
 ### Debug & Automation
 
 * **`DebugService.js`**: Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Triggers asset hydration for debug actions.
-* **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy.
+* **`bot/AutomatedPlayerService.js`**: Contains the `AutomatedPlayer` class, a state-machine-driven bot designed to stress-test the economy. It mimics a human player by directly calling service methods, bypassing the input layer.
 
 ---
 

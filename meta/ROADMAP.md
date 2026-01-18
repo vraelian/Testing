@@ -3,7 +3,9 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-
+- adjust base spawn rate of ship ugrades
+- tune ship spawn rate and location spawn chance
+- review effective activation of station quirks
 
 ## Immediate Concerns, Bugs
 
@@ -14,7 +16,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 ## Long-Term Goals, Ideas
 - Reputation system
 - Player age events
-- Player Stations
 - Additional tutorials
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders

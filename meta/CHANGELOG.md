@@ -14,6 +14,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added Mercury map screen POI and modal
 -  added Mercury travel animation
 -  updated Belt map screen POI icon
+-  updated meta files
 
 ## [34.16] - 2026-1-16
 -  added additional station quirks

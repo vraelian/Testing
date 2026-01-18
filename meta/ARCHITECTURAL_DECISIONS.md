@@ -230,3 +230,35 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Decouples mechanics, allowing for finer balance control.
     * **Pro**: Fixes the "Double Tax" bug, making Engine Mods a fair trade-off (Speed vs. Efficiency) rather than a pure penalty.
     * **Pro**: Clarifies the UI stats for the player.
+
+---
+
+### ADR-016: Client-Side Economy Simulation (The Bot)
+
+* **Status**: Accepted (2026-01-17)
+* **Context**: Validating the new "Delayed Supply" economic model (ADR-005) required long-term data on price stability and exploitability. Manual playtesting was too slow, and external modeling tools could not accurately replicate the game's specific logic/state coupled with the random event system.
+* **Decision**: Implemented an internal "Headless Player" state machine (`AutomatedPlayerService.js`).
+    1.  **Integration**: The bot runs within the live game client, utilizing the exact same `SimulationService` and `GameState` as a human player.
+    2.  **Architecture**: It bypasses the `EventManager` and Input Layer entirely, calling service methods directly to execute trades and travel.
+    3.  **Behavior**: The bot uses a goal-oriented action planning (GOAP) approach, dynamically switching between strategies (e.g., "Crash Market", "Deplete Stock", "Maintenance") based on current resources and market conditions.
+* **Consequences**:
+    * **Pro**: Provides 100% accurate validation of the economy, as it uses the actual production code.
+    * **Pro**: Allows for rapid "10-Year" simulations (running at ~100ms per day) to detect long-term inflation or deflation trends.
+    * **Pro**: Exposes edge cases in the logic layer that UI restrictions might otherwise hide.
+    * **Con**: Adds a large service file that is strictly for debug/dev purposes (must be excluded from production build or flagged off).
+
+---
+
+### ADR-017: Canvas-Driven Transition Overlays
+
+* **Status**: Accepted (2026-01-17)
+* **Context**: The travel sequence required a high-fidelity visual transition to mask the data loading/processing time and provide immersion. CSS-based animations were insufficient for complex particle effects (starfields) and caused layout thrashing when manipulating large DOM overlays.
+* **Decision**: Implemented a dedicated `TravelAnimationService` using the **HTML5 Canvas API**.
+    1.  **Blocking Overlay**: The transition acts as a modal, blocking all interaction and effectively pausing the "Game Loop" while the "Visual Loop" runs.
+    2.  **Canvas Rendering**: Starfields, engine particles, and celestial objects are rendered via `requestAnimationFrame` on a `<canvas>` element, separate from the main DOM tree.
+    3.  **Asynchronous Handoff**: The `SimulationService` calculates the *result* of travel instantly, but the `UIManager` defers the screen update until the `TravelAnimationService` signals completion via a callback.
+* **Consequences**:
+    * **Pro**: High-performance rendering of particle effects (60fps) without touching the DOM.
+    * **Pro**: cleanly separates the "Simulation" (instant) from the "Experience" (time-based).
+    * **Pro**: Allows for complex, procedurally generated visuals (randomized star fields) that would be impossible with static CSS assets.
+    * **Con**: Requires manual management of the Canvas context and resize events.
