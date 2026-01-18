@@ -16,6 +16,8 @@ export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
 export const SHIP_VARIANT_COUNTS = {
     // 'Mule.Ship': 7, (<-- EXAMPLE)
     'Wanderer.Ship': 6,
+    'Stalwart.Ship': 4,
+    'Rooster.Ship': 5,
     'Mule.Ship': 8,
     'Nomad.Ship': 6,
     'Mesa.Ship': 8,

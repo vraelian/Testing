@@ -9566,20 +9566,12 @@ export const SHIP_DATABASE = {
         maxFuel: 150, 
         role: "Explorer",
         attribute: "None",
-        description: "Its oversized fuel tank betrays its past as a survey ship, built for pilots who value the range over all else. ",
+        description: "Defined by its skeletal chassis, this stripped-down surveyor trades armor for a massive fuel reserve and a panoramic view of the void.",
         lore: `The Wanderer is a vessel born from the fine print of a corporate bankruptcy. Its chassis belongs to the ""Surveyor's Friend"" line, a failed venture by a minor Martian corp that attempted to build a cheap, long-range scout for freelance prospectors. The venture folded, and its assets were snapped up by the Merchant's Guild, not for their quality, but for their utility in backing the loans of new, desperate captains. This ship was never celebrated; it was simply requisitioned, its manufacturing plate filed clean and its identifiers reassigned.
 
 Its history is a patchwork of incomplete journeys. The original owner used it to map unlisted asteroid clusters in the Belt before defaulting on a fuel payment. It was then briefly captained by a paranoid journalist tracking rumors of Venetian Syndicate activity, who abandoned it on Luna after a close call, wiping the nav logs clean. Its call-sign, ""Wanderer,"" isn't a factory name but a nickname given by Guild dockworkers, who noted it never seemed to keep an owner for long.
 
-It's low cargo and thin hull are secondary to its one redeeming feature: a surprisingly robust fuel tank, a remnant of its original survey design.
-
-Inside, the ship is spartan. The cockpit is functional, designed for observation. The single bunk is a fold-down shelf.
-
-The air recyclers hum a half-step flat. It smells of sterilized plastic and the faint, metallic tang of ozone.
-
-The Wanderer is the quintessential first step into the void. It’s not a ship that promises riches or glory; it's a ship that promises distance. It was built to see what's over the horizon, and for a new captain, that is the only promise that matters.
-
-It is the very definition of freedom: a hull, an engine, and just enough range to disappear.`,
+Visually, the ship is little more than a stripped-down engine block with a cockpit attached. Its chassis is skeletal, eschewing heavy fairings for an exposed network of cabling and insulated piping that runs along the spine. The hull is worn to bare metal on the leading edges from years of micrometeorite abrasion. Two disproportionately large, bulbous fuel tanks dominate the mid-section, visually overpowering the small, bubble-style glass canopy that juts forward from the frame.`,
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
@@ -9595,7 +9587,7 @@ It is the very definition of freedom: a hull, an engine, and just enough range t
         maxFuel: 110, 
         role: "Balanced",
         attribute: "None",
-        description: "It lacks the range of an explorer, but its reinforced hull promises a steady hand through the system's most turbulent trade routes.",
+        description: "A chamfered wedge of heavy plating with a slit-like viewport, this ship is built like a flying bunker designed to shrug off impacts.",
         lore: `The Stalwart is a product of the Earth-Luna supply chain, a pure workhorse built by a subsidiary of the Terran Alliance.
 Its design was never meant to be revolutionary; it was meant to be reliable.
 During the Helium Rush, hundreds of these vessels were commissioned as high-priority couriers, running critical components, data cores, and personnel between Earth's orbital factories and the chaotic lunar mining settlements.
@@ -9609,13 +9601,7 @@ Its value is not in its potential, but in its proven track record.
 Its balanced stats—a tough hull, a respectable cargo bay, and adequate fuel—make it a low-risk asset.
 It is the sensible choice, a floating pickup truck for the practical-minded trader.
 
-The ship's interior is worn but clean.
-The bulkhead panels are scratched from years of cargo shifting, and the pilot's chair is permanently molded to a shape that isn't yours.
-The ship's systems are simple, robust, and easily repaired. There are no luxuries, only redundancies.
-Its most prominent feature is its reinforced hull plating, which makes the entire vessel feel solid and secure, a small piece of Earth's reliability in the void.
-The Stalwart is a tool for building a business. It’s not a vessel for exploration or high-stakes gambles;
-it’s for the captain who intends to navigate the razor's edge of commerce by being smarter, tougher, and more dependable than the competition.
-It’s a ship that promises to show up, do the work, and survive to do it again tomorrow.`,
+Visually, the Stalwart is a study in defensive geometry. It possesses a stubby, bulldog-like stance, defined by a unified fuselage that merges the cockpit directly into the main body to eliminate structural weak points. The hull is a chamfered wedge of heavy composite plating, lacking any fragile protruding wings or fins that could be sheared off in a collision. It looks less like a spacecraft and more like a flying armored truck, its surface studded with heavy-duty rivets and reinforced structural ribs designed to absorb kinetic impacts.`,
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
@@ -9631,7 +9617,7 @@ It’s a ship that promises to show up, do the work, and survive to do it again 
         maxFuel: 90, 
         role: "Hauler",
         attribute: "None",
-        description: "Little more than a cockpit bolted to a high-capacity cargo container, this ship was designed for slow but profitable journeys between orbital stations, one ton at a time.",
+        description: "Rust-streaked and unpainted, this modular cargo frame relies on high-pressure gas vents and a prayer to move heavy tonnage between stations.",
         lore: `The Mule is less a starship and more a cargo container with an engine and a cockpit welded to the side as an afterthought.
 It is a product of the Drive-Divide, a ship built for those who have no choice but to use the cheapest hardware available.
 Its design was mass-produced in the orbital yards of Mars, intended for ""last-mile"" hauling—moving raw, unprocessed ore from massive deep-space freighters to the planetary surface or between nearby stations.
@@ -9642,12 +9628,8 @@ Its only purpose, its only virtue, is the cavernous, un-shielded cargo bay that 
 This ship was likely repossessed by the Merchant's Guild after its previous owner, a small-time scrap hauler, was crushed by the manipulated market prices of the Venetian Syndicate.
 The ship sat in a Guild impound lot, its only value being the raw tonnage it could move.
 It is the perfect, high-risk, high-reward asset for a captain who is willing to sacrifice everything—comfort, safety, and speed—to maximize their manifests.
-The cockpit is a cramped metal box that smells of ozone, artificial lubricant, and stale coffee.
-The hull is thin, and every micrometeorite impact sounds like a gunshot.
-The ship shudders violently when the main drive engages. It is a vessel that constantly reminds its pilot that the void is waiting just outside a few inches of cheap alloy.
-This is the ship for the pure trader. You don't buy a Mule to see the system or to outrun pirates.
-You buy it for the cold, hard calculus of its cargo hold.
-It is a bet that you can fill it, sell its contents, and earn your way into a better ship before its numerous flaws finally catch up with you.`,
+
+The ship looks like it was scavenged rather than built. Its 'hull' is merely a skeletal lattice of treated steel, showing deep rust streaks around the mechanical joints. The cargo hold is an external cage, making the ship look hollow when empty and impossibly bulky when full. Reaction control is handled by simple high-pressure gas vents spaced at the corners of the frame. It is an ugly, functional beast, its surface fading into the brown of dried blood and old iron.`,
         saleLocationId: locationMap["Starter"],
         spawnChance: 1,
         spawnTrigger: "New game only",
@@ -9663,7 +9645,7 @@ It is a bet that you can fill it, sell its contents, and earn your way into a be
         maxFuel: 150,
         role: "Explorer",
         attribute: "None",
-        description: "Its lightweight frame and oversized fuel cells were designed for a single purpose: to keep moving, making it ideal for captains who rarely sleep in the same port twice.",
+        description: "Resembling a manned deep-space probe, its fragile, asymmetric frame carries massive fuel reserves at the cost of armor and crew comfort.",
         lore: `The Nomad, born from the Helium Rush, is a direct response to the chaos and opportunity of Luna's new economy.
 While large corporations focused on mass extraction, a gap emerged for independent prospectors - pilots who could scout new deposits, verify claims, or disappear into the Belt for months at a time.
 A small Luna-based shipyard, ""Cis-Lunar Dynamics,"" created the Nomad to fill this niche.
@@ -9673,9 +9655,8 @@ It is a ship designed to go far, if not fast or comfortably.
 The ship's early models were popular with claim-jumpers and independent surveyors.
 They were small enough to avoid appearing as a threat on sensors but had the range to ""go dark"" and operate far from the main shipping lanes.
 The name became synonymous with pilots who lived on the fringes, trusting no one but themselves and the reliability of their long-range fuel tanks.
-This particular Nomad has likely been hot-swapped multiple times in back-alley docks.
-Its transponder codes are clean, but its engine housing has tool marks that suggest hasty, non-standard modifications.
-The light hull and modest cargo bay make it an excellent choice for an explorer, a courier, or someone who needs to be somewhere they aren't supposed to be.`,
+
+The Nomad looks less like a commercial vessel and more like a manned probe. Its silhouette is dominated by a fragile, asymmetric lattice fuselage that connects a high-efficiency plasma drive to a solitary, claustrophobic cockpit module. The hull plating is non-existent in places, revealing the raw cabling and fuel lines running along the boom-like tail. Mismatched fairings—scavenged from different yards—give it a patchwork aesthetic. A faint, clean ionization trail marks its passage, a sign of the specialized low-thrust engine designed to push this lonely, single-seater frame to the furthest edges of the system.`,
         saleLocationId: locationMap["Moon"],
         spawnChance: 1,
         spawnTrigger: "Always available",
@@ -9691,7 +9672,7 @@ The light hull and modest cargo bay make it an excellent choice for an explorer,
         maxFuel: 110,
         role: "Balanced",
         attribute: "None",
-        description: "A solid, assertive design from Earth's dominant shipyards, the Rooster is for the captain who wants a ship that can take a hit, carry a decent load, and still look good doing it.",
+        description: "A tall, cockpit-forward design with vector-thrust pods, the Rooster is a status symbol that hovers above the common traffic.",
         lore: `The Rooster is a pure-bred Terran Alliance design, a ship that exudes the confidence of Earth's clean and advanced manufacturing.
 It was not built for the rough-and-tumble life of a freelancer;
 it was designed as a high-speed executive shuttle and priority courier for the inner system.
@@ -9702,12 +9683,8 @@ Its solid hull and balanced systems were a mark of its quality, built to protect
 As a balanced ship, it's a master of none but a jack-of-all-trades.
 It has enough speed to be interesting, enough armor to be reassuring, and a cargo bay large enough for specialized, high-profit goods.
 It's a ship for the captain who wants to maintain a low-level of corporate-style professionalism.
-This hull was likely part of a corporate fleet that was cycled out after only a few years of service to make way for a newer model.
-On Earth, technology iterates quickly, and yesterday's luxury transport is today's surplus.
-It was sold on the open market, its new ship smell barely faded, representing a significant step up for any independent captain.
-Owning a Rooster is a sign that a pilot has moved beyond simple survival.
-It’s a ship that implies a certain level of success and discretion.
-It’s fast, reliable, and just stylish enough to get you noticed by the kinds of clients who pay well for a captain who looks the part.`,
+
+Visually, the ship is defined by its verticality. It stands tall on its landing gear, with a cockpit that juts forward like a beak from a high, arched fuselage. Instead of wings, the ship relies on two massive, articulated vector-thrust pods hugged tight to the hull, allowing for aggressive, high-G maneuvers. The plating is smooth, lacking the exposed piping of lesser ships, presenting a unified face to the rest of the system.`,
         saleLocationId: locationMap["Earth"],
         spawnChance: 1,
         spawnTrigger: "Always available",
@@ -9723,23 +9700,17 @@ It’s fast, reliable, and just stylish enough to get you noticed by the kinds o
         maxFuel: 70,
         role: "Hauler",
         attribute: "None",
-        description: "A classic Martian-built freighter, it is essentially a flying warehouse designed to move bulk goods between the surface and orbital transfer stations.",
+        description: "A dusty, iron-plated barge with a wide stance, the Mesa uses brute thrust and heavy hydraulics to act as the workhorse of planetary logistics.",
         lore: `The Mesa is a Martian workhorse, as blunt and functional as the corporate nation-state that built it.
 Following the Martian Breakthrough, the new-found independent colony needed its own logistical backbone.
 The Mesa was the answer: a mass-produced, low-cost, high-capacity hauler designed to move bulk materials around the red planet's orbit.
 It is named for the flat, wide, and unglamorous geological formations that dot its homeworld.
 This ship was built for one job: to move as much mass as possible from Point A to Point B, assuming both points were within the same gravity well.
 Its low fuel tank and mediocre hull were cost-saving measures, as it was assumed these ships would always operate under the protection of Martian corporate security, running goods from orbital foundries to interplanetary transfer stations.
-The design is utilitarian to a fault. The cockpit is a reinforced box with a viewport.
-The engine is the cheapest model that could reliably push its maximum cargo load.
 The ship's entire philosophy is built around its cavernous, easily-accessible cargo bay.
 It is the very definition of a cog in the great machine of commerce.
-These vessels are now common on the Martian second-hand market.
-As the larger corporations upgrade to more efficient haulers, the older Mesas are sold off to independent captains and smaller outfits.
-They are a common first ""pure hauler"" for traders looking to capitalize on the high-volume needs of the Martian industrial machine.
-To pilot a Mesa is to embrace a life of pure profit-driven logistics.
-It’s a slow, lumbering beast that handles like a brick, but its ability to haul cargo makes it one of the most profitable ships in its class.
-It is a tool for the captain who studies manifests, not star charts.`,
+
+It resembles a heavy industrial barge adapted for flight. The hull is a wide, flat expanse of weather-beaten metal, marked by the dust and grit of planetary operations. There are no aerodynamic curves here; everything is built horizontally, giving the ship a planted, sturdy aesthetic. The cockpit is a reinforced band of glass set deep into the front of the slab, offering a wide view of the landing zone but little else. It handles like a brick because it looks like one—a solid block of utility designed to survive the daily grind of mass transport.`,
         saleLocationId: locationMap["Mars"],
         spawnChance: 1,
         spawnTrigger: "Always available",
@@ -11177,6 +11148,8 @@ export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
 export const SHIP_VARIANT_COUNTS = {
     // 'Mule.Ship': 7, (<-- EXAMPLE)
     'Wanderer.Ship': 6,
+    'Stalwart.Ship': 4,
+    'Rooster.Ship': 5,
     'Mule.Ship': 8,
     'Nomad.Ship': 6,
     'Mesa.Ship': 8,
