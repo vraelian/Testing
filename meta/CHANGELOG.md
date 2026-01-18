@@ -2,6 +2,19 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.27] - 2026-1-17
+-  added Sol Station location
+-  added Sol news ticker messaging
+-  added Sol theme
+-  added Sol travel animation
+-  added Sol map screen POI and modal
+-  add Mercurian Station location
+-  added Mercury news ticker messaging
+-  added Mercury theme
+-  added Mercury map screen POI and modal
+-  added Mercury travel animation
+-  updated Belt map screen POI icon
+
 ## [34.16] - 2026-1-16
 -  added additional station quirks
 -  balanced station exports/imports

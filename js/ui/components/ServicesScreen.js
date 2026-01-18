@@ -20,6 +20,8 @@ export function renderServicesScreen(gameState, simulationService) {
     const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
 
     const STARPORT_NAMES = {
+        [LOCATION_IDS.SUN]: "Sol Station",
+        [LOCATION_IDS.MERCURY]: "Mercurian Station",
         [LOCATION_IDS.VENUS]: "Venetian Cloudport",
         [LOCATION_IDS.EARTH]: "Earth Starport",
         [LOCATION_IDS.LUNA]: "Lunar Starport",

@@ -227,7 +227,15 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         .style("left", d => `${d.poiX}px`) // Centered on axis
         .style("width", d => `${d.radius * 2}px`)
         .style("height", d => `${d.radius * 2}px`)
-        .style("background-color", d => d.navTheme.borderColor);
+        .style("background-color", d => d.navTheme.borderColor)
+        // Add the diamond clip-path for Sol and upside-down triangle for Belt
+        .style("clip-path", d => {
+            if (d.id === LOCATION_IDS.SUN) return "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"; // Diamond
+            if (d.id === LOCATION_IDS.BELT) return "polygon(0% 0%, 100% 0%, 50% 100%)"; // Upside-down Triangle
+            return "none";
+        })
+        // Override default circle for Sol and Belt
+        .style("border-radius", d => (d.id === LOCATION_IDS.SUN || d.id === LOCATION_IDS.BELT) ? "0" : "50%");
 
     // POI Labels (alternating sides)
     groups.append("div")

@@ -6,6 +6,30 @@
  */
 
 export const FLAVOR_ADS = {
+    "loc_sun": [
+        "Proximity alert: Solar flare activity increasing.",
+        "Shield integrity at 98%. Acceptable parameters.",
+        "Living on the edge of the inferno: Humanity's hottest outpost.",
+        "Hazard Pay Update: External maintenance bonus tripled this week.",
+        "Solar harvesting arrays operating at peak efficiency.",
+        "Warning: EVA activity is prohibited.",
+        "Radiation storm passing. Comm disruptions expected.",
+        "The view is magnificent,  you have the proper filters.",
+        "Sol Station: The hottest posting in the fleet.",
+        "Remember: Thermal management is everyone's responsibility."
+    ],
+    "loc_mercury": [
+        "Sub-surface mining: Dig deep to escape the heat.",
+        "The surface is for machines. The tunnels are for people.",
+        "Mercury Mining Corp: We extract value and pass it on to you.",
+        "Water recycling is mandatory. Violators will be desiccated.",
+        "Solar shade maintenance scheduled for 1400 hours.",
+        "We need Ice. We pay in refined heavy metals.",
+        "Seismic activity detected in Sector 7 deep mines.",
+        "The days are long, but the work never stops.",
+        "New vein discovered in Deep Mine Sector 9.",
+        "Refined metals available for immediate export."
+    ],
     "loc_venus": [
         "Breathe easy in the floating cities of Venus.",
         "Great minds meet here... and whisper.",
