@@ -69,11 +69,11 @@ export class PlayerActionService {
             this.uiManager.createFloatingText("BULK DISCOUNT APPLIED", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
         }
 
-        // Belt Quirk: 10% Discount on Water Ice & Xeno-Geologicals
+        // Belt Quirk: 5% Discount on Water Ice & Xeno-Geologicals
         if (state.currentLocationId === LOCATION_IDS.BELT &&
             (goodId === COMMODITY_IDS.WATER_ICE || goodId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
             
-            totalCost = Math.floor(totalCost * 0.90);
+            totalCost = Math.floor(totalCost * 0.95);
             this.uiManager.createFloatingText("MINER'S DISCOUNT", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
         }
         // --- END VIRTUAL WORKBENCH ---
@@ -169,6 +169,15 @@ export class PlayerActionService {
         const priceMod = GameAttributes.getPriceModifier(upgrades, 'sell');
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
         // --- END UPGRADE SYSTEM ---
+
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SOL EXPORT YIELD) ---
+        // Sol Station Quirk: +25% Sell Price for Graphene Lattices & Plasteel
+        if (state.currentLocationId === LOCATION_IDS.SUN &&
+            (goodId === COMMODITY_IDS.GRAPHENE_LATTICES || goodId === COMMODITY_IDS.PLASTEEL)) {
+            totalSaleValue = Math.floor(totalSaleValue * 1.25);
+            this.uiManager.createFloatingText("EXPORT YIELD BONUS", window.innerWidth / 2, window.innerHeight / 2 - 50, '#eab308');
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
@@ -449,9 +458,9 @@ export class PlayerActionService {
         let paymentRequired = player.debt;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
-        // Kepler's Eye Quirk: 30% Discount on debt repayment.
+        // Kepler's Eye Quirk: 15% Discount on debt repayment.
         if (currentLocationId === LOCATION_IDS.KEPLER) {
-            paymentRequired = Math.floor(player.debt * 0.7);
+            paymentRequired = Math.floor(player.debt * 0.85);
         }
         // --- END VIRTUAL WORKBENCH ---
 
@@ -493,9 +502,9 @@ export class PlayerActionService {
         let finalFee = loanData.fee;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER FINANCING DISCOUNT) ---
-        // Kepler's Eye Quirk: 30% Discount on financing fees.
+        // Kepler's Eye Quirk: 15% Discount on financing fees.
         if (currentLocationId === LOCATION_IDS.KEPLER) {
-            finalFee = Math.floor(loanData.fee * 0.7);
+            finalFee = Math.floor(loanData.fee * 0.85);
         }
         // --- END VIRTUAL WORKBENCH ---
 

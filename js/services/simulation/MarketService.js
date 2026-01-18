@@ -75,12 +75,6 @@ export class MarketService {
             price = price * 1.25;
         }
 
-        // Sol Station Quirk: +25% Sell Price for Graphene Lattices & Plasteel
-        if (locationId === LOCATION_IDS.SUN &&
-            (commodityId === COMMODITY_IDS.GRAPHENE_LATTICES || commodityId === COMMODITY_IDS.PLASTEEL)) {
-            price = price * 1.25;
-        }
-
         // Mercury Quirk: +40% Sell Price for Water Ice
         if (locationId === LOCATION_IDS.MERCURY &&
             commodityId === COMMODITY_IDS.WATER_ICE) {

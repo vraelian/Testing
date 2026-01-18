@@ -409,7 +409,7 @@ export const DB = {
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
             arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
-            specialty: "30% Discount on all financing and debt payments.", 
+            specialty: "15% Discount on all financing and debt payments.", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
                 [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
