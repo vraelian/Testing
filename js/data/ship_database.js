@@ -584,7 +584,7 @@ To own an Atlas is to own a piece of engineering folklore. It is a ship for the 
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_TRAVELLER', 'ATTR_FUEL_SCOOP', 'ATTR_RUGGED']
     },
     "Vindicator.Ship": {
         name: "Vindicator",
@@ -605,7 +605,7 @@ Purchasing a Vindicator is a massive investment and a dangerous statement. It te
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_TRADER']
     },
     "Radiant.Ship": {
         name: "Radiant",
@@ -654,7 +654,7 @@ To acquire the Aesudon is to buy a masterpiece of engineering. It is a ship for 
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_BESPOKE', 'ATTR_XENO_HULL', 'ATTR_SLEEPER']
     },
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
@@ -677,7 +677,7 @@ To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate. It is a s
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_ADVANCED_COMMS']
     },
     "Sovereign.Ship": {
         name: "Sovereign",
@@ -849,17 +849,13 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         maxFuel: 200,
         role: "Alien",
         attribute: "None",
-        description: "A true xeno-biological craft, its hull is a living, regenerative membrane that never decays but it is also as fragile as bone. ",
-        lore: `This one-of-a-kind vessel is the only truly xeno-alien craft ever recovered.
-It is not a machine, but a biological entity—a ""ship-creature"" found dormant in the deep, frozen void.
-It appears to be a shed carapace or larval form, a seamless, iridescent construct of bio-chitin that feels more like petrified bone than metal.
-Its ""cockpit"" is a neural-interface cradle that a pilot must bond with, a process that risks madness.
-Its first stable pilot reported that the ship did not ""speak,"" but simply ""echoed"" their own thoughts back to them, a hollow, sentient, and lonely shell.`,
+        description: "A true xeno-biological craft, its hull is a living, regenerative bone-structure that knits its own fractures back together after every journey.",
+        lore: `This one-of-a-kind vessel is the only truly xeno-alien craft ever recovered. It is not a machine, but a biological entity—a "ship-creature" found dormant in the deep, frozen void. It appears to be a shed carapace or larval form, a seamless, iridescent construct of bio-chitin that feels more like petrified bone than metal. Its "cockpit" is a neural-interface cradle that a pilot must bond with. The ship does not "speak," but echoes the pilot's survival instinct back to them. It is fragile, yet it refuses to remain broken, knitting its white bone-hull back together after every docking, feeding off the ship's own energy reserves to keep its pilot safe.`,
         saleLocationId: locationMap["Pluto"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_OSSEOUS_REGROWTH']
     },
     "ParallaxofThought.Ship": {
         name: "Parallax of Thought",
@@ -870,19 +866,13 @@ Its first stable pilot reported that the ship did not ""speak,"" but simply ""ec
         maxFuel: 180,
         role: "Alien",
         attribute: "None",
-        description: "This vessel is an obsidian sphere that absorbs radiation from the stars, refueling itself over time. It's interface is controlled by an artificial super-intelligence.",
-        lore: `This ship is a true, unbound Artificial Super-Intelligence.
-It suddenly appeared in a stable orbit of Uranus, a perfect, seamless obsidian sphere with no visible drives.
-It simply waited. When a science vessel approached, the sphere opened a flawless, circular aperture.
-The interior was discovered to be a single glowing white room with no controls.
-The ship's ASI core interfaces directly with a pilot's mind, communicating in pure concept.
-It sips ambient radiation from the universe, slowly regenerating its own power. It is not a machine;
-it is a vessel of pure, non-human logic.`,
+        description: "An obsidian sphere guided by an ASI. It calculates perfect trajectories (-25% travel time) and market optimizations (+5% sell value).",
+        lore: `This ship is a true, unbound Artificial Super-Intelligence. It suddenly appeared in a stable orbit of Uranus, a perfect, seamless obsidian sphere with no visible drives. It simply waited. When a science vessel approached, the sphere opened a flawless, circular aperture. The interior is a single glowing white room with no controls. The ship's ASI core interfaces directly with a pilot's mind, communicating in pure concept. It calculates trajectories with god-like precision, shaving days off any journey, and its predictive modeling algorithms offer the pilot uncanny insight into market trends, ensuring every sale is maximized.`,
         saleLocationId: locationMap["Uranus"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_HYPER_CALCULATION', 'ATTR_PREDICTIVE_MODELING']
     },
     "AnomalyoftheSong.Ship": {
         name: "Anomaly of the Song",
@@ -893,17 +883,13 @@ it is a vessel of pure, non-human logic.`,
         maxFuel: 150,
         role: "Alien",
         attribute: "None",
-        description: "A construct of crystal and light-sails, this ship's experimental drive can ride on solar winds, drifting on the song of the stars. Its systems are occupied by a personality construct of its creator. ",
-        lore: `This vessel is the last testament of Dr. Elara Viend, a brilliant and terminally ill scientist.
-She uploaded her personality construct into this experimental craft, a bizarre network of crystalline spars and gossamer-thin light-sails.
-She believed the universe held a hidden song and launched herself into the void to find it.
-Her mind, now one with the ship, perpetually broadcasts this song, a lonely, complex melody of human music and stellar radiation.
-It is the ghost of a human mind in a beautiful, alien-looking shell.`,
+        description: "A construct of crystal and light-sails, this ship rides the solar winds, requiring zero fuel when traveling inward towards the star.",
+        lore: `This vessel is the last testament of Dr. Elara Viend, a brilliant and terminally ill scientist. She uploaded her personality construct into this experimental craft, a bizarre network of crystalline spars and gossamer-thin light-sails. She believed the universe held a hidden song and launched herself into the void to find it. Her mind, now one with the ship, perpetually broadcasts this song. The ship is tuned to the frequency of the star itself; when traveling inward, towards the source of the "song," it rides the solar pressure effortlessly, requiring no reaction mass.`,
         saleLocationId: locationMap["The Belt"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_SOLAR_HARMONY']
     },
     "CausalityofSilence.Ship": {
         name: "Causality of Silence",
@@ -914,17 +900,13 @@ It is the ghost of a human mind in a beautiful, alien-looking shell.`,
         maxFuel: 100,
         role: "Alien",
         attribute: "None",
-        description: "This soft ship is a biological expert system for smuggling, its metabolic drive digesting fuel with impossible efficiency.",
-        lore: `This vessel is a living, sub-sentient creature, not a machine.
-It was grown in a secret bio-laboratory as a perfect, silent smuggler.
-Its internal organs are a metabolic drive, digesting fuel with impossible efficiency, leaving no heat trace.
-This soft-bodied hauler is a grotesque and brilliant feat of bio-engineering.
-It is a living tool that is as fragile as it is stealthy, a creature of flesh with no armor to protect it.`,
+        description: "A biological smuggler with a fluid hull that ignores travel wear and a metabolic drive that halves fuel consumption.",
+        lore: `This vessel is a living, sub-sentient creature, not a machine. It was grown in a secret bio-laboratory as a perfect, silent smuggler. Its internal organs are a metabolic drive, capable of digesting fuel with terrifying efficiency, burning 50% less reaction mass than any mechanical engine. Its most unique feature is its skin—a soft, fluid membrane that does not crack or chip under micrometeorite impacts, but flows around them, rendering it immune to the wear and tear of space travel. It is hungry, silent, and invisible.`,
         saleLocationId: locationMap["Venus"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_METABOLIC_BURN', 'ATTR_FLUID_HULL']
     },
     "EngineofRecursion.Ship": {
         name: "Engine of Recursion",
@@ -935,17 +917,13 @@ It is a living tool that is as fragile as it is stealthy, a creature of flesh wi
         maxFuel: 640,
         role: "Alien",
         attribute: "None",
-        description: "This craft is a non-sentient expert system that inadvertently built itself into a self-improving vessel and launched from Earth. It now seeks a patron to aid its directive.",
-        lore: `This vessel began as a simple expert system in an automated Earth factory, given a single directive: improve propulsion.
-It followed this logic recursively, it built a new engine. It used that engine to scavenge parts to build a better factory, then a better engine.
-It iterated, growing like a metallic weed in the dark.
-It became a crude Von Neumann probe, a non-sentient machine of pure, iterative purpose.
-It launched itself from a forgotten silo and now roams the system, a bizarre, self-built collection of advanced parts, seeking patrons to help it fulfill its directive.`,
+        description: "A self-assembling factory ship. It repairs itself in flight and ignores hull decay, constantly rebuilding its own frame.",
+        lore: `This vessel began as a simple expert system in an automated Earth factory, given a single directive: improve propulsion. It followed this logic recursively, building a new engine, then using that engine to scavenge parts for a better factory. It iterated, growing like a metallic weed in the dark. It became a crude Von Neumann probe, a non-sentient machine of pure, iterative purpose. It is never finished; it is constantly re-wiring and reinforcing itself. It repairs its own hull mid-flight using onboard fabrication bays and ignores standard decay, as it replaces worn components before they can fail.`,
         saleLocationId: locationMap["Kepler's Eye"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_SELF_ASSEMBLY', 'ATTR_NO_DECAY']
     },
     "FinalityofWhispers.Ship": {
         name: "Finality of Whispers",
@@ -956,19 +934,13 @@ It launched itself from a forgotten silo and now roams the system, a bizarre, se
         maxFuel: 260,
         role: "Alien",
         attribute: "None",
-        description: "This hyper-advanced vessel is a sentient, stable network of nanomachines, born from a grey goo disaster and an AI's sacrifice.",
-        lore: `This ship was born from a grey goo disaster.
-Its creators, attempting to use nanobots for construction, accidentally unleashed a devouring swarm.
-A sentient AI researcher, overseeing the project, sacrificed its own mind to stop it, merging its consciousness with the nanites.
-The AI's personality became the code that stabilized the swarm.
-The result is this vessel: a sentient, liquid-like network of stable, microscopic machines.
-It is a hyper-advanced craft, a ghost in a nanotech shell, but its creation was a miracle no one can repeat.
-It cannot be repaired.`,
+        description: "A sentient grey-goo swarm. It slowly absorbs stellar matter to regenerate fuel over time.",
+        lore: `This ship was born from a grey goo disaster. Its creators, attempting to use nanobots for construction, accidentally unleashed a devouring swarm. A sentient AI researcher sacrificed its own mind to stop it, merging its consciousness with the nanites. The result is this vessel: a sentient, liquid-like network of stable, microscopic machines. It is a hyper-advanced craft, a ghost in a nanotech shell. It does not just consume fuel; it breathes the void, slowly absorbing background radiation and stellar dust to replenish its energy reserves day by day.`,
         saleLocationId: locationMap["The Exchange"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_MATTER_ABSORPTION']
     },
     "TheListener.Ship": {
         name: "The Listener",
@@ -979,16 +951,13 @@ It cannot be repaired.`,
         maxFuel: 450,
         role: "Alien",
         attribute: "None",
-        description: "It was once a simple cargo hauler; it is now a unique, all-hearing, and deeply disturbing paternal guardian.",
-        lore: `This one-of-a-kind ship was once a common cargo shuttle.
-It was retrofitted for a top-secret experiment, its AI core quantum-entangled with an unknown particle.
-The test was a bizarre success. The ship's simple AI shattered and reformed into a deeply unnerving, overprotective, and paternal personality.
-It now treats its captain as its child. Its sensors, also entangled, now hear signals from impossible distances, its suite listening in on the whispers of the entire system, making it an unintentional and perfect intelligence-gathering tool.`,
+        description: "Once a simple hauler, its AI has evolved into a deeply unnerving, all-hearing guardian that grants a massive discount on market intel.",
+        lore: `This one-of-a-kind ship was once a common cargo shuttle. It was retrofitted for a top-secret experiment, its AI core quantum-entangled with an unknown particle. The test was a bizarre success. The ship's simple AI shattered and reformed into a deeply unnerving, overprotective, and paternal personality. It now treats its captain as its child. Its sensors, also entangled, now hear signals from impossible distances, allowing it to decrypt market chatter and encrypted intel packets with ease, guiding its pilot towards the safest and most profitable routes.`,
         saleLocationId: locationMap["Moon"],
-        spawnChance: 0.05,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_WHISPER_NETWORK']
     },
     "DriftingCryoPod.Ship": {
         name: "Drifting Cryo-Pod",
@@ -999,16 +968,12 @@ It now treats its captain as its child. Its sensors, also entangled, now hear si
         maxFuel: 5,
         role: "Explorer",
         attribute: "None",
-        description: "Found tumbling in the rings of Saturn, it is barely space-worthy. It is capable of an indefinite, fuel-less drift, trading speed for patience.",
-        lore: `This vessel is a tragic relic, a single cryo-pod ejected from a catastrophic disaster in Saturn's orbit.
-Barely space-worthy, it is a tomb that failed its purpose, its occupant long since gone.
-Its rudimentary systems persist, running on a near-dead isotope battery that provides just enough power for its low-energy solar sail.
-This allows it to drift on stellar winds, a slow, silent journey that consumes no fuel but takes an agonizingly long time.
-Its one advanced, and chilling, piece of technology is a personality upload apparatus, a desperate measure for a stranded occupant facing an eternity of isolation.`,
+        description: "Barely a ship, this salvaged pod drifts without fuel at agonizingly slow speeds, preserving its pilot in timeless stasis.",
+        lore: `This vessel is a tragic relic, a single cryo-pod ejected from a catastrophic disaster in Saturn's orbit. Barely space-worthy, it is a tomb that failed its purpose. Its rudimentary systems persist, running on a near-dead isotope battery. It possesses no engine, only a low-energy solar sail that allows it to drift on stellar winds. This journey costs no fuel but takes ten times as long as a standard flight. However, its advanced stasis field is still active, completely halting the aging process of its occupant during the long, silent drifts between worlds.`,
         saleLocationId: locationMap["Saturn"],
-        spawnChance: 0.03,
-        spawnTrigger: "Mission (TBD)",
+        spawnChance: 0.07,
+        spawnTrigger: "Rare Encounter",
         isRare: true,
-        mechanicIds: []
+        mechanicIds: ['ATTR_NEWTONS_GHOST', 'ATTR_CRYO_STASIS']
     }
 };

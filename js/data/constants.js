@@ -98,6 +98,27 @@ export const LOCATION_IDS = Object.freeze({
 });
 
 /**
+ * Defines the orbital order from the Sun (Index 0) outwards.
+ * Used for "Solar Harmony" calculations.
+ */
+export const ORBITAL_ORDER = [
+    LOCATION_IDS.SUN,
+    LOCATION_IDS.MERCURY,
+    LOCATION_IDS.VENUS,
+    LOCATION_IDS.EARTH,
+    LOCATION_IDS.LUNA,
+    LOCATION_IDS.MARS,
+    LOCATION_IDS.BELT,
+    LOCATION_IDS.JUPITER,
+    LOCATION_IDS.SATURN,
+    LOCATION_IDS.URANUS,
+    LOCATION_IDS.NEPTUNE,
+    LOCATION_IDS.PLUTO,
+    LOCATION_IDS.KEPLER,
+    LOCATION_IDS.EXCHANGE
+];
+
+/**
  * Unique identifiers for player perks, which provide passive bonuses.
  * @enum {string}
  */
