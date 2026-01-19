@@ -41,6 +41,14 @@ export const SHIP_VARIANT_COUNTS = {
     'Citadel.Ship': 20,
     'Sophistacles.Ship': 17,
     'Thalassodromeus.Ship': 13,
+    'Causality_of_Silence.Ship': 2,
+    'Shell_That_Echoes.Ship': 2,
+    'Engine_of_Recursion.Ship': 3,
+    'Anomaly_of_the_Song.Ship': 4,
+    'Parralax_of_Thought.Ship': 4,
+    'Cryo_Sleep_Pod.Ship': 11,
+    'The_Listener.Ship': 3,
+    'Finality_of_Whispers.Ship': 4,
 };
 
 /**

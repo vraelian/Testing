@@ -2,6 +2,14 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.38] - 2026-1-19
+-  added Finality of Whispers assets
+-  added Causality of Silence assets
+-  added Engine of Recursion assets
+-  added Anomaly of the Song assets
+-  added Shell That Echoes assets
+-  added Parralax of Thought assets
+
 ## [34.32] - 2026-1-18
 -  updated ship writing and lore
 -  updated ship spawn rates

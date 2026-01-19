@@ -11077,6 +11077,14 @@ export const SHIP_VARIANT_COUNTS = {
     'Citadel.Ship': 20,
     'Sophistacles.Ship': 17,
     'Thalassodromeus.Ship': 13,
+    'Causality_of_Silence.Ship': 2,
+    'Shell_That_Echoes.Ship': 2,
+    'Engine_of_Recursion.Ship': 3,
+    'Anomaly_of_the_Song.Ship': 4,
+    'Parralax_of_Thought.Ship': 4,
+    'Cryo_Sleep_Pod.Ship': 11,
+    'The_Listener.Ship': 3,
+    'Finality_of_Whispers.Ship': 4,
 };
 
 /**
@@ -24425,6 +24433,14 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.38] - 2026-1-19
+-  added Finality of Whispers assets
+-  added Causality of Silence assets
+-  added Engine of Recursion assets
+-  added Anomaly of the Song assets
+-  added Shell That Echoes assets
+-  added Parralax of Thought assets
 
 ## [34.32] - 2026-1-18
 -  updated ship writing and lore
