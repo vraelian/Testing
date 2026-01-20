@@ -45,7 +45,7 @@ export const SHIP_VARIANT_COUNTS = {
     'Shell_That_Echoes.Ship': 2,
     'Engine_of_Recursion.Ship': 3,
     'Anomaly_of_the_Song.Ship': 4,
-    'Parallax_of_Thought.Ship': 4,
+    'Parallax_of_Thought.Ship': 4, // FIXED: Parallax (was Parralax)
     'Cryo_Sleep_Pod.Ship': 11,
     'The_Listener.Ship': 3,
     'Finality_of_Whispers.Ship': 4,
