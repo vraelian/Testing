@@ -35,7 +35,7 @@ Contains all progression, assets, and statistics for the user.
 | `loanStartDate` | Number | Day the loan was taken (for garnishment logic). |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
-| **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age Events.** |
+| **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
 | &nbsp;&nbsp;`profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
 | &nbsp;&nbsp;`intelCost` | Number | % Discount on Intel purchases. |
 | &nbsp;&nbsp;`purchaseCost` | Number | % Discount on Commodity purchases. |

@@ -38,8 +38,11 @@
     * **Dependencies**: `GameState`.
 
 * **TimeService (F035)**
-    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
-    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
+    * **Responsibility**: Advances the calendar and manages long-term progression.
+    * **Key Behavior**: 
+        * Triggers daily/weekly simulation ticks (Market, News).
+        * Manages the **"3-Era Age Engine"**, applying procedural stat bonuses and world modifiers based on player age.
+        * Checks for debt interest, Intel expiration, and loan garnishment.
     * **Dependencies**: `GameState`, `MarketService`.
 
 * **MissionService (F018)**

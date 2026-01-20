@@ -567,8 +567,6 @@ export class UIManager {
                     </button>`;
         }).join('');
     }
-    // --- END VIRTUAL WORKBENCH ---
-
     _updateHangarScreen(gameState) {
         const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
@@ -817,8 +815,6 @@ export class UIManager {
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        
         const basePrice = this.getItemPrice(state, goodId, true);
 
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
@@ -830,7 +826,9 @@ export class UIManager {
          const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
         if (netProfit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            // [MODIFIED] Switched from legacy 'birthdayProfitBonus' to 'statModifiers.profitBonus'
+            // This enables the new Age/Era system bonuses to correctly apply to trade preview logic.
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.statModifiers?.profitBonus || 0);
             netProfit += netProfit * totalBonus;
         }
 

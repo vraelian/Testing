@@ -262,3 +262,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: cleanly separates the "Simulation" (instant) from the "Experience" (time-based).
     * **Pro**: Allows for complex, procedurally generated visuals (randomized star fields) that would be impossible with static CSS assets.
     * **Con**: Requires manual management of the Canvas context and resize events.
+
+---
+
+### ADR-018: Procedural "3-Era" Age Progression System
+
+* **Status**: Accepted (2026-01-20)
+* **Context**: The original "Age Event" system relied on static, hand-written narrative events in `age_events.js` (e.g., "Captain Who?" at Day 366). This approach was not scalable for a "forever game" loop, lacked granular progression (only 2 events existed), and was disconnected from the core simulation stats.
+* **Decision**: Replaced static events with a procedural **"3-Era Age Engine"** managed entirely within `TimeService.js`.
+    1.  **Era 1 (Prime Years, 25-99)**: Cyclic, small stat efficiency boosts (Profit -> Intel -> Fuel) triggered every birthday.
+    2.  **Era 2 (Transhumanist, 100-199)**: Cybernetic augmentations triggered every 5 years, modifying global simulation parameters (Supply, Spawn Rates).
+    3.  **Era 3 (Ancient, 200+)**: "Guild Tribute" grants triggered every 5 years, providing free service vouchers (Fuel/Repair) to sustain infinite play.
+* **Consequences**:
+    * **Pro**: Infinite, scalable progression without writing new content.
+    * **Pro**: Deeply integrates player age into the economic simulation (e.g., actually modifying global supply vs. just giving a text popup).
+    * **Pro**: Allows for the deprecation of `age_events.js` and legacy tracking variables like `birthdayProfitBonus`.
+    * **Con**: Reduces narrative flavor text in favor of systemic tooltips.

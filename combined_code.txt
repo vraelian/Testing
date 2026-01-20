@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.42</title>
+    <title>Orbital Trading 34.43</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.42</p>
+            <p>Version 34.43</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -9282,31 +9282,14 @@ export const NEWS_FLAVOR = [
 /**
  * @fileoverview
  * Defines all static narrative "age" events triggered by game progression.
+ * * [DEPRECATED] 
+ * These static events have been replaced by the procedural 3-Era Age System 
+ * handled dynamically in TimeService.js. This array is intentionally left empty 
+ * to prevent legacy triggers while preserving imports in database.js.
  */
 import { PERK_IDS } from './constants.js';
 
-export const AGE_EVENTS = [
-    {
-        id: 'captain_choice',
-        trigger: { day: 366 }, // Triggers after one full year of gameplay.
-        title: 'Captain Who?',
-        description: "You've successfully navigated many trades and run a tight ship. Your crew depends on you... but what kind of captain will you be?",
-        choices: [
-            { title: 'Trademaster', description: '5% bonus on all trade profits.', perkId: PERK_IDS.TRADEMASTER, playerTitle: 'Trademaster' },
-            { title: 'Navigator', description: '10% reduced fuel usage, hull decay, and travel time.', perkId: PERK_IDS.NAVIGATOR, playerTitle: 'Navigator' }
-        ]
-    },
-    {
-        id: 'friends_with_benefits',
-        trigger: { credits: 50000 }, // Triggers upon reaching 50,000 credits.
-        title: 'Friends with Benefits',
-        description: 'An ally in need is an ally indeed.',
-        choices: [
-            { title: "Join the Merchant's Guild", description: 'Receive a free C-Class freighter.', perkId: PERK_IDS.MERCHANT_GUILD_SHIP },
-            { title: 'Join the Venetian Syndicate', description: '75% discount on fuel and repairs at Venus.', perkId: PERK_IDS.VENETIAN_SYNDICATE }
-        ]
-    }
-];
+export const AGE_EVENTS = [];
 --- END OF FILE: ./js/data/age_events.js ---
 
 --- START OF FILE: ./js/data/intelMessages.js ---
@@ -18296,8 +18279,6 @@ export class UIManager {
                     </button>`;
         }).join('');
     }
-    // --- END VIRTUAL WORKBENCH ---
-
     _updateHangarScreen(gameState) {
         const { uiState, player } = gameState; // Added player for visualSeed
         const hangarScreenEl = this.cache.hangarScreen;
@@ -18546,8 +18527,6 @@ export class UIManager {
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-        
         const basePrice = this.getItemPrice(state, goodId, true);
 
         const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
@@ -18559,7 +18538,9 @@ export class UIManager {
          const totalCost = avgCost * quantity;
         let netProfit = totalPrice - totalCost;
         if (netProfit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            // [MODIFIED] Switched from legacy 'birthdayProfitBonus' to 'statModifiers.profitBonus'
+            // This enables the new Age/Era system bonuses to correctly apply to trade preview logic.
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.statModifiers?.profitBonus || 0);
             netProfit += netProfit * totalBonus;
         }
 
@@ -24838,8 +24819,12 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.43] - 2026-1-20
+-  deprecated age event system
+-  updated meta files
+
 ## [34.42] - 2026-1-19
--  overhauled age events
+-  overhauled birthday system
 
 ## [34.41] - 2026-1-19
 -  added Finality of Whispers assets
@@ -26502,8 +26487,11 @@ All notable plans and desirables for the Orbital Trading project will be documen
     * **Dependencies**: `GameState`.
 
 * **TimeService (F035)**
-    * **Responsibility**: Advances the calendar. Triggers daily/weekly ticks for other services.
-    * **Key Behavior**: Checks for debt interest, Intel expiration, and birthday events.
+    * **Responsibility**: Advances the calendar and manages long-term progression.
+    * **Key Behavior**: 
+        * Triggers daily/weekly simulation ticks (Market, News).
+        * Manages the **"3-Era Age Engine"**, applying procedural stat bonuses and world modifiers based on player age.
+        * Checks for debt interest, Intel expiration, and loan garnishment.
     * **Dependencies**: `GameState`, `MarketService`.
 
 * **MissionService (F018)**
@@ -26862,6 +26850,22 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: cleanly separates the "Simulation" (instant) from the "Experience" (time-based).
     * **Pro**: Allows for complex, procedurally generated visuals (randomized star fields) that would be impossible with static CSS assets.
     * **Con**: Requires manual management of the Canvas context and resize events.
+
+---
+
+### ADR-018: Procedural "3-Era" Age Progression System
+
+* **Status**: Accepted (2026-01-20)
+* **Context**: The original "Age Event" system relied on static, hand-written narrative events in `age_events.js` (e.g., "Captain Who?" at Day 366). This approach was not scalable for a "forever game" loop, lacked granular progression (only 2 events existed), and was disconnected from the core simulation stats.
+* **Decision**: Replaced static events with a procedural **"3-Era Age Engine"** managed entirely within `TimeService.js`.
+    1.  **Era 1 (Prime Years, 25-99)**: Cyclic, small stat efficiency boosts (Profit -> Intel -> Fuel) triggered every birthday.
+    2.  **Era 2 (Transhumanist, 100-199)**: Cybernetic augmentations triggered every 5 years, modifying global simulation parameters (Supply, Spawn Rates).
+    3.  **Era 3 (Ancient, 200+)**: "Guild Tribute" grants triggered every 5 years, providing free service vouchers (Fuel/Repair) to sustain infinite play.
+* **Consequences**:
+    * **Pro**: Infinite, scalable progression without writing new content.
+    * **Pro**: Deeply integrates player age into the economic simulation (e.g., actually modifying global supply vs. just giving a text popup).
+    * **Pro**: Allows for the deprecation of `age_events.js` and legacy tracking variables like `birthdayProfitBonus`.
+    * **Con**: Reduces narrative flavor text in favor of systemic tooltips.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -27151,7 +27155,7 @@ Contains all progression, assets, and statistics for the user.
 | `loanStartDate` | Number | Day the loan was taken (for garnishment logic). |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
-| **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age Events.** |
+| **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
 | &nbsp;&nbsp;`profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
 | &nbsp;&nbsp;`intelCost` | Number | % Discount on Intel purchases. |
 | &nbsp;&nbsp;`purchaseCost` | Number | % Discount on Commodity purchases. |
