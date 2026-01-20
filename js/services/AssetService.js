@@ -45,17 +45,14 @@ export class AssetService {
         // 2. Branch Logic Based on Ship Class
         // Class Z (Alien) and F (Failsafe) use the HYBRID structure
         if (['Z', 'F'].includes(shipData.class)) {
-            // Folder: Uses Display Name (e.g. "Causality of Silence")
-            // EXCEPTION: Handle the "Cryo-Sleep Pod" hyphen explicitly if needed, otherwise use name
-            let folderName = shipData.name;
-            if (shipId === 'Cryo_Sleep_Pod.Ship') {
-                folderName = 'Cryo-Sleep Pod'; // Matches your specific folder structure
-            }
-
-            // Filename: Uses ID (Sanitized) to preserve underscores (e.g. "Causality_of_Silence")
+            // Base Filename: Uses ID (Sanitized) to preserve underscores (e.g. "Causality_of_Silence")
             const fileName = shipId.replace('.Ship', ''); 
             
-            // Result: assets/images/ships/Causality of Silence/Causality_of_Silence_A.jpeg
+            // Folder Name: Derived from ID by replacing underscores with spaces
+            // Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
+            const folderName = fileName.replace(/_/g, ' ');
+
+            // Result: assets/images/ships/Cryo Sleep Pod/Cryo_Sleep_Pod_A.jpeg
             return `assets/images/ships/${folderName}/${fileName}_${variantLetter}.jpeg`;
         } 
         
@@ -102,11 +99,11 @@ export class AssetService {
 
         // Conditional Fallback Logic
         if (['Z', 'F'].includes(shipData.class)) {
-            let folderName = shipData.name;
-            if (shipId === 'Cryo_Sleep_Pod.Ship') {
-                folderName = 'Cryo-Sleep Pod';
-            }
             const fileName = shipId.replace('.Ship', '');
+            
+            // Standard Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
+            const folderName = fileName.replace(/_/g, ' ');
+            
             return `assets/images/ships/${folderName}/${fileName}_A.jpeg`;
         }
 

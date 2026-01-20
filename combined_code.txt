@@ -13596,17 +13596,14 @@ export class AssetService {
         // 2. Branch Logic Based on Ship Class
         // Class Z (Alien) and F (Failsafe) use the HYBRID structure
         if (['Z', 'F'].includes(shipData.class)) {
-            // Folder: Uses Display Name (e.g. "Causality of Silence")
-            // EXCEPTION: Handle the "Cryo-Sleep Pod" hyphen explicitly if needed, otherwise use name
-            let folderName = shipData.name;
-            if (shipId === 'Cryo_Sleep_Pod.Ship') {
-                folderName = 'Cryo-Sleep Pod'; // Matches your specific folder structure
-            }
-
-            // Filename: Uses ID (Sanitized) to preserve underscores (e.g. "Causality_of_Silence")
+            // Base Filename: Uses ID (Sanitized) to preserve underscores (e.g. "Causality_of_Silence")
             const fileName = shipId.replace('.Ship', ''); 
             
-            // Result: assets/images/ships/Causality of Silence/Causality_of_Silence_A.jpeg
+            // Folder Name: Derived from ID by replacing underscores with spaces
+            // Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
+            const folderName = fileName.replace(/_/g, ' ');
+
+            // Result: assets/images/ships/Cryo Sleep Pod/Cryo_Sleep_Pod_A.jpeg
             return `assets/images/ships/${folderName}/${fileName}_${variantLetter}.jpeg`;
         } 
         
@@ -13653,11 +13650,11 @@ export class AssetService {
 
         // Conditional Fallback Logic
         if (['Z', 'F'].includes(shipData.class)) {
-            let folderName = shipData.name;
-            if (shipId === 'Cryo_Sleep_Pod.Ship') {
-                folderName = 'Cryo-Sleep Pod';
-            }
             const fileName = shipId.replace('.Ship', '');
+            
+            // Standard Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
+            const folderName = fileName.replace(/_/g, ' ');
+            
             return `assets/images/ships/${folderName}/${fileName}_A.jpeg`;
         }
 
@@ -24468,13 +24465,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [34.38] - 2026-1-19
+## [34.41] - 2026-1-19
 -  added Finality of Whispers assets
 -  added Causality of Silence assets
 -  added Engine of Recursion assets
 -  added Anomaly of the Song assets
 -  added Shell That Echoes assets
--  added Parralax of Thought assets
+-  added Parallax of Thought assets
+-  added The Listener assets
+-  added Cryo Sleep Pod assets
+-  updated asset config files
 
 ## [34.32] - 2026-1-18
 -  updated ship writing and lore
@@ -26052,14 +26052,13 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- adjust base spawn rate of ship ugrades
-- tune ship spawn rate and location spawn chance
-- review effective activation of station quirks
+- 
 
 ## Immediate Concerns, Bugs
-
+- 
 
 ## Imminent Projects
+- 
 
 
 ## Long-Term Goals, Ideas
