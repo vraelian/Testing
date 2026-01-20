@@ -425,8 +425,8 @@ you are a serious operator, capable of undertaking the most demanding, long-term
         attribute: "None",
         description: "A fortress of composite plate and reinforced steel, its design is a brutalist statement on survival in the system's most lawless territory.",
         lore: `The Forerunner is a legend of the Belt, a ship that has earned a reputation for being the toughest, meanest, and most survivable vessel outside of a capital ship.
-It is not the product of a clean corporate shipyard;
-it is an up-armored brawler, a design that has been iterated upon in the independent, often illicit, fabrication bays of the asteroid fields.
+It is not a product of a clean corporate shipyard;
+it was an up-armored brawler, a design that has been iterated upon in the independent, often illicit, fabrication bays of the asteroid fields.
 Its origin is a direct response to the cold trade war of commerce.
 The Forerunner's stats tell a story of brutal priorities. Its hull is its most prominent feature, a massive layer of ablative and composite armor designed to withstand excessive punishment.
 This protection is balanced with a powerful engine and a large cargo bay, creating a ship that can run a high-value, high-risk routes for months without maintenance.
@@ -625,7 +625,7 @@ Its cargo holds are equipped with advanced temporal stabilizers and status-monit
 
 These ships are the prized possession of the system's most elite couriers. They are the only vessels trusted to move new artifacts or newly-synthesized compounds. A Radiant streaking across the system is a common sight for astronomers, a hot delivery that is likely worth more than a C-class station.
 
-To own a Radiant is to be in the business of speed. It is a ship for the captain who understands that in the 22nd century, the razor's edge is not just about what you carry, but how fast you carry it. It is the perfect tool for the get-it-there-yesterday contracts that pay a fortune.`,
+To own a Radiant is to own a piece of engineering folklore. It is a ship for the captain who understands that in the 22nd century, the razor's edge is not just about what you carry, but how fast you carry it. It is the perfect tool for the get-it-there-yesterday contracts that pay a fortune.`,
         saleLocationId: locationMap["Kepler's Eye"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -840,7 +840,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: []
     },
-    "EchoingShell.Ship": {
+    "Shell_That_Echoes.Ship": {
         name: "Echoing Shell",
         class: "Z",
         price: 3500000,
@@ -857,7 +857,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_OSSEOUS_REGROWTH']
     },
-    "ParallaxofThought.Ship": {
+    "Parallax_of_Thought.Ship": {
         name: "Parallax of Thought",
         class: "Z",
         price: 2800000,
@@ -874,7 +874,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_HYPER_CALCULATION', 'ATTR_PREDICTIVE_MODELING']
     },
-    "AnomalyoftheSong.Ship": {
+    "Anomaly_of_the_Song.Ship": {
         name: "Anomaly of the Song",
         class: "Z",
         price: 1800000,
@@ -891,7 +891,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_SOLAR_HARMONY']
     },
-    "CausalityofSilence.Ship": {
+    "Causality_of_Silence.Ship": {
         name: "Causality of Silence",
         class: "Z",
         price: 6000000,
@@ -908,7 +908,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_METABOLIC_BURN', 'ATTR_FLUID_HULL']
     },
-    "EngineofRecursion.Ship": {
+    "Engine_of_Recursion.Ship": {
         name: "Engine of Recursion",
         class: "Z",
         price: 75000000,
@@ -925,7 +925,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_SELF_ASSEMBLY', 'ATTR_NO_DECAY']
     },
-    "FinalityofWhispers.Ship": {
+    "Finality_of_Whispers.Ship": {
         name: "Finality of Whispers",
         class: "Z",
         price: 5000000,
@@ -942,7 +942,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_MATTER_ABSORPTION']
     },
-    "TheListener.Ship": {
+    "The_Listener.Ship": {
         name: "The Listener",
         class: "Z",
         price: 4500000,
@@ -959,7 +959,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         isRare: true,
         mechanicIds: ['ATTR_WHISPER_NETWORK']
     },
-    "DriftingCryoPod.Ship": {
+    "Cryo_Sleep_Pod.Ship": {
         name: "Drifting Cryo-Pod",
         class: "F",
         price: 0,
