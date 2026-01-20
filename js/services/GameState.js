@@ -173,8 +173,26 @@ export class GameState {
                 debugEventIndex: 0,
                 // --- VIRTUAL WORKBENCH ---
                 // Visual Seed: A counter that increments to drive the deterministic asset rotation.
-                visualSeed: 0 
-                // --- END VIRTUAL WORKBENCH ---
+                visualSeed: 0,
+                // --- PHASE 1: AGE ENGINE ---
+                statModifiers: {
+                    profitBonus: 0.0,       // Era 1 (Age 25+)
+                    intelCost: 0.0,         // Era 1
+                    purchaseCost: 0.0,      // Era 1
+                    intelDuration: 0.0,     // Era 1 & 2
+                    fuelCost: 0.0,          // Era 1
+                    repairCost: 0.0,        // Era 1
+                    commoditySupply: 0.0,   // Era 2 (Age 100+)
+                    shipPrice: 0.0,         // Era 2
+                    travelSpeed: 0.0,       // Era 2
+                    shipSpawnRate: 0.0,     // Era 2
+                    upgradeSpawnRate: 0.0   // Era 2
+                },
+                serviceTokens: {
+                    fuel: 0, // Era 3 (Age 200+)
+                    repair: 0
+                }
+                // --- END PHASE 1 ---
             },
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             

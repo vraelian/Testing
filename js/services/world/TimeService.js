@@ -4,6 +4,30 @@ import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/const
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
+// --- ERA 2: TRANSHUMANIST EVENT DATA (Age 100-195) ---
+const CYBORG_EVENTS = {
+    100: { title: "Ocular Replacement", bonus: "commoditySupply", val: 0.02, desc: "The failing retinas are gone, replaced by Kiroshi-grade optical sensors. You don't just see crates anymore; you see wireframes, volume density, and spoilage rates overlaying reality in real-time. The world is brighter, sharper, and filled with data that organic eyes could never process. You can spot a supply surplus from orbit." },
+    105: { title: "Vocal Synthesizer", bonus: "shipPrice", val: 0.01, desc: "Your vocal cords had weathered from decades of shouting over thrusters, so you swapped them for a harmonic synthesizer. It analyzes the buyer's micro-expressions and adjusts your pitch to the exact frequency of 'trust' and 'compliance.' Negotiations feel less like arguments and more like conducting an orchestra. They never hear the manipulation, only the deal." },
+    110: { title: "Neural Spine Shunt", bonus: "travelSpeed", val: 0.01, desc: "The arthritis in your hands made the helm sluggish, so you excised the nerves and installed a direct neural-shunt in your spine. Now, you don't steer the ship with your hands; you *become* the ship, feeling the thruster burn as your own muscle tension. Reaction times are measured in microseconds. You move through the void as a single, steel entity." },
+    115: { title: "Subspace Cranial Receiver", bonus: "shipSpawnRate", val: 0.02, desc: "Your hearing was the next to go, replaced by broad-spectrum subspace receivers anchored in your skull. You can hear the 'thrum' of fusion drives entering the system hours before traffic control pings them. The static of the universe is now a symphony of arrival vectors. You know they are coming before they even drop out of warp." },
+    120: { title: "Haptic Diagnostic Tips", bonus: "upgradeSpawnRate", val: 0.02, desc: "You replaced your fingertips with haptic diagnostic probes, capable of sensing microscopic etchings in circuit boards. When you touch a piece of tech, you feel its efficiency rating and heat tolerance instantly, bypassing the need for spec sheets. The junk falls away, leaving only the rare gems humming against your skin. Finding the best gear is no longer luck; it’s a sense of touch." },
+    125: { title: "Mnemo-Core Implant", bonus: "intelDuration", val: 0.02, desc: "The organic brain forgets, but your new temporal-lobe memory bank does not. Every rumor, every price sheet, and every whisper in the bar is etched onto a crystalline drive with perfect clarity. You can recall a conversation from three weeks ago with the fidelity of a recording. Information no longer decays; it accumulates." },
+    130: { title: "Olfactory Chem-Analyzers", bonus: "commoditySupply", val: 0.02, desc: "Your respiratory system was inefficient, requiring oxygen tanks in the hold; the new filtration lungs scrub the air of toxins and analyze atmospheric particulate. You can smell the ozone of a fresh shipment of electronics or the metallic tang of refined ore from three docks away. The air itself tells you what the station is hiding. Nothing stays hidden from a nose that smells profit." },
+    135: { title: "Polymer-Mesh Facial Weave", bonus: "shipPrice", val: 0.01, desc: "You swapped your facial muscles for a polymer-mesh weave that allows for total micro-expression control. When you haggle, your face is a perfect mask of disinterest, giving away nothing while your sensors read their desperation. They drop their prices just to get a reaction out of you. It is the ultimate poker face, sculpted from synthetic flesh." },
+    140: { title: "Mag-Lev Circulatory Pump", bonus: "travelSpeed", val: 0.01, desc: "The frailty of the human heart limited your G-force tolerance, so you replaced it with a mag-lev pump. It circulates synthetic hemoglobin that carries double the oxygen, allowing you to pull burns that would blackout a normal pilot. You push the engines past the red line because your body no longer has a red line. The void shrinks beneath your unyielding endurance." },
+    145: { title: "Circadian Regulator Chip", bonus: "shipSpawnRate", val: 0.02, desc: "You replaced your biological sleep center with a circadian regulator chip. You no longer feel fatigue. While others sleep, you are watching the docking manifests, waiting for that unique signature. You are the ghost that haunts the market, always awake, always watching." },
+    150: { title: "Spectral Eye Analyzer", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your right eye has been replaced with a spectral analyzer that sees radiation leaks and energy signatures. You can look at a pile of scrap and see the glowing aura of a military-grade capacitor hidden within. The mundane world is grey, but power shines like a beacon to your upgraded vision. You pick the diamonds from the dust." },
+    155: { title: "Sub-Cortex Coprocessor", bonus: "intelDuration", val: 0.02, desc: "You installed a secondary co-processor at the base of your skull to handle background data crunching. While you negotiate, this sub-mind analyzes market trends and cross-references rumors, validating intel in real-time. It holds onto data streams long after the source has disconnected, keeping the signal alive. You are a walking server farm." },
+    160: { title: "Nutrient-Brick Reactor", bonus: "commoditySupply", val: 0.02, desc: "The digestive system was a waste of space/energy, replaced by a dense nutrient-brick reactor. You no longer feel hunger, only a 'fuel low' warning, freeing your mind to obsess over logistical volume. You calculate cargo space with the precision of a machine that essentially is cargo itself. You understand 'capacity' on a spiritual level." },
+    165: { title: "Pheromone Emitter Glands", bonus: "shipPrice", val: 0.01, desc: "You’ve replaced your pheromone glands with synthetic emitters that subtly flood the room with 'calm' and 'familiarity' agents. Sellers feel an inexplicable kinship with you, a chemical compulsion to give you the 'friend price.' It’s not mind control, but it’s frighteningly close. You simply smell like their best deal." },
+    170: { title: "Carbon-Nanotube Skeleton", bonus: "travelSpeed", val: 0.01, desc: "Your bone marrow has been swapped for a carbon-nanotube lattice, making your skeleton virtually unbreakable. You can slam the ship into maneuvers that would shatter a human frame, ignoring the inertial dampeners for raw speed. You are the structure that holds the ship together. Physics is just a suggestion to a body built of steel." },
+    175: { title: "Deep-Void Radar Cortex", bonus: "shipSpawnRate", val: 0.02, desc: "You’ve integrated a deep-range void-radar directly into your visual cortex. You don't look at a screen; you close your eyes and see the system's traffic as floating motes of light in the darkness. You spot the faint glimmer of a rare hull signature drifting in from the belt before the station sensors do. You are the radar." },
+    180: { title: "Magnetic Resonance Palms", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your hands are now fully mechanical, fitted with magnetic resonance scanners. You can wave your hand over a crate of parts and feel the magnetic pull of high-end alloys. The cheap plasteel feels dead, but the mil-spec components sing to your servos. You sort the wheat from the chaff without opening the box." },
+    185: { title: "Quantum-Entangled Storage", bonus: "intelDuration", val: 0.02, desc: "You’ve undergone a total neocortex rewrite, replacing grey matter with quantum-entangled storage. Your memories are no longer stored locally; they are backed up to a secure cloud, accessible instantly and corrupted by nothing. Time does not erode your knowledge. What you learn stays learned, forever perfect." },
+    190: { title: "Solar-Mesh Epidermis", bonus: "commoditySupply", val: 0.02, desc: "Your skin has been replaced by photosensitive solar-mesh. You feel the light of the local star as data, gauging the system's energy output and production cycles through your pores. You are in tune with the station's very power grid, sensing when production spikes. You are the station's pulse." },
+    195: { title: "Logic-Gate Processor", bonus: "shipPrice", val: 0.01, desc: "The last vestiges of your empathy centers have been excised for a logic-gate processor. You no longer feel guilt or pity during a negotiation; you calculate optimal outcomes with cold, binary precision. The seller's sob story is just noise; the numbers are the only truth. You are the ultimate dealmaker, for you have no soul to bargain with." }
+};
+
 export class TimeService {
     /**
      * @param {import('../GameState.js').GameState} gameState
@@ -78,15 +102,14 @@ export class TimeService {
                 }
             });
 
-            // Age & Milestone Checks
+            // Age & Birthday Check (Replaces legacy hardcoded logic)
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
             
             if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
-                this.gameState.player.playerAge++;
-                this.gameState.player.birthdayProfitBonus += 0.01; // 1% extra profit per year
                 this.gameState.player.lastBirthdayYear = currentYear;
-                this.uiManager.queueModal('event-modal', 'Happy Birthday!', `You turned ${this.gameState.player.playerAge}. Your experience grants you a permanent +1% profit bonus on all trades.`);
+                this.gameState.player.playerAge++;
+                this._handleBirthday(this.gameState.player.playerAge);
             }
 
             this._checkAgeEvents();
@@ -158,6 +181,106 @@ export class TimeService {
         
         this.logger.groupEnd();
         this.gameState.setState({});
+    }
+
+    /**
+     * Handles the new 3-Era Birthday System logic.
+     * @param {number} age - The player's new age.
+     * @private
+     */
+    _handleBirthday(age) {
+        const stats = this.gameState.player.statModifiers;
+        let title = `Happy Birthday!`;
+        let desc = `You turned ${age}.`;
+        let bonusText = "";
+
+        // --- ERA 1: THE PRIME YEARS (25 - 99) ---
+        // Cycle: Profit -> Intel -> Purchase -> IntelDur -> Fuel -> Intel -> Repair
+        if (age < 100) {
+            const cycleIndex = (age - 25) % 7;
+            
+            switch (cycleIndex) {
+                case 0: // Profit (+0.10%)
+                    stats.profitBonus += 0.001;
+                    bonusText = "Your experience grants you a permanent +0.10% profit bonus on all trades.";
+                    break;
+                case 1: // Intel Cost (-2%)
+                    stats.intelCost += 0.02;
+                    bonusText = "Your network grants you a permanent 2% discount on Intel Packets.";
+                    break;
+                case 2: // Purchase Cost (-0.10%)
+                    stats.purchaseCost += 0.001;
+                    bonusText = "Your reputation grants you a permanent 0.10% discount on commodity purchases.";
+                    break;
+                case 3: // Intel Duration (+2%)
+                    stats.intelDuration += 0.02;
+                    bonusText = "Your memory techniques allow Intel to last 2% longer.";
+                    break;
+                case 4: // Fuel Cost (-0.25%)
+                    stats.fuelCost += 0.0025;
+                    bonusText = "Refueling efficiency improved. Permanent 0.25% discount on fuel.";
+                    break;
+                case 5: // Intel Cost (-2%) - Repeated Slot
+                    stats.intelCost += 0.02;
+                    bonusText = "Your network grants you an additional 2% discount on Intel Packets.";
+                    break;
+                case 6: // Repair Cost (-0.25%)
+                    stats.repairCost += 0.0025;
+                    bonusText = "Maintenance efficiency improved. Permanent 0.25% discount on hull repairs.";
+                    break;
+            }
+            
+            // Era 1 uses the standard modal format
+            this.uiManager.queueModal('event-modal', title, `${desc} ${bonusText}`);
+        }
+
+        // --- ERA 2: THE TRANSHUMANIST ERA (100 - 199) ---
+        // Triggers every 5 years with unique narrative events
+        else if (age >= 100 && age < 200) {
+            if (age % 5 === 0 && CYBORG_EVENTS[age]) {
+                const event = CYBORG_EVENTS[age];
+                
+                // Apply Bonus
+                stats[event.bonus] += event.val;
+
+                // Format Bonus Text for Display (e.g., "0.02" -> "2%")
+                const valPct = (event.val * 100).toFixed(0) + "%";
+                let bonusDisplay = "";
+                
+                if (event.bonus === 'commoditySupply') bonusDisplay = `Increased commodity supply available at all markets by ${valPct}.`;
+                else if (event.bonus === 'shipPrice') bonusDisplay = `Reduced ship purchase prices by ${valPct}.`;
+                else if (event.bonus === 'travelSpeed') bonusDisplay = `Increased travel speed by ${valPct}.`;
+                else if (event.bonus === 'shipSpawnRate') bonusDisplay = `Increased rare ship spawn rate by ${valPct}.`;
+                else if (event.bonus === 'upgradeSpawnRate') bonusDisplay = `Increased ship upgrade spawn rate by ${valPct}.`;
+                else if (event.bonus === 'intelDuration') bonusDisplay = `Intel lasts ${valPct} longer.`;
+
+                // Era 2 uses specific narrative text
+                title = `Augmentation Installed: ${event.title}`;
+                this.uiManager.queueModal('event-modal', title, `${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
+            }
+        }
+
+        // --- ERA 3: THE ANCIENT ERA (200+) ---
+        // Alternating Vouchers every 5 years
+        else if (age >= 200) {
+            if (age % 5 === 0) {
+                const isFuel = (age % 10 === 0); // 200, 210, 220...
+                
+                if (isFuel) {
+                    this.gameState.player.serviceTokens.fuel++;
+                    title = "Guild Tribute: Fuel Voucher";
+                    desc = `In honor of your ${age}th year, the Merchant's Guild has issued a writ of passage. This token can be used at any port to completely refuel your active ship for free.`;
+                    bonusText = "Added 1 Fuel Voucher to account.";
+                } else { // 205, 215, 225...
+                    this.gameState.player.serviceTokens.repair++;
+                    title = "Guild Tribute: Drydock Voucher";
+                    desc = `In honor of your ${age}th year, the Shipwright's Union has issued a total restoration grant. This token can be used at any port to completely repair your active ship for free.`;
+                    bonusText = "Added 1 Repair Voucher to account.";
+                }
+
+                this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
+            }
+        }
     }
 
     _checkAgeEvents() {

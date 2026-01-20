@@ -54,10 +54,18 @@ export class PlayerActionService {
         // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
         // Apply Signal Hacker or other buy attributes
         const priceMod = GameAttributes.getPriceModifier(upgrades, 'buy');
-        const price = Math.max(1, Math.round(basePrice * priceMod));
+        let price = Math.max(1, Math.round(basePrice * priceMod));
         // --- END UPGRADE SYSTEM ---
 
         let totalCost = price * quantity;
+
+        // --- PHASE 2: AGE PERK (PURCHASE COST) ---
+        // Apply "Friends with Benefits" / Age discounts
+        const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
+        if (agePurchaseDiscount > 0) {
+            totalCost = Math.floor(totalCost * (1 - agePurchaseDiscount));
+        }
+        // --- END PHASE 2 ---
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE & BELT DISCOUNT) ---
         // Neptune Quirk: Buying > 50 units of Propellant or Plasteel grants 10% discount.
@@ -181,7 +189,11 @@ export class PlayerActionService {
 
         const profit = totalSaleValue - (item.avgCost * quantity);
         if (profit > 0) {
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.birthdayProfitBonus || 0);
+            // --- PHASE 2: AGE PERK (PROFIT BONUS) ---
+            const ageProfitBonus = state.player.statModifiers?.profitBonus || 0;
+            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + ageProfitBonus;
+            // --- END PHASE 2 ---
+            
             totalSaleValue += profit * totalBonus;
         }
 
@@ -223,8 +235,16 @@ export class PlayerActionService {
             this.logger.error('PlayerActionService', `validateBuyShip called with invalid shipId: ${shipId}`);
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist in the database." };
         }
-        if (this.gameState.player.credits < ship.price) {
-  
+
+        // --- PHASE 2: AGE PERK (SHIP PRICE) ---
+        let effectivePrice = ship.price;
+        const discount = this.gameState.player.statModifiers?.shipPrice || 0;
+        if (discount > 0) {
+            effectivePrice = Math.floor(ship.price * (1 - discount));
+        }
+        // --- END PHASE 2 ---
+
+        if (this.gameState.player.credits < effectivePrice) {
              return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
         }
         return { success: true };
@@ -246,12 +266,20 @@ export class PlayerActionService {
                 return null;
             }
 
-            this.gameState.player.credits -= ship.price;
-            this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(ship.price)}.`);
-            if (event) {
-                this.uiManager.createFloatingText(`-${formatCredits(ship.price, false)}`, event.clientX, event.clientY, '#f87171');
+            // --- PHASE 2: AGE PERK (SHIP PRICE) ---
+            let effectivePrice = ship.price;
+            const discount = this.gameState.player.statModifiers?.shipPrice || 0;
+            if (discount > 0) {
+                effectivePrice = Math.floor(ship.price * (1 - discount));
             }
-            this.simulationService._logTransaction('ship', -ship.price, `Purchased ${ship.name}`);
+            // --- END PHASE 2 ---
+
+            this.gameState.player.credits -= effectivePrice;
+            this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(effectivePrice)}.`);
+            if (event) {
+                this.uiManager.createFloatingText(`-${formatCredits(effectivePrice, false)}`, event.clientX, event.clientY, '#f87171');
+            }
+            this.simulationService._logTransaction('ship', -effectivePrice, `Purchased ${ship.name}`);
             this.simulationService.addShipToHangar(shipId);
 
             const shipyardInventory = this.simulationService._getShipyardInventory();
@@ -272,7 +300,7 @@ export class PlayerActionService {
 
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-ship.price, true)}</span>. This ship has been stored in your Hangar.`;
+            const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-effectivePrice, true)}</span>. This ship has been stored in your Hangar.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
 
             this.gameState.setState({
@@ -636,6 +664,13 @@ export class PlayerActionService {
         costPerTick *= attrMod;
         // --- END UPGRADE SYSTEM ---
 
+        // --- PHASE 2: AGE PERK (FUEL COST) ---
+        const ageFuelDiscount = state.player.statModifiers?.fuelCost || 0;
+        if (ageFuelDiscount > 0) {
+            costPerTick *= (1 - ageFuelDiscount);
+        }
+        // --- END PHASE 2 ---
+
         costPerTick = Math.max(1, Math.round(costPerTick));
 
         if (state.player.credits < costPerTick) return 0;
@@ -706,6 +741,13 @@ export class PlayerActionService {
         const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
         costPerTick *= attrMod;
         // --- END UPGRADE SYSTEM ---
+
+        // --- PHASE 2: AGE PERK (REPAIR COST) ---
+        const ageRepairDiscount = state.player.statModifiers?.repairCost || 0;
+        if (ageRepairDiscount > 0) {
+            costPerTick *= (1 - ageRepairDiscount);
+        }
+        // --- END PHASE 2 ---
 
          costPerTick = Math.max(1, Math.round(costPerTick));
 

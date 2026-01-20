@@ -293,7 +293,13 @@ export class MarketService {
 
                     // Market adaptation factor
                     const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
-                    const targetStock = baseMeanStock * marketAdaptationFactor;
+                    
+                    // --- PHASE 2: AGE PERK (COMMODITY SUPPLY) ---
+                    // "Increased commodity supply available at all markets by 2%"
+                    const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+                    // --- END PHASE 2 ---
+
+                    const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus);
 
                     // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
@@ -468,8 +474,14 @@ export class MarketService {
             const commonShips = Object.entries(DB.SHIPS).filter(([id, ship]) => !ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             const shipsForSaleIds = [...commonShips.map(entry => entry[0])];
+            
+            // --- PHASE 2: AGE PERK (RARE SHIP SPAWN RATE) ---
+            const spawnRateBonus = this.gameState.player.statModifiers?.shipSpawnRate || 0;
+            const finalSpawnChance = GAME_RULES.RARE_SHIP_CHANCE + spawnRateBonus;
+            // --- END PHASE 2 ---
+
             rareShips.forEach(([id, ship]) => {
-                if (Math.random() < GAME_RULES.RARE_SHIP_CHANCE) {
+                if (Math.random() < finalSpawnChance) {
                     shipsForSaleIds.push(id);
                 }
             });

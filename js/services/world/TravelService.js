@@ -154,6 +154,15 @@ export class TravelService {
         }
         // --- END VIRTUAL WORKBENCH ---
 
+        // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
+        // Increase speed = Reduce time.
+        // Formula: NewTime = Time / (1 + SpeedBonus)
+        const speedBonus = state.player.statModifiers?.travelSpeed || 0;
+        if (speedBonus > 0) {
+            travelInfo.time = travelInfo.time / (1 + speedBonus);
+        }
+        // --- END PHASE 2 ---
+
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;

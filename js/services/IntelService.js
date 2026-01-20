@@ -184,8 +184,15 @@ export class IntelService {
         }
         // --- END VIRTUAL WORKBENCH ---
 
-        const finalPrice = base * packet.valueMultiplier;
+        let finalPrice = base * packet.valueMultiplier;
         
+        // --- PHASE 2: AGE PERK (INTEL COST) ---
+        const ageIntelDiscount = state.player.statModifiers?.intelCost || 0;
+        if (ageIntelDiscount > 0) {
+            finalPrice *= (1 - ageIntelDiscount);
+        }
+        // --- END PHASE 2 ---
+
         return Math.floor(finalPrice / 100) * 100;
     }
 
@@ -260,6 +267,13 @@ export class IntelService {
         }
         // --- END VIRTUAL WORKBENCH ---
 
+        // --- PHASE 2: AGE PERK (INTEL DURATION) ---
+        const ageDurationBonus = state.player.statModifiers?.intelDuration || 0;
+        if (ageDurationBonus > 0) {
+            durationMultiplier *= (1 + ageDurationBonus);
+        }
+        // --- END PHASE 2 ---
+
         const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
@@ -319,8 +333,4 @@ export class IntelService {
     getCurrentDay() {
         return this.timeService.getCurrentDay();
     }
-
-    // --- VIRTUAL WORKBENCH REMOVAL ---
-    // The entire 'debug_AddAllIntelPackets' method has been removed.
-    // --- END REMOVAL ---
 }

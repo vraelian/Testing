@@ -45,6 +45,7 @@ export class DebugService {
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
+            targetAge: 25, // Default target age for debug setting
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
             selectedRandomEvent: 0,
@@ -402,6 +403,19 @@ ${logHistory}
                 this.simulationService._checkGameOverConditions();
                 this.gameState.setState({});
             }},
+            // --- NEW: Set Age Action ---
+            setAge: { name: 'Set Age', type: 'button', handler: () => {
+                this.gameState.player.playerAge = this.debugState.targetAge;
+                this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
+                
+                // Trigger the birthday event logic for the new age to ensure the modal/bonuses fire
+                if (this.simulationService.timeService) {
+                    this.simulationService.timeService._handleBirthday(this.debugState.targetAge);
+                }
+
+                this.gameState.setState({});
+            }},
+            // ---------------------------
              payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
@@ -586,6 +600,10 @@ ${logHistory}
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
+        // --- NEW: Set Age Controls ---
+        playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
+        playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
+        // -----------------------------
 
         const shipFolder = this.gui.addFolder('Ship');
         // --- [GEMINI] ADDED: Cycle Pics and Board Dropdown ---
