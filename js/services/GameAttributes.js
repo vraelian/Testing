@@ -1,5 +1,5 @@
 // js/services/GameAttributes.js
-import { UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES } from '../data/constants.js';
+import { UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES, LOCATION_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js'; // Imported at top for ES Module compatibility
 
 /**
@@ -12,6 +12,92 @@ import { DB } from '../data/database.js'; // Imported at top for ES Module compa
 // ==========================================
 
 const ATTRIBUTE_DEFINITIONS = {
+    // --- STATION QUIRKS (Map Intel) ---
+    'QUIRK_SOL_FORGE': {
+        name: "Solar Forge",
+        description: "+25% Sell Price for Graphene Lattices & Plasteel.",
+        type: "STATION_QUIRK",
+        color: "#f59e0b"
+    },
+    'QUIRK_MERCURY_THIRST': {
+        name: "Desperate Thirst",
+        description: "Pays 40% more for Water Ice.",
+        type: "STATION_QUIRK",
+        color: "#f87171"
+    },
+    'QUIRK_VENUS_DATA': {
+        name: "Data Haven",
+        description: "Intel is 50% cheaper and lasts twice as long.",
+        type: "STATION_QUIRK",
+        color: "#facc15"
+    },
+    'QUIRK_EARTH_CONSUMPTION': {
+        name: "High Demand",
+        description: "Cloned Organs & Xeno-Geologicals sell for 10% more.",
+        type: "STATION_QUIRK",
+        color: "#60a5fa"
+    },
+    'QUIRK_LUNA_SHIPYARD': {
+        name: "Orbital Shipyards",
+        description: "20% discount on all ship repairs.",
+        type: "STATION_QUIRK",
+        color: "#9ca3af"
+    },
+    'QUIRK_MARS_COLONY': {
+        name: "Colonial Expansion",
+        description: "+10% Sell Price for Water Ice and Hydroponics.",
+        type: "STATION_QUIRK",
+        color: "#fb923c"
+    },
+    'QUIRK_BELT_ANOMALY': {
+        name: "Lawless Zone",
+        description: "Pending Declassification...",
+        type: "STATION_QUIRK",
+        color: "#a16207"
+    },
+    'QUIRK_EXCHANGE_VOLATILITY': {
+        name: "Black Market",
+        description: "Prices fluctuate dramatically.",
+        type: "STATION_QUIRK",
+        color: "#c084fc"
+    },
+    'QUIRK_JUPITER_REFINERY': {
+        name: "Gas Giant Refinery",
+        description: "Fuel is sold at a 50% discount.",
+        type: "STATION_QUIRK",
+        color: "#fb923c"
+    },
+    'QUIRK_SATURN_LUXURY': {
+        name: "Luxury Tax",
+        description: "+20% Sell Price for Organs/Cryo Pods. 200% Service Costs.",
+        type: "STATION_QUIRK",
+        color: "#fde047"
+    },
+    'QUIRK_URANUS_RESEARCH': {
+        name: "Quantum Research",
+        description: "Increased chance for advanced ship upgrades in shop.",
+        type: "STATION_QUIRK",
+        color: "#67e8f9"
+    },
+    'QUIRK_NEPTUNE_MILITARY': {
+        name: "Military Logistics",
+        description: "10% Bulk Discount on Propellant & Plasteel (>50 units).",
+        type: "STATION_QUIRK",
+        color: "#60a5fa"
+    },
+    'QUIRK_KEPLER_BANK': {
+        name: "Financial Hub",
+        description: "15% Discount on all financing and debt payments.",
+        type: "STATION_QUIRK",
+        color: "#ec4899"
+    },
+    'QUIRK_PLUTO_FRINGE': {
+        name: "Fringe Outpost",
+        description: "+25% Sell Price on Cybernetics & Antimatter. Low Supply.",
+        type: "STATION_QUIRK",
+        color: "#a78bfa"
+    },
+
     // --- Z-CLASS & F-CLASS MECHANICS ---
     'ATTR_OSSEOUS_REGROWTH': {
         name: "Osseous Regrowth",
@@ -527,6 +613,31 @@ export class GameAttributes {
      */
     static getAllUpgradeIds() {
         return Object.keys(ATTRIBUTE_DEFINITIONS);
+    }
+
+    /**
+     * Retrieves the station quirk IDs for a specific location.
+     * @param {string} locationId 
+     * @returns {string[]} Array of Quirk IDs
+     */
+    static getStationQuirks(locationId) {
+        const map = {
+            [LOCATION_IDS.SUN]: ['QUIRK_SOL_FORGE'],
+            [LOCATION_IDS.MERCURY]: ['QUIRK_MERCURY_THIRST'],
+            [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_DATA'],
+            [LOCATION_IDS.EARTH]: ['QUIRK_EARTH_CONSUMPTION'],
+            [LOCATION_IDS.LUNA]: ['QUIRK_LUNA_SHIPYARD'],
+            [LOCATION_IDS.MARS]: ['QUIRK_MARS_COLONY'],
+            [LOCATION_IDS.BELT]: ['QUIRK_BELT_ANOMALY'],
+            [LOCATION_IDS.EXCHANGE]: ['QUIRK_EXCHANGE_VOLATILITY'],
+            [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_REFINERY'],
+            [LOCATION_IDS.SATURN]: ['QUIRK_SATURN_LUXURY'],
+            [LOCATION_IDS.URANUS]: ['QUIRK_URANUS_RESEARCH'],
+            [LOCATION_IDS.NEPTUNE]: ['QUIRK_NEPTUNE_MILITARY'],
+            [LOCATION_IDS.KEPLER]: ['QUIRK_KEPLER_BANK'],
+            [LOCATION_IDS.PLUTO]: ['QUIRK_PLUTO_FRINGE']
+        };
+        return map[locationId] || [];
     }
 
     // --- HELPER METHODS FOR CALCULATING MODIFIERS ---
