@@ -127,6 +127,14 @@ export function renderServicesScreen(gameState, simulationService) {
     }
     const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
     fuelCostPerTick *= fuelAttrMod;
+    
+    // --- PHASE 2: AGE PERK (FUEL COST) ---
+    const ageFuelDiscount = player.statModifiers?.fuelCost || 0;
+    if (ageFuelDiscount > 0) {
+        fuelCostPerTick *= (1 - ageFuelDiscount);
+    }
+    // --- END PHASE 2 ---
+
     fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
 
     let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
@@ -147,6 +155,14 @@ export function renderServicesScreen(gameState, simulationService) {
     }
     const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
     repairCostPerTick *= repairAttrMod;
+
+    // --- PHASE 2: AGE PERK (REPAIR COST) ---
+    const ageRepairDiscount = player.statModifiers?.repairCost || 0;
+    if (ageRepairDiscount > 0) {
+        repairCostPerTick *= (1 - ageRepairDiscount);
+    }
+    // --- END PHASE 2 ---
+
     repairCostPerTick = Math.max(1, Math.round(repairCostPerTick));
 
     // --- Calculate Percentages ---
@@ -250,8 +266,14 @@ function _getDailyStock(gameState) {
         if (id.endsWith('_II')) threshold = 0.10;
         if (id.endsWith('_III')) threshold = 0.05;
 
+        // --- PHASE 2: AGE PERK (UPGRADE SPAWN RATE) ---
+        // Increase the threshold by the player's accrued bonus (e.g., +0.02)
+        const spawnBonus = gameState.player.statModifiers?.upgradeSpawnRate || 0;
+        threshold += spawnBonus;
+        // --- END PHASE 2 ---
+
         // 3. Apply Uranus Station Quirk (2x Multiplier for ALL tiers)
-        // REVISED URANUS RATES: T1=30%, T2=20%, T3=10%
+        // REVISED URANUS RATES: T1=30%, T2=20%, T3=10% (Plus whatever the age bonus is)
         if (currentLocationId === LOCATION_IDS.URANUS) {
             threshold *= 2; 
         }

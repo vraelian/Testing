@@ -256,26 +256,34 @@ export class TimeService {
 
                 // Era 2 uses specific narrative text
                 title = `Augmentation Installed: ${event.title}`;
-                this.uiManager.queueModal('event-modal', title, `${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
+                // --- CHANGED: Now prepends "You are now [Age]." per user request ---
+                this.uiManager.queueModal('event-modal', title, `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
             }
         }
 
         // --- ERA 3: THE ANCIENT ERA (200+) ---
-        // Alternating Vouchers every 5 years
+        // Alternating Vouchers every 5 years (Instant Fill Implementation)
         else if (age >= 200) {
             if (age % 5 === 0) {
+                const activeShipId = this.gameState.player.activeShipId;
+                const activeShipState = this.gameState.player.shipStates[activeShipId];
+                // Access Effective Stats for accurate max values
+                const effectiveStats = this.simulationService ? this.simulationService.getEffectiveShipStats(activeShipId) : DB.SHIPS[activeShipId]; 
+
                 const isFuel = (age % 10 === 0); // 200, 210, 220...
                 
                 if (isFuel) {
-                    this.gameState.player.serviceTokens.fuel++;
-                    title = "Guild Tribute: Fuel Voucher";
-                    desc = `In honor of your ${age}th year, the Merchant's Guild has issued a writ of passage. This token can be used at any port to completely refuel your active ship for free.`;
-                    bonusText = "Added 1 Fuel Voucher to account.";
+                    // Instant Fuel Fill
+                    activeShipState.fuel = effectiveStats.maxFuel;
+                    title = "Guild Tribute: Fuel Grant";
+                    desc = `In honor of your ${age}th year, the Merchant's Guild has issued a writ of passage. Your ship's fuel reserves have been instantly restored to maximum capacity.`;
+                    bonusText = "Fuel reserves fully restored.";
                 } else { // 205, 215, 225...
-                    this.gameState.player.serviceTokens.repair++;
-                    title = "Guild Tribute: Drydock Voucher";
-                    desc = `In honor of your ${age}th year, the Shipwright's Union has issued a total restoration grant. This token can be used at any port to completely repair your active ship for free.`;
-                    bonusText = "Added 1 Repair Voucher to account.";
+                    // Instant Hull Repair
+                    activeShipState.health = effectiveStats.maxHealth;
+                    title = "Guild Tribute: Drydock Grant";
+                    desc = `In honor of your ${age}th year, the Shipwright's Union has issued a total restoration grant. Your ship's hull has been instantly repaired to maximum integrity.`;
+                    bonusText = "Hull integrity fully restored.";
                 }
 
                 this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
