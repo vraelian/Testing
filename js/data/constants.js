@@ -218,6 +218,67 @@ export const UPGRADE_COLORS = Object.freeze({
 });
 // --- [[END]] VIRTUAL WORKBENCH ---
 
+// --- [[START]] EVENT SYSTEM 2.0 (Phase 1) ---
+/**
+ * Core constants for the Random Event Engine v2.0.
+ * Defines standard tags, condition logic, and outcome resolution types.
+ */
+export const EVENT_CONSTANTS = Object.freeze({
+    // Tags allow the engine to filter events by context (Where are we?)
+    TAGS: {
+        SPACE: 'TAG_SPACE',       // Deep space travel
+        ORBIT: 'TAG_ORBIT',       // In orbit of a planet
+        STATION: 'TAG_STATION',   // Docked at a station
+        HAZARD: 'TAG_HAZARD',     // Dangerous sectors (e.g. Belt)
+        SAFE: 'TAG_SAFE',         // Safe sectors (e.g. Earth/Luna)
+        ALIEN: 'TAG_ALIEN',       // Xeno interactions
+        TRADE: 'TAG_TRADE',       // Economic opportunities
+        COMBAT: 'TAG_COMBAT'      // Hostile encounters
+    },
+
+    // Condition Types define "Can this happen?" or "Can I choose this?"
+    CONDITIONS: {
+        // Resource Checks
+        HAS_FUEL: 'COND_HAS_FUEL',
+        HAS_CREDITS: 'COND_HAS_CREDITS',
+        HAS_HULL: 'COND_HAS_HULL',
+        HAS_CARGO_SPACE: 'COND_HAS_CARGO_SPACE',
+        HAS_ITEM: 'COND_HAS_ITEM',
+        
+        // Player State Checks
+        HAS_PERK: 'COND_HAS_PERK',
+        HAS_SHIP_CLASS: 'COND_HAS_SHIP_CLASS', // e.g. "Must be Class A"
+        WEALTH_TIER: 'COND_WEALTH_TIER',       // e.g. "Must be Tier 3+"
+        
+        // Global/World Checks
+        LOCATION_IS: 'COND_LOCATION_IS',       // Specific location check
+        RNG_ROLL: 'COND_RNG_ROLL'              // Flat probability check (0-1)
+    },
+
+    // Resolvers define HOW an outcome is selected
+    RESOLVERS: {
+        WEIGHTED_RNG: 'RESOLVER_WEIGHTED',     // Standard "Dice Roll"
+        STAT_CHECK: 'RESOLVER_STAT_CHECK',     // Skill/Stat vs Threshold
+        DETERMINISTIC: 'RESOLVER_FIXED'        // Always happens (100%)
+    },
+    
+    // Effect Types define WHAT happens (The output)
+    EFFECTS: {
+        MODIFY_CREDITS: 'EFF_CREDITS',
+        MODIFY_FUEL: 'EFF_FUEL',
+        MODIFY_HULL: 'EFF_HULL',
+        MODIFY_DEBT: 'EFF_DEBT',
+        ADD_ITEM: 'EFF_ADD_ITEM',
+        REMOVE_ITEM: 'EFF_REMOVE_ITEM',
+        MODIFY_TRAVEL: 'EFF_MODIFY_TRAVEL',    // Change travel time/dest
+        UNLOCK_INTEL: 'EFF_UNLOCK_INTEL',      // Give market data
+        TRIGGER_FOLLOWUP: 'EFF_TRIGGER_EVENT', // Chain another event
+        LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
+        ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO' // Specific logic
+    }
+});
+// --- [[END]] EVENT SYSTEM 2.0 ---
+
 /**
  * A collection of core game balance numbers and rules.
  */
