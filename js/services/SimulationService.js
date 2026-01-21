@@ -86,13 +86,26 @@ export class SimulationService {
      * @param {string} eventId 
      */
     forceTriggerEvent(eventId) {
-        const eventDef = this.randomEventService.getEventById(eventId);
-        if (!eventDef) {
+        const rawEventDef = this.randomEventService.getEventById(eventId);
+        if (!rawEventDef) {
             this.logger.error('SimulationService', `Cannot force trigger event: ID '${eventId}' not found.`);
             return;
         }
 
-        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${eventDef.template.title}`);
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template.title}`);
+        
+        // Clone and process requirements to determine disabled state
+        const eventDef = { ...rawEventDef };
+        if (eventDef.choices) {
+            eventDef.choices = rawEventDef.choices.map(choice => {
+                const isAllowed = this.randomEventService.evaluator.checkAll(
+                    choice.requirements, 
+                    this.gameState, 
+                    this
+                );
+                return { ...choice, disabled: !isAllowed };
+            });
+        }
         
         // Pass the event to the UI Manager to display the modal
         // The modal will call back to resolveEventChoice
@@ -140,13 +153,21 @@ export class SimulationService {
                     break;
                 case 'EFF_TRAVEL_TIME':
                 case 'EFF_MODIFY_TRAVEL':
-                    this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                     // Check if pendingTravel exists to prevent crash (e.g. debug trigger)
+                     if (this.gameState.pendingTravel) {
+                        this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    }
                     break;
                 case 'EFF_ADD_ITEM':
+                    const invAdd = this._getActiveInventory();
+                    if(invAdd && invAdd[eff.target]) {
+                        invAdd[eff.target].quantity += eff.value;
+                    }
+                    break;
                 case 'EFF_REMOVE_ITEM':
-                    const inv = this._getActiveInventory();
-                    if(inv && inv[eff.target]) {
-                        inv[eff.target].quantity = Math.max(0, inv[eff.target].quantity + eff.value); // Value is negative for remove
+                    const invRem = this._getActiveInventory();
+                    if(invRem && invRem[eff.target]) {
+                        invRem[eff.target].quantity = Math.max(0, invRem[eff.target].quantity - eff.value);
                     }
                     break;
                 case 'EFF_ADD_RANDOM_CARGO':

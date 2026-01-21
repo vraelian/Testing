@@ -63,7 +63,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_shutdown',
-                text: 'System Shutdown (Drift)',
+                text: 'System Shutdown (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shutdown_delay' }] }
             }
         ],
@@ -152,12 +152,12 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_reboot',
-                text: 'Hard Reboot (Delay)',
+                text: 'Hard Reboot (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reboot' }] }
             },
             {
                 id: 'choice_override',
-                text: 'Manual Override (Risk Time)',
+                text: 'Manual Override (Risk Trip Delay)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -204,7 +204,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_slow',
-                text: 'Reduce Acceleration (Delay)',
+                text: 'Reduce Acceleration (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slow' }] }
             },
             {
@@ -264,7 +264,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_drift',
-                text: 'Drift Through (Delay)',
+                text: 'Drift Through (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
             }
         ],
@@ -301,7 +301,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_shadow',
-                text: 'Seek Shadow (Delay)',
+                text: 'Seek Shadow (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shadow' }] }
             },
             {
@@ -352,7 +352,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_decay',
-                text: 'Orbital Decay (Delay)',
+                text: 'Orbital Decay (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
             },
             {
@@ -395,7 +395,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_wait',
-                text: 'All Stop (Delay)',
+                text: 'All Stop (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
             },
             {
@@ -450,7 +450,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_inspect',
-                text: 'Full Inspection (Delay)',
+                text: 'Full Inspection (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
             },
             {
@@ -482,7 +482,7 @@ export const RANDOM_EVENTS = [
         requirements: [],
         template: {
             title: 'Toll Road',
-            description: 'The Martian Syndicate has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+            description: 'Local Orbital Patrol has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
         },
         choices: [
             {
@@ -492,7 +492,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_divert',
-                text: 'Divert (-Fuel & Delay)',
+                text: 'Divert (-Fuel & Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
             },
             {
@@ -552,7 +552,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_park',
-                text: 'Solar Sterilization (Delay)',
+                text: 'Solar Sterilization (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
             }
         ],
@@ -594,7 +594,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_dispute',
-                text: 'Dispute (Risk Fine & Delay)',
+                text: 'Dispute (Risk Fine & Trip Delay)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -642,12 +642,12 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_transfer',
-                text: 'Transfer Fuel (-10%)',
+                text: 'Transfer Fuel (-10% Fuel)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_transfer' }] }
             },
             {
                 id: 'choice_tow',
-                text: 'Tow Service (-Fuel & Delay)',
+                text: 'Tow Service (-Fuel & Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tow' }] }
             },
             {
@@ -690,19 +690,19 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_donate_ice',
-                text: 'Donate Water Ice (-5)',
+                text: 'Donate Water Ice (-5 Water Ice)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: 5 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
             },
             {
                 id: 'choice_donate_cyber',
-                text: 'Donate Cybernetics (-2)',
+                text: 'Donate Cybernetics (-2 Cybernetics)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_cyber' }] }
             },
             {
                 id: 'choice_dock',
-                text: 'Dock & Assist (Delay)',
+                text: 'Dock & Assist (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dock' }] }
             },
             {
@@ -799,7 +799,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_draft',
-                text: 'Draft Formation (Gain Fuel, Delay)',
+                text: 'Draft Formation (Gain Fuel, Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_draft' }] }
             },
             {
@@ -948,7 +948,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_restack',
-                text: 'EVA Re-Stack (Delay)',
+                text: 'EVA Re-Stack (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
             },
             {
@@ -1000,7 +1000,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_ignore',
-                text: 'Ignore (Lose More)',
+                text: 'Ignore (Lose More Cargo)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
             }
         ],
@@ -1035,7 +1035,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_scavenge',
-                text: 'Scavenge (Req: 5 Space)',
+                text: 'Scavenge (Req: 5 Cargo Space)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
@@ -1087,7 +1087,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_grapple',
-                text: 'Grapple (Req: 10 Space)',
+                text: 'Grapple (Req: 10 Cargo Space)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 10 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
@@ -1143,7 +1143,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_scrap',
-                text: 'Harvest Scrap (+Time, +Plasteel)',
+                text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
             },
             {

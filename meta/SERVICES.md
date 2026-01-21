@@ -25,7 +25,7 @@
 * **TravelService (F036)**
     * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
     * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. Uses `MOD_FUEL_BURN` for consumption logic.
-    * **Dependencies**: `GameState`, `TimeService`.
+    * **Dependencies**: `GameState`, `TimeService`, `RandomEventService`.
 
 * **MarketService (F010)**
     * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
@@ -57,7 +57,30 @@
 
 ---
 
-### 3. UI & Presentation Services
+### 3. Event System Services (Event 2.0)
+* **RandomEventService**
+    * **Responsibility**: The high-level coordinator for the random event system. Determines *if* an event occurs and *which* event is selected.
+    * **Key Behavior**: Filters the `RANDOM_EVENTS` registry based on current context (location, tags) and relative weights. Passes the selected event to the UI for display.
+    * **Dependencies**: `GameState`, `ConditionEvaluator`.
+
+* **ConditionEvaluator**
+    * **Responsibility**: A stateless utility service that validates requirements.
+    * **Key Behavior**: Parses the `requirements` array of an event or choice (e.g., "Has Item: Water Ice > 5", "Has Perk: Navigator"). Returns `true` or `false` based on the current `GameState`.
+    * **Dependencies**: `GameState` (Read-only).
+
+* **OutcomeResolver**
+    * **Responsibility**: Handles the logic of the player's choice.
+    * **Key Behavior**: Processes the `resolution` block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to `eventEffectResolver` for application.
+    * **Dependencies**: `GameState`, `eventEffectResolver`.
+
+* **eventEffectResolver**
+    * **Responsibility**: The "Applicator". Applies the specific state mutations defined by an event's outcome.
+    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly.
+    * **Dependencies**: `GameState`, `SimulationService`.
+
+---
+
+### 4. UI & Presentation Services
 * **UIManager (F017)**
     * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
     * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
@@ -90,7 +113,7 @@
 
 ---
 
-### 4. Input & Event Handling
+### 5. Input & Event Handling
 * **EventManager (F015)**: The root listener. Binds global click/touch events.
 * **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
 * **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
@@ -101,12 +124,6 @@
 ### UI/Renderers
 
 * **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
-
-### Event Effects
-
-* **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
-* **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
-* **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
 
@@ -127,7 +144,7 @@
 * **`assets_config.js`**: Defines configuration for ship asset variants.
 * **`constants.js`**: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
 * **`age_events.js`**: Defines static data for narrative events triggered by game progression.
-* **`events.js`**: Defines static data for random events encountered during travel.
+* **`events.js`**: **(Registry)** Defines the static, schema-driven data for all random events. Contains `template`, `requirements`, `choices`, and `resolutions` for each event ID.
 * **`missions.js`**: Defines static data for all player missions.
 * **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 * **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.

@@ -15,9 +15,18 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `market` | Object | **(See Section 3)** All economic data. |
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 4)** Currently active trade advantage. |
+| **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | State regarding the tutorial overlay system. |
 | `missions` | Object | State regarding active and completed missions. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
+
+**Pending Travel Structure (`state.pendingTravel`)**
+This object buffers data during the async travel/event loop.
+* `destinationId`: The intended target location ID.
+* `travelTimeAdd`: Additional days added to the trip by an event.
+* `travelTimeAddPercent`: Percentage modifier for trip duration.
+* `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
+* `setTravelTime`: Hard override for travel duration (if > 0).
 
 ---
 

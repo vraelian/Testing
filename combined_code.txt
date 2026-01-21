@@ -2569,6 +2569,45 @@ card.
     font-size: 1.1rem; /* Approx 1.5pt larger than 0.875rem */
 }
 /* --- [[END]] MODAL COST TEXT --- */
+
+/* --- [[START]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
+.event-choice-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    height: auto; /* Allow growth */
+    min-height: 3.5rem; /* Ensure substantial click area */
+}
+
+.choice-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f3f4f6; /* gray-100 */
+    margin-bottom: 0.25rem;
+    pointer-events: none; /* Let clicks pass to button */
+}
+
+.choice-subtext {
+    font-size: 0.85rem;
+    font-weight: 500;
+    pointer-events: none; /* Let clicks pass to button */
+}
+
+/* Event Color Utilities */
+.text-cost-orange {
+    color: #fb923c !important; /* orange-400 - Force override */
+}
+
+.text-req-yellow {
+    color: #facc15 !important; /* yellow-400 - Force override */
+}
+
+.text-delay-blue {
+    color: #60a5fa !important; /* blue-400 - Force override */
+}
+/* --- [[END]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -9137,7 +9176,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_shutdown',
-                text: 'System Shutdown (Drift)',
+                text: 'System Shutdown (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shutdown_delay' }] }
             }
         ],
@@ -9226,12 +9265,12 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_reboot',
-                text: 'Hard Reboot (Delay)',
+                text: 'Hard Reboot (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reboot' }] }
             },
             {
                 id: 'choice_override',
-                text: 'Manual Override (Risk Time)',
+                text: 'Manual Override (Risk Trip Delay)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -9278,7 +9317,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_slow',
-                text: 'Reduce Acceleration (Delay)',
+                text: 'Reduce Acceleration (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slow' }] }
             },
             {
@@ -9338,7 +9377,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_drift',
-                text: 'Drift Through (Delay)',
+                text: 'Drift Through (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
             }
         ],
@@ -9375,7 +9414,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_shadow',
-                text: 'Seek Shadow (Delay)',
+                text: 'Seek Shadow (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shadow' }] }
             },
             {
@@ -9426,7 +9465,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_decay',
-                text: 'Orbital Decay (Delay)',
+                text: 'Orbital Decay (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
             },
             {
@@ -9469,7 +9508,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_wait',
-                text: 'All Stop (Delay)',
+                text: 'All Stop (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
             },
             {
@@ -9524,7 +9563,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_inspect',
-                text: 'Full Inspection (Delay)',
+                text: 'Full Inspection (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
             },
             {
@@ -9556,7 +9595,7 @@ export const RANDOM_EVENTS = [
         requirements: [],
         template: {
             title: 'Toll Road',
-            description: 'The Martian Syndicate has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+            description: 'Local Orbital Patrol has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
         },
         choices: [
             {
@@ -9566,7 +9605,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_divert',
-                text: 'Divert (-Fuel & Delay)',
+                text: 'Divert (-Fuel & Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
             },
             {
@@ -9626,7 +9665,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_park',
-                text: 'Solar Sterilization (Delay)',
+                text: 'Solar Sterilization (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
             }
         ],
@@ -9668,7 +9707,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_dispute',
-                text: 'Dispute (Risk Fine & Delay)',
+                text: 'Dispute (Risk Fine & Trip Delay)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -9716,12 +9755,12 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_transfer',
-                text: 'Transfer Fuel (-10%)',
+                text: 'Transfer Fuel (-10% Fuel)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_transfer' }] }
             },
             {
                 id: 'choice_tow',
-                text: 'Tow Service (-Fuel & Delay)',
+                text: 'Tow Service (-Fuel & Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tow' }] }
             },
             {
@@ -9764,19 +9803,19 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_donate_ice',
-                text: 'Donate Water Ice (-5)',
+                text: 'Donate Water Ice (-5 Water Ice)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: 5 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
             },
             {
                 id: 'choice_donate_cyber',
-                text: 'Donate Cybernetics (-2)',
+                text: 'Donate Cybernetics (-2 Cybernetics)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_cyber' }] }
             },
             {
                 id: 'choice_dock',
-                text: 'Dock & Assist (Delay)',
+                text: 'Dock & Assist (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dock' }] }
             },
             {
@@ -9873,7 +9912,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_draft',
-                text: 'Draft Formation (Gain Fuel, Delay)',
+                text: 'Draft Formation (Gain Fuel, Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_draft' }] }
             },
             {
@@ -10022,7 +10061,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_restack',
-                text: 'EVA Re-Stack (Delay)',
+                text: 'EVA Re-Stack (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
             },
             {
@@ -10074,7 +10113,7 @@ export const RANDOM_EVENTS = [
             },
             {
                 id: 'choice_ignore',
-                text: 'Ignore (Lose More)',
+                text: 'Ignore (Lose More Cargo)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
             }
         ],
@@ -10109,7 +10148,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_scavenge',
-                text: 'Scavenge (Req: 5 Space)',
+                text: 'Scavenge (Req: 5 Cargo Space)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
@@ -10161,7 +10200,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_grapple',
-                text: 'Grapple (Req: 10 Space)',
+                text: 'Grapple (Req: 10 Cargo Space)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 10 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
@@ -10217,7 +10256,7 @@ export const RANDOM_EVENTS = [
         choices: [
             {
                 id: 'choice_scrap',
-                text: 'Harvest Scrap (+Time, +Plasteel)',
+                text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
             },
             {
@@ -16866,13 +16905,26 @@ export class SimulationService {
      * @param {string} eventId 
      */
     forceTriggerEvent(eventId) {
-        const eventDef = this.randomEventService.getEventById(eventId);
-        if (!eventDef) {
+        const rawEventDef = this.randomEventService.getEventById(eventId);
+        if (!rawEventDef) {
             this.logger.error('SimulationService', `Cannot force trigger event: ID '${eventId}' not found.`);
             return;
         }
 
-        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${eventDef.template.title}`);
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template.title}`);
+        
+        // Clone and process requirements to determine disabled state
+        const eventDef = { ...rawEventDef };
+        if (eventDef.choices) {
+            eventDef.choices = rawEventDef.choices.map(choice => {
+                const isAllowed = this.randomEventService.evaluator.checkAll(
+                    choice.requirements, 
+                    this.gameState, 
+                    this
+                );
+                return { ...choice, disabled: !isAllowed };
+            });
+        }
         
         // Pass the event to the UI Manager to display the modal
         // The modal will call back to resolveEventChoice
@@ -16920,13 +16972,21 @@ export class SimulationService {
                     break;
                 case 'EFF_TRAVEL_TIME':
                 case 'EFF_MODIFY_TRAVEL':
-                    this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                     // Check if pendingTravel exists to prevent crash (e.g. debug trigger)
+                     if (this.gameState.pendingTravel) {
+                        this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    }
                     break;
                 case 'EFF_ADD_ITEM':
+                    const invAdd = this._getActiveInventory();
+                    if(invAdd && invAdd[eff.target]) {
+                        invAdd[eff.target].quantity += eff.value;
+                    }
+                    break;
                 case 'EFF_REMOVE_ITEM':
-                    const inv = this._getActiveInventory();
-                    if(inv && inv[eff.target]) {
-                        inv[eff.target].quantity = Math.max(0, inv[eff.target].quantity + eff.value); // Value is negative for remove
+                    const invRem = this._getActiveInventory();
+                    if(invRem && invRem[eff.target]) {
+                        invRem[eff.target].quantity = Math.max(0, invRem[eff.target].quantity - eff.value);
                     }
                     break;
                 case 'EFF_ADD_RANDOM_CARGO':
@@ -20309,11 +20369,11 @@ export class UIManager {
 
     /**
      * Shows a modal for a random event (Event System 2.0).
+     * MODIFIED: Parses choice text to render header and cost/subtext separately.
      * @param {Object} event - The hydrated event object.
      * @param {Function} choicesCallback - Callback(choiceId).
      */
     showRandomEventModal(event, choicesCallback) {
-         // --- FIX: Schema V2 mapping ---
          // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
@@ -20326,20 +20386,46 @@ export class UIManager {
                 
                 event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    // Add standard button classes plus the new 'event-choice-btn' container class
+                    button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
                     
-                    // --- FIX: Schema V2 choice text ---
-                    // New schema uses 'text', old used 'title'
-                    button.innerHTML = choice.text || choice.title || 'Option';
+                    // Handle disabled state (passed from SimulationService)
+                    if (choice.disabled) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
                     
-                    // Add Tooltip if available (Event System 2.0 feature)
+                    // Text Parsing Logic:
+                    // Looks for pattern "Header Text (Subtext)"
+                    // Captures "Header Text" in group 1, "(Subtext)" in group 2
+                    const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                    const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                    const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                    // Determine Subtext Color
+                    let colorClass = 'text-gray-400'; // Default gray
+                    if (subText) {
+                        const lower = subText.toLowerCase();
+                        if (lower.includes('space')) {
+                            colorClass = 'text-req-yellow';
+                        } else if (lower.includes('delay')) {
+                            colorClass = 'text-delay-blue';
+                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium'].some(k => lower.includes(k))) {
+                            colorClass = 'text-cost-orange';
+                        }
+                    }
+
+                    // Render Layout
+                    button.innerHTML = `
+                        <span class="choice-header">${headerText}</span>
+                        ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                    `;
+                    
                     if (choice.tooltip) {
                         button.setAttribute('title', choice.tooltip);
                     }
 
                     button.onclick = () => {
-                        // --- FIX: Pass choice.id (String) ---
-                        // RandomEventService expects a string ID, not an index
                         choicesCallback(choice.id);
                         closeHandler();
                      };
@@ -21921,48 +22007,6 @@ export class UIManager {
 
                 // Initial render
                 renderStandardButtons();
-            }
-        });
-    }
-
-    /**
-     * Shows a modal for a random event (Event System 2.0).
-     * @param {Object} event - The hydrated event object.
-     * @param {Function} choicesCallback - Callback(choiceId).
-     */
-    showRandomEventModal(event, choicesCallback) {
-         // --- FIX: Schema V2 mapping ---
-         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
-         const title = event.template?.title || event.title || 'Unknown Event';
-         const description = event.template?.description || event.scenario || 'No description available.';
-
-         this.queueModal('random-event-modal', title, description, null, {
-            nonDismissible: true,
-            customSetup: (modal, closeHandler) => {
-                const choicesContainer = modal.querySelector('#random-event-choices-container');
-                choicesContainer.innerHTML = '';
-                
-                event.choices.forEach((choice) => {
-                    const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
-                    
-                    // --- FIX: Schema V2 choice text ---
-                    // New schema uses 'text', old used 'title'
-                    button.innerHTML = choice.text || choice.title || 'Option';
-                    
-                    // Add Tooltip if available (Event System 2.0 feature)
-                    if (choice.tooltip) {
-                        button.setAttribute('title', choice.tooltip);
-                    }
-
-                    button.onclick = () => {
-                        // --- FIX: Pass choice.id (String) ---
-                        // RandomEventService expects a string ID, not an index
-                        choicesCallback(choice.id);
-                        closeHandler();
-                     };
-                    choicesContainer.appendChild(button);
-                });
             }
         });
     }

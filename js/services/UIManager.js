@@ -995,11 +995,11 @@ export class UIManager {
 
     /**
      * Shows a modal for a random event (Event System 2.0).
+     * MODIFIED: Parses choice text to render header and cost/subtext separately.
      * @param {Object} event - The hydrated event object.
      * @param {Function} choicesCallback - Callback(choiceId).
      */
     showRandomEventModal(event, choicesCallback) {
-         // --- FIX: Schema V2 mapping ---
          // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
@@ -1012,20 +1012,46 @@ export class UIManager {
                 
                 event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    // Add standard button classes plus the new 'event-choice-btn' container class
+                    button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
                     
-                    // --- FIX: Schema V2 choice text ---
-                    // New schema uses 'text', old used 'title'
-                    button.innerHTML = choice.text || choice.title || 'Option';
+                    // Handle disabled state (passed from SimulationService)
+                    if (choice.disabled) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
                     
-                    // Add Tooltip if available (Event System 2.0 feature)
+                    // Text Parsing Logic:
+                    // Looks for pattern "Header Text (Subtext)"
+                    // Captures "Header Text" in group 1, "(Subtext)" in group 2
+                    const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                    const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                    const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                    // Determine Subtext Color
+                    let colorClass = 'text-gray-400'; // Default gray
+                    if (subText) {
+                        const lower = subText.toLowerCase();
+                        if (lower.includes('space')) {
+                            colorClass = 'text-req-yellow';
+                        } else if (lower.includes('delay')) {
+                            colorClass = 'text-delay-blue';
+                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium'].some(k => lower.includes(k))) {
+                            colorClass = 'text-cost-orange';
+                        }
+                    }
+
+                    // Render Layout
+                    button.innerHTML = `
+                        <span class="choice-header">${headerText}</span>
+                        ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                    `;
+                    
                     if (choice.tooltip) {
                         button.setAttribute('title', choice.tooltip);
                     }
 
                     button.onclick = () => {
-                        // --- FIX: Pass choice.id (String) ---
-                        // RandomEventService expects a string ID, not an index
                         choicesCallback(choice.id);
                         closeHandler();
                      };
@@ -2607,48 +2633,6 @@ export class UIManager {
 
                 // Initial render
                 renderStandardButtons();
-            }
-        });
-    }
-
-    /**
-     * Shows a modal for a random event (Event System 2.0).
-     * @param {Object} event - The hydrated event object.
-     * @param {Function} choicesCallback - Callback(choiceId).
-     */
-    showRandomEventModal(event, choicesCallback) {
-         // --- FIX: Schema V2 mapping ---
-         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
-         const title = event.template?.title || event.title || 'Unknown Event';
-         const description = event.template?.description || event.scenario || 'No description available.';
-
-         this.queueModal('random-event-modal', title, description, null, {
-            nonDismissible: true,
-            customSetup: (modal, closeHandler) => {
-                const choicesContainer = modal.querySelector('#random-event-choices-container');
-                choicesContainer.innerHTML = '';
-                
-                event.choices.forEach((choice) => {
-                    const button = document.createElement('button');
-                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
-                    
-                    // --- FIX: Schema V2 choice text ---
-                    // New schema uses 'text', old used 'title'
-                    button.innerHTML = choice.text || choice.title || 'Option';
-                    
-                    // Add Tooltip if available (Event System 2.0 feature)
-                    if (choice.tooltip) {
-                        button.setAttribute('title', choice.tooltip);
-                    }
-
-                    button.onclick = () => {
-                        // --- FIX: Pass choice.id (String) ---
-                        // RandomEventService expects a string ID, not an index
-                        choicesCallback(choice.id);
-                        closeHandler();
-                     };
-                    choicesContainer.appendChild(button);
-                });
             }
         });
     }

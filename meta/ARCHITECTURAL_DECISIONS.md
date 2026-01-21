@@ -278,3 +278,19 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Deeply integrates player age into the economic simulation (e.g., actually modifying global supply vs. just giving a text popup).
     * **Pro**: Allows for the deprecation of `age_events.js` and legacy tracking variables like `birthdayProfitBonus`.
     * **Con**: Reduces narrative flavor text in favor of systemic tooltips.
+
+---
+
+### ADR-019: Data-Driven Event System (Registry Pattern)
+
+* **Status**: Accepted (2026-01-21)
+* **Context**: The existing event system logic was often hard-coded or required modifying service files to add new content, making it difficult to scale or balance the "Travel Event" pool. A more data-centric approach was needed to allow for rapid content iteration and complex branching without touching logic code.
+* **Decision**: Implemented a **Registry & Resolver** pattern (Event System 2.0).
+    1.  **Registry (`events.js`)**: All event content (text, choices, conditions) is defined in a static JSON-like schema. It is purely passive data.
+    2.  **Stateless Resolvers**: Logic is moved to specialized, stateless services. `ConditionEvaluator` validates requirements (Items, Perks). `OutcomeResolver` processes the player's choice and determines the result (Deterministic vs. Weighted RNG).
+    3.  **Decoupled Effects**: The `eventEffectResolver` applies the final state mutations (Credits, Hull, Fuel) based on the outcome, completely separating the "Why" (Event) from the "How" (Effect).
+* **Consequences**:
+    * **Pro**: Massive scalability; new events can be added by simply creating a new object in the registry.
+    * **Pro**: Supports complex dependency chains (e.g., "Must have X item AND Y perk") via the generic `requirements` array.
+    * **Pro**: Enables "Weighted RNG" outcomes (Risk vs. Reward) purely through configuration.
+    * **Con**: Adds a layer of abstraction; debugging a specific event requires checking both the data definition and the resolver logic.
