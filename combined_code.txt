@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.43</title>
+    <title>Orbital Trading 34.49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.43</p>
+            <p>Version 34.49</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -26557,6 +26557,15 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.49] - 2026-1-21
+-  overhauled event system
+-  added OutcomeResolver.js
+-  added RandomEventService.js
+-  added DynamicValueResolver.js
+-  added ConditionEvaluator.js
+-  deprecated legacy events
+-  updated meta files
+
 ## [34.43] - 2026-1-20
 -  deprecated age event system
 -  updated meta files
@@ -28151,14 +28160,20 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- 
+- Achievements
+- Selecting Credit text on Nav bar transitions to Finance Screen
+- Why are Intel products gated by minimum time passage?
+- Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
+- Events: award ship upgrade
+- add date to center of Nav Header, verify time time delay effects and time passage
+- Update event writing to be canon with lore.
 
 ## Immediate Concerns, Bugs
-- 
+
 
 ## Imminent Projects
-- 
-
+- Overhaul Travel Screen
+- Overhaul Events
 
 ## Long-Term Goals, Ideas
 - Reputation system
@@ -28212,7 +28227,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 * **TravelService (F036)**
     * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
     * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. Uses `MOD_FUEL_BURN` for consumption logic.
-    * **Dependencies**: `GameState`, `TimeService`.
+    * **Dependencies**: `GameState`, `TimeService`, `RandomEventService`.
 
 * **MarketService (F010)**
     * **Responsibility**: Simulates the economy. Evolves prices daily, replenishes stock weekly.
@@ -28244,7 +28259,30 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 ---
 
-### 3. UI & Presentation Services
+### 3. Event System Services (Event 2.0)
+* **RandomEventService**
+    * **Responsibility**: The high-level coordinator for the random event system. Determines *if* an event occurs and *which* event is selected.
+    * **Key Behavior**: Filters the `RANDOM_EVENTS` registry based on current context (location, tags) and relative weights. Passes the selected event to the UI for display.
+    * **Dependencies**: `GameState`, `ConditionEvaluator`.
+
+* **ConditionEvaluator**
+    * **Responsibility**: A stateless utility service that validates requirements.
+    * **Key Behavior**: Parses the `requirements` array of an event or choice (e.g., "Has Item: Water Ice > 5", "Has Perk: Navigator"). Returns `true` or `false` based on the current `GameState`.
+    * **Dependencies**: `GameState` (Read-only).
+
+* **OutcomeResolver**
+    * **Responsibility**: Handles the logic of the player's choice.
+    * **Key Behavior**: Processes the `resolution` block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to `eventEffectResolver` for application.
+    * **Dependencies**: `GameState`, `eventEffectResolver`.
+
+* **eventEffectResolver**
+    * **Responsibility**: The "Applicator". Applies the specific state mutations defined by an event's outcome.
+    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly.
+    * **Dependencies**: `GameState`, `SimulationService`.
+
+---
+
+### 4. UI & Presentation Services
 * **UIManager (F017)**
     * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
     * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
@@ -28277,7 +28315,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 ---
 
-### 4. Input & Event Handling
+### 5. Input & Event Handling
 * **EventManager (F015)**: The root listener. Binds global click/touch events.
 * **ActionClickHandler (F039)**: Routes `data-action` clicks to services. Now handles Upgrade Installation logic.
 * **HoldEventHandler (F041)**: Manages "press-and-hold" for Refuel/Repair using Pointer Events.
@@ -28288,12 +28326,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 ### UI/Renderers
 
 * **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
-
-### Event Effects
-
-* **`eventEffectResolver.js`**: A central service that applies the game logic effects of a random event outcome by routing to specific handlers. **Uses:** `js/data/events.js`.
-* **`effectAdriftPassenger.js`**: The specific implementation for the "Adrift Passenger" event outcome.
-* **`effectSpaceRace.js`**: The specific implementation for the "Space Race" event outcome.
 
 ### Effects
 
@@ -28314,7 +28346,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 * **`assets_config.js`**: Defines configuration for ship asset variants.
 * **`constants.js`**: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
 * **`age_events.js`**: Defines static data for narrative events triggered by game progression.
-* **`events.js`**: Defines static data for random events encountered during travel.
+* **`events.js`**: **(Registry)** Defines the static, schema-driven data for all random events. Contains `template`, `requirements`, `choices`, and `resolutions` for each event ID.
 * **`missions.js`**: Defines static data for all player missions.
 * **`tutorials.js`**: Defines static data for all tutorial batches and steps.
 * **`flavorAds.js`**: Defines static, location-specific flavor text ads for the news ticker.
@@ -28604,6 +28636,22 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Deeply integrates player age into the economic simulation (e.g., actually modifying global supply vs. just giving a text popup).
     * **Pro**: Allows for the deprecation of `age_events.js` and legacy tracking variables like `birthdayProfitBonus`.
     * **Con**: Reduces narrative flavor text in favor of systemic tooltips.
+
+---
+
+### ADR-019: Data-Driven Event System (Registry Pattern)
+
+* **Status**: Accepted (2026-01-21)
+* **Context**: The existing event system logic was often hard-coded or required modifying service files to add new content, making it difficult to scale or balance the "Travel Event" pool. A more data-centric approach was needed to allow for rapid content iteration and complex branching without touching logic code.
+* **Decision**: Implemented a **Registry & Resolver** pattern (Event System 2.0).
+    1.  **Registry (`events.js`)**: All event content (text, choices, conditions) is defined in a static JSON-like schema. It is purely passive data.
+    2.  **Stateless Resolvers**: Logic is moved to specialized, stateless services. `ConditionEvaluator` validates requirements (Items, Perks). `OutcomeResolver` processes the player's choice and determines the result (Deterministic vs. Weighted RNG).
+    3.  **Decoupled Effects**: The `eventEffectResolver` applies the final state mutations (Credits, Hull, Fuel) based on the outcome, completely separating the "Why" (Event) from the "How" (Effect).
+* **Consequences**:
+    * **Pro**: Massive scalability; new events can be added by simply creating a new object in the registry.
+    * **Pro**: Supports complex dependency chains (e.g., "Must have X item AND Y perk") via the generic `requirements` array.
+    * **Pro**: Enables "Weighted RNG" outcomes (Risk vs. Reward) purely through configuration.
+    * **Con**: Adds a layer of abstraction; debugging a specific event requires checking both the data definition and the resolver logic.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -28873,9 +28921,18 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `market` | Object | **(See Section 3)** All economic data. |
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 4)** Currently active trade advantage. |
+| **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | State regarding the tutorial overlay system. |
 | `missions` | Object | State regarding active and completed missions. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
+
+**Pending Travel Structure (`state.pendingTravel`)**
+This object buffers data during the async travel/event loop.
+* `destinationId`: The intended target location ID.
+* `travelTimeAdd`: Additional days added to the trip by an event.
+* `travelTimeAddPercent`: Percentage modifier for trip duration.
+* `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
+* `setTravelTime`: Hard override for travel duration (if > 0).
 
 ---
 

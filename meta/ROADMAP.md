@@ -3,14 +3,20 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
-- 
+- Achievements
+- Selecting Credit text on Nav bar transitions to Finance Screen
+- Why are Intel products gated by minimum time passage?
+- Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
+- Events: award ship upgrade
+- add date to center of Nav Header, verify time time delay effects and time passage
+- Update event writing to be canon with lore.
 
 ## Immediate Concerns, Bugs
-- 
+
 
 ## Imminent Projects
-- 
-
+- Overhaul Travel Screen
+- Overhaul Events
 
 ## Long-Term Goals, Ideas
 - Reputation system

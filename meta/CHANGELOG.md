@@ -2,6 +2,15 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.49] - 2026-1-21
+-  overhauled event system
+-  added OutcomeResolver.js
+-  added RandomEventService.js
+-  added DynamicValueResolver.js
+-  added ConditionEvaluator.js
+-  deprecated legacy events
+-  updated meta files
+
 ## [34.43] - 2026-1-20
 -  deprecated age event system
 -  updated meta files
