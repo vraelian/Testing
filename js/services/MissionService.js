@@ -69,42 +69,19 @@ export class MissionService {
     /**
      * Accepts a new mission, setting it as the active mission.
      * @param {string} missionId The ID of the mission to accept.
-     * @param {boolean} [force=false] If true, bypasses checks and abandons current mission if necessary.
      */
-    acceptMission(missionId, force = false) {
+    acceptMission(missionId) {
         const mission = DB.MISSIONS[missionId];
-        
-        // 1. Validation (skipped if forced)
-        if (!force) {
-            if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
-                return;
-            }
+        if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
+            return;
         }
-
-        // 2. Handle existing mission collision (Force logic)
-        if (this.gameState.missions.activeMissionId) {
-            if (force) {
-                this.abandonMission(); // Clear the way
-            } else {
-                return; // Should have been caught by validation, but safety first
-            }
-        }
-
-        // 3. Initialize State
         this.gameState.missions.activeMissionId = missionId;
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
-        
-        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
-        
-        // 4. Grant Start Items
-        if (this.simulationService) {
-            this.simulationService.grantMissionCargo(missionId);
-        }
-        
-        // 5. Initial Check & Render
-        this.checkTriggers(); 
+        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId}`);
+        this.simulationService.grantMissionCargo(missionId);
+        this.checkTriggers(); // Run an initial check in case objectives are already met.
 
         // If the mission has no objectives, complete it immediately.
         if (!mission.objectives || mission.objectives.length === 0) {
@@ -189,44 +166,38 @@ export class MissionService {
 
     /**
      * Completes the active mission, granting rewards and removing objective items.
-     * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
      */
-    completeActiveMission(force = false) {
+    completeActiveMission() {
         const { activeMissionId } = this.gameState.missions;
         if (!activeMissionId) return;
         
-        // Temporarily set objectivesMet to true for objective-less missions OR if forced
+        // Temporarily set objectivesMet to true for objective-less missions
         const originalObjectivesMet = this.gameState.missions.activeMissionObjectivesMet;
         const mission = DB.MISSIONS[activeMissionId];
-        
-        // Check Conditions
-        const metRequirements = this.gameState.missions.activeMissionObjectivesMet;
-        const noObjectives = !mission.objectives || mission.objectives.length === 0;
-        
-        if (!metRequirements && !noObjectives && !force) {
-            return; // Can't complete yet
+        if (!mission.objectives || mission.objectives.length === 0) {
+            this.gameState.missions.activeMissionObjectivesMet = true;
+        }
+
+        if (!this.gameState.missions.activeMissionObjectivesMet) {
+            // Restore original state if completion is not actually met.
+            this.gameState.missions.activeMissionObjectivesMet = originalObjectivesMet;
+            return;
         }
 
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
-        // 1. Deduct objective items (Only if strictly met or forced-but-available)
-        // Note: If forcing completion without items, this might result in negative inventory if not careful,
-        // so we check possession before deducting even on force.
-        if (mission.objectives) {
-            mission.objectives.forEach(obj => {
-                if (obj.type === 'have_item' && inventory[obj.goodId]) {
-                    // Safe deduct: don't go below zero even on force
-                    const qtyToRemove = Math.min(inventory[obj.goodId].quantity, obj.quantity);
-                    inventory[obj.goodId].quantity -= qtyToRemove;
-                }
-            });
-        }
+        // 1. Deduct objective items
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item' && inventory[obj.goodId]) {
+                inventory[obj.goodId].quantity -= obj.quantity;
+            }
+        });
 
         // 2. Grant rewards via SimulationService
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
-        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId} ${force ? '(FORCED)' : ''}`);
+        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
