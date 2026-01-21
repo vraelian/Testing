@@ -7,6 +7,7 @@
  * 2. Selecting an event (Weighted RNG)
  * 3. Resolving player choices (OutcomeResolver)
  * 4. Calculating dynamic rewards (DynamicValueResolver)
+ * 5. Applying effects and triggering UI feedback (EventEffectResolver + UIManager)
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -14,6 +15,9 @@ import { EVENT_CONSTANTS } from '../data/constants.js';
 import { ConditionEvaluator } from './ConditionEvaluator.js';
 import { OutcomeResolver } from './OutcomeResolver.js';
 import { DynamicValueResolver } from './DynamicValueResolver.js';
+// [[START]] PHASE 1: Import Effect Applicator
+import { applyEffect } from './eventEffectResolver.js';
+// [[END]] PHASE 1
 
 export class RandomEventService {
     constructor() {
@@ -58,9 +62,10 @@ export class RandomEventService {
      * @param {string} choiceId - The ID of the selected choice.
      * @param {import('./GameState.js').GameState} gameState
      * @param {import('./SimulationService.js').SimulationService} simulationService
+     * @param {import('./UIManager.js').UIManager} [uiManager=null] - [[START]] PHASE 1: Added UI Manager for feedback
      * @returns {Object} The finalized outcome object with calculated effects.
      */
-    resolveChoice(eventId, choiceId, gameState, simulationService) {
+    resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
         const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
         if (!eventDef) throw new Error(`Event not found: ${eventId}`);
 
@@ -76,17 +81,34 @@ export class RandomEventService {
             return null;
         }
 
-        // 2. Calculate Dynamic Effects
-        // We clone the effects so we can inject specific calculated integer values
-        const calculatedEffects = outcomeDef.effects.map(effect => {
-            const finalValue = this.valueResolver.resolve(effect.value, gameState);
-            return {
-                ...effect,
-                value: finalValue
-            };
-        });
+        // 2. Calculate Dynamic Effects AND Apply Them (Phase 1 Logic)
+        const calculatedEffects = [];
+        
+        if (outcomeDef.effects) {
+            outcomeDef.effects.forEach(effect => {
+                // A. Resolve the dynamic value (e.g. "10% of Max Hull" -> 15)
+                const finalValue = this.valueResolver.resolve(effect.value, gameState);
+                
+                // B. Create a concrete effect object with the resolved number
+                const concreteEffect = {
+                    ...effect,
+                    value: finalValue
+                };
+                
+                calculatedEffects.push(concreteEffect);
 
-        // 3. Return the fully resolved package
+                // C. Apply the effect to the GameState immediately
+                applyEffect(gameState, simulationService, concreteEffect, outcomeDef);
+            });
+        }
+
+        // 3. Trigger UI Feedback (Phase 1 Logic)
+        if (uiManager) {
+            // We pass the calculatedEffects so the UI displays "-15 Hull" instead of "10%"
+            uiManager.showEventResultModal(outcomeDef.text, calculatedEffects);
+        }
+
+        // 4. Return the fully resolved package
         return {
             outcomeId: outcomeId,
             text: outcomeDef.text, 
