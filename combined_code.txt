@@ -8451,6 +8451,67 @@ export const UPGRADE_COLORS = Object.freeze({
 });
 // --- [[END]] VIRTUAL WORKBENCH ---
 
+// --- [[START]] EVENT SYSTEM 2.0 (Phase 1) ---
+/**
+ * Core constants for the Random Event Engine v2.0.
+ * Defines standard tags, condition logic, and outcome resolution types.
+ */
+export const EVENT_CONSTANTS = Object.freeze({
+    // Tags allow the engine to filter events by context (Where are we?)
+    TAGS: {
+        SPACE: 'TAG_SPACE',       // Deep space travel
+        ORBIT: 'TAG_ORBIT',       // In orbit of a planet
+        STATION: 'TAG_STATION',   // Docked at a station
+        HAZARD: 'TAG_HAZARD',     // Dangerous sectors (e.g. Belt)
+        SAFE: 'TAG_SAFE',         // Safe sectors (e.g. Earth/Luna)
+        ALIEN: 'TAG_ALIEN',       // Xeno interactions
+        TRADE: 'TAG_TRADE',       // Economic opportunities
+        COMBAT: 'TAG_COMBAT'      // Hostile encounters
+    },
+
+    // Condition Types define "Can this happen?" or "Can I choose this?"
+    CONDITIONS: {
+        // Resource Checks
+        HAS_FUEL: 'COND_HAS_FUEL',
+        HAS_CREDITS: 'COND_HAS_CREDITS',
+        HAS_HULL: 'COND_HAS_HULL',
+        HAS_CARGO_SPACE: 'COND_HAS_CARGO_SPACE',
+        HAS_ITEM: 'COND_HAS_ITEM',
+        
+        // Player State Checks
+        HAS_PERK: 'COND_HAS_PERK',
+        HAS_SHIP_CLASS: 'COND_HAS_SHIP_CLASS', // e.g. "Must be Class A"
+        WEALTH_TIER: 'COND_WEALTH_TIER',       // e.g. "Must be Tier 3+"
+        
+        // Global/World Checks
+        LOCATION_IS: 'COND_LOCATION_IS',       // Specific location check
+        RNG_ROLL: 'COND_RNG_ROLL'              // Flat probability check (0-1)
+    },
+
+    // Resolvers define HOW an outcome is selected
+    RESOLVERS: {
+        WEIGHTED_RNG: 'RESOLVER_WEIGHTED',     // Standard "Dice Roll"
+        STAT_CHECK: 'RESOLVER_STAT_CHECK',     // Skill/Stat vs Threshold
+        DETERMINISTIC: 'RESOLVER_FIXED'        // Always happens (100%)
+    },
+    
+    // Effect Types define WHAT happens (The output)
+    EFFECTS: {
+        MODIFY_CREDITS: 'EFF_CREDITS',
+        MODIFY_FUEL: 'EFF_FUEL',
+        MODIFY_HULL: 'EFF_HULL',
+        MODIFY_DEBT: 'EFF_DEBT',
+        ADD_ITEM: 'EFF_ADD_ITEM',
+        REMOVE_ITEM: 'EFF_REMOVE_ITEM',
+        MODIFY_TRAVEL: 'EFF_MODIFY_TRAVEL',    // Change travel time/dest
+        UNLOCK_INTEL: 'EFF_UNLOCK_INTEL',      // Give market data
+        TRIGGER_FOLLOWUP: 'EFF_TRIGGER_EVENT', // Chain another event
+        LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
+        ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO' // Specific logic
+    }
+});
+// --- [[END]] EVENT SYSTEM 2.0 ---
+
 /**
  * A collection of core game balance numbers and rules.
  */
@@ -9014,248 +9075,1245 @@ export const DB = {
 // js/data/events.js
 /**
  * @fileoverview
- * Defines all static random event data for the game.
+ * Defines the Registry and Schema for Event System 2.0.
+ * * ARCHITECTURE NOTE:
+ * This file contains the static definitions for all random events.
+ * Logic is handled by the RandomEventService, ConditionEvaluator, and OutcomeResolver.
+ * * SCHEMA DEFINITION:
+ * @typedef {Object} GameEvent
+ * @property {string} id - Unique identifier (e.g., 'evt_distress_signal').
+ * @property {string[]} tags - Context tags from EVENT_CONSTANTS.TAGS.
+ * @property {number} weight - Relative frequency (Default: 10). Higher = More common.
+ * @property {EventCondition[]} requirements - List of conditions for the event to spawn.
+ * @property {Object} template - Text content.
+ * @property {string} template.title - Event title.
+ * @property {string} template.description - Main flavor text.
+ * @property {EventChoice[]} choices - List of player options.
+ * * @typedef {Object} EventCondition
+ * @property {string} type - From EVENT_CONSTANTS.CONDITIONS.
+ * @property {string} [target] - ID of item/perk/stat being checked.
+ * @property {string} operator - 'GT' (>), 'LT' (<), 'EQ' (==), 'GTE' (>=).
+ * @property {number|string} value - The threshold value.
+ * * @typedef {Object} EventChoice
+ * @property {string} id - Unique choice ID (e.g., 'choice_help').
+ * @property {string} text - Button text.
+ * @property {string} [tooltip] - Hover text explaining risk/reward.
+ * @property {EventCondition[]} [requirements] - If failing, choice is hidden/disabled.
+ * @property {Object} resolution - How the outcome is determined.
+ * @property {string} resolution.type - From EVENT_CONSTANTS.RESOLVERS.
+ * @property {EventOutcomePool[]} resolution.pool - Possible results.
  */
-import { COMMODITY_IDS } from './constants.js';
 
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from './constants.js';
+
+/**
+ * The central registry of all possible random events.
+ * @type {GameEvent[]}
+ */
 export const RANDOM_EVENTS = [
+    // =========================================================================
+    // CATEGORY I: ENTROPY (Mechanical Failures)
+    // =========================================================================
     {
-        id: 'distress_call',
-        title: 'Distress Call',
-        scenario: 'You pick up a distress signal from a small, damaged ship. They are out of fuel and requesting an emergency transfer to restart their reactor.',
-        precondition: (gameState, activeShip) => activeShip.fuel >= 20, // Event can only trigger if player has enough fuel to offer.
-        choices: [
-            {
-                title: 'Offer Aid (20 Fuel)',
-                outcomes: [
-                    {
-                        chance: 0.75,
-                        description: 'The fuel transfer is successful. The grateful captain rewards you with 10,000 credits for your timely assistance.',
-                        effects: [ { type: 'fuel', value: -20 }, { type: 'credits', value: 10000 } ]
-                    },
-                    {
-                        chance: 0.25,
-                        description: 'As the fuel transfer begins, their reactor overloads! The resulting explosion damages your hull by 15%.',
-                        effects: [ { type: 'fuel', value: -20 }, { type: 'hull_damage_percent', value: 15 } ]
-                    }
-                ]
-            },
-            {
-                title: 'Ignore the Call',
-                outcomes: [ { chance: 1.0, description: 'You press on, and the desperate signal fades behind you.', effects: [] } ]
-            }
-        ]
-    },
-    {
-        id: 'floating_cargo',
-        title: 'Floating Cargo Pod',
-        scenario: 'Long-range sensors detect an unmarked, sealed cargo pod adrift in the shipping lane. It appears to be intact.',
-        precondition: () => true,
-        choices: [
-            {
-                title: 'Bring it Aboard',
-                outcomes: [
-                    {
-                        chance: 0.60,
-                        description: `The pod contains valuable goods. You gain 25 units of Neural Processors.`,
-                        effects: [ { type: 'add_cargo', value: { id: COMMODITY_IDS.PROCESSORS, quantity: 25 } } ]
-                    },
-                    {
-                        chance: 0.40,
-                        description: 'It was a trap! The pod is booby-trapped and detonates as your tractor beam locks on, causing 20% hull damage.',
-                        effects: [ { type: 'hull_damage_percent', value: 20 } ]
-                    }
-                ]
-            },
-            {
-                title: 'Report it',
-                outcomes: [ { chance: 1.0, description: 'You notify the nearest station of the hazard and receive a small finder\'s fee of 1,000 credits.', effects: [ { type: 'credits', value: 1000 } ] } ]
-            }
-        ]
-    },
-    {
-        id: 'adrift_passenger',
-        title: 'Adrift Passenger',
-        scenario: 'You find a spacer in a functioning escape pod. Their beacon is down, and they ask for passage to the nearest civilized port.',
-        precondition: (gameState, activeShip) => activeShip.fuel >= 30,
-        choices: [
-            {
-                title: 'Take Aboard for Payment',
-                outcomes: [ { chance: 1.0, description: 'The passenger is grateful for the rescue and pays you 10,000 credits upon arrival at your destination.', effects: [ { type: 'credits', value: 10000 } ] } ]
-            },
-            {
-                title: 'Give a Fuel Cell (30 Fuel)',
-                outcomes: [
-                    {
-                        chance: 1.0,
-                        descriptions: {
-                            'reward_cybernetics': `In gratitude, the passenger gives you a crate of <span class="hl-green">40 Cybernetics</span>.`,
-                            'reward_debt_paid': `Seeing your tight cargo, the passenger pays off 20% of your debt, reducing it by <span class="hl-green">{amount}</span>.`,
-                            'reward_credits': `With no room and no debt, the passenger transfers you <span class="hl-green">{amount}</span>.`
-                        },
-                        effects: [ { type: 'ADRIFT_PASSENGER' } ]
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'meteoroid_swarm',
-        title: 'Micrometeoroid Swarm',
-        scenario: 'Alarms blare as you fly into an uncharted micrometeoroid swarm. Your navigation computer suggests two options to minimize damage.',
-        precondition: (gameState, activeShip) => activeShip.fuel >= 15,
-        choices: [
-            {
-                title: 'Evade Aggressively (+15 Fuel)',
-                outcomes: [ { chance: 1.0, description: 'You burn extra fuel to successfully dodge the worst of the swarm, emerging unscathed.', effects: [ { type: 'fuel', value: -15 } ] } ]
-            },
-            {
-                title: 'Brace for Impact',
-                outcomes: [ { chance: 1.0, description: 'You trust your hull to withstand the impacts, taking a beating but saving fuel.', effects: [ { type: 'hull_damage_percent', value: [10, 25] } ] } ]
-            }
-        ]
-    },
-    {
-        id: 'engine_malfunction',
-        title: 'Engine Malfunction',
-        scenario: 'A sickening shudder runs through the ship. A key plasma injector has failed, destabilizing your engine output.',
-        precondition: (gameState, activeShip, getActiveInventory) => (getActiveInventory()[COMMODITY_IDS.PLASTEEL]?.quantity || 0) >= 5,
-        choices: [
-            {
-                title: 'Quick, Risky Fix (5 Plasteel)',
-                outcomes: [
-                    {
-                        chance: 0.50,
-                        description: 'The patch holds! The engine stabilizes and you continue your journey without further incident.',
-                        effects: [ { type: 'lose_cargo', value: { id: COMMODITY_IDS.PLASTEEL, quantity: 5 } } ]
-                    },
-                    {
-                        chance: 0.50,
-                        description: 'The patch fails catastrophically, causing a small explosion that deals 20% hull damage.',
-                        effects: [ { type: 'lose_cargo', value: { id: COMMODITY_IDS.PLASTEEL, quantity: 5 } }, { type: 'hull_damage_percent', value: 20 } ]
-                    }
-                ]
-            },
-            {
-                title: 'Limp to Destination',
-                outcomes: [ { chance: 1.0, description: 'You shut down the faulty injector. The ship is slower, but stable. Your remaining travel time increases by 25%.', effects: [ { type: 'travel_time_add_percent', value: 0.25 } ] } ]
-            }
-        ]
-    },
-    {
-        id: 'nav_glitch',
-        title: 'Navigation Sensor Glitch',
-        scenario: 'The nav-console flashes red. Your primary positioning sensors are offline, and you\'re flying blind in the deep dark.',
-        precondition: () => true,
-        choices: [
-            {
-                title: 'Attempt Hard Reboot',
-                outcomes: [
-                    {
-                        chance: 0.50,
-                        description: 'Success! The sensors come back online. In your haste, you find a shortcut, shortening your trip. You will arrive the next day.',
-                        effects: [ { type: 'set_travel_time', value: 1 } ]
-                    },
-                    {
-                        chance: 0.50,
-                        description: 'The reboot corrupts your course data, sending you on a long, meandering path. This adds 15 days to your journey.',
-                        effects: [ { type: 'travel_time_add', value: 15 } ]
-                    }
-                ]
-            },
-            {
-                title: 'Navigate Manually',
-                outcomes: [ { chance: 1.0, description: 'You rely on old-fashioned star charts. It\'s slow but safe, adding 7 days to your trip.', effects: [ { type: 'travel_time_add', value: 7 } ] } ]
-            }
-        ]
-    },
-    {
-        id: 'life_support_fluctuation',
-        title: 'Life Support Fluctuation',
-        scenario: 'An alarm indicates unstable oxygen levels. It\'s not critical yet, but the crew is on edge and efficiency is dropping.',
-        precondition: (gameState, activeShip) => activeShip.health > (activeShip.maxHealth * 0.25),
-        choices: [
-            {
-                title: 'Salvage materials from the ship to repair the atmospheric regulators. (This will cost 25% hull damage)',
-                outcomes: [ { chance: 1.0, description: 'You cannibalize some non-essential hull plating to get the regulators working again. The system stabilizes, but the ship\'s integrity is compromised.', effects: [ { type: 'hull_damage_percent', value: 25 } ] } ]
-            },
-            {
-                title: 'Defer Maintenance Costs',
-                outcomes: [ { chance: 1.0, description: 'You log the issue for later. The cost of repairs and crew hazard pay, 5,000 credits, is added to your debt.', effects: [ { type: 'add_debt', value: 5000 } ] } ]
-            }
-        ]
-    },
-    {
-        id: 'cargo_rupture',
-        title: 'Cargo Hold Rupture',
-        scenario: 'A micrometeorite has punched a small hole in the cargo bay. One of your cargo stacks is exposed to hard vacuum.',
-        precondition: (gameState, activeShip, getActiveInventory) => {
-            const inventory = getActiveInventory();
-            if (!inventory) return false;
-            return Object.values(inventory).some(item => item.quantity > 0);
+        id: 'evt_entropy_thermal',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Avionics Overheat',
+            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly in the flight computer core. The smell of ozone is already drifting through the vents.'
         },
         choices: [
             {
-                title: 'Jettison Damaged Cargo',
-                outcomes: [ { chance: 1.0, description: 'You vent the damaged section, losing 10% of a random cargo stack from your hold into the void.', effects: [ { type: 'lose_random_cargo_percent', value: 0.10 } ] } ]
+                id: 'choice_coolant',
+                text: 'Flush with Coolant (-5 Water Ice)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_coolant_fix' }] }
             },
             {
-                title: 'Attempt EVA Repair',
-                outcomes: [
-                    {
-                        chance: 0.75,
-                        description: 'The emergency patch holds! The cargo is safe, but the repair adds 2 days to your trip.',
-                        effects: [ { type: 'travel_time_add', value: 2 } ]
-                    },
-                    {
-                        chance: 0.25,
-                        description: 'The patch fails to hold. Explosive decompression destroys 50% of the cargo stack, and the repair still adds 2 days to your trip.',
-                        effects: [ { type: 'lose_random_cargo_percent', value: 0.50 }, { type: 'travel_time_add', value: 2 } ]
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'space_race',
-        title: 'Space Race Wager',
-        scenario: 'A smug-looking luxury ship pulls alongside and its captain, broadcasted on your main screen, challenges you to a "friendly" race to the destination.',
-        precondition: (gameState) => gameState.player.credits > 100,
-        choices: [
-            {
-                title: 'Accept Wager (Bet: 80% of current credits)',
-                outcomes: [
-                    {
-                        chance: 1.0,
-                        description: 'You accept the high-stakes challenge...',
-                        effects: [ { type: 'SPACE_RACE', wagerPercentage: 0.80, winChance: { 'S': 0.85, 'A': 0.70, 'B': 0.55, 'C': 0.40, 'O': 0.95 } } ]
-                    }
-                ]
+                id: 'choice_vent',
+                text: 'Emergency Venting (Hull Damage)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent_damage' }] }
             },
             {
-                title: 'Politely Decline',
-                outcomes: [ { chance: 1.0, description: 'You decline the race. The luxury ship performs a flashy maneuver and speeds off, leaving you to travel in peace.', effects: [] } ]
+                id: 'choice_shutdown',
+                text: 'System Shutdown (Drift)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shutdown_delay' }] }
             }
-        ]
+        ],
+        outcomes: {
+            'out_coolant_fix': {
+                text: 'You manually override the coolant loops, crushing the blocks of Water Ice into the reservoir. The temperature graph plummets back to the green.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 }]
+            },
+            'out_vent_damage': {
+                text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            },
+            'out_shutdown_delay': {
+                text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            }
+        }
     },
     {
-        id: 'supply_drop',
-        title: 'Emergency Supply Drop',
-        scenario: 'You intercept a system-wide emergency broadcast. A new outpost is offering a massive premium for an immediate delivery of a specific commodity that you happen to be carrying.',
-        precondition: (gameState, activeShip, getActiveInventory) => {
-            const inventory = getActiveInventory();
-            return inventory && Object.values(inventory).some(item => item.quantity > 0);
+        id: 'evt_entropy_injector',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Injector Desync',
+            description: 'A sickening vibration runs through the deck plates. The number three plasma injector is misfiring. You can swap it out, or try to retune it on the fly—but a bad tune could dump your fuel.'
         },
         choices: [
             {
-                title: 'Divert Course to Deliver',
-                outcomes: [ { chance: 1.0, description: 'You sell your entire stack of the requested commodity for 3 times its galactic average value. Your course is diverted to a new, random destination, adding 7 days to your trip.', effects: [ { type: 'sell_random_cargo_premium', value: 3 }, { type: 'travel_time_add', value: 7 }, { type: 'set_new_random_destination' } ] } ]
+                id: 'choice_replace',
+                text: 'Replace Injector (-2 Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_replace' }] }
             },
             {
-                title: 'Decline and Continue',
-                outcomes: [ { chance: 1.0, description: 'You stick to your original plan and let someone else handle the emergency supply run.', effects: [] } ]
+                id: 'choice_tune',
+                text: 'Manual Recalibration (Risk Fuel)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_tune_success', weight: 60 },
+                        { outcomeId: 'out_tune_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_push',
+                text: 'Push It (Hull Damage)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_push_fail' }] }
             }
-        ]
+        ],
+        outcomes: {
+            'out_replace': {
+                text: 'The new Plasteel housing seats perfectly. The vibration vanishes.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 2 }]
+            },
+            'out_tune_success': {
+                text: 'You wrestle with the magnetic field harmonics for hours. Finally, the waveform syncs up.',
+                effects: []
+            },
+            'out_tune_fail': {
+                text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
+            },
+            'out_push_fail': {
+                text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_entropy_software',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Logic Loop',
+            description: 'The navigation console freezes. A legacy code fragment has triggered a recursive loop in the astrogation buffer. You need high-end hardware to brute-force a solution, or you have to pull the plug.'
+        },
+        choices: [
+            {
+                id: 'choice_hardware',
+                text: 'Hardware Patch (-2 Processors)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_patch' }] }
+            },
+            {
+                id: 'choice_reboot',
+                text: 'Hard Reboot (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reboot' }] }
+            },
+            {
+                id: 'choice_override',
+                text: 'Manual Override (Risk Time)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_override_success', weight: 70 },
+                        { outcomeId: 'out_override_fail', weight: 30 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_patch': {
+                text: 'The extra compute power chews through the bad code in seconds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
+            },
+            'out_reboot': {
+                text: 'You pull the main breaker. When the OS reloads, you realize the ship has drifted off-vector.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
+            },
+            'out_override_success': {
+                text: 'You bypass the safety protocols and force the last known trajectory. It works.',
+                effects: []
+            },
+            'out_override_fail': {
+                text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_entropy_structure',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Micro-Fractures',
+            description: 'Sensors report a web of micro-fractures spreading along the dorsal cargo spine. If you don\'t reinforce it or slow down, the ship could snap under the G-load.'
+        },
+        choices: [
+            {
+                id: 'choice_reinforce',
+                text: 'Reinforce (-5 Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
+            },
+            {
+                id: 'choice_slow',
+                text: 'Reduce Acceleration (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slow' }] }
+            },
+            {
+                id: 'choice_maintain',
+                text: 'Maintain Velocity (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_maintain_success', weight: 50 },
+                        { outcomeId: 'out_maintain_fail', weight: 50 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_reinforce': {
+                text: 'You weld Plasteel bracing over the affected area. It is an ugly patch, but stronger than the original.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
+            },
+            'out_slow': {
+                text: 'You dial back the engine thrust. The stress eases, but your arrival time slips further away.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_maintain_success': {
+                text: 'You watch the stress gauges for the entire trip. Miraculously, the metal groans but doesn\'t buckle.',
+                effects: []
+            },
+            'out_maintain_fail': {
+                text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
+            }
+        }
+    },
+
+    // =========================================================================
+    // CATEGORY II: HAZARDS (Navigational Threats)
+    // =========================================================================
+    {
+        id: 'evt_hazard_meteoroid',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Debris Field',
+            description: 'Long-range radar paints a cloud of "gravel" directly in your path—remnants of a collision moving at 15 km/s. You can burn hard to go around, or shield up and tank it.'
+        },
+        choices: [
+            {
+                id: 'choice_evade',
+                text: 'Evasive Maneuvers (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_evade' }] }
+            },
+            {
+                id: 'choice_tank',
+                text: 'Brace for Impact (-Hull)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tank' }] }
+            },
+            {
+                id: 'choice_drift',
+                text: 'Drift Through (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
+            }
+        ],
+        outcomes: {
+            'out_evade': {
+                text: 'You slam the throttle forward, vectoring hard "up" relative to the ecliptic. It consumes fuel, but you clear the cloud.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } }]
+            },
+            'out_tank': {
+                text: 'It sounds like hail on a tin roof. Impacts pit the hull and shatter sensors.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            },
+            'out_drift': {
+                text: 'You kill your velocity and gently drift through the widening gaps. It is safe, but agonizingly slow.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_flare',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Coronal Mass Ejection',
+            description: 'The radiation alarm screams. A massive solar flare has erupted. You need to harden the ship or find cover immediately.'
+        },
+        choices: [
+            {
+                id: 'choice_harden',
+                text: 'Harden Shields (-5 Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_harden' }] }
+            },
+            {
+                id: 'choice_shadow',
+                text: 'Seek Shadow (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shadow' }] }
+            },
+            {
+                id: 'choice_run',
+                text: 'Run Silent (Risk Cargo)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_run_success', weight: 60 },
+                        { outcomeId: 'out_run_fail', weight: 40 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_harden': {
+                text: 'You rig extra Plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
+            },
+            'out_shadow': {
+                text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            },
+            'out_run_success': {
+                text: 'You pushed the engines to the redline and managed to stay just ahead of the worst wavefront.',
+                effects: []
+            },
+            'out_run_fail': {
+                text: 'Hard radiation pierces the cargo bay, ionizing a portion of your manifest.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.20 }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_gravity',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Gravity Well',
+            description: 'A navigational error brought you too close to a gas giant\'s gravity well. The tidal forces are dragging you off course.'
+        },
+        choices: [
+            {
+                id: 'choice_burn',
+                text: 'Corrective Burn (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_burn' }] }
+            },
+            {
+                id: 'choice_decay',
+                text: 'Orbital Decay (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
+            },
+            {
+                id: 'choice_slingshot',
+                text: 'Slingshot (Req: Navigator)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slingshot' }] }
+            }
+        ],
+        outcomes: {
+            'out_burn': {
+                text: 'You burn directly against the gravity vector. The engines scream, consuming reaction mass at a terrifying rate.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
+            },
+            'out_decay': {
+                text: 'You surrender to the physics, letting the planet pull you into a long, elliptical orbit before flinging you back out.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_slingshot': {
+                text: 'You dip deeper into the well, using the Oberth effect to steal momentum. You exit faster than you entered.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: -0.10 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_magnetic',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Sensor Blindness',
+            description: 'You\'ve entered a region of intense magnetic flux. The lidar is whited out. You can try to filter the signal with high-end hardware or wait it out.'
+        },
+        choices: [
+            {
+                id: 'choice_filter',
+                text: 'Filter Signal (-2 Processors)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_filter' }] }
+            },
+            {
+                id: 'choice_wait',
+                text: 'All Stop (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
+            },
+            {
+                id: 'choice_blind',
+                text: 'Fly Blind (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_blind_success', weight: 70 },
+                        { outcomeId: 'out_blind_fail', weight: 30 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_filter': {
+                text: 'The new Processors work overtime, filtering the noise from the data. The sensor picture snaps into focus.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
+            },
+            'out_wait': {
+                text: 'It is too dangerous. You cut velocity and wait for the magnetic storm to drift past.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
+            },
+            'out_blind_success': {
+                text: 'You flew by feel and luck. The hull remains intact.',
+                effects: []
+            },
+            'out_blind_fail': {
+                text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
+            }
+        }
+    },
+
+    // =========================================================================
+    // CATEGORY III: BUREAUCRACY (Corporate & Legal)
+    // =========================================================================
+    {
+        id: 'evt_bureau_audit',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Inspection Hail',
+            description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
+        },
+        choices: [
+            {
+                id: 'choice_bribe',
+                text: 'Expedited Fee (-2% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
+            },
+            {
+                id: 'choice_inspect',
+                text: 'Full Inspection (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
+            },
+            {
+                id: 'choice_bylaws',
+                text: 'Cite Bylaws (Req: Trademaster)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.TRADEMASTER, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bylaws' }] }
+            }
+        ],
+        outcomes: {
+            'out_bribe': {
+                text: 'You transfer the fee. The inspector suddenly decides your ship looks visibly compliant.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
+            },
+            'out_inspect': {
+                text: 'They board you. They check every seal. It takes a week.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_bylaws': {
+                text: 'You transmit Guild Statute 12-C regarding "In-Transit Sovereignty." The inspector grumbles and moves on.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_tariff',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Toll Road',
+            description: 'The Martian Syndicate has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+        },
+        choices: [
+            {
+                id: 'choice_pay',
+                text: 'Pay Tariff (-1% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pay' }] }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert (-Fuel & Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            },
+            {
+                id: 'choice_run',
+                text: 'Run Blockade (Risk Fine)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_run_success', weight: 50 },
+                        { outcomeId: 'out_run_fail', weight: 50 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_pay': {
+                text: 'You pay the toll. It stings, but they grant you a coded squawk that clears your passage.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.01 } }]
+            },
+            'out_divert': {
+                text: 'You plot a course through deep space, skirting the edge of their sensor net.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
+                ]
+            },
+            'out_run_success': {
+                text: 'You run silent, masking your thermal signature. You slip through their net.',
+                effects: []
+            },
+            'out_run_fail': {
+                text: 'A patrol drone tags you. "Toll violation detected." They garnish your accounts automatically.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_quarantine',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Contaminant Alert',
+            description: 'An automated navigation buoy flags your ship. "Biological contaminant detected on outer hull. Sector access denied pending sterilization."'
+        },
+        choices: [
+            {
+                id: 'choice_service',
+                text: 'Drone Service (-3% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_service' }] }
+            },
+            {
+                id: 'choice_chem',
+                text: 'Chemical Bath (-5 Propellant)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
+            },
+            {
+                id: 'choice_park',
+                text: 'Solar Sterilization (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
+            }
+        ],
+        outcomes: {
+            'out_service': {
+                text: 'You pay for a remote drone service. It sprays your hull with harsh foam and clears your flag.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.03 } }]
+            },
+            'out_chem': {
+                text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the mold.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: 5 }]
+            },
+            'out_park': {
+                text: 'You park the ship in a high-radiation orbit and wait for the UV light to kill the spores.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_license',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Expired Credential',
+            description: 'You receive a summons. A clerical error has flagged your Pilot\'s License as expired. Operating a heavy freighter without a license carries a hefty fine.'
+        },
+        choices: [
+            {
+                id: 'choice_lawyer',
+                text: 'Auto-Lawyer (-2% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_lawyer' }] }
+            },
+            {
+                id: 'choice_spoof',
+                text: 'Data Spoof (-2 Processors)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_spoof' }] }
+            },
+            {
+                id: 'choice_dispute',
+                text: 'Dispute (Risk Fine & Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_dispute_success', weight: 40 },
+                        { outcomeId: 'out_dispute_fail', weight: 60 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_lawyer': {
+                text: 'You hire a digital legal AI. It files an injunction and clears the error in milliseconds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
+            },
+            'out_spoof': {
+                text: 'You use Processors to brute-force a timestamp correction. The record now shows you renewed it yesterday.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
+            },
+            'out_dispute_success': {
+                text: 'You argue your case with passion. The AI finds a precedent and dismisses the charge.',
+                effects: []
+            },
+            'out_dispute_fail': {
+                text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }
+                ]
+            }
+        }
+    },
+
+    // =========================================================================
+    // CATEGORY IV: TRAFFIC (Encounters & Distress)
+    // =========================================================================
+    {
+        id: 'evt_traffic_stranded',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Mayday',
+            description: 'A beat-up hauler hails you. "Reactor is dry. Life support is failing. Can you spare some reaction mass?"'
+        },
+        choices: [
+            {
+                id: 'choice_transfer',
+                text: 'Transfer Fuel (-10%)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_transfer' }] }
+            },
+            {
+                id: 'choice_tow',
+                text: 'Tow Service (-Fuel & Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tow' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_transfer': {
+                text: '"Thank you, captain. We don\'t have credits, but here is our scan data for the local market."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_tow': {
+                text: 'You drag them to the nearest lane. The Guild pays a standard bounty for assisting distressed vessels.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.008 } }
+                ]
+            },
+            'out_ignore': {
+                text: 'You cut the comms. Their signal fades behind you.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_medical',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Critical Patient',
+            description: 'A luxury liner broadcasts a pan-pan. "We have a critical patient and our med-bay is malfunctioning. Requesting immediate medical supplies."'
+        },
+        choices: [
+            {
+                id: 'choice_donate_ice',
+                text: 'Donate Water Ice (-5)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
+            },
+            {
+                id: 'choice_donate_cyber',
+                text: 'Donate Cybernetics (-2)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_cyber' }] }
+            },
+            {
+                id: 'choice_dock',
+                text: 'Dock & Assist (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dock' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_donate_ice': {
+                text: '"Payment transferred. You saved a life today, captain."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }
+                ]
+            },
+            'out_donate_cyber': {
+                text: '"Payment transferred. You saved a life today, captain."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }
+                ]
+            },
+            'out_dock': {
+                text: 'You help stabilize the patient personally. The liner\'s captain shares high-level encryption keys.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 2 }
+                ]
+            },
+            'out_ignore': {
+                text: 'You fly past.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_broker',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Encrypted Hail',
+            description: 'A stealth-corvette matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
+        },
+        choices: [
+            {
+                id: 'choice_buy',
+                text: 'Buy Data (-1% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_buy' }] }
+            },
+            {
+                id: 'choice_barter',
+                text: 'Barter (-2 Processors)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_barter' }] }
+            },
+            {
+                id: 'choice_decline',
+                text: 'Decline',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decline' }] }
+            }
+        ],
+        outcomes: {
+            'out_buy': {
+                text: 'You transfer the credits. A packet of market data floods your computer.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.01 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_barter': {
+                text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_decline': {
+                text: 'The corvette vanishes into the black.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_convoy',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'The Train',
+            description: 'You encounter a massive corporate heavy-freight convoy. You could draft behind them to save fuel, or sell goods to their crews.'
+        },
+        choices: [
+            {
+                id: 'choice_draft',
+                text: 'Draft Formation (Gain Fuel, Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_draft' }] }
+            },
+            {
+                id: 'choice_sell',
+                text: 'Flash Sale (Lose Cargo, +Credits)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], // Hack to ensure we have cargo
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
+            },
+            {
+                id: 'choice_pass',
+                text: 'Fly Past',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
+            }
+        ],
+        outcomes: {
+            'out_draft': {
+                text: 'You tuck in behind the massive engine bells. Your fuel consumption drops to near zero, but you are limited to their speed.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
+                ]
+            },
+            'out_sell': {
+                text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.012 } }
+                ]
+            },
+            'out_pass': {
+                text: 'You overtake the slow convoy.',
+                effects: []
+            }
+        }
+    },
+
+    // =========================================================================
+    // CATEGORY V: LOGISTICS (Cargo & Storage)
+    // =========================================================================
+    {
+        id: 'evt_logistics_containment',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Mag-Lock Failure',
+            description: 'A cargo pod is vibrating loose. If you don\'t secure it, it will tear itself free—and might take a chunk of the hull with it.'
+        },
+        choices: [
+            {
+                id: 'choice_foam',
+                text: 'Secure with Foam (-5 Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_foam' }] }
+            },
+            {
+                id: 'choice_jettison',
+                text: 'Jettison Pod (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_jettison' }] }
+            },
+            {
+                id: 'choice_hold',
+                text: 'Hold it Together (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_hold_success', weight: 70 },
+                        { outcomeId: 'out_hold_fail', weight: 30 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_foam': {
+                text: 'You spray industrial foam into the clamp mechanism. It hardens instantly, welding the pod to the frame.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
+            },
+            'out_jettison': {
+                text: 'You blow the emergency bolts. The pod tumbles away into the dark.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 }]
+            },
+            'out_hold_success': {
+                text: 'The clamps groan and spark, but they hold for the duration.',
+                effects: []
+            },
+            'out_hold_fail': {
+                text: 'The clamp fails. The pod shears off, ripping through the dorsal plating.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.25 }
+                ]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_spoilage',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Temp Rising',
+            description: 'The refrigeration unit in Bay 4 is dying. Your perishable cargo will rot if you don\'t act fast.'
+        },
+        choices: [
+            {
+                id: 'choice_ice',
+                text: 'Add Coolant (-5 Water Ice)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ice' }] }
+            },
+            {
+                id: 'choice_power',
+                text: 'Power Boost (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_power' }] }
+            },
+            {
+                id: 'choice_vent',
+                text: 'Vent to Vacuum (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
+            }
+        ],
+        outcomes: {
+            'out_ice': {
+                text: 'You feed Water Ice into the heat exchanger. The temp drops back to safe levels.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 }]
+            },
+            'out_power': {
+                text: 'You divert main engine power to the cryo-units. Your engines run inefficiently.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } }]
+            },
+            'out_vent': {
+                text: 'You open the airlock, flash-freezing the cargo. Some is sucked out, but the rest is saved.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.05 }]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_shift',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Imbalance',
+            description: 'A hard maneuver caused the cargo to shift. The ship\'s center of mass is off, causing a dangerous wobble.'
+        },
+        choices: [
+            {
+                id: 'choice_restack',
+                text: 'EVA Re-Stack (Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
+            },
+            {
+                id: 'choice_thrust',
+                text: 'Thrust Compensation (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_thrust' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore (-Hull)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_restack': {
+                text: 'You spend a day in zero-G, manually winching containers back into place.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
+            },
+            'out_thrust': {
+                text: 'You let the thrusters fight the wobble. They fire constantly to keep the ship straight.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
+            },
+            'out_ignore': {
+                text: 'The constant oscillation stresses the ship\'s frame until rivets start popping.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_bloom',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'The Bloom',
+            description: 'Humidity sensors detect a rapid algal bloom in the cargo hold. It is eating the packaging and will soon eat the cargo.'
+        },
+        choices: [
+            {
+                id: 'choice_fumigate',
+                text: 'Fumigate (-5 Propellant)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: 5 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_fumigate' }] }
+            },
+            {
+                id: 'choice_vac',
+                text: 'Vacuum Sterilize (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vac' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore (Lose More)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_fumigate': {
+                text: 'You flood the hold with toxic Propellant vapor. It kills the bloom instantly.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: 5 }]
+            },
+            'out_vac': {
+                text: 'You vent the atmosphere. The sudden pressure drop ruptures some containers.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.05 }]
+            },
+            'out_ignore': {
+                text: 'By the time you arrive, a quarter of the shipment is covered in green slime.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.25 }]
+            }
+        }
+    },
+
+    // =========================================================================
+    // CATEGORY VI: SALVAGE (Discovery & Opportunity)
+    // =========================================================================
+    {
+        id: 'evt_salvage_probe',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Silent Signal',
+            description: 'You spot a dark object tumbling in orbit. It\'s a pre-war survey probe. It might have valuable components, or unexploded ordnance.'
+        },
+        choices: [
+            {
+                id: 'choice_scavenge',
+                text: 'Scavenge (Req: 5 Space)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_scavenge_success', weight: 80 },
+                        { outcomeId: 'out_scavenge_fail', weight: 20 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_logs',
+                text: 'Download Logs (Intel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_logs' }] }
+            },
+            {
+                id: 'choice_leave',
+                text: 'Leave',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_leave' }] }
+            }
+        ],
+        outcomes: {
+            'out_scavenge_success': {
+                text: 'You grapple the probe and strip it for parts. High-grade electronics!',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 3 }]
+            },
+            'out_scavenge_fail': {
+                text: 'A self-destruct charge triggers as you touch it. The explosion rocks your ship.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            },
+            'out_logs': {
+                text: 'You recover some old stellar charts from the corrupted memory core.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }]
+            },
+            'out_leave': {
+                text: 'You leave the relic alone.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_container',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Free Floating',
+            description: 'A sealed shipping container floats alone in the void. It might be goods, or it might be waste.'
+        },
+        choices: [
+            {
+                id: 'choice_grapple',
+                text: 'Grapple (Req: 10 Space)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 10 }],
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_grapple_success', weight: 60 },
+                        { outcomeId: 'out_grapple_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_scan',
+                text: 'Detailed Scan (-2 Processors)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scan' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_grapple_success': {
+                text: 'You bring it aboard. It is full of legitimate trade goods!',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }]
+            },
+            'out_grapple_fail': {
+                text: 'You bring it aboard. It is full of industrial sludge. You have to pay a disposal fee.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
+            },
+            'out_scan': {
+                text: 'You burn high-end sensors to peer inside. It reveals valid cargo, which you collect safely.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }
+                ]
+            },
+            'out_ignore': {
+                text: 'Not worth the risk.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_wreck',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Graveyard',
+            description: 'You drift through a field of shattered hull plates. There is scrap everywhere.'
+        },
+        choices: [
+            {
+                id: 'choice_scrap',
+                text: 'Harvest Scrap (+Time, +Plasteel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
+            },
+            {
+                id: 'choice_deep',
+                text: 'Deep Search (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_deep_success', weight: 70 },
+                        { outcomeId: 'out_deep_fail', weight: 30 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_pass',
+                text: 'Pass',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
+            }
+        ],
+        outcomes: {
+            'out_scrap': {
+                text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }
+                ]
+            },
+            'out_deep_success': {
+                text: 'You find a surviving computer core and some intact cybernetics.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }
+                ]
+            },
+            'out_deep_fail': {
+                text: 'A piece of debris you didn\'t see slams into your engine bell.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            },
+            'out_pass': {
+                text: 'You navigate through without stopping.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_beacon',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Ghost Signal',
+            description: 'A distress beacon pings nearby, but the encryption doesn\'t match Guild protocols. It could be an old cache, or malware.'
+        },
+        choices: [
+            {
+                id: 'choice_investigate',
+                text: 'Investigate (Risk Wealth)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_investigate_success', weight: 50 },
+                        { outcomeId: 'out_investigate_fail', weight: 50 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_nav',
+                text: 'Nav Scan (Req: Navigator)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_nav' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_investigate_success': {
+                text: 'It is a dead drop from the last war. You crack the code and find a stash of credits.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.005 } }]
+            },
+            'out_investigate_fail': {
+                text: 'As soon as you link up, a virus uploads itself to your finance computer and siphons funds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
+            },
+            'out_nav': {
+                text: 'Your advanced sensors flag the signal as a known malware signature. You mark it for deletion and move on.',
+                effects: []
+            },
+            'out_ignore': {
+                text: 'Not worth the risk.',
+                effects: []
+            }
+        }
     }
 ];
 --- END OF FILE: ./js/data/events.js ---
@@ -11591,6 +12649,105 @@ export async function playBlockingAnimationAndRemove(element, animationClass) {
 // --- [[END]] VIRTUAL WORKBENCH ---
 --- END OF FILE: ./js/services/ui/AnimationService.js ---
 
+--- START OF FILE: ./js/services/DynamicValueResolver.js ---
+// js/services/DynamicValueResolver.js
+/**
+ * @fileoverview
+ * Service responsible for calculating numerical values for event effects.
+ * It translates abstract formulas (e.g., "Scale with Wealth Tier") into
+ * concrete integers (e.g., "Gain 500 Credits").
+ */
+
+import { DB } from '../data/database.js';
+
+export class DynamicValueResolver {
+    constructor() {
+        // Stateless service
+    }
+
+    /**
+     * Resolves a value definition into a concrete number.
+     * @param {number|Object} valueDef - The value schema (number or object).
+     * @param {import('./GameState.js').GameState} gameState - Current game state.
+     * @returns {number} The calculated value.
+     */
+    resolve(valueDef, gameState) {
+        // 1. Handle simple static numbers (Legacy support & simple events)
+        if (typeof valueDef === 'number') {
+            return valueDef;
+        }
+
+        // 2. Handle Dynamic Objects
+        if (typeof valueDef === 'object' && valueDef !== null) {
+            return this._calculateDynamicValue(valueDef, gameState);
+        }
+
+        console.warn('[DynamicValueResolver] Invalid value definition:', valueDef);
+        return 0;
+    }
+
+    /**
+     * Internal calculation logic.
+     * Formula: Base + (ScalerValue * Factor)
+     * @private
+     */
+    _calculateDynamicValue(def, gameState) {
+        const base = def.base || 0;
+        const factor = def.factor !== undefined ? def.factor : 1;
+        const scalerValue = this._getScalerValue(def.scaleWith, gameState);
+
+        // Calculate and floor to ensure integers
+        return Math.floor(base + (scalerValue * factor));
+    }
+
+    /**
+     * Retrieves the reference value to scale against.
+     * @private
+     */
+    _getScalerValue(scaleType, gameState) {
+        if (!scaleType) return 0;
+
+        const activeShipId = gameState.player.activeShipId;
+        const shipDef = DB.SHIPS[activeShipId];
+        const shipState = gameState.player.shipStates[activeShipId];
+
+        switch (scaleType) {
+            case 'WEALTH_TIER':
+                // Returns 1 to 7 based on game progress
+                return gameState.player.revealedTier || 1;
+
+            case 'PLAYER_CREDITS':
+                // Returns current wallet balance (Risk: can be 0)
+                return gameState.player.credits || 0;
+
+            case 'MAX_FUEL':
+                // Returns ship's maximum fuel capacity
+                return shipDef ? shipDef.maxFuel : 100;
+
+            case 'MAX_HULL':
+                // Returns ship's maximum hull points
+                return shipDef ? shipDef.maxHealth : 100;
+
+            case 'CURRENT_FUEL':
+                return shipState ? shipState.fuel : 0;
+
+            case 'CURRENT_HULL':
+                return shipState ? shipState.health : 0;
+
+            case 'CARGO_CAPACITY':
+                return shipDef ? shipDef.cargoCapacity : 10;
+            
+            case 'DEBT_TOTAL':
+                return gameState.player.debt || 0;
+
+            default:
+                console.warn(`[DynamicValueResolver] Unknown scale type: ${scaleType}`);
+                return 0;
+        }
+    }
+}
+--- END OF FILE: ./js/services/DynamicValueResolver.js ---
+
 --- START OF FILE: ./js/services/AssetStorageService.js ---
 // js/services/AssetStorageService.js
 /**
@@ -11696,15 +12853,15 @@ export class AssetStorageService {
 import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
-import { calculateInventoryUsed, skewedRandom } from '../utils.js'; // Added skewedRandom import if needed, or just use Math
+import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added Import
-import { AssetService } from './AssetService.js'; // IMPORT ADDED
+import { GameAttributes } from './GameAttributes.js'; 
+import { AssetService } from './AssetService.js'; 
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
 const TUTORIAL_PRESETS_PERCENT = {
-    topCenter: [50, 15], // Example: 50% across, 15% down
+    topCenter: [50, 15], 
     top34Center: [50, 30],
     vertHorizCenter: [50, 50],
     bottom34Center: [50, 70],
@@ -11735,21 +12892,21 @@ export class DebugService {
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
-            targetAge: 25, // Default target age for debug setting
+            targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
-            selectedRandomEvent: 0,
-            selectedAgeEvent: DB.AGE_EVENTS[0].id,
+            // [FIX] Added safe check for empty array using optional chaining
+            selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
+            // [FIX] Added safe check for empty array using optional chaining
+            selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
             logLevel: 'INFO',
             
-            // --- [GEMINI] NEW DEBUG STATE ---
-            shipToBoard: null, // Holds the ID of the ship selected in the dropdown
-            selectedUpgrade: null, // Holds the ID of the upgrade to apply
-            // -------------------------------
+            shipToBoard: null, 
+            selectedUpgrade: null, 
 
             // Tutorial Tuner State
             ttStepId: 'None',
@@ -12159,26 +13316,33 @@ ${logHistory}
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
+            
+            // --- UPDATED EVENT TRIGGER (UPDATED) ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
-                const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
-                if (dest) {
-                     this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                // Now uses the Force Trigger method in Simulation Service
+                if (this.debugState.selectedRandomEvent) {
+                     this.simulationService.forceTriggerEvent(this.debugState.selectedRandomEvent);
                 }
             }},
+            // ---------------------------------------
+
             triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
                 const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
                 if (event) {
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
-             triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
+            // --- NEW FORCE MISSION HANDLERS ---
+            forceAcceptMission: { name: 'Force Accept Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
-                    if(this.gameState.missions.activeMissionId) {
-                        this.simulationService.missionService.abandonMission();
-                    }
-                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
+                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); // Force = True
                 }
-             }},
+            }},
+            forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
+                 this.simulationService.missionService.completeActiveMission(true); // Force = True
+            }},
+            // ----------------------------------
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -12290,13 +13454,10 @@ ${logHistory}
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
-        // --- NEW: Set Age Controls ---
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
-        // -----------------------------
 
         const shipFolder = this.gui.addFolder('Ship');
-        // --- [GEMINI] ADDED: Cycle Pics and Board Dropdown ---
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
         // Populate Dropdown Options from Database
@@ -12324,7 +13485,6 @@ ${logHistory}
                 this.gameState.setState({});
                 this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
             });
-        // -----------------------------------------------------
 
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
@@ -12366,22 +13526,28 @@ ${logHistory}
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        // [[PHASE 3]]
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
-        // [[END]]
 
         const triggerFolder = this.gui.addFolder('Triggers');
-        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
+        
+        // --- UPDATED EVENT SELECTOR (NOW USES ID AS VALUE) ---
+        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
-        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
-        const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-        triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
-        triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
-        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
-        if (this.debugState.selectedMission) {
-             triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-             triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+        // -----------------------------------------------------
+        
+        // [FIX] Add check if AGE_EVENTS are populated before reducing
+        if (DB.AGE_EVENTS.length > 0) {
+            const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
+            triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
+            triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
+        
+        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        // Always show mission controls
+        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
+        triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
@@ -12690,6 +13856,136 @@ popperOptions: {
     // --- [[END]] TUTORIAL TUNER METHODS ---
 }
 --- END OF FILE: ./js/services/DebugService.js ---
+
+--- START OF FILE: ./js/services/RandomEventService.js ---
+// js/services/RandomEventService.js
+/**
+ * @fileoverview
+ * The central engine for Event System 2.0.
+ * This service orchestrates the lifecycle of a random event:
+ * 1. Filtering valid events (ConditionEvaluator)
+ * 2. Selecting an event (Weighted RNG)
+ * 3. Resolving player choices (OutcomeResolver)
+ * 4. Calculating dynamic rewards (DynamicValueResolver)
+ */
+
+import { RANDOM_EVENTS } from '../data/events.js';
+import { EVENT_CONSTANTS } from '../data/constants.js';
+import { ConditionEvaluator } from './ConditionEvaluator.js';
+import { OutcomeResolver } from './OutcomeResolver.js';
+import { DynamicValueResolver } from './DynamicValueResolver.js';
+
+export class RandomEventService {
+    constructor() {
+        this.evaluator = new ConditionEvaluator();
+        this.outcomeResolver = new OutcomeResolver(this.evaluator);
+        this.valueResolver = new DynamicValueResolver();
+    }
+
+    /**
+     * Attempts to find and select a valid random event for the current context.
+     * @param {import('./GameState.js').GameState} gameState
+     * @param {import('./SimulationService.js').SimulationService} simulationService
+     * @param {string[]} contextTags - Tags defining the current situation (e.g. ['TAG_SPACE', 'TAG_HAZARD'])
+     * @returns {Object|null} The hydrated event object or null if none found.
+     */
+    tryTriggerEvent(gameState, simulationService, contextTags = []) {
+        // 1. Filter events by Tag and Conditions
+        const validEvents = this._getValidEvents(gameState, simulationService, contextTags);
+
+        if (validEvents.length === 0) {
+            return null;
+        }
+
+        // 2. Select one based on weight
+        const selectedEvent = this._selectWeightedEvent(validEvents);
+        
+        return selectedEvent;
+    }
+
+    /**
+     * Forces a specific event to trigger by ID, bypassing standard checks.
+     * @param {string} eventId
+     * @returns {Object|null}
+     */
+    getEventById(eventId) {
+        return RANDOM_EVENTS.find(e => e.id === eventId) || null;
+    }
+
+    /**
+     * Processes a player's decision during an event.
+     * @param {string} eventId - The ID of the active event.
+     * @param {string} choiceId - The ID of the selected choice.
+     * @param {import('./GameState.js').GameState} gameState
+     * @param {import('./SimulationService.js').SimulationService} simulationService
+     * @returns {Object} The finalized outcome object with calculated effects.
+     */
+    resolveChoice(eventId, choiceId, gameState, simulationService) {
+        const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
+        if (!eventDef) throw new Error(`Event not found: ${eventId}`);
+
+        const choiceDef = eventDef.choices.find(c => c.id === choiceId);
+        if (!choiceDef) throw new Error(`Choice not found: ${choiceId}`);
+
+        // 1. Determine the Outcome ID (Success/Fail/etc)
+        const outcomeId = this.outcomeResolver.resolve(choiceDef.resolution, gameState, simulationService);
+        const outcomeDef = eventDef.outcomes[outcomeId];
+
+        if (!outcomeDef) {
+            console.error(`Outcome definition missing: ${outcomeId}`);
+            return null;
+        }
+
+        // 2. Calculate Dynamic Effects
+        // We clone the effects so we can inject specific calculated integer values
+        const calculatedEffects = outcomeDef.effects.map(effect => {
+            const finalValue = this.valueResolver.resolve(effect.value, gameState);
+            return {
+                ...effect,
+                value: finalValue
+            };
+        });
+
+        // 3. Return the fully resolved package
+        return {
+            outcomeId: outcomeId,
+            text: outcomeDef.text, 
+            effects: calculatedEffects
+        };
+    }
+
+    /**
+     * Internal helper to filter the global event registry.
+     * @private
+     */
+    _getValidEvents(gameState, simulationService, contextTags) {
+        return RANDOM_EVENTS.filter(event => {
+            // Check 1: Do tags match? (Must have at least one matching tag)
+            const hasMatchingTag = event.tags.some(tag => contextTags.includes(tag));
+            if (!hasMatchingTag) return false;
+
+            // Check 2: Are all requirements met?
+            return this.evaluator.checkAll(event.requirements, gameState, simulationService);
+        });
+    }
+
+    /**
+     * Standard weighted random selection.
+     * @private
+     */
+    _selectWeightedEvent(events) {
+        const totalWeight = events.reduce((sum, e) => sum + (e.weight || 10), 0);
+        let random = Math.random() * totalWeight;
+
+        for (const event of events) {
+            const w = event.weight || 10;
+            if (random < w) return event;
+            random -= w;
+        }
+        return events[events.length - 1];
+    }
+}
+--- END OF FILE: ./js/services/RandomEventService.js ---
 
 --- START OF FILE: ./js/services/GameState.js ---
 // js/services/GameState.js
@@ -13088,19 +14384,42 @@ export class MissionService {
     /**
      * Accepts a new mission, setting it as the active mission.
      * @param {string} missionId The ID of the mission to accept.
+     * @param {boolean} [force=false] If true, bypasses checks and abandons current mission if necessary.
      */
-    acceptMission(missionId) {
+    acceptMission(missionId, force = false) {
         const mission = DB.MISSIONS[missionId];
-        if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
-            return;
+        
+        // 1. Validation (skipped if forced)
+        if (!force) {
+            if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
+                return;
+            }
         }
+
+        // 2. Handle existing mission collision (Force logic)
+        if (this.gameState.missions.activeMissionId) {
+            if (force) {
+                this.abandonMission(); // Clear the way
+            } else {
+                return; // Should have been caught by validation, but safety first
+            }
+        }
+
+        // 3. Initialize State
         this.gameState.missions.activeMissionId = missionId;
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {}
         };
-        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId}`);
-        this.simulationService.grantMissionCargo(missionId);
-        this.checkTriggers(); // Run an initial check in case objectives are already met.
+        
+        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
+        
+        // 4. Grant Start Items
+        if (this.simulationService) {
+            this.simulationService.grantMissionCargo(missionId);
+        }
+        
+        // 5. Initial Check & Render
+        this.checkTriggers(); 
 
         // If the mission has no objectives, complete it immediately.
         if (!mission.objectives || mission.objectives.length === 0) {
@@ -13185,38 +14504,44 @@ export class MissionService {
 
     /**
      * Completes the active mission, granting rewards and removing objective items.
+     * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
      */
-    completeActiveMission() {
+    completeActiveMission(force = false) {
         const { activeMissionId } = this.gameState.missions;
         if (!activeMissionId) return;
         
-        // Temporarily set objectivesMet to true for objective-less missions
+        // Temporarily set objectivesMet to true for objective-less missions OR if forced
         const originalObjectivesMet = this.gameState.missions.activeMissionObjectivesMet;
         const mission = DB.MISSIONS[activeMissionId];
-        if (!mission.objectives || mission.objectives.length === 0) {
-            this.gameState.missions.activeMissionObjectivesMet = true;
-        }
-
-        if (!this.gameState.missions.activeMissionObjectivesMet) {
-            // Restore original state if completion is not actually met.
-            this.gameState.missions.activeMissionObjectivesMet = originalObjectivesMet;
-            return;
+        
+        // Check Conditions
+        const metRequirements = this.gameState.missions.activeMissionObjectivesMet;
+        const noObjectives = !mission.objectives || mission.objectives.length === 0;
+        
+        if (!metRequirements && !noObjectives && !force) {
+            return; // Can't complete yet
         }
 
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
-        // 1. Deduct objective items
-        mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item' && inventory[obj.goodId]) {
-                inventory[obj.goodId].quantity -= obj.quantity;
-            }
-        });
+        // 1. Deduct objective items (Only if strictly met or forced-but-available)
+        // Note: If forcing completion without items, this might result in negative inventory if not careful,
+        // so we check possession before deducting even on force.
+        if (mission.objectives) {
+            mission.objectives.forEach(obj => {
+                if (obj.type === 'have_item' && inventory[obj.goodId]) {
+                    // Safe deduct: don't go below zero even on force
+                    const qtyToRemove = Math.min(inventory[obj.goodId].quantity, obj.quantity);
+                    inventory[obj.goodId].quantity -= qtyToRemove;
+                }
+            });
+        }
 
         // 2. Grant rewards via SimulationService
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
-        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId}`);
+        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId} ${force ? '(FORCED)' : ''}`);
 
         // 3. Update mission state
         this.gameState.missions.completedMissionIds.push(activeMissionId);
@@ -15461,19 +16786,16 @@ export class IntroService {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
-// END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
-// --- VIRTUAL WORKBENCH: IMPORT ---
 import { IntelService } from './IntelService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added for Upgrade Logic
-// --- END VIRTUAL WORKBENCH ---
+import { GameAttributes } from './GameAttributes.js'; 
+import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -15486,43 +16808,37 @@ export class SimulationService {
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
+    constructor(gameState, uiManager, logger, newsTickerService) { 
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.newsTickerService = newsTickerService; // ADDED
+        this.newsTickerService = newsTickerService; 
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
         
-        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE ---
-        this.intelService = null; // Will be instantiated below
-        // --- END VIRTUAL WORKBENCH ---
+        this.intelService = null; 
 
-  
          // Instantiate all services
         this.marketService = new MarketService(gameState);
-        // MODIFIED: Pass newsTickerService
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
 
-        // --- VIRTUAL WORKBENCH: INSTANTIATE AND INJECT INTEL SERVICE ---
-        // Must be after dependencies (time, market, news) are created
+        // --- EVENT SYSTEM 2.0 ---
+        this.randomEventService = new RandomEventService();
+        // ------------------------
+
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
         // Inject intelService into services that depend on it
         this.timeService.intelService = this.intelService;
-        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
-        // --- END VIRTUAL WORKBENCH ---
+        this.uiManager.setIntelService(this.intelService); 
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
         
-        // --- [NEW V2 CHANGE] ---
-        // Inject services required by NewsTickerService for dynamic content.
         this.newsTickerService.setServices(this, this.marketService);
-        // --- [END NEW V2 CHANGE] ---
     }
 
     /**
@@ -15540,6 +16856,88 @@ export class SimulationService {
     setMissionService(missionService) {
         this.missionService = missionService;
         this.playerActionService.missionService = missionService;
+    }
+
+    // --- EVENT SYSTEM 2.0 METHODS ---
+
+    /**
+     * Forces a specific Random Event to trigger immediately.
+     * Used by DebugService.
+     * @param {string} eventId 
+     */
+    forceTriggerEvent(eventId) {
+        const eventDef = this.randomEventService.getEventById(eventId);
+        if (!eventDef) {
+            this.logger.error('SimulationService', `Cannot force trigger event: ID '${eventId}' not found.`);
+            return;
+        }
+
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${eventDef.template.title}`);
+        
+        // Pass the event to the UI Manager to display the modal
+        // The modal will call back to resolveEventChoice
+        this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
+            this.resolveEventChoice(eventId, choiceId);
+        });
+    }
+
+    /**
+     * Resolves a player's choice from a Random Event.
+     * @param {string} eventId 
+     * @param {string} choiceId 
+     */
+    resolveEventChoice(eventId, choiceId) {
+        // 1. Calculate Outcome
+        const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
+        
+        if (!result) return;
+
+        // 2. Apply Effects
+        this._applyEventEffects(result.effects);
+
+        // 3. Show Result Modal
+        this.uiManager.showEventResultModal(result.text, result.effects);
+    }
+
+    /**
+     * Applies the calculated effects from an event outcome.
+     * @private
+     */
+    _applyEventEffects(effects) {
+        effects.forEach(eff => {
+            switch (eff.type) {
+                case 'EFF_CREDITS':
+                    this.gameState.player.credits += eff.value;
+                    break;
+                case 'EFF_FUEL':
+                    const ship = this._getActiveShip();
+                    if(ship) this.gameState.player.shipStates[ship.id].fuel = Math.max(0, Math.min(ship.maxFuel, ship.fuel + eff.value));
+                    break;
+                case 'EFF_HULL':
+                    const s = this._getActiveShip();
+                    // value is negative for damage
+                    if(s) this.gameState.player.shipStates[s.id].health = Math.max(0, Math.min(s.maxHealth, s.health + eff.value));
+                    break;
+                case 'EFF_TRAVEL_TIME':
+                case 'EFF_MODIFY_TRAVEL':
+                    this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    break;
+                case 'EFF_ADD_ITEM':
+                case 'EFF_REMOVE_ITEM':
+                    const inv = this._getActiveInventory();
+                    if(inv && inv[eff.target]) {
+                        inv[eff.target].quantity = Math.max(0, inv[eff.target].quantity + eff.value); // Value is negative for remove
+                    }
+                    break;
+                case 'EFF_ADD_RANDOM_CARGO':
+                    // Add random tier 1-3 commodity logic here if needed, or handle in service
+                    break;
+                case 'EFF_LOSE_RANDOM_CARGO':
+                    // Logic handled in resolver or here
+                    break;
+            }
+        });
+        this.gameState.setState({}); // Commit changes
     }
 
     // --- FACADE METHODS ---
@@ -15569,19 +16967,16 @@ export class SimulationService {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
         // 2. Find the button that was clicked
         const purchaseButton = event.target.closest('.action-button');
 
         // 3. Trigger the BLOCKING 1-second glow
         if (purchaseButton) {
-            // Use playBlockingAnimationAndRemove to properly clean up the class
             await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
         }
         
-        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
-        // --- END VIRTUAL WORKBENCH ---
 
         // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
@@ -15605,19 +17000,16 @@ export class SimulationService {
             return false;
         }
 
-        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
         // 2. Find the button that was clicked
         const sellButton = event.target.closest('.action-button');
 
         // 3. Trigger the BLOCKING 1-second glow
         if (sellButton) {
-            // Use playBlockingAnimationAndRemove to properly clean up the class
             await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
         }
         
-        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
-        // --- END VIRTUAL WORKBENCH ---
 
         // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
@@ -15628,13 +17020,11 @@ export class SimulationService {
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    // --- VIRTUAL WORKBENCH: RE-ORCHESTRATE boardShip ---
     /**
      * Orchestrates boarding a ship: Glows button, waits 1s, sets state, then animates card.
      * @param {string} shipId
      * @param {Event} event - The click event, used to find the button for animation.
      * @returns {Promise<boolean>} True on success, false on failure.
-     * @JSDoc
      */
     async boardShip(shipId, event) {
         // 1. Validate
@@ -15646,13 +17036,10 @@ export class SimulationService {
             return false;
         }
 
-        // --- NEW SEQUENCE ---
-
-   
-         // 2. Find the button that was clicked
+        // 2. Find the button that was clicked
         const boardButton = event.target.closest('.action-button');
         
-        // 3. (NEW) Find the sibling "Sell" button and disable it immediately
+        // 3. Find the sibling "Sell" button and disable it immediately
         if (boardButton) {
             const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
             if (sellButton) {
@@ -15661,9 +17048,7 @@ export class SimulationService {
         }
 
         // 4. Trigger the BLOCKING 1-second glow on the "Board" button
-  
          if (boardButton) {
-            // This is the new BLOCKING helper that waits for the animation to end
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
 
@@ -15675,20 +17060,15 @@ export class SimulationService {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
         }
    
-      
         // 7. Run the BLOCKING card animation *LAST*
-        // We must wait one frame for the UI to re-render *before* we can
-        // find the element we want to animate.
         await new Promise(resolve => requestAnimationFrame(resolve));
         
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
-        // --- END NEW SEQUENCE ---
         
         return true;
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Pays off the player's entire outstanding debt.
@@ -15705,11 +17085,6 @@ export class SimulationService {
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
- 
-     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
-    // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
-    // --- END VIRTUAL WORKBENCH ---
-
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
     
@@ -15717,7 +17092,7 @@ export class SimulationService {
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
 
-    // ADDED: NewsTickerService Delegation
+    // NewsTickerService Delegation
     /**
      * Pushes a new message to the news ticker.
      * @param {string} text - The message content.
@@ -15740,8 +17115,6 @@ export class SimulationService {
     }
 
     // --- CORE & SHARED METHODS ---
-    // These methods remain in the facade because they are either simple state setters
-    // or are helpers required by multiple services.
 
     /**
      * Sets the active navigation tab and screen.
@@ -15756,22 +17129,14 @@ export class SimulationService {
             lastActiveScreen: newLastActive 
         });
 
-        // --- [NEW V2 CHANGE] ---
-        // MODIFICATION: Removed the onLocationChange() call from this function.
-        // It will now be called by TravelService when the location *actually* changes.
-        // --- [END NEW V2 CHANGE] ---
-
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
     }
 
-   
-     // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
     /**
      * Sets the active tab on the Intel screen.
      * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
-     * @JSDoc
      */
     setIntelTab(tabId) {
         if (this.gameState.uiState.activeIntelTab !== tabId) {
@@ -15781,7 +17146,6 @@ export class SimulationService {
             });
         }
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Sets the hangar/shipyard toggle state.
@@ -15847,20 +17211,15 @@ export class SimulationService {
 
     /**
      * Checks for any condition that would end the game, such as bankruptcy.
-     * This is intended to be called only by automated processes that can
-     * reduce credits without a prior "insufficient funds" check (e.g., garnishment, debug).
      * @private
      */
     _checkGameOverConditions() {
-        // This is the performant check: it reads directly from the state
-        // object instead of creating an expensive deep copy with getState().
         if (this.gameState.player.credits <= 0) {
             this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
         }
     }
 
     // --- HELPER & PRIVATE METHODS (SHARED) ---
-    // These are kept here to be accessible by the specialized services that need them.
 
     /**
      * Calculates ship stats including upgrade modifiers (e.g. Max Fuel + 20%).
@@ -15897,7 +17256,7 @@ export class SimulationService {
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
         
-        // --- UPGRADE SYSTEM UPDATE: Initialize with empty upgrades ---
+        // Initialize with empty upgrades
         this.gameState.player.shipStates[shipId] = { 
             health: ship.maxHealth, 
             fuel: ship.maxFuel, 
@@ -15929,8 +17288,7 @@ export class SimulationService {
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
         
-        // --- UPGRADE SYSTEM UPDATE: Return Effective Stats ---
-        // Merge the calculated Max/Capacities with the current state (Health/Fuel values)
+        // Return Effective Stats
         const effectiveStats = this.getEffectiveShipStats(activeId);
         return { 
             id: activeId, 
@@ -15946,7 +17304,6 @@ export class SimulationService {
     
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
-        // Use Effective Stats for percentage calculation
         const effectiveStats = this.getEffectiveShipStats(shipId);
         
         const healthPct = (shipState.health / effectiveStats.maxHealth) * 100;
@@ -16020,9 +17377,8 @@ export class SimulationService {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
               
-                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                // Apply credit cap
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
-                // --- END VIRTUAL WORKBENCH ---
 
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
@@ -16164,6 +17520,252 @@ export function resolveSpaceRace(gameState, simulationService, effectData, outco
     }
 }
 --- END OF FILE: ./js/services/event-effects/effectSpaceRace.js ---
+
+--- START OF FILE: ./js/services/OutcomeResolver.js ---
+// js/services/OutcomeResolver.js
+/**
+ * @fileoverview
+ * Service responsible for determining the result of a player's choice.
+ * It handles the "Dice Roll" logic, including calculating dynamic weights
+ * based on player stats/perks before selecting an outcome.
+ */
+
+import { EVENT_CONSTANTS } from '../data/constants.js';
+
+export class OutcomeResolver {
+    /**
+     * @param {import('./ConditionEvaluator.js').ConditionEvaluator} conditionEvaluator
+     */
+    constructor(conditionEvaluator) {
+        this.conditionEvaluator = conditionEvaluator;
+    }
+
+    /**
+     * Resolves a choice's resolution block into a single outcome ID.
+     * @param {Object} resolutionData - The 'resolution' object from the event choice schema.
+     * @param {import('./GameState.js').GameState} gameState - Current game state.
+     * @param {import('./SimulationService.js').SimulationService} simulationService
+     * @returns {string} The ID of the selected outcome.
+     */
+    resolve(resolutionData, gameState, simulationService) {
+        if (!resolutionData) {
+            console.error('[OutcomeResolver] Missing resolution data');
+            return null;
+        }
+
+        switch (resolutionData.type) {
+            case EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC:
+                return this._resolveFixed(resolutionData.pool);
+
+            case EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG:
+                return this._resolveWeighted(resolutionData.pool, gameState, simulationService);
+
+            case EVENT_CONSTANTS.RESOLVERS.STAT_CHECK:
+                // Placeholder for Phase B: Skill vs DC logic
+                return this._resolveWeighted(resolutionData.pool, gameState, simulationService);
+
+            default:
+                console.warn(`[OutcomeResolver] Unknown resolution type: ${resolutionData.type}`);
+                // Fallback: pick the first one
+                return resolutionData.pool[0]?.outcomeId || null;
+        }
+    }
+
+    /**
+     * Handles Fixed resolution (always returns the first item).
+     * @private
+     */
+    _resolveFixed(pool) {
+        return pool[0]?.outcomeId || null;
+    }
+
+    /**
+     * Handles Weighted RNG resolution.
+     * 1. Calculate effective weight for each outcome (Base + Modifiers).
+     * 2. Roll a number between 0 and TotalWeight.
+     * 3. Select the outcome corresponding to the roll.
+     * @private
+     */
+    _resolveWeighted(pool, gameState, simulationService) {
+        const weightedPool = pool.map(item => {
+            let finalWeight = item.weight || 0;
+
+            // Apply dynamic modifiers if they exist
+            // Example Modifier: { condition: { type: 'HAS_PERK', target: 'lucky' }, value: 20 }
+            if (item.modifiers && Array.isArray(item.modifiers)) {
+                item.modifiers.forEach(mod => {
+                    if (this.conditionEvaluator.evaluate(mod.condition, gameState, simulationService)) {
+                        finalWeight += mod.value;
+                    }
+                });
+            }
+
+            // Weights cannot be negative
+            return {
+                outcomeId: item.outcomeId,
+                weight: Math.max(0, finalWeight)
+            };
+        });
+
+        // Calculate total weight
+        const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
+
+        if (totalWeight <= 0) {
+            console.warn('[OutcomeResolver] Total weight is 0. Defaulting to first option.');
+            return weightedPool[0]?.outcomeId || null;
+        }
+
+        // The "Roll"
+        let randomValue = Math.random() * totalWeight;
+
+        // Selection Loop
+        for (const item of weightedPool) {
+            if (randomValue < item.weight) {
+                return item.outcomeId;
+            }
+            randomValue -= item.weight;
+        }
+
+        // Fallback (should theoretically not be reached due to math)
+        return weightedPool[weightedPool.length - 1].outcomeId;
+    }
+}
+--- END OF FILE: ./js/services/OutcomeResolver.js ---
+
+--- START OF FILE: ./js/services/ConditionEvaluator.js ---
+// js/services/ConditionEvaluator.js
+/**
+ * @fileoverview
+ * Service responsible for evaluating conditions defined in the Event System 2.0 schema.
+ * It acts as the gatekeeper, determining if an event can spawn or if a choice is valid.
+ */
+
+import { EVENT_CONSTANTS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { DB } from '../data/database.js';
+
+export class ConditionEvaluator {
+    constructor() {
+        // No internal state required for now.
+    }
+
+    /**
+     * Evaluates a single condition or a list of conditions against the current game state.
+     * @param {Object|Object[]} conditions - A single condition object or array of them.
+     * @param {import('./GameState.js').GameState} gameState - The current state of the game.
+     * @param {import('./SimulationService.js').SimulationService} simulationService - Access to helper methods (like inventory calc).
+     * @returns {boolean} True if ALL conditions are met (AND logic).
+     */
+    checkAll(conditions, gameState, simulationService) {
+        if (!conditions) return true; // No conditions = always valid
+        if (!Array.isArray(conditions)) conditions = [conditions];
+
+        return conditions.every(cond => this.evaluate(cond, gameState, simulationService));
+    }
+
+    /**
+     * Evaluates a specific condition object.
+     * @param {Object} condition - The condition schema object.
+     * @param {import('./GameState.js').GameState} gameState
+     * @param {import('./SimulationService.js').SimulationService} simulationService
+     * @returns {boolean}
+     */
+    evaluate(condition, gameState, simulationService) {
+        const { type, operator, value, target } = condition;
+        
+        let currentValue = null;
+        let threshold = value;
+
+        // 1. Resolve the 'currentValue' based on the condition type
+        switch (type) {
+            // --- RESOURCE CHECKS ---
+            case EVENT_CONSTANTS.CONDITIONS.HAS_FUEL:
+                const shipId = gameState.player.activeShipId;
+                currentValue = gameState.player.shipStates[shipId]?.fuel || 0;
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS:
+                currentValue = gameState.player.credits;
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.HAS_HULL:
+                const activeShip = gameState.player.shipStates[gameState.player.activeShipId];
+                // Checks current Health points, not percentage
+                currentValue = activeShip ? activeShip.health : 0; 
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE:
+                const shipStats = DB.SHIPS[gameState.player.activeShipId];
+                if (!shipStats) return false;
+                
+                const inventory = simulationService._getActiveInventory();
+                const usedSpace = Object.values(inventory).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                currentValue = shipStats.cargoCapacity - usedSpace;
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.HAS_ITEM:
+                const activeInv = simulationService._getActiveInventory();
+                currentValue = activeInv[target]?.quantity || 0;
+                break;
+
+            // --- PLAYER STATE CHECKS ---
+            case EVENT_CONSTANTS.CONDITIONS.HAS_PERK:
+                // Boolean check: 1 if true, 0 if false
+                currentValue = gameState.player.activePerks[target] ? 1 : 0;
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.HAS_SHIP_CLASS:
+                const shipDef = DB.SHIPS[gameState.player.activeShipId];
+                // String comparison: 'A' == 'A'
+                currentValue = shipDef ? shipDef.class : ''; 
+                break;
+            
+            case EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER:
+                currentValue = gameState.player.revealedTier;
+                break;
+
+            // --- WORLD CHECKS ---
+            case EVENT_CONSTANTS.CONDITIONS.LOCATION_IS:
+                currentValue = gameState.currentLocationId;
+                // If checking strict equality, threshold is the target location ID
+                break;
+
+            case EVENT_CONSTANTS.CONDITIONS.RNG_ROLL:
+                // A dynamic roll every time it's checked. 
+                // e.g., Value 0.5 means "50% chance this condition passes"
+                return Math.random() < value;
+
+            default:
+                console.warn(`[ConditionEvaluator] Unknown condition type: ${type}`);
+                return false;
+        }
+
+        // 2. Compare 'currentValue' against 'threshold' using the 'operator'
+        return this.compare(currentValue, operator, threshold);
+    }
+
+    /**
+     * Standardized comparison logic.
+     * @param {number|string} a - The value from the game state.
+     * @param {string} op - The operator code ('GT', 'EQ', etc).
+     * @param {number|string} b - The threshold value from the event data.
+     */
+    compare(a, op, b) {
+        switch (op) {
+            case 'GT': return a > b;
+            case 'GTE': return a >= b;
+            case 'LT': return a < b;
+            case 'LTE': return a <= b;
+            case 'EQ': return a === b;
+            case 'NEQ': return a !== b;
+            case 'IN': // Check if A is in array B
+                return Array.isArray(b) && b.includes(a);
+            default:
+                console.warn(`[ConditionEvaluator] Unknown operator: ${op}`);
+                return false;
+        }
+    }
+}
+--- END OF FILE: ./js/services/ConditionEvaluator.js ---
 
 --- START OF FILE: ./js/services/EventManager.js ---
 // js/services/EventManager.js
@@ -17908,8 +19510,8 @@ export class UIManager {
     }
 
     /**
-    * Resets the state of the market transaction modules.
-    */
+     * Resets the state of the market transaction modules.
+     */
     resetMarketTransactionState() {
         this.marketTransactionState = {};
     }
@@ -18057,24 +19659,6 @@ export class UIManager {
             this.newsTickerService.isDirty = false;
             return;
         }
-
-        // =========================================================================
-        // ARCHITECTURAL WARNING: INFINITE SCROLL GEOMETRY
-        // =========================================================================
-        // Do NOT change this implementation without reading ADR-013.
-        //
-        // Problem: JS width calculation causes sub-pixel errors vs CSS % transforms.
-        // Solution: Use CSS Flexbox to strictly define the layout.
-        //
-        // 1. Wrap content in a .ticker-block (flex item).
-        // 2. Duplicate that EXACT block.
-        // 3. Result: [Block A][Block B] inside a flex container.
-        // 4. CSS: translateX(-50%).
-        //
-        // Because Block A and Block B are identical DOM nodes, the browser guarantees
-        // that Width(Parent) = 2 * Width(Block). Therefore, moving -50% of the
-        // Parent is GUARANTEED to move exactly 1x Width(Block).
-        // =========================================================================
 
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
         
@@ -18723,18 +20307,40 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
 
+    /**
+     * Shows a modal for a random event (Event System 2.0).
+     * @param {Object} event - The hydrated event object.
+     * @param {Function} choicesCallback - Callback(choiceId).
+     */
     showRandomEventModal(event, choicesCallback) {
-         this.queueModal('random-event-modal', event.title, event.scenario, null, {
+         // --- FIX: Schema V2 mapping ---
+         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
+         const title = event.template?.title || event.title || 'Unknown Event';
+         const description = event.template?.description || event.scenario || 'No description available.';
+
+         this.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
-                event.choices.forEach((choice, index) => {
+                
+                event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                     button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
-                    button.innerHTML = choice.title;
+                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    
+                    // --- FIX: Schema V2 choice text ---
+                    // New schema uses 'text', old used 'title'
+                    button.innerHTML = choice.text || choice.title || 'Option';
+                    
+                    // Add Tooltip if available (Event System 2.0 feature)
+                    if (choice.tooltip) {
+                        button.setAttribute('title', choice.tooltip);
+                    }
+
                     button.onclick = () => {
-                         choicesCallback(event.id, index);
+                        // --- FIX: Pass choice.id (String) ---
+                        // RandomEventService expects a string ID, not an index
+                        choicesCallback(choice.id);
                         closeHandler();
                      };
                     choicesContainer.appendChild(button);
@@ -20316,6 +21922,94 @@ export class UIManager {
                 // Initial render
                 renderStandardButtons();
             }
+        });
+    }
+
+    /**
+     * Shows a modal for a random event (Event System 2.0).
+     * @param {Object} event - The hydrated event object.
+     * @param {Function} choicesCallback - Callback(choiceId).
+     */
+    showRandomEventModal(event, choicesCallback) {
+         // --- FIX: Schema V2 mapping ---
+         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
+         const title = event.template?.title || event.title || 'Unknown Event';
+         const description = event.template?.description || event.scenario || 'No description available.';
+
+         this.queueModal('random-event-modal', title, description, null, {
+            nonDismissible: true,
+            customSetup: (modal, closeHandler) => {
+                const choicesContainer = modal.querySelector('#random-event-choices-container');
+                choicesContainer.innerHTML = '';
+                
+                event.choices.forEach((choice) => {
+                    const button = document.createElement('button');
+                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    
+                    // --- FIX: Schema V2 choice text ---
+                    // New schema uses 'text', old used 'title'
+                    button.innerHTML = choice.text || choice.title || 'Option';
+                    
+                    // Add Tooltip if available (Event System 2.0 feature)
+                    if (choice.tooltip) {
+                        button.setAttribute('title', choice.tooltip);
+                    }
+
+                    button.onclick = () => {
+                        // --- FIX: Pass choice.id (String) ---
+                        // RandomEventService expects a string ID, not an index
+                        choicesCallback(choice.id);
+                        closeHandler();
+                     };
+                    choicesContainer.appendChild(button);
+                });
+            }
+        });
+    }
+
+    /**
+     * Displays a result modal for event outcomes.
+     * @param {string} text - The result text.
+     * @param {Array} effects - Array of applied effects.
+     */
+    showEventResultModal(text, effects) {
+        let effectsHtml = '';
+        if (effects && effects.length > 0) {
+            effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
+            effects.forEach(eff => {
+                let effectText = '';
+                // Simple formatting based on type - expand as needed
+                switch (eff.type) {
+                    case 'EFF_CREDITS':
+                        effectText = `Credits: ${eff.value > 0 ? '+' : ''}${formatCredits(eff.value)}`;
+                        break;
+                    case 'EFF_FUEL':
+                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_HULL':
+                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_TRAVEL_TIME':
+                    case 'EFF_MODIFY_TRAVEL':
+                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
+                        break;
+                    case 'EFF_ADD_ITEM':
+                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; // Could lookup name
+                        break;
+                    case 'EFF_REMOVE_ITEM':
+                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
+                        break;
+                    default:
+                        effectText = `Effect Applied`;
+                }
+                effectsHtml += `<li>${effectText}</li>`;
+            });
+            effectsHtml += '</ul>';
+        }
+
+        this.queueModal('event-result-modal', 'Event Outcome', text + effectsHtml, null, {
+            dismissOutside: true,
+            buttonText: 'Continue'
         });
     }
 }

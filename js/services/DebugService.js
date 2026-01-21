@@ -6,15 +6,15 @@
 import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
-import { calculateInventoryUsed, skewedRandom } from '../utils.js'; // Added skewedRandom import if needed, or just use Math
+import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added Import
-import { AssetService } from './AssetService.js'; // IMPORT ADDED
+import { GameAttributes } from './GameAttributes.js'; 
+import { AssetService } from './AssetService.js'; 
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
 const TUTORIAL_PRESETS_PERCENT = {
-    topCenter: [50, 15], // Example: 50% across, 15% down
+    topCenter: [50, 15], 
     top34Center: [50, 30],
     vertHorizCenter: [50, 50],
     bottom34Center: [50, 70],
@@ -45,21 +45,21 @@ export class DebugService {
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
-            targetAge: 25, // Default target age for debug setting
+            targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
-            selectedRandomEvent: 0,
-            selectedAgeEvent: DB.AGE_EVENTS[0].id,
+            // [FIX] Added safe check for empty array using optional chaining
+            selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
+            // [FIX] Added safe check for empty array using optional chaining
+            selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
             logLevel: 'INFO',
             
-            // --- [GEMINI] NEW DEBUG STATE ---
-            shipToBoard: null, // Holds the ID of the ship selected in the dropdown
-            selectedUpgrade: null, // Holds the ID of the upgrade to apply
-            // -------------------------------
+            shipToBoard: null, 
+            selectedUpgrade: null, 
 
             // Tutorial Tuner State
             ttStepId: 'None',
@@ -469,26 +469,33 @@ ${logHistory}
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
+            
+            // --- UPDATED EVENT TRIGGER (UPDATED) ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
-                const dest = DB.MARKETS.find(m => m.id !== this.gameState.currentLocationId)?.id;
-                if (dest) {
-                     this.simulationService.travelService._checkForRandomEvent(dest, this.debugState.selectedRandomEvent);
+                // Now uses the Force Trigger method in Simulation Service
+                if (this.debugState.selectedRandomEvent) {
+                     this.simulationService.forceTriggerEvent(this.debugState.selectedRandomEvent);
                 }
             }},
+            // ---------------------------------------
+
             triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
                 const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
                 if (event) {
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
-             triggerMission: { name: 'Trigger Mission', type: 'button', handler: () => {
+            // --- NEW FORCE MISSION HANDLERS ---
+            forceAcceptMission: { name: 'Force Accept Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
-                    if(this.gameState.missions.activeMissionId) {
-                        this.simulationService.missionService.abandonMission();
-                    }
-                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission);
+                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); // Force = True
                 }
-             }},
+            }},
+            forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
+                 this.simulationService.missionService.completeActiveMission(true); // Force = True
+            }},
+            // ----------------------------------
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -600,13 +607,10 @@ ${logHistory}
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
         playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
-        // --- NEW: Set Age Controls ---
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
-        // -----------------------------
 
         const shipFolder = this.gui.addFolder('Ship');
-        // --- [GEMINI] ADDED: Cycle Pics and Board Dropdown ---
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
         // Populate Dropdown Options from Database
@@ -634,7 +638,6 @@ ${logHistory}
                 this.gameState.setState({});
                 this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
             });
-        // -----------------------------------------------------
 
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
@@ -676,22 +679,28 @@ ${logHistory}
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        // [[PHASE 3]]
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
-        // [[END]]
 
         const triggerFolder = this.gui.addFolder('Triggers');
-        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event, index) => ({...acc, [event.title]: index }), {});
+        
+        // --- UPDATED EVENT SELECTOR (NOW USES ID AS VALUE) ---
+        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
-        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Trigger Event');
-        const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-        triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
-        triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
-        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
-        if (this.debugState.selectedMission) {
-             triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-             triggerFolder.add(this.actions.triggerMission, 'handler').name('Accept Mission');
+        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+        // -----------------------------------------------------
+        
+        // [FIX] Add check if AGE_EVENTS are populated before reducing
+        if (DB.AGE_EVENTS.length > 0) {
+            const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
+            triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
+            triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
+        
+        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        // Always show mission controls
+        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
+        triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');

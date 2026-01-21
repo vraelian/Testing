@@ -6,19 +6,16 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Import new playBlockingAnimationAndRemove
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
-// END VIRTUAL WORKBENCH
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
 import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
-// --- VIRTUAL WORKBENCH: IMPORT ---
 import { IntelService } from './IntelService.js';
-import { GameAttributes } from './GameAttributes.js'; // Added for Upgrade Logic
-// --- END VIRTUAL WORKBENCH ---
+import { GameAttributes } from './GameAttributes.js'; 
+import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -31,43 +28,37 @@ export class SimulationService {
      * @param {import('./LoggingService.js').Logger} logger - The logging utility.
      * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
      */
-    constructor(gameState, uiManager, logger, newsTickerService) { // MODIFIED
+    constructor(gameState, uiManager, logger, newsTickerService) { 
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.newsTickerService = newsTickerService; // ADDED
+        this.newsTickerService = newsTickerService; 
         this.tutorialService = null; // Injected post-instantiation.
         this.missionService = null;  // Injected post-instantiation.
         
-        // --- VIRTUAL WORKBENCH: ADD INTEL SERVICE ---
-        this.intelService = null; // Will be instantiated below
-        // --- END VIRTUAL WORKBENCH ---
+        this.intelService = null; 
 
-  
          // Instantiate all services
         this.marketService = new MarketService(gameState);
-        // MODIFIED: Pass newsTickerService
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
 
-        // --- VIRTUAL WORKBENCH: INSTANTIATE AND INJECT INTEL SERVICE ---
-        // Must be after dependencies (time, market, news) are created
+        // --- EVENT SYSTEM 2.0 ---
+        this.randomEventService = new RandomEventService();
+        // ------------------------
+
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
         // Inject intelService into services that depend on it
         this.timeService.intelService = this.intelService;
-        this.uiManager.setIntelService(this.intelService); // UIManager will need this setter
-        // --- END VIRTUAL WORKBENCH ---
+        this.uiManager.setIntelService(this.intelService); 
 
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
         
-        // --- [NEW V2 CHANGE] ---
-        // Inject services required by NewsTickerService for dynamic content.
         this.newsTickerService.setServices(this, this.marketService);
-        // --- [END NEW V2 CHANGE] ---
     }
 
     /**
@@ -85,6 +76,88 @@ export class SimulationService {
     setMissionService(missionService) {
         this.missionService = missionService;
         this.playerActionService.missionService = missionService;
+    }
+
+    // --- EVENT SYSTEM 2.0 METHODS ---
+
+    /**
+     * Forces a specific Random Event to trigger immediately.
+     * Used by DebugService.
+     * @param {string} eventId 
+     */
+    forceTriggerEvent(eventId) {
+        const eventDef = this.randomEventService.getEventById(eventId);
+        if (!eventDef) {
+            this.logger.error('SimulationService', `Cannot force trigger event: ID '${eventId}' not found.`);
+            return;
+        }
+
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${eventDef.template.title}`);
+        
+        // Pass the event to the UI Manager to display the modal
+        // The modal will call back to resolveEventChoice
+        this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
+            this.resolveEventChoice(eventId, choiceId);
+        });
+    }
+
+    /**
+     * Resolves a player's choice from a Random Event.
+     * @param {string} eventId 
+     * @param {string} choiceId 
+     */
+    resolveEventChoice(eventId, choiceId) {
+        // 1. Calculate Outcome
+        const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
+        
+        if (!result) return;
+
+        // 2. Apply Effects
+        this._applyEventEffects(result.effects);
+
+        // 3. Show Result Modal
+        this.uiManager.showEventResultModal(result.text, result.effects);
+    }
+
+    /**
+     * Applies the calculated effects from an event outcome.
+     * @private
+     */
+    _applyEventEffects(effects) {
+        effects.forEach(eff => {
+            switch (eff.type) {
+                case 'EFF_CREDITS':
+                    this.gameState.player.credits += eff.value;
+                    break;
+                case 'EFF_FUEL':
+                    const ship = this._getActiveShip();
+                    if(ship) this.gameState.player.shipStates[ship.id].fuel = Math.max(0, Math.min(ship.maxFuel, ship.fuel + eff.value));
+                    break;
+                case 'EFF_HULL':
+                    const s = this._getActiveShip();
+                    // value is negative for damage
+                    if(s) this.gameState.player.shipStates[s.id].health = Math.max(0, Math.min(s.maxHealth, s.health + eff.value));
+                    break;
+                case 'EFF_TRAVEL_TIME':
+                case 'EFF_MODIFY_TRAVEL':
+                    this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    break;
+                case 'EFF_ADD_ITEM':
+                case 'EFF_REMOVE_ITEM':
+                    const inv = this._getActiveInventory();
+                    if(inv && inv[eff.target]) {
+                        inv[eff.target].quantity = Math.max(0, inv[eff.target].quantity + eff.value); // Value is negative for remove
+                    }
+                    break;
+                case 'EFF_ADD_RANDOM_CARGO':
+                    // Add random tier 1-3 commodity logic here if needed, or handle in service
+                    break;
+                case 'EFF_LOSE_RANDOM_CARGO':
+                    // Logic handled in resolver or here
+                    break;
+            }
+        });
+        this.gameState.setState({}); // Commit changes
     }
 
     // --- FACADE METHODS ---
@@ -114,19 +187,16 @@ export class SimulationService {
             return null;
         }
 
-        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
         // 2. Find the button that was clicked
         const purchaseButton = event.target.closest('.action-button');
 
         // 3. Trigger the BLOCKING 1-second glow
         if (purchaseButton) {
-            // Use playBlockingAnimationAndRemove to properly clean up the class
             await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
         }
         
-        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
-        // --- END VIRTUAL WORKBENCH ---
 
         // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
@@ -150,19 +220,16 @@ export class SimulationService {
             return false;
         }
 
-        // --- VIRTUAL WORKBENCH: ADD PRE-ACTION GLOW ---
         // 2. Find the button that was clicked
         const sellButton = event.target.closest('.action-button');
 
         // 3. Trigger the BLOCKING 1-second glow
         if (sellButton) {
-            // Use playBlockingAnimationAndRemove to properly clean up the class
             await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
         }
         
-        // 4. (NEW) Wait one animation frame to prevent animation race condition
+        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
-        // --- END VIRTUAL WORKBENCH ---
 
         // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
@@ -173,13 +240,11 @@ export class SimulationService {
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    // --- VIRTUAL WORKBENCH: RE-ORCHESTRATE boardShip ---
     /**
      * Orchestrates boarding a ship: Glows button, waits 1s, sets state, then animates card.
      * @param {string} shipId
      * @param {Event} event - The click event, used to find the button for animation.
      * @returns {Promise<boolean>} True on success, false on failure.
-     * @JSDoc
      */
     async boardShip(shipId, event) {
         // 1. Validate
@@ -191,13 +256,10 @@ export class SimulationService {
             return false;
         }
 
-        // --- NEW SEQUENCE ---
-
-   
-         // 2. Find the button that was clicked
+        // 2. Find the button that was clicked
         const boardButton = event.target.closest('.action-button');
         
-        // 3. (NEW) Find the sibling "Sell" button and disable it immediately
+        // 3. Find the sibling "Sell" button and disable it immediately
         if (boardButton) {
             const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
             if (sellButton) {
@@ -206,9 +268,7 @@ export class SimulationService {
         }
 
         // 4. Trigger the BLOCKING 1-second glow on the "Board" button
-  
          if (boardButton) {
-            // This is the new BLOCKING helper that waits for the animation to end
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
 
@@ -220,20 +280,15 @@ export class SimulationService {
             this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
         }
    
-      
         // 7. Run the BLOCKING card animation *LAST*
-        // We must wait one frame for the UI to re-render *before* we can
-        // find the element we want to animate.
         await new Promise(resolve => requestAnimationFrame(resolve));
         
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
-        // --- END NEW SEQUENCE ---
         
         return true;
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Pays off the player's entire outstanding debt.
@@ -250,11 +305,6 @@ export class SimulationService {
     
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     
- 
-     // --- VIRTUAL WORKBENCH: REMOVE OBSOLETE METHOD ---
-    // purchaseIntel(cost) { this.playerActionService.purchaseIntel(cost); } // This is now handled by UIManager + IntelService
-    // --- END VIRTUAL WORKBENCH ---
-
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
     
@@ -262,7 +312,7 @@ export class SimulationService {
     travelTo(locationId) { this.travelService.travelTo(locationId); }
     resumeTravel() { this.travelService.resumeTravel(); }
 
-    // ADDED: NewsTickerService Delegation
+    // NewsTickerService Delegation
     /**
      * Pushes a new message to the news ticker.
      * @param {string} text - The message content.
@@ -285,8 +335,6 @@ export class SimulationService {
     }
 
     // --- CORE & SHARED METHODS ---
-    // These methods remain in the facade because they are either simple state setters
-    // or are helpers required by multiple services.
 
     /**
      * Sets the active navigation tab and screen.
@@ -301,22 +349,14 @@ export class SimulationService {
             lastActiveScreen: newLastActive 
         });
 
-        // --- [NEW V2 CHANGE] ---
-        // MODIFICATION: Removed the onLocationChange() call from this function.
-        // It will now be called by TravelService when the location *actually* changes.
-        // --- [END NEW V2 CHANGE] ---
-
         if (this.tutorialService) {
             this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
         }
     }
 
-   
-     // --- VIRTUAL WORKBENCH: ADD MISSING METHOD ---
     /**
      * Sets the active tab on the Intel screen.
      * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
-     * @JSDoc
      */
     setIntelTab(tabId) {
         if (this.gameState.uiState.activeIntelTab !== tabId) {
@@ -326,7 +366,6 @@ export class SimulationService {
             });
         }
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     /**
      * Sets the hangar/shipyard toggle state.
@@ -392,20 +431,15 @@ export class SimulationService {
 
     /**
      * Checks for any condition that would end the game, such as bankruptcy.
-     * This is intended to be called only by automated processes that can
-     * reduce credits without a prior "insufficient funds" check (e.g., garnishment, debug).
      * @private
      */
     _checkGameOverConditions() {
-        // This is the performant check: it reads directly from the state
-        // object instead of creating an expensive deep copy with getState().
         if (this.gameState.player.credits <= 0) {
             this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
         }
     }
 
     // --- HELPER & PRIVATE METHODS (SHARED) ---
-    // These are kept here to be accessible by the specialized services that need them.
 
     /**
      * Calculates ship stats including upgrade modifiers (e.g. Max Fuel + 20%).
@@ -442,7 +476,7 @@ export class SimulationService {
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
         
-        // --- UPGRADE SYSTEM UPDATE: Initialize with empty upgrades ---
+        // Initialize with empty upgrades
         this.gameState.player.shipStates[shipId] = { 
             health: ship.maxHealth, 
             fuel: ship.maxFuel, 
@@ -474,8 +508,7 @@ export class SimulationService {
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
         
-        // --- UPGRADE SYSTEM UPDATE: Return Effective Stats ---
-        // Merge the calculated Max/Capacities with the current state (Health/Fuel values)
+        // Return Effective Stats
         const effectiveStats = this.getEffectiveShipStats(activeId);
         return { 
             id: activeId, 
@@ -491,7 +524,6 @@ export class SimulationService {
     
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
-        // Use Effective Stats for percentage calculation
         const effectiveStats = this.getEffectiveShipStats(shipId);
         
         const healthPct = (shipState.health / effectiveStats.maxHealth) * 100;
@@ -565,9 +597,8 @@ export class SimulationService {
         rewards.forEach(reward => {
             if (reward.type === 'credits') {
               
-                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
+                // Apply credit cap
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
-                // --- END VIRTUAL WORKBENCH ---
 
                 this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                 this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
