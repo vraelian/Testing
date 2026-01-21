@@ -196,8 +196,8 @@ export class UIManager {
     }
 
     /**
-    * Resets the state of the market transaction modules.
-    */
+     * Resets the state of the market transaction modules.
+     */
     resetMarketTransactionState() {
         this.marketTransactionState = {};
     }
@@ -345,24 +345,6 @@ export class UIManager {
             this.newsTickerService.isDirty = false;
             return;
         }
-
-        // =========================================================================
-        // ARCHITECTURAL WARNING: INFINITE SCROLL GEOMETRY
-        // =========================================================================
-        // Do NOT change this implementation without reading ADR-013.
-        //
-        // Problem: JS width calculation causes sub-pixel errors vs CSS % transforms.
-        // Solution: Use CSS Flexbox to strictly define the layout.
-        //
-        // 1. Wrap content in a .ticker-block (flex item).
-        // 2. Duplicate that EXACT block.
-        // 3. Result: [Block A][Block B] inside a flex container.
-        // 4. CSS: translateX(-50%).
-        //
-        // Because Block A and Block B are identical DOM nodes, the browser guarantees
-        // that Width(Parent) = 2 * Width(Block). Therefore, moving -50% of the
-        // Parent is GUARANTEED to move exactly 1x Width(Block).
-        // =========================================================================
 
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
         
@@ -1011,18 +993,40 @@ export class UIManager {
         modal.classList.add('modal-visible');
     }
 
+    /**
+     * Shows a modal for a random event (Event System 2.0).
+     * @param {Object} event - The hydrated event object.
+     * @param {Function} choicesCallback - Callback(choiceId).
+     */
     showRandomEventModal(event, choicesCallback) {
-         this.queueModal('random-event-modal', event.title, event.scenario, null, {
+         // --- FIX: Schema V2 mapping ---
+         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
+         const title = event.template?.title || event.title || 'Unknown Event';
+         const description = event.template?.description || event.scenario || 'No description available.';
+
+         this.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
-                event.choices.forEach((choice, index) => {
+                
+                event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                     button.className = 'btn w-full text-center p-4 hover:bg-slate-700';
-                    button.innerHTML = choice.title;
+                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    
+                    // --- FIX: Schema V2 choice text ---
+                    // New schema uses 'text', old used 'title'
+                    button.innerHTML = choice.text || choice.title || 'Option';
+                    
+                    // Add Tooltip if available (Event System 2.0 feature)
+                    if (choice.tooltip) {
+                        button.setAttribute('title', choice.tooltip);
+                    }
+
                     button.onclick = () => {
-                         choicesCallback(event.id, index);
+                        // --- FIX: Pass choice.id (String) ---
+                        // RandomEventService expects a string ID, not an index
+                        choicesCallback(choice.id);
                         closeHandler();
                      };
                     choicesContainer.appendChild(button);
@@ -2604,6 +2608,94 @@ export class UIManager {
                 // Initial render
                 renderStandardButtons();
             }
+        });
+    }
+
+    /**
+     * Shows a modal for a random event (Event System 2.0).
+     * @param {Object} event - The hydrated event object.
+     * @param {Function} choicesCallback - Callback(choiceId).
+     */
+    showRandomEventModal(event, choicesCallback) {
+         // --- FIX: Schema V2 mapping ---
+         // Use template properties if available (Schema 2.0), fallback to old (Schema 1.0) just in case
+         const title = event.template?.title || event.title || 'Unknown Event';
+         const description = event.template?.description || event.scenario || 'No description available.';
+
+         this.queueModal('random-event-modal', title, description, null, {
+            nonDismissible: true,
+            customSetup: (modal, closeHandler) => {
+                const choicesContainer = modal.querySelector('#random-event-choices-container');
+                choicesContainer.innerHTML = '';
+                
+                event.choices.forEach((choice) => {
+                    const button = document.createElement('button');
+                    button.className = 'btn w-full text-center p-4 hover:bg-slate-700 mb-2'; // Added margin bottom for spacing
+                    
+                    // --- FIX: Schema V2 choice text ---
+                    // New schema uses 'text', old used 'title'
+                    button.innerHTML = choice.text || choice.title || 'Option';
+                    
+                    // Add Tooltip if available (Event System 2.0 feature)
+                    if (choice.tooltip) {
+                        button.setAttribute('title', choice.tooltip);
+                    }
+
+                    button.onclick = () => {
+                        // --- FIX: Pass choice.id (String) ---
+                        // RandomEventService expects a string ID, not an index
+                        choicesCallback(choice.id);
+                        closeHandler();
+                     };
+                    choicesContainer.appendChild(button);
+                });
+            }
+        });
+    }
+
+    /**
+     * Displays a result modal for event outcomes.
+     * @param {string} text - The result text.
+     * @param {Array} effects - Array of applied effects.
+     */
+    showEventResultModal(text, effects) {
+        let effectsHtml = '';
+        if (effects && effects.length > 0) {
+            effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
+            effects.forEach(eff => {
+                let effectText = '';
+                // Simple formatting based on type - expand as needed
+                switch (eff.type) {
+                    case 'EFF_CREDITS':
+                        effectText = `Credits: ${eff.value > 0 ? '+' : ''}${formatCredits(eff.value)}`;
+                        break;
+                    case 'EFF_FUEL':
+                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_HULL':
+                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_TRAVEL_TIME':
+                    case 'EFF_MODIFY_TRAVEL':
+                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
+                        break;
+                    case 'EFF_ADD_ITEM':
+                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; // Could lookup name
+                        break;
+                    case 'EFF_REMOVE_ITEM':
+                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
+                        break;
+                    default:
+                        effectText = `Effect Applied`;
+                }
+                effectsHtml += `<li>${effectText}</li>`;
+            });
+            effectsHtml += '</ul>';
+        }
+
+        this.queueModal('event-result-modal', 'Event Outcome', text + effectsHtml, null, {
+            dismissOutside: true,
+            buttonText: 'Continue'
         });
     }
 }

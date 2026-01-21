@@ -15,7 +15,7 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
-import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
+import { RandomEventService } from './RandomEventService.js';
 
 /**
  * @class SimulationService
@@ -140,17 +140,26 @@ export class SimulationService {
                     break;
                 case 'EFF_TRAVEL_TIME':
                 case 'EFF_MODIFY_TRAVEL':
-                    this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    // [FIX] Add safety check for pendingTravel (fixes Debug Service crash)
+                    if (this.gameState.pendingTravel) {
+                        this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
+                    }
                     break;
                 case 'EFF_ADD_ITEM':
+                    const invAdd = this._getActiveInventory();
+                    if(invAdd && invAdd[eff.target]) {
+                        invAdd[eff.target].quantity = Math.max(0, invAdd[eff.target].quantity + eff.value);
+                    }
+                    break;
                 case 'EFF_REMOVE_ITEM':
-                    const inv = this._getActiveInventory();
-                    if(inv && inv[eff.target]) {
-                        inv[eff.target].quantity = Math.max(0, inv[eff.target].quantity + eff.value); // Value is negative for remove
+                    const invRem = this._getActiveInventory();
+                    if(invRem && invRem[eff.target]) {
+                        // [FIX] Subtract value instead of adding (events.js defines positive integers for removal)
+                        invRem[eff.target].quantity = Math.max(0, invRem[eff.target].quantity - eff.value);
                     }
                     break;
                 case 'EFF_ADD_RANDOM_CARGO':
-                    // Add random tier 1-3 commodity logic here if needed, or handle in service
+                    // Logic handled in resolver or here
                     break;
                 case 'EFF_LOSE_RANDOM_CARGO':
                     // Logic handled in resolver or here
