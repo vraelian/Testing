@@ -294,3 +294,20 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Supports complex dependency chains (e.g., "Must have X item AND Y perk") via the generic `requirements` array.
     * **Pro**: Enables "Weighted RNG" outcomes (Risk vs. Reward) purely through configuration.
     * **Con**: Adds a layer of abstraction; debugging a specific event requires checking both the data definition and the resolver logic.
+
+    ### ADR-020: The "Switchboard" UI Architecture (Facade Pattern)
+
+* **Status**: Accepted (2026-01-22)
+* **Context**: `UIManager.js` had grown into a 2,600+ line "God Object," handling everything from market SVG rendering to complex hangar interactions and mission HUD logic. This monolithic structure made maintenance error-prone and severely hampered AI code generation capabilities due to token limits.
+* **Decision**: Refactored the `UIManager` into a thin **Facade** ("Switchboard") that delegates specific domain logic to six specialized Controllers:
+    1.  **`UIModalEngine`**: Lifecycle management for the global modal queue.
+    2.  **`UITutorialManager`**: Orchestration of tutorial steps, toasts, and visual highlights.
+    3.  **`UIMarketControl`**: Market screen rendering, state retention, and graph generation.
+    4.  **`UIMissionControl`**: Mission data screens, sticky bar HUD, and Intel interactions.
+    5.  **`UIHangarControl`**: Ship interactions, carousels, and upgrade installation flows.
+    6.  **`UIEventControl`**: "World" interactions (Maps, Lore, Random Events, EULA).
+* **Consequences**:
+    * **Pro**: Drastically reduces file size (UIManager is now <500 lines), ensuring AI tools can parse and update it without truncation.
+    * **Pro**: Enforces separation of concerns; Market logic is strictly isolated from Hangar logic.
+    * **Pro**: Preserves the public API; `UIManager` methods act as proxies, so no external services (`SimulationService`, `ActionClickHandler`) required refactoring.
+    * **Con**: Adds a slight layer of indirection (Proxy -> Controller -> Logic), but the maintenance benefits far outweigh this cost.

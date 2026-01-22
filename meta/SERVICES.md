@@ -151,3 +151,32 @@
 * **`intelMessages.js`**: Defines message templates for free and purchased market intel.
 * **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
 * **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
+### 4. UI & Presentation Services
+* **UIManager (F017) [FACADE]**
+    * **Responsibility**: The master "Switchboard". Instantiates and coordinates the 6 Domain Controllers. Handles the main render loop and navigation bars.
+    * **Key Behavior**: Proxies requests from external services (like `ActionClickHandler`) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
+    * **Dependencies**: `UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`.
+
+    * **Controllers (Delegates)**:
+        * **`UIModalEngine`**: Manages the modal queue, priority processing, and dismissal logic.
+        * **`UITutorialManager`**: Manages tutorial toasts, Popper.js positioning, and highlight overlays.
+        * **`UIMarketControl`**: Manages Market screen rendering, input state retention, and SVG graphs.
+        * **`UIMissionControl`**: Manages Mission screens, Sticky Bar HUD, and Intel Broker logic.
+        * **`UIHangarControl`**: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
+        * **`UIEventControl`**: Manages "World" interactions: Random Events, Maps, Lore, and Launch modals.
+
+* **IntelMarketRenderer (F058)**
+    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab content (Called by `UIMissionControl`).
+    * **Dependencies**: `IntelService`.
+
+* **NewsTickerService (F053)**
+    * **Responsibility**: Manages the scrolling text bar content.
+    * **Dependencies**: `GameState`.
+
+* **AssetService (F065)**
+    * **Responsibility**: Centralized path resolution and "Hydration" for visual assets.
+    * **Dependencies**: `AssetStorageService`, `assets_config.js`.
+
+* **TravelAnimationService.js**
+    * **Responsibility**: Manages the high-fidelity visual transition during travel via Canvas.
+    * **Dependencies**: `DB` (Travel Visuals).
