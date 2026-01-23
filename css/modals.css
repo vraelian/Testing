@@ -504,4 +504,26 @@
 .text-delay-blue {
     color: #60a5fa !important; /* blue-400 - Force override */
 }
+
+/* Event Result Text Colors (PHASE 3: Semantics) */
+.text-result-hull {
+    color: #4ade80 !important; /* green-400 */
+}
+.text-result-fuel {
+    color: #60a5fa !important; /* blue-400 */
+}
+.text-result-time {
+    color: #9ca3af !important; /* gray-400 */
+}
+.text-result-cargo {
+    color: #facc15 !important; /* yellow-400 */
+}
+.text-result-credit-gain {
+    color: #22d3ee !important; /* cyan-400 */
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+.text-result-credit-loss {
+    color: #ef4444 !important; /* red-500 */
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
 /* --- [[END]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */

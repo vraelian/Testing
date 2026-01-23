@@ -13,16 +13,13 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Update event writing to be canon with lore.
 - Add location navigation link to Intel modals
 
-## Immediate Concerns, Bugs
-
 
 ## Imminent Projects
 - Overhaul Travel Screen
-- Overhaul Events
+
 
 ## Long-Term Goals, Ideas
 - Reputation system
-- Player age events
 - Additional tutorials
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders

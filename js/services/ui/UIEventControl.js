@@ -408,30 +408,28 @@ export class UIEventControl {
                     case 'EFF_CREDITS':
                         const isGain = eff.value > 0;
                         const sign = isGain ? '+' : '';
-                        const colorStyle = isGain 
-                            ? 'color: #22d3ee; text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);' // Cyan glow
-                            : 'color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);'; // Red glow
+                        const creditClass = isGain ? 'text-result-credit-gain' : 'text-result-credit-loss';
                         
-                        effectText = `<span style="${colorStyle}" class="${baseStyle}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
+                        effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
                         break;
                     case 'EFF_FUEL':
-                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
                         break;
                     case 'EFF_HULL':
-                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        effectText = `<span class="${baseStyle} text-result-hull">Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
                         break;
                     case 'EFF_TRAVEL_TIME':
                     case 'EFF_MODIFY_TRAVEL':
-                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
+                        effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
-                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; 
+                        effectText = `<span class="${baseStyle} text-result-cargo">Received: ${Math.round(eff.value)}x ${eff.target}</span>`; 
                         break;
                     case 'EFF_REMOVE_ITEM':
-                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
+                        effectText = `<span class="${baseStyle} text-result-cargo">Removed: ${Math.round(eff.value)}x ${eff.target}</span>`;
                         break;
                     case 'EFF_LOSE_RANDOM_CARGO':
-                         effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${Math.round(eff.value * 100)}%</span>`;
                          break;
                     default:
                          // User Instruction: Remove 'Effect Applied' to reduce noise

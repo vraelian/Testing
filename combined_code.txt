@@ -2614,7 +2614,30 @@ card.
 .text-delay-blue {
     color: #60a5fa !important; /* blue-400 - Force override */
 }
+
+/* Event Result Text Colors (PHASE 3: Semantics) */
+.text-result-hull {
+    color: #4ade80 !important; /* green-400 */
+}
+.text-result-fuel {
+    color: #60a5fa !important; /* blue-400 */
+}
+.text-result-time {
+    color: #9ca3af !important; /* gray-400 */
+}
+.text-result-cargo {
+    color: #facc15 !important; /* yellow-400 */
+}
+.text-result-credit-gain {
+    color: #22d3ee !important; /* cyan-400 */
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+.text-result-credit-loss {
+    color: #ef4444 !important; /* red-500 */
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
 /* --- [[END]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
+
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -13197,30 +13220,28 @@ export class UIEventControl {
                     case 'EFF_CREDITS':
                         const isGain = eff.value > 0;
                         const sign = isGain ? '+' : '';
-                        const colorStyle = isGain 
-                            ? 'color: #22d3ee; text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);' // Cyan glow
-                            : 'color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);'; // Red glow
+                        const creditClass = isGain ? 'text-result-credit-gain' : 'text-result-credit-loss';
                         
-                        effectText = `<span style="${colorStyle}" class="${baseStyle}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
+                        effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
                         break;
                     case 'EFF_FUEL':
-                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
                         break;
                     case 'EFF_HULL':
-                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        effectText = `<span class="${baseStyle} text-result-hull">Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
                         break;
                     case 'EFF_TRAVEL_TIME':
                     case 'EFF_MODIFY_TRAVEL':
-                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
+                        effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
-                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; 
+                        effectText = `<span class="${baseStyle} text-result-cargo">Received: ${Math.round(eff.value)}x ${eff.target}</span>`; 
                         break;
                     case 'EFF_REMOVE_ITEM':
-                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
+                        effectText = `<span class="${baseStyle} text-result-cargo">Removed: ${Math.round(eff.value)}x ${eff.target}</span>`;
                         break;
                     case 'EFF_LOSE_RANDOM_CARGO':
-                         effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${Math.round(eff.value * 100)}%</span>`;
                          break;
                     default:
                          // User Instruction: Remove 'Effect Applied' to reduce noise
@@ -26895,8 +26916,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [34.58] - 2026-1-23
+## [34.59] - 2026-1-23
 -  fixed contextual event outcome modal titling
+-  added color scheme to event outcome costs
 
 ## [34.57] - 2026-1-22
 -  refactored UIManager.js
@@ -28611,16 +28633,13 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Update event writing to be canon with lore.
 - Add location navigation link to Intel modals
 
-## Immediate Concerns, Bugs
-
 
 ## Imminent Projects
 - Overhaul Travel Screen
-- Overhaul Events
+
 
 ## Long-Term Goals, Ideas
 - Reputation system
-- Player age events
 - Additional tutorials
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders
