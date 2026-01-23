@@ -88,6 +88,10 @@ export class DynamicValueResolver {
             case 'DEBT_TOTAL':
                 return gameState.player.debt || 0;
 
+            case 'TRIP_DURATION':
+                // Safe access to pending travel data
+                return gameState.pendingTravel ? gameState.pendingTravel.days : 7;
+
             default:
                 console.warn(`[DynamicValueResolver] Unknown scale type: ${scaleType}`);
                 return 0;

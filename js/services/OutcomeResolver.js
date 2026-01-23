@@ -64,14 +64,15 @@ export class OutcomeResolver {
      */
     _resolveWeighted(pool, gameState, simulationService) {
         const weightedPool = pool.map(item => {
-            let finalWeight = item.weight || 0;
+            // FIX: Enforce numeric conversion to prevent string concatenation bugs
+            let finalWeight = Number(item.weight) || 0;
 
             // Apply dynamic modifiers if they exist
             // Example Modifier: { condition: { type: 'HAS_PERK', target: 'lucky' }, value: 20 }
             if (item.modifiers && Array.isArray(item.modifiers)) {
                 item.modifiers.forEach(mod => {
                     if (this.conditionEvaluator.evaluate(mod.condition, gameState, simulationService)) {
-                        finalWeight += mod.value;
+                        finalWeight += Number(mod.value) || 0;
                     }
                 });
             }
@@ -93,6 +94,9 @@ export class OutcomeResolver {
 
         // The "Roll"
         let randomValue = Math.random() * totalWeight;
+        
+        // Debug Log to trace RNG logic
+        console.log(`[OutcomeResolver] Rolled: ${randomValue.toFixed(2)} / ${totalWeight} (Weights: ${weightedPool.map(i => i.weight).join(',')})`);
 
         // Selection Loop
         for (const item of weightedPool) {

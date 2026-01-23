@@ -104,7 +104,8 @@ export class RandomEventService {
         if (uiManager) {
             // [[IMMERSION UPDATE]]
             // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
-            const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || 'Event Outcome';
+            // REFACTOR: Removed 'Event Outcome' default to allow pure pass-through or debug ID
+            const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
             
             // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);

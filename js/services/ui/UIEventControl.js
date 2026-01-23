@@ -362,21 +362,36 @@ export class UIEventControl {
     showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined) {
         let title, text, effects;
 
-        // Check if argument 1 is title (string) and argument 2 is text (string)
-        if (typeof titleOrText === 'string' && typeof textOrEffects === 'string') {
-            title = titleOrText;
-            text = textOrEffects;
-            effects = effectsOrUndefined || [];
-        } else if (Array.isArray(textOrEffects)) {
-            // Fallback for potential legacy calls (Text, Effects)
-            console.warn('[UIEventControl] Legacy signature detected (2 args). Using default title.');
-            title = 'Event Outcome';
-            text = titleOrText;
+        // --- REFACTOR: Robust Argument Parsing (Final) ---
+        
+        // 1. Modern Signature: (Title, Text, EffectsArray)
+        // We prioritize checking the 3rd argument for an Array. 
+        // This ensures proper mapping even if 'text' is empty/null.
+        if (Array.isArray(effectsOrUndefined)) {
+            title = titleOrText || 'System Alert';
+            text = textOrEffects || '';
+            effects = effectsOrUndefined;
+        } 
+        // 2. Legacy Signature: (Text, EffectsArray)
+        // We detect this if the 2nd argument is an Array (and 3rd wasn't).
+        else if (Array.isArray(textOrEffects)) {
+            // Optional: console.warn('[UIEventControl] Legacy signature detected.');
+            title = 'System Alert'; // Legacy implies no title provided
+            text = titleOrText || '';
             effects = textOrEffects;
-        } else {
-             // Safe Fallback
-             title = 'Event Outcome';
-             text = titleOrText || '';
+        } 
+        // 3. Simple Message Signature: (Title, Text) - No effects
+        // Fallback for simple messages where both are strings
+        else if (typeof titleOrText === 'string') {
+             title = titleOrText;
+             text = (typeof textOrEffects === 'string') ? textOrEffects : '';
+             effects = [];
+        }
+        // 4. Safe Fallback
+        else {
+             console.warn('[UIEventControl] Invalid arguments passed to showEventResultModal', { titleOrText, textOrEffects, effectsOrUndefined });
+             title = 'System Alert'; 
+             text = '';
              effects = [];
         }
 
