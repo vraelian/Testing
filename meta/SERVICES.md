@@ -1,3 +1,7 @@
+{
+type: file_update,
+fileName: meta/SERVICES.md,
+fullContent:
 # Service Responsibility & Dependency Matrix
 
 ## Core Architecture
@@ -73,32 +77,42 @@
     * **Key Behavior**: Processes the `resolution` block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to `eventEffectResolver` for application.
     * **Dependencies**: `GameState`, `eventEffectResolver`.
 
+* **DynamicValueResolver**
+    * **Responsibility**: Calculates dynamic integer values for event effects based on game state context.
+    * **Key Behavior**: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties.
+    * **Dependencies**: `GameState` (Read-only), `DB`.
+
 * **eventEffectResolver**
     * **Responsibility**: The "Applicator". Applies the specific state mutations defined by an event's outcome.
     * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly.
-    * **Dependencies**: `GameState`, `SimulationService`.
+    * **Dependencies**: `GameState`, `SimulationService`, `DynamicValueResolver`.
 
 ---
 
 ### 4. UI & Presentation Services
-* **UIManager (F017)**
-    * **Responsibility**: The master renderer. Orchestrates the drawing of all screens (`Hangar`, `Market`, etc.).
-    * **Key Behavior**: Reads State -> Clears DOM -> Rebuilds HTML. Manages the "Triple-Confirmation" modal flow for upgrades.
-    * **Dependencies**: `GameAttributes`, `IntelService`, `IntelMarketRenderer`, `EffectsManager`.
+* **UIManager (F017) [FACADE]**
+    * **Responsibility**: The master "Switchboard". Instantiates and coordinates the 6 Domain Controllers. Handles the main render loop and navigation bars.
+    * **Key Behavior**: Proxies requests from external services (like `ActionClickHandler`) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
+    * **Dependencies**: `UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`.
+
+    * **Controllers (Delegates)**:
+        * **`UIModalEngine`**: Manages the modal queue, priority processing, and dismissal logic.
+        * **`UITutorialManager`**: Manages tutorial toasts, Popper.js positioning, and highlight overlays.
+        * **`UIMarketControl`**: Manages Market screen rendering, input state retention, and SVG graphs.
+        * **`UIMissionControl`**: Manages Mission screens, Sticky Bar HUD, and Intel Broker logic.
+        * **`UIHangarControl`**: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
+        * **`UIEventControl`**: Manages "World" interactions: Random Events, Maps, Lore, and Launch modals.
 
 * **IntelMarketRenderer (F058)**
-    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab.
-    * **Key Behavior**: Separates the complex shop logic from the main `IntelScreen` shell.
+    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab content (Called by `UIMissionControl`).
     * **Dependencies**: `IntelService`.
 
 * **NewsTickerService (F053)**
-    * **Responsibility**: Manages the scrolling text bar.
-    * **Key Behavior**: Aggregates flavor text, system alerts, and intel rumors into a seamless loop.
+    * **Responsibility**: Manages the scrolling text bar content.
     * **Dependencies**: `GameState`.
 
 * **AssetService (F065)**
     * **Responsibility**: Centralized path resolution and "Hydration" for visual assets.
-    * **Key Behavior**: Acts as a high-level manager for the "Asset Locker". Checks memory cache first, then `AssetStorageService`, then network. Converts Blobs to URLs.
     * **Dependencies**: `AssetStorageService`, `assets_config.js`.
 
 * **AssetStorageService (F070)**
@@ -107,8 +121,7 @@
     * **Dependencies**: None (Native IndexedDB API).
 
 * **TravelAnimationService.js**
-    * **Responsibility**: Manages the high-fidelity visual transition during travel.
-    * **Key Behavior**: Renders starfields and particles to an HTML5 Canvas overlay. Blocks UI interaction during the sequence.
+    * **Responsibility**: Manages the high-fidelity visual transition during travel via Canvas.
     * **Dependencies**: `DB` (Travel Visuals).
 
 ---
@@ -120,10 +133,6 @@
 * **CarouselEventHandler (F042)**: Manages swipe/drag for the Hangar.
 * **MarketEventHandler (F040)**: Manages the buy/sell sliders on market cards.
 * **TooltipHandler (F043)**: Manages hover states and popups for graphs and attribute pills.
-
-### UI/Renderers
-
-* **`IntelMarketRenderer.js`**: A new, dedicated renderer. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the "Intel Market" tab.
 
 ### Effects
 
@@ -151,32 +160,4 @@
 * **`intelMessages.js`**: Defines message templates for free and purchased market intel.
 * **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
 * **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
-### 4. UI & Presentation Services
-* **UIManager (F017) [FACADE]**
-    * **Responsibility**: The master "Switchboard". Instantiates and coordinates the 6 Domain Controllers. Handles the main render loop and navigation bars.
-    * **Key Behavior**: Proxies requests from external services (like `ActionClickHandler`) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
-    * **Dependencies**: `UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`.
-
-    * **Controllers (Delegates)**:
-        * **`UIModalEngine`**: Manages the modal queue, priority processing, and dismissal logic.
-        * **`UITutorialManager`**: Manages tutorial toasts, Popper.js positioning, and highlight overlays.
-        * **`UIMarketControl`**: Manages Market screen rendering, input state retention, and SVG graphs.
-        * **`UIMissionControl`**: Manages Mission screens, Sticky Bar HUD, and Intel Broker logic.
-        * **`UIHangarControl`**: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-        * **`UIEventControl`**: Manages "World" interactions: Random Events, Maps, Lore, and Launch modals.
-
-* **IntelMarketRenderer (F058)**
-    * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab content (Called by `UIMissionControl`).
-    * **Dependencies**: `IntelService`.
-
-* **NewsTickerService (F053)**
-    * **Responsibility**: Manages the scrolling text bar content.
-    * **Dependencies**: `GameState`.
-
-* **AssetService (F065)**
-    * **Responsibility**: Centralized path resolution and "Hydration" for visual assets.
-    * **Dependencies**: `AssetStorageService`, `assets_config.js`.
-
-* **TravelAnimationService.js**
-    * **Responsibility**: Manages the high-fidelity visual transition during travel via Canvas.
-    * **Dependencies**: `DB` (Travel Visuals).
+}
