@@ -250,37 +250,89 @@
         ]
       },
       "UIManager": {
-        "description": "Responsible for rendering the entire UI based on the current GameState. It reads from the state but never modifies it. It also manages visual effects via the EffectsManager, travel animations via the TravelAnimationService, and news ticker content.",
+        "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 6 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`). Responsible for the main render loop and proxying logic to delegates.",
         "dependencies": [
           "Logger",
           "EffectsManager",
           "TravelAnimationService",
-          "MissionService",
-          "SimulationService",
-          "NewsTickerService",
-          "IntelService",
-          "IntelMarketRenderer",
-          "GameAttributes",
-          "js/services/ui/AnimationService.js"
+          "UIModalEngine",
+          "UITutorialManager",
+          "UIMarketControl",
+          "UIMissionControl",
+          "UIHangarControl",
+          "UIEventControl"
         ],
         "key_functions": {
           "render": "The main function that orchestrates the re-drawing of all UI components.",
-          "queueModal": "Manages a queue for displaying modals to prevent overlap.",
-          "triggerEffect": "Initiates a visual effect through the EffectsManager.",
-          "showTravelAnimation": "Initiates the travel animation sequence.",
-          "_renderNewsTicker": "Renders the news ticker content only when its content is dirty.",
-          "showGenericTooltip": "Shows a contextual tooltip with dynamic 'right' or 'top' orientation.",
-          "updateGenericTooltipPosition": "Calculates pixel coordinates for tooltips, including 'top' centering logic.",
-          "handleShowIntelOffer": "New handler for Intel Market.",
-          "handleBuyIntel": "New handler for Intel Market.",
-          "handleShowIntelDetails": "New handler for Intel Market.",
-          "runShipTransactionAnimation": "Finds the active ship card and calls AnimationService.playBlockingAnimation to run the 'dematerialize' effect.",
-          "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrade purchase and destructive replacement."
+          "queueModal": "Proxy to UIModalEngine.",
+          "updateMarketScreen": "Proxy to UIMarketControl.",
+          "showShipDetailModal": "Proxy to UIHangarControl.",
+          "showRandomEventModal": "Proxy to UIEventControl.",
+          "showGenericTooltip": "Shows a contextual tooltip with dynamic 'right' or 'top' orientation."
+        },
+        "mutates_state": []
+      },
+      "UIModalEngine": {
+        "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and DOM manipulation for showing/hiding modals.",
+        "dependencies": ["UIManager (Facade)"],
+        "key_functions": {
+          "queueModal": "Adds a modal to the queue.",
+          "processModalQueue": "Displays the next modal.",
+          "hideModal": "Removes the active modal."
+        }
+      },
+      "UITutorialManager": {
+        "description": "Domain Controller responsible for the interactive tutorial system. Encapsulates Popper.js logic for positioning toasts and managing highlight overlays.",
+        "dependencies": ["UIManager (Facade)", "Popper.js"],
+        "key_functions": {
+          "showTutorialToast": "Renders a tutorial step.",
+          "applyTutorialHighlight": "Draws SVG highlights over target elements."
+        }
+      },
+      "UIMarketControl": {
+        "description": "Domain Controller responsible for the Market screen. Manages high-frequency rendering, input state retention, and SVG graph generation.",
+        "dependencies": ["UIManager (Facade)"],
+        "key_functions": {
+          "updateMarketScreen": "Renders the market list.",
+          "renderPriceGraph": "Generates SVG for price history.",
+          "_saveMarketTransactionState": "Preserves input values during re-renders."
+        }
+      },
+      "UIMissionControl": {
+        "description": "Domain Controller responsible for the Data tab (Missions & Intel). Manages the sticky bar HUD and Intel Broker interactions.",
+        "dependencies": ["UIManager (Facade)"],
+        "key_functions": {
+          "renderStickyBar": "Updates the mission HUD.",
+          "handleBuyIntel": "Processes intel purchases."
+        }
+      },
+      "UIHangarControl": {
+        "description": "Domain Controller responsible for Ship assets. Manages the Hangar/Shipyard carousel, pagination, and the Upgrade Installation flow.",
+        "dependencies": ["UIManager (Facade)"],
+        "key_functions": {
+          "updateHangarScreen": "Updates carousel position and lazy loading.",
+          "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrades."
+        }
+      },
+      "UIEventControl": {
+        "description": "Domain Controller responsible for 'World' interactions. Handles Random Events, Map Details, Lore, and Launch modals.",
+        "dependencies": ["UIManager (Facade)"],
+        "key_functions": {
+          "showRandomEventModal": "Renders an event choice.",
+          "showMapDetailModal": "Shows location details."
+        }
+      },
+      "AssetStorageService": {
+        "description": "Low-level IndexedDB wrapper. Manages the 'OrbitalAssetsDB' to store raw `Blob` data, preventing iOS cache eviction.",
+        "dependencies": [],
+        "key_functions": {
+          "saveAsset": "Stores a blob in IDB.",
+          "getAsset": "Retrieves a blob from IDB."
         },
         "mutates_state": []
       },
       "IntelMarketRenderer": {
-        "description": "A dedicated renderer class. Its sole job is to be called by UIManager to dynamically build the HTML for the content of the 'Intel Market' tab.",
+        "description": "A dedicated renderer class. Its sole job is to be called by UIManager (via UIMissionControl) to dynamically build the HTML for the content of the 'Intel Market' tab.",
         "dependencies": [
           "UIManager",
           "GameState",
@@ -553,9 +605,12 @@
         "path": "./js/services/UIManager.js",
         "role": "UI_RENDERER",
         "dependencies": [
-          "js/services/IntelService.js",
-          "js/ui/renderers/IntelMarketRenderer.js",
-          "js/services/GameAttributes.js"
+          "js/services/ui/UIModalEngine.js",
+          "js/services/ui/UITutorialManager.js",
+          "js/services/ui/UIMarketControl.js",
+          "js/services/ui/UIMissionControl.js",
+          "js/services/ui/UIHangarControl.js",
+          "js/services/ui/UIEventControl.js"
         ]
       },
       "F018": {
@@ -791,6 +846,41 @@
         "path": "./js/services/GameAttributes.js",
         "role": "LOGIC_SERVICE",
         "description": "The Upgrade Registry. Defines available upgrades, station quirks, and neutralizing legacy attribute logic."
+      },
+      "F070": {
+        "path": "./js/services/AssetStorageService.js",
+        "role": "UTILITY_SERVICE",
+        "description": "Low-level IndexedDB wrapper for storing asset blobs."
+      },
+      "F071": {
+        "path": "./js/services/ui/UIModalEngine.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages modal lifecycle and queue."
+      },
+      "F072": {
+        "path": "./js/services/ui/UITutorialManager.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages tutorial toasts and overlays."
+      },
+      "F073": {
+        "path": "./js/services/ui/UIMarketControl.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages Market screen and graphs."
+      },
+      "F074": {
+        "path": "./js/services/ui/UIMissionControl.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages Missions, Sticky Bar, and Intel Broker."
+      },
+      "F075": {
+        "path": "./js/services/ui/UIHangarControl.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages Hangar carousel and Upgrade installation."
+      },
+      "F076": {
+        "path": "./js/services/ui/UIEventControl.js",
+        "role": "UI_CONTROLLER",
+        "description": "Domain Controller: Manages World Events, Maps, and Lore."
       }
     }
   }
