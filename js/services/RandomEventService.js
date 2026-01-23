@@ -15,9 +15,7 @@ import { EVENT_CONSTANTS } from '../data/constants.js';
 import { ConditionEvaluator } from './ConditionEvaluator.js';
 import { OutcomeResolver } from './OutcomeResolver.js';
 import { DynamicValueResolver } from './DynamicValueResolver.js';
-// [[START]] PHASE 1: Import Effect Applicator
 import { applyEffect } from './eventEffectResolver.js';
-// [[END]] PHASE 1
 
 export class RandomEventService {
     constructor() {
@@ -62,7 +60,7 @@ export class RandomEventService {
      * @param {string} choiceId - The ID of the selected choice.
      * @param {import('./GameState.js').GameState} gameState
      * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {import('./UIManager.js').UIManager} [uiManager=null] - [[START]] PHASE 1: Added UI Manager for feedback
+     * @param {import('./UIManager.js').UIManager} [uiManager=null]
      * @returns {Object} The finalized outcome object with calculated effects.
      */
     resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
@@ -81,7 +79,7 @@ export class RandomEventService {
             return null;
         }
 
-        // 2. Calculate Dynamic Effects AND Apply Them (Phase 1 Logic)
+        // 2. Calculate Dynamic Effects AND Apply Them
         const calculatedEffects = [];
         
         if (outcomeDef.effects) {
@@ -102,10 +100,12 @@ export class RandomEventService {
             });
         }
 
-        // 3. Trigger UI Feedback (Phase 1 Logic)
+        // 3. Trigger UI Feedback
         if (uiManager) {
-            // We pass the calculatedEffects so the UI displays "-15 Hull" instead of "10%"
-            uiManager.showEventResultModal(outcomeDef.text, calculatedEffects);
+            // [[CRITICAL FIX]] We prioritize the template title, then the root title.
+            // We pass 3 arguments: (Title, Text, Effects) to match the new UIEventControl signature.
+            const eventTitle = eventDef.template?.title || eventDef.title || 'Event Outcome';
+            uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 
         // 4. Return the fully resolved package

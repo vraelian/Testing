@@ -32,6 +32,7 @@ export class UIEventControl {
 
          this.manager.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
+            contentClass: 'text-center', // Enforce center alignment for Description
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
@@ -358,15 +359,25 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showEventResultModal(text, effects) {
+    showEventResultModal(title, text, effects) {
         let effectsHtml = '';
         if (effects && effects.length > 0) {
-            effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
+            // Increased text size (text-lg) and center alignment
+            effectsHtml = '<ul class="list-none text-lg text-gray-300 mt-6 space-y-3 text-center">';
             effects.forEach(eff => {
                 let effectText = '';
+                // Common styling for consistency
+                const baseStyle = "font-medium";
+                
                 switch (eff.type) {
                     case 'EFF_CREDITS':
-                        effectText = `Credits: ${eff.value > 0 ? '+' : ''}${formatCredits(eff.value)}`;
+                        const isGain = eff.value > 0;
+                        const sign = isGain ? '+' : '';
+                        const colorStyle = isGain 
+                            ? 'color: #22d3ee; text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);' // Cyan glow
+                            : 'color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);'; // Red glow
+                        
+                        effectText = `<span style="${colorStyle}" class="${baseStyle}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
                         break;
                     case 'EFF_FUEL':
                         effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
@@ -384,16 +395,23 @@ export class UIEventControl {
                     case 'EFF_REMOVE_ITEM':
                         effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
                         break;
+                    case 'EFF_LOSE_RANDOM_CARGO':
+                         effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         break;
                     default:
-                        effectText = `Effect Applied`;
+                         // User Instruction: Remove 'Effect Applied' to reduce noise
+                         return;
                 }
                 effectsHtml += `<li>${effectText}</li>`;
             });
             effectsHtml += '</ul>';
         }
 
-        this.manager.queueModal('event-result-modal', 'Event Outcome', text + effectsHtml, null, {
-            dismissOutside: true,
+        // Use the context-aware title passed from the service
+        this.manager.queueModal('event-result-modal', title, text + effectsHtml, null, {
+            dismissOutside: false, // Enforced user interaction
+            dismissInside: false,
+            contentClass: 'text-center', // Enforced Center Alignment
             buttonText: 'Continue'
         });
     }
