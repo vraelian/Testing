@@ -46,6 +46,9 @@ export class ActionClickHandler {
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
+                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
+                    await this.uiManager.runShipTransactionAnimation(shipId);
+                    
                     await this.simulationService.buyShip(shipId, { target });
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
@@ -59,6 +62,9 @@ export class ActionClickHandler {
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
+                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
+                    await this.uiManager.runShipTransactionAnimation(shipId);
+
                     await this.simulationService.sellShip(shipId, { target });
                 });
                 break;
