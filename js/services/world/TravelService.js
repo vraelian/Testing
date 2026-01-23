@@ -297,7 +297,7 @@ export class TravelService {
         this.gameState.setState({ pendingTravel: { destinationId } });
         
         // Use the new callback signature
-        this.uiManager.showRandomEventModal(event, (eventId, choiceId) => this._resolveEventChoice(eventId, choiceId));
+        this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
     }
 
