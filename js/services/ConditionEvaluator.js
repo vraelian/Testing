@@ -7,10 +7,11 @@
 
 import { EVENT_CONSTANTS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
+import { DynamicValueResolver } from './DynamicValueResolver.js'; // [[UPDATED]]
 
 export class ConditionEvaluator {
     constructor() {
-        // No internal state required for now.
+        this.valueResolver = new DynamicValueResolver(); // [[UPDATED]]
     }
 
     /**
@@ -38,7 +39,9 @@ export class ConditionEvaluator {
         const { type, operator, value, target } = condition;
         
         let currentValue = null;
-        let threshold = value;
+        
+        // [[UPDATED]]: Resolve dynamic values (e.g. { scaleWith: 'SHIP_CLASS_SCALAR', base: 5 })
+        let threshold = this.valueResolver.resolve(value, gameState);
 
         // 1. Resolve the 'currentValue' based on the condition type
         switch (type) {
@@ -91,13 +94,14 @@ export class ConditionEvaluator {
             // --- WORLD CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.LOCATION_IS:
                 currentValue = gameState.currentLocationId;
-                // If checking strict equality, threshold is the target location ID
+                // If checking strict equality, threshold is the target location ID (if value is string)
+                if (typeof value === 'string') threshold = value; 
                 break;
 
             case EVENT_CONSTANTS.CONDITIONS.RNG_ROLL:
                 // A dynamic roll every time it's checked. 
                 // e.g., Value 0.5 means "50% chance this condition passes"
-                return Math.random() < value;
+                return Math.random() < threshold;
 
             default:
                 console.warn(`[ConditionEvaluator] Unknown condition type: ${type}`);

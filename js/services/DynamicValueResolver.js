@@ -91,6 +91,13 @@ export class DynamicValueResolver {
             case 'TRIP_DURATION':
                 // Safe access to pending travel data
                 return gameState.pendingTravel ? gameState.pendingTravel.days : 7;
+            
+            case 'SHIP_CLASS_SCALAR':
+                // [[UPDATED]]: Implements ship-size scaling based on Max Hull.
+                // Base 100 Hull = 1.0x Multiplier. 
+                // e.g. Titan (1000 Hull) = 10.0x Multiplier.
+                const baseHull = 100;
+                return shipDef ? Math.max(1, shipDef.maxHealth / baseHull) : 1;
 
             default:
                 console.warn(`[DynamicValueResolver] Unknown scale type: ${scaleType}`);
