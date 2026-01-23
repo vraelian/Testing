@@ -15,6 +15,14 @@ export class UIMarketControl {
     }
 
     /**
+     * Resets the input state for market transactions.
+     * Critical for clearing pending trades when traveling to a new location.
+     */
+    resetMarketTransactionState() {
+        this.marketTransactionState = {};
+    }
+
+    /**
      * Renders the market screen, preserving scroll position and input states.
      * @param {object} gameState 
      */

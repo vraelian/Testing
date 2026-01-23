@@ -345,8 +345,13 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                // Full Render needed?
-                const needsFullRender = !previousState || previousState.activeScreen !== SCREEN_IDS.HANGAR || previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState;
+                // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
+                const needsFullRender = !previousState || 
+                    previousState.activeScreen !== SCREEN_IDS.HANGAR || 
+                    previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
+                    previousState.player.activeShipId !== gameState.player.activeShipId || 
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
+
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
@@ -423,6 +428,9 @@ export class UIManager {
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
+    resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
+    // [[FIXED]] Added _calculateSaleDetails proxy to UIMarketControl
+    _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
     // --- Mission Control ---
     renderStickyBar(...args) { this.missionControl.renderStickyBar(...args); }

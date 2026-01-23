@@ -5,9 +5,11 @@
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { RandomEventService } from '../RandomEventService.js'; // [[NEW]]
+import { formatCredits } from '../../utils.js'; // [[NEW]]
 
 export class TravelService {
     /**
@@ -23,6 +25,9 @@ export class TravelService {
         this.timeService = timeService;
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
+        
+        // [[NEW]] Instantiate Event Engine (Hybrid Injection)
+        this.randomEventService = new RandomEventService(); 
     }
 
     /**
@@ -54,10 +59,8 @@ export class TravelService {
         }
 
         // --- UPGRADE SYSTEM: DYNAMIC STATS FETCH ---
-        // Get effective stats (includes upgrades like Aux Tanks)
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
-        // ---------------------------
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
@@ -72,11 +75,8 @@ export class TravelService {
         }
 
         // 2. Apply Attribute/Upgrade Modifier
-        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
         const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
-
-        // --- END UPGRADE SYSTEM ---
 
         if (effectiveMaxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
@@ -99,8 +99,6 @@ export class TravelService {
 
     /**
      * Executes the core travel logic: applies fuel costs and hull damage, advances time, and shows the animation.
-     * @param {string} locationId - The destination location ID.
-     * @param {object} [eventMods={}] - Modifications to travel parameters from a random event.
      */
     initiateTravel(locationId, eventMods = {}) {
         const state = this.gameState.getState();
@@ -114,37 +112,28 @@ export class TravelService {
         const upgrades = activeShipState.upgrades || [];
 
         // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
-        
-        // 1. Base Perk Modifiers
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
 
-        // 2. Apply Generic Attribute Modifiers (Multiplicative)
-        // Changed to use getFuelBurnModifier (Mod Fuel Burn)
         const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
         
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
         travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
-        // 3. Handle Time Modifiers & Complex Logic (Legacy)
         shipAttributes.forEach(attrId => {
             const def = GameAttributes.getDefinition(attrId);
-            
-            // Standard Time Modifiers (Heavy, Fast, Sleeper)
             if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
                 if (def.value) travelInfo.time *= def.value;
             }
-            // Sleeper Special Case (Time x 4.5 handled via def.timeMod if structured, or manual here)
             if (attrId === 'ATTR_SLEEPER') {
                 travelInfo.time *= 4.5;
-                travelInfo.fuelCost = 0; // Ensure 0 fuel
+                travelInfo.fuelCost = 0;
             }
         });
 
-        // 4. Handle "Solar Sail" Probability (15% chance: 0 fuel, 2x time)
         if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
             if (Math.random() < 0.15) {
                 travelInfo.fuelCost = 0;
@@ -152,27 +141,21 @@ export class TravelService {
                 this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
             }
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
-        // Increase speed = Reduce time.
-        // Formula: NewTime = Time / (1 + SpeedBonus)
         const speedBonus = state.player.statModifiers?.travelSpeed || 0;
         if (speedBonus > 0) {
             travelInfo.time = travelInfo.time / (1 + speedBonus);
         }
-        // --- END PHASE 2 ---
 
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
         travelInfo.time = Math.max(1, Math.round(travelInfo.time));
-        travelInfo.fuelCost = Math.round(travelInfo.fuelCost); // Final integer round
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
-        
         if (activeShipState.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
-            this.logger.warn('TravelService', `Travel to ${locationId} aborted due to insufficient fuel after event mods.`);
             return;
         }
 
@@ -184,7 +167,6 @@ export class TravelService {
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
         
-        // --- Hull Decay Attributes ---
         if (shipAttributes.includes('ATTR_XENO_HULL')) {
             travelHullDamage = 0;
         } else if (shipAttributes.includes('ATTR_RESILIENT')) {
@@ -193,7 +175,6 @@ export class TravelService {
         
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         
-        // Use Effective Max Health for percentage calculation
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
@@ -217,14 +198,12 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
-        // Legacy: Traveller Perk
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
             activeShipState.fuel = effectiveStats.maxFuel;
             this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
-        // Legacy: Fuel Scoop
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
             const fuelRestore = effectiveStats.maxFuel * 0.15;
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
@@ -271,6 +250,7 @@ export class TravelService {
 
     /**
      * Checks for and triggers a random event based on a probability roll.
+     * Uses Event System 2.0 (RandomEventService).
      * @param {string} destinationId
      * @param {boolean|number} [force=false]
      * @returns {boolean}
@@ -286,13 +266,10 @@ export class TravelService {
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
         // Apply Upgrade Modifier (Radar Mod - Additive)
-        // Previous logic was multiplicative (* 1.10). 
-        // New logic is additive (+ 0.10).
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
 
-        // ATTR_ADVANCED_COMMS: +25% chance (Legacy multiplier, keep or convert?)
-        // Keeping as legacy multiplier for now.
+        // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }
@@ -303,69 +280,88 @@ export class TravelService {
         let event;
 
         if (typeof force === 'number') {
+            // Debug force by ID index or similar if needed, 
+            // but primarily we use the Service now.
+            // Fallback for debug:
             event = DB.RANDOM_EVENTS[force];
         } else {
-             const validEvents = DB.RANDOM_EVENTS.filter(event => 
-                event.precondition(this.gameState.getState(), activeShip, this.simulationService._getActiveInventory.bind(this.simulationService))
-            );
-            if (validEvents.length === 0) return false;
-            event = validEvents[Math.floor(Math.random() * validEvents.length)];
+            // [[NEW]] Use RandomEventService to filter and select
+            // Standard space travel context
+            const contextTags = [EVENT_CONSTANTS.TAGS.SPACE]; 
+            event = this.randomEventService.tryTriggerEvent(this.gameState, this.simulationService, contextTags);
         }
         
-        if (!event) {
-            this.logger.warn('TravelService', `Debug event trigger failed for index: ${force}`);
-            return false;
-        }
+        if (!event) return false;
         
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         this.gameState.setState({ pendingTravel: { destinationId } });
-        this.uiManager.showRandomEventModal(event, (eventId, choiceIndex) => this._resolveEventChoice(eventId, choiceIndex));
+        
+        // Use the new callback signature
+        this.uiManager.showRandomEventModal(event, (eventId, choiceId) => this._resolveEventChoice(eventId, choiceId));
         return true;
     }
 
     /**
-     * Resolves the player's choice in a random event and applies the outcome.
+     * Resolves the player's choice in a random event and applies the outcome using RandomEventService.
      * @param {string} eventId
-     * @param {number} choiceIndex
+     * @param {string} choiceId
      * @private
      */
-    _resolveEventChoice(eventId, choiceIndex) {
-        const event = DB.RANDOM_EVENTS.find(e => e.id === eventId);
-        const choice = event.choices[choiceIndex];
-        let random = Math.random();
-        const chosenOutcome = choice.outcomes.find(o => (random -= o.chance) < 0) || choice.outcomes[choice.outcomes.length - 1];
-    
-        const effectResult = this._applyEventEffects(chosenOutcome);
-    
-        let description = chosenOutcome.description;
-        if (effectResult && chosenOutcome.descriptions) {
-            description = chosenOutcome.descriptions[effectResult.key];
-            if (effectResult.amount) {
-                description = description.replace('{amount}', effectResult.amount);
-            }
+    _resolveEventChoice(eventId, choiceId) {
+        // [[NEW]] Delegate logic to RandomEventService
+        // We do NOT pass uiManager here because we want to manually handle the resumeTravel callback
+        const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
+
+        if (!result) {
+            this.logger.error('TravelService', 'Event resolution returned null.');
+            this.resumeTravel();
+            return;
+        }
+
+        // Format effects for display (Simple list generation)
+        let effectsHtml = '';
+        if (result.effects && result.effects.length > 0) {
+            effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
+            result.effects.forEach(eff => {
+                let effectText = '';
+                switch (eff.type) {
+                    case 'EFF_CREDITS':
+                        effectText = `Credits: ${eff.value > 0 ? '+' : ''}${formatCredits(eff.value)}`;
+                        break;
+                    case 'EFF_FUEL':
+                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_HULL':
+                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
+                        break;
+                    case 'EFF_TRAVEL_TIME':
+                    case 'EFF_MODIFY_TRAVEL':
+                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
+                        break;
+                    case 'EFF_ADD_ITEM':
+                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; 
+                        break;
+                    case 'EFF_REMOVE_ITEM':
+                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
+                        break;
+                    case 'EFF_LOSE_RANDOM_CARGO':
+                         effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         break;
+                    default:
+                        effectText = `Effect Applied`;
+                }
+                effectsHtml += `<li>${effectText}</li>`;
+            });
+            effectsHtml += '</ul>';
         }
     
-        this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose '${choice.title}' for event '${event.title}'.`);
-        this.uiManager.queueModal('event-modal', event.title, description, () => this.resumeTravel(), {
+        this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
+        
+        // Manually trigger the result modal so we can attach the resumeTravel callback
+        this.uiManager.queueModal('event-result-modal', 'Event Outcome', result.text + effectsHtml, () => this.resumeTravel(), {
+            dismissOutside: true,
             buttonText: 'Continue Journey'
         });
-    }
-
-    /**
-     * Applies a list of effects from a chosen event outcome by calling the effect resolver.
-     * @param {object} outcome
-     * @private
-     */
-    _applyEventEffects(outcome) {
-        let result = null;
-        outcome.effects.forEach(effect => {
-            const effectResult = applyEffect(this.gameState, this.simulationService, effect, outcome);
-            if (effectResult) {
-                result = effectResult;
-            }
-        });
-        this.gameState.setState({});
-        return result;
     }
 
     /**

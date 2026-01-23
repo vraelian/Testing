@@ -4,7 +4,7 @@ import { GameAttributes } from '../GameAttributes.js';
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
-import { playBlockingAnimation } from './ui/AnimationService.js';
+import { playBlockingAnimation } from './AnimationService.js'; // [[FIXED]] Correct Sibling Import
 
 export class UIHangarControl {
     /**

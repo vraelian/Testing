@@ -616,3 +616,24 @@ COMPONENT-SPECIFIC STYLING
    3. Performance Standard: Restored aggressive content-visibility:auto as SVG rendering is highly efficient on iOS.
    4. Sub-pixel Stability: SVG viewBox coordinates provide mathematical rigidity that survives 3D carousel scaling transforms.
 */
+
+/* [[NEW]] Animation Classes for Ship Transactions */
+.is-dematerializing {
+    animation: dematerialize 0.8s forwards;
+}
+
+@keyframes dematerialize {
+    0% { opacity: 1; transform: scale(1); filter: brightness(1); }
+    50% { opacity: 0.5; transform: scale(0.95); filter: brightness(2) blur(2px); }
+    100% { opacity: 0; transform: scale(0.1); filter: brightness(5) blur(10px); }
+}
+
+.is-boarding {
+    animation: board-ship 1.0s forwards;
+}
+
+@keyframes board-ship {
+    0% { border-color: var(--frame-border-color); box-shadow: 0 0 0 transparent; }
+    50% { border-color: var(--ot-cyan-base); box-shadow: 0 0 20px var(--ot-cyan-glow), inset 0 0 20px var(--ot-cyan-glow); }
+    100% { border-color: var(--ot-green-accent); box-shadow: 0 0 30px var(--ot-green-accent), inset 0 0 30px var(--ot-green-accent); }
+}
