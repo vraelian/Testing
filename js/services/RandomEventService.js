@@ -79,7 +79,11 @@ export class RandomEventService {
             return null;
         }
 
-        // 2. Calculate Dynamic Effects AND Apply Them
+        // 2. Capture the Title Logic
+        // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
+        const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
+
+        // 3. Calculate Dynamic Effects AND Apply Them
         const calculatedEffects = [];
         
         if (outcomeDef.effects) {
@@ -100,20 +104,16 @@ export class RandomEventService {
             });
         }
 
-        // 3. Trigger UI Feedback
+        // 4. Trigger UI Feedback
         if (uiManager) {
-            // [[IMMERSION UPDATE]]
-            // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
-            // REFACTOR: Removed 'Event Outcome' default to allow pure pass-through or debug ID
-            const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
-            
             // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 
-        // 4. Return the fully resolved package
+        // 5. Return the fully resolved package
         return {
             outcomeId: outcomeId,
+            title: eventTitle,
             text: outcomeDef.text, 
             effects: calculatedEffects
         };

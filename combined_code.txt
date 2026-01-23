@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.57</title>
+    <title>Orbital Trading 34.58</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.57</p>
+            <p>Version 34.58</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -16264,7 +16264,11 @@ export class RandomEventService {
             return null;
         }
 
-        // 2. Calculate Dynamic Effects AND Apply Them
+        // 2. Capture the Title Logic
+        // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
+        const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
+
+        // 3. Calculate Dynamic Effects AND Apply Them
         const calculatedEffects = [];
         
         if (outcomeDef.effects) {
@@ -16285,20 +16289,16 @@ export class RandomEventService {
             });
         }
 
-        // 3. Trigger UI Feedback
+        // 4. Trigger UI Feedback
         if (uiManager) {
-            // [[IMMERSION UPDATE]]
-            // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
-            // REFACTOR: Removed 'Event Outcome' default to allow pure pass-through or debug ID
-            const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
-            
             // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 
-        // 4. Return the fully resolved package
+        // 5. Return the fully resolved package
         return {
             outcomeId: outcomeId,
+            title: eventTitle,
             text: outcomeDef.text, 
             effects: calculatedEffects
         };
@@ -18475,7 +18475,8 @@ export class TravelService {
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
         // Manually trigger the result modal so we can attach the resumeTravel callback
-        this.uiManager.queueModal('event-result-modal', 'Event Outcome', result.text + effectsHtml, () => this.resumeTravel(), {
+        // FIXED: Using result.title instead of hardcoded string
+        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this.resumeTravel(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
         });
@@ -19255,7 +19256,7 @@ export class SimulationService {
         this._applyEventEffects(result.effects);
 
         // 3. Show Result Modal
-        this.uiManager.showEventResultModal(result.text, result.effects);
+        this.uiManager.showEventResultModal(result.title, result.text, result.effects);
     }
 
     /**
@@ -26894,6 +26895,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.58] - 2026-1-23
+-  fixed contextual event outcome modal titling
+
 ## [34.57] - 2026-1-22
 -  refactored UIManager.js
 -  added UIEventControl.js
@@ -28597,13 +28601,15 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Ongoing, WIP Efforts
+- Service Vouchers as mission awards
 - Achievements
 - Selecting Credit text on Nav bar transitions to Finance Screen
-- Why are Intel products gated by minimum time passage?
+- Why is Intel hidden by passage of time?
 - Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
-- Events: award ship upgrade
+- Events/missions: award ship upgrade
 - add date to center of Nav Header, verify time time delay effects and time passage
 - Update event writing to be canon with lore.
+- Add location navigation link to Intel modals
 
 ## Immediate Concerns, Bugs
 

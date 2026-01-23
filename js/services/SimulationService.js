@@ -129,7 +129,7 @@ export class SimulationService {
         this._applyEventEffects(result.effects);
 
         // 3. Show Result Modal
-        this.uiManager.showEventResultModal(result.text, result.effects);
+        this.uiManager.showEventResultModal(result.title, result.text, result.effects);
     }
 
     /**

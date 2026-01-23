@@ -358,7 +358,8 @@ export class TravelService {
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
         // Manually trigger the result modal so we can attach the resumeTravel callback
-        this.uiManager.queueModal('event-result-modal', 'Event Outcome', result.text + effectsHtml, () => this.resumeTravel(), {
+        // FIXED: Using result.title instead of hardcoded string
+        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this.resumeTravel(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
         });
