@@ -69,14 +69,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_coolant_fix': {
+                title: 'Systems Stabilized',
                 text: 'You manually override the coolant loops, crushing the blocks of Water Ice into the reservoir. The temperature graph plummets back to the green.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 }]
             },
             'out_vent_damage': {
+                title: 'Emergency Venting',
                 text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
             },
             'out_shutdown_delay': {
+                title: 'Reboot Sequence',
                 text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
             }
@@ -117,18 +120,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_replace': {
+                title: 'Maintenance Complete',
                 text: 'The new Plasteel housing seats perfectly. The vibration vanishes.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 2 }]
             },
             'out_tune_success': {
+                title: 'Harmonics Aligned',
                 text: 'You wrestle with the magnetic field harmonics for hours. Finally, the waveform syncs up.',
                 effects: []
             },
             'out_tune_fail': {
+                title: 'Fuel Dump',
                 text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
             },
             'out_push_fail': {
+                title: 'Structural Stress',
                 text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
             }
@@ -169,18 +176,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_patch': {
+                title: 'System Restored',
                 text: 'The extra compute power chews through the bad code in seconds.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
             },
             'out_reboot': {
+                title: 'Reboot Complete',
                 text: 'You pull the main breaker. When the OS reloads, you realize the ship has drifted off-vector.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
             },
             'out_override_success': {
+                title: 'Override Successful',
                 text: 'You bypass the safety protocols and force the last known trajectory. It works.',
                 effects: []
             },
             'out_override_fail': {
+                title: 'Navigational Error',
                 text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
             }
@@ -221,18 +232,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_reinforce': {
+                title: 'Hull Reinforced',
                 text: 'You weld Plasteel bracing over the affected area. It is an ugly patch, but stronger than the original.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
             },
             'out_slow': {
+                title: 'Velocity Reduced',
                 text: 'You dial back the engine thrust. The stress eases, but your arrival time slips further away.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
             },
             'out_maintain_success': {
+                title: 'Holding Together',
                 text: 'You watch the stress gauges for the entire trip. Miraculously, the metal groans but doesn\'t buckle.',
                 effects: []
             },
             'out_maintain_fail': {
+                title: 'Structural Failure',
                 text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
             }
@@ -270,14 +285,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_evade': {
+                title: 'Evasion Successful',
                 text: 'You slam the throttle forward, vectoring hard "up" relative to the ecliptic. It consumes fuel, but you clear the cloud.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } }]
             },
             'out_tank': {
+                title: 'Impact Sustained',
                 text: 'It sounds like hail on a tin roof. Impacts pit the hull and shatter sensors.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
             },
             'out_drift': {
+                title: 'Navigation Complete',
                 text: 'You kill your velocity and gently drift through the widening gaps. It is safe, but agonizingly slow.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
             }
@@ -318,18 +336,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_harden': {
+                title: 'Shields Holding',
                 text: 'You rig extra Plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
             },
             'out_shadow': {
+                title: 'Storm Passed',
                 text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
             },
             'out_run_success': {
+                title: 'Outrun',
                 text: 'You pushed the engines to the redline and managed to stay just ahead of the worst wavefront.',
                 effects: []
             },
             'out_run_fail': {
+                title: 'Radiation Leak',
                 text: 'Hard radiation pierces the cargo bay, ionizing a portion of your manifest.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.20 }]
             }
@@ -364,14 +386,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_burn': {
+                title: 'Orbit Corrected',
                 text: 'You burn directly against the gravity vector. The engines scream, consuming reaction mass at a terrifying rate.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
             },
             'out_decay': {
+                title: 'Decay & Recovery',
                 text: 'You surrender to the physics, letting the planet pull you into a long, elliptical orbit before flinging you back out.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
             },
             'out_slingshot': {
+                title: 'Gravity Assist',
                 text: 'You dip deeper into the well, using the Oberth effect to steal momentum. You exit faster than you entered.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: -0.10 } }]
             }
@@ -412,18 +437,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_filter': {
+                title: 'Signal Clear',
                 text: 'The new Processors work overtime, filtering the noise from the data. The sensor picture snaps into focus.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
             },
             'out_wait': {
+                title: 'Storm Waited Out',
                 text: 'It is too dangerous. You cut velocity and wait for the magnetic storm to drift past.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
             },
             'out_blind_success': {
+                title: 'Pure Luck',
                 text: 'You flew by feel and luck. The hull remains intact.',
                 effects: []
             },
             'out_blind_fail': {
+                title: 'Collision Alert',
                 text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
             }
@@ -462,14 +491,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_bribe': {
+                title: 'Fee Accepted',
                 text: 'You transfer the fee. The inspector suddenly decides your ship looks visibly compliant.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
             },
             'out_inspect': {
+                title: 'Bureaucratic Delay',
                 text: 'They board you. They check every seal. It takes a week.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
             },
             'out_bylaws': {
+                title: 'Inspection Waived',
                 text: 'You transmit Guild Statute 12-C regarding "In-Transit Sovereignty." The inspector grumbles and moves on.',
                 effects: []
             }
@@ -509,10 +541,12 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_pay': {
+                title: 'Tariff Paid',
                 text: 'You pay the toll. It stings, but they grant you a coded squawk that clears your passage.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.01 } }]
             },
             'out_divert': {
+                title: 'Detour Plotted',
                 text: 'You plot a course through deep space, skirting the edge of their sensor net.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
@@ -520,10 +554,12 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_run_success': {
+                title: 'Blockade Runner',
                 text: 'You run silent, masking your thermal signature. You slip through their net.',
                 effects: []
             },
             'out_run_fail': {
+                title: 'Violation Detected',
                 text: 'A patrol drone tags you. "Toll violation detected." They garnish your accounts automatically.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } }]
             }
@@ -558,14 +594,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_service': {
+                title: 'Decon Complete',
                 text: 'You pay for a remote drone service. It sprays your hull with harsh foam and clears your flag.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.03 } }]
             },
             'out_chem': {
+                title: 'Chemical Scrub',
                 text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the mold.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: 5 }]
             },
             'out_park': {
+                title: 'Solar Cleanse',
                 text: 'You park the ship in a high-radiation orbit and wait for the UV light to kill the spores.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
             }
@@ -606,18 +645,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_lawyer': {
+                title: 'Case Dismissed',
                 text: 'You hire a digital legal AI. It files an injunction and clears the error in milliseconds.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
             },
             'out_spoof': {
+                title: 'Records Falsified',
                 text: 'You use Processors to brute-force a timestamp correction. The record now shows you renewed it yesterday.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }]
             },
             'out_dispute_success': {
+                title: 'Appeal Granted',
                 text: 'You argue your case with passion. The AI finds a precedent and dismisses the charge.',
                 effects: []
             },
             'out_dispute_fail': {
+                title: 'Appeal Denied',
                 text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } },
@@ -658,6 +701,7 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_transfer': {
+                title: 'Fuel Transferred',
                 text: '"Thank you, captain. We don\'t have credits, but here is our scan data for the local market."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } },
@@ -665,6 +709,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_tow': {
+                title: 'Vessel Recovered',
                 text: 'You drag them to the nearest lane. The Guild pays a standard bounty for assisting distressed vessels.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
@@ -673,6 +718,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_ignore': {
+                title: 'Hail Ignored',
                 text: 'You cut the comms. Their signal fades behind you.',
                 effects: []
             }
@@ -713,6 +759,7 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_donate_ice': {
+                title: 'Patient Stabilized',
                 text: '"Payment transferred. You saved a life today, captain."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 },
@@ -720,6 +767,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_donate_cyber': {
+                title: 'Systems Restored',
                 text: '"Payment transferred. You saved a life today, captain."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
@@ -727,6 +775,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_dock': {
+                title: 'Medical Assistance',
                 text: 'You help stabilize the patient personally. The liner\'s captain shares high-level encryption keys.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } },
@@ -734,6 +783,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_ignore': {
+                title: 'Broadcast Ignored',
                 text: 'You fly past.',
                 effects: []
             }
@@ -768,6 +818,7 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_buy': {
+                title: 'Data Acquired',
                 text: 'You transfer the credits. A packet of market data floods your computer.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.01 } },
@@ -775,6 +826,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_barter': {
+                title: 'Exchange Complete',
                 text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
@@ -782,6 +834,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_decline': {
+                title: 'Connection Closed',
                 text: 'The corvette vanishes into the black.',
                 effects: []
             }
@@ -816,6 +869,7 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_draft': {
+                title: 'Slipstream Entered',
                 text: 'You tuck in behind the massive engine bells. Your fuel consumption drops to near zero, but you are limited to their speed.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: 0.10 } },
@@ -823,6 +877,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_sell': {
+                title: 'Transaction Complete',
                 text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 },
@@ -830,6 +885,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_pass': {
+                title: 'Overtaking',
                 text: 'You overtake the slow convoy.',
                 effects: []
             }
@@ -874,18 +930,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_foam': {
+                title: 'Cargo Secured',
                 text: 'You spray industrial foam into the clamp mechanism. It hardens instantly, welding the pod to the frame.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }]
             },
             'out_jettison': {
+                title: 'Cargo Ejected',
                 text: 'You blow the emergency bolts. The pod tumbles away into the dark.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 }]
             },
             'out_hold_success': {
+                title: 'Locks Holding',
                 text: 'The clamps groan and spark, but they hold for the duration.',
                 effects: []
             },
             'out_hold_fail': {
+                title: 'Containment Breach',
                 text: 'The clamp fails. The pod shears off, ripping through the dorsal plating.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } },
@@ -923,14 +983,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_ice': {
+                title: 'Temp Stabilized',
                 text: 'You feed Water Ice into the heat exchanger. The temp drops back to safe levels.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: 5 }]
             },
             'out_power': {
+                title: 'Power Diverted',
                 text: 'You divert main engine power to the cryo-units. Your engines run inefficiently.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } }]
             },
             'out_vent': {
+                title: 'Partial Loss',
                 text: 'You open the airlock, flash-freezing the cargo. Some is sucked out, but the rest is saved.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.05 }]
             }
@@ -964,14 +1027,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_restack': {
+                title: 'Cargo Secured',
                 text: 'You spend a day in zero-G, manually winching containers back into place.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } }]
             },
             'out_thrust': {
+                title: 'Thrusters Compensating',
                 text: 'You let the thrusters fight the wobble. They fire constantly to keep the ship straight.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
             },
             'out_ignore': {
+                title: 'Structural Stress',
                 text: 'The constant oscillation stresses the ship\'s frame until rivets start popping.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
             }
@@ -1006,14 +1072,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_fumigate': {
+                title: 'Sterilization Complete',
                 text: 'You flood the hold with toxic Propellant vapor. It kills the bloom instantly.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: 5 }]
             },
             'out_vac': {
+                title: 'Vacuum Exposure',
                 text: 'You vent the atmosphere. The sudden pressure drop ruptures some containers.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.05 }]
             },
             'out_ignore': {
+                title: 'Cargo Spoiled',
                 text: 'By the time you arrive, a quarter of the shipment is covered in green slime.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.25 }]
             }
@@ -1058,18 +1127,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_scavenge_success': {
+                title: 'Components Recovered',
                 text: 'You grapple the probe and strip it for parts. High-grade electronics!',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 3 }]
             },
             'out_scavenge_fail': {
+                title: 'Trap Triggered',
                 text: 'A self-destruct charge triggers as you touch it. The explosion rocks your ship.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
             },
             'out_logs': {
+                title: 'Data Decrypted',
                 text: 'You recover some old stellar charts from the corrupted memory core.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }]
             },
             'out_leave': {
+                title: 'Signal Ignored',
                 text: 'You leave the relic alone.',
                 effects: []
             }
@@ -1111,14 +1184,17 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_grapple_success': {
+                title: 'Lucky Find',
                 text: 'You bring it aboard. It is full of legitimate trade goods!',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }]
             },
             'out_grapple_fail': {
+                title: 'Hazardous Waste',
                 text: 'You bring it aboard. It is full of industrial sludge. You have to pay a disposal fee.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
             },
             'out_scan': {
+                title: 'Scan Confirmed',
                 text: 'You burn high-end sensors to peer inside. It reveals valid cargo, which you collect safely.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
@@ -1126,6 +1202,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_ignore': {
+                title: 'Object Avoided',
                 text: 'Not worth the risk.',
                 effects: []
             }
@@ -1165,6 +1242,7 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_scrap': {
+                title: 'Scrap Harvested',
                 text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.05 } },
@@ -1172,6 +1250,7 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_deep_success': {
+                title: 'Core Salvaged',
                 text: 'You find a surviving computer core and some intact cybernetics.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } },
@@ -1180,10 +1259,12 @@ export const RANDOM_EVENTS = [
                 ]
             },
             'out_deep_fail': {
+                title: 'Collision!',
                 text: 'A piece of debris you didn\'t see slams into your engine bell.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
             },
             'out_pass': {
+                title: 'Course Maintained',
                 text: 'You navigate through without stopping.',
                 effects: []
             }
@@ -1224,18 +1305,22 @@ export const RANDOM_EVENTS = [
         ],
         outcomes: {
             'out_investigate_success': {
+                title: 'Dead Drop Found',
                 text: 'It is a dead drop from the last war. You crack the code and find a stash of credits.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.005 } }]
             },
             'out_investigate_fail': {
+                title: 'Malware Detected',
                 text: 'As soon as you link up, a virus uploads itself to your finance computer and siphons funds.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
             },
             'out_nav': {
+                title: 'Threat Identified',
                 text: 'Your advanced sensors flag the signal as a known malware signature. You mark it for deletion and move on.',
                 effects: []
             },
             'out_ignore': {
+                title: 'Signal Ignored',
                 text: 'Not worth the risk.',
                 effects: []
             }

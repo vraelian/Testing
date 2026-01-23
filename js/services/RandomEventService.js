@@ -102,9 +102,11 @@ export class RandomEventService {
 
         // 3. Trigger UI Feedback
         if (uiManager) {
-            // [[CRITICAL FIX]] We prioritize the template title, then the root title.
-            // We pass 3 arguments: (Title, Text, Effects) to match the new UIEventControl signature.
-            const eventTitle = eventDef.template?.title || eventDef.title || 'Event Outcome';
+            // [[IMMERSION UPDATE]]
+            // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
+            const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || 'Event Outcome';
+            
+            // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 

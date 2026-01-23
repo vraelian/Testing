@@ -359,7 +359,28 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showEventResultModal(title, text, effects) {
+    showEventResultModal(arg1, arg2, arg3) {
+        // [[DEFENSIVE CODING]] 
+        // Auto-detect if we received (Title, Text, Effects) or (Text, Effects)
+        // This solves the "Broken Modal" issue if RandomEventService is cached or out of sync.
+        
+        console.log('[UIEventControl] showEventResultModal received:', arg1, arg2, arg3);
+        
+        let title, text, effects;
+
+        if (arg3 === undefined && Array.isArray(arg2)) {
+            // DETECTED LEGACY FORMAT: (Text, Effects)
+            console.warn('[UIEventControl] Detected legacy signature (2 args). Auto-correcting to prevent [object Object] error.');
+            title = 'Event Outcome'; // Fallback Title
+            text = arg1;             // Text was passed as first arg
+            effects = arg2;          // Effects were passed as second arg
+        } else {
+            // DETECTED CORRECT FORMAT: (Title, Text, Effects)
+            title = arg1;
+            text = arg2;
+            effects = arg3;
+        }
+
         let effectsHtml = '';
         if (effects && effects.length > 0) {
             // Increased text size (text-lg) and center alignment
@@ -407,7 +428,6 @@ export class UIEventControl {
             effectsHtml += '</ul>';
         }
 
-        // Use the context-aware title passed from the service
         this.manager.queueModal('event-result-modal', title, text + effectsHtml, null, {
             dismissOutside: false, // Enforced user interaction
             dismissInside: false,
