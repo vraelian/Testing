@@ -54,9 +54,23 @@ export class UIModalEngine {
         modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
-        const titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
+        // --- TITLE ELEMENT RESOLUTION ---
+        // 1. Strict Check: Expects convention [modalId]-title (e.g., 'event-result-title')
+        let titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
+        let titleEl = modal.querySelector(`#${titleElId}`);
+
+        // 2. Fallback: If strict ID not found, check for generic 'event-title' if it's an event modal
+        if (!titleEl && (modalId.includes('event') || modalId === 'event-result-modal')) {
+            titleEl = modal.querySelector('#event-title') || modal.querySelector('#title');
+        }
+
+        // 3. Fallback: Try to find a generic class or tag
+        if (!titleEl) {
+            titleEl = modal.querySelector('.modal-title') || modal.querySelector('h3');
+        }
+
+        // --- DESCRIPTION ELEMENT RESOLUTION ---
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
-        const titleEl = modal.querySelector(`#${titleElId}`);
         const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
 
         if (titleEl) titleEl.innerHTML = title;
@@ -68,7 +82,7 @@ export class UIModalEngine {
                 descEl.classList.add('mb-6', 'text-lg');
             }
 
-            if (modalId === 'event-modal' || modalId === 'random-event-modal') {
+            if (modalId === 'event-modal' || modalId === 'random-event-modal' || modalId === 'event-result-modal') {
                 descEl.classList.add('text-center');
             }
 

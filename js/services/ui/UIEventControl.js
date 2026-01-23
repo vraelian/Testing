@@ -359,26 +359,25 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showEventResultModal(arg1, arg2, arg3) {
-        // [[DEFENSIVE CODING]] 
-        // Auto-detect if we received (Title, Text, Effects) or (Text, Effects)
-        // This solves the "Broken Modal" issue if RandomEventService is cached or out of sync.
-        
-        console.log('[UIEventControl] showEventResultModal received:', arg1, arg2, arg3);
-        
+    showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined) {
         let title, text, effects;
 
-        if (arg3 === undefined && Array.isArray(arg2)) {
-            // DETECTED LEGACY FORMAT: (Text, Effects)
-            console.warn('[UIEventControl] Detected legacy signature (2 args). Auto-correcting to prevent [object Object] error.');
-            title = 'Event Outcome'; // Fallback Title
-            text = arg1;             // Text was passed as first arg
-            effects = arg2;          // Effects were passed as second arg
+        // Check if argument 1 is title (string) and argument 2 is text (string)
+        if (typeof titleOrText === 'string' && typeof textOrEffects === 'string') {
+            title = titleOrText;
+            text = textOrEffects;
+            effects = effectsOrUndefined || [];
+        } else if (Array.isArray(textOrEffects)) {
+            // Fallback for potential legacy calls (Text, Effects)
+            console.warn('[UIEventControl] Legacy signature detected (2 args). Using default title.');
+            title = 'Event Outcome';
+            text = titleOrText;
+            effects = textOrEffects;
         } else {
-            // DETECTED CORRECT FORMAT: (Title, Text, Effects)
-            title = arg1;
-            text = arg2;
-            effects = arg3;
+             // Safe Fallback
+             title = 'Event Outcome';
+             text = titleOrText || '';
+             effects = [];
         }
 
         let effectsHtml = '';
