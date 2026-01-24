@@ -128,8 +128,54 @@ export class SimulationService {
         // 2. Apply Effects
         this._applyEventEffects(result.effects);
 
-        // 3. Show Result Modal
-        this.uiManager.showEventResultModal(result.title, result.text, result.effects);
+        // 3. Show Result Modal with Post-Check Callback
+        this.uiManager.showEventResultModal(
+            result.title, 
+            result.text, 
+            result.effects, 
+            () => this._handlePostForceEvent()
+        );
+    }
+
+    /**
+     * Handles post-event logic for forced/debug events, checking for hull or fuel depletion.
+     * @private
+     */
+    _handlePostForceEvent() {
+        const ship = this._getActiveShip();
+        if (!ship) return;
+
+        // 1. Check Destruction (Hull <= 0)
+        if (ship.health <= 0) {
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear any pending travel state
+            
+            if (this.travelService) {
+                this.travelService._handleShipDestruction(ship.id);
+            }
+            return;
+        }
+
+        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
+        if (ship.fuel <= 0) {
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear pending travel
+            
+            // Ensure fuel is exactly 0
+            this.gameState.player.shipStates[ship.id].fuel = 0;
+            
+            this.logger.info.player(this.gameState.day, 'EVENT_FAIL', `Ship ran out of fuel (Forced Event). Towed back to port.`);
+            
+            const locId = this.gameState.currentLocationId;
+            const location = DB.MARKETS.find(m => m.id === locId);
+            const locName = location ? location.name : "Port";
+            
+            this.uiManager.queueModal(
+                'event-modal', 
+                'Fuel Depleted', 
+                `Your engines sputter and die. A passing freighter tows you back to <b>${locName}</b>.`
+            );
+            
+            this.gameState.setState({}); // Refresh UI
+        }
     }
 
     /**

@@ -52,10 +52,8 @@ const effectHandlers = {
         // NEW: effect.value is a resolved integer (e.g. -10 damage)
         shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + effect.value));
         
-        // Trigger death check if health hits 0
-        if (shipState.health <= 0) {
-            simulationService.travelService._handleShipDestruction(ship.id);
-        }
+        // REMOVED: Immediate death check. 
+        // Logic moved to TravelService._postEventCheck() to allow user to see outcome first.
     },
 
     // 4. DEBT

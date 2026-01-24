@@ -13212,8 +13212,9 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined) {
+    showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
+        let onDismiss = (typeof callback === 'function') ? callback : null;
 
         // --- REFACTOR: Robust Argument Parsing (Final) ---
         
@@ -13232,6 +13233,10 @@ export class UIEventControl {
             title = 'System Alert'; // Legacy implies no title provided
             text = titleOrText || '';
             effects = textOrEffects;
+            // Support callback in 3rd position for legacy calls if needed
+            if (typeof effectsOrUndefined === 'function') {
+                onDismiss = effectsOrUndefined;
+            }
         } 
         // 3. Simple Message Signature: (Title, Text) - No effects
         // Fallback for simple messages where both are strings
@@ -13293,7 +13298,7 @@ export class UIEventControl {
             effectsHtml += '</ul>';
         }
 
-        this.manager.queueModal('event-result-modal', title, text + effectsHtml, null, {
+        this.manager.queueModal('event-result-modal', title, text + effectsHtml, onDismiss, {
             dismissOutside: false, // Enforced user interaction
             dismissInside: false,
             contentClass: 'text-center', // Enforced Center Alignment
@@ -13312,6 +13317,7 @@ export class UIEventControl {
         }).join('');
     }
 }
+
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
 
 --- START OF FILE: ./js/services/ui/UITutorialManager.js ---
@@ -18545,11 +18551,55 @@ export class TravelService {
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
         // Manually trigger the result modal so we can attach the resumeTravel callback
-        // FIXED: Using result.title instead of hardcoded string
-        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this.resumeTravel(), {
+        // CHANGED: Callback now points to _postEventCheck to handle death/fuel scenarios *after* acknowledgment.
+        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this._postEventCheck(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
         });
+    }
+
+    /**
+     * Checks for critical failures (Hull or Fuel depletion) after an event outcome.
+     * If failed, aborts the travel. If healthy, resumes travel.
+     * @private
+     */
+    _postEventCheck() {
+        const ship = this.simulationService._getActiveShip();
+        if (!ship) { 
+            this.resumeTravel(); 
+            return; 
+        }
+
+        // 1. Check Destruction (Hull <= 0)
+        if (ship.health <= 0) {
+            this.gameState.pendingTravel = null; // Cancel trip
+            this._handleShipDestruction(ship.id);
+            return;
+        }
+
+        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
+        if (ship.fuel <= 0) {
+            this.gameState.pendingTravel = null; // Cancel trip (remain at origin)
+            
+            // Ensure fuel is exactly 0
+            this.gameState.player.shipStates[ship.id].fuel = 0;
+            
+            this.logger.info.player(this.gameState.day, 'TRAVEL_ABORT', `Ship ran out of fuel after event. Towed back to port.`);
+            
+            const originName = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId)?.name || "Port";
+            
+            this.uiManager.queueModal(
+                'event-modal', 
+                'Fuel Depleted', 
+                `Your engines sputter and die, leaving you drifting in the void. <br><br>After days of signaling, a passing freighter tows you back to <b>${originName}</b>. The rescue fees have left you with an empty tank.`
+            );
+            
+            this.gameState.setState({}); // Refresh UI
+            return;
+        }
+
+        // 3. All Systems Nominal - Proceed
+        this.resumeTravel();
     }
 
     /**
@@ -19325,8 +19375,54 @@ export class SimulationService {
         // 2. Apply Effects
         this._applyEventEffects(result.effects);
 
-        // 3. Show Result Modal
-        this.uiManager.showEventResultModal(result.title, result.text, result.effects);
+        // 3. Show Result Modal with Post-Check Callback
+        this.uiManager.showEventResultModal(
+            result.title, 
+            result.text, 
+            result.effects, 
+            () => this._handlePostForceEvent()
+        );
+    }
+
+    /**
+     * Handles post-event logic for forced/debug events, checking for hull or fuel depletion.
+     * @private
+     */
+    _handlePostForceEvent() {
+        const ship = this._getActiveShip();
+        if (!ship) return;
+
+        // 1. Check Destruction (Hull <= 0)
+        if (ship.health <= 0) {
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear any pending travel state
+            
+            if (this.travelService) {
+                this.travelService._handleShipDestruction(ship.id);
+            }
+            return;
+        }
+
+        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
+        if (ship.fuel <= 0) {
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear pending travel
+            
+            // Ensure fuel is exactly 0
+            this.gameState.player.shipStates[ship.id].fuel = 0;
+            
+            this.logger.info.player(this.gameState.day, 'EVENT_FAIL', `Ship ran out of fuel (Forced Event). Towed back to port.`);
+            
+            const locId = this.gameState.currentLocationId;
+            const location = DB.MARKETS.find(m => m.id === locId);
+            const locName = location ? location.name : "Port";
+            
+            this.uiManager.queueModal(
+                'event-modal', 
+                'Fuel Depleted', 
+                `Your engines sputter and die. A passing freighter tows you back to <b>${locName}</b>.`
+            );
+            
+            this.gameState.setState({}); // Refresh UI
+        }
     }
 
     /**
@@ -21685,10 +21781,8 @@ const effectHandlers = {
         // NEW: effect.value is a resolved integer (e.g. -10 damage)
         shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + effect.value));
         
-        // Trigger death check if health hits 0
-        if (shipState.health <= 0) {
-            simulationService.travelService._handleShipDestruction(ship.id);
-        }
+        // REMOVED: Immediate death check. 
+        // Logic moved to TravelService._postEventCheck() to allow user to see outcome first.
     },
 
     // 4. DEBT
@@ -26969,9 +27063,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [34.59] - 2026-1-23
+## [34.61] - 2026-1-23
 -  fixed contextual event outcome modal titling
 -  added color scheme to event outcome costs
+-  added 0 fuel event contingency
+-  added 0 hull event contingency
 
 ## [34.57] - 2026-1-22
 -  refactored UIManager.js
@@ -28715,14 +28811,10 @@ All notable plans and desirables for the Orbital Trading project will be documen
 --- END OF FILE: ./meta/ROADMAP.md ---
 
 --- START OF FILE: ./meta/SERVICES.md ---
-{
-type: file_update,
-fileName: meta/SERVICES.md,
-fullContent:
 # Service Responsibility & Dependency Matrix
 
 ## Core Architecture
-**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
+**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the **Event System 2.0**, handling Debug Event injection and high-level resolution orchestration.
 
 ---
 
@@ -28745,7 +28837,7 @@ fullContent:
 
 * **TravelService (F036)**
     * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
-    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. Uses `MOD_FUEL_BURN` for consumption logic.
+    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. **Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.** Uses `MOD_FUEL_BURN` for consumption logic.
     * **Dependencies**: `GameState`, `TimeService`, `RandomEventService`.
 
 * **MarketService (F010)**
@@ -28801,7 +28893,7 @@ fullContent:
 
 * **eventEffectResolver**
     * **Responsibility**: The "Applicator". Applies the specific state mutations defined by an event's outcome.
-    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly.
+    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly. **Pure state mutation only; does not handle game-over consequences.**
     * **Dependencies**: `GameState`, `SimulationService`, `DynamicValueResolver`.
 
 ---
@@ -28818,7 +28910,7 @@ fullContent:
         * **`UIMarketControl`**: Manages Market screen rendering, input state retention, and SVG graphs.
         * **`UIMissionControl`**: Manages Mission screens, Sticky Bar HUD, and Intel Broker logic.
         * **`UIHangarControl`**: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-        * **`UIEventControl`**: Manages "World" interactions: Random Events, Maps, Lore, and Launch modals.
+        * **`UIEventControl`**: Manages "World" interactions: Random Events (Selection & Results with callbacks), Maps, Lore, and Launch modals.
 
 * **IntelMarketRenderer (F058)**
     * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab content (Called by `UIMissionControl`).
@@ -28877,7 +28969,7 @@ fullContent:
 * **`intelMessages.js`**: Defines message templates for free and purchased market intel.
 * **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
 * **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
-}
+
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

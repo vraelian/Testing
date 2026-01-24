@@ -1,11 +1,7 @@
-{
-type: file_update,
-fileName: meta/SERVICES.md,
-fullContent:
 # Service Responsibility & Dependency Matrix
 
 ## Core Architecture
-**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below.
+**SimulationService** acts as the central Facade. It is the only service that the `EventManager` talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the **Event System 2.0**, handling Debug Event injection and high-level resolution orchestration.
 
 ---
 
@@ -28,7 +24,7 @@ fullContent:
 
 * **TravelService (F036)**
     * **Responsibility**: Manages the travel loop. Calculates fuel/time costs, triggers random events.
-    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. Uses `MOD_FUEL_BURN` for consumption logic.
+    * **Key Behavior**: Uses `GameState.TRAVEL_DATA` for distances. Pauses travel for event resolution. **Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.** Uses `MOD_FUEL_BURN` for consumption logic.
     * **Dependencies**: `GameState`, `TimeService`, `RandomEventService`.
 
 * **MarketService (F010)**
@@ -84,7 +80,7 @@ fullContent:
 
 * **eventEffectResolver**
     * **Responsibility**: The "Applicator". Applies the specific state mutations defined by an event's outcome.
-    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly.
+    * **Key Behavior**: Routes effect types (e.g., `MODIFY_FUEL`, `REMOVE_ITEM`) to specific handler functions. Mutates `GameState` or `pendingTravel` accordingly. **Pure state mutation only; does not handle game-over consequences.**
     * **Dependencies**: `GameState`, `SimulationService`, `DynamicValueResolver`.
 
 ---
@@ -101,7 +97,7 @@ fullContent:
         * **`UIMarketControl`**: Manages Market screen rendering, input state retention, and SVG graphs.
         * **`UIMissionControl`**: Manages Mission screens, Sticky Bar HUD, and Intel Broker logic.
         * **`UIHangarControl`**: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-        * **`UIEventControl`**: Manages "World" interactions: Random Events, Maps, Lore, and Launch modals.
+        * **`UIEventControl`**: Manages "World" interactions: Random Events (Selection & Results with callbacks), Maps, Lore, and Launch modals.
 
 * **IntelMarketRenderer (F058)**
     * **Responsibility**: Dedicated renderer for the dynamic "Intel Market" tab content (Called by `UIMissionControl`).
@@ -160,4 +156,3 @@ fullContent:
 * **`intelMessages.js`**: Defines message templates for free and purchased market intel.
 * **`intelContent.js`**: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
 * **`eulaContent.js`**: Defines the static HTML content for the EULA modal.
-}

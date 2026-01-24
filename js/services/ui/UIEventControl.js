@@ -359,8 +359,9 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined) {
+    showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
+        let onDismiss = (typeof callback === 'function') ? callback : null;
 
         // --- REFACTOR: Robust Argument Parsing (Final) ---
         
@@ -379,6 +380,10 @@ export class UIEventControl {
             title = 'System Alert'; // Legacy implies no title provided
             text = titleOrText || '';
             effects = textOrEffects;
+            // Support callback in 3rd position for legacy calls if needed
+            if (typeof effectsOrUndefined === 'function') {
+                onDismiss = effectsOrUndefined;
+            }
         } 
         // 3. Simple Message Signature: (Title, Text) - No effects
         // Fallback for simple messages where both are strings
@@ -440,7 +445,7 @@ export class UIEventControl {
             effectsHtml += '</ul>';
         }
 
-        this.manager.queueModal('event-result-modal', title, text + effectsHtml, null, {
+        this.manager.queueModal('event-result-modal', title, text + effectsHtml, onDismiss, {
             dismissOutside: false, // Enforced user interaction
             dismissInside: false,
             contentClass: 'text-center', // Enforced Center Alignment

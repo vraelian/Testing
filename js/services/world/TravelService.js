@@ -358,11 +358,55 @@ export class TravelService {
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
         // Manually trigger the result modal so we can attach the resumeTravel callback
-        // FIXED: Using result.title instead of hardcoded string
-        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this.resumeTravel(), {
+        // CHANGED: Callback now points to _postEventCheck to handle death/fuel scenarios *after* acknowledgment.
+        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this._postEventCheck(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
         });
+    }
+
+    /**
+     * Checks for critical failures (Hull or Fuel depletion) after an event outcome.
+     * If failed, aborts the travel. If healthy, resumes travel.
+     * @private
+     */
+    _postEventCheck() {
+        const ship = this.simulationService._getActiveShip();
+        if (!ship) { 
+            this.resumeTravel(); 
+            return; 
+        }
+
+        // 1. Check Destruction (Hull <= 0)
+        if (ship.health <= 0) {
+            this.gameState.pendingTravel = null; // Cancel trip
+            this._handleShipDestruction(ship.id);
+            return;
+        }
+
+        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
+        if (ship.fuel <= 0) {
+            this.gameState.pendingTravel = null; // Cancel trip (remain at origin)
+            
+            // Ensure fuel is exactly 0
+            this.gameState.player.shipStates[ship.id].fuel = 0;
+            
+            this.logger.info.player(this.gameState.day, 'TRAVEL_ABORT', `Ship ran out of fuel after event. Towed back to port.`);
+            
+            const originName = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId)?.name || "Port";
+            
+            this.uiManager.queueModal(
+                'event-modal', 
+                'Fuel Depleted', 
+                `Your engines sputter and die, leaving you drifting in the void. <br><br>After days of signaling, a passing freighter tows you back to <b>${originName}</b>. The rescue fees have left you with an empty tank.`
+            );
+            
+            this.gameState.setState({}); // Refresh UI
+            return;
+        }
+
+        // 3. All Systems Nominal - Proceed
+        this.resumeTravel();
     }
 
     /**
