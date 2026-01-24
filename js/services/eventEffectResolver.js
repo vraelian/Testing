@@ -8,7 +8,8 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { GameAttributes } from './GameAttributes.js';
 
 /**
  * A map of effect type strings to their corresponding handler functions.
@@ -164,6 +165,55 @@ const effectHandlers = {
             
             // Append to text for user clarity
             if (outcome) outcome.text += ` (Salvaged ${amountToAdd}x ${randomCom.name})`;
+        }
+    },
+
+    // 11. ADD UPGRADE (Grant Specific Upgrade)
+    [EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE]: (gameState, simulationService, effect, outcome) => {
+        const ship = simulationService._getActiveShip();
+        const shipState = gameState.player.shipStates[ship.id];
+        const upgradeId = effect.target; // Target contains the Upgrade ID (e.g. UPG_ECO_FUEL_1)
+
+        shipState.upgrades = shipState.upgrades || [];
+
+        if (!shipState.upgrades.includes(upgradeId)) {
+            shipState.upgrades.push(upgradeId);
+            
+            if (outcome) {
+                const def = GameAttributes.getDefinition(upgradeId);
+                const name = def ? def.name : upgradeId;
+                outcome.text += ` (Installed Upgrade: ${name})`;
+            }
+
+            // [[NEW]] Switch to Hangar view to show the new upgrade
+            // Ensure we are looking at Owned Ships, not the Shipyard
+            gameState.uiState.hangarShipyardToggleState = 'hangar';
+            
+            // Navigate to the screen if the method exists
+            if (simulationService.setScreen) {
+                simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+            }
+
+        } else {
+            // Fallback if they already have it
+            if (outcome) {
+                 const def = GameAttributes.getDefinition(upgradeId);
+                 const name = def ? def.name : upgradeId;
+                 outcome.text += ` (Already owned ${name}. Used for spare parts.)`;
+            }
+        }
+    },
+
+    // 12. FULL REFUEL (Fuel Voucher)
+    [EVENT_CONSTANTS.EFFECTS.FULL_REFUEL]: (gameState, simulationService, effect, outcome) => {
+        const ship = simulationService._getActiveShip();
+        const shipState = gameState.player.shipStates[ship.id];
+        
+        // Set fuel to maximum capacity
+        shipState.fuel = ship.maxFuel;
+
+        if (outcome) {
+            outcome.text += ` (Fuel tanks topped off!)`;
         }
     }
 };

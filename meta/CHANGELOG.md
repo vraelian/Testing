@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.69] - 2026-1-24
+-  added reward events
+-  event polish
+-  event rewrites
+
 ## [34.65] - 2026-1-23
 -  added date to navigation bar
 -  added navigation bar text dynamism

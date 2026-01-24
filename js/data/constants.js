@@ -274,7 +274,9 @@ export const EVENT_CONSTANTS = Object.freeze({
         UNLOCK_INTEL: 'EFF_UNLOCK_INTEL',      // Give market data
         TRIGGER_FOLLOWUP: 'EFF_TRIGGER_EVENT', // Chain another event
         LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
-        ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO' // Specific logic
+        ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO', // Specific logic
+        ADD_UPGRADE: 'EFF_ADD_UPGRADE', // [[NEW]]: Grants a specific ship upgrade
+        FULL_REFUEL: 'EFF_FULL_REFUEL'  // [[NEW]]: Sets active ship fuel to 100%
     }
 });
 // --- [[END]] EVENT SYSTEM 2.0 ---
