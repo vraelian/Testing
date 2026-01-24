@@ -6,12 +6,10 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Service Vouchers as mission awards
 - Achievements
 - Selecting Credit text on Nav bar transitions to Finance Screen
-- Why is Intel hidden by passage of time?
 - Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
 - Events/missions: award ship upgrade
 - add date to center of Nav Header, verify time time delay effects and time passage
 - Update event writing to be canon with lore.
-- Add location navigation link to Intel modals
 
 
 ## Imminent Projects

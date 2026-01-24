@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.58</title>
+    <title>Orbital Trading 34.61</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.58</p>
+            <p>Version 34.61</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -12478,6 +12478,7 @@ export const EULA_CONTENT = `
 import { DB } from '../../data/database.js';
 import { INTEL_CONTENT } from '../../data/intelContent.js';
 import { formatCredits } from '../../utils.js';
+import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 export class UIMissionControl {
     /**
@@ -12811,8 +12812,37 @@ export class UIMissionControl {
             theme: locationId, 
             dismissInside: true, 
             dismissOutside: true,
-            footer: null, 
-            contentClass: 'text-left' 
+            
+            // [[FIX]] Custom setup to inject button and FORCE navigation via simulationService
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                if (btnContainer) {
+                    btnContainer.innerHTML = `
+                        <button class="btn btn-pulse-green w-full" id="intel-navigate-btn">
+                            NAVIGATE TO ${packet.dealLocationId ? 'TARGET' : 'SYSTEM'}
+                        </button>`;
+                    
+                    const btn = btnContainer.querySelector('#intel-navigate-btn');
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                             // 1. Force Screen Switch directly
+                             if (this.manager.simulationService) {
+                                 this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+                             }
+
+                             // 2. [[FIX]] Launch the navigation modal for the specific target
+                             if (packet.dealLocationId) {
+                                 setTimeout(() => {
+                                     this.manager.showLaunchModal(packet.dealLocationId);
+                                 }, 100);
+                             }
+
+                             // 3. Close Modal
+                             closeHandler();
+                        });
+                    }
+                }
+            }
         });
     }
 
@@ -18771,9 +18801,15 @@ export class TimeService {
             }
 
             // Periodic Intel Generation
-            if (this.intelService && (this.gameState.day % 120 === 1)) {
-                this.intelService.generateIntelRefresh();
+            // --- MODIFIED: Ensure start-of-game intel is available (Request A) ---
+            if (this.intelService) {
+                const totalIntel = Object.values(this.gameState.intelMarket).flat().length;
+                // Regular 120-day interval OR (Early Game AND No Intel Available)
+                if ((this.gameState.day % 120 === 1) || (this.gameState.day < 120 && totalIntel === 0)) {
+                    this.intelService.generateIntelRefresh();
+                }
             }
+            // --- END MODIFICATION ---
             
             // Passive Repair for INACTIVE ships (Hangar)
             // Stored ships repair slowly over time (Base Game Rule)
@@ -27063,6 +27099,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.63] - 2026-1-23
+-  added navigation link to purchased intel modal
+-  intel polish
+
 ## [34.61] - 2026-1-23
 -  fixed contextual event outcome modal titling
 -  added color scheme to event outcome costs
@@ -28775,12 +28815,10 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Service Vouchers as mission awards
 - Achievements
 - Selecting Credit text on Nav bar transitions to Finance Screen
-- Why is Intel hidden by passage of time?
 - Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
 - Events/missions: award ship upgrade
 - add date to center of Nav Header, verify time time delay effects and time passage
 - Update event writing to be canon with lore.
-- Add location navigation link to Intel modals
 
 
 ## Imminent Projects

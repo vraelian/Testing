@@ -141,9 +141,15 @@ export class TimeService {
             }
 
             // Periodic Intel Generation
-            if (this.intelService && (this.gameState.day % 120 === 1)) {
-                this.intelService.generateIntelRefresh();
+            // --- MODIFIED: Ensure start-of-game intel is available (Request A) ---
+            if (this.intelService) {
+                const totalIntel = Object.values(this.gameState.intelMarket).flat().length;
+                // Regular 120-day interval OR (Early Game AND No Intel Available)
+                if ((this.gameState.day % 120 === 1) || (this.gameState.day < 120 && totalIntel === 0)) {
+                    this.intelService.generateIntelRefresh();
+                }
             }
+            // --- END MODIFICATION ---
             
             // Passive Repair for INACTIVE ships (Hangar)
             // Stored ships repair slowly over time (Base Game Rule)

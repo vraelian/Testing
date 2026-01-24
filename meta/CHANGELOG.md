@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.63] - 2026-1-23
+-  added navigation link to purchased intel modal
+-  intel polish
+
 ## [34.61] - 2026-1-23
 -  fixed contextual event outcome modal titling
 -  added color scheme to event outcome costs

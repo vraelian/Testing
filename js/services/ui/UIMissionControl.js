@@ -2,6 +2,7 @@
 import { DB } from '../../data/database.js';
 import { INTEL_CONTENT } from '../../data/intelContent.js';
 import { formatCredits } from '../../utils.js';
+import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 export class UIMissionControl {
     /**
@@ -335,8 +336,37 @@ export class UIMissionControl {
             theme: locationId, 
             dismissInside: true, 
             dismissOutside: true,
-            footer: null, 
-            contentClass: 'text-left' 
+            
+            // [[FIX]] Custom setup to inject button and FORCE navigation via simulationService
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                if (btnContainer) {
+                    btnContainer.innerHTML = `
+                        <button class="btn btn-pulse-green w-full" id="intel-navigate-btn">
+                            NAVIGATE TO ${packet.dealLocationId ? 'TARGET' : 'SYSTEM'}
+                        </button>`;
+                    
+                    const btn = btnContainer.querySelector('#intel-navigate-btn');
+                    if (btn) {
+                        btn.addEventListener('click', () => {
+                             // 1. Force Screen Switch directly
+                             if (this.manager.simulationService) {
+                                 this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+                             }
+
+                             // 2. [[FIX]] Launch the navigation modal for the specific target
+                             if (packet.dealLocationId) {
+                                 setTimeout(() => {
+                                     this.manager.showLaunchModal(packet.dealLocationId);
+                                 }, 100);
+                             }
+
+                             // 3. Close Modal
+                             closeHandler();
+                        });
+                    }
+                }
+            }
         });
     }
 
