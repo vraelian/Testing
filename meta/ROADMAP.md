@@ -8,7 +8,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Selecting Credit text on Nav bar transitions to Finance Screen
 - Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
 - Events/missions: award ship upgrade
-- add date to center of Nav Header, verify time time delay effects and time passage
 - Update event writing to be canon with lore.
 
 

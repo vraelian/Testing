@@ -131,6 +131,34 @@ export function getDateFromDay(dayNumber) {
 }
 
 /**
+ * Converts an absolute day number into a short date string (DD/MM/YYYY).
+ * @param {number} dayNumber - The absolute day number.
+ * @returns {string} The formatted date string (e.g., "01/01/2140").
+ */
+export function formatGameDateShort(dayNumber) {
+    const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
+    let dayOfYear = (dayNumber - 1) % 365;
+    
+    let monthIndex = 0;
+    for (let i = 0; i < DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
+        if (dayOfYear < DATE_CONFIG.DAYS_IN_MONTH[i]) {
+            monthIndex = i;
+            break;
+        }
+        dayOfYear -= DATE_CONFIG.DAYS_IN_MONTH[i];
+    }
+    
+    const day = dayOfYear + 1;
+    const month = monthIndex + 1;
+    
+    // Pad with leading zeros
+    const dStr = day.toString().padStart(2, '0');
+    const mStr = month.toString().padStart(2, '0');
+    
+    return `${dStr}/${mStr}/${year}`;
+}
+
+/**
  * Generates a random integer between a min and max value, skewed towards the lower end.
  * This is useful for creating distributions where lower values are more common.
  * @param {number} min - The minimum possible value (inclusive).

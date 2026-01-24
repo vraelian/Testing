@@ -1,6 +1,6 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, renderIndicatorPills } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
@@ -247,10 +247,16 @@ export class UIManager {
         const isMax = player.credits >= Number.MAX_SAFE_INTEGER;
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
+        
+        // [[NEW]] Add conditional class for max credits state to the container
+        const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
+
+        const dateText = formatGameDateShort(gameState.day);
 
         const contextBarHtml = `
-            <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
+            <div class="${containerClass}" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
+                <span class="date-text">${dateText}</span>
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 

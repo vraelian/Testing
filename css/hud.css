@@ -49,9 +49,22 @@
     z-index: 2;
 }
 
+.date-text {
+    font-size: calc(0.9rem - 2px); /* Reduced by ~1.5pt */
+}
+
+/* [[NEW]] When Max Credits are active, reduce Location Name font size */
+.context-bar.max-credits-active .location-name-text {
+    font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt */
+}
+
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
+}
+
+.credit-text.text-glow-gold {
+    font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt for Maximum Credits */
 }
 
 .status-pod {

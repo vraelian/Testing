@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.61</title>
+    <title>Orbital Trading 34.65</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.61</p>
+            <p>Version 34.65</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1058,9 +1058,22 @@
     z-index: 2;
 }
 
+.date-text {
+    font-size: calc(0.9rem - 2px); /* Reduced by ~1.5pt */
+}
+
+/* [[NEW]] When Max Credits are active, reduce Location Name font size */
+.context-bar.max-credits-active .location-name-text {
+    font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt */
+}
+
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
+}
+
+.credit-text.text-glow-gold {
+    font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt for Maximum Credits */
 }
 
 .status-pod {
@@ -8120,6 +8133,34 @@ export function getDateFromDay(dayNumber) {
     const dayOfMonth = dayOfYear + 1;
     const monthName = DATE_CONFIG.MONTH_NAMES[monthIndex];
     return `${dayOfWeek}, ${monthName} ${dayOfMonth}${getDaySuffix(dayOfMonth)}, ${year}`;
+}
+
+/**
+ * Converts an absolute day number into a short date string (DD/MM/YYYY).
+ * @param {number} dayNumber - The absolute day number.
+ * @returns {string} The formatted date string (e.g., "01/01/2140").
+ */
+export function formatGameDateShort(dayNumber) {
+    const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
+    let dayOfYear = (dayNumber - 1) % 365;
+    
+    let monthIndex = 0;
+    for (let i = 0; i < DATE_CONFIG.DAYS_IN_MONTH.length; i++) {
+        if (dayOfYear < DATE_CONFIG.DAYS_IN_MONTH[i]) {
+            monthIndex = i;
+            break;
+        }
+        dayOfYear -= DATE_CONFIG.DAYS_IN_MONTH[i];
+    }
+    
+    const day = dayOfYear + 1;
+    const month = monthIndex + 1;
+    
+    // Pad with leading zeros
+    const dStr = day.toString().padStart(2, '0');
+    const mStr = month.toString().padStart(2, '0');
+    
+    return `${dStr}/${mStr}/${year}`;
 }
 
 /**
@@ -21954,7 +21995,7 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 --- START OF FILE: ./js/services/UIManager.js ---
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
-import { formatCredits, calculateInventoryUsed, renderIndicatorPills } from '../utils.js';
+import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
@@ -22201,10 +22242,16 @@ export class UIManager {
         const isMax = player.credits >= Number.MAX_SAFE_INTEGER;
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
+        
+        // [[NEW]] Add conditional class for max credits state to the container
+        const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
+
+        const dateText = formatGameDateShort(gameState.day);
 
         const contextBarHtml = `
-            <div class="context-bar" style="background: ${theme.gradient}; color: ${theme.textColor};">
+            <div class="${containerClass}" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
+                <span class="date-text">${dateText}</span>
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 
@@ -27099,6 +27146,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## [34.65] - 2026-1-23
+-  added date to navigation bar
+-  added navigation bar text dynamism
+
 ## [34.63] - 2026-1-23
 -  added navigation link to purchased intel modal
 -  intel polish
@@ -28817,7 +28868,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Selecting Credit text on Nav bar transitions to Finance Screen
 - Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
 - Events/missions: award ship upgrade
-- add date to center of Nav Header, verify time time delay effects and time passage
 - Update event writing to be canon with lore.
 
 
