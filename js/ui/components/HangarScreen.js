@@ -72,6 +72,106 @@ function _getAbbreviatedLabel(label) {
 }
 
 /**
+ * Generates the CSS styles for an upgrade pill based on its definition and tier.
+ * Applies a distinct visual language for each tier (1-5) and Alien attributes.
+ * @param {object} definition - The attribute definition object.
+ * @param {number} tier - The calculated tier (1-5).
+ * @param {string} color - The base hex color.
+ * @returns {string} CSS style string.
+ * @private
+ */
+function _getUpgradePillStyle(definition, tier, color) {
+    // 1. Calculate palette derivatives
+    const dark = _adjustColor(color, -60);
+    const mid = _adjustColor(color, -20);
+    const light = _adjustColor(color, 40);
+    const bright = _adjustColor(color, 80);
+
+    // 2. Base Properties (Typography, Size, Layout)
+    const baseCSS = `
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 1px 6px;
+        border-radius: 4px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        cursor: pointer;
+        pointer-events: auto;
+        white-space: nowrap;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        opacity: 1; /* Force Opaque */
+        z-index: 20;
+    `;
+
+    // 3. Tier-Specific Visuals
+    let visualCSS = '';
+
+    // ALIEN / Z-CLASS (Organic / Exotic Look)
+    if (definition.isAlien) {
+        visualCSS = `
+            background: linear-gradient(135deg, ${dark}, ${color});
+            border: 1px solid ${light};
+            box-shadow: 0 0 8px ${_adjustColor(color, -20)}, inset 0 0 5px ${light};
+            text-shadow: 0 0 3px ${light};
+        `;
+        return `${baseCSS} ${visualCSS}`;
+    }
+
+    // STANDARD TIERS
+    switch (tier) {
+        case 5: // LEGENDARY (Holographic / Animated Feel)
+            visualCSS = `
+                background: linear-gradient(90deg, ${dark} 0%, ${color} 50%, ${light} 100%);
+                background-size: 200% 100%;
+                border: 1px solid ${bright};
+                box-shadow: 0 0 10px ${color}, inset 0 0 5px ${light};
+                animation: shimmer 3s infinite linear; 
+            `;
+            break;
+
+        case 4: // EPIC (High Contrast, Technical)
+            visualCSS = `
+                background: linear-gradient(to bottom, ${mid}, ${dark});
+                border: 1px solid ${light};
+                border-bottom: 2px solid ${light};
+                box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            `;
+            break;
+
+        case 3: // RARE (Glossy / Metallic)
+            visualCSS = `
+                background: linear-gradient(to bottom right, ${mid}, ${dark});
+                border: 1px solid ${color};
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.5);
+            `;
+            break;
+
+        case 2: // UNCOMMON (Subtle Sheen)
+            visualCSS = `
+                background: ${dark};
+                border: 1px solid ${mid};
+                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            `;
+            break;
+
+        case 1: // COMMON (Matte / Utilitarian)
+        default:
+            visualCSS = `
+                background: #1e293b;
+                border: 1px solid ${dark};
+                color: ${color}; /* Colored text for low tiers */
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            `;
+            break;
+    }
+
+    return `${baseCSS} ${visualCSS}`;
+}
+
+
+/**
  * Renders the entire Hangar screen UI.
  * @param {object} gameState - The current state of the game.
  * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
@@ -183,6 +283,8 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         // Requirement: Sort by Tier (I -> II -> III) ascending, then by ID for stability.
         const sortedUpgrades = [...shipDynamic.upgrades].sort((a, b) => {
             const getTier = (id) => {
+                if (id.endsWith('_V')) return 5;
+                if (id.endsWith('_IV')) return 4;
                 if (id.endsWith('_III')) return 3;
                 if (id.endsWith('_II')) return 2;
                 return 1; // Default to Tier 1 for _I or suffix-less
@@ -221,29 +323,19 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             }
 
             // 3. Base Color Logic
-            const baseColor = definition ? (definition.pillColor || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            // FIX: Prioritize .pillColor, then .color, then Default
+            const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
             
             // 4. Tier & Style Logic
             let tier = 1;
-            if (upgradeId.endsWith('_III')) tier = 3;
+            if (upgradeId.endsWith('_V')) tier = 5;
+            else if (upgradeId.endsWith('_IV')) tier = 4;
+            else if (upgradeId.endsWith('_III')) tier = 3;
             else if (upgradeId.endsWith('_II')) tier = 2;
+            else if (definition && definition.isAlien) tier = 5; // Alien uses special styling, treated as high tier for sorting
 
-            // Generate Darker Border Color (-40% luminance)
-            const borderColor = _adjustColor(baseColor, -40);
-            const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
-            
-            // Generate Background
-            let backgroundStyle = baseColor;
-            if (tier === 3) {
-                // TIER 3 OVERHAUL: High-Gloss Metallic Gradient (Diagonal)
-                // Start Bright (+40), hit Base, end Deep Dark (-80)
-                const highlight = _adjustColor(baseColor, 40);
-                const shadow = _adjustColor(baseColor, -80);
-                backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 45%, ${shadow} 100%)`;
-            } else if (tier === 2) {
-                // Tier 2: Subtle vertical sheen
-                backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${_adjustColor(baseColor, -20)})`;
-            }
+            // Generate Complex Styles
+            const pillStyle = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
             // Semantic Button
             return `
@@ -251,22 +343,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
-                     style="
-                        background: ${backgroundStyle}; 
-                        color: #0f172a; 
-                        border: ${borderStyle};
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                        padding: 1px 5px;
-                        border-radius: 4px;
-                        font-family: 'Orbitron', sans-serif;
-                        font-size: 0.64rem;
-                        font-weight: 700;
-                        letter-spacing: 0.02em;
-                        pointer-events: auto;
-                        touch-action: manipulation;
-                        white-space: nowrap;
-                        -webkit-tap-highlight-color: transparent;
-                     ">
+                     style="${pillStyle}">
                     ${label}
                 </button>
             `;

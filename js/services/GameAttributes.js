@@ -1,4 +1,5 @@
 // js/services/GameAttributes.js
+
 import { UPGRADE_TYPES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js'; 
 
@@ -19,7 +20,13 @@ const COLORS = {
     SEAFOAM: '#14b8a6', // Repair III
     ORANGE: '#f97316',  // Fuel
     RED: '#ef4444',     // Tier 4 / Combat
-    VIOLET: '#8b5cf6'   // Tier 3 / Expensive
+    VIOLET: '#8b5cf6',  // Tier 3 / Expensive
+    // Alien / Exotic Colors
+    ALIEN_BONE: '#e2e8f0',
+    ALIEN_VOID: '#1e293b',
+    ALIEN_BIO: '#84cc16',
+    ALIEN_PSI: '#d946ef',
+    ALIEN_BLOOD: '#991b1b'
 };
 
 const ATTRIBUTE_DEFINITIONS = {
@@ -109,78 +116,91 @@ const ATTRIBUTE_DEFINITIONS = {
         color: "#a78bfa"
     },
 
-    // --- Z-CLASS & F-CLASS MECHANICS ---
+    // --- Z-CLASS & F-CLASS MECHANICS (ALIEN) ---
+    // Added 'isAlien: true' to trigger special rendering in HangarScreen
     'ATTR_OSSEOUS_REGROWTH': {
         name: "Osseous Regrowth",
         description: "Regenerates 10% Hull upon arrival at any dock.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: COLORS.SEAFOAM
+        color: COLORS.ALIEN_BONE,
+        isAlien: true
     },
     'ATTR_SOLAR_HARMONY': {
         name: "Solar Harmony",
         description: "Zero Fuel cost when traveling inward towards the Sun.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: COLORS.GOLD
+        color: COLORS.GOLD,
+        isAlien: true
     },
     'ATTR_WHISPER_NETWORK': {
         name: "Whisper Network",
         description: "50% Discount on Intel Packets.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: COLORS.VIOLET
+        color: COLORS.ALIEN_PSI,
+        isAlien: true
     },
     'ATTR_NEWTONS_GHOST': {
         name: "Newton's Ghost",
         description: "Travel costs 0 Fuel but takes 10x longer.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: COLORS.GREY
+        color: COLORS.ALIEN_VOID,
+        isAlien: true
     },
     'ATTR_CRYO_STASIS': {
         name: "Cryo-Stasis",
         description: "Player age does not advance while piloting this ship.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: COLORS.CYAN
+        color: COLORS.CYAN,
+        isAlien: true
     },
     'ATTR_METABOLIC_BURN': {
         name: "Metabolic Burn",
         description: "Reduces Fuel consumption by 50%.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: COLORS.EMERALD
+        color: COLORS.ALIEN_BIO,
+        isAlien: true
     },
     'ATTR_FLUID_HULL': {
         name: "Fluid Hull",
         description: "Immune to standard hull decay from travel.",
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        color: COLORS.BLUE
+        color: COLORS.BLUE,
+        isAlien: true
     },
     'ATTR_HYPER_CALCULATION': {
         name: "Hyper-Calculation",
         description: "Reduces Travel Time by 25%.",
         type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
-        color: COLORS.INDIGO
+        color: COLORS.INDIGO,
+        isAlien: true
     },
     'ATTR_PREDICTIVE_MODELING': {
         name: "Predictive Modeling",
         description: "Increases Sell Price of all goods by 5%.",
         type: ATTRIBUTE_TYPES.MOD_PRICE,
-        color: COLORS.GOLD
+        color: COLORS.GOLD,
+        isAlien: true
     },
     'ATTR_SELF_ASSEMBLY': {
         name: "Self-Assembly",
         description: "Passively repairs 5% Hull daily while traveling.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: COLORS.ORANGE
+        color: COLORS.ORANGE,
+        isAlien: true
     },
     'ATTR_NO_DECAY': {
         name: "Iterative Reinforcement",
         description: "Immune to standard hull decay from travel.",
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        color: COLORS.GREY
+        color: COLORS.GREY,
+        isAlien: true
     },
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
         description: "Regenerates 1% Fuel daily.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: COLORS.RED
+        color: COLORS.ALIEN_BLOOD,
+        isAlien: true
     },
 
     // --- LEGACY / EXISTING ATTRIBUTES ---
