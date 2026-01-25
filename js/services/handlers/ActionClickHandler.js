@@ -95,30 +95,36 @@ export class ActionClickHandler {
             // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
             // Handles the purchase and installation flow for upgrades
             case 'install_upgrade': {
-                const { upgradeId, cost } = dataset;
+                const { upgradeId } = dataset;
                 if (!upgradeId) return;
                 
                 const upgradeDef = GameAttributes.getDefinition(upgradeId);
-                const costNum = parseInt(cost || '0', 10);
                 const player = this.gameState.player;
                 const activeShipId = player.activeShipId;
+                const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
+                // [[NEW]] Calculate total cost server-side logic (Hardware + Labor)
+                const hardwareCost = upgradeDef.value;
+                const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
+                const totalCost = hardwareCost + laborFee;
+
                 // 1. Basic Checks
-                if (player.credits < costNum) {
-                    this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade.');
+                if (player.credits < totalCost) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade and installation fee.');
                     return;
                 }
 
                 // 2. Trigger Triple-Confirmation Flow
-                this.uiManager.showUpgradeInstallationModal(upgradeId, costNum, shipState, (replaceIndex) => {
+                // Pass hardwareCost and laborFee separately for the UI breakdown
+                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
                     
                     // 3. Execution (Callback)
                     
                     // Deduct Credits
-                    if (costNum > 0) {
-                        this.gameState.player.credits -= costNum;
-                        this.uiManager.createFloatingText(`-${formatCredits(costNum, false)}`, e.clientX, e.clientY, '#f87171');
+                    if (totalCost > 0) {
+                        this.gameState.player.credits -= totalCost;
+                        this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
                     // Handle Replacement (Dismantle)

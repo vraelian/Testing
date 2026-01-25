@@ -4,7 +4,7 @@ import { GameAttributes } from '../GameAttributes.js';
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
-import { playBlockingAnimation } from './AnimationService.js'; // [[FIXED]] Correct Sibling Import
+import { playBlockingAnimation } from './AnimationService.js'; 
 
 export class UIHangarControl {
     /**
@@ -224,11 +224,14 @@ export class UIHangarControl {
                 
                 const label = def ? def.name : id; 
                 const tooltipText = def ? def.description : '';
-                const baseColor = def ? (def.pillColor || '#94a3b8') : '#94a3b8'; 
+                // [[FIXED]] Check 'pillColor' first, fallback to 'color', then hard fallback.
+                const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
                 let tier = 1;
-                if (id.endsWith('_III')) tier = 3;
-                else if (id.endsWith('_II')) tier = 2;
+                if (id.endsWith('_3') || id.endsWith('_III')) tier = 3;
+                else if (id.endsWith('_2') || id.endsWith('_II')) tier = 2;
+                else if (id.endsWith('_4')) tier = 4;
+                else if (id.endsWith('_5')) tier = 5;
 
                 const borderColor = this._adjustColor(baseColor, -40);
                 const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
@@ -240,6 +243,9 @@ export class UIHangarControl {
                     backgroundStyle = `linear-gradient(135deg, ${highlight} 0%, ${baseColor} 40%, ${shadow} 100%)`;
                 } else if (tier === 2) {
                     backgroundStyle = `linear-gradient(to bottom, ${baseColor}, ${this._adjustColor(baseColor, -20)})`;
+                } else if (tier >= 4) {
+                    // Pulsing effect for Prototype/Luminary
+                    backgroundStyle = `linear-gradient(45deg, ${baseColor}, ${this._adjustColor(baseColor, 40)})`;
                 }
 
                 return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
@@ -279,23 +285,29 @@ export class UIHangarControl {
     /**
      * Shows the robust modal flow for installing upgrades (ADR-012).
      * @param {string} upgradeId 
-     * @param {number} cost 
+     * @param {number} hardwareCost 
+     * @param {number} installationFee 
      * @param {object} shipState 
      * @param {Function} onConfirm 
      */
-    showUpgradeInstallationModal(upgradeId, cost, shipState, onConfirm) {
+    showUpgradeInstallationModal(upgradeId, hardwareCost, installationFee, shipState, onConfirm) {
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
 
         const currentUpgrades = shipState.upgrades || [];
         const isFull = currentUpgrades.length >= 3;
         
-        let title = cost > 0 ? "Purchase Upgrade" : "Install Upgrade";
-        const nameColor = upgradeDef.pillColor || '#fff';
+        const totalCost = hardwareCost + installationFee;
+        let title = totalCost > 0 ? "Purchase Upgrade" : "Install Upgrade";
+        // [[FIXED]] Check pillColor first, fallback to color
+        const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
         let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
         
-        if (cost > 0) {
-            desc += `<p class="text-base text-gray-400">Cost: <span class="credits-text-pulsing">${formatCredits(cost, true)}</span></p>`;
+        if (totalCost > 0) {
+            desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
+            if (installationFee > 0) {
+                desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+            }
         }
         
         desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
@@ -332,7 +344,8 @@ export class UIHangarControl {
                     
                     const upgradesList = currentUpgrades.map((uId, idx) => {
                         const def = GameAttributes.getDefinition(uId);
-                        const pColor = def ? (def.pillColor || '#fff') : '#fff';
+                        // [[FIXED]] Fallback to color if pillColor missing
+                        const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
                         const uName = def ? def.name : uId;
                         const statText = def ? (def.statText || 'Unknown Effect') : 'Unknown Effect';
                         const valText = def ? formatCredits(def.value, true) : '0';
@@ -375,7 +388,7 @@ export class UIHangarControl {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Confirm Replacement";
                     
-                    const removeNameColor = defToRemove ? (defToRemove.pillColor || '#fff') : '#fff';
+                    const removeNameColor = defToRemove ? (defToRemove.pillColor || defToRemove.color || '#fff') : '#fff';
                     const removeName = defToRemove ? defToRemove.name : idToRemove;
 
                     contentEl.innerHTML = `
@@ -434,7 +447,7 @@ export class UIHangarControl {
      * Helper to darken/lighten color (extracted from facade).
      */
     _adjustColor(color, amount) {
-        if (!color || !color.startsWith('#')) return color;
+        if (!color || !color.startsWith('#')) return '#94a3b8'; // Default grey on invalid input
         const hex = color.replace('#', '');
         const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
         const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));

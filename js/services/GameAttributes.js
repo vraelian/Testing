@@ -1,15 +1,26 @@
 // js/services/GameAttributes.js
-import { UPGRADE_TYPES, UPGRADE_COLORS, ATTRIBUTE_TYPES, LOCATION_IDS } from '../data/constants.js';
-import { DB } from '../data/database.js'; // Imported at top for ES Module compatibility
+import { UPGRADE_TYPES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../data/constants.js';
+import { DB } from '../data/database.js'; 
 
 /**
  * @fileoverview The Upgrade Registry. Defines the metadata (name, cost, description, visual style)
- * for all Ship Upgrades and Station Quirks. Acts as a rule engine for modifiers.
+ * for all Ship Upgrades and Station Quirks.
  */
 
-// ==========================================
-// 1. UPGRADE DEFINITIONS (The Registry)
-// ==========================================
+// Explicit Hex Codes to prevent import/runtime resolution issues
+const COLORS = {
+    BLUE: '#3b82f6',    // Tier 1
+    CYAN: '#06b6d4',    // Tier 5 / Utility
+    GREEN: '#22c55e',   // Repair
+    GOLD: '#eab308',    // Trade / Tier 3
+    GREY: '#94a3b8',    // Common
+    INDIGO: '#6366f1',  // Tier 2
+    EMERALD: '#10b981', // Radar
+    SEAFOAM: '#14b8a6', // Repair III
+    ORANGE: '#f97316',  // Fuel
+    RED: '#ef4444',     // Tier 4 / Combat
+    VIOLET: '#8b5cf6'   // Tier 3 / Expensive
+};
 
 const ATTRIBUTE_DEFINITIONS = {
     // --- STATION QUIRKS (Map Intel) ---
@@ -103,73 +114,73 @@ const ATTRIBUTE_DEFINITIONS = {
         name: "Osseous Regrowth",
         description: "Regenerates 10% Hull upon arrival at any dock.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.SEAFOAM
+        color: COLORS.SEAFOAM
     },
     'ATTR_SOLAR_HARMONY': {
         name: "Solar Harmony",
         description: "Zero Fuel cost when traveling inward towards the Sun.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'ATTR_WHISPER_NETWORK': {
         name: "Whisper Network",
         description: "50% Discount on Intel Packets.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
     },
     'ATTR_NEWTONS_GHOST': {
         name: "Newton's Ghost",
         description: "Travel costs 0 Fuel but takes 10x longer.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: UPGRADE_COLORS.GREY
+        color: COLORS.GREY
     },
     'ATTR_CRYO_STASIS': {
         name: "Cryo-Stasis",
         description: "Player age does not advance while piloting this ship.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.CYAN
+        color: COLORS.CYAN
     },
     'ATTR_METABOLIC_BURN': {
         name: "Metabolic Burn",
         description: "Reduces Fuel consumption by 50%.",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: UPGRADE_COLORS.EMERALD
+        color: COLORS.EMERALD
     },
     'ATTR_FLUID_HULL': {
         name: "Fluid Hull",
         description: "Immune to standard hull decay from travel.",
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'ATTR_HYPER_CALCULATION': {
         name: "Hyper-Calculation",
         description: "Reduces Travel Time by 25%.",
         type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
-        color: UPGRADE_COLORS.INDIGO
+        color: COLORS.INDIGO
     },
     'ATTR_PREDICTIVE_MODELING': {
         name: "Predictive Modeling",
         description: "Increases Sell Price of all goods by 5%.",
         type: ATTRIBUTE_TYPES.MOD_PRICE,
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'ATTR_SELF_ASSEMBLY': {
         name: "Self-Assembly",
         description: "Passively repairs 5% Hull daily while traveling.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.ORANGE
+        color: COLORS.ORANGE
     },
     'ATTR_NO_DECAY': {
         name: "Iterative Reinforcement",
         description: "Immune to standard hull decay from travel.",
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
-        color: UPGRADE_COLORS.GREY
+        color: COLORS.GREY
     },
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
         description: "Regenerates 1% Fuel daily.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.RED
+        color: COLORS.RED
     },
 
     // --- LEGACY / EXISTING ATTRIBUTES ---
@@ -179,31 +190,31 @@ const ATTRIBUTE_DEFINITIONS = {
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
         mode: 'multiplicative',
         value: 0.5,
-        color: UPGRADE_COLORS.GREEN
+        color: COLORS.GREEN
     },
     'ATTR_FUEL_SCOOP': {
         name: "Fuel Scoop",
         description: "Regenerates 15% max fuel after every trip.",
         type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'ATTR_TRAVELLER': {
         name: "Traveller",
         description: "Every 20th trip restores full Hull and Fuel.",
         type: ATTRIBUTE_TYPES.TRIGGER_ON_TRAVEL,
-        color: UPGRADE_COLORS.CYAN
+        color: COLORS.CYAN
     },
     'ATTR_TRADER': {
         name: "Trader",
         description: "15% chance to gain +1 unit when buying goods.",
         type: ATTRIBUTE_TYPES.TRIGGER_ON_TRADE,
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'ATTR_BESPOKE': {
         name: "Bespoke",
         description: "Cannot be repaired at standard facilities.",
         type: ATTRIBUTE_TYPES.RESTRICTION,
-        color: UPGRADE_COLORS.RED
+        color: COLORS.RED
     },
     'ATTR_XENO_HULL': {
         name: "Xeno-Hull",
@@ -211,7 +222,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
         mode: 'override',
         value: 0,
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
     },
     'ATTR_SLEEPER': {
         name: "Sleeper",
@@ -219,19 +230,19 @@ const ATTRIBUTE_DEFINITIONS = {
         type: ATTRIBUTE_TYPES.MOD_TRAVEL_TIME,
         mode: 'multiplicative',
         value: 4.5, 
-        color: UPGRADE_COLORS.GREY
+        color: COLORS.GREY
     },
     'ATTR_ADVANCED_COMMS': {
         name: "Adv. Comms",
         description: "Increases chance of finding random events by 25%.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'ATTR_SOLAR_SAIL': {
         name: "Solar Sail",
         description: "15% chance for 0 fuel cost (but 2x travel time).",
         type: ATTRIBUTE_TYPES.MOD_FUEL_BURN,
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'ATTR_RESILIENT': {
         name: "Resilient",
@@ -239,7 +250,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: ATTRIBUTE_TYPES.MOD_HULL_DECAY,
         mode: 'multiplicative',
         value: 0.5,
-        color: UPGRADE_COLORS.GREEN
+        color: COLORS.GREEN
     },
 
     // --- UPGRADES: ENGINE ---
@@ -251,7 +262,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 5000,
         modifiers: { travelTime: 0.90, fuelBurn: 1.15 },
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'UPG_ENG_SPEED_2': {
         name: "Injector II",
@@ -261,7 +272,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 15000,
         modifiers: { travelTime: 0.80, fuelBurn: 1.30 },
-        color: UPGRADE_COLORS.INDIGO
+        color: COLORS.INDIGO
     },
     'UPG_ENG_SPEED_3': {
         name: "Injector III",
@@ -271,7 +282,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 45000,
         modifiers: { travelTime: 0.70, fuelBurn: 1.45 },
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
+    },
+    'UPG_ENG_SPEED_4': {
+        name: "Injector IV",
+        description: "Prototype. Reduces travel time by 36%, but increases fuel burn by 54%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
+        value: 12500000,
+        modifiers: { travelTime: 0.64, fuelBurn: 1.54 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ENG_SPEED_5': {
+        name: "Injector V",
+        description: "Luminary. Reduces travel time by 40%, but increases fuel burn by 60%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
+        value: 25000000,
+        modifiers: { travelTime: 0.60, fuelBurn: 1.60 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     // --- UPGRADES: ECONOMY ---
@@ -283,7 +316,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
         value: 5000,
         modifiers: { fuelPrice: 0.80 },
-        color: UPGRADE_COLORS.ORANGE
+        color: COLORS.ORANGE
     },
     'UPG_ECO_FUEL_2': {
         name: "Fuel Pass II",
@@ -293,7 +326,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
         value: 15000,
         modifiers: { fuelPrice: 0.50 },
-        color: UPGRADE_COLORS.RED
+        color: COLORS.RED
     },
     'UPG_ECO_FUEL_3': {
         name: "Fuel Pass III",
@@ -303,7 +336,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
         value: 45000,
         modifiers: { fuelPrice: 0.25 },
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
+    },
+    'UPG_ECO_FUEL_4': {
+        name: "Fuel Pass IV",
+        description: "Prototype. Reduces refueling cost at stations by 90%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_FUEL_PRICE,
+        value: 12500000,
+        modifiers: { fuelPrice: 0.10 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ECO_FUEL_5': {
+        name: "Fuel Pass V",
+        description: "Luminary. Reduces refueling cost at stations by 99%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_FUEL_PRICE,
+        value: 25000000,
+        modifiers: { fuelPrice: 0.01 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_ECO_REPAIR_1': {
@@ -314,7 +369,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
         value: 5000,
         modifiers: { repairCost: 0.85 },
-        color: UPGRADE_COLORS.GREEN
+        color: COLORS.GREEN
     },
     'UPG_ECO_REPAIR_2': {
         name: "Repair Pass II",
@@ -324,7 +379,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
         value: 15000,
         modifiers: { repairCost: 0.70 },
-        color: UPGRADE_COLORS.EMERALD
+        color: COLORS.EMERALD
     },
     'UPG_ECO_REPAIR_3': {
         name: "Repair Pass III",
@@ -334,7 +389,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
         value: 45000,
         modifiers: { repairCost: 0.50 },
-        color: UPGRADE_COLORS.SEAFOAM
+        color: COLORS.SEAFOAM
+    },
+    'UPG_ECO_REPAIR_4': {
+        name: "Repair Pass IV",
+        description: "Prototype. Reduces hull repair cost by 60%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_REPAIR_COST,
+        value: 12500000,
+        modifiers: { repairCost: 0.40 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ECO_REPAIR_5': {
+        name: "Repair Pass V",
+        description: "Luminary. Reduces hull repair cost by 66%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_REPAIR_COST,
+        value: 25000000,
+        modifiers: { repairCost: 0.34 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_ECO_BUY_1': {
@@ -345,7 +422,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
         value: 5000,
         modifiers: { buyPrice: 0.97 },
-        color: UPGRADE_COLORS.CYAN
+        color: COLORS.CYAN
     },
     'UPG_ECO_BUY_2': {
         name: "Signal Hacker II",
@@ -355,7 +432,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
         value: 15000,
         modifiers: { buyPrice: 0.95 },
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'UPG_ECO_BUY_3': {
         name: "Signal Hacker III",
@@ -365,7 +442,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
         value: 45000,
         modifiers: { buyPrice: 0.93 },
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
+    },
+    'UPG_ECO_BUY_4': {
+        name: "Signal Hacker IV",
+        description: "Prototype. Reduces market purchase prices by 8.4%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_BUY_PRICE,
+        value: 12500000,
+        modifiers: { buyPrice: 0.916 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ECO_BUY_5': {
+        name: "Signal Hacker V",
+        description: "Luminary. Reduces market purchase prices by 9.2%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_BUY_PRICE,
+        value: 25000000,
+        modifiers: { buyPrice: 0.908 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_ECO_SELL_1': {
@@ -376,7 +475,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
         value: 5000,
         modifiers: { sellPrice: 1.03 },
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
     },
     'UPG_ECO_SELL_2': {
         name: "Guild Badge II",
@@ -386,7 +485,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
         value: 15000,
         modifiers: { sellPrice: 1.05 },
-        color: UPGRADE_COLORS.ORANGE
+        color: COLORS.ORANGE
     },
     'UPG_ECO_SELL_3': {
         name: "Guild Badge III",
@@ -396,7 +495,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
         value: 45000,
         modifiers: { sellPrice: 1.07 },
-        color: UPGRADE_COLORS.RED
+        color: COLORS.RED
+    },
+    'UPG_ECO_SELL_4': {
+        name: "Guild Badge IV",
+        description: "Prototype. Increases market sell prices by 8.4%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_SELL_PRICE,
+        value: 12500000,
+        modifiers: { sellPrice: 1.084 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ECO_SELL_5': {
+        name: "Guild Badge V",
+        description: "Luminary. Increases market sell prices by 9.2%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_SELL_PRICE,
+        value: 25000000,
+        modifiers: { sellPrice: 1.092 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
     
     'UPG_ECO_DEBT_1': {
@@ -407,7 +528,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         value: 5000,
         modifiers: { interestRate: 0.80 },
-        color: UPGRADE_COLORS.GREY
+        color: COLORS.GREY
     },
     'UPG_ECO_DEBT_2': {
         name: "Syndicate Badge II",
@@ -417,7 +538,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         value: 15000,
         modifiers: { interestRate: 0.70 },
-        color: UPGRADE_COLORS.INDIGO
+        color: COLORS.INDIGO
     },
     'UPG_ECO_DEBT_3': {
         name: "Syndicate Badge III",
@@ -427,7 +548,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         value: 45000,
         modifiers: { interestRate: 0.50 },
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
+    },
+    'UPG_ECO_DEBT_4': {
+        name: "Syndicate Badge IV",
+        description: "Prototype. Reduces monthly debt interest by 60%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
+        value: 12500000,
+        modifiers: { interestRate: 0.40 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_ECO_DEBT_5': {
+        name: "Syndicate Badge V",
+        description: "Luminary. Reduces monthly debt interest by 66%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
+        value: 25000000,
+        modifiers: { interestRate: 0.34 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     // --- UPGRADES: UTILITY ---
@@ -439,7 +582,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 5000,
         modifiers: { maxHull: 25 },
-        color: UPGRADE_COLORS.GREY
+        color: COLORS.GREY
     },
     'UPG_UTIL_HULL_2': {
         name: "Plating II",
@@ -449,7 +592,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 15000,
         modifiers: { maxHull: 50 },
-        color: UPGRADE_COLORS.INDIGO
+        color: COLORS.INDIGO
     },
     'UPG_UTIL_HULL_3': {
         name: "Plating III",
@@ -459,7 +602,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 45000,
         modifiers: { maxHull: 100 },
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
+    },
+    'UPG_UTIL_HULL_4': {
+        name: "Plating IV",
+        description: "Prototype. Increases Max Hull by 120.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_MAX_HULL,
+        value: 12500000,
+        modifiers: { maxHull: 120 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_UTIL_HULL_5': {
+        name: "Plating V",
+        description: "Luminary. Increases Max Hull by 132.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_MAX_HULL,
+        value: 25000000,
+        modifiers: { maxHull: 132 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_UTIL_FUEL_1': {
@@ -470,7 +635,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
         value: 5000,
         modifiers: { maxFuel: 30 },
-        color: UPGRADE_COLORS.ORANGE
+        color: COLORS.ORANGE
     },
     'UPG_UTIL_FUEL_2': {
         name: "Aux Tank II",
@@ -480,7 +645,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
         value: 15000,
         modifiers: { maxFuel: 60 },
-        color: UPGRADE_COLORS.RED
+        color: COLORS.RED
     },
     'UPG_UTIL_FUEL_3': {
         name: "Aux Tank III",
@@ -490,7 +655,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
         value: 45000,
         modifiers: { maxFuel: 120 },
-        color: UPGRADE_COLORS.GOLD
+        color: COLORS.GOLD
+    },
+    'UPG_UTIL_FUEL_4': {
+        name: "Aux Tank IV",
+        description: "Prototype. Increases Max Fuel by 144.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_MAX_FUEL,
+        value: 12500000,
+        modifiers: { maxFuel: 144 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_UTIL_FUEL_5': {
+        name: "Aux Tank V",
+        description: "Luminary. Increases Max Fuel by 158.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_MAX_FUEL,
+        value: 25000000,
+        modifiers: { maxFuel: 158 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_UTIL_CARGO_1': {
@@ -501,7 +688,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
         value: 5000,
         modifiers: { maxCargo: 10 },
-        color: UPGRADE_COLORS.CYAN
+        color: COLORS.CYAN
     },
     'UPG_UTIL_CARGO_2': {
         name: "Exp. Hold II",
@@ -511,7 +698,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
         value: 15000,
         modifiers: { maxCargo: 25 },
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'UPG_UTIL_CARGO_3': {
         name: "Exp. Hold III",
@@ -521,7 +708,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
         value: 45000,
         modifiers: { maxCargo: 50 },
-        color: UPGRADE_COLORS.VIOLET
+        color: COLORS.VIOLET
+    },
+    'UPG_UTIL_CARGO_4': {
+        name: "Exp. Hold IV",
+        description: "Prototype. Increases Cargo Capacity by 60.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_MAX_CARGO,
+        value: 12500000,
+        modifiers: { maxCargo: 60 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_UTIL_CARGO_5': {
+        name: "Exp. Hold V",
+        description: "Luminary. Increases Cargo Capacity by 66.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_MAX_CARGO,
+        value: 25000000,
+        modifiers: { maxCargo: 66 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_UTIL_RADAR_1': {
@@ -532,7 +741,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
         value: 5000,
         modifiers: { eventChance: 0.05 },
-        color: UPGRADE_COLORS.SEAFOAM
+        color: COLORS.SEAFOAM
     },
     'UPG_UTIL_RADAR_2': {
         name: "Radar Mod II",
@@ -542,7 +751,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
         value: 15000,
         modifiers: { eventChance: 0.10 },
-        color: UPGRADE_COLORS.EMERALD
+        color: COLORS.EMERALD
     },
     'UPG_UTIL_RADAR_3': {
         name: "Radar Mod III",
@@ -552,7 +761,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
         value: 45000,
         modifiers: { eventChance: 0.15 },
-        color: UPGRADE_COLORS.GREEN
+        color: COLORS.GREEN
+    },
+    'UPG_UTIL_RADAR_4': {
+        name: "Radar Mod IV",
+        description: "Prototype. Increases random event chance by 18%.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
+        value: 12500000,
+        modifiers: { eventChance: 0.18 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_UTIL_RADAR_5': {
+        name: "Radar Mod V",
+        description: "Luminary. Increases random event chance by 20%.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
+        value: 25000000,
+        modifiers: { eventChance: 0.20 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     },
 
     'UPG_UTIL_NANO_1': {
@@ -563,7 +794,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
         value: 5000,
         modifiers: { passiveRepair: 0.01 },
-        color: UPGRADE_COLORS.CYAN
+        color: COLORS.CYAN
     },
     'UPG_UTIL_NANO_2': {
         name: "Nano-Bots II",
@@ -573,7 +804,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
         value: 15000,
         modifiers: { passiveRepair: 0.02 },
-        color: UPGRADE_COLORS.BLUE
+        color: COLORS.BLUE
     },
     'UPG_UTIL_NANO_3': {
         name: "Nano-Bots III",
@@ -583,7 +814,29 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
         value: 45000,
         modifiers: { passiveRepair: 0.03 },
-        color: UPGRADE_COLORS.INDIGO
+        color: COLORS.INDIGO
+    },
+    'UPG_UTIL_NANO_4': {
+        name: "Nano-Bots IV",
+        description: "Prototype. Repairs 3.6% of Max Hull daily.",
+        cost: 12500000,
+        tier: 4,
+        type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
+        value: 12500000,
+        modifiers: { passiveRepair: 0.036 },
+        color: COLORS.RED,
+        pillColor: "#ef4444"
+    },
+    'UPG_UTIL_NANO_5': {
+        name: "Nano-Bots V",
+        description: "Luminary. Repairs 4% of Max Hull daily.",
+        cost: 25000000,
+        tier: 5,
+        type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
+        value: 25000000,
+        modifiers: { passiveRepair: 0.04 },
+        color: COLORS.CYAN,
+        pillColor: "#22d3ee"
     }
 };
 
@@ -641,6 +894,17 @@ export class GameAttributes {
     }
 
     // --- HELPER METHODS FOR CALCULATING MODIFIERS ---
+
+    /**
+     * Calculates the "Installation Labor Fee" for an upgrade.
+     * Formula: 5% of the ship's base hull value.
+     * @param {number} shipBasePrice - The DB price of the target ship.
+     * @returns {number} The installation fee.
+     */
+    static getInstallationFee(shipBasePrice) {
+        if (!shipBasePrice || shipBasePrice <= 0) return 0;
+        return Math.floor(shipBasePrice * 0.05);
+    }
 
     /**
      * Generic helper to calculate multiplicative modifiers.

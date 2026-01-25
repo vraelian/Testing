@@ -291,7 +291,7 @@ export function renderServicesScreen(gameState, simulationService) {
  * @returns {string[]} Array of available upgrade IDs.
  */
 function _getDailyStock(gameState) {
-    const { day, currentLocationId } = gameState;
+    const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
     return allIds.filter(id => {
@@ -300,13 +300,25 @@ function _getDailyStock(gameState) {
         if (!id.startsWith('UPG_')) return false;
 
         // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
-        if (id.includes('GUILD') || id.includes('SYNDICATE')) return false;
+        if (id.includes('GUILD') || id.includes('SYNDICATE')) {
+            // EXCEPTION: Tier 4/5 Syndicate Pass allowed
+            if (!id.endsWith('_4') && !id.endsWith('_5')) return false;
+        }
 
         // 2. Determine Base Chance based on Tier Suffix
         // REVISED BASE RATES: T1=15%, T2=10%, T3=5%
         let threshold = 0.15; // Tier 1 Default
-        if (id.endsWith('_II')) threshold = 0.10;
-        if (id.endsWith('_III')) threshold = 0.05;
+
+        // FIX: Identifiers use Arabic numerals (_2, _3)
+        if (id.endsWith('_2')) threshold = 0.10;
+        if (id.endsWith('_3')) threshold = 0.05;
+
+        // [[NEW]] TIER 4/5 LOGIC: SPAWNS FOR WEALTHY
+        if (id.endsWith('_4') || id.endsWith('_5')) {
+            if (player.credits < 10000000) return false;
+            // [[UPDATED]] 5% Spawn Rate as requested
+            threshold = 0.05; 
+        }
 
         // --- PHASE 2: AGE PERK (UPGRADE SPAWN RATE) ---
         // Increase the threshold by the player's accrued bonus (e.g., +0.02)
@@ -315,13 +327,13 @@ function _getDailyStock(gameState) {
         // --- END PHASE 2 ---
 
         // 3. Apply Uranus Station Quirk (2x Multiplier for ALL tiers)
-        // REVISED URANUS RATES: T1=30%, T2=20%, T3=10% (Plus whatever the age bonus is)
         if (currentLocationId === LOCATION_IDS.URANUS) {
             threshold *= 2; 
         }
 
-        // 4. Deterministic Hashing (Day + Location + UpgradeID)
-        const seedString = `${day}_${currentLocationId}_${id}`;
+        // 4. Deterministic Hashing
+        // FIX: ID first to prevent clustering
+        const seedString = `${id}_${currentLocationId}_${day}`;
         
         // Simple hash function to generate a pseudo-random number 0-1
         let hash = 0;
@@ -344,7 +356,7 @@ function _getDailyStock(gameState) {
 function _renderTuningView(gameState) {
     const availableUpgradeIds = _getDailyStock(gameState);
     
-    // Sort slightly for nicer presentation (Tier I -> II -> III, then alphabetical)
+    // Sort slightly for nicer presentation (Tier I -> II -> III -> IV -> V, then alphabetical)
     availableUpgradeIds.sort();
 
     if (availableUpgradeIds.length === 0) {
@@ -354,18 +366,25 @@ function _renderTuningView(gameState) {
             </div>
         `;
     }
+    
+    // [[NEW]] LABOR CALCULATION
+    const activeShipId = gameState.player.activeShipId;
+    const activeShipStatic = DB.SHIPS[activeShipId];
+    const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
 
     const upgradesHtml = availableUpgradeIds.map(id => {
         const def = GameAttributes.getDefinition(id);
         if (!def) return '';
 
-        const baseColor = def.pillColor || UPGRADE_COLORS.GREY;
+        // [[FIXED]] Color Logic for shop view to match pills
+        const baseColor = def.pillColor || def.color || UPGRADE_COLORS.GREY;
         const styleVars = `
             --item-color: ${baseColor};
             --item-glow: ${baseColor}80;
         `;
-
-        const canAfford = gameState.player.credits >= def.value;
+        
+        const totalCost = def.value + laborFee;
+        const canAfford = gameState.player.credits >= totalCost;
         
         return `
             <div class="service-module upgrade-shop-item" style="${styleVars}">
@@ -378,15 +397,19 @@ function _renderTuningView(gameState) {
                              ${def.name}
                         </div>
                         <div class="text-xs text-gray-400 mt-1 leading-tight">${def.description}</div>
+                        <div class="text-[10px] text-gray-500 mt-2 font-mono">
+                            HARDWARE: ${formatCredits(def.value)}<br>
+                            LABOR: ${formatCredits(laborFee)} (5%)
+                        </div>
                     </div>
 
                     <div class="flex flex-col items-end gap-2 min-w-[100px]">
-                        <div class="font-mono text-cyan-300 credits-text-pulsing text-2xl">${formatCredits(def.value, true)}</div>
+                        <div class="font-mono text-cyan-300 credits-text-pulsing text-xl">${formatCredits(totalCost, true)}</div>
                         <button class="btn btn-sm w-full font-bold uppercase tracking-wider"
                                 style="border: 1px solid var(--item-color); color: ${canAfford ? '#fff' : '#666'};"
                                 data-action="install_upgrade"
                                 data-upgrade-id="${id}"
-                                data-cost="${def.value}"
+                                data-cost="${totalCost}" 
                                 ${!canAfford ? 'disabled' : ''}>
                             INSTALL
                         </button>
