@@ -347,21 +347,15 @@ export class UIHangarControl {
                         // [[FIXED]] Fallback to color if pillColor missing
                         const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
                         const uName = def ? def.name : uId;
-                        // [[FIXED]] Corrected reference: 'statText' was undefined in schema, using 'description'.
-                        const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
+                        const statText = def ? (def.statText || 'Unknown Effect') : 'Unknown Effect';
                         const valText = def ? formatCredits(def.value, true) : '0';
 
-                        // [[FIXED]] VIRTUAL WORKBENCH: UI Readability & Marquee Fix
-                        // Wrapped description in marquee-container/content architecture to allow
-                        // scrolling of long sentences while protecting the "Value" text layout.
                         return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center" data-idx="${idx}">
-                                    <div class="flex flex-col overflow-hidden">
+                                    <div class="flex flex-col">
                                         <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                        <div class="marquee-container mt-1">
-                                            <span class="marquee-content text-xs text-gray-400">${statText}</span>
-                                        </div>
+                                        <span class="text-xs text-gray-400 mt-1">${statText}</span>
                                     </div>
-                                    <div class="text-right flex-shrink-0 ml-4">
+                                    <div class="text-right">
                                         <span class="text-xs text-gray-500 block">Value</span>
                                         <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
                                     </div>

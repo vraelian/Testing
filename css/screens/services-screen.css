@@ -336,13 +336,3 @@
     color: #000 !important; /* Force black text on hover */
     box-shadow: 0 0 10px var(--item-glow);
 }
-
-/* --- TUNING SHOP: VIRTUAL WORKBENCH (FONT SCALING) --- */
-.upgrade-item-name {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    /* REDUCED: text-lg (1.125rem) minus 1.1pt (~1.46px). */
-    font-size: calc(1.125rem - 1.1pt); 
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
