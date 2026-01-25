@@ -1,6 +1,4 @@
-
-{
-  "project_info": {
+{ "project_info": {
     "project_name": "Orbital Trading",
     "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
     "core_mechanics": [

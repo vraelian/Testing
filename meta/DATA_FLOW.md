@@ -43,10 +43,14 @@ graph TD
     end
 
     H --> A;
-2.2 Boot Sequence & Pre-Flight (ADR-021)
+
+```
+
+### 2.2 Boot Sequence & Pre-Flight (ADR-021)
+
 Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
 
-Code snippet
+```mermaid
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -67,10 +71,14 @@ graph TD
         J --> K[Hydrate Game Assets: Ships/Planets];
         K --> L[UIManager.render: Game];
     end
-2.3 Asset Hydration Architecture
+
+```
+
+### 2.3 Asset Hydration Architecture
+
 Persistence strategy to prevent iOS cache eviction.
 
-Code snippet
+```mermaid
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -93,10 +101,14 @@ graph TD
     subgraph Render
         D & H --> K[DOM Image Element];
     end
-2.4 Intel Market System (Local Data Broker)
+
+```
+
+### 2.4 Intel Market System (Local Data Broker)
+
 Flow for generating and purchasing temporary market advantages.
 
-Code snippet
+```mermaid
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -120,10 +132,14 @@ graph TD
         M -- Yes --> N[Return Override Price];
         M -- No --> O[Return Standard Price];
     end
-2.5 Upgrade Installation (Destructive Replacement)
+
+```
+
+### 2.5 Upgrade Installation (Destructive Replacement)
+
 Logic handling the 3-slot limit and replacement confirmation.
 
-Code snippet
+```mermaid
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -145,10 +161,14 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-2.6 Animated Transaction Flow
+
+```
+
+### 2.6 Animated Transaction Flow
+
 Handling asynchronous visual blocking during state transitions.
 
-Code snippet
+```mermaid
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -170,10 +190,14 @@ graph TD
         H --> I((Mutate GameState));
         I --> J[UIManager.render];
     end
-2.7 Automated Testing Bot
+
+```
+
+### 2.7 Automated Testing Bot
+
 Headless execution path bypassing the input layer.
 
-Code snippet
+```mermaid
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -190,10 +214,14 @@ graph TD
         E & F --> G((GameState));
         G --> A;
     end
-2.8 Travel Sequence (Visual Handoff)
+
+```
+
+### 2.8 Travel Sequence (Visual Handoff)
+
 Separation of instant logic calculation and delayed visual presentation.
 
-Code snippet
+```mermaid
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[SimulationService.handleTravel];
@@ -214,10 +242,14 @@ graph TD
         I --> K{Event Triggered?};
         K -- Yes --> L[Show Event Modal];
     end
-2.9 Event System 2.0 Resolution
+
+```
+
+### 2.9 Event System 2.0 Resolution
+
 Data-driven event selection and effect application.
 
-Code snippet
+```mermaid
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];

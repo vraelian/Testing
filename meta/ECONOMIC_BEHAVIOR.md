@@ -1,3 +1,7 @@
+{
+type: file_update,
+fileName: meta/ECONOMIC_BEHAVIOR.md,
+fullContent:
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
 Last Edit: 1/25/26, ver. 34.70
@@ -196,3 +200,4 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 * **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
 * **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
 * **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
+}

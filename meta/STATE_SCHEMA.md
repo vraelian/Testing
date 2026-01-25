@@ -1,3 +1,7 @@
+{
+type: file_update,
+fileName: meta/STATE_SCHEMA.md,
+fullContent:
 # Orbital Trading: State Schema Definition
 
 ## 1. Root State Object
@@ -114,3 +118,4 @@ New data structures for the "Local Data Broker" system.
 * Represents the currently active market advantage.
 * **Structure**: `{ locationId, commodityId, overridePrice, expiryDay, sourcePacketId }`.
 * *Note: Only one deal can be active at a time.*
+}
