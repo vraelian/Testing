@@ -311,3 +311,47 @@ This document records the key architectural decisions made during the developmen
     * **Pro**: Enforces separation of concerns; Market logic is strictly isolated from Hangar logic.
     * **Pro**: Preserves the public API; `UIManager` methods act as proxies, so no external services (`SimulationService`, `ActionClickHandler`) required refactoring.
     * **Con**: Adds a slight layer of indirection (Proxy -> Controller -> Logic), but the maintenance benefits far outweigh this cost.
+
+    ### ADR-020: The "Switchboard" UI Architecture (Facade Pattern)
+
+* **Status**: Accepted (2026-01-22)
+* **Context**: `UIManager.js` had grown into a 2,600+ line "God Object," handling everything from market SVG rendering to complex hangar interactions and mission HUD logic. This monolithic structure made maintenance error-prone and severely hampered AI code generation capabilities due to token limits.
+* **Decision**: Refactored the `UIManager` into a thin **Facade** ("Switchboard") that delegates specific domain logic to six specialized Controllers:
+    1.  **`UIModalEngine`**: Lifecycle management for the global modal queue.
+    2.  **`UITutorialManager`**: Orchestration of tutorial steps, toasts, and visual highlights.
+    3.  **`UIMarketControl`**: Market screen rendering, state retention, and graph generation.
+    4.  **`UIMissionControl`**: Mission data screens, sticky bar HUD, and Intel interactions.
+    5.  **`UIHangarControl`**: Ship interactions, carousels, and upgrade installation flows.
+    6.  **`UIEventControl`**: "World" interactions (Maps, Lore, Random Events, EULA).
+* **Consequences**:
+    * **Pro**: Drastically reduces file size (UIManager is now <500 lines), ensuring AI tools can parse and update it without truncation.
+    * **Pro**: Enforces separation of concerns; Market logic is strictly isolated from Hangar logic.
+    * **Pro**: Preserves the public API; `UIManager` methods act as proxies, so no external services (`SimulationService`, `ActionClickHandler`) required refactoring.
+    * **Con**: Adds a slight layer of indirection (Proxy -> Controller -> Logic), but the maintenance benefits far outweigh this cost.
+
+### ADR-021: Pre-Flight Asset Hydration & EULA Gate
+
+* **Status**: Accepted (2026-01-23)
+* **Context**: The game requires a large number of heavy image assets (ships, backgrounds) that need to be loaded from the network and stored in IndexedDB (`AssetStorageService`) to prevent iOS cache eviction. Doing this *during* gameplay caused stutter. Additionally, legal requirements necessitated a mandatory EULA acceptance before the game loop could legally begin.
+* **Decision**: Implemented a **"Pre-Flight" Loading State** in `main.js`.
+    1.  **Boot Phase**: On DOMContentLoaded, only `AssetService` and a lightweight UI subset are initialized. The "Start Game" button is disabled/gated.
+    2.  **Background Hydration**: The `AssetService` immediately begins fetching and caching "Boot Assets" (Title screen art, common UI elements) in the background.
+    3.  **EULA Check**: The user must explicitly interact with the EULA modal checkbox. This interaction is used as the "User Gesture" required by modern browsers to unlock AudioContext and other restricted APIs.
+    4.  **Deferred Instantiation**: The core game services (`SimulationService`, `GameState`) are only instantiated *after* the EULA is accepted and the "Start" button is clicked.
+* **Consequences**:
+    * **Pro**: Ensures all critical assets are ready before the player sees the first screen, eliminating "pop-in".
+    * **Pro**: Satisfies legal compliance requirements.
+    * **Pro**: Optimizes the "First Contentful Paint" time by delaying heavy JS execution until after user intent is confirmed.
+
+### ADR-022: Modular Event System (Facade Pattern)
+
+* **Status**: Accepted (2026-01-24)
+* **Context**: The `events.js` file, which contained the definitions for all random events, had become unwieldy (>1000 lines). Navigating between "Traffic" events and "Hazard" events was difficult, and the file size risked hitting AI context limits.
+* **Decision**: Split the monolithic event registry into specialized, domain-specific modules.
+    1.  **Modular files**: Created `events_traffic.js`, `events_entropy.js`, `events_hazards.js`, etc., each exporting a specific array of event objects.
+    2.  **Facade**: The main `events.js` file was converted into a **Facade** that imports these arrays and spreads them into a single master `RANDOM_EVENTS` export.
+    3.  **Transparency**: The rest of the codebase (e.g., `RandomEventService`) continues to import from `events.js` and remains unaware of the underlying file split.
+* **Consequences**:
+    * **Pro**: drastically improves code organization and readability.
+    * **Pro**: Allows multiple developers (or AI sessions) to work on different event categories simultaneously without merge conflicts.
+    * **Pro**: No refactoring required for consuming services.

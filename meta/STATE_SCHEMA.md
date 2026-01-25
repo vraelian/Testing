@@ -89,7 +89,21 @@ The economic simulation data.
 
 ---
 
-## 4. Intel State
+## 4. UI State (`state.uiState`)
+Ephemeral data used to persist UI context across re-renders.
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `marketCardMinimized` | Object | Map of commodity IDs to boolean (true = minimized). |
+| `hangarShipyardToggleState` | String | 'hangar' or 'shipyard'. |
+| `hangarActiveIndex` | Number | Index of the currently viewed ship in the carousel. |
+| `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
+| `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
+| `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
+
+---
+
+## 5. Intel State
 New data structures for the "Local Data Broker" system.
 
 **`state.intelMarket`**

@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  tuned ship upgrade parameters
 -  updated ship upgrade spawn rate
 -  updated tuning screen spawn rate
+-  updated meta files
 
 ## [34.70] - 2026-1-24
 -  added reward events

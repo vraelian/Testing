@@ -1,6 +1,6 @@
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 1/12/26, ver. 34.00
+Last Edit: 1/25/26, ver. 34.70
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -13,22 +13,34 @@ Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) 
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
+Sol Station
+Exports (Price Reverts Toward a Lower Baseline):
+Antimatter
+Imports (Price Reverts Toward a Higher Baseline):
+Graphene Lattices
+Plasteel
+Mercury
+Exports (Price Reverts Toward a Lower Baseline):
+Plasteel
+Imports (Price Reverts Toward a Higher Baseline):
+Water Ice (Strong Import)
 Venus
 Exports (Price Reverts Toward a Lower Baseline):
 Cloned Organs
 Neural Processors
 Imports (Price Reverts Toward a Higher Baseline):
 Sentient AI Cores
+Atmo Processors
 Earth
 Exports (Price Reverts Toward a Lower Baseline):
 Hydroponics
+Cybernetics
 Imports (Price Reverts Toward a Higher Baseline):
 Cloned Organs
 Xeno-Geologicals
 The Moon
 Exports (Price Reverts Toward a Lower Baseline):
 Plasteel
-Refined Propellant
 Graphene Lattices
 Imports (Price Reverts Toward a Higher Baseline):
 Water Ice
@@ -36,11 +48,10 @@ Hydroponics
 Mars
 Exports (Price Reverts Toward a Lower Baseline):
 Plasteel
+Xeno-Geologicals
 Imports (Price Reverts Toward a Higher Baseline):
 Hydroponics
-Cryo-Sleep Pods
 Water Ice
-Graphene Lattices
 The Belt
 Exports (Price Reverts Toward a Lower Baseline):
 Water Ice
@@ -49,37 +60,50 @@ Imports (Price Reverts Toward a Higher Baseline):
 Hydroponics
 Cybernetics
 The Exchange
-Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Exports (Price Reverts Toward a Lower Baseline):
+Sentient AI Cores
+Cloned Organs
+Imports (Price Reverts Toward a Higher Baseline):
+Antimatter
+Xeno-Geologicals
 Jupiter
 Exports (Price Reverts Toward a Lower Baseline):
 Refined Propellant
-Atmo Processors
 Imports (Price Reverts Toward a Higher Baseline):
-Neural Processors
+Plasteel
+Atmo Processors
 Saturn
+Exports (Price Reverts Toward a Lower Baseline):
+Cybernetics
 Imports (Price Reverts Toward a Higher Baseline):
 Cryo-Sleep Pods
 Cloned Organs
 Uranus
 Exports (Price Reverts Toward a Lower Baseline):
-Atmo Processors
+Neural Processors
 Imports (Price Reverts Toward a Higher Baseline):
 Sentient AI Cores
-Neural Processors
+Atmo Processors
 Neptune
+Exports (Price Reverts Toward a Lower Baseline):
+Cryo-Sleep Pods
+Graphene Lattices
 Imports (Price Reverts Toward a Higher Baseline):
-Plasteel (Note: This is a strong import with a 0.1 modifier, so prices will trend very high)
+Plasteel
 Refined Propellant
 Kepler's Eye
-Neutral Location: This location has no local modifiers. All prices will revert directly toward the Galactic Average.
+Exports (Price Reverts Toward a Lower Baseline):
+Antimatter
+Imports (Price Reverts Toward a Higher Baseline):
+Folded-Space Drives
+Neural Processors
 Pluto
 Exports (Price Reverts Toward a Lower Baseline):
-Water Ice
+Graphene Lattices
 Xeno-Geologicals
 Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
+Antimatter
 Cybernetics
-Cloned Organs
 
 III. Player-Driven Market Dynamics & Simulation
 Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
@@ -98,6 +122,7 @@ Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on
 Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
 Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
 Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade, allowing them to travel and return to exploit the price they created.
+**Note:** Active Intel Deals also trigger a form of price lock where the price fluctuates by only ±3% around the deal price.
 3. Force: Depletion Bonus (The Panic)
 A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
 Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
@@ -121,22 +146,7 @@ priceLockEndDay is reset to 0, re-enabling Mean Reversion.
 depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
 
 IV. How The Market Behaves (Simple Terms)
-Here is a simple breakdown of those forces with examples.
-Availability Pressure (The Shock): You sell 1,000 "Plasteel" on Mars, doubling its stock.
-For the next 7 days, nothing happens to the price (this prevents you from buying it right back).
-On Day 7, the price crashes by 50%.
-Price Lock (Your Loop): You sell 1,000 "Plasteel" on Mars, crashing the price.
-That price will stay crashed (it won't recover from natural Mean Reversion) for a random 3-6 months.
-This allows you to travel, then return to buy it back at the low price you created.
-Depletion Bonus (The Panic): You buy the entire large stock of "Cybernetics" (e.g., 50 units) on Earth.
-For the next 7 days, the price for "Cybernetics" on Earth will rise 50% faster than normal.
-This won't happen if you just buy the last 2 units, and it can only happen once per year.
-Replenishment (The Bottleneck): A market wants 1,000 "Plasteel" but has 1,200 (a surplus of 200).
-It will not shed 200 units at once.
-It will only shed 10% of the 200-unit gap, losing 20 units per week.
-This is the "race": the price crash from your sale slowly gets weaker each week as the surplus shrinks.
-Market Memory (The Reset): You crash the "Plasteel" price on Mars, then fly to the outer system and don't come back.
-After 120 days of you not trading Plasteel on Mars, the market "forgets" you, and the price returns to normal.
+(See existing file for basic behavior examples...)
 
 V. Commodity Behavior
 (See existing file for full Commodity Tier list...)
@@ -145,10 +155,12 @@ VI. Ship Upgrade Economy
 The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
 
 1. Tiered Pricing Structure
-Upgrades are categorized into three tiers of rarity and power.
-Tier I (Common): 5,000 Credits. Entry-level modifications.
-Tier II (Rare): 15,000 Credits. Advanced specialized equipment.
-Tier III (Very Rare): 45,000 Credits. Experimental or military-grade technology.
+Upgrades are categorized into five tiers of rarity and power.
+Tier I (Common): 5,000 - 40,000 Credits. Entry-level modifications.
+Tier II (Rare): 15,000 - 120,000 Credits. Advanced specialized equipment.
+Tier III (Very Rare): 45,000 - 480,000 Credits. Experimental military-grade technology.
+Tier IV (Prototype): 270,000 - 12,500,000 Credits. Unstable, high-performance experimental tech.
+Tier V (Luminary): 810,000 - 25,000,000 Credits. Unique, "best-in-class" artifacts.
 
 2. Resale Value Logic
 Ships are now valued based on the sum of their hull and their installed components.
@@ -159,8 +171,28 @@ Destructive Replacement: However, if a player installs an upgrade into a full sl
 
 3. Economic Modifiers
 Specific upgrades directly alter the player's profit margins and operating costs.
-Signal Hacker (Buy Price): Reduces the purchase price of all commodities by 3% / 5% / 7%.
-Guild Badge (Sell Price): Increases the sell price of all commodities by 3% / 5% / 7%.
-Fuel Pass (Service Cost): Reduces refueling costs by 20% / 50% / 75%.
-Syndicate Badge (Debt): Reduces monthly debt interest by 20% / 30% / 50%.
-Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases fuel consumption by 15% / 30% / 45%.
+Signal Hacker (Buy Price): Reduces purchase prices (Tier I: 0.5% -> Tier V: 3.3%).
+Guild Badge (Sell Price): Increases sell prices (Tier I: 0.5% -> Tier V: 3.3%).
+Fuel Pass (Service Cost): Reduces refueling costs (Tier I: 10% -> Tier V: 50%).
+Syndicate Badge (Debt): Reduces monthly debt interest (Tier I: 20% -> Tier V: 66%).
+Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption (15-60%).
+
+VII. Service Economies & Quirks (See existing file...)
+
+VIII. Station-Specific Market Quirks
+Unique economic rules that apply only to specific stations, encouraging specialized trade routes.
+
+* **Sol Station (Solar Forge):** +25% Sell Price for Graphene Lattices & Plasteel.
+* **Mercury (Desperate Thirst):** Pays 40% more for Water Ice.
+* **Venus (Data Haven):** Intel is 50% cheaper and deals last 2x longer.
+* **Earth (High Demand):** Cloned Organs & Xeno-Geologicals sell for 10% more.
+* **The Moon (Orbital Shipyards):** 20% discount on all ship repairs.
+* **Mars (Colonial Expansion):** +10% Sell Price for Water Ice and Hydroponics.
+* **The Belt (Lawless Zone):** (Classified).
+* **The Exchange (Black Market):** Prices fluctuate dramatically (3x Volatility).
+* **Jupiter (Gas Giant Refinery):** Fuel is sold at a 50% discount.
+* **Saturn (Luxury Tax):** +20% Sell Price for Organs/Cryo Pods, but 200% Service Costs.
+* **Uranus (Quantum Research):** Increased chance for advanced ship upgrades in the tuning shop.
+* **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
+* **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
+* **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
