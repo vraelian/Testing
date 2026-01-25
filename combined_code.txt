@@ -7594,18 +7594,21 @@ function _renderTuningView(gameState) {
         const totalCost = def.value + laborFee;
         const canAfford = gameState.player.credits >= totalCost;
         
+        // VIRTUAL WORKBENCH: Dynamic Name Size logic
+        const nameSizeClass = def.name.length > 12 ? 'text-base' : 'text-lg';
+
         return `
             <div class="service-module upgrade-shop-item" style="${styleVars}">
                 <div class="flex flex-row items-center gap-4 h-full">
                     <div class="upgrade-icon-strip h-full w-2" style="background-color: var(--item-color); box-shadow: 0 0 8px var(--item-glow);"></div>
                     
                     <div class="flex-grow flex flex-col justify-center overflow-hidden">
-                        <div class="font-orbitron font-bold text-lg engraved-text truncate" 
+                        <div class="font-orbitron font-bold ${nameSizeClass} engraved-text truncate" 
                              style="color: var(--item-color); text-shadow: 0 0 5px var(--item-glow);">
                              ${def.name}
                         </div>
                         <div class="text-xs text-gray-400 mt-1 leading-tight">${def.description}</div>
-                        <div class="text-[10px] text-gray-500 mt-2 font-mono">
+                        <div class="text-[11.5px] text-gray-500 mt-2 font-mono">
                             HARDWARE: ${formatCredits(def.value)}<br>
                             LABOR: ${formatCredits(laborFee)} (5%)
                         </div>
@@ -28132,6 +28135,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+
+## [34.73] - 2026-1-25
+-  ship upgrade polish
 
 ## [34.73] - 2026-1-25
 -  tuned ship upgrade parameters
