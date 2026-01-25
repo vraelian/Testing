@@ -2,12 +2,7 @@
 /**
  * @fileoverview
  * The central engine for Event System 2.0.
- * This service orchestrates the lifecycle of a random event:
- * 1. Filtering valid events (ConditionEvaluator)
- * 2. Selecting an event (Weighted RNG)
- * 3. Resolving player choices (OutcomeResolver)
- * 4. Calculating dynamic rewards (DynamicValueResolver)
- * 5. Applying effects and triggering UI feedback (EventEffectResolver + UIManager)
+ * UPDATED: Includes logic to pre-evaluate choices and disable them if requirements are not met.
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -26,10 +21,7 @@ export class RandomEventService {
 
     /**
      * Attempts to find and select a valid random event for the current context.
-     * @param {import('./GameState.js').GameState} gameState
-     * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {string[]} contextTags - Tags defining the current situation (e.g. ['TAG_SPACE', 'TAG_HAZARD'])
-     * @returns {Object|null} The hydrated event object or null if none found.
+     * UPDATED: Now creates a deep copy of the event and checks choice requirements.
      */
     tryTriggerEvent(gameState, simulationService, contextTags = []) {
         // 1. Filter events by Tag and Conditions
@@ -40,28 +32,40 @@ export class RandomEventService {
         }
 
         // 2. Select one based on weight
-        const selectedEvent = this._selectWeightedEvent(validEvents);
+        const selectedEventTemplate = this._selectWeightedEvent(validEvents);
         
-        return selectedEvent;
+        // 3. [[UPDATED]]: Create a Deep Clone to avoid mutating the static database
+        const eventInstance = JSON.parse(JSON.stringify(selectedEventTemplate));
+
+        // 4. [[UPDATED]]: Evaluate choices to determine if they should be enabled/disabled
+        if (eventInstance.choices) {
+            eventInstance.choices.forEach(choice => {
+                if (choice.requirements && choice.requirements.length > 0) {
+                    // Check if player meets requirements
+                    const meetsReqs = this.evaluator.checkAll(choice.requirements, gameState, simulationService);
+                    
+                    if (!meetsReqs) {
+                        choice.disabled = true;
+                        // Optional: Append a flag or text to indicate why (handled by UI style usually)
+                    }
+                }
+            });
+        }
+        
+        return eventInstance;
     }
 
     /**
      * Forces a specific event to trigger by ID, bypassing standard checks.
-     * @param {string} eventId
-     * @returns {Object|null}
      */
     getEventById(eventId) {
-        return RANDOM_EVENTS.find(e => e.id === eventId) || null;
+        // [[UPDATED]]: Clone here as well to be safe
+        const template = RANDOM_EVENTS.find(e => e.id === eventId);
+        return template ? JSON.parse(JSON.stringify(template)) : null;
     }
 
     /**
      * Processes a player's decision during an event.
-     * @param {string} eventId - The ID of the active event.
-     * @param {string} choiceId - The ID of the selected choice.
-     * @param {import('./GameState.js').GameState} gameState
-     * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {import('./UIManager.js').UIManager} [uiManager=null]
-     * @returns {Object} The finalized outcome object with calculated effects.
      */
     resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
         const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
@@ -80,7 +84,6 @@ export class RandomEventService {
         }
 
         // 2. Capture the Title Logic
-        // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
         const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
 
         // 3. Calculate Dynamic Effects AND Apply Them
@@ -88,7 +91,7 @@ export class RandomEventService {
         
         if (outcomeDef.effects) {
             outcomeDef.effects.forEach(effect => {
-                // A. Resolve the dynamic value (e.g. "10% of Max Hull" -> 15)
+                // A. Resolve the dynamic value
                 const finalValue = this.valueResolver.resolve(effect.value, gameState);
                 
                 // B. Create a concrete effect object with the resolved number
@@ -106,7 +109,6 @@ export class RandomEventService {
 
         // 4. Trigger UI Feedback
         if (uiManager) {
-            // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 

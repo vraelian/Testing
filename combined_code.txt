@@ -9210,40 +9210,11 @@ export const DB = {
 /**
  * @fileoverview
  * Defines the Registry and Schema for Event System 2.0.
- * * ARCHITECTURE NOTE:
- * This file contains the static definitions for all random events.
- * Logic is handled by the RandomEventService, ConditionEvaluator, and OutcomeResolver.
- * * SCHEMA DEFINITION:
- * @typedef {Object} GameEvent
- * @property {string} id - Unique identifier (e.g., 'evt_distress_signal').
- * @property {string[]} tags - Context tags from EVENT_CONSTANTS.TAGS.
- * @property {number} weight - Relative frequency (Default: 10). Higher = More common.
- * @property {EventCondition[]} requirements - List of conditions for the event to spawn.
- * @property {Object} template - Text content.
- * @property {string} template.title - Event title.
- * @property {string} template.description - Main flavor text.
- * @property {EventChoice[]} choices - List of player options.
- * * @typedef {Object} EventCondition
- * @property {string} type - From EVENT_CONSTANTS.CONDITIONS.
- * @property {string} [target] - ID of item/perk/stat being checked.
- * @property {string} operator - 'GT' (>), 'LT' (<), 'EQ' (==), 'GTE' (>=).
- * @property {number|string} value - The threshold value.
- * * @typedef {Object} EventChoice
- * @property {string} id - Unique choice ID (e.g., 'choice_help').
- * @property {string} text - Button text.
- * @property {string} [tooltip] - Hover text explaining risk/reward.
- * @property {EventCondition[]} [requirements] - If failing, choice is hidden/disabled.
- * @property {Object} resolution - How the outcome is determined.
- * @property {string} resolution.type - From EVENT_CONSTANTS.RESOLVERS.
- * @property {EventOutcomePool[]} resolution.pool - Possible results.
+ * UPDATED: Lore V8 Alignment (Ad Astra, Guild, Syndicate) & Restrictions Check.
  */
 
 import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from './constants.js';
 
-/**
- * The central registry of all possible random events.
- * @type {GameEvent[]}
- */
 export const RANDOM_EVENTS = [
     // =========================================================================
     // CATEGORY I: ENTROPY (Mechanical Failures)
@@ -9254,14 +9225,13 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Avionics Overheat',
-            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly in the flight computer core. The smell of ozone is already drifting through the vents.'
+            title: 'Thermal Runaway',
+            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly. The smell of ozone is already drifting through the vents.'
         },
         choices: [
             {
                 id: 'choice_coolant',
                 text: 'Flush with Coolant (-15 Ice * Scale)',
-                // [[UPDATED]]: Base 15, Scales with Ship Size. 
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_coolant_fix' }] }
             },
@@ -9285,7 +9255,6 @@ export const RANDOM_EVENTS = [
             'out_vent_damage': {
                 title: 'Emergency Venting',
                 text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
-                // [[UPDATED]]: Increased penalty from -0.10 to -0.25 (25%)
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
             },
             'out_shutdown_delay': {
@@ -9301,7 +9270,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Injector Desync',
+            title: 'Injector Misfire',
             description: 'A sickening vibration runs through the deck plates. The number three plasma injector is misfiring. You can swap it out, or try to retune it on the fly—but a bad tune could dump your fuel.'
         },
         choices: [
@@ -9309,8 +9278,7 @@ export const RANDOM_EVENTS = [
                 id: 'choice_replace',
                 text: 'Replace Injector (-5 Plasteel * Scale)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, // Plasteel is Tier 1
-                    // [[UPDATED]]: Base 5, Scales with Ship Size
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, 
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_replace' }] }
@@ -9321,7 +9289,6 @@ export const RANDOM_EVENTS = [
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        // [[UPDATED]]: Improved success odds (70/30)
                         { outcomeId: 'out_tune_success', weight: 70 },
                         { outcomeId: 'out_tune_fail', weight: 30 }
                     ]
@@ -9347,13 +9314,11 @@ export const RANDOM_EVENTS = [
             'out_tune_fail': {
                 title: 'Fuel Dump',
                 text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
-                // [[UPDATED]]: Increased fuel penalty to 25%
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
             },
             'out_push_fail': {
                 title: 'Structural Stress',
                 text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
-                // [[UPDATED]]: Increased hull penalty to 30%
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
             }
         }
@@ -9372,7 +9337,6 @@ export const RANDOM_EVENTS = [
                 id: 'choice_hardware',
                 text: 'Hardware Patch (-10 Processors * Scale)',
                 requirements: [
-                    // [[UPDATED]]: Added Wealth Tier check (Processors are Tier 3)
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
                 ],
@@ -9389,7 +9353,6 @@ export const RANDOM_EVENTS = [
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        // [[UPDATED]]: Improved success odds to 80/20
                         { outcomeId: 'out_override_success', weight: 80 },
                         { outcomeId: 'out_override_fail', weight: 20 }
                     ]
@@ -9415,7 +9378,6 @@ export const RANDOM_EVENTS = [
             'out_override_fail': {
                 title: 'Navigational Error',
                 text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
-                // [[UPDATED]]: Massive delay penalty for failure
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
             }
         }
@@ -9472,7 +9434,6 @@ export const RANDOM_EVENTS = [
             'out_maintain_fail': {
                 title: 'Structural Failure',
                 text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
-                // [[UPDATED]]: Critical damage
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.40 } }]
             }
         }
@@ -9695,7 +9656,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Inspection Hail',
+            title: 'Guild Authority Audit',
             description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
         },
         choices: [
@@ -9740,8 +9701,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Toll Road',
-            description: 'Local Orbital Patrol has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+            title: 'Corporate Tariff',
+            description: 'Local Corporate Security has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
         },
         choices: [
             {
@@ -9811,7 +9772,7 @@ export const RANDOM_EVENTS = [
                 id: 'choice_chem',
                 text: 'Chemical Bath (-15 Propellant * Scale)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, // Propellant is Tier 3
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, 
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
@@ -9976,7 +9937,6 @@ export const RANDOM_EVENTS = [
             {
                 id: 'choice_donate_cyber',
                 text: 'Donate Cybernetics (-2 Cybernetics)',
-                // Cybernetics are Tier 2, low volume/high value, so fixed cost of 2 is fine for balance
                 requirements: [
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 2 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }
@@ -10032,8 +9992,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Encrypted Hail',
-            description: 'A stealth-corvette matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
+            title: 'Syndicate Broker',
+            description: 'A sleek Syndicate interceptor matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
         },
         choices: [
             {
@@ -10098,7 +10058,7 @@ export const RANDOM_EVENTS = [
             {
                 id: 'choice_sell',
                 text: 'Flash Sale (Lose Cargo, +Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], // Hack to ensure we have cargo
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], 
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
             },
             {
@@ -10344,8 +10304,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Silent Signal',
-            description: 'You spot a dark object tumbling in orbit. It\'s a pre-war survey probe. It might have valuable components, or unexploded ordnance.'
+            title: 'Ad Astra Relic',
+            description: 'You spot a dark object tumbling in orbit. It\'s a decaying Ad Astra Initiative survey probe from the expansion era. It might have valuable components, or unexploded ordnance.'
         },
         choices: [
             {
@@ -10525,7 +10485,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Ghost Signal',
+            title: 'Rogue Beacon',
             description: 'A distress beacon pings nearby, but the encryption doesn\'t match Guild protocols. It could be an old cache, or malware.'
         },
         choices: [
@@ -10860,7 +10820,6 @@ export const RANDOM_EVENTS = [
         }
     }
 ];
-
 --- END OF FILE: ./js/data/events.js ---
 
 --- START OF FILE: ./js/data/news_flavor.js ---
@@ -16622,12 +16581,7 @@ popperOptions: {
 /**
  * @fileoverview
  * The central engine for Event System 2.0.
- * This service orchestrates the lifecycle of a random event:
- * 1. Filtering valid events (ConditionEvaluator)
- * 2. Selecting an event (Weighted RNG)
- * 3. Resolving player choices (OutcomeResolver)
- * 4. Calculating dynamic rewards (DynamicValueResolver)
- * 5. Applying effects and triggering UI feedback (EventEffectResolver + UIManager)
+ * UPDATED: Includes logic to pre-evaluate choices and disable them if requirements are not met.
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -16646,10 +16600,7 @@ export class RandomEventService {
 
     /**
      * Attempts to find and select a valid random event for the current context.
-     * @param {import('./GameState.js').GameState} gameState
-     * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {string[]} contextTags - Tags defining the current situation (e.g. ['TAG_SPACE', 'TAG_HAZARD'])
-     * @returns {Object|null} The hydrated event object or null if none found.
+     * UPDATED: Now creates a deep copy of the event and checks choice requirements.
      */
     tryTriggerEvent(gameState, simulationService, contextTags = []) {
         // 1. Filter events by Tag and Conditions
@@ -16660,28 +16611,40 @@ export class RandomEventService {
         }
 
         // 2. Select one based on weight
-        const selectedEvent = this._selectWeightedEvent(validEvents);
+        const selectedEventTemplate = this._selectWeightedEvent(validEvents);
         
-        return selectedEvent;
+        // 3. [[UPDATED]]: Create a Deep Clone to avoid mutating the static database
+        const eventInstance = JSON.parse(JSON.stringify(selectedEventTemplate));
+
+        // 4. [[UPDATED]]: Evaluate choices to determine if they should be enabled/disabled
+        if (eventInstance.choices) {
+            eventInstance.choices.forEach(choice => {
+                if (choice.requirements && choice.requirements.length > 0) {
+                    // Check if player meets requirements
+                    const meetsReqs = this.evaluator.checkAll(choice.requirements, gameState, simulationService);
+                    
+                    if (!meetsReqs) {
+                        choice.disabled = true;
+                        // Optional: Append a flag or text to indicate why (handled by UI style usually)
+                    }
+                }
+            });
+        }
+        
+        return eventInstance;
     }
 
     /**
      * Forces a specific event to trigger by ID, bypassing standard checks.
-     * @param {string} eventId
-     * @returns {Object|null}
      */
     getEventById(eventId) {
-        return RANDOM_EVENTS.find(e => e.id === eventId) || null;
+        // [[UPDATED]]: Clone here as well to be safe
+        const template = RANDOM_EVENTS.find(e => e.id === eventId);
+        return template ? JSON.parse(JSON.stringify(template)) : null;
     }
 
     /**
      * Processes a player's decision during an event.
-     * @param {string} eventId - The ID of the active event.
-     * @param {string} choiceId - The ID of the selected choice.
-     * @param {import('./GameState.js').GameState} gameState
-     * @param {import('./SimulationService.js').SimulationService} simulationService
-     * @param {import('./UIManager.js').UIManager} [uiManager=null]
-     * @returns {Object} The finalized outcome object with calculated effects.
      */
     resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
         const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
@@ -16700,7 +16663,6 @@ export class RandomEventService {
         }
 
         // 2. Capture the Title Logic
-        // Priority: Outcome Title -> Event Template Title -> Event Title -> Fallback
         const eventTitle = outcomeDef.title || eventDef.template?.title || eventDef.title || `Unknown Event (${eventId})`;
 
         // 3. Calculate Dynamic Effects AND Apply Them
@@ -16708,7 +16670,7 @@ export class RandomEventService {
         
         if (outcomeDef.effects) {
             outcomeDef.effects.forEach(effect => {
-                // A. Resolve the dynamic value (e.g. "10% of Max Hull" -> 15)
+                // A. Resolve the dynamic value
                 const finalValue = this.valueResolver.resolve(effect.value, gameState);
                 
                 // B. Create a concrete effect object with the resolved number
@@ -16726,7 +16688,6 @@ export class RandomEventService {
 
         // 4. Trigger UI Feedback
         if (uiManager) {
-            // Pass 3 arguments: (Title, Text, Effects)
             uiManager.showEventResultModal(eventTitle, outcomeDef.text, calculatedEffects);
         }
 
@@ -22097,6 +22058,7 @@ export const Logger = {
  * @fileoverview This file acts as a resolver for all random event outcomes. It maps effect types
  * to their corresponding handler functions, providing a centralized and extensible way to
  * apply the consequences of player choices during events.
+ * UPDATED: Added Math.round() to enforce integer values and preventing float drift.
  */
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
@@ -22107,9 +22069,6 @@ import { GameAttributes } from './GameAttributes.js';
 
 /**
  * A map of effect type strings to their corresponding handler functions.
- * Each handler function receives the game state, simulation service, the specific effect object,
- * and the parent outcome object. This allows for complex, conditional logic.
- * @type {Object.<string, function(import('./GameState.js').GameState, import('./SimulationService.js').SimulationService, object, object): (object|void)>}
  */
 const effectHandlers = {
     // --- Custom, Complex Event Handlers ---
@@ -22120,9 +22079,10 @@ const effectHandlers = {
     
     // 1. CREDITS
     [EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS]: (gameState, simulationService, effect) => {
-        // Effect value is already resolved to an integer (e.g. -500 or +1000)
         const oldValue = gameState.player.credits;
-        gameState.player.credits = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + effect.value));
+        // FIX: Enforce Integer
+        const change = Math.round(effect.value); 
+        gameState.player.credits = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + change));
         
         const diff = gameState.player.credits - oldValue;
         if (diff !== 0) {
@@ -22134,21 +22094,18 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL]: (gameState, simulationService, effect) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        // Effect value is resolved integer (e.g. -15)
-        shipState.fuel = Math.max(0, Math.min(ship.maxFuel, shipState.fuel + effect.value));
+        // FIX: Enforce Integer
+        const change = Math.round(effect.value);
+        shipState.fuel = Math.max(0, Math.min(ship.maxFuel, shipState.fuel + change));
     },
 
     // 3. HULL
     [EVENT_CONSTANTS.EFFECTS.MODIFY_HULL]: (gameState, simulationService, effect) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        
-        // OLD: Calculated percent on the fly
-        // NEW: effect.value is a resolved integer (e.g. -10 damage)
-        shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + effect.value));
-        
-        // REMOVED: Immediate death check. 
-        // Logic moved to TravelService._postEventCheck() to allow user to see outcome first.
+        // FIX: Enforce Integer
+        const change = Math.round(effect.value);
+        shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + change));
     },
 
     // 4. DEBT
@@ -22157,16 +22114,17 @@ const effectHandlers = {
             gameState.player.loanStartDate = gameState.day;
             gameState.player.weeklyInterestAmount = 0;
         }
-        // Assuming simple debt addition. Recalculating interest is complex, relying on daily update.
-        gameState.player.debt = Math.max(0, gameState.player.debt + effect.value);
+        // FIX: Enforce Integer
+        const change = Math.round(effect.value);
+        gameState.player.debt = Math.max(0, gameState.player.debt + change);
     },
 
     // 5. ADD ITEM (Specific)
     [EVENT_CONSTANTS.EFFECTS.ADD_ITEM]: (gameState, simulationService, effect, outcome) => {
         const ship = simulationService._getActiveShip();
         const inventory = simulationService._getActiveInventory();
-        const commodityId = effect.target; // ID is in target
-        const quantity = effect.value;     // Qty is in value
+        const commodityId = effect.target; 
+        const quantity = Math.floor(effect.value); // FIX: Floor items
         
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
         
@@ -22176,7 +22134,6 @@ const effectHandlers = {
             }
             inventory[commodityId].quantity += quantity;
         } else {
-            // Modify outcome text to reflect failure
             if (outcome && commodity) {
                 outcome.text += ` (Cargo hold full! Abandoned ${quantity}x ${commodity.name}.)`;
             }
@@ -22187,7 +22144,7 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM]: (gameState, simulationService, effect) => {
         const inventory = simulationService._getActiveInventory();
         const commodityId = effect.target;
-        const quantity = effect.value;
+        const quantity = Math.ceil(effect.value); // FIX: Ceiling removals to be safe
 
         if (inventory[commodityId]) {
             inventory[commodityId].quantity = Math.max(0, inventory[commodityId].quantity - quantity);
@@ -22196,24 +22153,17 @@ const effectHandlers = {
 
     // 7. TRAVEL TIME (Modify)
     [EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL]: (gameState, simulationService, effect) => {
-        // effect.value is resolved number of days (e.g. 1 or 2)
         if (gameState.pendingTravel) {
-            gameState.pendingTravel.travelTimeAdd = (gameState.pendingTravel.travelTimeAdd || 0) + effect.value;
+            // FIX: Enforce Integer for days
+            const change = Math.round(effect.value);
+            gameState.pendingTravel.travelTimeAdd = (gameState.pendingTravel.travelTimeAdd || 0) + change;
         }
     },
 
     // 8. UNLOCK INTEL
     [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect) => {
-        // Generic handler for "Gaining Data"
-        // In the future, this could unlock a specific route or price list.
-        // For now, we'll simulate it by giving a small amount of XP/Skill (if that existed) or just visual feedback.
-        // Or better: Reveal prices for a random location for 7 days.
         const randomLoc = DB.MARKETS[Math.floor(Math.random() * DB.MARKETS.length)];
-        if (simulationService.intelService) {
-             // Create a temporary intel packet? 
-             // For now, let's just assume it was "sold" instantly for credits or acts as a flavor effect
-             // that avoids the 'No handler' error.
-        }
+        // Logic handled by IntelService later, currently just visual/placeholder
     },
 
     // 9. LOSE RANDOM CARGO (Percentage)
@@ -22223,13 +22173,11 @@ const effectHandlers = {
         
         if (heldCommodities.length > 0) {
             const [id, item] = heldCommodities[Math.floor(Math.random() * heldCommodities.length)];
-            // effect.value is a percentage (0.20)
             const quantityToLose = Math.ceil(item.quantity * effect.value);
             item.quantity = Math.max(0, item.quantity - quantityToLose);
             
             const commodity = DB.COMMODITIES.find(c => c.id === id);
             if (commodity) {
-                // Return generic info for the UI logger if needed
                 return { lostItem: commodity.name, lostQty: quantityToLose };
             }
         }
@@ -22246,18 +22194,15 @@ const effectHandlers = {
              return;
         }
 
-        // Pick a random trade good (excluding specialized ones if needed, but generic is fine)
-        const validCommodities = DB.COMMODITIES.filter(c => c.id !== 'fuel_rod'); // Example filter
+        const validCommodities = DB.COMMODITIES.filter(c => c.id !== 'fuel_rod'); 
         const randomCom = validCommodities[Math.floor(Math.random() * validCommodities.length)];
         
-        // Add up to effect.value, constrained by space
         const amountToAdd = Math.min(Math.floor(effect.value), space);
         
         if (amountToAdd > 0) {
             if (!inventory[randomCom.id]) inventory[randomCom.id] = { quantity: 0, avgCost: 0 };
             inventory[randomCom.id].quantity += amountToAdd;
             
-            // Append to text for user clarity
             if (outcome) outcome.text += ` (Salvaged ${amountToAdd}x ${randomCom.name})`;
         }
     },
@@ -22266,7 +22211,7 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE]: (gameState, simulationService, effect, outcome) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        const upgradeId = effect.target; // Target contains the Upgrade ID (e.g. UPG_ECO_FUEL_1)
+        const upgradeId = effect.target;
 
         shipState.upgrades = shipState.upgrades || [];
 
@@ -22279,17 +22224,13 @@ const effectHandlers = {
                 outcome.text += ` (Installed Upgrade: ${name})`;
             }
 
-            // [[NEW]] Switch to Hangar view to show the new upgrade
-            // Ensure we are looking at Owned Ships, not the Shipyard
             gameState.uiState.hangarShipyardToggleState = 'hangar';
             
-            // Navigate to the screen if the method exists
             if (simulationService.setScreen) {
                 simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
             }
 
         } else {
-            // Fallback if they already have it
             if (outcome) {
                  const def = GameAttributes.getDefinition(upgradeId);
                  const name = def ? def.name : upgradeId;
@@ -22302,8 +22243,6 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.FULL_REFUEL]: (gameState, simulationService, effect, outcome) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        
-        // Set fuel to maximum capacity
         shipState.fuel = ship.maxFuel;
 
         if (outcome) {
@@ -22314,11 +22253,6 @@ const effectHandlers = {
 
 /**
  * Acts as a router, calling the appropriate handler function for a given event effect type.
- * @param {import('./GameState.js').GameState} gameState - The mutable game state object.
- * @param {import('./SimulationService.js').SimulationService} simulationService - The simulation service instance.
- * @param {object} effect - The effect object from the event definition in the database.
- * @param {object} outcome - The parent outcome object, which can be modified by the handler (e.g., to change descriptions).
- * @returns {object|void} An optional object from the handler, typically for dynamic description data.
  */
 export function applyEffect(gameState, simulationService, effect, outcome) {
     const handler = effectHandlers[effect.type];

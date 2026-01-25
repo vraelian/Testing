@@ -2,40 +2,11 @@
 /**
  * @fileoverview
  * Defines the Registry and Schema for Event System 2.0.
- * * ARCHITECTURE NOTE:
- * This file contains the static definitions for all random events.
- * Logic is handled by the RandomEventService, ConditionEvaluator, and OutcomeResolver.
- * * SCHEMA DEFINITION:
- * @typedef {Object} GameEvent
- * @property {string} id - Unique identifier (e.g., 'evt_distress_signal').
- * @property {string[]} tags - Context tags from EVENT_CONSTANTS.TAGS.
- * @property {number} weight - Relative frequency (Default: 10). Higher = More common.
- * @property {EventCondition[]} requirements - List of conditions for the event to spawn.
- * @property {Object} template - Text content.
- * @property {string} template.title - Event title.
- * @property {string} template.description - Main flavor text.
- * @property {EventChoice[]} choices - List of player options.
- * * @typedef {Object} EventCondition
- * @property {string} type - From EVENT_CONSTANTS.CONDITIONS.
- * @property {string} [target] - ID of item/perk/stat being checked.
- * @property {string} operator - 'GT' (>), 'LT' (<), 'EQ' (==), 'GTE' (>=).
- * @property {number|string} value - The threshold value.
- * * @typedef {Object} EventChoice
- * @property {string} id - Unique choice ID (e.g., 'choice_help').
- * @property {string} text - Button text.
- * @property {string} [tooltip] - Hover text explaining risk/reward.
- * @property {EventCondition[]} [requirements] - If failing, choice is hidden/disabled.
- * @property {Object} resolution - How the outcome is determined.
- * @property {string} resolution.type - From EVENT_CONSTANTS.RESOLVERS.
- * @property {EventOutcomePool[]} resolution.pool - Possible results.
+ * UPDATED: Lore V8 Alignment (Ad Astra, Guild, Syndicate) & Restrictions Check.
  */
 
 import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from './constants.js';
 
-/**
- * The central registry of all possible random events.
- * @type {GameEvent[]}
- */
 export const RANDOM_EVENTS = [
     // =========================================================================
     // CATEGORY I: ENTROPY (Mechanical Failures)
@@ -46,14 +17,13 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Avionics Overheat',
-            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly in the flight computer core. The smell of ozone is already drifting through the vents.'
+            title: 'Thermal Runaway',
+            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly. The smell of ozone is already drifting through the vents.'
         },
         choices: [
             {
                 id: 'choice_coolant',
                 text: 'Flush with Coolant (-15 Ice * Scale)',
-                // [[UPDATED]]: Base 15, Scales with Ship Size. 
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_coolant_fix' }] }
             },
@@ -77,7 +47,6 @@ export const RANDOM_EVENTS = [
             'out_vent_damage': {
                 title: 'Emergency Venting',
                 text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
-                // [[UPDATED]]: Increased penalty from -0.10 to -0.25 (25%)
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
             },
             'out_shutdown_delay': {
@@ -93,7 +62,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Injector Desync',
+            title: 'Injector Misfire',
             description: 'A sickening vibration runs through the deck plates. The number three plasma injector is misfiring. You can swap it out, or try to retune it on the fly—but a bad tune could dump your fuel.'
         },
         choices: [
@@ -101,8 +70,7 @@ export const RANDOM_EVENTS = [
                 id: 'choice_replace',
                 text: 'Replace Injector (-5 Plasteel * Scale)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, // Plasteel is Tier 1
-                    // [[UPDATED]]: Base 5, Scales with Ship Size
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, 
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_replace' }] }
@@ -113,7 +81,6 @@ export const RANDOM_EVENTS = [
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        // [[UPDATED]]: Improved success odds (70/30)
                         { outcomeId: 'out_tune_success', weight: 70 },
                         { outcomeId: 'out_tune_fail', weight: 30 }
                     ]
@@ -139,13 +106,11 @@ export const RANDOM_EVENTS = [
             'out_tune_fail': {
                 title: 'Fuel Dump',
                 text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
-                // [[UPDATED]]: Increased fuel penalty to 25%
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
             },
             'out_push_fail': {
                 title: 'Structural Stress',
                 text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
-                // [[UPDATED]]: Increased hull penalty to 30%
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
             }
         }
@@ -164,7 +129,6 @@ export const RANDOM_EVENTS = [
                 id: 'choice_hardware',
                 text: 'Hardware Patch (-10 Processors * Scale)',
                 requirements: [
-                    // [[UPDATED]]: Added Wealth Tier check (Processors are Tier 3)
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
                 ],
@@ -181,7 +145,6 @@ export const RANDOM_EVENTS = [
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        // [[UPDATED]]: Improved success odds to 80/20
                         { outcomeId: 'out_override_success', weight: 80 },
                         { outcomeId: 'out_override_fail', weight: 20 }
                     ]
@@ -207,7 +170,6 @@ export const RANDOM_EVENTS = [
             'out_override_fail': {
                 title: 'Navigational Error',
                 text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
-                // [[UPDATED]]: Massive delay penalty for failure
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
             }
         }
@@ -264,7 +226,6 @@ export const RANDOM_EVENTS = [
             'out_maintain_fail': {
                 title: 'Structural Failure',
                 text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
-                // [[UPDATED]]: Critical damage
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.40 } }]
             }
         }
@@ -487,7 +448,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Inspection Hail',
+            title: 'Guild Authority Audit',
             description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
         },
         choices: [
@@ -532,8 +493,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Toll Road',
-            description: 'Local Orbital Patrol has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+            title: 'Corporate Tariff',
+            description: 'Local Corporate Security has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
         },
         choices: [
             {
@@ -603,7 +564,7 @@ export const RANDOM_EVENTS = [
                 id: 'choice_chem',
                 text: 'Chemical Bath (-15 Propellant * Scale)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, // Propellant is Tier 3
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, 
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
@@ -768,7 +729,6 @@ export const RANDOM_EVENTS = [
             {
                 id: 'choice_donate_cyber',
                 text: 'Donate Cybernetics (-2 Cybernetics)',
-                // Cybernetics are Tier 2, low volume/high value, so fixed cost of 2 is fine for balance
                 requirements: [
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 2 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }
@@ -824,8 +784,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Encrypted Hail',
-            description: 'A stealth-corvette matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
+            title: 'Syndicate Broker',
+            description: 'A sleek Syndicate interceptor matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
         },
         choices: [
             {
@@ -890,7 +850,7 @@ export const RANDOM_EVENTS = [
             {
                 id: 'choice_sell',
                 text: 'Flash Sale (Lose Cargo, +Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], // Hack to ensure we have cargo
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], 
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
             },
             {
@@ -1136,8 +1096,8 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Silent Signal',
-            description: 'You spot a dark object tumbling in orbit. It\'s a pre-war survey probe. It might have valuable components, or unexploded ordnance.'
+            title: 'Ad Astra Relic',
+            description: 'You spot a dark object tumbling in orbit. It\'s a decaying Ad Astra Initiative survey probe from the expansion era. It might have valuable components, or unexploded ordnance.'
         },
         choices: [
             {
@@ -1317,7 +1277,7 @@ export const RANDOM_EVENTS = [
         weight: 10,
         requirements: [],
         template: {
-            title: 'Ghost Signal',
+            title: 'Rogue Beacon',
             description: 'A distress beacon pings nearby, but the encryption doesn\'t match Guild protocols. It could be an old cache, or malware.'
         },
         choices: [
