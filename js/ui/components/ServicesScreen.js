@@ -285,66 +285,124 @@ export function renderServicesScreen(gameState, simulationService) {
 }
 
 /**
- * Deterministically filters the available upgrades based on Day and Location.
- * Implements "Exploration Economy" rates: Tier 1 (15%), Tier 2 (10%), Tier 3 (5%).
- * @param {object} gameState
- * @returns {string[]} Array of available upgrade IDs.
+ * Deterministically filters and selects daily stock using a "Quantity First, Selection Second" logic.
+ * * 1. Quantity Roll: Determines shop size (0-5 items) based on fixed distribution.
+ * 0:5%, 1:20%, 2:35%, 3:25%, 4:10%, 5:5%
+ * * 2. Weighted Selection: Picks unique items to fill the slots based on Tier rarity.
+ * Weights: T1(17), T2(11), T3(9), T4(6), T5(4)
+ * * @param {object} gameState
+ * @returns {string[]} Array of selected upgrade IDs.
  */
 function _getDailyStock(gameState) {
     const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
-    return allIds.filter(id => {
-        // 0. Strict Allowlist: Only items starting with 'UPG_' are valid shop items.
-        // This filters out STATION_QUIRKS, innate ship ATTRIBUTES, and Z-Class mechanics.
+    // 1. FILTER CANDIDATES
+    // Create a list of all *possible* items allowed to spawn here/now.
+    let candidates = allIds.filter(id => {
+        // Strict Allowlist
         if (!id.startsWith('UPG_')) return false;
 
-        // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
+        // Exclude Rewards (Guild/Syndicate) unless Tier 4/5
         if (id.includes('GUILD') || id.includes('SYNDICATE')) {
-            // EXCEPTION: Tier 4/5 Syndicate Pass allowed
             if (!id.endsWith('_4') && !id.endsWith('_5')) return false;
         }
 
-        // 2. Determine Base Chance based on Tier Suffix
-        // REVISED BASE RATES: T1=15%, T2=10%, T3=5%
-        let threshold = 0.15; // Tier 1 Default
-
-        // FIX: Identifiers use Arabic numerals (_2, _3)
-        if (id.endsWith('_2')) threshold = 0.10;
-        if (id.endsWith('_3')) threshold = 0.05;
-
-        // [[NEW]] TIER 4/5 LOGIC: SPAWNS FOR WEALTHY
+        // Wealth Gate for Tier 4/5 (1 Million Credits)
         if (id.endsWith('_4') || id.endsWith('_5')) {
-            if (player.credits < 10000000) return false;
-            // [[UPDATED]] 5% Spawn Rate as requested
-            threshold = 0.05; 
+            if (player.credits < 1000000) return false;
         }
-
-        // --- PHASE 2: AGE PERK (UPGRADE SPAWN RATE) ---
-        // Increase the threshold by the player's accrued bonus (e.g., +0.02)
-        const spawnBonus = gameState.player.statModifiers?.upgradeSpawnRate || 0;
-        threshold += spawnBonus;
-        // --- END PHASE 2 ---
-
-        // 3. Apply Uranus Station Quirk (2x Multiplier for ALL tiers)
-        if (currentLocationId === LOCATION_IDS.URANUS) {
-            threshold *= 2; 
-        }
-
-        // 4. Deterministic Hashing
-        // FIX: ID first to prevent clustering
-        const seedString = `${id}_${currentLocationId}_${day}`;
         
-        // Simple hash function to generate a pseudo-random number 0-1
-        let hash = 0;
-        for (let i = 0; i < seedString.length; i++) {
-            hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
-            hash |= 0; // Convert to 32bit integer
-        }
-        const random = (Math.abs(hash) % 1000) / 1000;
-        
-        return random < threshold;
+        return true;
     });
+
+    // 2. DETERMINE SHOP CAPACITY (Quantity Roll)
+    // 0: 5%, 1: 20%, 2: 35%, 3: 25%, 4: 10%, 5: 5%
+    const quantitySeed = `quantity_${currentLocationId}_${day}`;
+    const quantityRoll = _generatePseudoRandom(quantitySeed);
+    
+    let targetCount = 0;
+    if (quantityRoll < 0.05) targetCount = 0;
+    else if (quantityRoll < 0.25) targetCount = 1; // 0.05 + 0.20
+    else if (quantityRoll < 0.60) targetCount = 2; // 0.25 + 0.35
+    else if (quantityRoll < 0.85) targetCount = 3; // 0.60 + 0.25
+    else if (quantityRoll < 0.95) targetCount = 4; // 0.85 + 0.10
+    else targetCount = 5;
+
+    // 3. ASSIGN WEIGHTS TO CANDIDATES
+    // Tier 1: 17, Tier 2: 11, Tier 3: 9, Tier 4: 6, Tier 5: 4
+    // Modifiers: Age Perk (+), Uranus Quirk (Advanced x2)
+    
+    const ageBonusWeight = (gameState.player.statModifiers?.upgradeSpawnRate || 0) * 100;
+    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
+
+    let weightedPool = candidates.map(id => {
+        let weight = 0;
+        
+        // Base Weights
+        if (id.endsWith('_1')) weight = 17;
+        else if (id.endsWith('_2')) weight = 11;
+        else if (id.endsWith('_3')) weight = 9;
+        else if (id.endsWith('_4')) weight = 6;
+        else if (id.endsWith('_5')) weight = 4;
+        
+        // Age Perk (Additive)
+        weight += ageBonusWeight;
+
+        // Uranus Quirk (Advanced Multiplier)
+        if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
+            weight *= 2;
+        }
+
+        return { id, weight };
+    });
+
+    // 4. SELECT ITEMS
+    const selectedIds = [];
+    
+    // Loop until we fill the slots or run out of candidates
+    for (let i = 0; i < targetCount; i++) {
+        if (weightedPool.length === 0) break;
+
+        const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
+        const selectionSeed = `select_${currentLocationId}_${day}_${i}`;
+        let roll = _generatePseudoRandom(selectionSeed) * totalWeight;
+
+        // Weighted Pick
+        let selectedIndex = -1;
+        for (let j = 0; j < weightedPool.length; j++) {
+            roll -= weightedPool[j].weight;
+            if (roll < 0) {
+                selectedIndex = j;
+                break;
+            }
+        }
+        
+        // Fallback (rounding errors)
+        if (selectedIndex === -1 && weightedPool.length > 0) selectedIndex = weightedPool.length - 1;
+
+        if (selectedIndex !== -1) {
+            selectedIds.push(weightedPool[selectedIndex].id);
+            // Remove from pool to prevent duplicates
+            weightedPool.splice(selectedIndex, 1);
+        }
+    }
+
+    return selectedIds;
+}
+
+/**
+ * Generates a deterministic pseudo-random number (0-1) from a string seed.
+ * @param {string} seedString 
+ * @returns {number} 0.0 to 1.0
+ */
+function _generatePseudoRandom(seedString) {
+    let hash = 0;
+    for (let i = 0; i < seedString.length; i++) {
+        hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
+        hash |= 0; 
+    }
+    return (Math.abs(hash) % 1000) / 1000;
 }
 
 /**
