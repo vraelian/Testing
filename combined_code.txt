@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.65</title>
+    <title>Orbital Trading 34.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.65</p>
+            <p>Version 34.70</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -27799,10 +27799,12 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## [34.69] - 2026-1-24
+## [34.70] - 2026-1-24
 -  added reward events
 -  event polish
 -  event rewrites
+-  added IV and V ship upgrade tiers
+-  services screen polish
 
 ## [34.65] - 2026-1-23
 -  added date to navigation bar
@@ -29520,13 +29522,9 @@ Engine Mod (Trade-Off): Increases travel speed (time efficiency) but increases f
 
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## Ongoing, WIP Efforts
-- Service Vouchers as mission awards
+## Ongoing, WIP Effortsa
 - Achievements
-- Selecting Credit text on Nav bar transitions to Finance Screen
-- Change services ticks to always be 5% replenishment, and calculating exactly per 1%. 
-- Events/missions: award ship upgrade
-- Update event writing to be canon with lore.
+- Upgrade pill polish
 
 
 ## Imminent Projects
