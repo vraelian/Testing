@@ -194,7 +194,16 @@ export class GameState {
                 }
                 // --- END PHASE 1 ---
             },
-            market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
+            // --- VIRTUAL WORKBENCH: DAILY TUNING PURCHASES ---
+            // Added dailyTuningPurchases to track upgrades removed from shop after purchase.
+            market: { 
+                prices: {}, 
+                inventory: {}, 
+                galacticAverages: {}, 
+                priceHistory: {}, 
+                shipyardStock: {},
+                dailyTuningPurchases: {} 
+            },
             
             // --- VIRTUAL WORKBENCH ---
             // Removed obsolete `intel` property

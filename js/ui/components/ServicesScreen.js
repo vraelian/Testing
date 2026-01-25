@@ -413,11 +413,17 @@ function _generatePseudoRandom(seedString) {
  */
 function _renderTuningView(gameState) {
     const availableUpgradeIds = _getDailyStock(gameState);
+
+    // --- VIRTUAL WORKBENCH: SHOP REMOVAL LOGIC ---
+    // Filter out items already purchased today at this location.
+    const purchaseKey = `${gameState.currentLocationId}_${gameState.day}`;
+    const purchasedIds = gameState.market.dailyTuningPurchases?.[purchaseKey] || [];
+    const filteredStock = availableUpgradeIds.filter(id => !purchasedIds.includes(id));
     
     // Sort slightly for nicer presentation (Tier I -> II -> III -> IV -> V, then alphabetical)
-    availableUpgradeIds.sort();
+    filteredStock.sort();
 
-    if (availableUpgradeIds.length === 0) {
+    if (filteredStock.length === 0) {
         return `
             <div class="services-scroll-panel flex-grow min-h-0 flex items-center justify-center">
                 <p class="text-gray-500 text-lg">No upgrades available in stock today.</p>
@@ -430,7 +436,7 @@ function _renderTuningView(gameState) {
     const activeShipStatic = DB.SHIPS[activeShipId];
     const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
 
-    const upgradesHtml = availableUpgradeIds.map(id => {
+    const upgradesHtml = filteredStock.map(id => {
         const def = GameAttributes.getDefinition(id);
         if (!def) return '';
 
@@ -450,7 +456,7 @@ function _renderTuningView(gameState) {
                     <div class="upgrade-icon-strip h-full w-2" style="background-color: var(--item-color); box-shadow: 0 0 8px var(--item-glow);"></div>
                     
                     <div class="flex-grow flex flex-col justify-center overflow-hidden">
-                        <div class="font-orbitron font-bold text-lg engraved-text truncate" 
+                        <div class="upgrade-item-name font-orbitron font-bold engraved-text truncate" 
                              style="color: var(--item-color); text-shadow: 0 0 5px var(--item-glow);">
                              ${def.name}
                         </div>

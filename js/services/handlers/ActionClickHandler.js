@@ -120,6 +120,18 @@ export class ActionClickHandler {
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
                     
                     // 3. Execution (Callback)
+
+                    // --- VIRTUAL WORKBENCH: RECORD PURCHASE FOR SHOP REMOVAL ---
+                    // Generate a unique key for the location and day to ensure removal persists.
+                    const purchaseKey = `${state.currentLocationId}_${state.day}`;
+                    if (!this.gameState.market.dailyTuningPurchases) {
+                        this.gameState.market.dailyTuningPurchases = {};
+                    }
+                    if (!this.gameState.market.dailyTuningPurchases[purchaseKey]) {
+                        this.gameState.market.dailyTuningPurchases[purchaseKey] = [];
+                    }
+                    this.gameState.market.dailyTuningPurchases[purchaseKey].push(upgradeId);
+                    // --- END VIRTUAL WORKBENCH ---
                     
                     // Deduct Credits
                     if (totalCost > 0) {
