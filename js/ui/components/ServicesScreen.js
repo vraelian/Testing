@@ -112,58 +112,96 @@ export function renderServicesScreen(gameState, simulationService) {
         }
     }
 
-    // --- Calculate Costs ---
-    let fuelCostPerTick = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 2;
+    // =========================================================================
+    // --- COST CALCULATION: FUEL (Dynamic 5% / 1% Logic) ---
+    // =========================================================================
     
-    // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
-    // Saturn & Pluto Quirk: 200% Cost for Refueling & Repairs
+    // 1. Calculate Base Unit Cost (Cost for 1 Fuel Unit)
+    // Standard rate is Fuel Price / 2 for 5 units. So 1 unit = Price / 10.
+    let fuelUnitCost = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 10;
+    
+    // 2. Apply Modifiers to Unit Cost
+    // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
     if (currentLocationId === LOCATION_IDS.SATURN || currentLocationId === LOCATION_IDS.PLUTO) {
-        fuelCostPerTick *= 2.0;
+        fuelUnitCost *= 2.0;
     }
-    // --- END VIRTUAL WORKBENCH ---
-
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        fuelCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        fuelUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
-    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
-    fuelCostPerTick *= fuelAttrMod;
     
-    // --- PHASE 2: AGE PERK (FUEL COST) ---
+    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
+    fuelUnitCost *= fuelAttrMod;
+    
+    // --- PHASE 2: AGE PERK ---
     const ageFuelDiscount = player.statModifiers?.fuelCost || 0;
     if (ageFuelDiscount > 0) {
-        fuelCostPerTick *= (1 - ageFuelDiscount);
+        fuelUnitCost *= (1 - ageFuelDiscount);
     }
-    // --- END PHASE 2 ---
 
-    fuelCostPerTick = Math.max(1, Math.round(fuelCostPerTick));
-
-    let repairCostPerTick = (effectiveMaxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100)) * GAME_RULES.REPAIR_COST_PER_HP;
+    // 3. Determine Dynamic Tick Size (5% vs 1%)
+    const currentFuel = shipState.fuel;
+    const fuelDeficit = effectiveMaxFuel - currentFuel;
+    const fuelDeficitPct = fuelDeficit / effectiveMaxFuel;
     
-    // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
-    // Moon Quirk: 20% Discount
+    let fuelTickAmount = 0;
+    if (fuelDeficit > 0) {
+        // Precision Mode: If less than 5% deficit, fill 1% at a time. Otherwise 5%.
+        if (fuelDeficitPct < 0.05) {
+             fuelTickAmount = Math.ceil(effectiveMaxFuel * 0.01);
+        } else {
+             fuelTickAmount = Math.ceil(effectiveMaxFuel * 0.05);
+        }
+    }
+
+    // 4. Final Cost Per Tick
+    let fuelCostPerTick = Math.max(1, Math.round(fuelUnitCost * fuelTickAmount));
+
+    // =========================================================================
+    // --- COST CALCULATION: REPAIR (Dynamic 5% / 1% Logic) ---
+    // =========================================================================
+
+    // 1. Calculate Base Unit Cost (Cost for 1 HP)
+    let repairUnitCost = GAME_RULES.REPAIR_COST_PER_HP;
+    
+    // 2. Apply Modifiers to Unit Cost
+    // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
     if (currentLocationId === LOCATION_IDS.LUNA) {
-        repairCostPerTick *= 0.8; 
+        repairUnitCost *= 0.8; 
     }
-    // Saturn & Pluto Quirk: 200% Cost
     if (currentLocationId === LOCATION_IDS.SATURN || currentLocationId === LOCATION_IDS.PLUTO) {
-        repairCostPerTick *= 2.0;
+        repairUnitCost *= 2.0;
     }
-    // --- END VIRTUAL WORKBENCH ---
-
     if (player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && currentLocationId === LOCATION_IDS.VENUS) {
-        repairCostPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+        repairUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
-    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
-    repairCostPerTick *= repairAttrMod;
 
-    // --- PHASE 2: AGE PERK (REPAIR COST) ---
+    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
+    repairUnitCost *= repairAttrMod;
+
+    // --- PHASE 2: AGE PERK ---
     const ageRepairDiscount = player.statModifiers?.repairCost || 0;
     if (ageRepairDiscount > 0) {
-        repairCostPerTick *= (1 - ageRepairDiscount);
+        repairUnitCost *= (1 - ageRepairDiscount);
     }
-    // --- END PHASE 2 ---
 
-    repairCostPerTick = Math.max(1, Math.round(repairCostPerTick));
+    // 3. Determine Dynamic Tick Size (5% vs 1%)
+    const currentHealth = shipState.health;
+    const healthDeficit = effectiveMaxHealth - currentHealth;
+    const healthDeficitPct = healthDeficit / effectiveMaxHealth;
+    
+    let repairTickAmount = 0;
+    if (healthDeficit > 0) {
+        if (healthDeficitPct < 0.05) {
+             repairTickAmount = Math.ceil(effectiveMaxHealth * 0.01);
+        } else {
+             repairTickAmount = Math.ceil(effectiveMaxHealth * 0.05);
+        }
+    }
+
+    // 4. Final Cost Per Tick
+    let repairCostPerTick = Math.max(1, Math.round(repairUnitCost * repairTickAmount));
+
+    // =========================================================================
 
     // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
@@ -257,6 +295,10 @@ function _getDailyStock(gameState) {
     const allIds = GameAttributes.getAllUpgradeIds();
 
     return allIds.filter(id => {
+        // 0. Strict Allowlist: Only items starting with 'UPG_' are valid shop items.
+        // This filters out STATION_QUIRKS, innate ship ATTRIBUTES, and Z-Class mechanics.
+        if (!id.startsWith('UPG_')) return false;
+
         // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
         if (id.includes('GUILD') || id.includes('SYNDICATE')) return false;
 

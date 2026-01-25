@@ -637,59 +637,78 @@ export class PlayerActionService {
         if (!ship) return 0;
 
         // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
-        // Use Effective Max Fuel to prevent overfilling beyond upgraded capacity
         const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
-        if (state.player.shipStates[ship.id].fuel >= effectiveStats.maxFuel) return 0;
+        const currentFuel = state.player.shipStates[ship.id].fuel;
+        
+        // Prevent overfilling
+        if (currentFuel >= effectiveStats.maxFuel) return 0;
         // --- END UPGRADE SYSTEM ---
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
 
-        let costPerTick = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 2;
+        // 1. Calculate Base Unit Cost (Cost for 1 Unit of Fuel)
+        // Standard rate was "FuelPrice / 2" for 5 units. Thus 1 unit = FuelPrice / 10.
+        let unitCost = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         // Saturn & Pluto Quirk: 200% Cost
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
-            costPerTick *= 2.0;
+            unitCost *= 2.0;
         }
         // --- END VIRTUAL WORKBENCH ---
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-             costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+             unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
         }
         
         // Apply Fuel Pass Discount
-        // Changed to use getFuelPriceModifier (Mod Fuel Price)
         const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
-        costPerTick *= attrMod;
+        unitCost *= attrMod;
         // --- END UPGRADE SYSTEM ---
 
         // --- PHASE 2: AGE PERK (FUEL COST) ---
         const ageFuelDiscount = state.player.statModifiers?.fuelCost || 0;
         if (ageFuelDiscount > 0) {
-            costPerTick *= (1 - ageFuelDiscount);
+            unitCost *= (1 - ageFuelDiscount);
         }
         // --- END PHASE 2 ---
 
-        costPerTick = Math.max(1, Math.round(costPerTick));
+        // 2. Determine Dynamic Tick Amount (5% or 1%)
+        const fuelDeficit = effectiveStats.maxFuel - currentFuel;
+        const fuelDeficitPct = fuelDeficit / effectiveStats.maxFuel;
+        
+        let tickAmount = 0;
+        // Precision Mode: If < 5% needed, fill 1%. Else, fill 5%.
+        if (fuelDeficitPct < 0.05) {
+            tickAmount = Math.ceil(effectiveStats.maxFuel * 0.01);
+        } else {
+            tickAmount = Math.ceil(effectiveStats.maxFuel * 0.05);
+        }
 
-        if (state.player.credits < costPerTick) return 0;
+        // 3. Final Cost Calculation
+        // Ensure minimum 1 credit cost
+        let totalCost = Math.max(1, Math.round(unitCost * tickAmount));
 
-        state.player.credits -= costPerTick;
-        // Use effectiveStats.maxFuel
-        state.player.shipStates[ship.id].fuel = Math.min(effectiveStats.maxFuel, state.player.shipStates[ship.id].fuel + 5);
-        this.simulationService._logConsolidatedTransaction('fuel', -costPerTick, 'Fuel Purchase');
+        // 4. Transaction
+        if (state.player.credits < totalCost) return 0;
+
+        state.player.credits -= totalCost;
+        // Cap fuel at maxFuel
+        state.player.shipStates[ship.id].fuel = Math.min(effectiveStats.maxFuel, currentFuel + tickAmount);
+        
+        this.simulationService._logConsolidatedTransaction('fuel', -totalCost, 'Fuel Purchase');
 
         const refuelBtn = document.getElementById('refuel-btn');
         if (refuelBtn) {
             const rect = refuelBtn.getBoundingClientRect();
              const x = rect.left + rect.width / 2;
             const y = rect.top;
-            this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
+            this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, x, y, '#f87171'); // Red color for cost
         }
 
         this.gameState.setState({}); 
-        return costPerTick;
+        return totalCost;
     }
 
     /**
@@ -702,9 +721,10 @@ export class PlayerActionService {
         if (!ship) return 0;
 
         // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
-        // Use Effective Max Health
         const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
-        if (state.player.shipStates[ship.id].health >= effectiveStats.maxHealth) return 0;
+        const currentHealth = state.player.shipStates[ship.id].health;
+        
+        if (currentHealth >= effectiveStats.maxHealth) return 0;
         // --- END UPGRADE SYSTEM ---
 
         const shipState = state.player.shipStates[ship.id];
@@ -717,44 +737,57 @@ export class PlayerActionService {
             return 0; 
         }
 
-        // Repair calculation based on Effective Max Health
-        const repairAmount = effectiveStats.maxHealth * (GAME_RULES.REPAIR_AMOUNT_PER_TICK / 100);
-        let costPerTick = repairAmount * GAME_RULES.REPAIR_COST_PER_HP;
+        // 1. Calculate Base Unit Cost (Cost for 1 HP)
+        let unitCost = GAME_RULES.REPAIR_COST_PER_HP;
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         // Moon Quirk: 20% Discount
         if (state.currentLocationId === LOCATION_IDS.LUNA) {
-            costPerTick *= 0.8; 
+            unitCost *= 0.8; 
         }
         // Saturn & Pluto Quirk: 200% Cost
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
-            costPerTick *= 2.0;
+            unitCost *= 2.0;
         }
         // --- END VIRTUAL WORKBENCH ---
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            costPerTick *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+            unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
         }
 
         // --- UPGRADE SYSTEM: SERVICE ATTRIBUTES ---
-        // Apply Repair Pass Discount
         const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
-        costPerTick *= attrMod;
+        unitCost *= attrMod;
         // --- END UPGRADE SYSTEM ---
 
         // --- PHASE 2: AGE PERK (REPAIR COST) ---
         const ageRepairDiscount = state.player.statModifiers?.repairCost || 0;
         if (ageRepairDiscount > 0) {
-            costPerTick *= (1 - ageRepairDiscount);
+            unitCost *= (1 - ageRepairDiscount);
         }
         // --- END PHASE 2 ---
 
-         costPerTick = Math.max(1, Math.round(costPerTick));
+        // 2. Determine Dynamic Tick Amount (5% or 1%)
+        const healthDeficit = effectiveStats.maxHealth - currentHealth;
+        const healthDeficitPct = healthDeficit / effectiveStats.maxHealth;
+        
+        let tickAmount = 0;
+        if (healthDeficitPct < 0.05) {
+            tickAmount = Math.ceil(effectiveStats.maxHealth * 0.01);
+        } else {
+            tickAmount = Math.ceil(effectiveStats.maxHealth * 0.05);
+        }
 
-        if (state.player.credits < costPerTick) return 0;
-        state.player.credits -= costPerTick;
-        state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, state.player.shipStates[ship.id].health + repairAmount);
-        this.simulationService._logConsolidatedTransaction('repair', -costPerTick, 'Hull Repairs');
+        // 3. Final Cost Calculation
+        let totalCost = Math.max(1, Math.round(unitCost * tickAmount));
+
+        // 4. Transaction
+        if (state.player.credits < totalCost) return 0;
+        
+        state.player.credits -= totalCost;
+        state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, currentHealth + tickAmount);
+        
+        this.simulationService._logConsolidatedTransaction('repair', -totalCost, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 
         const repairBtn = document.getElementById('repair-btn');
@@ -762,11 +795,11 @@ export class PlayerActionService {
              const rect = repairBtn.getBoundingClientRect();
             const x = rect.left + rect.width / 2;
             const y = rect.top;
-            this.uiManager.createFloatingText(`-${formatCredits(costPerTick, false)}`, x, y, '#f87171'); // Red color for cost
+            this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, x, y, '#f87171'); // Red color for cost
         }
 
         this.gameState.setState({}); 
-        return costPerTick;
+        return totalCost;
     }
 
     /**
