@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.70</title>
+    <title>Orbital Trading 34.73</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.70</p>
+            <p>Version 34.73</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -7417,66 +7417,124 @@ export function renderServicesScreen(gameState, simulationService) {
 }
 
 /**
- * Deterministically filters the available upgrades based on Day and Location.
- * Implements "Exploration Economy" rates: Tier 1 (15%), Tier 2 (10%), Tier 3 (5%).
- * @param {object} gameState
- * @returns {string[]} Array of available upgrade IDs.
+ * Deterministically filters and selects daily stock using a "Quantity First, Selection Second" logic.
+ * * 1. Quantity Roll: Determines shop size (0-5 items) based on fixed distribution.
+ * 0:5%, 1:20%, 2:35%, 3:25%, 4:10%, 5:5%
+ * * 2. Weighted Selection: Picks unique items to fill the slots based on Tier rarity.
+ * Weights: T1(17), T2(11), T3(9), T4(6), T5(4)
+ * * @param {object} gameState
+ * @returns {string[]} Array of selected upgrade IDs.
  */
 function _getDailyStock(gameState) {
     const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
-    return allIds.filter(id => {
-        // 0. Strict Allowlist: Only items starting with 'UPG_' are valid shop items.
-        // This filters out STATION_QUIRKS, innate ship ATTRIBUTES, and Z-Class mechanics.
+    // 1. FILTER CANDIDATES
+    // Create a list of all *possible* items allowed to spawn here/now.
+    let candidates = allIds.filter(id => {
+        // Strict Allowlist
         if (!id.startsWith('UPG_')) return false;
 
-        // 1. Exclude Rewards (Guild/Syndicate) - 0% Chance
+        // Exclude Rewards (Guild/Syndicate) unless Tier 4/5
         if (id.includes('GUILD') || id.includes('SYNDICATE')) {
-            // EXCEPTION: Tier 4/5 Syndicate Pass allowed
             if (!id.endsWith('_4') && !id.endsWith('_5')) return false;
         }
 
-        // 2. Determine Base Chance based on Tier Suffix
-        // REVISED BASE RATES: T1=15%, T2=10%, T3=5%
-        let threshold = 0.15; // Tier 1 Default
-
-        // FIX: Identifiers use Arabic numerals (_2, _3)
-        if (id.endsWith('_2')) threshold = 0.10;
-        if (id.endsWith('_3')) threshold = 0.05;
-
-        // [[NEW]] TIER 4/5 LOGIC: SPAWNS FOR WEALTHY
+        // Wealth Gate for Tier 4/5 (1 Million Credits)
         if (id.endsWith('_4') || id.endsWith('_5')) {
-            if (player.credits < 10000000) return false;
-            // [[UPDATED]] 5% Spawn Rate as requested
-            threshold = 0.05; 
+            if (player.credits < 1000000) return false;
         }
-
-        // --- PHASE 2: AGE PERK (UPGRADE SPAWN RATE) ---
-        // Increase the threshold by the player's accrued bonus (e.g., +0.02)
-        const spawnBonus = gameState.player.statModifiers?.upgradeSpawnRate || 0;
-        threshold += spawnBonus;
-        // --- END PHASE 2 ---
-
-        // 3. Apply Uranus Station Quirk (2x Multiplier for ALL tiers)
-        if (currentLocationId === LOCATION_IDS.URANUS) {
-            threshold *= 2; 
-        }
-
-        // 4. Deterministic Hashing
-        // FIX: ID first to prevent clustering
-        const seedString = `${id}_${currentLocationId}_${day}`;
         
-        // Simple hash function to generate a pseudo-random number 0-1
-        let hash = 0;
-        for (let i = 0; i < seedString.length; i++) {
-            hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
-            hash |= 0; // Convert to 32bit integer
-        }
-        const random = (Math.abs(hash) % 1000) / 1000;
-        
-        return random < threshold;
+        return true;
     });
+
+    // 2. DETERMINE SHOP CAPACITY (Quantity Roll)
+    // 0: 5%, 1: 20%, 2: 35%, 3: 25%, 4: 10%, 5: 5%
+    const quantitySeed = `quantity_${currentLocationId}_${day}`;
+    const quantityRoll = _generatePseudoRandom(quantitySeed);
+    
+    let targetCount = 0;
+    if (quantityRoll < 0.05) targetCount = 0;
+    else if (quantityRoll < 0.25) targetCount = 1; // 0.05 + 0.20
+    else if (quantityRoll < 0.60) targetCount = 2; // 0.25 + 0.35
+    else if (quantityRoll < 0.85) targetCount = 3; // 0.60 + 0.25
+    else if (quantityRoll < 0.95) targetCount = 4; // 0.85 + 0.10
+    else targetCount = 5;
+
+    // 3. ASSIGN WEIGHTS TO CANDIDATES
+    // Tier 1: 17, Tier 2: 11, Tier 3: 9, Tier 4: 6, Tier 5: 4
+    // Modifiers: Age Perk (+), Uranus Quirk (Advanced x2)
+    
+    const ageBonusWeight = (gameState.player.statModifiers?.upgradeSpawnRate || 0) * 100;
+    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
+
+    let weightedPool = candidates.map(id => {
+        let weight = 0;
+        
+        // Base Weights
+        if (id.endsWith('_1')) weight = 17;
+        else if (id.endsWith('_2')) weight = 11;
+        else if (id.endsWith('_3')) weight = 9;
+        else if (id.endsWith('_4')) weight = 6;
+        else if (id.endsWith('_5')) weight = 4;
+        
+        // Age Perk (Additive)
+        weight += ageBonusWeight;
+
+        // Uranus Quirk (Advanced Multiplier)
+        if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
+            weight *= 2;
+        }
+
+        return { id, weight };
+    });
+
+    // 4. SELECT ITEMS
+    const selectedIds = [];
+    
+    // Loop until we fill the slots or run out of candidates
+    for (let i = 0; i < targetCount; i++) {
+        if (weightedPool.length === 0) break;
+
+        const totalWeight = weightedPool.reduce((sum, item) => sum + item.weight, 0);
+        const selectionSeed = `select_${currentLocationId}_${day}_${i}`;
+        let roll = _generatePseudoRandom(selectionSeed) * totalWeight;
+
+        // Weighted Pick
+        let selectedIndex = -1;
+        for (let j = 0; j < weightedPool.length; j++) {
+            roll -= weightedPool[j].weight;
+            if (roll < 0) {
+                selectedIndex = j;
+                break;
+            }
+        }
+        
+        // Fallback (rounding errors)
+        if (selectedIndex === -1 && weightedPool.length > 0) selectedIndex = weightedPool.length - 1;
+
+        if (selectedIndex !== -1) {
+            selectedIds.push(weightedPool[selectedIndex].id);
+            // Remove from pool to prevent duplicates
+            weightedPool.splice(selectedIndex, 1);
+        }
+    }
+
+    return selectedIds;
+}
+
+/**
+ * Generates a deterministic pseudo-random number (0-1) from a string seed.
+ * @param {string} seedString 
+ * @returns {number} 0.0 to 1.0
+ */
+function _generatePseudoRandom(seedString) {
+    let hash = 0;
+    for (let i = 0; i < seedString.length; i++) {
+        hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
+        hash |= 0; 
+    }
+    return (Math.abs(hash) % 1000) / 1000;
 }
 
 /**
@@ -9351,1616 +9409,29 @@ export const DB = {
 // js/data/events.js
 /**
  * @fileoverview
- * Defines the Registry and Schema for Event System 2.0.
- * UPDATED: Lore V8 Alignment (Ad Astra, Guild, Syndicate) & Restrictions Check.
+ * Facade for Event System 2.0.
+ * Aggregates modular event files into the master RANDOM_EVENTS registry.
+ * This file should NOT contain actual event definitions.
  */
 
-import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from './constants.js';
+import { EVENTS_ENTROPY } from './events/events_entropy.js';
+import { EVENTS_HAZARDS } from './events/events_hazards.js';
+import { EVENTS_BUREAUCRACY } from './events/events_bureaucracy.js';
+import { EVENTS_TRAFFIC } from './events/events_traffic.js';
+import { EVENTS_LOGISTICS } from './events/events_logistics.js';
+import { EVENTS_SALVAGE } from './events/events_salvage.js';
+import { EVENTS_OPPORTUNITY } from './events/events_opportunity.js';
+import { EVENTS_STORY } from './events/events_story.js';
 
 export const RANDOM_EVENTS = [
-    // =========================================================================
-    // CATEGORY I: ENTROPY (Mechanical Failures)
-    // =========================================================================
-    {
-        id: 'evt_entropy_thermal',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Thermal Runaway',
-            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly. The smell of ozone is already drifting through the vents.'
-        },
-        choices: [
-            {
-                id: 'choice_coolant',
-                text: 'Flush with Coolant (-15 Ice * Scale)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_coolant_fix' }] }
-            },
-            {
-                id: 'choice_vent',
-                text: 'Emergency Venting (Significant Hull Dmg)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent_damage' }] }
-            },
-            {
-                id: 'choice_shutdown',
-                text: 'System Shutdown (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shutdown_delay' }] }
-            }
-        ],
-        outcomes: {
-            'out_coolant_fix': {
-                title: 'Systems Stabilized',
-                text: 'You manually override the coolant loops, crushing the blocks of Water Ice into the reservoir. The temperature graph plummets back to the green.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
-            },
-            'out_vent_damage': {
-                title: 'Emergency Venting',
-                text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
-            },
-            'out_shutdown_delay': {
-                title: 'Reboot Sequence',
-                text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_entropy_injector',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Injector Misfire',
-            description: 'A sickening vibration runs through the deck plates. The number three plasma injector is misfiring. You can swap it out, or try to retune it on the fly—but a bad tune could dump your fuel.'
-        },
-        choices: [
-            {
-                id: 'choice_replace',
-                text: 'Replace Injector (-5 Plasteel * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, 
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_replace' }] }
-            },
-            {
-                id: 'choice_tune',
-                text: 'Manual Recalibration (Risk Fuel)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_tune_success', weight: 70 },
-                        { outcomeId: 'out_tune_fail', weight: 30 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_push',
-                text: 'Push It (Hull Damage)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_push_fail' }] }
-            }
-        ],
-        outcomes: {
-            'out_replace': {
-                title: 'Maintenance Complete',
-                text: 'The new Plasteel housing seats perfectly. The vibration vanishes.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }]
-            },
-            'out_tune_success': {
-                title: 'Harmonics Aligned',
-                text: 'You wrestle with the magnetic field harmonics for hours. Finally, the waveform syncs up.',
-                effects: []
-            },
-            'out_tune_fail': {
-                title: 'Fuel Dump',
-                text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
-            },
-            'out_push_fail': {
-                title: 'Structural Stress',
-                text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_entropy_software',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Logic Loop',
-            description: 'The navigation console freezes. A legacy code fragment has triggered a recursive loop in the astrogation buffer. You need high-end hardware to brute-force a solution, or you have to pull the plug.'
-        },
-        choices: [
-            {
-                id: 'choice_hardware',
-                text: 'Hardware Patch (-10 Processors * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_patch' }] }
-            },
-            {
-                id: 'choice_reboot',
-                text: 'Hard Reboot (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reboot' }] }
-            },
-            {
-                id: 'choice_override',
-                text: 'Manual Override (Risk Trip Delay)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_override_success', weight: 80 },
-                        { outcomeId: 'out_override_fail', weight: 20 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_patch': {
-                title: 'System Restored',
-                text: 'The extra compute power chews through the bad code in seconds.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_reboot': {
-                title: 'Reboot Complete',
-                text: 'You pull the main breaker. When the OS reloads, you realize the ship has drifted off-vector.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_override_success': {
-                title: 'Override Successful',
-                text: 'You bypass the safety protocols and force the last known trajectory. It works.',
-                effects: []
-            },
-            'out_override_fail': {
-                title: 'Navigational Error',
-                text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_entropy_structure',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Micro-Fractures',
-            description: 'Sensors report a web of micro-fractures spreading along the dorsal cargo spine. If you don\'t reinforce it or slow down, the ship could snap under the G-load.'
-        },
-        choices: [
-            {
-                id: 'choice_reinforce',
-                text: 'Reinforce (-10 Plasteel * Scale)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
-            },
-            {
-                id: 'choice_slow',
-                text: 'Reduce Acceleration (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slow' }] }
-            },
-            {
-                id: 'choice_maintain',
-                text: 'Maintain Velocity (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_maintain_success', weight: 60 },
-                        { outcomeId: 'out_maintain_fail', weight: 40 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_reinforce': {
-                title: 'Hull Reinforced',
-                text: 'You weld Plasteel bracing over the affected area. It is an ugly patch, but stronger than the original.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_slow': {
-                title: 'Velocity Reduced',
-                text: 'You dial back the engine thrust. The stress eases, but your arrival time slips further away.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
-            },
-            'out_maintain_success': {
-                title: 'Holding Together',
-                text: 'You watch the stress gauges for the entire trip. Miraculously, the metal groans but doesn\'t buckle.',
-                effects: []
-            },
-            'out_maintain_fail': {
-                title: 'Structural Failure',
-                text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.40 } }]
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY II: HAZARDS (Navigational Threats)
-    // =========================================================================
-    {
-        id: 'evt_hazard_meteoroid',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Debris Field',
-            description: 'Long-range radar paints a cloud of "gravel" directly in your path—remnants of a collision moving at 15 km/s. You can burn hard to go around, or shield up and tank it.'
-        },
-        choices: [
-            {
-                id: 'choice_evade',
-                text: 'Evasive Maneuvers (-Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_evade' }] }
-            },
-            {
-                id: 'choice_tank',
-                text: 'Brace for Impact (-Hull)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tank' }] }
-            },
-            {
-                id: 'choice_drift',
-                text: 'Drift Through (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
-            }
-        ],
-        outcomes: {
-            'out_evade': {
-                title: 'Evasion Successful',
-                text: 'You slam the throttle forward, vectoring hard "up" relative to the ecliptic. It consumes fuel, but you clear the cloud.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
-            },
-            'out_tank': {
-                title: 'Impact Sustained',
-                text: 'It sounds like hail on a tin roof. Impacts pit the hull and shatter sensors.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
-            },
-            'out_drift': {
-                title: 'Navigation Complete',
-                text: 'You kill your velocity and gently drift through the widening gaps. It is safe, but agonizingly slow.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_hazard_flare',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Coronal Mass Ejection',
-            description: 'The radiation alarm screams. A massive solar flare has erupted. You need to harden the ship or find cover immediately.'
-        },
-        choices: [
-            {
-                id: 'choice_harden',
-                text: 'Harden Shields (-10 Plasteel * Scale)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_harden' }] }
-            },
-            {
-                id: 'choice_shadow',
-                text: 'Seek Shadow (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shadow' }] }
-            },
-            {
-                id: 'choice_run',
-                text: 'Run Silent (Risk Cargo)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_run_success', weight: 60 },
-                        { outcomeId: 'out_run_fail', weight: 40 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_harden': {
-                title: 'Shields Holding',
-                text: 'You rig extra Plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_shadow': {
-                title: 'Storm Passed',
-                text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
-            },
-            'out_run_success': {
-                title: 'Outrun',
-                text: 'You pushed the engines to the redline and managed to stay just ahead of the worst wavefront.',
-                effects: []
-            },
-            'out_run_fail': {
-                title: 'Radiation Leak',
-                text: 'Hard radiation pierces the cargo bay, ionizing a portion of your manifest.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
-            }
-        }
-    },
-    {
-        id: 'evt_hazard_gravity',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Gravity Well',
-            description: 'A navigational error brought you too close to a gas giant\'s gravity well. The tidal forces are dragging you off course.'
-        },
-        choices: [
-            {
-                id: 'choice_burn',
-                text: 'Corrective Burn (-Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_burn' }] }
-            },
-            {
-                id: 'choice_decay',
-                text: 'Orbital Decay (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
-            },
-            {
-                id: 'choice_slingshot',
-                text: 'Slingshot (Req: Navigator)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slingshot' }] }
-            }
-        ],
-        outcomes: {
-            'out_burn': {
-                title: 'Orbit Corrected',
-                text: 'You burn directly against the gravity vector. The engines scream, consuming reaction mass at a terrifying rate.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
-            },
-            'out_decay': {
-                title: 'Decay & Recovery',
-                text: 'You surrender to the physics, letting the planet pull you into a long, elliptical orbit before flinging you back out.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
-            },
-            'out_slingshot': {
-                title: 'Gravity Assist',
-                text: 'You dip deeper into the well, using the Oberth effect to steal momentum. You exit faster than you entered.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: -0.15 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_hazard_magnetic',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Sensor Blindness',
-            description: 'You\'ve entered a region of intense magnetic flux. The lidar is whited out. You can try to filter the signal with high-end hardware or wait it out.'
-        },
-        choices: [
-            {
-                id: 'choice_filter',
-                text: 'Filter Signal (-10 Processors * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_filter' }] }
-            },
-            {
-                id: 'choice_wait',
-                text: 'All Stop (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
-            },
-            {
-                id: 'choice_blind',
-                text: 'Fly Blind (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_blind_success', weight: 70 },
-                        { outcomeId: 'out_blind_fail', weight: 30 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_filter': {
-                title: 'Signal Clear',
-                text: 'The new Processors work overtime, filtering the noise from the data. The sensor picture snaps into focus.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_wait': {
-                title: 'Storm Waited Out',
-                text: 'It is too dangerous. You cut velocity and wait for the magnetic storm to drift past.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_blind_success': {
-                title: 'Pure Luck',
-                text: 'You flew by feel and luck. The hull remains intact.',
-                effects: []
-            },
-            'out_blind_fail': {
-                title: 'Collision Alert',
-                text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY III: BUREAUCRACY (Corporate & Legal)
-    // =========================================================================
-    {
-        id: 'evt_bureau_audit',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Guild Authority Audit',
-            description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
-        },
-        choices: [
-            {
-                id: 'choice_bribe',
-                text: 'Expedited Fee (-4% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
-            },
-            {
-                id: 'choice_inspect',
-                text: 'Full Inspection (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
-            },
-            {
-                id: 'choice_bylaws',
-                text: 'Cite Bylaws (Req: Trademaster)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.TRADEMASTER, operator: 'EQ', value: 1 }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bylaws' }] }
-            }
-        ],
-        outcomes: {
-            'out_bribe': {
-                title: 'Fee Accepted',
-                text: 'You transfer the fee. The inspector suddenly decides your ship looks visibly compliant.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } }]
-            },
-            'out_inspect': {
-                title: 'Bureaucratic Delay',
-                text: 'They board you. They check every seal. It takes a week.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
-            },
-            'out_bylaws': {
-                title: 'Inspection Waived',
-                text: 'You transmit Guild Statute 12-C regarding "In-Transit Sovereignty." The inspector grumbles and moves on.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_bureau_tariff',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Corporate Tariff',
-            description: 'Local Corporate Security has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
-        },
-        choices: [
-            {
-                id: 'choice_pay',
-                text: 'Pay Tariff (-2% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pay' }] }
-            },
-            {
-                id: 'choice_divert',
-                text: 'Divert (-Fuel & Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
-            },
-            {
-                id: 'choice_run',
-                text: 'Run Blockade (Risk Fine)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_run_success', weight: 60 },
-                        { outcomeId: 'out_run_fail', weight: 40 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_pay': {
-                title: 'Tariff Paid',
-                text: 'You pay the toll. It stings, but they grant you a coded squawk that clears your passage.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
-            },
-            'out_divert': {
-                title: 'Detour Plotted',
-                text: 'You plot a course through deep space, skirting the edge of their sensor net.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
-                ]
-            },
-            'out_run_success': {
-                title: 'Blockade Runner',
-                text: 'You run silent, masking your thermal signature. You slip through their net.',
-                effects: []
-            },
-            'out_run_fail': {
-                title: 'Violation Detected',
-                text: 'A patrol drone tags you. "Toll violation detected." They garnish your accounts automatically.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.08 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_bureau_quarantine',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Contaminant Alert',
-            description: 'An automated navigation buoy flags your ship. "Biological contaminant detected on outer hull. Sector access denied pending sterilization."'
-        },
-        choices: [
-            {
-                id: 'choice_service',
-                text: 'Drone Service (-5% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_service' }] }
-            },
-            {
-                id: 'choice_chem',
-                text: 'Chemical Bath (-15 Propellant * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, 
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
-            },
-            {
-                id: 'choice_park',
-                text: 'Solar Sterilization (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
-            }
-        ],
-        outcomes: {
-            'out_service': {
-                title: 'Decon Complete',
-                text: 'You pay for a remote drone service. It sprays your hull with harsh foam and clears your flag.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
-            },
-            'out_chem': {
-                title: 'Chemical Scrub',
-                text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the mold.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
-            },
-            'out_park': {
-                title: 'Solar Cleanse',
-                text: 'You park the ship in a high-radiation orbit and wait for the UV light to kill the spores.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.25 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_bureau_license',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Expired Credential',
-            description: 'You receive a summons. A clerical error has flagged your Pilot\'s License as expired. Operating a heavy freighter without a license carries a hefty fine.'
-        },
-        choices: [
-            {
-                id: 'choice_lawyer',
-                text: 'Auto-Lawyer (-3% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_lawyer' }] }
-            },
-            {
-                id: 'choice_spoof',
-                text: 'Data Spoof (-10 Processors * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_spoof' }] }
-            },
-            {
-                id: 'choice_dispute',
-                text: 'Dispute (Risk Fine & Trip Delay)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_dispute_success', weight: 40 }, // Hard legal battle
-                        { outcomeId: 'out_dispute_fail', weight: 60 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_lawyer': {
-                title: 'Case Dismissed',
-                text: 'You hire a digital legal AI. It files an injunction and clears the error in milliseconds.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.03 } }]
-            },
-            'out_spoof': {
-                title: 'Records Falsified',
-                text: 'You use Processors to brute-force a timestamp correction. The record now shows you renewed it yesterday.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_dispute_success': {
-                title: 'Appeal Granted',
-                text: 'You argue your case with passion. The AI finds a precedent and dismisses the charge.',
-                effects: []
-            },
-            'out_dispute_fail': {
-                title: 'Appeal Denied',
-                text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
-                ]
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY IV: TRAFFIC (Encounters & Distress)
-    // =========================================================================
-    {
-        id: 'evt_traffic_stranded',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Mayday',
-            description: 'A beat-up hauler hails you. "Reactor is dry. Life support is failing. Can you spare some reaction mass?"'
-        },
-        choices: [
-            {
-                id: 'choice_transfer',
-                text: 'Transfer Fuel (-20% Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_transfer' }] }
-            },
-            {
-                id: 'choice_tow',
-                text: 'Tow Service (-Fuel & Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tow' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_transfer': {
-                title: 'Fuel Transferred',
-                text: '"Thank you, captain. We don\'t have credits, but here is our scan data for the local market."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
-                ]
-            },
-            'out_tow': {
-                title: 'Vessel Recovered',
-                text: 'You drag them to the nearest lane. The Guild pays a standard bounty for assisting distressed vessels.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }
-                ]
-            },
-            'out_ignore': {
-                title: 'Hail Ignored',
-                text: 'You cut the comms. Their signal fades behind you.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_traffic_medical',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Critical Patient',
-            description: 'A luxury liner broadcasts a pan-pan. "We have a critical patient and our med-bay is malfunctioning. Requesting immediate medical supplies."'
-        },
-        choices: [
-            {
-                id: 'choice_donate_ice',
-                text: 'Donate Water Ice (-15 Ice * Scale)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
-            },
-            {
-                id: 'choice_donate_cyber',
-                text: 'Donate Cybernetics (-2 Cybernetics)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 2 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_cyber' }] }
-            },
-            {
-                id: 'choice_dock',
-                text: 'Dock & Assist (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dock' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_donate_ice': {
-                title: 'Patient Stabilized',
-                text: '"Payment transferred. You saved a life today, captain."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.03 } }
-                ]
-            },
-            'out_donate_cyber': {
-                title: 'Systems Restored',
-                text: '"Payment transferred. You saved a life today, captain."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.03 } }
-                ]
-            },
-            'out_dock': {
-                title: 'Medical Assistance',
-                text: 'You help stabilize the patient personally. The liner\'s captain shares high-level encryption keys.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 2 }
-                ]
-            },
-            'out_ignore': {
-                title: 'Broadcast Ignored',
-                text: 'You fly past.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_traffic_broker',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Syndicate Broker',
-            description: 'A sleek Syndicate interceptor matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
-        },
-        choices: [
-            {
-                id: 'choice_buy',
-                text: 'Buy Data (-2% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_buy' }] }
-            },
-            {
-                id: 'choice_barter',
-                text: 'Barter (-5 Processors)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 5 }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_barter' }] }
-            },
-            {
-                id: 'choice_decline',
-                text: 'Decline',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decline' }] }
-            }
-        ],
-        outcomes: {
-            'out_buy': {
-                title: 'Data Acquired',
-                text: 'You transfer the credits. A packet of market data floods your computer.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
-                ]
-            },
-            'out_barter': {
-                title: 'Exchange Complete',
-                text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 5 },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
-                ]
-            },
-            'out_decline': {
-                title: 'Connection Closed',
-                text: 'The corvette vanishes into the black.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_traffic_convoy',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'The Train',
-            description: 'You encounter a massive corporate heavy-freight convoy. You could draft behind them to save fuel, or sell goods to their crews.'
-        },
-        choices: [
-            {
-                id: 'choice_draft',
-                text: 'Draft Formation (Gain Fuel, Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_draft' }] }
-            },
-            {
-                id: 'choice_sell',
-                text: 'Flash Sale (Lose Cargo, +Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], 
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
-            },
-            {
-                id: 'choice_pass',
-                text: 'Fly Past',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
-            }
-        ],
-        outcomes: {
-            'out_draft': {
-                title: 'Slipstream Entered',
-                text: 'You tuck in behind the massive engine bells. Your fuel consumption drops to near zero, but you are limited to their speed.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: 0.15 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
-                ]
-            },
-            'out_sell': {
-                title: 'Transaction Complete',
-                text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.02 } }
-                ]
-            },
-            'out_pass': {
-                title: 'Overtaking',
-                text: 'You overtake the slow convoy.',
-                effects: []
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY V: LOGISTICS (Cargo & Storage)
-    // =========================================================================
-    {
-        id: 'evt_logistics_containment',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
-        template: {
-            title: 'Mag-Lock Failure',
-            description: 'A cargo pod is vibrating loose. If you don\'t secure it, it will tear itself free—and might take a chunk of the hull with it.'
-        },
-        choices: [
-            {
-                id: 'choice_foam',
-                text: 'Secure with Foam (-5 Plasteel * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_foam' }] }
-            },
-            {
-                id: 'choice_jettison',
-                text: 'Jettison Pod (Lose Cargo)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_jettison' }] }
-            },
-            {
-                id: 'choice_hold',
-                text: 'Hold it Together (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_hold_success', weight: 70 },
-                        { outcomeId: 'out_hold_fail', weight: 30 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_foam': {
-                title: 'Cargo Secured',
-                text: 'You spray industrial foam into the clamp mechanism. It hardens instantly, welding the pod to the frame.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }]
-            },
-            'out_jettison': {
-                title: 'Cargo Ejected',
-                text: 'You blow the emergency bolts. The pod tumbles away into the dark.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
-            },
-            'out_hold_success': {
-                title: 'Locks Holding',
-                text: 'The clamps groan and spark, but they hold for the duration.',
-                effects: []
-            },
-            'out_hold_fail': {
-                title: 'Containment Breach',
-                text: 'The clamp fails. The pod shears off, ripping through the dorsal plating.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.30 }
-                ]
-            }
-        }
-    },
-    {
-        id: 'evt_logistics_spoilage',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
-        template: {
-            title: 'Temp Rising',
-            description: 'The refrigeration unit in Bay 4 is dying. Your perishable cargo will rot if you don\'t act fast.'
-        },
-        choices: [
-            {
-                id: 'choice_ice',
-                text: 'Add Coolant (-15 Ice * Scale)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ice' }] }
-            },
-            {
-                id: 'choice_power',
-                text: 'Power Boost (-Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_power' }] }
-            },
-            {
-                id: 'choice_vent',
-                text: 'Vent to Vacuum (Lose Cargo)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
-            }
-        ],
-        outcomes: {
-            'out_ice': {
-                title: 'Temp Stabilized',
-                text: 'You feed Water Ice into the heat exchanger. The temp drops back to safe levels.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
-            },
-            'out_power': {
-                title: 'Power Diverted',
-                text: 'You divert main engine power to the cryo-units. Your engines run inefficiently.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } }]
-            },
-            'out_vent': {
-                title: 'Partial Loss',
-                text: 'You open the airlock, flash-freezing the cargo. Some is sucked out, but the rest is saved.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 }]
-            }
-        }
-    },
-    {
-        id: 'evt_logistics_shift',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
-        template: {
-            title: 'Imbalance',
-            description: 'A hard maneuver caused the cargo to shift. The ship\'s center of mass is off, causing a dangerous wobble.'
-        },
-        choices: [
-            {
-                id: 'choice_restack',
-                text: 'EVA Re-Stack (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
-            },
-            {
-                id: 'choice_thrust',
-                text: 'Thrust Compensation (-Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_thrust' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore (-Hull)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_restack': {
-                title: 'Cargo Secured',
-                text: 'You spend a day in zero-G, manually winching containers back into place.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_thrust': {
-                title: 'Thrusters Compensating',
-                text: 'You let the thrusters fight the wobble. They fire constantly to keep the ship straight.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
-            },
-            'out_ignore': {
-                title: 'Structural Stress',
-                text: 'The constant oscillation stresses the ship\'s frame until rivets start popping.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
-            }
-        }
-    },
-    {
-        id: 'evt_logistics_bloom',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
-        template: {
-            title: 'The Bloom',
-            description: 'Humidity sensors detect a rapid algal bloom in the cargo hold. It is eating the packaging and will soon eat the cargo.'
-        },
-        choices: [
-            {
-                id: 'choice_fumigate',
-                text: 'Fumigate (-15 Propellant * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_fumigate' }] }
-            },
-            {
-                id: 'choice_vac',
-                text: 'Vacuum Sterilize (Lose Cargo)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vac' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore (Lose More Cargo)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_fumigate': {
-                title: 'Sterilization Complete',
-                text: 'You flood the hold with toxic Propellant vapor. It kills the bloom instantly.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
-            },
-            'out_vac': {
-                title: 'Vacuum Exposure',
-                text: 'You vent the atmosphere. The sudden pressure drop ruptures some containers.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
-            },
-            'out_ignore': {
-                title: 'Cargo Spoiled',
-                text: 'By the time you arrive, a quarter of the shipment is covered in green slime.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY VI: SALVAGE (Discovery & Opportunity)
-    // =========================================================================
-    {
-        id: 'evt_salvage_probe',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Ad Astra Relic',
-            description: 'You spot a dark object tumbling in orbit. It\'s a decaying Ad Astra Initiative survey probe from the expansion era. It might have valuable components, or unexploded ordnance.'
-        },
-        choices: [
-            {
-                id: 'choice_scavenge',
-                text: 'Scavenge (Req: 5 Cargo Space)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_scavenge_success', weight: 80 },
-                        { outcomeId: 'out_scavenge_fail', weight: 20 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_logs',
-                text: 'Download Logs (Intel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_logs' }] }
-            },
-            {
-                id: 'choice_leave',
-                text: 'Leave',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_leave' }] }
-            }
-        ],
-        outcomes: {
-            'out_scavenge_success': {
-                title: 'Components Recovered',
-                text: 'You grapple the probe and strip it for parts. High-grade electronics!',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 3 }]
-            },
-            'out_scavenge_fail': {
-                title: 'Trap Triggered',
-                text: 'A self-destruct charge triggers as you touch it. The explosion rocks your ship.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
-            },
-            'out_logs': {
-                title: 'Data Decrypted',
-                text: 'You recover some old stellar charts from the corrupted memory core.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }]
-            },
-            'out_leave': {
-                title: 'Signal Ignored',
-                text: 'You leave the relic alone.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_salvage_container',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Free Floating',
-            description: 'A sealed shipping container floats alone in the void. It might be goods, or it might be waste.'
-        },
-        choices: [
-            {
-                id: 'choice_grapple',
-                text: 'Grapple (Req: 10 Cargo Space)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 10 }],
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_grapple_success', weight: 60 },
-                        { outcomeId: 'out_grapple_fail', weight: 40 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_scan',
-                text: 'Detailed Scan (-2 Processors)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scan' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_grapple_success': {
-                title: 'Lucky Find',
-                text: 'You bring it aboard. It is full of legitimate trade goods!',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }]
-            },
-            'out_grapple_fail': {
-                title: 'Hazardous Waste',
-                text: 'You bring it aboard. It is full of industrial sludge. You have to pay a disposal fee.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
-            },
-            'out_scan': {
-                title: 'Scan Confirmed',
-                text: 'You burn high-end sensors to peer inside. It reveals valid cargo, which you collect safely.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
-                    { type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }
-                ]
-            },
-            'out_ignore': {
-                title: 'Object Avoided',
-                text: 'Not worth the risk.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_salvage_wreck',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Graveyard',
-            description: 'You drift through a field of shattered hull plates. There is scrap everywhere.'
-        },
-        choices: [
-            {
-                id: 'choice_scrap',
-                text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
-            },
-            {
-                id: 'choice_deep',
-                text: 'Deep Search (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_deep_success', weight: 70 },
-                        { outcomeId: 'out_deep_fail', weight: 30 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_pass',
-                text: 'Pass',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
-            }
-        ],
-        outcomes: {
-            'out_scrap': {
-                title: 'Scrap Harvested',
-                text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }
-                ]
-            },
-            'out_deep_success': {
-                title: 'Core Salvaged',
-                text: 'You find a surviving computer core and some intact cybernetics.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
-                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }
-                ]
-            },
-            'out_deep_fail': {
-                title: 'Collision!',
-                text: 'A piece of debris you didn\'t see slams into your engine bell.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
-            },
-            'out_pass': {
-                title: 'Course Maintained',
-                text: 'You navigate through without stopping.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_salvage_beacon',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Rogue Beacon',
-            description: 'A distress beacon pings nearby, but the encryption doesn\'t match Guild protocols. It could be an old cache, or malware.'
-        },
-        choices: [
-            {
-                id: 'choice_investigate',
-                text: 'Investigate (Risk Wealth)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_investigate_success', weight: 50 },
-                        { outcomeId: 'out_investigate_fail', weight: 50 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_nav',
-                text: 'Nav Scan (Req: Navigator)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_nav' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_investigate_success': {
-                title: 'Dead Drop Found',
-                text: 'It is a dead drop from the last war. You crack the code and find a stash of credits.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }]
-            },
-            'out_investigate_fail': {
-                title: 'Malware Detected',
-                text: 'As soon as you link up, a virus uploads itself to your finance computer and siphons funds.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
-            },
-            'out_nav': {
-                title: 'Threat Identified',
-                text: 'Your advanced sensors flag the signal as a known malware signature. You mark it for deletion and move on.',
-                effects: []
-            },
-            'out_ignore': {
-                title: 'Signal Ignored',
-                text: 'Not worth the risk.',
-                effects: []
-            }
-        }
-    },
-
-    // =========================================================================
-    // CATEGORY VII: OPPORTUNITY (Beneficial Encounters)
-    // =========================================================================
-    {
-        id: 'evt_opp_server',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 5,
-        requirements: [],
-        template: {
-            title: 'Corrupted Server',
-            description: 'You drift past a scorched server rack, likely ejected from a destroyed corporate station. Its backup battery is weak, but the encryption light is still blinking.'
-        },
-        choices: [
-            {
-                id: 'choice_decrypt',
-                text: 'Attempt Decryption (Risk Trip Delay)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_decrypt_success', weight: 60 },
-                        { outcomeId: 'out_decrypt_fail', weight: 40 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_decrypt_success': {
-                title: 'Access Granted',
-                text: 'You crack the encryption just before the battery dies. It contains a forgotten, anonymous bank transfer authorization.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 2500 }]
-            },
-            'out_decrypt_fail': {
-                title: 'Data Corruption',
-                text: 'The security protocols trigger a localized EMP. The server fries, and your nav-computer needs a hard reboot.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_ignore': {
-                title: 'Server Left',
-                text: 'You leave the electronic ghost to drift.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_opp_noble',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 5,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
-        template: {
-            title: 'The Eccentric Noble',
-            description: 'A flamboyant private yacht hails you. "My guests are dreadfully bored of this empty void! Do you have any entertaining stories or exotic goods to share?"'
-        },
-        choices: [
-            {
-                id: 'choice_entertain',
-                text: 'Provide Entertainment (-500 Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_entertain_success', weight: 50 },
-                        { outcomeId: 'out_entertain_fail', weight: 50 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Decline',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_entertain_success': {
-                title: 'Generous Patron',
-                text: 'You spend hours recounting your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
-                ]
-            },
-            'out_entertain_fail': {
-                title: 'Tough Crowd',
-                text: 'You try to entertain them with drinks and stories, but they quickly grow bored and cut the feed. You wasted your resources.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
-            },
-            'out_ignore': {
-                title: 'Connection Closed',
-                text: 'You have work to do.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_opp_veteran',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 5,
-        requirements: [],
-        template: {
-            title: 'Drifting Veteran',
-            description: 'You find an old, heavily modified shuttle drifting with a blown comms relay. The pilot waves frantically from the cockpit window.'
-        },
-        choices: [
-            {
-                id: 'choice_assist',
-                text: 'Assist Repair (Trip Delay)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_assist_success', weight: 80 },
-                        { outcomeId: 'out_assist_fail', weight: 20 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_assist_success': {
-                title: 'Gratitude',
-                text: 'You help fix the relay. "I have no credits," the old pilot says, "but take this old Fuel Pass. It still works at most corporate stations."',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_ECO_FUEL_1' }
-                ]
-            },
-            'out_assist_fail': {
-                title: 'Simple Thanks',
-                text: 'You fix the relay. The pilot nods thanks and departs immediately. No reward, but a good deed done.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_ignore': {
-                title: 'Signal Ignored',
-                text: 'You fly past.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_opp_crate',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 5,
-        requirements: [],
-        template: {
-            title: 'Sealed Military Crate',
-            description: 'A high-security crate floats in a debris field. It has no digital interface, only a manual pressure seal that looks jammed.'
-        },
-        choices: [
-            {
-                id: 'choice_force',
-                text: 'Force Open (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_force_success', weight: 50 },
-                        { outcomeId: 'out_force_fail', weight: 50 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Leave It',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_force_success': {
-                title: 'Pristine Tech',
-                text: 'You pry the seal open. Inside is a mint-condition set of Hull Plating, still in the factory wrap.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_UTIL_HULL_1' }]
-            },
-            'out_force_fail': {
-                title: 'Explosive Bolt',
-                text: 'The anti-tamper mechanism fires an explosive bolt, sending shrapnel into your hull.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
-            },
-            'out_ignore': {
-                title: 'Left Alone',
-                text: 'Not worth the risk.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_opp_ion',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 5,
-        requirements: [],
-        template: {
-            title: 'Ion Cloud',
-            description: 'Your sensors detect a dense, highly charged ion cloud. It is dangerous to fly through, but it is composed of nearly pure, energetic plasma.'
-        },
-        choices: [
-            {
-                id: 'choice_scoop',
-                text: 'Manual Scoop (Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_scoop_success', weight: 60 },
-                        { outcomeId: 'out_scoop_fail', weight: 40 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_avoid',
-                text: 'Avoid',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_avoid' }] }
-            }
-        ],
-        outcomes: {
-            'out_scoop_success': {
-                title: 'Tanks Full',
-                text: 'You carefully open the intakes. The energetic plasma floods your system, filling your tanks to capacity in minutes.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }]
-            },
-            'out_scoop_fail': {
-                title: 'Overload',
-                text: 'The ion discharge arcs across your hull, scorching the plating without giving you a chance to collect it.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
-            },
-            'out_avoid': {
-                title: 'Course Correction',
-                text: 'You steer clear of the anomaly.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_opp_tanker',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE],
-        weight: 5,
-        requirements: [],
-        template: {
-            title: 'Stranded Tanker',
-            description: 'A massive corporate fuel tanker is drifting. "Our main valve is stuck," the captain hails. "If you can help us unstuck it manually, we\'ll make it worth your while."'
-        },
-        choices: [
-            {
-                id: 'choice_repair',
-                text: 'Help Repair (Trip Delay)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_repair_success', weight: 90 },
-                        { outcomeId: 'out_repair_fail', weight: 10 }
-                    ]
-                }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_repair_success': {
-                title: 'Service Rendered',
-                text: 'It takes two days of spacewalking to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }
-                ]
-            },
-            'out_repair_fail': {
-                title: 'Valve Jammed',
-                text: 'You try for days, but the valve is fused solid. You wasted your time.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
-            },
-            'out_ignore': {
-                title: 'Offer Declined',
-                text: 'You have your own schedule to keep.',
-                effects: []
-            }
-        }
-    }
+    ...EVENTS_ENTROPY,
+    ...EVENTS_HAZARDS,
+    ...EVENTS_BUREAUCRACY,
+    ...EVENTS_TRAFFIC,
+    ...EVENTS_LOGISTICS,
+    ...EVENTS_SALVAGE,
+    ...EVENTS_OPPORTUNITY,
+    ...EVENTS_STORY
 ];
 --- END OF FILE: ./js/data/events.js ---
 
@@ -12819,6 +11290,1739 @@ export const COMMODITY_VARIANT_COUNTS = {
     'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };
 --- END OF FILE: ./js/data/assets_config.js ---
+
+--- START OF FILE: ./js/data/events/events_entropy.js ---
+/**
+ * @fileoverview
+ * Event Category: ENTROPY
+ * Focus: Mechanical failures, system glitches, and wear-and-tear.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_ENTROPY = [
+    // =========================================================================
+    // CATEGORY I: ENTROPY (Mechanical Failures)
+    // =========================================================================
+    {
+        id: 'evt_entropy_thermal',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Thermal Runaway',
+            description: 'A jagged warning klaxon cuts through the bridge silence. The environmental scrubbers in the avionics bay have seized, and waste heat is building up rapidly. The smell of ozone is already drifting through the vents.'
+        },
+        choices: [
+            {
+                id: 'choice_coolant',
+                text: 'Flush with Coolant (-15 Ice * Scale)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_coolant_fix' }] }
+            },
+            {
+                id: 'choice_vent',
+                text: 'Emergency Venting (Significant Hull Dmg)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent_damage' }] }
+            },
+            {
+                id: 'choice_shutdown',
+                text: 'System Shutdown (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shutdown_delay' }] }
+            }
+        ],
+        outcomes: {
+            'out_coolant_fix': {
+                title: 'Systems Stabilized',
+                text: 'You manually override the coolant loops, crushing the blocks of Water Ice into the reservoir. The temperature graph plummets back to the green.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_vent_damage': {
+                title: 'Emergency Venting',
+                text: 'You blow the emergency heat sinks. The superheated gas vents violently, warping the external plating near the exhaust port.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } }]
+            },
+            'out_shutdown_delay': {
+                title: 'Reboot Sequence',
+                text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_entropy_injector',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Injector Misfire',
+            description: 'A sickening vibration runs through the deck plates. The number three plasma injector is misfiring. You can swap it out, or try to retune it on the fly—but a bad tune could dump your fuel.'
+        },
+        choices: [
+            {
+                id: 'choice_replace',
+                text: 'Replace Injector (-5 Plasteel * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 }, 
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_replace' }] }
+            },
+            {
+                id: 'choice_tune',
+                text: 'Manual Recalibration (Risk Fuel)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_tune_success', weight: 70 },
+                        { outcomeId: 'out_tune_fail', weight: 30 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_push',
+                text: 'Push It (Hull Damage)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_push_fail' }] }
+            }
+        ],
+        outcomes: {
+            'out_replace': {
+                title: 'Maintenance Complete',
+                text: 'The new Plasteel housing seats perfectly. The vibration vanishes.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }]
+            },
+            'out_tune_success': {
+                title: 'Harmonics Aligned',
+                text: 'You wrestle with the magnetic field harmonics for hours. Finally, the waveform syncs up.',
+                effects: []
+            },
+            'out_tune_fail': {
+                title: 'Fuel Dump',
+                text: 'You overcompensated the fuel mix. The vibration stops, but only because you are dumping raw plasma out the exhaust.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
+            },
+            'out_push_fail': {
+                title: 'Structural Stress',
+                text: 'The vibration grows violent, rattling teeth and loosening bolts across the entire aft section.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_entropy_software',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Logic Loop',
+            description: 'The navigation console freezes. A legacy code fragment has triggered a recursive loop in the astrogation buffer. You need high-end hardware to brute-force a solution, or you have to pull the plug.'
+        },
+        choices: [
+            {
+                id: 'choice_hardware',
+                text: 'Hardware Patch (-10 Processors * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_patch' }] }
+            },
+            {
+                id: 'choice_reboot',
+                text: 'Hard Reboot (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reboot' }] }
+            },
+            {
+                id: 'choice_override',
+                text: 'Manual Override (Risk Trip Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_override_success', weight: 80 },
+                        { outcomeId: 'out_override_fail', weight: 20 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_patch': {
+                title: 'System Restored',
+                text: 'The extra compute power chews through the bad code in seconds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_reboot': {
+                title: 'Reboot Complete',
+                text: 'You pull the main breaker. When the OS reloads, you realize the ship has drifted off-vector.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_override_success': {
+                title: 'Override Successful',
+                text: 'You bypass the safety protocols and force the last known trajectory. It works.',
+                effects: []
+            },
+            'out_override_fail': {
+                title: 'Navigational Error',
+                text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_entropy_structure',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Micro-Fractures',
+            description: 'Sensors report a web of micro-fractures spreading along the dorsal cargo spine. If you don\'t reinforce it or slow down, the ship could snap under the G-load.'
+        },
+        choices: [
+            {
+                id: 'choice_reinforce',
+                text: 'Reinforce (-10 Plasteel * Scale)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
+            },
+            {
+                id: 'choice_slow',
+                text: 'Reduce Acceleration (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slow' }] }
+            },
+            {
+                id: 'choice_maintain',
+                text: 'Maintain Velocity (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_maintain_success', weight: 60 },
+                        { outcomeId: 'out_maintain_fail', weight: 40 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_reinforce': {
+                title: 'Hull Reinforced',
+                text: 'You weld Plasteel bracing over the affected area. It is an ugly patch, but stronger than the original.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_slow': {
+                title: 'Velocity Reduced',
+                text: 'You dial back the engine thrust. The stress eases, but your arrival time slips further away.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_maintain_success': {
+                title: 'Holding Together',
+                text: 'You watch the stress gauges for the entire trip. Miraculously, the metal groans but doesn\'t buckle.',
+                effects: []
+            },
+            'out_maintain_fail': {
+                title: 'Structural Failure',
+                text: 'A loud CRACK reverberates through the ship. A primary load-bearer snaps.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.40 } }]
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_entropy.js ---
+
+--- START OF FILE: ./js/data/events/events_traffic.js ---
+/**
+ * @fileoverview
+ * Event Category: TRAFFIC
+ * Focus: Ship-to-ship encounters, distress signals, and trade convoys.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_TRAFFIC = [
+    // =========================================================================
+    // CATEGORY IV: TRAFFIC (Encounters & Distress)
+    // =========================================================================
+    {
+        id: 'evt_traffic_stranded',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Mayday',
+            description: 'A beat-up hauler hails you. "Reactor is dry. Life support is failing. Can you spare some reaction mass?"'
+        },
+        choices: [
+            {
+                id: 'choice_transfer',
+                text: 'Transfer Fuel (-20% Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_transfer' }] }
+            },
+            {
+                id: 'choice_tow',
+                text: 'Tow Service (-Fuel & Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tow' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_transfer': {
+                title: 'Fuel Transferred',
+                text: '"Thank you, captain. We don\'t have credits, but here is our scan data for the local market."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_tow': {
+                title: 'Vessel Recovered',
+                text: 'You drag them to the nearest lane. The Guild pays a standard bounty for assisting distressed vessels.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }
+                ]
+            },
+            'out_ignore': {
+                title: 'Hail Ignored',
+                text: 'You cut the comms. Their signal fades behind you.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_medical',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Critical Patient',
+            description: 'A luxury liner broadcasts a pan-pan. "We have a critical patient and our med-bay is malfunctioning. Requesting immediate medical supplies."'
+        },
+        choices: [
+            {
+                id: 'choice_donate_ice',
+                text: 'Donate Water Ice (-15 Ice * Scale)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
+            },
+            {
+                id: 'choice_donate_cyber',
+                text: 'Donate Cybernetics (-2 Cybernetics)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 2 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_cyber' }] }
+            },
+            {
+                id: 'choice_dock',
+                text: 'Dock & Assist (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dock' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_donate_ice': {
+                title: 'Patient Stabilized',
+                text: '"Payment transferred. You saved a life today, captain."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.03 } }
+                ]
+            },
+            'out_donate_cyber': {
+                title: 'Systems Restored',
+                text: '"Payment transferred. You saved a life today, captain."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.03 } }
+                ]
+            },
+            'out_dock': {
+                title: 'Medical Assistance',
+                text: 'You help stabilize the patient personally. The liner\'s captain shares high-level encryption keys.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 2 }
+                ]
+            },
+            'out_ignore': {
+                title: 'Broadcast Ignored',
+                text: 'You fly past.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_broker',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Syndicate Broker',
+            description: 'A sleek Syndicate interceptor matches your velocity. "I have data on the upcoming market shifts. Guaranteed profitable. Interested?"'
+        },
+        choices: [
+            {
+                id: 'choice_buy',
+                text: 'Buy Data (-2% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_buy' }] }
+            },
+            {
+                id: 'choice_barter',
+                text: 'Barter (-5 Processors)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 5 }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_barter' }] }
+            },
+            {
+                id: 'choice_decline',
+                text: 'Decline',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decline' }] }
+            }
+        ],
+        outcomes: {
+            'out_buy': {
+                title: 'Data Acquired',
+                text: 'You transfer the credits. A packet of market data floods your computer.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_barter': {
+                title: 'Exchange Complete',
+                text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 5 },
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                ]
+            },
+            'out_decline': {
+                title: 'Connection Closed',
+                text: 'The corvette vanishes into the black.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_convoy',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'The Train',
+            description: 'You encounter a massive corporate heavy-freight convoy. You could draft behind them to save fuel, or sell goods to their crews.'
+        },
+        choices: [
+            {
+                id: 'choice_draft',
+                text: 'Draft Formation (Gain Fuel, Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_draft' }] }
+            },
+            {
+                id: 'choice_sell',
+                text: 'Flash Sale (Lose Cargo, +Credits)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], 
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
+            },
+            {
+                id: 'choice_pass',
+                text: 'Fly Past',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
+            }
+        ],
+        outcomes: {
+            'out_draft': {
+                title: 'Slipstream Entered',
+                text: 'You tuck in behind the massive engine bells. Your fuel consumption drops to near zero, but you are limited to their speed.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: 0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
+                ]
+            },
+            'out_sell': {
+                title: 'Transaction Complete',
+                text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.02 } }
+                ]
+            },
+            'out_pass': {
+                title: 'Overtaking',
+                text: 'You overtake the slow convoy.',
+                effects: []
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_traffic.js ---
+
+--- START OF FILE: ./js/data/events/events_bureaucracy.js ---
+/**
+ * @fileoverview
+ * Event Category: BUREAUCRACY
+ * Focus: Legal challenges, corporate audits, tariffs, and quarantine protocols.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_BUREAUCRACY = [
+    // =========================================================================
+    // CATEGORY III: BUREAUCRACY (Corporate & Legal)
+    // =========================================================================
+    {
+        id: 'evt_bureau_audit',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Guild Authority Audit',
+            description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
+        },
+        choices: [
+            {
+                id: 'choice_bribe',
+                text: 'Expedited Fee (-4% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
+            },
+            {
+                id: 'choice_inspect',
+                text: 'Full Inspection (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
+            },
+            {
+                id: 'choice_bylaws',
+                text: 'Cite Bylaws (Req: Trademaster)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.TRADEMASTER, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bylaws' }] }
+            }
+        ],
+        outcomes: {
+            'out_bribe': {
+                title: 'Fee Accepted',
+                text: 'You transfer the fee. The inspector suddenly decides your ship looks visibly compliant.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } }]
+            },
+            'out_inspect': {
+                title: 'Bureaucratic Delay',
+                text: 'They board you. They check every seal. It takes a week.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            },
+            'out_bylaws': {
+                title: 'Inspection Waived',
+                text: 'You transmit Guild Statute 12-C regarding "In-Transit Sovereignty." The inspector grumbles and moves on.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_tariff',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Corporate Tariff',
+            description: 'Local Corporate Security has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
+        },
+        choices: [
+            {
+                id: 'choice_pay',
+                text: 'Pay Tariff (-2% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pay' }] }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert (-Fuel & Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            },
+            {
+                id: 'choice_run',
+                text: 'Run Blockade (Risk Fine)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_run_success', weight: 60 },
+                        { outcomeId: 'out_run_fail', weight: 40 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_pay': {
+                title: 'Tariff Paid',
+                text: 'You pay the toll. It stings, but they grant you a coded squawk that clears your passage.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
+            },
+            'out_divert': {
+                title: 'Detour Plotted',
+                text: 'You plot a course through deep space, skirting the edge of their sensor net.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                ]
+            },
+            'out_run_success': {
+                title: 'Blockade Runner',
+                text: 'You run silent, masking your thermal signature. You slip through their net.',
+                effects: []
+            },
+            'out_run_fail': {
+                title: 'Violation Detected',
+                text: 'A patrol drone tags you. "Toll violation detected." They garnish your accounts automatically.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.08 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_quarantine',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Contaminant Alert',
+            description: 'An automated navigation buoy flags your ship. "Biological contaminant detected on outer hull. Sector access denied pending sterilization."'
+        },
+        choices: [
+            {
+                id: 'choice_service',
+                text: 'Drone Service (-5% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_service' }] }
+            },
+            {
+                id: 'choice_chem',
+                text: 'Chemical Bath (-15 Propellant * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, 
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
+            },
+            {
+                id: 'choice_park',
+                text: 'Solar Sterilization (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
+            }
+        ],
+        outcomes: {
+            'out_service': {
+                title: 'Decon Complete',
+                text: 'You pay for a remote drone service. It sprays your hull with harsh foam and clears your flag.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
+            },
+            'out_chem': {
+                title: 'Chemical Scrub',
+                text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the mold.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_park': {
+                title: 'Solar Cleanse',
+                text: 'You park the ship in a high-radiation orbit and wait for the UV light to kill the spores.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.25 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_license',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Expired Credential',
+            description: 'You receive a summons. A clerical error has flagged your Pilot\'s License as expired. Operating a heavy freighter without a license carries a hefty fine.'
+        },
+        choices: [
+            {
+                id: 'choice_lawyer',
+                text: 'Auto-Lawyer (-3% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_lawyer' }] }
+            },
+            {
+                id: 'choice_spoof',
+                text: 'Data Spoof (-10 Processors * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_spoof' }] }
+            },
+            {
+                id: 'choice_dispute',
+                text: 'Dispute (Risk Fine & Trip Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_dispute_success', weight: 40 }, // Hard legal battle
+                        { outcomeId: 'out_dispute_fail', weight: 60 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_lawyer': {
+                title: 'Case Dismissed',
+                text: 'You hire a digital legal AI. It files an injunction and clears the error in milliseconds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.03 } }]
+            },
+            'out_spoof': {
+                title: 'Records Falsified',
+                text: 'You use Processors to brute-force a timestamp correction. The record now shows you renewed it yesterday.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_dispute_success': {
+                title: 'Appeal Granted',
+                text: 'You argue your case with passion. The AI finds a precedent and dismisses the charge.',
+                effects: []
+            },
+            'out_dispute_fail': {
+                title: 'Appeal Denied',
+                text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
+                ]
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_bureaucracy.js ---
+
+--- START OF FILE: ./js/data/events/events_opportunity.js ---
+/**
+ * @fileoverview
+ * Event Category: OPPORTUNITY
+ * Focus: Rare chances, beneficial encounters, and high-reward risks.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_OPPORTUNITY = [
+    // =========================================================================
+    // CATEGORY VII: OPPORTUNITY (Beneficial Encounters)
+    // =========================================================================
+    {
+        id: 'evt_opp_server',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 5,
+        requirements: [],
+        template: {
+            title: 'Corrupted Server',
+            description: 'You drift past a scorched server rack, likely ejected from a destroyed corporate station. Its backup battery is weak, but the encryption light is still blinking.'
+        },
+        choices: [
+            {
+                id: 'choice_decrypt',
+                text: 'Attempt Decryption (Risk Trip Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_decrypt_success', weight: 60 },
+                        { outcomeId: 'out_decrypt_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_decrypt_success': {
+                title: 'Access Granted',
+                text: 'You crack the encryption just before the battery dies. It contains a forgotten, anonymous bank transfer authorization.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 2500 }]
+            },
+            'out_decrypt_fail': {
+                title: 'Data Corruption',
+                text: 'The security protocols trigger a localized EMP. The server fries, and your nav-computer needs a hard reboot.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_ignore': {
+                title: 'Server Left',
+                text: 'You leave the electronic ghost to drift.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_opp_noble',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 5,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+        template: {
+            title: 'The Eccentric Noble',
+            description: 'A flamboyant private yacht hails you. "My guests are dreadfully bored of this empty void! Do you have any entertaining stories or exotic goods to share?"'
+        },
+        choices: [
+            {
+                id: 'choice_entertain',
+                text: 'Provide Entertainment (-500 Credits)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_entertain_success', weight: 50 },
+                        { outcomeId: 'out_entertain_fail', weight: 50 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Decline',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_entertain_success': {
+                title: 'Generous Patron',
+                text: 'You spend hours recounting your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
+                ]
+            },
+            'out_entertain_fail': {
+                title: 'Tough Crowd',
+                text: 'You try to entertain them with drinks and stories, but they quickly grow bored and cut the feed. You wasted your resources.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
+            },
+            'out_ignore': {
+                title: 'Connection Closed',
+                text: 'You have work to do.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_opp_veteran',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 5,
+        requirements: [],
+        template: {
+            title: 'Drifting Veteran',
+            description: 'You find an old, heavily modified shuttle drifting with a blown comms relay. The pilot waves frantically from the cockpit window.'
+        },
+        choices: [
+            {
+                id: 'choice_assist',
+                text: 'Assist Repair (Trip Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_assist_success', weight: 80 },
+                        { outcomeId: 'out_assist_fail', weight: 20 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_assist_success': {
+                title: 'Gratitude',
+                text: 'You help fix the relay. "I have no credits," the old pilot says, "but take this old Fuel Pass. It still works at most corporate stations."',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_ECO_FUEL_1' }
+                ]
+            },
+            'out_assist_fail': {
+                title: 'Simple Thanks',
+                text: 'You fix the relay. The pilot nods thanks and departs immediately. No reward, but a good deed done.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_ignore': {
+                title: 'Signal Ignored',
+                text: 'You fly past.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_opp_crate',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 5,
+        requirements: [],
+        template: {
+            title: 'Sealed Military Crate',
+            description: 'A high-security crate floats in a debris field. It has no digital interface, only a manual pressure seal that looks jammed.'
+        },
+        choices: [
+            {
+                id: 'choice_force',
+                text: 'Force Open (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_force_success', weight: 50 },
+                        { outcomeId: 'out_force_fail', weight: 50 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Leave It',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_force_success': {
+                title: 'Pristine Tech',
+                text: 'You pry the seal open. Inside is a mint-condition set of Hull Plating, still in the factory wrap.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_UTIL_HULL_1' }]
+            },
+            'out_force_fail': {
+                title: 'Explosive Bolt',
+                text: 'The anti-tamper mechanism fires an explosive bolt, sending shrapnel into your hull.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
+            },
+            'out_ignore': {
+                title: 'Left Alone',
+                text: 'Not worth the risk.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_opp_ion',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 5,
+        requirements: [],
+        template: {
+            title: 'Ion Cloud',
+            description: 'Your sensors detect a dense, highly charged ion cloud. It is dangerous to fly through, but it is composed of nearly pure, energetic plasma.'
+        },
+        choices: [
+            {
+                id: 'choice_scoop',
+                text: 'Manual Scoop (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_scoop_success', weight: 60 },
+                        { outcomeId: 'out_scoop_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_avoid',
+                text: 'Avoid',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_avoid' }] }
+            }
+        ],
+        outcomes: {
+            'out_scoop_success': {
+                title: 'Tanks Full',
+                text: 'You carefully open the intakes. The energetic plasma floods your system, filling your tanks to capacity in minutes.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }]
+            },
+            'out_scoop_fail': {
+                title: 'Overload',
+                text: 'The ion discharge arcs across your hull, scorching the plating without giving you a chance to collect it.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.10 } }]
+            },
+            'out_avoid': {
+                title: 'Course Correction',
+                text: 'You steer clear of the anomaly.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_opp_tanker',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 5,
+        requirements: [],
+        template: {
+            title: 'Stranded Tanker',
+            description: 'A massive corporate fuel tanker is drifting. "Our main valve is stuck," the captain hails. "If you can help us unstuck it manually, we\'ll make it worth your while."'
+        },
+        choices: [
+            {
+                id: 'choice_repair',
+                text: 'Help Repair (Trip Delay)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_repair_success', weight: 90 },
+                        { outcomeId: 'out_repair_fail', weight: 10 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_repair_success': {
+                title: 'Service Rendered',
+                text: 'It takes two days of spacewalking to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }
+                ]
+            },
+            'out_repair_fail': {
+                title: 'Valve Jammed',
+                text: 'You try for days, but the valve is fused solid. You wasted your time.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            },
+            'out_ignore': {
+                title: 'Offer Declined',
+                text: 'You have your own schedule to keep.',
+                effects: []
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_opportunity.js ---
+
+--- START OF FILE: ./js/data/events/events_salvage.js ---
+/**
+ * @fileoverview
+ * Event Category: SALVAGE
+ * Focus: Derelict ships, ancient probes, and debris fields.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_SALVAGE = [
+    // =========================================================================
+    // CATEGORY VI: SALVAGE (Discovery & Opportunity)
+    // =========================================================================
+    {
+        id: 'evt_salvage_probe',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Ad Astra Relic',
+            description: 'You spot a dark object tumbling in orbit. It\'s a decaying Ad Astra Initiative survey probe from the expansion era. It might have valuable components, or unexploded ordnance.'
+        },
+        choices: [
+            {
+                id: 'choice_scavenge',
+                text: 'Scavenge (Req: 5 Cargo Space)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_scavenge_success', weight: 80 },
+                        { outcomeId: 'out_scavenge_fail', weight: 20 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_logs',
+                text: 'Download Logs (Intel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_logs' }] }
+            },
+            {
+                id: 'choice_leave',
+                text: 'Leave',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_leave' }] }
+            }
+        ],
+        outcomes: {
+            'out_scavenge_success': {
+                title: 'Components Recovered',
+                text: 'You grapple the probe and strip it for parts. High-grade electronics!',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 3 }]
+            },
+            'out_scavenge_fail': {
+                title: 'Trap Triggered',
+                text: 'A self-destruct charge triggers as you touch it. The explosion rocks your ship.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
+            },
+            'out_logs': {
+                title: 'Data Decrypted',
+                text: 'You recover some old stellar charts from the corrupted memory core.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }]
+            },
+            'out_leave': {
+                title: 'Signal Ignored',
+                text: 'You leave the relic alone.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_container',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Free Floating',
+            description: 'A sealed shipping container floats alone in the void. It might be goods, or it might be waste.'
+        },
+        choices: [
+            {
+                id: 'choice_grapple',
+                text: 'Grapple (Req: 10 Cargo Space)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 10 }],
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_grapple_success', weight: 60 },
+                        { outcomeId: 'out_grapple_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_scan',
+                text: 'Detailed Scan (-2 Processors)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 2 }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scan' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_grapple_success': {
+                title: 'Lucky Find',
+                text: 'You bring it aboard. It is full of legitimate trade goods!',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }]
+            },
+            'out_grapple_fail': {
+                title: 'Hazardous Waste',
+                text: 'You bring it aboard. It is full of industrial sludge. You have to pay a disposal fee.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
+            },
+            'out_scan': {
+                title: 'Scan Confirmed',
+                text: 'You burn high-end sensors to peer inside. It reveals valid cargo, which you collect safely.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO, value: 10 }
+                ]
+            },
+            'out_ignore': {
+                title: 'Object Avoided',
+                text: 'Not worth the risk.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_wreck',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Graveyard',
+            description: 'You drift through a field of shattered hull plates. There is scrap everywhere.'
+        },
+        choices: [
+            {
+                id: 'choice_scrap',
+                text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
+            },
+            {
+                id: 'choice_deep',
+                text: 'Deep Search (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_deep_success', weight: 70 },
+                        { outcomeId: 'out_deep_fail', weight: 30 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_pass',
+                text: 'Pass',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pass' }] }
+            }
+        ],
+        outcomes: {
+            'out_scrap': {
+                title: 'Scrap Harvested',
+                text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }
+                ]
+            },
+            'out_deep_success': {
+                title: 'Core Salvaged',
+                text: 'You find a surviving computer core and some intact cybernetics.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.CYBERNETICS, value: 2 },
+                    { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 2 }
+                ]
+            },
+            'out_deep_fail': {
+                title: 'Collision!',
+                text: 'A piece of debris you didn\'t see slams into your engine bell.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
+            },
+            'out_pass': {
+                title: 'Course Maintained',
+                text: 'You navigate through without stopping.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_salvage_beacon',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Rogue Beacon',
+            description: 'A distress beacon pings nearby, but the encryption doesn\'t match Guild protocols. It could be an old cache, or malware.'
+        },
+        choices: [
+            {
+                id: 'choice_investigate',
+                text: 'Investigate (Risk Wealth)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_investigate_success', weight: 50 },
+                        { outcomeId: 'out_investigate_fail', weight: 50 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_nav',
+                text: 'Nav Scan (Req: Navigator)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_nav' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_investigate_success': {
+                title: 'Dead Drop Found',
+                text: 'It is a dead drop from the last war. You crack the code and find a stash of credits.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.015 } }]
+            },
+            'out_investigate_fail': {
+                title: 'Malware Detected',
+                text: 'As soon as you link up, a virus uploads itself to your finance computer and siphons funds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
+            },
+            'out_nav': {
+                title: 'Threat Identified',
+                text: 'Your advanced sensors flag the signal as a known malware signature. You mark it for deletion and move on.',
+                effects: []
+            },
+            'out_ignore': {
+                title: 'Signal Ignored',
+                text: 'Not worth the risk.',
+                effects: []
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_salvage.js ---
+
+--- START OF FILE: ./js/data/events/events_story.js ---
+/**
+ * @fileoverview
+ * Event Category: STORY
+ * Focus: Narrative-only events, lore expansion, and flavor text.
+ * These events typically have no major mechanical impact but build world-building.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_STORY = [
+    // =========================================================================
+    // CATEGORY VIII: STORY (Lore & Narrative)
+    // =========================================================================
+    // Place new story events here.
+    // Example:
+    /*
+    {
+        id: 'evt_story_example',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Stellar Phenomenon',
+            description: 'You witness a breathtaking binary star eclipse. It serves as a reminder of why you fly.'
+        },
+        choices: [
+            {
+                id: 'choice_watch',
+                text: 'Watch',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_watch' }] }
+            }
+        ],
+        outcomes: {
+            'out_watch': {
+                title: 'Moment of Peace',
+                text: 'The view is magnificent.',
+                effects: [] // No effects, just flavor
+            }
+        }
+    }
+    */
+];
+--- END OF FILE: ./js/data/events/events_story.js ---
+
+--- START OF FILE: ./js/data/events/events_logistics.js ---
+/**
+ * @fileoverview
+ * Event Category: LOGISTICS
+ * Focus: Cargo management, storage failures, and spoilage.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_LOGISTICS = [
+    // =========================================================================
+    // CATEGORY V: LOGISTICS (Cargo & Storage)
+    // =========================================================================
+    {
+        id: 'evt_logistics_containment',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Mag-Lock Failure',
+            description: 'A cargo pod is vibrating loose. If you don\'t secure it, it will tear itself free—and might take a chunk of the hull with it.'
+        },
+        choices: [
+            {
+                id: 'choice_foam',
+                text: 'Secure with Foam (-5 Plasteel * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_foam' }] }
+            },
+            {
+                id: 'choice_jettison',
+                text: 'Jettison Pod (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_jettison' }] }
+            },
+            {
+                id: 'choice_hold',
+                text: 'Hold it Together (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_hold_success', weight: 70 },
+                        { outcomeId: 'out_hold_fail', weight: 30 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_foam': {
+                title: 'Cargo Secured',
+                text: 'You spray industrial foam into the clamp mechanism. It hardens instantly, welding the pod to the frame.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }]
+            },
+            'out_jettison': {
+                title: 'Cargo Ejected',
+                text: 'You blow the emergency bolts. The pod tumbles away into the dark.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
+            },
+            'out_hold_success': {
+                title: 'Locks Holding',
+                text: 'The clamps groan and spark, but they hold for the duration.',
+                effects: []
+            },
+            'out_hold_fail': {
+                title: 'Containment Breach',
+                text: 'The clamp fails. The pod shears off, ripping through the dorsal plating.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.30 }
+                ]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_spoilage',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Temp Rising',
+            description: 'The refrigeration unit in Bay 4 is dying. Your perishable cargo will rot if you don\'t act fast.'
+        },
+        choices: [
+            {
+                id: 'choice_ice',
+                text: 'Add Coolant (-15 Ice * Scale)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ice' }] }
+            },
+            {
+                id: 'choice_power',
+                text: 'Power Boost (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_power' }] }
+            },
+            {
+                id: 'choice_vent',
+                text: 'Vent to Vacuum (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
+            }
+        ],
+        outcomes: {
+            'out_ice': {
+                title: 'Temp Stabilized',
+                text: 'You feed Water Ice into the heat exchanger. The temp drops back to safe levels.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_power': {
+                title: 'Power Diverted',
+                text: 'You divert main engine power to the cryo-units. Your engines run inefficiently.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } }]
+            },
+            'out_vent': {
+                title: 'Partial Loss',
+                text: 'You open the airlock, flash-freezing the cargo. Some is sucked out, but the rest is saved.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 }]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_shift',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'Imbalance',
+            description: 'A hard maneuver caused the cargo to shift. The ship\'s center of mass is off, causing a dangerous wobble.'
+        },
+        choices: [
+            {
+                id: 'choice_restack',
+                text: 'EVA Re-Stack (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
+            },
+            {
+                id: 'choice_thrust',
+                text: 'Thrust Compensation (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_thrust' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore (-Hull)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_restack': {
+                title: 'Cargo Secured',
+                text: 'You spend a day in zero-G, manually winching containers back into place.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_thrust': {
+                title: 'Thrusters Compensating',
+                text: 'You let the thrusters fight the wobble. They fire constantly to keep the ship straight.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
+            },
+            'out_ignore': {
+                title: 'Structural Stress',
+                text: 'The constant oscillation stresses the ship\'s frame until rivets start popping.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_logistics_bloom',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        template: {
+            title: 'The Bloom',
+            description: 'Humidity sensors detect a rapid algal bloom in the cargo hold. It is eating the packaging and will soon eat the cargo.'
+        },
+        choices: [
+            {
+                id: 'choice_fumigate',
+                text: 'Fumigate (-15 Propellant * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_fumigate' }] }
+            },
+            {
+                id: 'choice_vac',
+                text: 'Vacuum Sterilize (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vac' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore (Lose More Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_fumigate': {
+                title: 'Sterilization Complete',
+                text: 'You flood the hold with toxic Propellant vapor. It kills the bloom instantly.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_vac': {
+                title: 'Vacuum Exposure',
+                text: 'You vent the atmosphere. The sudden pressure drop ruptures some containers.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
+            },
+            'out_ignore': {
+                title: 'Cargo Spoiled',
+                text: 'By the time you arrive, a quarter of the shipment is covered in green slime.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_logistics.js ---
+
+--- START OF FILE: ./js/data/events/events_hazards.js ---
+/**
+ * @fileoverview
+ * Event Category: HAZARDS
+ * Focus: Navigational threats, environmental dangers, and celestial phenomena.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const EVENTS_HAZARDS = [
+    // =========================================================================
+    // CATEGORY II: HAZARDS (Navigational Threats)
+    // =========================================================================
+    {
+        id: 'evt_hazard_meteoroid',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Debris Field',
+            description: 'Long-range radar paints a cloud of "gravel" directly in your path—remnants of a collision moving at 15 km/s. You can burn hard to go around, or shield up and tank it.'
+        },
+        choices: [
+            {
+                id: 'choice_evade',
+                text: 'Evasive Maneuvers (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_evade' }] }
+            },
+            {
+                id: 'choice_tank',
+                text: 'Brace for Impact (-Hull)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_tank' }] }
+            },
+            {
+                id: 'choice_drift',
+                text: 'Drift Through (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
+            }
+        ],
+        outcomes: {
+            'out_evade': {
+                title: 'Evasion Successful',
+                text: 'You slam the throttle forward, vectoring hard "up" relative to the ecliptic. It consumes fuel, but you clear the cloud.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
+            },
+            'out_tank': {
+                title: 'Impact Sustained',
+                text: 'It sounds like hail on a tin roof. Impacts pit the hull and shatter sensors.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } }]
+            },
+            'out_drift': {
+                title: 'Navigation Complete',
+                text: 'You kill your velocity and gently drift through the widening gaps. It is safe, but agonizingly slow.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_flare',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Coronal Mass Ejection',
+            description: 'The radiation alarm screams. A massive solar flare has erupted. You need to harden the ship or find cover immediately.'
+        },
+        choices: [
+            {
+                id: 'choice_harden',
+                text: 'Harden Shields (-10 Plasteel * Scale)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_harden' }] }
+            },
+            {
+                id: 'choice_shadow',
+                text: 'Seek Shadow (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_shadow' }] }
+            },
+            {
+                id: 'choice_run',
+                text: 'Run Silent (Risk Cargo)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_run_success', weight: 60 },
+                        { outcomeId: 'out_run_fail', weight: 40 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_harden': {
+                title: 'Shields Holding',
+                text: 'You rig extra Plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_shadow': {
+                title: 'Storm Passed',
+                text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_run_success': {
+                title: 'Outrun',
+                text: 'You pushed the engines to the redline and managed to stay just ahead of the worst wavefront.',
+                effects: []
+            },
+            'out_run_fail': {
+                title: 'Radiation Leak',
+                text: 'Hard radiation pierces the cargo bay, ionizing a portion of your manifest.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_gravity',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Gravity Well',
+            description: 'A navigational error brought you too close to a gas giant\'s gravity well. The tidal forces are dragging you off course.'
+        },
+        choices: [
+            {
+                id: 'choice_burn',
+                text: 'Corrective Burn (-Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_burn' }] }
+            },
+            {
+                id: 'choice_decay',
+                text: 'Orbital Decay (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
+            },
+            {
+                id: 'choice_slingshot',
+                text: 'Slingshot (Req: Navigator)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slingshot' }] }
+            }
+        ],
+        outcomes: {
+            'out_burn': {
+                title: 'Orbit Corrected',
+                text: 'You burn directly against the gravity vector. The engines scream, consuming reaction mass at a terrifying rate.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
+            },
+            'out_decay': {
+                title: 'Decay & Recovery',
+                text: 'You surrender to the physics, letting the planet pull you into a long, elliptical orbit before flinging you back out.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_slingshot': {
+                title: 'Gravity Assist',
+                text: 'You dip deeper into the well, using the Oberth effect to steal momentum. You exit faster than you entered.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: -0.15 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_magnetic',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [],
+        template: {
+            title: 'Sensor Blindness',
+            description: 'You\'ve entered a region of intense magnetic flux. The lidar is whited out. You can try to filter the signal with high-end hardware or wait it out.'
+        },
+        choices: [
+            {
+                id: 'choice_filter',
+                text: 'Filter Signal (-10 Processors * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_filter' }] }
+            },
+            {
+                id: 'choice_wait',
+                text: 'All Stop (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
+            },
+            {
+                id: 'choice_blind',
+                text: 'Fly Blind (Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_blind_success', weight: 70 },
+                        { outcomeId: 'out_blind_fail', weight: 30 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_filter': {
+                title: 'Signal Clear',
+                text: 'The new Processors work overtime, filtering the noise from the data. The sensor picture snaps into focus.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_wait': {
+                title: 'Storm Waited Out',
+                text: 'It is too dangerous. You cut velocity and wait for the magnetic storm to drift past.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
+            },
+            'out_blind_success': {
+                title: 'Pure Luck',
+                text: 'You flew by feel and luck. The hull remains intact.',
+                effects: []
+            },
+            'out_blind_fail': {
+                title: 'Collision Alert',
+                text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
+            }
+        }
+    }
+];
+--- END OF FILE: ./js/data/events/events_hazards.js ---
 
 --- START OF FILE: ./js/data/eulaContent.js ---
 // js/data/eulaContent.js
@@ -21578,219 +21782,224 @@ const ATTRIBUTE_DEFINITIONS = {
         pillColor: "#22d3ee"
     },
 
-    // --- UPGRADES: ECONOMY ---
+    // --- UPGRADES: ECONOMY (REBALANCED) ---
+    // Fuel Pass: -10%/-20%/-30%/-40%/-50%
     'UPG_ECO_FUEL_1': {
         name: "Fuel Pass I",
-        description: "Reduces refueling cost at stations by 20%.",
-        cost: 5000,
+        description: "Reduces refueling cost at stations by 10%.",
+        cost: 10000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
-        value: 5000,
-        modifiers: { fuelPrice: 0.80 },
+        value: 10000,
+        modifiers: { fuelPrice: 0.90 },
         color: COLORS.ORANGE
     },
     'UPG_ECO_FUEL_2': {
         name: "Fuel Pass II",
-        description: "Reduces refueling cost at stations by 50%.",
-        cost: 15000,
+        description: "Reduces refueling cost at stations by 20%.",
+        cost: 30000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
-        value: 15000,
-        modifiers: { fuelPrice: 0.50 },
+        value: 30000,
+        modifiers: { fuelPrice: 0.80 },
         color: COLORS.RED
     },
     'UPG_ECO_FUEL_3': {
         name: "Fuel Pass III",
-        description: "Reduces refueling cost at stations by 75%.",
-        cost: 45000,
+        description: "Reduces refueling cost at stations by 30%.",
+        cost: 90000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
-        value: 45000,
-        modifiers: { fuelPrice: 0.25 },
+        value: 90000,
+        modifiers: { fuelPrice: 0.70 },
         color: COLORS.GOLD
     },
     'UPG_ECO_FUEL_4': {
         name: "Fuel Pass IV",
-        description: "Prototype. Reduces refueling cost at stations by 90%.",
-        cost: 12500000,
+        description: "Prototype. Reduces refueling cost at stations by 40%.",
+        cost: 270000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
-        value: 12500000,
-        modifiers: { fuelPrice: 0.10 },
+        value: 270000,
+        modifiers: { fuelPrice: 0.60 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_ECO_FUEL_5': {
         name: "Fuel Pass V",
-        description: "Luminary. Reduces refueling cost at stations by 99%.",
-        cost: 25000000,
+        description: "Luminary. Reduces refueling cost at stations by 50%.",
+        cost: 810000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
-        value: 25000000,
-        modifiers: { fuelPrice: 0.01 },
+        value: 810000,
+        modifiers: { fuelPrice: 0.50 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Repair Pass: -5%/-10%/-15%/-20%/-25%
     'UPG_ECO_REPAIR_1': {
         name: "Repair Pass I",
-        description: "Reduces hull repair cost by 15%.",
-        cost: 5000,
+        description: "Reduces hull repair cost by 5%.",
+        cost: 20000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
-        value: 5000,
-        modifiers: { repairCost: 0.85 },
+        value: 20000,
+        modifiers: { repairCost: 0.95 },
         color: COLORS.GREEN
     },
     'UPG_ECO_REPAIR_2': {
         name: "Repair Pass II",
-        description: "Reduces hull repair cost by 30%.",
-        cost: 15000,
+        description: "Reduces hull repair cost by 10%.",
+        cost: 60000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
-        value: 15000,
-        modifiers: { repairCost: 0.70 },
+        value: 60000,
+        modifiers: { repairCost: 0.90 },
         color: COLORS.EMERALD
     },
     'UPG_ECO_REPAIR_3': {
         name: "Repair Pass III",
-        description: "Reduces hull repair cost by 50%.",
-        cost: 45000,
+        description: "Reduces hull repair cost by 15%.",
+        cost: 180000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
-        value: 45000,
-        modifiers: { repairCost: 0.50 },
+        value: 180000,
+        modifiers: { repairCost: 0.85 },
         color: COLORS.SEAFOAM
     },
     'UPG_ECO_REPAIR_4': {
         name: "Repair Pass IV",
-        description: "Prototype. Reduces hull repair cost by 60%.",
-        cost: 12500000,
+        description: "Prototype. Reduces hull repair cost by 20%.",
+        cost: 540000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
-        value: 12500000,
-        modifiers: { repairCost: 0.40 },
+        value: 540000,
+        modifiers: { repairCost: 0.80 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_ECO_REPAIR_5': {
         name: "Repair Pass V",
-        description: "Luminary. Reduces hull repair cost by 66%.",
-        cost: 25000000,
+        description: "Luminary. Reduces hull repair cost by 25%.",
+        cost: 1620000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
-        value: 25000000,
-        modifiers: { repairCost: 0.34 },
+        value: 1620000,
+        modifiers: { repairCost: 0.75 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Signal Hacker: -0.5%/-1.2%/-1.9%/-2.6%/-3.3%
     'UPG_ECO_BUY_1': {
         name: "Signal Hacker I",
-        description: "Reduces market purchase prices by 3%.",
-        cost: 5000,
+        description: "Reduces market purchase prices by 0.5%.",
+        cost: 30000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
-        value: 5000,
-        modifiers: { buyPrice: 0.97 },
+        value: 30000,
+        modifiers: { buyPrice: 0.995 },
         color: COLORS.CYAN
     },
     'UPG_ECO_BUY_2': {
         name: "Signal Hacker II",
-        description: "Reduces market purchase prices by 5%.",
-        cost: 15000,
+        description: "Reduces market purchase prices by 1.2%.",
+        cost: 90000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
-        value: 15000,
-        modifiers: { buyPrice: 0.95 },
+        value: 90000,
+        modifiers: { buyPrice: 0.988 },
         color: COLORS.BLUE
     },
     'UPG_ECO_BUY_3': {
         name: "Signal Hacker III",
-        description: "Reduces market purchase prices by 7%.",
-        cost: 45000,
+        description: "Reduces market purchase prices by 1.9%.",
+        cost: 270000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
-        value: 45000,
-        modifiers: { buyPrice: 0.93 },
+        value: 270000,
+        modifiers: { buyPrice: 0.981 },
         color: COLORS.VIOLET
     },
     'UPG_ECO_BUY_4': {
         name: "Signal Hacker IV",
-        description: "Prototype. Reduces market purchase prices by 8.4%.",
-        cost: 12500000,
+        description: "Prototype. Reduces market purchase prices by 2.6%.",
+        cost: 810000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
-        value: 12500000,
-        modifiers: { buyPrice: 0.916 },
+        value: 810000,
+        modifiers: { buyPrice: 0.974 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_ECO_BUY_5': {
         name: "Signal Hacker V",
-        description: "Luminary. Reduces market purchase prices by 9.2%.",
-        cost: 25000000,
+        description: "Luminary. Reduces market purchase prices by 3.3%.",
+        cost: 2430000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
-        value: 25000000,
-        modifiers: { buyPrice: 0.908 },
+        value: 2430000,
+        modifiers: { buyPrice: 0.967 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Guild Badge: +0.5%/+1.2%/+1.9%/+2.6%/+3.3%
     'UPG_ECO_SELL_1': {
         name: "Guild Badge I",
-        description: "Increases market sell prices by 3%.",
-        cost: 5000,
+        description: "Increases market sell prices by 0.5%.",
+        cost: 30000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
-        value: 5000,
-        modifiers: { sellPrice: 1.03 },
+        value: 30000,
+        modifiers: { sellPrice: 1.005 },
         color: COLORS.GOLD
     },
     'UPG_ECO_SELL_2': {
         name: "Guild Badge II",
-        description: "Increases market sell prices by 5%.",
-        cost: 15000,
+        description: "Increases market sell prices by 1.2%.",
+        cost: 90000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
-        value: 15000,
-        modifiers: { sellPrice: 1.05 },
+        value: 90000,
+        modifiers: { sellPrice: 1.012 },
         color: COLORS.ORANGE
     },
     'UPG_ECO_SELL_3': {
         name: "Guild Badge III",
-        description: "Increases market sell prices by 7%.",
-        cost: 45000,
+        description: "Increases market sell prices by 1.9%.",
+        cost: 270000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
-        value: 45000,
-        modifiers: { sellPrice: 1.07 },
+        value: 270000,
+        modifiers: { sellPrice: 1.019 },
         color: COLORS.RED
     },
     'UPG_ECO_SELL_4': {
         name: "Guild Badge IV",
-        description: "Prototype. Increases market sell prices by 8.4%.",
-        cost: 12500000,
+        description: "Prototype. Increases market sell prices by 2.6%.",
+        cost: 810000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
-        value: 12500000,
-        modifiers: { sellPrice: 1.084 },
+        value: 810000,
+        modifiers: { sellPrice: 1.026 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_ECO_SELL_5': {
         name: "Guild Badge V",
-        description: "Luminary. Increases market sell prices by 9.2%.",
-        cost: 25000000,
+        description: "Luminary. Increases market sell prices by 3.3%.",
+        cost: 2430000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
-        value: 25000000,
-        modifiers: { sellPrice: 1.092 },
+        value: 2430000,
+        modifiers: { sellPrice: 1.033 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
     
+    // Syndicate Badge: Unchanged in request, keeping defaults or logic as previous
     'UPG_ECO_DEBT_1': {
         name: "Syndicate Badge I",
         description: "Reduces monthly debt interest by 20%.",
@@ -21844,268 +22053,273 @@ const ATTRIBUTE_DEFINITIONS = {
         pillColor: "#22d3ee"
     },
 
-    // --- UPGRADES: UTILITY ---
+    // --- UPGRADES: UTILITY (REBALANCED) ---
+    // Plating: +10/+25/+55/+85/+115
     'UPG_UTIL_HULL_1': {
         name: "Plating I",
-        description: "Increases Max Hull by 25.",
-        cost: 5000,
+        description: "Increases Max Hull by 10.",
+        cost: 20000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
-        value: 5000,
-        modifiers: { maxHull: 25 },
+        value: 20000,
+        modifiers: { maxHull: 10 },
         color: COLORS.GREY
     },
     'UPG_UTIL_HULL_2': {
         name: "Plating II",
-        description: "Increases Max Hull by 50.",
-        cost: 15000,
+        description: "Increases Max Hull by 25.",
+        cost: 80000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
-        value: 15000,
-        modifiers: { maxHull: 50 },
+        value: 80000,
+        modifiers: { maxHull: 25 },
         color: COLORS.INDIGO
     },
     'UPG_UTIL_HULL_3': {
         name: "Plating III",
-        description: "Increases Max Hull by 100.",
-        cost: 45000,
+        description: "Increases Max Hull by 55.",
+        cost: 320000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
-        value: 45000,
-        modifiers: { maxHull: 100 },
+        value: 320000,
+        modifiers: { maxHull: 55 },
         color: COLORS.VIOLET
     },
     'UPG_UTIL_HULL_4': {
         name: "Plating IV",
-        description: "Prototype. Increases Max Hull by 120.",
-        cost: 12500000,
+        description: "Prototype. Increases Max Hull by 85.",
+        cost: 960000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
-        value: 12500000,
-        modifiers: { maxHull: 120 },
+        value: 960000,
+        modifiers: { maxHull: 85 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_HULL_5': {
         name: "Plating V",
-        description: "Luminary. Increases Max Hull by 132.",
-        cost: 25000000,
+        description: "Luminary. Increases Max Hull by 115.",
+        cost: 2880000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
-        value: 25000000,
-        modifiers: { maxHull: 132 },
+        value: 2880000,
+        modifiers: { maxHull: 115 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Aux Tank: +30/+60/+90/+120/+150
     'UPG_UTIL_FUEL_1': {
         name: "Aux Tank I",
         description: "Increases Max Fuel by 30.",
-        cost: 5000,
+        cost: 20000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
-        value: 5000,
+        value: 20000,
         modifiers: { maxFuel: 30 },
         color: COLORS.ORANGE
     },
     'UPG_UTIL_FUEL_2': {
         name: "Aux Tank II",
         description: "Increases Max Fuel by 60.",
-        cost: 15000,
+        cost: 60000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
-        value: 15000,
+        value: 60000,
         modifiers: { maxFuel: 60 },
         color: COLORS.RED
     },
     'UPG_UTIL_FUEL_3': {
         name: "Aux Tank III",
-        description: "Increases Max Fuel by 120.",
-        cost: 45000,
+        description: "Increases Max Fuel by 90.",
+        cost: 180000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
-        value: 45000,
-        modifiers: { maxFuel: 120 },
+        value: 180000,
+        modifiers: { maxFuel: 90 },
         color: COLORS.GOLD
     },
     'UPG_UTIL_FUEL_4': {
         name: "Aux Tank IV",
-        description: "Prototype. Increases Max Fuel by 144.",
-        cost: 12500000,
+        description: "Prototype. Increases Max Fuel by 120.",
+        cost: 540000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
-        value: 12500000,
-        modifiers: { maxFuel: 144 },
+        value: 540000,
+        modifiers: { maxFuel: 120 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_FUEL_5': {
         name: "Aux Tank V",
-        description: "Luminary. Increases Max Fuel by 158.",
-        cost: 25000000,
+        description: "Luminary. Increases Max Fuel by 150.",
+        cost: 1620000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
-        value: 25000000,
-        modifiers: { maxFuel: 158 },
+        value: 1620000,
+        modifiers: { maxFuel: 150 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Cargo Expansion: +10/+25/+40/+55/+70
     'UPG_UTIL_CARGO_1': {
         name: "Exp. Hold I",
         description: "Increases Cargo Capacity by 10.",
-        cost: 5000,
+        cost: 40000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
-        value: 5000,
+        value: 40000,
         modifiers: { maxCargo: 10 },
         color: COLORS.CYAN
     },
     'UPG_UTIL_CARGO_2': {
         name: "Exp. Hold II",
         description: "Increases Cargo Capacity by 25.",
-        cost: 15000,
+        cost: 120000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
-        value: 15000,
+        value: 120000,
         modifiers: { maxCargo: 25 },
         color: COLORS.BLUE
     },
     'UPG_UTIL_CARGO_3': {
         name: "Exp. Hold III",
-        description: "Increases Cargo Capacity by 50.",
-        cost: 45000,
+        description: "Increases Cargo Capacity by 40.",
+        cost: 360000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
-        value: 45000,
-        modifiers: { maxCargo: 50 },
+        value: 360000,
+        modifiers: { maxCargo: 40 },
         color: COLORS.VIOLET
     },
     'UPG_UTIL_CARGO_4': {
         name: "Exp. Hold IV",
-        description: "Prototype. Increases Cargo Capacity by 60.",
-        cost: 12500000,
+        description: "Prototype. Increases Cargo Capacity by 55.",
+        cost: 1080000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
-        value: 12500000,
-        modifiers: { maxCargo: 60 },
+        value: 1080000,
+        modifiers: { maxCargo: 55 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_CARGO_5': {
         name: "Exp. Hold V",
-        description: "Luminary. Increases Cargo Capacity by 66.",
-        cost: 25000000,
+        description: "Luminary. Increases Cargo Capacity by 70.",
+        cost: 3240000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
-        value: 25000000,
-        modifiers: { maxCargo: 66 },
+        value: 3240000,
+        modifiers: { maxCargo: 70 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Radar Mod: +3%/+5%/+8%/+13%/+20%
     'UPG_UTIL_RADAR_1': {
         name: "Radar Mod I",
-        description: "Increases random event chance by 5%.",
-        cost: 5000,
+        description: "Increases random event chance by 3%.",
+        cost: 10000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
-        value: 5000,
-        modifiers: { eventChance: 0.05 },
+        value: 10000,
+        modifiers: { eventChance: 0.03 },
         color: COLORS.SEAFOAM
     },
     'UPG_UTIL_RADAR_2': {
         name: "Radar Mod II",
-        description: "Increases random event chance by 10%.",
-        cost: 15000,
+        description: "Increases random event chance by 5%.",
+        cost: 30000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
-        value: 15000,
-        modifiers: { eventChance: 0.10 },
+        value: 30000,
+        modifiers: { eventChance: 0.05 },
         color: COLORS.EMERALD
     },
     'UPG_UTIL_RADAR_3': {
         name: "Radar Mod III",
-        description: "Increases random event chance by 15%.",
-        cost: 45000,
+        description: "Increases random event chance by 8%.",
+        cost: 90000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
-        value: 45000,
-        modifiers: { eventChance: 0.15 },
+        value: 90000,
+        modifiers: { eventChance: 0.08 },
         color: COLORS.GREEN
     },
     'UPG_UTIL_RADAR_4': {
         name: "Radar Mod IV",
-        description: "Prototype. Increases random event chance by 18%.",
-        cost: 12500000,
+        description: "Prototype. Increases random event chance by 13%.",
+        cost: 270000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
-        value: 12500000,
-        modifiers: { eventChance: 0.18 },
+        value: 270000,
+        modifiers: { eventChance: 0.13 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_RADAR_5': {
         name: "Radar Mod V",
         description: "Luminary. Increases random event chance by 20%.",
-        cost: 25000000,
+        cost: 810000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
-        value: 25000000,
+        value: 810000,
         modifiers: { eventChance: 0.20 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
 
+    // Nano-Bots: 0.3%/0.5%/0.8%/1.3%/2%
     'UPG_UTIL_NANO_1': {
         name: "Nano-Bots I",
-        description: "Repairs 1% of Max Hull daily while traveling.",
-        cost: 5000,
+        description: "Repairs 0.3% of Max Hull daily while traveling.",
+        cost: 30000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
-        value: 5000,
-        modifiers: { passiveRepair: 0.01 },
+        value: 30000,
+        modifiers: { passiveRepair: 0.003 },
         color: COLORS.CYAN
     },
     'UPG_UTIL_NANO_2': {
         name: "Nano-Bots II",
-        description: "Repairs 2% of Max Hull daily while traveling.",
-        cost: 15000,
+        description: "Repairs 0.5% of Max Hull daily while traveling.",
+        cost: 120000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
-        value: 15000,
-        modifiers: { passiveRepair: 0.02 },
+        value: 120000,
+        modifiers: { passiveRepair: 0.005 },
         color: COLORS.BLUE
     },
     'UPG_UTIL_NANO_3': {
         name: "Nano-Bots III",
-        description: "Repairs 3% of Max Hull daily while traveling.",
-        cost: 45000,
+        description: "Repairs 0.8% of Max Hull daily while traveling.",
+        cost: 480000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
-        value: 45000,
-        modifiers: { passiveRepair: 0.03 },
+        value: 480000,
+        modifiers: { passiveRepair: 0.008 },
         color: COLORS.INDIGO
     },
     'UPG_UTIL_NANO_4': {
         name: "Nano-Bots IV",
-        description: "Prototype. Repairs 3.6% of Max Hull daily.",
-        cost: 12500000,
+        description: "Prototype. Repairs 1.3% of Max Hull daily.",
+        cost: 1920000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
-        value: 12500000,
-        modifiers: { passiveRepair: 0.036 },
+        value: 1920000,
+        modifiers: { passiveRepair: 0.013 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_NANO_5': {
         name: "Nano-Bots V",
-        description: "Luminary. Repairs 4% of Max Hull daily.",
-        cost: 25000000,
+        description: "Luminary. Repairs 2% of Max Hull daily.",
+        cost: 7680000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
-        value: 25000000,
-        modifiers: { passiveRepair: 0.04 },
+        value: 7680000,
+        modifiers: { passiveRepair: 0.02 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     }
@@ -27895,6 +28109,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+## [34.73] - 2026-1-25
+-  tuned ship upgrade parameters
+-  updated ship upgrade spawn rate
+-  updated tuning screen spawn rate
 
 ## [34.70] - 2026-1-24
 -  added reward events
