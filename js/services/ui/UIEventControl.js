@@ -1,22 +1,10 @@
 // js/services/ui/UIEventControl.js
 import { DB } from '../../data/database.js';
 import { EULA_CONTENT } from '../../data/eulaContent.js';
+import { LORE_REGISTRY } from '../../data/lore/loreRegistry.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
-
-const LORE_CONTENT = {
-    story_so_far: {
-        title: "Story So Far...",
-        content: `
-            <p>The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p>
-        
-            <p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p>
-            <p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p>
-            <p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.</p>
-        `
-    }
-};
 
 export class UIEventControl {
     /**
@@ -111,7 +99,7 @@ export class UIEventControl {
             return;
         }
 
-        const loreEntry = LORE_CONTENT[loreId];
+        const loreEntry = LORE_REGISTRY[loreId];
         if (!loreEntry) {
             this.manager.logger.error('UIEventControl', `No lore content found for ID: ${loreId}`);
             contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
@@ -477,7 +465,7 @@ export class UIEventControl {
         const loreContainer = screenContainer.querySelector('#lore-button-container');
         if (!loreContainer) return;
         
-        loreContainer.innerHTML = Object.entries(LORE_CONTENT).map(([id, data]) => {
+        loreContainer.innerHTML = Object.entries(LORE_REGISTRY).map(([id, data]) => {
             return `<button class="btn btn-header" data-action="show_lore" data-lore-id="${id}">
                         ${data.title}
                     </button>`;
