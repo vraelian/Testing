@@ -95,6 +95,12 @@ const effectHandlers = {
                 inventory[commodityId] = { quantity: 0, avgCost: 0 };
             }
             inventory[commodityId].quantity += quantity;
+
+            // [[UPDATED]]: Return details for UI instead of appending to text
+            if (commodity) {
+                return { addedItem: commodity.name, addedQty: quantity };
+            }
+
         } else {
             if (outcome && commodity) {
                 outcome.text += ` (Cargo hold full! Abandoned ${quantity}x ${commodity.name}.)`;
@@ -172,7 +178,8 @@ const effectHandlers = {
             if (!inventory[randomCom.id]) inventory[randomCom.id] = { quantity: 0, avgCost: 0 };
             inventory[randomCom.id].quantity += amountToAdd;
             
-            if (outcome) outcome.text += ` (Salvaged ${amountToAdd}x ${randomCom.name})`;
+            // [[UPDATED]]: Return details for UI instead of appending to text
+            return { addedItem: randomCom.name, addedQty: amountToAdd };
         }
     },
 
@@ -187,17 +194,17 @@ const effectHandlers = {
         if (!shipState.upgrades.includes(upgradeId)) {
             shipState.upgrades.push(upgradeId);
             
-            if (outcome) {
-                const def = GameAttributes.getDefinition(upgradeId);
-                const name = def ? def.name : upgradeId;
-                outcome.text += ` (Installed Upgrade: ${name})`;
-            }
+            // [[UPDATED]]: Removed text appending. Now returns the name for the UI.
+            const def = GameAttributes.getDefinition(upgradeId);
+            const name = def ? def.name : upgradeId;
 
             gameState.uiState.hangarShipyardToggleState = 'hangar';
             
             if (simulationService.setScreen) {
                 simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
             }
+            
+            return { installedUpgrade: name };
 
         } else {
             if (outcome) {

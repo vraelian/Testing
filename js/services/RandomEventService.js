@@ -1,8 +1,10 @@
+
 // js/services/RandomEventService.js
 /**
  * @fileoverview
  * The central engine for Event System 2.0.
  * UPDATED: Includes logic to pre-evaluate choices and disable them if requirements are not met.
+ * UPDATED: Automatically formats choice text to replace raw "Scale" strings with actual calculated values.
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -11,6 +13,10 @@ import { ConditionEvaluator } from './ConditionEvaluator.js';
 import { OutcomeResolver } from './OutcomeResolver.js';
 import { DynamicValueResolver } from './DynamicValueResolver.js';
 import { applyEffect } from './eventEffectResolver.js';
+// [[UPDATED]]: Import helper for cargo check
+import { calculateInventoryUsed } from '../utils.js';
+// [[UPDATED]]: Import DB for Item Name lookups
+import { DB } from '../data/database.js';
 
 export class RandomEventService {
     constructor() {
@@ -40,15 +46,41 @@ export class RandomEventService {
         // 4. [[UPDATED]]: Evaluate choices to determine if they should be enabled/disabled
         if (eventInstance.choices) {
             eventInstance.choices.forEach(choice => {
+                
+                // A. Check explicit requirements (e.g. Has Credits > 500)
                 if (choice.requirements && choice.requirements.length > 0) {
-                    // Check if player meets requirements
                     const meetsReqs = this.evaluator.checkAll(choice.requirements, gameState, simulationService);
                     
                     if (!meetsReqs) {
                         choice.disabled = true;
-                        // Optional: Append a flag or text to indicate why (handled by UI style usually)
                     }
                 }
+
+                // B. [[UPDATED]]: Implicit Requirement - "Cannot Risk Cargo if Cargo is Empty"
+                // If the choice is not yet disabled, check if it leads to potential cargo loss
+                if (!choice.disabled) {
+                     const potentialOutcomes = this._getPotentialOutcomes(choice, eventInstance);
+                     const risksCargo = potentialOutcomes.some(o => 
+                         o.effects && o.effects.some(e => e.type === EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO)
+                     );
+
+                     if (risksCargo) {
+                         const inventory = simulationService._getActiveInventory();
+                         const used = calculateInventoryUsed(inventory);
+                         
+                         if (used <= 0) {
+                             choice.disabled = true;
+                             // Append explanation to text
+                              const textMatch = (choice.text || choice.title).match(/^(.*?)\s*(\(.*\))?$/);
+                              const baseText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                              choice.text = `${baseText} (No Cargo to Risk)`;
+                         }
+                     }
+                }
+
+                // C. [[UPDATED]]: Dynamic Text Formatting
+                // Replaces raw strings like "(-15 Ice * Scale)" with actuals "(-30 Water Ice)"
+                this._hydrateChoiceText(choice, gameState);
             });
         }
         
@@ -100,10 +132,15 @@ export class RandomEventService {
                     value: finalValue
                 };
                 
-                calculatedEffects.push(concreteEffect);
-
                 // C. Apply the effect to the GameState immediately
-                applyEffect(gameState, simulationService, concreteEffect, outcomeDef);
+                // [[UPDATED]]: Capture result to merge dynamic details (like item names) back into the effect for UI
+                const result = applyEffect(gameState, simulationService, concreteEffect, outcomeDef);
+
+                if (result && typeof result === 'object') {
+                    Object.assign(concreteEffect, result);
+                }
+                
+                calculatedEffects.push(concreteEffect);
             });
         }
 
@@ -150,5 +187,75 @@ export class RandomEventService {
             random -= w;
         }
         return events[events.length - 1];
+    }
+    
+    /**
+     * Internal helper to find all possible outcomes for a choice.
+     * Used for risk analysis (e.g. disabling buttons if cargo is 0).
+     * @private
+     */
+    _getPotentialOutcomes(choice, eventInstance) {
+        if (!choice.resolution || !eventInstance.outcomes) return [];
+        
+        const outcomes = [];
+        
+        if (choice.resolution.type === EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC) {
+             const id = choice.resolution.pool[0]?.outcomeId;
+             if (id && eventInstance.outcomes[id]) outcomes.push(eventInstance.outcomes[id]);
+        } 
+        else if (choice.resolution.type === EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG || choice.resolution.type === EVENT_CONSTANTS.RESOLVERS.STAT_CHECK) {
+            choice.resolution.pool.forEach(item => {
+                if (item.outcomeId && eventInstance.outcomes[item.outcomeId]) {
+                    outcomes.push(eventInstance.outcomes[item.outcomeId]);
+                }
+            });
+        }
+        
+        return outcomes;
+    }
+
+    /**
+     * Scans choice text for raw dynamic string patterns (e.g. "* Scale")
+     * and replaces them with the actual resolved values from the requirements.
+     * @private
+     */
+    _hydrateChoiceText(choice, gameState) {
+        if (!choice.text || !choice.text.toLowerCase().includes('scale')) return;
+
+        // Pattern matching: Looks for (...) containing "* Scale"
+        // e.g. "Flush with Coolant (-15 Ice * Scale)"
+        const scalePattern = /\((.*?) \* Scale\)/i;
+        const match = choice.text.match(scalePattern);
+
+        if (match) {
+            // Found a scale pattern. Try to find the linked requirement to get the real value.
+            // We look for a requirement that is a 'cost' (HAS_ITEM or HAS_CREDITS) with dynamic scaling.
+            const costReq = choice.requirements?.find(r => 
+                (r.type === EVENT_CONSTANTS.CONDITIONS.HAS_ITEM || 
+                 r.type === EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS ||
+                 r.type === EVENT_CONSTANTS.CONDITIONS.HAS_FUEL) &&
+                typeof r.value === 'object' && r.value.scaleWith
+            );
+
+            if (costReq) {
+                const actualValue = this.valueResolver.resolve(costReq.value, gameState);
+                let label = '';
+
+                if (costReq.type === EVENT_CONSTANTS.CONDITIONS.HAS_ITEM) {
+                    const item = DB.COMMODITIES.find(c => c.id === costReq.target);
+                    label = item ? item.name : costReq.target;
+                } else if (costReq.type === EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS) {
+                    label = 'Credits';
+                } else if (costReq.type === EVENT_CONSTANTS.CONDITIONS.HAS_FUEL) {
+                    label = 'Fuel';
+                }
+
+                // Replace the entire parenthetical match with clean text
+                choice.text = choice.text.replace(scalePattern, `(-${actualValue} ${label})`);
+            } else {
+                // Fallback: If no requirement matches, just strip the " * Scale" text so it isn't ugly
+                choice.text = choice.text.replace(' * Scale', '');
+            }
+        }
     }
 }

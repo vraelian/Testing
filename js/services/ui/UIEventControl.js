@@ -428,7 +428,10 @@ export class UIEventControl {
                         effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
-                        effectText = `<span class="${baseStyle} text-result-cargo">Received: ${Math.round(eff.value)}x ${eff.target}</span>`; 
+                        // [[UPDATED]]: Check for resolved name, fallback to target ID
+                        const itemName = eff.addedItem || eff.target;
+                        const itemQty = eff.addedQty || Math.round(eff.value);
+                        effectText = `<span class="${baseStyle} text-result-cargo">Received: ${itemQty}x ${itemName}</span>`; 
                         break;
                     case 'EFF_REMOVE_ITEM':
                         effectText = `<span class="${baseStyle} text-result-cargo">Removed: ${Math.round(eff.value)}x ${eff.target}</span>`;
@@ -436,6 +439,23 @@ export class UIEventControl {
                     case 'EFF_LOSE_RANDOM_CARGO':
                          effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${Math.round(eff.value * 100)}%</span>`;
                          break;
+                    // [[UPDATED]]: Added specific handler for Random Cargo to show what was got
+                    case 'EFF_ADD_RANDOM_CARGO':
+                        if (eff.addedItem && eff.addedQty) {
+                             effectText = `<span class="${baseStyle} text-result-cargo">Received: ${eff.addedQty}x ${eff.addedItem}</span>`;
+                        } else {
+                             // Fallback if full or failed
+                             effectText = `<span class="${baseStyle} text-gray-500">No salvage recovered.</span>`;
+                        }
+                        break;
+                    // [[UPDATED]]: Added Handler for Upgrades
+                    case 'EFF_ADD_UPGRADE':
+                        if (eff.installedUpgrade) {
+                             effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
+                        } else {
+                             effectText = `<span class="${baseStyle} text-gray-500">Upgrade already installed.</span>`;
+                        }
+                        break;
                     default:
                          // User Instruction: Remove 'Effect Applied' to reduce noise
                          return;
