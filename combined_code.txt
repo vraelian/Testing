@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.78</title>
+    <title>Orbital Trading 34.88</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.78</p>
+            <p>Version 34.88</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -11248,7 +11248,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 27,
+                positionY: 31,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" },
                 "nextStepId": "mission_1_6",
                 "isSkippable": false,
@@ -11295,7 +11295,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 25,
+                positionY: 29,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "market" },
                 "nextStepId": "mission_2_2",
                 "isSkippable": false,
@@ -11307,7 +11307,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '150px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 67,
+                positionY: 70,
                 "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" },
                 "nextStepId": "mission_2_3",
                 "isSkippable": false
@@ -11318,7 +11318,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '150px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 67,
+                positionY: 70,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "missions" },
                 "nextStepId": "mission_2_4",
                 "isSkippable": false,
@@ -11330,7 +11330,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 77,
+                positionY: 82,
                 "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" },
                 "nextStepId": "mission_3_1",
                 "isSkippable": false
@@ -11341,7 +11341,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '160px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 83,
+                positionY: 84,
                 "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" },
                 "nextStepId": "mission_final",
                 "isSkippable": false,
@@ -11353,7 +11353,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 29,
+                positionY: 33,
                 "completion": { "type": "INFO" },
                 "nextStepId": null,
                 "isSkippable": false,
@@ -23691,11 +23691,13 @@ export class UIManager {
                 break;
             case SCREEN_IDS.HANGAR:
                 // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
+                    previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
@@ -28512,6 +28514,18 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [34.88] - 2026-1-26
+-  refactored lore
+-  refactored tutorials
+-  added tuts_economy.js
+-  added tuts_intro.js
+-  added tuts_ships.js
+-  added tuts_upgrades.js
+-  added lore_broadstrokes.js
+-  added loreRegistry.js
+-  tutorial intro sequence polish
+-  updated meta files
 
 # [34.79] - 2026-1-25
 -  added event debug toggle

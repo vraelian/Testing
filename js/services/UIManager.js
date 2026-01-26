@@ -352,11 +352,13 @@ export class UIManager {
                 break;
             case SCREEN_IDS.HANGAR:
                 // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
+                    previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);

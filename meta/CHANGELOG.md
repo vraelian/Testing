@@ -3,6 +3,18 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.88] - 2026-1-26
+-  refactored lore
+-  refactored tutorials
+-  added tuts_economy.js
+-  added tuts_intro.js
+-  added tuts_ships.js
+-  added tuts_upgrades.js
+-  added lore_broadstrokes.js
+-  added loreRegistry.js
+-  tutorial intro sequence polish
+-  updated meta files
+
 # [34.79] - 2026-1-25
 -  added event debug toggle
 -  event polish
