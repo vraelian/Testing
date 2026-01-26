@@ -48,8 +48,18 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.MODIFY_HULL]: (gameState, simulationService, effect) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        // FIX: Enforce Integer
-        const change = Math.round(effect.value);
+        let change = Math.round(effect.value);
+
+        // --- NEW: Hull Resistance Mitigation ---
+        // If damage is occurring (negative change), apply resistance from plating
+        if (change < 0) {
+            const upgrades = shipState.upgrades || [];
+            const resistance = GameAttributes.getHullResistanceModifier(upgrades);
+            // resistance is a decimal (e.g., 0.20 for 20% reduction)
+            change = Math.round(change * (1 - resistance));
+        }
+        // --- END CHANGE ---
+
         shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + change));
     },
 
@@ -69,9 +79,16 @@ const effectHandlers = {
         const ship = simulationService._getActiveShip();
         const inventory = simulationService._getActiveInventory();
         const commodityId = effect.target; 
-        const quantity = Math.floor(effect.value); // FIX: Floor items
+        const quantity = Math.floor(effect.value); 
         
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+        
+        // --- NEW: Tier Gating ---
+        if (commodity && commodity.tier > gameState.player.revealedTier) {
+            if (outcome) outcome.text += ` (Recovered ${commodity.name}, but lacked the data-encryption keys to secure it. Cargo abandoned.)`;
+            return;
+        }
+        // --- END CHANGE ---
         
         if (calculateInventoryUsed(inventory) + quantity <= ship.cargoCapacity) {
             if (!inventory[commodityId]) {
@@ -139,9 +156,16 @@ const effectHandlers = {
              return;
         }
 
-        const validCommodities = DB.COMMODITIES.filter(c => c.id !== 'fuel_rod'); 
+        // --- NEW: Tier Gating ---
+        const validCommodities = DB.COMMODITIES.filter(c => 
+            c.id !== 'fuel_rod' && 
+            c.tier <= gameState.player.revealedTier
+        ); 
+        // --- END CHANGE ---
+
+        if (validCommodities.length === 0) return;
+
         const randomCom = validCommodities[Math.floor(Math.random() * validCommodities.length)];
-        
         const amountToAdd = Math.min(Math.floor(effect.value), space);
         
         if (amountToAdd > 0) {

@@ -602,53 +602,53 @@ const ATTRIBUTE_DEFINITIONS = {
     // Plating: +10/+25/+55/+85/+115
     'UPG_UTIL_HULL_1': {
         name: "Plating I",
-        description: "Increases Max Hull by 10.",
+        description: "Increases Max Hull by 10. Reduces event hull damage by 10%.",
         cost: 20000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 20000,
-        modifiers: { maxHull: 10 },
+        modifiers: { maxHull: 10, hullResistance: 0.10 },
         color: COLORS.GREY
     },
     'UPG_UTIL_HULL_2': {
         name: "Plating II",
-        description: "Increases Max Hull by 25.",
+        description: "Increases Max Hull by 25. Reduces event hull damage by 15%.",
         cost: 80000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 80000,
-        modifiers: { maxHull: 25 },
+        modifiers: { maxHull: 25, hullResistance: 0.15 },
         color: COLORS.INDIGO
     },
     'UPG_UTIL_HULL_3': {
         name: "Plating III",
-        description: "Increases Max Hull by 55.",
+        description: "Increases Max Hull by 55. Reduces event hull damage by 20%.",
         cost: 320000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 320000,
-        modifiers: { maxHull: 55 },
+        modifiers: { maxHull: 55, hullResistance: 0.20 },
         color: COLORS.VIOLET
     },
     'UPG_UTIL_HULL_4': {
         name: "Plating IV",
-        description: "Prototype. Increases Max Hull by 85.",
+        description: "Prototype. Increases Max Hull by 85. Reduces event hull damage by 25%.",
         cost: 960000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 960000,
-        modifiers: { maxHull: 85 },
+        modifiers: { maxHull: 85, hullResistance: 0.25 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_UTIL_HULL_5': {
         name: "Plating V",
-        description: "Luminary. Increases Max Hull by 115.",
+        description: "Luminary. Increases Max Hull by 115. Reduces event hull damage by 35%.",
         cost: 2880000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 2880000,
-        modifiers: { maxHull: 115 },
+        modifiers: { maxHull: 115, hullResistance: 0.35 },
         color: COLORS.CYAN,
         pillColor: "#22d3ee"
     },
@@ -986,7 +986,7 @@ export class GameAttributes {
      * @returns {number} Multiplier.
      */
     static getFuelBurnModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_BURN);
+        return this._getMultiplicativeModifier(upgrades, 'fuelBurn');
     }
 
     /**
@@ -996,7 +996,7 @@ export class GameAttributes {
      * @returns {number} Multiplier.
      */
     static getFuelPriceModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_FUEL_PRICE);
+        return this._getMultiplicativeModifier(upgrades, 'fuelPrice');
     }
 
     /**
@@ -1005,7 +1005,7 @@ export class GameAttributes {
      * @returns {number} Multiplier.
      */
     static getTravelTimeModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_TRAVEL_SPEED);
+        return this._getMultiplicativeModifier(upgrades, 'travelTime');
     }
 
     /**
@@ -1015,7 +1015,7 @@ export class GameAttributes {
      * @returns {number} Flat bonus amount (e.g. 0.03).
      */
     static getEventChanceModifier(upgrades = []) {
-        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_EVENT_CHANCE, 0.0);
+        return this._getAdditiveModifier(upgrades, 'eventChance', 0.0);
     }
 
     /**
@@ -1025,8 +1025,8 @@ export class GameAttributes {
      * @returns {number} Multiplier.
      */
     static getPriceModifier(upgrades = [], transactionType) {
-        const modType = transactionType === 'buy' ? UPGRADE_TYPES.MOD_BUY_PRICE : UPGRADE_TYPES.MOD_SELL_PRICE;
-        return this._getMultiplicativeModifier(upgrades, modType);
+        const modKey = transactionType === 'buy' ? 'buyPrice' : 'sellPrice';
+        return this._getMultiplicativeModifier(upgrades, modKey);
     }
 
     /**
@@ -1039,7 +1039,7 @@ export class GameAttributes {
         if (serviceType === 'refuel') {
             return this.getFuelPriceModifier(upgrades);
         } else {
-            return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_REPAIR_COST);
+            return this._getMultiplicativeModifier(upgrades, 'repairCost');
         }
     }
 
@@ -1050,7 +1050,7 @@ export class GameAttributes {
      * @returns {number} Total Multiplier (e.g. 1.20 for +20%).
      */
     static getMaxHullModifier(upgrades = []) {
-        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_HULL, 1.0);
+        return this._getAdditiveModifier(upgrades, 'maxHull', 0); // Note: Base is 0 for flat additive HP
     }
 
     /**
@@ -1060,7 +1060,7 @@ export class GameAttributes {
      * @returns {number} Total Multiplier.
      */
     static getMaxFuelModifier(upgrades = []) {
-        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_FUEL, 1.0);
+        return this._getAdditiveModifier(upgrades, 'maxFuel', 0);
     }
 
     /**
@@ -1070,7 +1070,7 @@ export class GameAttributes {
      * @returns {number} Total Multiplier.
      */
     static getMaxCargoModifier(upgrades = []) {
-        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_MAX_CARGO, 1.0);
+        return this._getAdditiveModifier(upgrades, 'maxCargo', 0);
     }
 
     /**
@@ -1079,7 +1079,7 @@ export class GameAttributes {
      * @returns {number} Multiplier.
      */
     static getInterestModifier(upgrades = []) {
-        return this._getMultiplicativeModifier(upgrades, UPGRADE_TYPES.MOD_DEBT_INTEREST);
+        return this._getMultiplicativeModifier(upgrades, 'interestRate');
     }
 
     /**
@@ -1089,7 +1089,17 @@ export class GameAttributes {
      * @returns {number} Daily Repair % (e.g. 0.03 for 3%).
      */
     static getPassiveRepairRate(upgrades = []) {
-        return this._getAdditiveModifier(upgrades, UPGRADE_TYPES.MOD_PASSIVE_REPAIR, 0.0);
+        return this._getAdditiveModifier(upgrades, 'passiveRepair', 0.0);
+    }
+
+    /**
+     * Calculates total event hull damage mitigation (Additive).
+     * Used in eventEffectResolver.
+     * @param {string[]} upgrades 
+     * @returns {number} Total resistance (e.g. 0.25 for 25% reduction).
+     */
+    static getHullResistanceModifier(upgrades = []) {
+        return this._getAdditiveModifier(upgrades, 'hullResistance', 0.0);
     }
 
     /**

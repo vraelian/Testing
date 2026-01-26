@@ -303,10 +303,12 @@ function _getDailyStock(gameState) {
         // Strict Allowlist
         if (!id.startsWith('UPG_')) return false;
 
-        // Exclude Rewards (Guild/Syndicate) unless Tier 4/5
+        // --- NEW: Hard Exclusion ---
+        // Exclude Rewards (Guild/Syndicate) from standard shop rotation
         if (id.includes('GUILD') || id.includes('SYNDICATE')) {
-            if (!id.endsWith('_4') && !id.endsWith('_5')) return false;
+            return false;
         }
+        // --- END CHANGE ---
 
         // Wealth Gate for Tier 4/5 (1 Million Credits)
         if (id.endsWith('_4') || id.endsWith('_5')) {
