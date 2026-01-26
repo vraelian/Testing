@@ -5,16 +5,10 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
-        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
-        
-        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
-     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        
-        // Prevent the browser's default error handling.
         return true;
       };
     </script>

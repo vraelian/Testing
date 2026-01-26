@@ -226,6 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
+        
+        // [[MISSION SYSTEM]] Initialize Engine
+        missionService.init();
+
         if (!hasSave) {
             if (isSimpleStart && debugService) {
                 gameState.startNewGame('');
@@ -264,5 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // any new state created during startNewGame.
         AssetService.hydrateGameAssets(gameState.getState());
         // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
+
+        // [[MISSION SYSTEM]] Fire Intro Trigger
+        // Triggers 'intro_01_welcome' completion
+        if (window.MissionService) {
+            window.MissionService.handleEvent('TUTORIAL_STEP_COMPLETE');
+        }
     }
 });

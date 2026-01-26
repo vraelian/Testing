@@ -10,8 +10,12 @@
  * 4. If all objectives in a mission are done, mission is completed.
  */
 
-class MissionService {
-    constructor() {
+export class MissionService {
+    constructor(gameState, uiManager, logger) {
+        this.gameState = gameState;
+        this.uiManager = uiManager;
+        this.logger = logger;
+
         this.activeMissions = []; // Array of hydrated mission objects with current progress
         this.completedMissionIds = []; // Array of strings (IDs)
         this.missionHistory = []; // Log of past completions for stats
@@ -19,6 +23,10 @@ class MissionService {
         // Internal event mapping to optimize lookups
         // Key: EventType (string), Value: Array of MissionIDs listening for this
         this.eventListeners = new Map();
+
+        // [[CORE LOGIC]] Assign global singleton so non-module services (like MarketService) 
+        // can access it without complex injection chains.
+        window.MissionService = this;
     }
 
     init() {
@@ -94,9 +102,8 @@ class MissionService {
         this.mapEventListeners();
 
         // Notify UI
-        if (window.UIManager) {
-            // UIManager.updateMissionTracker(); // Hypothetical hook
-            // UIManager.showToast(`Mission Started: ${def.title}`);
+        if (this.uiManager && this.uiManager.showToast) {
+            this.uiManager.showToast(`Mission Started: ${def.title}`);
         }
     }
 
@@ -207,9 +214,11 @@ class MissionService {
 
         // 2. Trigger Next Steps (Chaining)
         if (def.on_complete) {
-            if (def.on_complete.trigger_event) {
-                // Example: Triggering a generic event that the Tutorial system listens to
-                // window.Game.emit(def.on_complete.trigger_event, def.on_complete.trigger_args);
+            if (def.on_complete.trigger_event && this.uiManager) {
+                // Example trigger for UI Toasts
+                if (def.on_complete.trigger_event === "SHOW_TOAST") {
+                    this.uiManager.showToast(def.on_complete.trigger_args[0]);
+                }
             }
             
             if (def.on_complete.auto_accept_next) {
@@ -223,9 +232,12 @@ class MissionService {
 
     grantRewards(rewards) {
         // Hook into Player/Game state
-        if (rewards.credits) {
+        if (rewards.credits && this.gameState) {
             console.log(`> Reward: ${rewards.credits} Credits`);
-            if (window.Game) window.Game.state.credits += rewards.credits;
+            // Access state directly or via setter if available
+            // this.gameState.state.credits += rewards.credits; 
+            // Better: use a dedicated method in GameState if it exists, or direct modification for now
+            this.gameState.state.credits += rewards.credits;
         }
         if (rewards.xp) {
             console.log(`> Reward: ${rewards.xp} XP`);
@@ -243,6 +255,3 @@ class MissionService {
         return this.completedMissionIds.includes(id);
     }
 }
-
-// Global Singleton
-window.MissionService = new MissionService();

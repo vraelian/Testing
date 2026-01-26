@@ -6,16 +6,10 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
-        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
-        
-        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
-     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        
-        // Prevent the browser's default error handling.
         return true;
       };
     </script>
@@ -8263,6 +8257,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
+        
+        // [[MISSION SYSTEM]] Initialize Engine
+        missionService.init();
+
         if (!hasSave) {
             if (isSimpleStart && debugService) {
                 gameState.startNewGame('');
@@ -8301,6 +8299,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // any new state created during startNewGame.
         AssetService.hydrateGameAssets(gameState.getState());
         // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
+
+        // [[MISSION SYSTEM]] Fire Intro Trigger
+        // Triggers 'intro_01_welcome' completion
+        if (window.MissionService) {
+            window.MissionService.handleEvent('TUTORIAL_STEP_COMPLETE');
+        }
     }
 });
 --- END OF FILE: ./js/main.js ---
@@ -17904,8 +17908,12 @@ export class GameState {
  * 4. If all objectives in a mission are done, mission is completed.
  */
 
-class MissionService {
-    constructor() {
+export class MissionService {
+    constructor(gameState, uiManager, logger) {
+        this.gameState = gameState;
+        this.uiManager = uiManager;
+        this.logger = logger;
+
         this.activeMissions = []; // Array of hydrated mission objects with current progress
         this.completedMissionIds = []; // Array of strings (IDs)
         this.missionHistory = []; // Log of past completions for stats
@@ -17913,6 +17921,10 @@ class MissionService {
         // Internal event mapping to optimize lookups
         // Key: EventType (string), Value: Array of MissionIDs listening for this
         this.eventListeners = new Map();
+
+        // [[CORE LOGIC]] Assign global singleton so non-module services (like MarketService) 
+        // can access it without complex injection chains.
+        window.MissionService = this;
     }
 
     init() {
@@ -17988,9 +18000,8 @@ class MissionService {
         this.mapEventListeners();
 
         // Notify UI
-        if (window.UIManager) {
-            // UIManager.updateMissionTracker(); // Hypothetical hook
-            // UIManager.showToast(`Mission Started: ${def.title}`);
+        if (this.uiManager && this.uiManager.showToast) {
+            this.uiManager.showToast(`Mission Started: ${def.title}`);
         }
     }
 
@@ -18101,9 +18112,11 @@ class MissionService {
 
         // 2. Trigger Next Steps (Chaining)
         if (def.on_complete) {
-            if (def.on_complete.trigger_event) {
-                // Example: Triggering a generic event that the Tutorial system listens to
-                // window.Game.emit(def.on_complete.trigger_event, def.on_complete.trigger_args);
+            if (def.on_complete.trigger_event && this.uiManager) {
+                // Example trigger for UI Toasts
+                if (def.on_complete.trigger_event === "SHOW_TOAST") {
+                    this.uiManager.showToast(def.on_complete.trigger_args[0]);
+                }
             }
             
             if (def.on_complete.auto_accept_next) {
@@ -18117,9 +18130,12 @@ class MissionService {
 
     grantRewards(rewards) {
         // Hook into Player/Game state
-        if (rewards.credits) {
+        if (rewards.credits && this.gameState) {
             console.log(`> Reward: ${rewards.credits} Credits`);
-            if (window.Game) window.Game.state.credits += rewards.credits;
+            // Access state directly or via setter if available
+            // this.gameState.state.credits += rewards.credits; 
+            // Better: use a dedicated method in GameState if it exists, or direct modification for now
+            this.gameState.state.credits += rewards.credits;
         }
         if (rewards.xp) {
             console.log(`> Reward: ${rewards.xp} XP`);
@@ -18137,9 +18153,6 @@ class MissionService {
         return this.completedMissionIds.includes(id);
     }
 }
-
-// Global Singleton
-window.MissionService = new MissionService();
 --- END OF FILE: ./js/services/MissionService.js ---
 
 --- START OF FILE: ./js/services/NewsTickerService.js ---
