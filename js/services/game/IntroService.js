@@ -195,9 +195,18 @@ export class IntroService {
 
                 setTimeout(() => {
                     this.uiManager.showGameContainer();
-                    this.uiManager.render(this.gameState.getState());
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                    
+                    // [[FIXED]] REORDERED INITIALIZATION SEQUENCE (State/Render Race Condition)
+                    // 1. Trigger the tutorial state FIRST. This sets 'activeBatchId'.
                     this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
+                    
+                    // 2. THEN switch the screen.
+                    // The setScreen call updates the State, which triggers UIManager.render().
+                    // Because step 1 already set 'activeBatchId', the UIManager's guard clause 
+                    // (which blocks renders during Intro if no tutorial is active) will now PASS.
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                    
+                    // 3. Removed redundant 'this.uiManager.render()' call as setScreen handles it.
                 }, 2000);
             };
 
