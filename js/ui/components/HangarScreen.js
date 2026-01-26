@@ -207,81 +207,99 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     }
 
     // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL - TIER STYLING) ---
-    // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
-    // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
-    if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
-        
-        // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
-        const sortedUpgrades = [...shipDynamic.upgrades].sort((a, b) => {
-            const getTier = (id) => {
-                if (id.endsWith('_V')) return 5;
-                if (id.endsWith('_IV')) return 4;
-                if (id.endsWith('_III')) return 3;
-                if (id.endsWith('_II')) return 2;
-                return 1; // Default to Tier 1 for _I or suffix-less
-            };
-            
-            const tierA = getTier(a);
-            const tierB = getTier(b);
-            
-            if (tierA !== tierB) {
-                return tierA - tierB; // Low to High (I, II, III)
-            }
-            // Secondary Sort: ID (Alphabetical) to group types
-            return a.localeCompare(b);
-        });
+    // Only render upgrades if in Hangar Mode (owned ship)
+    if (isHangarMode && shipDynamic) {
+        // [[FIXED]]: Combine Innate Mechanics (Static) with Installed Upgrades (Dynamic)
+        // This ensures Z-Class attributes like "Osseous Regrowth" appear as pills.
+        const allAttributes = [
+            ...(shipStatic.mechanicIds || []),
+            ...(shipDynamic.upgrades || [])
+        ];
 
-        // 1. Pre-Calculation Phase: Check for Clipping Risk
-        const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
-        
-        const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
-        const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
+        if (allAttributes.length > 0) {
+            // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
+            const sortedUpgrades = [...allAttributes].sort((a, b) => {
+                const getTier = (id) => {
+                    const def = GameAttributes.getDefinition(id);
+                    if (def && def.tier) return def.tier;
+                    if (def && def.isAlien) return 5;
 
-        // Use sortedUpgrades for rendering loop
-        const pills = sortedUpgrades.map((upgradeId, idx) => {
-            const definition = upgradeDefinitions[idx];
+                    // Fallback: Check for both Roman and Arabic suffixes
+                    if (id.endsWith('_V') || id.endsWith('_5')) return 5;
+                    if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
+                    if (id.endsWith('_III') || id.endsWith('_3')) return 3;
+                    if (id.endsWith('_II') || id.endsWith('_2')) return 2;
+                    return 1; // Default
+                };
+                
+                const tierA = getTier(a);
+                const tierB = getTier(b);
+                
+                if (tierA !== tierB) {
+                    return tierA - tierB; // Low to High (I, II, III)
+                }
+                // Secondary Sort: ID (Alphabetical) to group types
+                return a.localeCompare(b);
+            });
+
+            // 1. Pre-Calculation Phase: Check for Clipping Risk
+            const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
             
-            // 2. Label Logic
-            let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
-            const tooltipText = definition ? definition.description : '';
-            
-            if (useAbbreviation) {
-                label = _getAbbreviatedLabel(label);
-            }
+            const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
+            const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            // 3. Base Color Logic
-            const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
-            
-            // 4. Tier & Style Logic
-            let tier = 1;
-            if (upgradeId.endsWith('_V')) tier = 5;
-            else if (upgradeId.endsWith('_IV')) tier = 4;
-            else if (upgradeId.endsWith('_III')) tier = 3;
-            else if (upgradeId.endsWith('_II')) tier = 2;
-            else if (definition && definition.isAlien) tier = 5; 
+            // Use sortedUpgrades for rendering loop
+            const pills = sortedUpgrades.map((upgradeId, idx) => {
+                const definition = upgradeDefinitions[idx];
+                
+                // 2. Label Logic
+                let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
+                const tooltipText = definition ? definition.description : '';
+                
+                if (useAbbreviation) {
+                    label = _getAbbreviatedLabel(label);
+                }
 
-            // Generate Data-Driven Styles (CSS Class + Variables)
-            const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+                // 3. Base Color Logic
+                const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+                
+                // 4. Tier & Style Logic
+                let tier = definition?.tier || 1;
+                
+                // Robust Fallback: If DB tier is missing, try string parsing (Arabic/Roman)
+                if (!definition?.tier) {
+                    if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
+                    else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
+                    else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
+                    else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
+                }
+                
+                // Ensure Aliens get high-tier styling hooks if not explicitly set
+                if (definition && definition.isAlien) tier = 5;
 
-            // Semantic Button
-            return `
-                <button class="attribute-pill ${styleData.className}" 
-                     data-action="show-attribute-tooltip" 
-                     data-attribute-id="${upgradeId}"
-                     data-tooltip="${tooltipText}"
-                     style="${styleData.styleVars}">
-                    ${label}
-                </button>
+                // Generate Data-Driven Styles (CSS Class + Variables)
+                const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+
+                // Semantic Button
+                return `
+                    <button class="attribute-pill ${styleData.className}" 
+                        data-action="show-attribute-tooltip" 
+                        data-attribute-id="${upgradeId}"
+                        data-tooltip="${tooltipText}"
+                        style="${styleData.styleVars}">
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+
+            attributesHtml = `
+                <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
+                    ${pills}
+                </div>
             `;
-        }).join('');
-
-        attributesHtml = `
-            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
-                ${pills}
-            </div>
-        `;
+        }
     }
     // --- END VIRTUAL WORKBENCH ---
 

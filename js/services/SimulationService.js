@@ -524,7 +524,15 @@ export class SimulationService {
         // If not owned or no upgrades, return base stats (defensive copy)
         if (!shipState || !shipState.upgrades) return { ...ship };
 
-        const upgrades = shipState.upgrades;
+        // [[FIXED]] - Merge Installed Upgrades AND Innate Mechanics
+        // This ensures stats from innate ship attributes (e.g. Sleeper's 0 fuel logic, though that's logic not stats)
+        // are accounted for if they ever modify base stats.
+        // Even if mechanicIds are mostly logic flags, this unifies the system.
+        const upgrades = [
+            ...(ship.mechanicIds || []), 
+            ...(shipState.upgrades || [])
+        ];
+
         // Calculate Additive Modifiers (1.0 + 0.1 + 0.1 = 1.2)
         const hullMod = GameAttributes.getMaxHullModifier(upgrades);
         const fuelMod = GameAttributes.getMaxFuelModifier(upgrades);

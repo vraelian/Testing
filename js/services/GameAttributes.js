@@ -323,8 +323,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 25000000,
         modifiers: { travelTime: 0.60, fuelBurn: 1.60 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.VIOLET
     },
 
     // --- UPGRADES: ECONOMY (REBALANCED) ---
@@ -378,8 +377,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
         value: 810000,
         modifiers: { fuelPrice: 0.50 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.ORANGE
     },
 
     // Repair Pass: -5%/-10%/-15%/-20%/-25%
@@ -432,8 +430,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
         value: 1620000,
         modifiers: { repairCost: 0.75 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GREEN
     },
 
     // Signal Hacker: -0.5%/-1.2%/-1.9%/-2.6%/-3.3%
@@ -486,8 +483,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
         value: 2430000,
         modifiers: { buyPrice: 0.967 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.INDIGO
     },
 
     // Guild Badge: +0.5%/+1.2%/+1.9%/+2.6%/+3.3%
@@ -540,8 +536,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
         value: 2430000,
         modifiers: { sellPrice: 1.033 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GOLD
     },
     
     // Syndicate Badge: Unchanged in request, keeping defaults or logic as previous
@@ -594,8 +589,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         value: 25000000,
         modifiers: { interestRate: 0.34 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.VIOLET
     },
 
     // --- UPGRADES: UTILITY (REBALANCED) ---
@@ -649,8 +643,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 2880000,
         modifiers: { maxHull: 115, hullResistance: 0.35 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GREY
     },
 
     // Aux Tank: +30/+60/+90/+120/+150
@@ -703,8 +696,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
         value: 1620000,
         modifiers: { maxFuel: 150 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.ORANGE
     },
 
     // Cargo Expansion: +10/+25/+40/+55/+70
@@ -757,8 +749,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
         value: 3240000,
         modifiers: { maxCargo: 70 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.BLUE
     },
 
     // Radar Mod: +3%/+5%/+8%/+13%/+20%
@@ -811,8 +802,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
         value: 810000,
         modifiers: { eventChance: 0.20 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.EMERALD
     },
 
     // Nano-Bots: 0.3%/0.5%/0.8%/1.3%/2%
@@ -865,8 +855,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
         value: 7680000,
         modifiers: { passiveRepair: 0.02 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.SEAFOAM
     }
 };
 
