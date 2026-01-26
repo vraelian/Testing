@@ -30,8 +30,8 @@ const Missions_Intro = [
             {
                 "id": "read_intro",
                 "text": "Complete initialization sequence",
-                "type": "action", // Requires a button press or event
-                "target_event": "TUTORIAL_STEP_1_COMPLETE",
+                "type": "action", 
+                "target_event": "TUTORIAL_STEP_COMPLETE", // [[FIXED]] Matches main.js event
                 "count": 1
             }
         ],
