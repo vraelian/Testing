@@ -28,6 +28,9 @@ export class TravelService {
         
         // Instantiate Event Engine
         this.randomEventService = new RandomEventService(); 
+
+        // [[DEBUG FLAG]]
+        this.debugAlwaysTriggerEvents = false;
     }
 
     /**
@@ -343,6 +346,12 @@ export class TravelService {
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
+        // [[DEBUG OVERRIDE]]
+        if (this.debugAlwaysTriggerEvents) {
+            eventChance = 1.0;
+            this.logger.warn('TravelService', 'DEBUG: Event chance forced to 100%.');
+        }
+
         // Apply Upgrade Modifier (Radar Mod - Additive)
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
@@ -367,7 +376,12 @@ export class TravelService {
         if (!event) return false;
         
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
-        this.gameState.setState({ pendingTravel: { destinationId } });
+        
+        // [[UPDATED]] - Populate base travel time to ensure scalar calculations work
+        const currentLoc = this.gameState.currentLocationId;
+        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
+        
+        this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;

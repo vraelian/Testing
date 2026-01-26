@@ -90,7 +90,11 @@ export class DynamicValueResolver {
 
             case 'TRIP_DURATION':
                 // Safe access to pending travel data
-                return gameState.pendingTravel ? gameState.pendingTravel.days : 7;
+                // [[UPDATED]] - Hardened check to prevent NaN
+                if (gameState.pendingTravel && typeof gameState.pendingTravel.days === 'number') {
+                     return gameState.pendingTravel.days;
+                }
+                return 7; // Default fallback
             
             case 'SHIP_CLASS_SCALAR':
                 // [[UPDATED]]: Implements ship-size scaling based on Max Hull.

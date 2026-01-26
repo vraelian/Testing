@@ -60,6 +60,9 @@ export class DebugService {
             
             shipToBoard: null, 
             selectedUpgrade: null, 
+            
+            // [[DEBUG FLAG STATE]]
+            alwaysTriggerEvents: false,
 
             // Tutorial Tuner State
             ttStepId: 'None',
@@ -683,10 +686,20 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
-        // --- UPDATED EVENT SELECTOR (NOW USES ID AS VALUE) ---
+        // --- UPDATED EVENT SELECTOR (UPDATED) ---
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+
+        // [[NEW DEBUG TOGGLE]]
+        triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
+            .name('Always Trigger (100%)')
+            .onChange(val => {
+                // Directly modify the flag on the live service instance
+                if (this.simulationService && this.simulationService.travelService) {
+                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
+                }
+            });
         // -----------------------------------------------------
         
         // [FIX] Add check if AGE_EVENTS are populated before reducing

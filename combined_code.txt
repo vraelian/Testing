@@ -15912,7 +15912,11 @@ export class DynamicValueResolver {
 
             case 'TRIP_DURATION':
                 // Safe access to pending travel data
-                return gameState.pendingTravel ? gameState.pendingTravel.days : 7;
+                // [[UPDATED]] - Hardened check to prevent NaN
+                if (gameState.pendingTravel && typeof gameState.pendingTravel.days === 'number') {
+                     return gameState.pendingTravel.days;
+                }
+                return 7; // Default fallback
             
             case 'SHIP_CLASS_SCALAR':
                 // [[UPDATED]]: Implements ship-size scaling based on Max Hull.
@@ -15927,7 +15931,6 @@ export class DynamicValueResolver {
         }
     }
 }
-
 --- END OF FILE: ./js/services/DynamicValueResolver.js ---
 
 --- START OF FILE: ./js/services/AssetStorageService.js ---
@@ -16089,6 +16092,9 @@ export class DebugService {
             
             shipToBoard: null, 
             selectedUpgrade: null, 
+            
+            // [[DEBUG FLAG STATE]]
+            alwaysTriggerEvents: false,
 
             // Tutorial Tuner State
             ttStepId: 'None',
@@ -16712,10 +16718,20 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
-        // --- UPDATED EVENT SELECTOR (NOW USES ID AS VALUE) ---
+        // --- UPDATED EVENT SELECTOR (UPDATED) ---
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+
+        // [[NEW DEBUG TOGGLE]]
+        triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
+            .name('Always Trigger (100%)')
+            .onChange(val => {
+                // Directly modify the flag on the live service instance
+                if (this.simulationService && this.simulationService.travelService) {
+                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
+                }
+            });
         // -----------------------------------------------------
         
         // [FIX] Add check if AGE_EVENTS are populated before reducing
@@ -19004,6 +19020,9 @@ export class TravelService {
         
         // Instantiate Event Engine
         this.randomEventService = new RandomEventService(); 
+
+        // [[DEBUG FLAG]]
+        this.debugAlwaysTriggerEvents = false;
     }
 
     /**
@@ -19319,6 +19338,12 @@ export class TravelService {
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
+        // [[DEBUG OVERRIDE]]
+        if (this.debugAlwaysTriggerEvents) {
+            eventChance = 1.0;
+            this.logger.warn('TravelService', 'DEBUG: Event chance forced to 100%.');
+        }
+
         // Apply Upgrade Modifier (Radar Mod - Additive)
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
@@ -19343,7 +19368,12 @@ export class TravelService {
         if (!event) return false;
         
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
-        this.gameState.setState({ pendingTravel: { destinationId } });
+        
+        // [[UPDATED]] - Populate base travel time to ensure scalar calculations work
+        const currentLoc = this.gameState.currentLocationId;
+        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
+        
+        this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
@@ -28299,7 +28329,11 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-## [34.78] - 2026-1-25
+# [34.79] - 2026-1-25
+-  added event debug toggle
+-  event polish
+
+# [34.78] - 2026-1-25
 -  upgrade pill polish
 -  navigation screen data polish
 
