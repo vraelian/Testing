@@ -10,12 +10,9 @@ import { GameAttributes } from '../../services/GameAttributes.js';
 // Fallback configuration for upgrade pills if definition is missing color
 const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
 // Safe character limit for the pill container before clipping likely occurs
-// User Report: 54 chars is ~4 chars too long. Max visible is ~50. 
-// Setting safe limit to 38 to ensure comfortable padding.
 const PILL_CONTAINER_SAFE_CHARS = 38;
 
 // Universal list of generic words to strip when abbreviation is active.
-// This allows "Signal Hacker" -> "Signal", "Hull Armor" -> "Armor", etc.
 const ABBREVIATION_STOP_WORDS = [
     'Auxiliary', 
     'Standard', 
@@ -24,7 +21,7 @@ const ABBREVIATION_STOP_WORDS = [
     'Mod', 
     'Hacker', 
     'Machines', 
-    'Hull' // "Hull Armor" -> "Armor" to save space
+    'Hull' 
 ];
 
 /**
@@ -72,102 +69,39 @@ function _getAbbreviatedLabel(label) {
 }
 
 /**
- * Generates the CSS styles for an upgrade pill based on its definition and tier.
- * Applies a distinct visual language for each tier (1-5) and Alien attributes.
+ * Generates the CSS variable injection and class names for an upgrade pill.
+ * Refactored to separate Data (Variables) from Presentation (CSS Classes).
  * @param {object} definition - The attribute definition object.
  * @param {number} tier - The calculated tier (1-5).
  * @param {string} color - The base hex color.
- * @returns {string} CSS style string.
+ * @returns {object} { className, styleVars }
  * @private
  */
 function _getUpgradePillStyle(definition, tier, color) {
-    // 1. Calculate palette derivatives
+    // 1. Calculate palette derivatives (Data Layer)
     const dark = _adjustColor(color, -60);
     const mid = _adjustColor(color, -20);
     const light = _adjustColor(color, 40);
     const bright = _adjustColor(color, 80);
 
-    // 2. Base Properties (Typography, Size, Layout)
-    const baseCSS = `
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.64rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        padding: 1px 6px;
-        border-radius: 4px;
-        color: #ffffff;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        cursor: pointer;
-        pointer-events: auto;
-        white-space: nowrap;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        opacity: 1; /* Force Opaque */
-        z-index: 20;
-    `;
-
-    // 3. Tier-Specific Visuals
-    let visualCSS = '';
-
-    // ALIEN / Z-CLASS (Organic / Exotic Look)
+    // 2. Determine CSS Class (Visual Layer Hook)
+    let cssClass = `pill-tier-${tier}`;
     if (definition.isAlien) {
-        visualCSS = `
-            background: linear-gradient(135deg, ${dark}, ${color});
-            border: 1px solid ${light};
-            box-shadow: 0 0 8px ${_adjustColor(color, -20)}, inset 0 0 5px ${light};
-            text-shadow: 0 0 3px ${light};
-        `;
-        return `${baseCSS} ${visualCSS}`;
+        cssClass = 'pill-alien';
     }
 
-    // STANDARD TIERS
-    switch (tier) {
-        case 5: // LEGENDARY (Holographic / Animated Feel)
-            visualCSS = `
-                background: linear-gradient(90deg, ${dark} 0%, ${color} 50%, ${light} 100%);
-                background-size: 200% 100%;
-                border: 1px solid ${bright};
-                box-shadow: 0 0 10px ${color}, inset 0 0 5px ${light};
-                animation: shimmer 3s infinite linear; 
-            `;
-            break;
-
-        case 4: // EPIC (High Contrast, Technical)
-            visualCSS = `
-                background: linear-gradient(to bottom, ${mid}, ${dark});
-                border: 1px solid ${light};
-                border-bottom: 2px solid ${light};
-                box-shadow: 0 2px 6px rgba(0,0,0,0.6);
-            `;
-            break;
-
-        case 3: // RARE (Glossy / Metallic)
-            visualCSS = `
-                background: linear-gradient(to bottom right, ${mid}, ${dark});
-                border: 1px solid ${color};
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.5);
-            `;
-            break;
-
-        case 2: // UNCOMMON (Subtle Sheen)
-            visualCSS = `
-                background: ${dark};
-                border: 1px solid ${mid};
-                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-            `;
-            break;
-
-        case 1: // COMMON (Matte / Utilitarian)
-        default:
-            visualCSS = `
-                background: #1e293b;
-                border: 1px solid ${dark};
-                color: ${color}; /* Colored text for low tiers */
-                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            `;
-            break;
-    }
-
-    return `${baseCSS} ${visualCSS}`;
+    // 3. Generate Variable Injection (The "Style String")
+    // We only inject variables. The CSS handles the painting.
+    return {
+        className: cssClass,
+        styleVars: `
+            --pill-color: ${color};
+            --pill-dark: ${dark};
+            --pill-mid: ${mid};
+            --pill-light: ${light};
+            --pill-bright: ${bright};
+        `
+    };
 }
 
 
@@ -279,8 +213,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
     if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
         
-        // --- VIRTUAL WORKBENCH: SORTING LOGIC (1/13/26) ---
-        // Requirement: Sort by Tier (I -> II -> III) ascending, then by ID for stability.
+        // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
         const sortedUpgrades = [...shipDynamic.upgrades].sort((a, b) => {
             const getTier = (id) => {
                 if (id.endsWith('_V')) return 5;
@@ -301,20 +234,16 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         });
 
         // 1. Pre-Calculation Phase: Check for Clipping Risk
-        // Map SORTED upgrades to definitions first to get the labels
         const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
         
-        // Sum total characters of all labels to determine "Visual Weight"
         const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
-        
-        // If total length exceeds safe limit, trigger abbreviation mode for ALL pills
         const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
         // Use sortedUpgrades for rendering loop
         const pills = sortedUpgrades.map((upgradeId, idx) => {
             const definition = upgradeDefinitions[idx];
             
-            // 2. Label Logic: Choose Full or Abbreviated based on pre-calculation
+            // 2. Label Logic
             let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
             const tooltipText = definition ? definition.description : '';
             
@@ -323,7 +252,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             }
 
             // 3. Base Color Logic
-            // FIX: Prioritize .pillColor, then .color, then Default
             const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
             
             // 4. Tier & Style Logic
@@ -332,27 +260,23 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             else if (upgradeId.endsWith('_IV')) tier = 4;
             else if (upgradeId.endsWith('_III')) tier = 3;
             else if (upgradeId.endsWith('_II')) tier = 2;
-            else if (definition && definition.isAlien) tier = 5; // Alien uses special styling, treated as high tier for sorting
+            else if (definition && definition.isAlien) tier = 5; 
 
-            // Generate Complex Styles
-            const pillStyle = _getUpgradePillStyle(definition || {}, tier, baseColor);
+            // Generate Data-Driven Styles (CSS Class + Variables)
+            const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
             // Semantic Button
             return `
-                <button class="attribute-pill cursor-pointer transition-transform hover:scale-105" 
+                <button class="attribute-pill ${styleData.className}" 
                      data-action="show-attribute-tooltip" 
                      data-attribute-id="${upgradeId}"
                      data-tooltip="${tooltipText}"
-                     style="${pillStyle}">
+                     style="${styleData.styleVars}">
                     ${label}
                 </button>
             `;
         }).join('');
 
-        // Centering Rule: justify-center applied to container
-        // VIRTUAL WORKBENCH: LAYOUT FIX (1/12/26)
-        // Replaced flex-wrap with flex-nowrap to enforce single row
-        // Reduced gap-2 to gap-1 and px-4 to px-1 for tighter packing
         attributesHtml = `
             <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
                 ${pills}

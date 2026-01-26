@@ -306,7 +306,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ENG_SPEED_4': {
         name: "Injector IV",
-        description: "Prototype. Reduces travel time by 36%, but increases fuel burn by 54%.",
+        description: "Reduces travel time by 36%, but increases fuel burn by 54%.",
         cost: 12500000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
@@ -317,7 +317,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ENG_SPEED_5': {
         name: "Injector V",
-        description: "Luminary. Reduces travel time by 40%, but increases fuel burn by 60%.",
+        description: "Reduces travel time by 40%, but increases fuel burn by 60%.",
         cost: 25000000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
@@ -361,7 +361,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_FUEL_4': {
         name: "Fuel Pass IV",
-        description: "Prototype. Reduces refueling cost at stations by 40%.",
+        description: "Reduces refueling cost at stations by 40%.",
         cost: 270000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
@@ -372,7 +372,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_FUEL_5': {
         name: "Fuel Pass V",
-        description: "Luminary. Reduces refueling cost at stations by 50%.",
+        description: "Reduces refueling cost at stations by 50%.",
         cost: 810000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
@@ -415,7 +415,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_REPAIR_4': {
         name: "Repair Pass IV",
-        description: "Prototype. Reduces hull repair cost by 20%.",
+        description: "Reduces hull repair cost by 20%.",
         cost: 540000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
@@ -426,7 +426,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_REPAIR_5': {
         name: "Repair Pass V",
-        description: "Luminary. Reduces hull repair cost by 25%.",
+        description: "Reduces hull repair cost by 25%.",
         cost: 1620000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
@@ -469,7 +469,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_BUY_4': {
         name: "Signal Hacker IV",
-        description: "Prototype. Reduces market purchase prices by 2.6%.",
+        description: "Reduces market purchase prices by 2.6%.",
         cost: 810000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
@@ -480,7 +480,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_BUY_5': {
         name: "Signal Hacker V",
-        description: "Luminary. Reduces market purchase prices by 3.3%.",
+        description: "Reduces market purchase prices by 3.3%.",
         cost: 2430000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
@@ -523,7 +523,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_SELL_4': {
         name: "Guild Badge IV",
-        description: "Prototype. Increases market sell prices by 2.6%.",
+        description: "Increases market sell prices by 2.6%.",
         cost: 810000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
@@ -534,7 +534,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_SELL_5': {
         name: "Guild Badge V",
-        description: "Luminary. Increases market sell prices by 3.3%.",
+        description: "Increases market sell prices by 3.3%.",
         cost: 2430000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
@@ -577,7 +577,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_DEBT_4': {
         name: "Syndicate Badge IV",
-        description: "Prototype. Reduces monthly debt interest by 60%.",
+        description: "Reduces monthly debt interest by 60%.",
         cost: 12500000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
@@ -588,7 +588,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_ECO_DEBT_5': {
         name: "Syndicate Badge V",
-        description: "Luminary. Reduces monthly debt interest by 66%.",
+        description: "Reduces monthly debt interest by 66%.",
         cost: 25000000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
@@ -632,7 +632,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_HULL_4': {
         name: "Plating IV",
-        description: "Prototype. Increases Max Hull by 85. Reduces event hull damage by 25%.",
+        description: "Increases Max Hull by 85. Reduces event hull damage by 25%.",
         cost: 960000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
@@ -643,7 +643,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_HULL_5': {
         name: "Plating V",
-        description: "Luminary. Increases Max Hull by 115. Reduces event hull damage by 35%.",
+        description: "Increases Max Hull by 115. Reduces event hull damage by 35%.",
         cost: 2880000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_HULL,
@@ -686,7 +686,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_FUEL_4': {
         name: "Aux Tank IV",
-        description: "Prototype. Increases Max Fuel by 120.",
+        description: "Increases Max Fuel by 120.",
         cost: 540000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
@@ -697,7 +697,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_FUEL_5': {
         name: "Aux Tank V",
-        description: "Luminary. Increases Max Fuel by 150.",
+        description: "Increases Max Fuel by 150.",
         cost: 1620000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
@@ -740,7 +740,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_CARGO_4': {
         name: "Exp. Hold IV",
-        description: "Prototype. Increases Cargo Capacity by 55.",
+        description: "Increases Cargo Capacity by 55.",
         cost: 1080000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
@@ -751,7 +751,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_CARGO_5': {
         name: "Exp. Hold V",
-        description: "Luminary. Increases Cargo Capacity by 70.",
+        description: "Increases Cargo Capacity by 70.",
         cost: 3240000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
@@ -794,7 +794,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_RADAR_4': {
         name: "Radar Mod IV",
-        description: "Prototype. Increases random event chance by 13%.",
+        description: "Increases random event chance by 13%.",
         cost: 270000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
@@ -805,7 +805,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_RADAR_5': {
         name: "Radar Mod V",
-        description: "Luminary. Increases random event chance by 20%.",
+        description: "Increases random event chance by 20%.",
         cost: 810000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
@@ -848,7 +848,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_NANO_4': {
         name: "Nano-Bots IV",
-        description: "Prototype. Repairs 1.3% of Max Hull daily.",
+        description: "Repairs 1.3% of Max Hull daily.",
         cost: 1920000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
@@ -859,7 +859,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'UPG_UTIL_NANO_5': {
         name: "Nano-Bots V",
-        description: "Luminary. Repairs 2% of Max Hull daily.",
+        description: "Repairs 2% of Max Hull daily.",
         cost: 7680000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,

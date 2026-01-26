@@ -637,3 +637,110 @@ COMPONENT-SPECIFIC STYLING
     50% { border-color: var(--ot-cyan-base); box-shadow: 0 0 20px var(--ot-cyan-glow), inset 0 0 20px var(--ot-cyan-glow); }
     100% { border-color: var(--ot-green-accent); box-shadow: 0 0 30px var(--ot-green-accent), inset 0 0 30px var(--ot-green-accent); }
 }
+
+/* ================================================================================
+   UPGRADE PILL "ART PASS" (ADR-008 Compliant)
+   ================================================================================ */
+
+.attribute-pill {
+    /* Base Layout & Typography */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 2px 8px; /* Slightly increased padding */
+    border-radius: 4px;
+    white-space: nowrap;
+    
+    /* Interaction & Performance */
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation; /* ADR-011 */
+    user-select: none;
+    z-index: 20;
+
+    /* Theming Defaults */
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    
+    /* GPU Transitions */
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+    will-change: transform;
+}
+
+/* Interaction States */
+.attribute-pill:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05);
+    z-index: 30; /* Pop on hover */
+}
+.attribute-pill:active {
+    transform: scale(0.95);
+    filter: brightness(0.9);
+}
+
+/* --- TIER 1: COMMON (Utilitarian / Matte) --- */
+.pill-tier-1 {
+    background-color: #1e293b;
+    border: 1px solid var(--pill-dark);
+    color: var(--pill-color); /* Colored text for contrast */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* --- TIER 2: UNCOMMON (Brushed Metal) --- */
+.pill-tier-2 {
+    background: linear-gradient(180deg, var(--pill-mid) 0%, var(--pill-dark) 100%);
+    border: 1px solid var(--pill-mid);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* --- TIER 3: RARE (Glassy / Ceramic) --- */
+.pill-tier-3 {
+    background: linear-gradient(135deg, var(--pill-mid), var(--pill-dark));
+    border: 1px solid var(--pill-color);
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.3), 
+        0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* --- TIER 4: EPIC (High-Tech / Neon) --- */
+.pill-tier-4 {
+    background: linear-gradient(to bottom, var(--pill-mid), #0f172a);
+    border: 1px solid var(--pill-light);
+    border-bottom: 2px solid var(--pill-light); /* Underlight */
+    box-shadow: 
+        0 2px 6px rgba(0,0,0,0.6),
+        0 0 5px var(--pill-dark); /* Subtle glow */
+}
+
+/* --- TIER 5: LEGENDARY (Holographic / Prismatic) --- */
+.pill-tier-5 {
+    background: linear-gradient(90deg, var(--pill-dark) 0%, var(--pill-color) 50%, var(--pill-light) 100%);
+    background-size: 200% 100%;
+    border: 1px solid var(--pill-bright);
+    box-shadow: 
+        0 0 10px var(--pill-color), 
+        inset 0 0 5px var(--pill-light);
+    animation: pill-shimmer 3s infinite linear;
+}
+
+@keyframes pill-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* --- ALIEN / Z-CLASS (Organic / Bioluminescent) --- */
+.pill-alien {
+    background: radial-gradient(circle at center, var(--pill-color), var(--pill-dark));
+    border: 1px solid var(--pill-light);
+    box-shadow: 
+        0 0 8px var(--pill-dark), 
+        inset 0 0 5px var(--pill-light);
+    text-shadow: 0 0 3px var(--pill-light);
+    animation: pill-pulse 2s infinite ease-in-out;
+}
+
+@keyframes pill-pulse {
+    0%, 100% { box-shadow: 0 0 8px var(--pill-dark), inset 0 0 5px var(--pill-light); }
+    50% { box-shadow: 0 0 15px var(--pill-color), inset 0 0 10px var(--pill-light); }
+}
