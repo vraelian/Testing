@@ -304,8 +304,9 @@ function _getDailyStock(gameState) {
         if (!id.startsWith('UPG_')) return false;
 
         // --- NEW: Hard Exclusion ---
-        // Exclude Rewards (Guild/Syndicate) from standard shop rotation
-        if (id.includes('GUILD') || id.includes('SYNDICATE')) {
+        // Exclude Rewards (Guild/Syndicate) from standard shop rotation.
+        // NOTE: Guild Badges use UPG_ECO_SELL_ and Syndicate use UPG_ECO_DEBT_.
+        if (id.startsWith('UPG_ECO_SELL_') || id.startsWith('UPG_ECO_DEBT_')) {
             return false;
         }
         // --- END CHANGE ---
