@@ -8,8 +8,8 @@ import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
-import { RandomEventService } from '../RandomEventService.js'; // [[NEW]]
-import { formatCredits } from '../../utils.js'; // [[NEW]]
+import { RandomEventService } from '../RandomEventService.js';
+import { formatCredits } from '../../utils.js';
 
 export class TravelService {
     /**
@@ -26,7 +26,7 @@ export class TravelService {
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
         
-        // [[NEW]] Instantiate Event Engine (Hybrid Injection)
+        // Instantiate Event Engine
         this.randomEventService = new RandomEventService(); 
     }
 
@@ -58,17 +58,16 @@ export class TravelService {
             return;
         }
 
-        // --- UPGRADE SYSTEM: DYNAMIC STATS FETCH ---
+        // --- UPGRADE SYSTEM & Z-CLASS LOGIC ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const shipState = state.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // --- UPGRADE SYSTEM: COST MODIFIERS ---
-        const shipState = state.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
-
         // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
@@ -77,6 +76,29 @@ export class TravelService {
         // 2. Apply Attribute/Upgrade Modifier
         const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
+
+        // --- Z-CLASS VALIDATION OVERRIDES ---
+        
+        // ATTR_METABOLIC_BURN: 50% Fuel Cost
+        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+            requiredFuel = Math.round(requiredFuel * 0.5);
+        }
+
+        // ATTR_SOLAR_HARMONY: 0 Fuel if traveling inward
+        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+            const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
+            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+            if (toDist < fromDist) {
+                requiredFuel = 0;
+            }
+        }
+
+        // ATTR_NEWTONS_GHOST: 0 Fuel always (Cryo Pod)
+        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            requiredFuel = 0;
+        }
+
+        // --- END Z-CLASS OVERRIDES ---
 
         if (effectiveMaxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
@@ -123,10 +145,40 @@ export class TravelService {
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
         travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
+        // --- Z-CLASS EXECUTION LOGIC ---
+
+        // ATTR_METABOLIC_BURN
+        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
+        }
+
+        // ATTR_HYPER_CALCULATION (-25% Time)
+        if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+            travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
+        }
+
+        // ATTR_SOLAR_HARMONY (0 Fuel Inward)
+        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+            const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+            if (toDist < fromDist) {
+                travelInfo.fuelCost = 0;
+                this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
+            }
+        }
+
+        // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
+        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            travelInfo.fuelCost = 0;
+            travelInfo.time *= 10;
+        }
+
+        // Legacy: Sleeper
         shipAttributes.forEach(attrId => {
             const def = GameAttributes.getDefinition(attrId);
             if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                if (def.value) travelInfo.time *= def.value;
+                // Prevent double dipping if handled above, but legacy logic kept for safety
+                if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
             }
             if (attrId === 'ATTR_SLEEPER') {
                 travelInfo.time *= 4.5;
@@ -167,7 +219,10 @@ export class TravelService {
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
         
-        if (shipAttributes.includes('ATTR_XENO_HULL')) {
+        // --- Z-CLASS HULL LOGIC ---
+        if (shipAttributes.includes('ATTR_XENO_HULL') || 
+            shipAttributes.includes('ATTR_FLUID_HULL') || 
+            shipAttributes.includes('ATTR_NO_DECAY')) {
             travelHullDamage = 0;
         } else if (shipAttributes.includes('ATTR_RESILIENT')) {
             travelHullDamage *= 0.5;
@@ -198,15 +253,38 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
+        // --- Z-CLASS POST-TRAVEL LOGIC ---
+
+        // ATTR_TRAVELLER (Atlas)
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
             activeShipState.fuel = effectiveStats.maxFuel;
             this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
+
+        // ATTR_OSSEOUS_REGROWTH (Shell That Echoes)
+        if (shipAttributes.includes('ATTR_OSSEOUS_REGROWTH')) {
+            const healAmount = effectiveStats.maxHealth * 0.10;
+            if (activeShipState.health < effectiveStats.maxHealth) {
+                activeShipState.health = Math.min(effectiveStats.maxHealth, activeShipState.health + healAmount);
+                this.uiManager.createFloatingText("Hull Regenerated", window.innerWidth / 2, window.innerHeight / 2, '#e2e8f0');
+            }
+        }
+
+        // ATTR_FUEL_SCOOP (Atlas)
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
             const fuelRestore = effectiveStats.maxFuel * 0.15;
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
+        }
+
+        // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
+        if (shipAttributes.includes('ATTR_MATTER_ABSORPTION')) {
+            const refund = travelInfo.fuelCost * 0.5;
+            if (refund > 0) {
+                activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + refund);
+                this.uiManager.createFloatingText(`Fuel Refunded: +${Math.round(refund)}`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#991b1b');
+            }
         }
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
@@ -280,13 +358,8 @@ export class TravelService {
         let event;
 
         if (typeof force === 'number') {
-            // Debug force by ID index or similar if needed, 
-            // but primarily we use the Service now.
-            // Fallback for debug:
             event = DB.RANDOM_EVENTS[force];
         } else {
-            // [[NEW]] Use RandomEventService to filter and select
-            // Standard space travel context
             const contextTags = [EVENT_CONSTANTS.TAGS.SPACE]; 
             event = this.randomEventService.tryTriggerEvent(this.gameState, this.simulationService, contextTags);
         }
@@ -296,7 +369,6 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         this.gameState.setState({ pendingTravel: { destinationId } });
         
-        // Use the new callback signature
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
     }
@@ -308,8 +380,6 @@ export class TravelService {
      * @private
      */
     _resolveEventChoice(eventId, choiceId) {
-        // [[NEW]] Delegate logic to RandomEventService
-        // We do NOT pass uiManager here because we want to manually handle the resumeTravel callback
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
 
         if (!result) {
@@ -318,7 +388,6 @@ export class TravelService {
             return;
         }
 
-        // Format effects for display (Simple list generation)
         let effectsHtml = '';
         if (result.effects && result.effects.length > 0) {
             effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
@@ -357,8 +426,6 @@ export class TravelService {
     
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
-        // Manually trigger the result modal so we can attach the resumeTravel callback
-        // CHANGED: Callback now points to _postEventCheck to handle death/fuel scenarios *after* acknowledgment.
         this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this._postEventCheck(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
@@ -379,16 +446,15 @@ export class TravelService {
 
         // 1. Check Destruction (Hull <= 0)
         if (ship.health <= 0) {
-            this.gameState.pendingTravel = null; // Cancel trip
+            this.gameState.pendingTravel = null;
             this._handleShipDestruction(ship.id);
             return;
         }
 
         // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
         if (ship.fuel <= 0) {
-            this.gameState.pendingTravel = null; // Cancel trip (remain at origin)
+            this.gameState.pendingTravel = null;
             
-            // Ensure fuel is exactly 0
             this.gameState.player.shipStates[ship.id].fuel = 0;
             
             this.logger.info.player(this.gameState.day, 'TRAVEL_ABORT', `Ship ran out of fuel after event. Towed back to port.`);
@@ -401,7 +467,7 @@ export class TravelService {
                 `Your engines sputter and die, leaving you drifting in the void. <br><br>After days of signaling, a passing freighter tows you back to <b>${originName}</b>. The rescue fees have left you with an empty tank.`
             );
             
-            this.gameState.setState({}); // Refresh UI
+            this.gameState.setState({});
             return;
         }
 

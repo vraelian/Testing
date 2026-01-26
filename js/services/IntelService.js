@@ -9,8 +9,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Added PERK_IDS & LOCATION_IDS import
 import { PERK_IDS, LOCATION_IDS } from '../data/constants.js';
+import { GameAttributes } from './GameAttributes.js';
 
 /**
  * @class IntelService
@@ -31,7 +31,7 @@ export class IntelService {
         this.marketService = marketService;
         this.newsTickerService = newsTickerService;
         this.logger = logger;
-        this.db = DB; // For accessing static data
+        this.db = DB; 
     }
 
     /**
@@ -42,14 +42,11 @@ export class IntelService {
      */
     generateIntelRefresh() {
         this.logger.info.system('IntelService', this.gameState.day, 'REFRESH', 'Generating intel refresh for all markets.');
-        // Get the LIVE state object.
         const state = this.gameState.getState();
         const intelMarket = state.intelMarket;
 
         for (const locationId of Object.keys(intelMarket)) {
-            // Filter out (remove) any packets that were NOT purchased
             const purchasedPackets = intelMarket[locationId].filter(packet => packet.isPurchased);
-            // Mutate the intelMarket object directly, as per app architecture.
             intelMarket[locationId] = purchasedPackets;
         }
 
@@ -61,23 +58,16 @@ export class IntelService {
                  intelMarket[locationId] = [];
             }
 
-            // GDD: Apply randomization to decide if a location gets new intel
-            // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
-                // Get keys already in use by purchased packets at this location
                 const existingKeys = intelMarket[locationId].map(p => p.messageKey).filter(Boolean);
-                // Track keys used in this specific batch
                 const newKeysInBatch = new Set();
 
                 const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
-                    // Combine persistent keys and new-batch keys
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
-                    // Pass the sale location ID and unavailable keys
                     const newPacket = this._createPacket(locationId, unavailableKeys);
 
                     if (newPacket) {
-                        // Mutate the intelMarket array directly.
                         intelMarket[locationId].push(newPacket);
                         newKeysInBatch.add(newPacket.messageKey);
                     }
@@ -85,7 +75,6 @@ export class IntelService {
             }
         }
         
-        // Call setState to trigger a render of the mutated state.
         this.gameState.setState({ intelMarket: intelMarket });
     }
 
@@ -132,7 +121,6 @@ export class IntelService {
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
-        // Logic to prevent duplicate message keys
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
              this.logger.warn('IntelService', 'Cannot create packet: INTEL_CONTENT is empty.');
@@ -175,14 +163,14 @@ export class IntelService {
         const state = this.gameState.getState();
         const playerCredits = state.player.credits;
         const currentLocationId = state.currentLocationId;
+        const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK (CHEAPER INTEL) ---
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         if (currentLocationId === LOCATION_IDS.VENUS) {
             base *= 0.5; // 50% discount at Venus
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         let finalPrice = base * packet.valueMultiplier;
         
@@ -191,7 +179,14 @@ export class IntelService {
         if (ageIntelDiscount > 0) {
             finalPrice *= (1 - ageIntelDiscount);
         }
-        // --- END PHASE 2 ---
+
+        // --- Z-CLASS LOGIC ---
+        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip);
+        if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
+            finalPrice *= 0.5;
+        }
+        // --- END Z-CLASS ---
 
         return Math.floor(finalPrice / 100) * 100;
     }
@@ -206,15 +201,13 @@ export class IntelService {
      */
     purchaseIntel(packetId, locationId, calculatedPrice) {
         
-        // --- VIRTUAL WORKBENCH REFACTOR (ADHERING TO MUTABLE ARCHITECTURE) ---
-        
         // 1. Read the *current* state ONCE. This is a shallow copy.
         const state = this.gameState.getState();
         
         // 2. Perform all failure checks on this state.
         if (state.activeIntelDeal !== null) {
             this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
-            return null; // This is what's failing in debug.
+            return null; 
         }
 
         if (state.player.credits < calculatedPrice) {
@@ -223,7 +216,6 @@ export class IntelService {
         }
 
         // 3. Get the *live* intelMarket object from the state.
-        // We will mutate this object directly, as per the app's architecture.
         const intelMarket = state.intelMarket;
 
         // 4. Find the *live* packet object.
@@ -231,15 +223,12 @@ export class IntelService {
 
         if (!packet) {
             this.logger.error('IntelService', `Purchase failed: Could not find packetId ${packetId} in live market at ${locationId}.`);
-            return null; // This was the other potential failure point.
+            return null; 
         }
         
         // 5. Mutate the live packet object.
         packet.isPurchased = true;
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Save the price that was paid to the packet object.
         packet.pricePaid = calculatedPrice;
-        // --- END BUG FIX ---
 
         this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
 
@@ -252,27 +241,24 @@ export class IntelService {
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
 
         // Calculate dynamic duration
-        const currentLocationId = state.currentLocationId;
         const dealLocationId = packet.dealLocationId;
-        let travelTime = this.gameState.TRAVEL_DATA[currentLocationId][dealLocationId].time;
+        let travelTime = this.gameState.TRAVEL_DATA[state.currentLocationId][dealLocationId].time;
 
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK (LONGER DURATION) ---
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         let durationMultiplier = 1.9; // Base multiplier
-        if (currentLocationId === LOCATION_IDS.VENUS) {
+        if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
         const ageDurationBonus = state.player.statModifiers?.intelDuration || 0;
         if (ageDurationBonus > 0) {
             durationMultiplier *= (1 + ageDurationBonus);
         }
-        // --- END PHASE 2 ---
 
         const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
@@ -303,16 +289,13 @@ export class IntelService {
         }
 
         // 10. Set the new state *once*.
-        // We pass the *mutated* intelMarket and the *new* player/activeDeal.
         this.gameState.setState({ 
             player: newPlayerState,
             activeIntelDeal: newActiveDeal,
-            intelMarket: intelMarket // Pass the mutated object to trigger render
+            intelMarket: intelMarket 
         });
         
-        // Return the mutated packet
         return packet;
-        // --- END REFACTOR ---
     }
 
     /**

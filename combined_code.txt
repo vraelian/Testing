@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.76</title>
+    <title>Orbital Trading 34.78</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.76</p>
+            <p>Version 34.78</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -6304,8 +6304,12 @@ function _getUpgradePillStyle(definition, tier, color) {
 
     // 2. Determine CSS Class (Visual Layer Hook)
     let cssClass = `pill-tier-${tier}`;
+    let extraStyle = '';
+
     if (definition.isAlien) {
         cssClass = 'pill-alien';
+        // Add thin black outline for alien pills (e.g. Osseous Regrowth)
+        extraStyle = 'text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;';
     }
 
     // 3. Generate Variable Injection (The "Style String")
@@ -6318,6 +6322,7 @@ function _getUpgradePillStyle(definition, tier, color) {
             --pill-mid: ${mid};
             --pill-light: ${light};
             --pill-bright: ${bright};
+            ${extraStyle}
         `
     };
 }
@@ -6425,81 +6430,99 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     }
 
     // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL - TIER STYLING) ---
-    // Switch from DB mechanicIds to dynamic shipState.upgrades
     let attributesHtml = '';
     
-    // Only render upgrades if in Hangar Mode (owned ship) AND upgrades exist
-    if (isHangarMode && shipDynamic && shipDynamic.upgrades && shipDynamic.upgrades.length > 0) {
-        
-        // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
-        const sortedUpgrades = [...shipDynamic.upgrades].sort((a, b) => {
-            const getTier = (id) => {
-                if (id.endsWith('_V')) return 5;
-                if (id.endsWith('_IV')) return 4;
-                if (id.endsWith('_III')) return 3;
-                if (id.endsWith('_II')) return 2;
-                return 1; // Default to Tier 1 for _I or suffix-less
-            };
-            
-            const tierA = getTier(a);
-            const tierB = getTier(b);
-            
-            if (tierA !== tierB) {
-                return tierA - tierB; // Low to High (I, II, III)
-            }
-            // Secondary Sort: ID (Alphabetical) to group types
-            return a.localeCompare(b);
-        });
+    // Only render upgrades if in Hangar Mode (owned ship)
+    if (isHangarMode && shipDynamic) {
+        // [[FIXED]]: Combine Innate Mechanics (Static) with Installed Upgrades (Dynamic)
+        // This ensures Z-Class attributes like "Osseous Regrowth" appear as pills.
+        const allAttributes = [
+            ...(shipStatic.mechanicIds || []),
+            ...(shipDynamic.upgrades || [])
+        ];
 
-        // 1. Pre-Calculation Phase: Check for Clipping Risk
-        const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
-        
-        const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
-        const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
+        if (allAttributes.length > 0) {
+            // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
+            const sortedUpgrades = [...allAttributes].sort((a, b) => {
+                const getTier = (id) => {
+                    const def = GameAttributes.getDefinition(id);
+                    if (def && def.tier) return def.tier;
+                    if (def && def.isAlien) return 5;
 
-        // Use sortedUpgrades for rendering loop
-        const pills = sortedUpgrades.map((upgradeId, idx) => {
-            const definition = upgradeDefinitions[idx];
+                    // Fallback: Check for both Roman and Arabic suffixes
+                    if (id.endsWith('_V') || id.endsWith('_5')) return 5;
+                    if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
+                    if (id.endsWith('_III') || id.endsWith('_3')) return 3;
+                    if (id.endsWith('_II') || id.endsWith('_2')) return 2;
+                    return 1; // Default
+                };
+                
+                const tierA = getTier(a);
+                const tierB = getTier(b);
+                
+                if (tierA !== tierB) {
+                    return tierA - tierB; // Low to High (I, II, III)
+                }
+                // Secondary Sort: ID (Alphabetical) to group types
+                return a.localeCompare(b);
+            });
+
+            // 1. Pre-Calculation Phase: Check for Clipping Risk
+            const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
             
-            // 2. Label Logic
-            let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
-            const tooltipText = definition ? definition.description : '';
-            
-            if (useAbbreviation) {
-                label = _getAbbreviatedLabel(label);
-            }
+            const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
+            const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            // 3. Base Color Logic
-            const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
-            
-            // 4. Tier & Style Logic
-            let tier = 1;
-            if (upgradeId.endsWith('_V')) tier = 5;
-            else if (upgradeId.endsWith('_IV')) tier = 4;
-            else if (upgradeId.endsWith('_III')) tier = 3;
-            else if (upgradeId.endsWith('_II')) tier = 2;
-            else if (definition && definition.isAlien) tier = 5; 
+            // Use sortedUpgrades for rendering loop
+            const pills = sortedUpgrades.map((upgradeId, idx) => {
+                const definition = upgradeDefinitions[idx];
+                
+                // 2. Label Logic
+                let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
+                const tooltipText = definition ? definition.description : '';
+                
+                if (useAbbreviation) {
+                    label = _getAbbreviatedLabel(label);
+                }
 
-            // Generate Data-Driven Styles (CSS Class + Variables)
-            const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+                // 3. Base Color Logic
+                const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+                
+                // 4. Tier & Style Logic
+                let tier = definition?.tier || 1;
+                
+                // Robust Fallback: If DB tier is missing, try string parsing (Arabic/Roman)
+                if (!definition?.tier) {
+                    if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
+                    else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
+                    else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
+                    else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
+                }
+                
+                // Ensure Aliens get high-tier styling hooks if not explicitly set
+                if (definition && definition.isAlien) tier = 5;
 
-            // Semantic Button
-            return `
-                <button class="attribute-pill ${styleData.className}" 
-                     data-action="show-attribute-tooltip" 
-                     data-attribute-id="${upgradeId}"
-                     data-tooltip="${tooltipText}"
-                     style="${styleData.styleVars}">
-                    ${label}
-                </button>
+                // Generate Data-Driven Styles (CSS Class + Variables)
+                const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+
+                // Semantic Button
+                return `
+                    <button class="attribute-pill ${styleData.className}" 
+                        data-action="show-attribute-tooltip" 
+                        data-attribute-id="${upgradeId}"
+                        data-tooltip="${tooltipText}"
+                        style="${styleData.styleVars}">
+                        ${label}
+                    </button>
+                `;
+            }).join('');
+
+            attributesHtml = `
+                <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
+                    ${pills}
+                </div>
             `;
-        }).join('');
-
-        attributesHtml = `
-            <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
-                ${pills}
-            </div>
-        `;
+        }
     }
     // --- END VIRTUAL WORKBENCH ---
 
@@ -6778,7 +6801,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
-
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -6851,7 +6873,6 @@ export function renderNavigationScreen(gameState) {
         fuelMod *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
     }
     // Apply Engine Mod (Fuel Burn)
-    // FIX: Updated method name from getFuelCostModifier to getFuelBurnModifier
     fuelMod *= GameAttributes.getFuelBurnModifier(upgrades);
 
     // 2. Time Modifiers (Perk * Upgrade)
@@ -6862,10 +6883,26 @@ export function renderNavigationScreen(gameState) {
     // Apply Engine Mod
     timeMod *= GameAttributes.getTravelTimeModifier(upgrades);
 
-    // 3. Legacy Attributes
+    // 3. Legacy & Z-Class Attributes
     const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
-    // FIX: Removed ATTR_SPACE_FOLDING legacy check
+    
+    // Z-Class Time Logic
+    if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+        timeMod *= 0.75; // -25% Travel Time
+    }
+    if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+        timeMod *= 10.0; // 10x Travel Time (Cryo Pod)
+    }
+
+    // Legacy Legacy
     const hasSleeper = shipAttributes.includes('ATTR_SLEEPER');
+    if (hasSleeper) timeMod *= 4.5;
+
+    // Z-Class Fuel Logic
+    if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+        fuelMod *= 0.5; // -50% Fuel Cost
+    }
+    const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 
     return `
@@ -6885,14 +6922,20 @@ export function renderNavigationScreen(gameState) {
                         // Apply Time Logic (Mod * Base)
                         displayTime = Math.max(1, Math.round(baseData.time * timeMod));
                         
-                        // Legacy Overrides
-                        if (hasSleeper) displayTime = Math.round(displayTime * 4.5); // Sleeper adds time
-
                         // Apply Fuel Logic (Mod * Base)
                         displayFuel = Math.round(baseData.fuelCost * fuelMod);
                         
-                        // Legacy Overrides
-                        if (hasSleeper) displayFuel = 0; // Sleeper is free
+                        // Z-Class: Solar Harmony (Zero fuel if moving inward)
+                        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                            const fromDist = currentLocation.distance || 0; // Current
+                            const toDist = location.distance || 0; // Target
+                            if (toDist < fromDist) {
+                                displayFuel = 0;
+                            }
+                        }
+
+                        // Override: Free Fuel attributes (Cryo/Sleeper)
+                        if (isFreeFuel) displayFuel = 0;
                     }
 
                     const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
@@ -18941,8 +18984,8 @@ import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
-import { RandomEventService } from '../RandomEventService.js'; // [[NEW]]
-import { formatCredits } from '../../utils.js'; // [[NEW]]
+import { RandomEventService } from '../RandomEventService.js';
+import { formatCredits } from '../../utils.js';
 
 export class TravelService {
     /**
@@ -18959,7 +19002,7 @@ export class TravelService {
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
         
-        // [[NEW]] Instantiate Event Engine (Hybrid Injection)
+        // Instantiate Event Engine
         this.randomEventService = new RandomEventService(); 
     }
 
@@ -18991,17 +19034,16 @@ export class TravelService {
             return;
         }
 
-        // --- UPGRADE SYSTEM: DYNAMIC STATS FETCH ---
+        // --- UPGRADE SYSTEM & Z-CLASS LOGIC ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const shipState = state.player.shipStates[activeShip.id];
+        const upgrades = shipState.upgrades || [];
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // --- UPGRADE SYSTEM: COST MODIFIERS ---
-        const shipState = state.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
-
         // 1. Apply Perk Modifier
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
@@ -19010,6 +19052,29 @@ export class TravelService {
         // 2. Apply Attribute/Upgrade Modifier
         const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
         requiredFuel = Math.round(requiredFuel * attrFuelMod);
+
+        // --- Z-CLASS VALIDATION OVERRIDES ---
+        
+        // ATTR_METABOLIC_BURN: 50% Fuel Cost
+        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+            requiredFuel = Math.round(requiredFuel * 0.5);
+        }
+
+        // ATTR_SOLAR_HARMONY: 0 Fuel if traveling inward
+        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+            const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
+            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+            if (toDist < fromDist) {
+                requiredFuel = 0;
+            }
+        }
+
+        // ATTR_NEWTONS_GHOST: 0 Fuel always (Cryo Pod)
+        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            requiredFuel = 0;
+        }
+
+        // --- END Z-CLASS OVERRIDES ---
 
         if (effectiveMaxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
@@ -19056,10 +19121,40 @@ export class TravelService {
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
         travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
+        // --- Z-CLASS EXECUTION LOGIC ---
+
+        // ATTR_METABOLIC_BURN
+        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
+        }
+
+        // ATTR_HYPER_CALCULATION (-25% Time)
+        if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+            travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
+        }
+
+        // ATTR_SOLAR_HARMONY (0 Fuel Inward)
+        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+            const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+            if (toDist < fromDist) {
+                travelInfo.fuelCost = 0;
+                this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
+            }
+        }
+
+        // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
+        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            travelInfo.fuelCost = 0;
+            travelInfo.time *= 10;
+        }
+
+        // Legacy: Sleeper
         shipAttributes.forEach(attrId => {
             const def = GameAttributes.getDefinition(attrId);
             if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                if (def.value) travelInfo.time *= def.value;
+                // Prevent double dipping if handled above, but legacy logic kept for safety
+                if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
             }
             if (attrId === 'ATTR_SLEEPER') {
                 travelInfo.time *= 4.5;
@@ -19100,7 +19195,10 @@ export class TravelService {
 
         let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
         
-        if (shipAttributes.includes('ATTR_XENO_HULL')) {
+        // --- Z-CLASS HULL LOGIC ---
+        if (shipAttributes.includes('ATTR_XENO_HULL') || 
+            shipAttributes.includes('ATTR_FLUID_HULL') || 
+            shipAttributes.includes('ATTR_NO_DECAY')) {
             travelHullDamage = 0;
         } else if (shipAttributes.includes('ATTR_RESILIENT')) {
             travelHullDamage *= 0.5;
@@ -19131,15 +19229,38 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
+        // --- Z-CLASS POST-TRAVEL LOGIC ---
+
+        // ATTR_TRAVELLER (Atlas)
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
             activeShipState.fuel = effectiveStats.maxFuel;
             this.logger.info.player(state.day, 'ATTR_TRIGGER', 'Atlas systems engaged: Hull and Fuel fully restored.');
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
+
+        // ATTR_OSSEOUS_REGROWTH (Shell That Echoes)
+        if (shipAttributes.includes('ATTR_OSSEOUS_REGROWTH')) {
+            const healAmount = effectiveStats.maxHealth * 0.10;
+            if (activeShipState.health < effectiveStats.maxHealth) {
+                activeShipState.health = Math.min(effectiveStats.maxHealth, activeShipState.health + healAmount);
+                this.uiManager.createFloatingText("Hull Regenerated", window.innerWidth / 2, window.innerHeight / 2, '#e2e8f0');
+            }
+        }
+
+        // ATTR_FUEL_SCOOP (Atlas)
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
             const fuelRestore = effectiveStats.maxFuel * 0.15;
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
+        }
+
+        // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
+        if (shipAttributes.includes('ATTR_MATTER_ABSORPTION')) {
+            const refund = travelInfo.fuelCost * 0.5;
+            if (refund > 0) {
+                activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + refund);
+                this.uiManager.createFloatingText(`Fuel Refunded: +${Math.round(refund)}`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#991b1b');
+            }
         }
         
         this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
@@ -19213,13 +19334,8 @@ export class TravelService {
         let event;
 
         if (typeof force === 'number') {
-            // Debug force by ID index or similar if needed, 
-            // but primarily we use the Service now.
-            // Fallback for debug:
             event = DB.RANDOM_EVENTS[force];
         } else {
-            // [[NEW]] Use RandomEventService to filter and select
-            // Standard space travel context
             const contextTags = [EVENT_CONSTANTS.TAGS.SPACE]; 
             event = this.randomEventService.tryTriggerEvent(this.gameState, this.simulationService, contextTags);
         }
@@ -19229,7 +19345,6 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         this.gameState.setState({ pendingTravel: { destinationId } });
         
-        // Use the new callback signature
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
     }
@@ -19241,8 +19356,6 @@ export class TravelService {
      * @private
      */
     _resolveEventChoice(eventId, choiceId) {
-        // [[NEW]] Delegate logic to RandomEventService
-        // We do NOT pass uiManager here because we want to manually handle the resumeTravel callback
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
 
         if (!result) {
@@ -19251,7 +19364,6 @@ export class TravelService {
             return;
         }
 
-        // Format effects for display (Simple list generation)
         let effectsHtml = '';
         if (result.effects && result.effects.length > 0) {
             effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
@@ -19290,8 +19402,6 @@ export class TravelService {
     
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
-        // Manually trigger the result modal so we can attach the resumeTravel callback
-        // CHANGED: Callback now points to _postEventCheck to handle death/fuel scenarios *after* acknowledgment.
         this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this._postEventCheck(), {
             dismissOutside: true,
             buttonText: 'Continue Journey'
@@ -19312,16 +19422,15 @@ export class TravelService {
 
         // 1. Check Destruction (Hull <= 0)
         if (ship.health <= 0) {
-            this.gameState.pendingTravel = null; // Cancel trip
+            this.gameState.pendingTravel = null;
             this._handleShipDestruction(ship.id);
             return;
         }
 
         // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
         if (ship.fuel <= 0) {
-            this.gameState.pendingTravel = null; // Cancel trip (remain at origin)
+            this.gameState.pendingTravel = null;
             
-            // Ensure fuel is exactly 0
             this.gameState.player.shipStates[ship.id].fuel = 0;
             
             this.logger.info.player(this.gameState.day, 'TRAVEL_ABORT', `Ship ran out of fuel after event. Towed back to port.`);
@@ -19334,7 +19443,7 @@ export class TravelService {
                 `Your engines sputter and die, leaving you drifting in the void. <br><br>After days of signaling, a passing freighter tows you back to <b>${originName}</b>. The rescue fees have left you with an empty tank.`
             );
             
-            this.gameState.setState({}); // Refresh UI
+            this.gameState.setState({});
             return;
         }
 
@@ -19430,6 +19539,7 @@ export class TimeService {
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
         const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
+        const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
@@ -19443,11 +19553,15 @@ export class TimeService {
                 this.simulationService.pulseNewsTicker();
             }
 
-            // --- UPGRADE SYSTEM: Passive Repair (Nano Machines) ---
-            // Only applies to the ACTIVE ship while traveling (advanceDays is driven by travel)
-            // Use Additive Rate (e.g. 0.01 + 0.02 = 0.03)
-            const passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
+            // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
+            // Base upgrade modifier
+            let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
             
+            // ATTR_SELF_ASSEMBLY (Engine of Recursion): +5% Daily Repair
+            if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
+                passiveRepairRate += 0.05;
+            }
+
             if (passiveRepairRate > 0 && this.simulationService) {
                 const effectiveStats = this.simulationService.getEffectiveShipStats(activeShipId);
                 if (activeShipState.health < effectiveStats.maxHealth) {
@@ -19458,12 +19572,9 @@ export class TimeService {
                     );
                 }
             }
-            // --- END UPGRADE SYSTEM ---
 
             // --- Legacy Attribute Support (Flat Decay) ---
-            // Keeps compatibility for any old "Flat Daily" decay attributes if they exist
-            const shipAttrs = GameAttributes.getShipAttributes(activeShipId); 
-            shipAttrs.forEach(attrId => {
+            activeShipAttributes.forEach(attrId => {
                 const def = GameAttributes.getDefinition(attrId);
                 if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
                     if (activeShipState.health > 1) {
@@ -19476,7 +19587,10 @@ export class TimeService {
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
             
-            if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
+            // Cryo-Stasis: Check if age should advance
+            const canAge = !activeShipAttributes.includes('ATTR_CRYO_STASIS');
+
+            if (canAge && dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.lastBirthdayYear = currentYear;
                 this.gameState.player.playerAge++;
                 this._handleBirthday(this.gameState.player.playerAge);
@@ -19511,22 +19625,17 @@ export class TimeService {
             }
 
             // Periodic Intel Generation
-            // --- MODIFIED: Ensure start-of-game intel is available (Request A) ---
             if (this.intelService) {
                 const totalIntel = Object.values(this.gameState.intelMarket).flat().length;
-                // Regular 120-day interval OR (Early Game AND No Intel Available)
                 if ((this.gameState.day % 120 === 1) || (this.gameState.day < 120 && totalIntel === 0)) {
                     this.intelService.generateIntelRefresh();
                 }
             }
-            // --- END MODIFICATION ---
             
             // Passive Repair for INACTIVE ships (Hangar)
-            // Stored ships repair slowly over time (Base Game Rule)
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
                     const ship = DB.SHIPS[shipId]; 
-                    // Inactive ships use base stats for simplicity/performance
                     const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
                 }
@@ -20517,7 +20626,15 @@ export class SimulationService {
         // If not owned or no upgrades, return base stats (defensive copy)
         if (!shipState || !shipState.upgrades) return { ...ship };
 
-        const upgrades = shipState.upgrades;
+        // [[FIXED]] - Merge Installed Upgrades AND Innate Mechanics
+        // This ensures stats from innate ship attributes (e.g. Sleeper's 0 fuel logic, though that's logic not stats)
+        // are accounted for if they ever modify base stats.
+        // Even if mechanicIds are mostly logic flags, this unifies the system.
+        const upgrades = [
+            ...(ship.mechanicIds || []), 
+            ...(shipState.upgrades || [])
+        ];
+
         // Calculate Additive Modifiers (1.0 + 0.1 + 0.1 = 1.2)
         const hullMod = GameAttributes.getMaxHullModifier(upgrades);
         const fuelMod = GameAttributes.getMaxFuelModifier(upgrades);
@@ -21714,9 +21831,10 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GREY,
         isAlien: true
     },
+    // --- CHANGED: Updated description to reflect Arrival Refund ---
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
-        description: "Regenerates 1% Fuel daily.",
+        description: "Absorbs stellar matter to regenerate 50% of spent fuel upon arrival.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
         color: COLORS.ALIEN_BLOOD,
         isAlien: true
@@ -21842,8 +21960,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 25000000,
         modifiers: { travelTime: 0.60, fuelBurn: 1.60 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.VIOLET
     },
 
     // --- UPGRADES: ECONOMY (REBALANCED) ---
@@ -21897,8 +22014,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_FUEL_PRICE,
         value: 810000,
         modifiers: { fuelPrice: 0.50 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.ORANGE
     },
 
     // Repair Pass: -5%/-10%/-15%/-20%/-25%
@@ -21951,8 +22067,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_REPAIR_COST,
         value: 1620000,
         modifiers: { repairCost: 0.75 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GREEN
     },
 
     // Signal Hacker: -0.5%/-1.2%/-1.9%/-2.6%/-3.3%
@@ -22005,8 +22120,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_BUY_PRICE,
         value: 2430000,
         modifiers: { buyPrice: 0.967 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.INDIGO
     },
 
     // Guild Badge: +0.5%/+1.2%/+1.9%/+2.6%/+3.3%
@@ -22059,8 +22173,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_SELL_PRICE,
         value: 2430000,
         modifiers: { sellPrice: 1.033 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GOLD
     },
     
     // Syndicate Badge: Unchanged in request, keeping defaults or logic as previous
@@ -22113,8 +22226,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         value: 25000000,
         modifiers: { interestRate: 0.34 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.VIOLET
     },
 
     // --- UPGRADES: UTILITY (REBALANCED) ---
@@ -22168,8 +22280,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_HULL,
         value: 2880000,
         modifiers: { maxHull: 115, hullResistance: 0.35 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.GREY
     },
 
     // Aux Tank: +30/+60/+90/+120/+150
@@ -22222,8 +22333,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_FUEL,
         value: 1620000,
         modifiers: { maxFuel: 150 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.ORANGE
     },
 
     // Cargo Expansion: +10/+25/+40/+55/+70
@@ -22276,8 +22386,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_MAX_CARGO,
         value: 3240000,
         modifiers: { maxCargo: 70 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.BLUE
     },
 
     // Radar Mod: +3%/+5%/+8%/+13%/+20%
@@ -22330,8 +22439,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_EVENT_CHANCE,
         value: 810000,
         modifiers: { eventChance: 0.20 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.EMERALD
     },
 
     // Nano-Bots: 0.3%/0.5%/0.8%/1.3%/2%
@@ -22384,8 +22492,7 @@ const ATTRIBUTE_DEFINITIONS = {
         type: UPGRADE_TYPES.MOD_PASSIVE_REPAIR,
         value: 7680000,
         modifiers: { passiveRepair: 0.02 },
-        color: COLORS.CYAN,
-        pillColor: "#22d3ee"
+        color: COLORS.SEAFOAM
     }
 };
 
@@ -25460,8 +25567,8 @@ import { DB } from '../data/database.js';
 import { INTEL_CONTENT } from '../data/intelContent.js';
 import { PURCHASED_INTEL_MESSAGES } from '../data/intelMessages.js';
 import { formatCredits } from '../utils.js';
-// VIRTUAL WORKBENCH: Added PERK_IDS & LOCATION_IDS import
 import { PERK_IDS, LOCATION_IDS } from '../data/constants.js';
+import { GameAttributes } from './GameAttributes.js';
 
 /**
  * @class IntelService
@@ -25482,7 +25589,7 @@ export class IntelService {
         this.marketService = marketService;
         this.newsTickerService = newsTickerService;
         this.logger = logger;
-        this.db = DB; // For accessing static data
+        this.db = DB; 
     }
 
     /**
@@ -25493,14 +25600,11 @@ export class IntelService {
      */
     generateIntelRefresh() {
         this.logger.info.system('IntelService', this.gameState.day, 'REFRESH', 'Generating intel refresh for all markets.');
-        // Get the LIVE state object.
         const state = this.gameState.getState();
         const intelMarket = state.intelMarket;
 
         for (const locationId of Object.keys(intelMarket)) {
-            // Filter out (remove) any packets that were NOT purchased
             const purchasedPackets = intelMarket[locationId].filter(packet => packet.isPurchased);
-            // Mutate the intelMarket object directly, as per app architecture.
             intelMarket[locationId] = purchasedPackets;
         }
 
@@ -25512,23 +25616,16 @@ export class IntelService {
                  intelMarket[locationId] = [];
             }
 
-            // GDD: Apply randomization to decide if a location gets new intel
-            // Using 70% chance as specified in GDD
             if (Math.random() < 0.7) {
-                // Get keys already in use by purchased packets at this location
                 const existingKeys = intelMarket[locationId].map(p => p.messageKey).filter(Boolean);
-                // Track keys used in this specific batch
                 const newKeysInBatch = new Set();
 
                 const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
                 for (let i = 0; i < numPackets; i++) {
-                    // Combine persistent keys and new-batch keys
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
-                    // Pass the sale location ID and unavailable keys
                     const newPacket = this._createPacket(locationId, unavailableKeys);
 
                     if (newPacket) {
-                        // Mutate the intelMarket array directly.
                         intelMarket[locationId].push(newPacket);
                         newKeysInBatch.add(newPacket.messageKey);
                     }
@@ -25536,7 +25633,6 @@ export class IntelService {
             }
         }
         
-        // Call setState to trigger a render of the mutated state.
         this.gameState.setState({ intelMarket: intelMarket });
     }
 
@@ -25583,7 +25679,6 @@ export class IntelService {
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
         
-        // Logic to prevent duplicate message keys
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
              this.logger.warn('IntelService', 'Cannot create packet: INTEL_CONTENT is empty.');
@@ -25626,14 +25721,14 @@ export class IntelService {
         const state = this.gameState.getState();
         const playerCredits = state.player.credits;
         const currentLocationId = state.currentLocationId;
+        const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK (CHEAPER INTEL) ---
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         if (currentLocationId === LOCATION_IDS.VENUS) {
             base *= 0.5; // 50% discount at Venus
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         let finalPrice = base * packet.valueMultiplier;
         
@@ -25642,7 +25737,14 @@ export class IntelService {
         if (ageIntelDiscount > 0) {
             finalPrice *= (1 - ageIntelDiscount);
         }
-        // --- END PHASE 2 ---
+
+        // --- Z-CLASS LOGIC ---
+        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip);
+        if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
+            finalPrice *= 0.5;
+        }
+        // --- END Z-CLASS ---
 
         return Math.floor(finalPrice / 100) * 100;
     }
@@ -25657,15 +25759,13 @@ export class IntelService {
      */
     purchaseIntel(packetId, locationId, calculatedPrice) {
         
-        // --- VIRTUAL WORKBENCH REFACTOR (ADHERING TO MUTABLE ARCHITECTURE) ---
-        
         // 1. Read the *current* state ONCE. This is a shallow copy.
         const state = this.gameState.getState();
         
         // 2. Perform all failure checks on this state.
         if (state.activeIntelDeal !== null) {
             this.logger.warn('IntelService', 'Purchase aborted: A deal is already active.');
-            return null; // This is what's failing in debug.
+            return null; 
         }
 
         if (state.player.credits < calculatedPrice) {
@@ -25674,7 +25774,6 @@ export class IntelService {
         }
 
         // 3. Get the *live* intelMarket object from the state.
-        // We will mutate this object directly, as per the app's architecture.
         const intelMarket = state.intelMarket;
 
         // 4. Find the *live* packet object.
@@ -25682,15 +25781,12 @@ export class IntelService {
 
         if (!packet) {
             this.logger.error('IntelService', `Purchase failed: Could not find packetId ${packetId} in live market at ${locationId}.`);
-            return null; // This was the other potential failure point.
+            return null; 
         }
         
         // 5. Mutate the live packet object.
         packet.isPurchased = true;
-        // --- VIRTUAL WORKBENCH: BUG FIX ---
-        // Save the price that was paid to the packet object.
         packet.pricePaid = calculatedPrice;
-        // --- END BUG FIX ---
 
         this.logger.info.player(state.day, 'INTEL_PURCHASE', `Purchased intel packet ${packet.id} for ${formatCredits(calculatedPrice)}`);
 
@@ -25703,27 +25799,24 @@ export class IntelService {
         const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
 
         // Calculate dynamic duration
-        const currentLocationId = state.currentLocationId;
         const dealLocationId = packet.dealLocationId;
-        let travelTime = this.gameState.TRAVEL_DATA[currentLocationId][dealLocationId].time;
+        let travelTime = this.gameState.TRAVEL_DATA[state.currentLocationId][dealLocationId].time;
 
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK (LONGER DURATION) ---
+        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         let durationMultiplier = 1.9; // Base multiplier
-        if (currentLocationId === LOCATION_IDS.VENUS) {
+        if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
         const ageDurationBonus = state.player.statModifiers?.intelDuration || 0;
         if (ageDurationBonus > 0) {
             durationMultiplier *= (1 + ageDurationBonus);
         }
-        // --- END PHASE 2 ---
 
         const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
@@ -25754,16 +25847,13 @@ export class IntelService {
         }
 
         // 10. Set the new state *once*.
-        // We pass the *mutated* intelMarket and the *new* player/activeDeal.
         this.gameState.setState({ 
             player: newPlayerState,
             activeIntelDeal: newActiveDeal,
-            intelMarket: intelMarket // Pass the mutated object to trigger render
+            intelMarket: intelMarket 
         });
         
-        // Return the mutated packet
         return packet;
-        // --- END REFACTOR ---
     }
 
     /**
@@ -28208,6 +28298,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+## [34.78] - 2026-1-25
+-  upgrade pill polish
+-  navigation screen data polish
 
 ## [34.76] - 2026-1-25
 -  ship upgrade polish

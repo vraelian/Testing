@@ -30,7 +30,6 @@ export function renderNavigationScreen(gameState) {
         fuelMod *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
     }
     // Apply Engine Mod (Fuel Burn)
-    // FIX: Updated method name from getFuelCostModifier to getFuelBurnModifier
     fuelMod *= GameAttributes.getFuelBurnModifier(upgrades);
 
     // 2. Time Modifiers (Perk * Upgrade)
@@ -41,10 +40,26 @@ export function renderNavigationScreen(gameState) {
     // Apply Engine Mod
     timeMod *= GameAttributes.getTravelTimeModifier(upgrades);
 
-    // 3. Legacy Attributes
+    // 3. Legacy & Z-Class Attributes
     const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
-    // FIX: Removed ATTR_SPACE_FOLDING legacy check
+    
+    // Z-Class Time Logic
+    if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+        timeMod *= 0.75; // -25% Travel Time
+    }
+    if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+        timeMod *= 10.0; // 10x Travel Time (Cryo Pod)
+    }
+
+    // Legacy Legacy
     const hasSleeper = shipAttributes.includes('ATTR_SLEEPER');
+    if (hasSleeper) timeMod *= 4.5;
+
+    // Z-Class Fuel Logic
+    if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+        fuelMod *= 0.5; // -50% Fuel Cost
+    }
+    const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 
     return `
@@ -64,14 +79,20 @@ export function renderNavigationScreen(gameState) {
                         // Apply Time Logic (Mod * Base)
                         displayTime = Math.max(1, Math.round(baseData.time * timeMod));
                         
-                        // Legacy Overrides
-                        if (hasSleeper) displayTime = Math.round(displayTime * 4.5); // Sleeper adds time
-
                         // Apply Fuel Logic (Mod * Base)
                         displayFuel = Math.round(baseData.fuelCost * fuelMod);
                         
-                        // Legacy Overrides
-                        if (hasSleeper) displayFuel = 0; // Sleeper is free
+                        // Z-Class: Solar Harmony (Zero fuel if moving inward)
+                        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                            const fromDist = currentLocation.distance || 0; // Current
+                            const toDist = location.distance || 0; // Target
+                            if (toDist < fromDist) {
+                                displayFuel = 0;
+                            }
+                        }
+
+                        // Override: Free Fuel attributes (Cryo/Sleeper)
+                        if (isFreeFuel) displayFuel = 0;
                     }
 
                     const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;

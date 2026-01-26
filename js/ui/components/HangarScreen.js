@@ -86,8 +86,12 @@ function _getUpgradePillStyle(definition, tier, color) {
 
     // 2. Determine CSS Class (Visual Layer Hook)
     let cssClass = `pill-tier-${tier}`;
+    let extraStyle = '';
+
     if (definition.isAlien) {
         cssClass = 'pill-alien';
+        // Add thin black outline for alien pills (e.g. Osseous Regrowth)
+        extraStyle = 'text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;';
     }
 
     // 3. Generate Variable Injection (The "Style String")
@@ -100,6 +104,7 @@ function _getUpgradePillStyle(definition, tier, color) {
             --pill-mid: ${mid};
             --pill-light: ${light};
             --pill-bright: ${bright};
+            ${extraStyle}
         `
     };
 }

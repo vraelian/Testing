@@ -195,9 +195,10 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GREY,
         isAlien: true
     },
+    // --- CHANGED: Updated description to reflect Arrival Refund ---
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
-        description: "Regenerates 1% Fuel daily.",
+        description: "Absorbs stellar matter to regenerate 50% of spent fuel upon arrival.",
         type: ATTRIBUTE_TYPES.PASSIVE_EFFECT,
         color: COLORS.ALIEN_BLOOD,
         isAlien: true

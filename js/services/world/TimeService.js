@@ -60,6 +60,7 @@ export class TimeService {
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
         const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
+        const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
@@ -73,11 +74,15 @@ export class TimeService {
                 this.simulationService.pulseNewsTicker();
             }
 
-            // --- UPGRADE SYSTEM: Passive Repair (Nano Machines) ---
-            // Only applies to the ACTIVE ship while traveling (advanceDays is driven by travel)
-            // Use Additive Rate (e.g. 0.01 + 0.02 = 0.03)
-            const passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
+            // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
+            // Base upgrade modifier
+            let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
             
+            // ATTR_SELF_ASSEMBLY (Engine of Recursion): +5% Daily Repair
+            if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
+                passiveRepairRate += 0.05;
+            }
+
             if (passiveRepairRate > 0 && this.simulationService) {
                 const effectiveStats = this.simulationService.getEffectiveShipStats(activeShipId);
                 if (activeShipState.health < effectiveStats.maxHealth) {
@@ -88,12 +93,9 @@ export class TimeService {
                     );
                 }
             }
-            // --- END UPGRADE SYSTEM ---
 
             // --- Legacy Attribute Support (Flat Decay) ---
-            // Keeps compatibility for any old "Flat Daily" decay attributes if they exist
-            const shipAttrs = GameAttributes.getShipAttributes(activeShipId); 
-            shipAttrs.forEach(attrId => {
+            activeShipAttributes.forEach(attrId => {
                 const def = GameAttributes.getDefinition(attrId);
                 if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
                     if (activeShipState.health > 1) {
@@ -106,7 +108,10 @@ export class TimeService {
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
             
-            if (dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
+            // Cryo-Stasis: Check if age should advance
+            const canAge = !activeShipAttributes.includes('ATTR_CRYO_STASIS');
+
+            if (canAge && dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.lastBirthdayYear = currentYear;
                 this.gameState.player.playerAge++;
                 this._handleBirthday(this.gameState.player.playerAge);
@@ -141,22 +146,17 @@ export class TimeService {
             }
 
             // Periodic Intel Generation
-            // --- MODIFIED: Ensure start-of-game intel is available (Request A) ---
             if (this.intelService) {
                 const totalIntel = Object.values(this.gameState.intelMarket).flat().length;
-                // Regular 120-day interval OR (Early Game AND No Intel Available)
                 if ((this.gameState.day % 120 === 1) || (this.gameState.day < 120 && totalIntel === 0)) {
                     this.intelService.generateIntelRefresh();
                 }
             }
-            // --- END MODIFICATION ---
             
             // Passive Repair for INACTIVE ships (Hangar)
-            // Stored ships repair slowly over time (Base Game Rule)
             this.gameState.player.ownedShipIds.forEach(shipId => {
                 if (shipId !== this.gameState.player.activeShipId) {
                     const ship = DB.SHIPS[shipId]; 
-                    // Inactive ships use base stats for simplicity/performance
                     const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
                     this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
                 }
