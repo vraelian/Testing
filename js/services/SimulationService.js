@@ -532,9 +532,12 @@ export class SimulationService {
 
         return {
             ...ship,
-            maxHealth: Math.round(ship.maxHealth * hullMod),
-            maxFuel: Math.round(ship.maxFuel * fuelMod),
-            cargoCapacity: Math.round(ship.cargoCapacity * cargoMod)
+            // [[FIXED]] - Switched from Multiplication (*) to Addition (+) 
+            // GameAttributes returns a flat integer (e.g. 10 or 0). 
+            // 30 * 0 = 0 (The bug). 30 + 0 = 30 (Correct).
+            maxHealth: Math.round(ship.maxHealth + hullMod),
+            maxFuel: Math.round(ship.maxFuel + fuelMod),
+            cargoCapacity: Math.round(ship.cargoCapacity + cargoMod)
         };
     }
 
