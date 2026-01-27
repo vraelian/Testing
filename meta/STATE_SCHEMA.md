@@ -142,4 +142,3 @@ Manages the progress and locking mechanisms for interactive tutorials.
 | `seenBatchIds` | Array<String> | List of tutorial IDs the player has already completed. |
 | `skippedTutorialBatches` | Array<String> | List of tutorial IDs the player explicitly skipped. |
 | `navLock` | Object | `{ navId, screenId }` - If set, restricts navigation to this target. |
-| } |  |  |
