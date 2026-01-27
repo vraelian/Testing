@@ -12,14 +12,10 @@ export class UIModalEngine {
 
     /**
      * Queues a modal for display. If no modal is currently visible, processes the queue immediately.
-     * @param {string} modalId - The DOM ID of the modal (e.g., 'event-modal').
-     * @param {string} title - The title to display.
-     * @param {string} description - The body text/HTML.
-     * @param {Function} [callback] - Function to run on close.
-     * @param {object} [options] - Configuration options (theme, dismissal, etc.).
      */
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
+        // Only trigger processing if NO modal backdrop is currently active/visible.
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
             this.processModalQueue();
         }
@@ -30,6 +26,12 @@ export class UIModalEngine {
      */
     processModalQueue() {
         if (this.modalQueue.length === 0) return;
+        
+        // Peek at the active modal state to ensure we don't clobber an animating modal
+        if (document.querySelector('.modal-backdrop:not(.hidden)')) {
+            return; 
+        }
+
         const { modalId, title, description, callback, options } = this.modalQueue.shift();
         const modal = document.getElementById(modalId);
         
@@ -55,16 +57,13 @@ export class UIModalEngine {
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
         // --- TITLE ELEMENT RESOLUTION ---
-        // 1. Strict Check: Expects convention [modalId]-title (e.g., 'event-result-title')
         let titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         let titleEl = modal.querySelector(`#${titleElId}`);
 
-        // 2. Fallback: If strict ID not found, check for generic 'event-title' if it's an event modal
         if (!titleEl && (modalId.includes('event') || modalId === 'event-result-modal')) {
             titleEl = modal.querySelector('#event-title') || modal.querySelector('#title');
         }
 
-        // 3. Fallback: Try to find a generic class or tag
         if (!titleEl) {
             titleEl = modal.querySelector('.modal-title') || modal.querySelector('h3');
         }
@@ -97,7 +96,9 @@ export class UIModalEngine {
         const closeHandler = () => {
             this.hideModal(modalId);
             if (callback) callback();
-            this.processModalQueue();
+            // [FIX] REMOVED strict processModalQueue call here.
+            // We rely on the animationend listener in hideModal to trigger the next item.
+            // This prevents the new modal from colliding with the exit animation of the old one.
         };
 
         if (options.customSetup) {
@@ -149,6 +150,7 @@ export class UIModalEngine {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('modal-hiding');
+            
             modal.addEventListener('animationend', () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
@@ -157,7 +159,8 @@ export class UIModalEngine {
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
 
-                if (this.modalQueue.length > 0 && !document.querySelector('.modal-backdrop:not(.hidden)')) {
+                // [FIX] Now that the DOM is clean, we check the queue.
+                if (this.modalQueue.length > 0) {
                     this.processModalQueue();
                 }
             }, { once: true });
@@ -181,22 +184,12 @@ export class UIModalEngine {
         const isContentClick = e.target.closest('.modal-content');
 
         if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
-            if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) {
-                return modalBackdrop.id;
-            }
-            if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) {
-                return modalBackdrop.id;
-            }
-
-            if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) {
-                return modalBackdrop.id;
-            }
-            if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) {
-                return modalBackdrop.id;
-            }
-            if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) {
-                return modalBackdrop.id;
-            }
+            // [Truncated for brevity, logic remains same]
+            if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) return modalBackdrop.id;
+            if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) return modalBackdrop.id;
+            if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) return modalBackdrop.id;
+            if (modalBackdrop.id === 'lore-modal' && !e.target.closest('.modal-content')) return modalBackdrop.id;
+            if (modalBackdrop.id === 'eula-modal' && !e.target.closest('.modal-content')) return modalBackdrop.id;
             
             return modalBackdrop.id;
         }
@@ -215,9 +208,7 @@ export class UIModalEngine {
     }
 
     /**
-     * Displays the full-screen processing animation (e.g., for License acquisition).
-     * @param {string} playerName 
-     * @param {Function} callback 
+     * Displays the full-screen processing animation.
      */
     showProcessingAnimation(playerName, callback) {
         const modal = this.manager.cache.processingModal;

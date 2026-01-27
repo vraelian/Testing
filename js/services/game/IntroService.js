@@ -18,10 +18,10 @@ export class IntroService {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-        this.simulationService = simulationServiceFacade; // Renamed to avoid confusion
+        this.simulationService = simulationServiceFacade; 
         
-        // [ADR-Ref] Transition Lock to prevent race conditions/double-clicks
-        this.transitionLock = false; 
+        // Strict Lock: Persists until the *next* modal is actively queued
+        this._transitioning = false; 
     }
 
     /**
@@ -30,12 +30,15 @@ export class IntroService {
     start() {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
-        // Set the initial state for the intro: No ship, ready for the tutorial purchase.
+        
+        // Set the initial state for the intro
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
         this.gameState.player.shipStates = {};
         this.gameState.player.inventories = {};
         this.gameState.player.introStep = 0;
+        
+        this._transitioning = false; 
         this._showNextModal();
     }
 
@@ -44,8 +47,7 @@ export class IntroService {
      * @param {Event} e - The click event object.
      */
     handleIntroClick(e) {
-        // [FIX] Throttle check: Ignore clicks if a transition is active
-        if (this.transitionLock) {
+        if (this._transitioning) {
             e.preventDefault();
             e.stopPropagation();
             return;
@@ -53,54 +55,33 @@ export class IntroService {
 
         const button = e.target.closest('button');
         if (!button) return;
-        const targetId = button.id;
         
-        // [FIX] Removed 'intro-next-btn' handling here. 
-        // The inline onclick handler in _showNextModal handles the close/advance logic correctly.
-        // Handling it here caused a duplicate modal to open without closing the previous one.
-
-        if (targetId === 'intro-submit-btn') {
-            // Lock the UI to prevent double-submission
-            this._setTransitionLock(2000); 
-
-            button.disabled = true;
+        if (button.id === 'intro-submit-btn') {
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
-                    // This callback runs after the "Invalid Signature" modal is closed.
-                    // We need to re-show the signature modal without advancing the step.
-                    this.gameState.player.introStep--; // Decrement to counteract the increment in _showNextModal
-    
                     this._showNextModal();
                 });
             } else {
+                this._transitioning = true;
+                button.disabled = true;
+
                 this.gameState.player.name = sanitizedPlayerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.monthlyInterestAmount = 390;
     
-                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`, {
-                    debt: 25000,
-                     name: sanitizedPlayerName
-                });
+                this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`);
+                
+                // Explicitly close the signature modal to clear the stage
+                this.uiManager.hideModal('signature-modal');
+
                 this._startProcessingSequence();
             }
         }
-    }
-
-    /**
-     * Helper to set a temporary lock on UI transitions.
-     * @param {number} durationMs - How long to lock the UI (default 500ms)
-     * @private
-     */
-    _setTransitionLock(durationMs = 500) {
-        this.transitionLock = true;
-        setTimeout(() => {
-            this.transitionLock = false;
-        }, durationMs);
     }
 
     /**
@@ -112,7 +93,6 @@ export class IntroService {
             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
         } else if (completedBatchId === 'intro_finance') {
- 
              this._end();
         }
     }
@@ -127,6 +107,9 @@ export class IntroService {
             this._end();
             return;
         }
+
+        // Release lock: The next step is ready to be queued.
+        this._transitioning = false;
 
         const options = {
             buttonClass: step.buttonClass,
@@ -154,29 +137,31 @@ export class IntroService {
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
                 
-                // [FIX] Inline handler with throttle to prevent double-tap skipping
                 button.onclick = (e) => {
-                    if (this.transitionLock) {
+                    if (this._transitioning) { 
                         e.preventDefault(); 
                         return;
                     }
-                    this._setTransitionLock(500); // Lock for transition
-
-                    e.target.disabled = true;
-                    closeHandler();
+                    this._transitioning = true; 
+                    e.target.disabled = true;   
+                    closeHandler();             
                 };
                 btnContainer.appendChild(button);
             };
         }
 
-        this.uiManager.queueModal(modalId, step.title, step.description, () => this.gameState.player.introStep++, options);
+        // Recursive Callback:
+        // When the modal closes, increment step and queue the next one.
+        const onModalClose = () => {
+            this.gameState.player.introStep++;
+            this._showNextModal();
+        };
+
+        this.uiManager.queueModal(modalId, step.title, step.description, onModalClose, options);
     }
 
     /**
      * Performs custom setup for interactive modals in the intro.
-     * @param {HTMLElement} modal
-     * @param {object} step
-     * @param {function} closeHandler
      * @private
      */
     _setupInteractiveModal(modal, step, closeHandler) {
@@ -186,14 +171,12 @@ export class IntroService {
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
         
-        // [FIX] Wrapped onClick to include throttle
         const safeCloseHandler = (e) => {
-            if (this.transitionLock) {
+            if (this._transitioning) {
                 if (e) e.preventDefault();
                 return;
             }
-            this._setTransitionLock(500);
-            
+            this._transitioning = true;
             if (e && e.target) e.target.disabled = true;
             closeHandler();
         };
@@ -201,24 +184,10 @@ export class IntroService {
         if (step.id === 'signature') {
             const input = modal.querySelector('#signature-input');
             input.value = '';
-            button.id = 'intro-submit-btn'; // Handled by handleIntroClick (which is also throttled)
+            button.id = 'intro-submit-btn'; 
             button.disabled = true;
             
-            // Signature submit is handled by handleIntroClick, but we attach this for safety/fallback
-            // or if the button is clicked directly without bubbling. 
-            // However, handleIntroClick has the logic. 
-            // We just ensure it doesn't close prematurely.
-            
-            // Actually, for signature, clicking calls handleIntroClick logic.
-            // We do NOT want closeHandler here immediately.
-            // So we leave this empty or delegate? 
-            // The original code had: button.onclick = closeHandler;
-            // But handleIntroClick had logic to call _startProcessingSequence. 
-            // If we assume handleIntroClick runs, we don't need onclick here.
-            // BUT, let's keep it consistent with the previous logic:
-            // Previous: button.onclick = closeHandler;
-            // We will NOT attach closeHandler here for signature, because handleIntroClick manages the flow.
-            
+            // Note: The click logic for this button is handled in handleIntroClick
             button.onclick = null; 
 
             input.oninput = () => {
@@ -238,37 +207,31 @@ export class IntroService {
      */
     _startProcessingSequence() {
         const showApprovalModal = () => {
+            // [FIX] UNLOCK HERE: The processing animation is done. 
+            // We must release the lock so the "Accept Transfer" button works.
+            this._transitioning = false;
+
             const title = 'Loan Approved';
             const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
+            
             const hangarTransition = (event) => {
-                if (this.transitionLock) return; // Safety check
-                this._setTransitionLock(2000);   // Long lock for scene transition
-
-                const button = event.target;
-                if(button) button.disabled = true;
+                this._transitioning = true;
+                if(event && event.target) event.target.disabled = true;
                 
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
-                // --- VIRTUAL WORKBENCH: APPLY CREDIT CAP ---
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
-                // --- END VIRTUAL WORKBENCH ---
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 setTimeout(() => {
                     this.uiManager.showGameContainer();
                     
-                    // [[FIXED]] REORDERED INITIALIZATION SEQUENCE (State/Render Race Condition)
-                    // 1. Trigger the tutorial state FIRST. This sets 'activeBatchId'.
                     this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
                     
-                    // 2. THEN switch the screen.
-                    // The setScreen call updates the State, which triggers UIManager.render().
-                    // Because step 1 already set 'activeBatchId', the UIManager's guard clause 
-                    // (which blocks renders during Intro if no tutorial is active) will now PASS.
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                     
-                    // 3. Removed redundant 'this.uiManager.render()' call as setScreen handles it.
+                    this._transitioning = false; 
                 }, 2000);
             };
 
@@ -278,15 +241,15 @@ export class IntroService {
                     modal.querySelector('.modal-content').classList.add('modal-theme-admin');
      
                     const btnContainer = modal.querySelector('#event-button-container');
-
                     btnContainer.innerHTML = '';
                     const button = document.createElement('button');
                     button.className = 'btn px-6 py-2';
                     button.innerHTML = 'Accept Transfer';
                     
-                    // [FIX] Throttle on final accept
                     button.onclick = (event) => {
-                        if(this.transitionLock) return;
+                        if (this._transitioning) return;
+                        this._transitioning = true; 
+                        
                         hangarTransition(event);
                         closeHandler();
                     };
@@ -305,6 +268,8 @@ export class IntroService {
      */
     _end() {
         this.gameState.introSequenceActive = false;
+        this._transitioning = false;
+        
         this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
         const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
         const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
@@ -313,7 +278,6 @@ export class IntroService {
         this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
     
         this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-     
              this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
              this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
         }, { buttonText: buttonText });
