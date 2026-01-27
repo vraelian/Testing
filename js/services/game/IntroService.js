@@ -19,6 +19,9 @@ export class IntroService {
         this.uiManager = uiManager;
         this.logger = logger;
         this.simulationService = simulationServiceFacade; // Renamed to avoid confusion
+        
+        // [ADR-Ref] Transition Lock to prevent race conditions/double-clicks
+        this.transitionLock = false; 
     }
 
     /**
@@ -41,14 +44,25 @@ export class IntroService {
      * @param {Event} e - The click event object.
      */
     handleIntroClick(e) {
+        // [FIX] Throttle check: Ignore clicks if a transition is active
+        if (this.transitionLock) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
         const button = e.target.closest('button');
         if (!button) return;
         const targetId = button.id;
         
-        if (targetId === 'intro-next-btn') {
-            button.disabled = true;
-            this._showNextModal();
-        } else if (targetId === 'intro-submit-btn') {
+        // [FIX] Removed 'intro-next-btn' handling here. 
+        // The inline onclick handler in _showNextModal handles the close/advance logic correctly.
+        // Handling it here caused a duplicate modal to open without closing the previous one.
+
+        if (targetId === 'intro-submit-btn') {
+            // Lock the UI to prevent double-submission
+            this._setTransitionLock(2000); 
+
             button.disabled = true;
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
@@ -75,6 +89,18 @@ export class IntroService {
                 this._startProcessingSequence();
             }
         }
+    }
+
+    /**
+     * Helper to set a temporary lock on UI transitions.
+     * @param {number} durationMs - How long to lock the UI (default 500ms)
+     * @private
+     */
+    _setTransitionLock(durationMs = 500) {
+        this.transitionLock = true;
+        setTimeout(() => {
+            this.transitionLock = false;
+        }, durationMs);
     }
 
     /**
@@ -127,7 +153,15 @@ export class IntroService {
                 if(step.buttonClass) button.classList.add(step.buttonClass);
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
+                
+                // [FIX] Inline handler with throttle to prevent double-tap skipping
                 button.onclick = (e) => {
+                    if (this.transitionLock) {
+                        e.preventDefault(); 
+                        return;
+                    }
+                    this._setTransitionLock(500); // Lock for transition
+
                     e.target.disabled = true;
                     closeHandler();
                 };
@@ -151,26 +185,51 @@ export class IntroService {
         const button = document.createElement('button');
         button.className = 'btn px-6 py-2';
         button.innerHTML = step.buttonText;
-        button.onclick = (e) => {
-            e.target.disabled = true;
+        
+        // [FIX] Wrapped onClick to include throttle
+        const safeCloseHandler = (e) => {
+            if (this.transitionLock) {
+                if (e) e.preventDefault();
+                return;
+            }
+            this._setTransitionLock(500);
+            
+            if (e && e.target) e.target.disabled = true;
             closeHandler();
         };
-        buttonContainer.appendChild(button);
 
         if (step.id === 'signature') {
             const input = modal.querySelector('#signature-input');
             input.value = '';
-            button.id = 'intro-submit-btn';
+            button.id = 'intro-submit-btn'; // Handled by handleIntroClick (which is also throttled)
             button.disabled = true;
             
-            button.onclick = closeHandler;
+            // Signature submit is handled by handleIntroClick, but we attach this for safety/fallback
+            // or if the button is clicked directly without bubbling. 
+            // However, handleIntroClick has the logic. 
+            // We just ensure it doesn't close prematurely.
+            
+            // Actually, for signature, clicking calls handleIntroClick logic.
+            // We do NOT want closeHandler here immediately.
+            // So we leave this empty or delegate? 
+            // The original code had: button.onclick = closeHandler;
+            // But handleIntroClick had logic to call _startProcessingSequence. 
+            // If we assume handleIntroClick runs, we don't need onclick here.
+            // BUT, let's keep it consistent with the previous logic:
+            // Previous: button.onclick = closeHandler;
+            // We will NOT attach closeHandler here for signature, because handleIntroClick manages the flow.
+            
+            button.onclick = null; 
 
             input.oninput = () => {
                 button.disabled = input.value.trim() === '';
             };
         } else {
             button.id = 'intro-next-btn';
+            button.onclick = safeCloseHandler;
         }
+        
+        buttonContainer.appendChild(button);
     }
 
     /**
@@ -182,6 +241,9 @@ export class IntroService {
             const title = 'Loan Approved';
             const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
             const hangarTransition = (event) => {
+                if (this.transitionLock) return; // Safety check
+                this._setTransitionLock(2000);   // Long lock for scene transition
+
                 const button = event.target;
                 if(button) button.disabled = true;
                 
@@ -221,7 +283,10 @@ export class IntroService {
                     const button = document.createElement('button');
                     button.className = 'btn px-6 py-2';
                     button.innerHTML = 'Accept Transfer';
+                    
+                    // [FIX] Throttle on final accept
                     button.onclick = (event) => {
+                        if(this.transitionLock) return;
                         hangarTransition(event);
                         closeHandler();
                     };
