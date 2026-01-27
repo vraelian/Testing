@@ -799,7 +799,8 @@
     },
     "F052": {
       "path": "./js/data/tutorials.js",
-      "role": "DATA_DEFINITION"
+      "role": "DATA_DEFINITION",
+      "description": "Facade that aggregates modular tutorial files."
     },
     "F053": {
       "path": "./js/services/NewsTickerService.js",
@@ -975,6 +976,47 @@
       "path": "./js/data/events/events_story.js",
       "role": "DATA_DEFINITION",
       "description": "Modular event file: Unique narrative encounters."
+    },
+    "F089": {
+      "path": "./js/data/tutorials/tuts_intro.js",
+      "role": "DATA_DEFINITION",
+      "description": "Modular tutorial file: Introduction sequence."
+    },
+    "F090": {
+      "path": "./js/data/tutorials/tuts_economy.js",
+      "role": "DATA_DEFINITION",
+      "description": "Modular tutorial file: Economy & Market mechanics."
+    },
+    "F091": {
+      "path": "./js/data/tutorials/tuts_progression.js",
+      "role": "DATA_DEFINITION",
+      "description": "Modular tutorial file: Ship upgrades & Progression."
+    },
+    "F092": {
+      "path": "./js/data/lore/loreRegistry.js",
+      "role": "DATA_DEFINITION",
+      "description": "Facade that aggregates modular lore files."
+    },
+    "F093": {
+      "path": "./js/data/lore/lore_broadstrokes.js",
+      "role": "DATA_DEFINITION",
+      "description": "Modular lore file: General world-building and history."
+    },
+    "F094": {
+      "path": "./meta/MATH_REGISTRY.md",
+      "role": "DOCUMENTATION"
+    },
+    "F095": {
+      "path": "./meta/CODING_STANDARDS.md",
+      "role": "DOCUMENTATION"
+    },
+    "F096": {
+      "path": "./meta/UI_LIBRARY.md",
+      "role": "DOCUMENTATION"
+    },
+    "F097": {
+      "path": "./meta/LORE_COMPENDIUM.md",
+      "role": "DOCUMENTATION"
     }
   }
 }
