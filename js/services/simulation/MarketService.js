@@ -374,19 +374,6 @@ export class MarketService {
         // --- END CHANGE ---
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
-
-        // --- MISSION ENGINE TRIGGER ---
-        // Notify MissionService that a trade occurred
-        if (window.MissionService && window.MissionService.handleEvent) {
-            window.MissionService.handleEvent(
-                transactionType === 'buy' ? 'PLAYER_BOUGHT_ITEM' : 'PLAYER_SOLD_ITEM',
-                {
-                    itemId: goodId,
-                    quantity: quantity,
-                    locationId: this.gameState.currentLocationId
-                }
-            );
-        }
     }
 
     // --- VIRTUAL WORKBENCH: NEW METHOD ---

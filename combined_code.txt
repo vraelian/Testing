@@ -6,17 +6,23 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
+        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
+        
+        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
+     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
+        
+        // Prevent the browser's default error handling.
         return true;
       };
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.88</title>
+    <title>Orbital Trading 34.87</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -64,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.88</p>
+            <p>Version 34.87</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -297,10 +303,6 @@
     </div>
 
     <script src="https://unpkg.com/@popperjs/core@2"></script>
-
-    <script src="./js/services/MissionRegistry.js"></script>
-    <script src="./js/data/missions/Missions_Intro.js"></script>
-
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -8257,10 +8259,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Game Initialization ---
         const hasSave = gameState.loadGame();
-        
-        // [[MISSION SYSTEM]] Initialize Engine
-        missionService.init();
-
         if (!hasSave) {
             if (isSimpleStart && debugService) {
                 gameState.startNewGame('');
@@ -8299,12 +8297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // any new state created during startNewGame.
         AssetService.hydrateGameAssets(gameState.getState());
         // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
-
-        // [[MISSION SYSTEM]] Fire Intro Trigger
-        // Triggers 'intro_01_welcome' completion
-        if (window.MissionService) {
-            window.MissionService.handleEvent('TUTORIAL_STEP_COMPLETE');
-        }
     }
 });
 --- END OF FILE: ./js/main.js ---
@@ -9558,192 +9550,6 @@ export const NEWS_FLAVOR = [
     "[PUBLIC] Remember: All cargo must be declared. Smuggling is a system-wide offense."
 ];
 --- END OF FILE: ./js/data/news_flavor.js ---
-
---- START OF FILE: ./js/data/missions/Missions_Intro.js ---
-/**
- * Missions_Intro.js
- * * Contains the definitions for the Tutorial and Intro Sequence.
- * Formatted for ingestion by MissionRegistry.
- */
-
-const Missions_Intro = [
-    {
-        "id": "intro_01_welcome",
-        "type": "tutorial",
-        "title": "Welcome to Orbital Trading",
-        "description": "Initialize your systems and prepare for your first trade.",
-        "icon": "assets/icons/ui/holo_chat.png",
-        
-        // VISUAL CUSTOMIZATION
-        "ui_style": {
-            "theme": "tutorial_blue",
-            "priority": 100, // Show at top
-            "modal_type": "conversation" // Tells UI to render as chat vs contract
-        },
-
-        // LOGIC GATING
-        "prerequisites": {
-            "stats": { "min_level": 0 }
-            // No previous missions required, this is the start
-        },
-
-        // OBJECTIVES (The Engine checks these)
-        "objectives": [
-            {
-                "id": "read_intro",
-                "text": "Complete initialization sequence",
-                "type": "action", 
-                "target_event": "TUTORIAL_STEP_COMPLETE", // [[FIXED]] Matches main.js event
-                "count": 1
-            }
-        ],
-
-        // REWARDS
-        "rewards": {
-            "credits": 100,
-            "xp": 50,
-            "unlock_features": ["market_panel"]
-        },
-
-        // CHAINING
-        "on_complete": {
-            "trigger_event": "SHOW_TOAST",
-            "trigger_args": ["Systems Online. Market Data Available."],
-            "auto_accept_next": "intro_02_first_trade"
-        }
-    },
-    {
-        "id": "intro_02_first_trade",
-        "type": "tutorial",
-        "title": "Market Dynamics",
-        "description": "Purchase a commodity from the local market to understand trading mechanics.",
-        "icon": "assets/icons/items/crate_generic.png",
-        
-        "ui_style": {
-            "theme": "tutorial_blue",
-            "priority": 99
-        },
-
-        "prerequisites": {
-            "completed_missions": ["intro_01_welcome"]
-        },
-
-        "objectives": [
-            {
-                "id": "buy_item",
-                "text": "Purchase 1 unit of any commodity",
-                "type": "transaction",
-                "target_event": "PLAYER_BOUGHT_ITEM",
-                "count": 1
-            }
-        ],
-
-        "rewards": {
-            "credits": 0,
-            "xp": 100,
-            "items": ["fuel_canister_small"]
-        },
-        
-        "on_complete": {
-            "trigger_event": "SHOW_TOAST",
-            "trigger_args": ["Trade Complete. Cargo Secure."]
-        }
-    }
-];
-
-// Auto-register if Registry exists (safety check)
-if (window.MissionRegistry) {
-    window.MissionRegistry.registerPack(Missions_Intro);
-}
---- END OF FILE: ./js/data/missions/Missions_Intro.js ---
-
---- START OF FILE: ./js/data/missions/Missions_Licenses.js ---
-/**
- * Missions_Licenses.js
- * * Missions related to acquiring Trade Licenses.
- */
-
-const Missions_Licenses = [
-    {
-        "id": "license_t3_grant",
-        "type": "license",
-        "title": "Guild Certification (Tier 3)",
-        "description": "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.",
-        "icon": "assets/icons/items/license_t3.png",
-        
-        "ui_style": {
-            "theme": "guild_gold",
-            "priority": 50
-        },
-
-        "prerequisites": {
-            "stats": { "revealed_tier": 3 },
-            "excluded_by": ["license_t3_grant"] // Cannot do it twice
-        },
-
-        // Instant completion upon acceptance for licenses
-        "objectives": [
-            {
-                "id": "sign_contract",
-                "text": "Sign the Guild Contract",
-                "target_event": "MISSION_ACCEPTED", // Auto-complete logic needed here later
-                "count": 1,
-                "auto_complete": true // Special flag for the engine
-            }
-        ],
-
-        "rewards": {
-            "items": ["t3_license"],
-            "xp": 500
-        },
-        
-        "on_complete": {
-            "trigger_event": "SHOW_TOAST",
-            "trigger_args": ["Tier 3 Clearance Granted"]
-        }
-    },
-    {
-        "id": "license_t5_grant",
-        "type": "license",
-        "title": "Governor's Contract (Tier 5)",
-        "description": "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.",
-        "icon": "assets/icons/items/license_t5.png",
-        
-        "ui_style": {
-            "theme": "guild_gold",
-            "priority": 60
-        },
-
-        "prerequisites": {
-            "stats": { "revealed_tier": 5 }
-        },
-
-        "objectives": [
-            {
-                "id": "sign_contract",
-                "text": "Sign the Governor's Contract",
-                "target_event": "MISSION_ACCEPTED",
-                "count": 1,
-                "auto_complete": true
-            }
-        ],
-
-        "rewards": {
-            "items": ["t5_license"],
-            "xp": 2000
-        },
-        
-        "on_complete": {
-            "trigger_event": "SHOW_TOAST",
-            "trigger_args": ["Tier 5 Clearance Granted"]
-        }
-    }
-];
-
-if (window.MissionRegistry) {
-    window.MissionRegistry.registerPack(Missions_Licenses);
-}
---- END OF FILE: ./js/data/missions/Missions_Licenses.js ---
 
 --- START OF FILE: ./js/data/age_events.js ---
 // js/data/age_events.js
@@ -11295,17 +11101,13 @@ export const TUTORIAL_DATA = {
 };
 --- END OF FILE: ./js/data/tutorials.js ---
 
---- START OF FILE: ./js/data/tutorials/tuts_ships.js ---
+--- START OF FILE: ./js/data/tutorials/tuts_progression.js ---
 
---- END OF FILE: ./js/data/tutorials/tuts_ships.js ---
+--- END OF FILE: ./js/data/tutorials/tuts_progression.js ---
 
 --- START OF FILE: ./js/data/tutorials/tuts_economy.js ---
 
 --- END OF FILE: ./js/data/tutorials/tuts_economy.js ---
-
---- START OF FILE: ./js/data/tutorials/tuts_upgrades.js ---
-
---- END OF FILE: ./js/data/tutorials/tuts_upgrades.js ---
 
 --- START OF FILE: ./js/data/tutorials/tuts_intro.js ---
 // js/data/tutorials/tuts_intro.js
@@ -11398,7 +11200,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 84,
+                positionY: 88,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_1_2",
                 "isSkippable": false
@@ -11409,7 +11211,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 84,
+                positionY: 88,
                 "completion": { "type": "ACTION", "action": "show-mission-modal" },
                 "nextStepId": "mission_1_3",
                 "isSkippable": false
@@ -11420,7 +11222,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 84,
+                positionY: 88,
                 "completion": { "type": "ACTION", "action": "accept-mission" },
                 "nextStepId": "mission_1_4",
                 "isSkippable": false
@@ -11431,7 +11233,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 77,
+                positionY: 80,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_1_5",
                 "isSkippable": false
@@ -11442,7 +11244,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 31,
+                positionY: 32,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" },
                 "nextStepId": "mission_1_6",
                 "isSkippable": false,
@@ -11478,7 +11280,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 25,
+                positionY: 30,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_2_1",
                 "isSkippable": false
@@ -11489,7 +11291,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 29,
+                positionY: 30,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "market" },
                 "nextStepId": "mission_2_2",
                 "isSkippable": false,
@@ -11501,7 +11303,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '150px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 70,
+                positionY: 67,
                 "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" },
                 "nextStepId": "mission_2_3",
                 "isSkippable": false
@@ -11512,7 +11314,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '150px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 70,
+                positionY: 71,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "missions" },
                 "nextStepId": "mission_2_4",
                 "isSkippable": false,
@@ -11535,7 +11337,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: '160px' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 84,
+                positionY: 83,
                 "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" },
                 "nextStepId": "mission_final",
                 "isSkippable": false,
@@ -11547,7 +11349,7 @@ export const TUTS_INTRO = {
                 size: { width: '400px', height: 'auto' },
                 anchorElement: 'body',
                 positionX: 50,
-                positionY: 33,
+                positionY: 22,
                 "completion": { "type": "INFO" },
                 "nextStepId": null,
                 "isSkippable": false,
@@ -13470,7 +13272,6 @@ export class UIMissionControl {
 
     /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * Updated to check the new MissionService Engine.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -13479,32 +13280,14 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Check for missions in the NEW engine first
-        const activeMission = window.MissionService && window.MissionService.activeMissions.length > 0 
-            ? window.MissionService.activeMissions[0] 
-            : null;
-
-        if (activeMission) {
-            // New Engine Logic
-            const objective = activeMission.objectives.find(o => !o.isComplete) || activeMission.objectives[0];
-            const def = objective.definition;
-            
-            objectiveTextEl.textContent = def.text;
-            objectiveProgressEl.textContent = `[${objective.current}/${objective.target}]`;
-
-            // Default style for now
-            const hostClass = 'host-station'; 
-            contentEl.className = `sticky-content sci-fi-frame ${hostClass}`;
-            stickyBarEl.style.display = 'block';
-
-        } else if (gameState.missions.activeMissionId) {
-            // Fallback to Old System (if any old missions are still active)
+        if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;
             }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
+
             const objective = mission.objectives[0];
             const current = progress.objectives[objective.goodId]?.current ?? 0;
             const target = objective.quantity;
@@ -13538,24 +13321,10 @@ export class UIMissionControl {
     }
 
     /**
-     * Orchestrates showing the correct mission modal.
-     * Updated to support the new Registry.
+     * Orchestrates showing the correct mission modal (Details vs Completion).
      * @param {string} missionId 
      */
     showMissionModal(missionId) {
-        // Try New System
-        if (window.MissionRegistry) {
-            const def = window.MissionRegistry.getMission(missionId);
-            if (def) {
-                // Determine if we are completing it or viewing details
-                // This logic will be fully built out in Phase 4. 
-                // For now, we show details.
-                this._showMissionDetailsModalNew(def);
-                return;
-            }
-        }
-
-        // Fallback to Old System
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
@@ -13569,58 +13338,6 @@ export class UIMissionControl {
         } else {
             this._showMissionDetailsModal(mission);
         }
-    }
-
-    _showMissionDetailsModalNew(missionDef) {
-        const options = {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const modalContent = modal.querySelector('.modal-content');
-                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                
-                // Style from definition
-                if (missionDef.ui_style && missionDef.ui_style.theme) {
-                    modalContent.classList.add(missionDef.ui_style.theme);
-                }
-
-                modal.querySelector('#mission-modal-type').textContent = missionDef.type || "MISSION";
-                modal.querySelector('#mission-modal-description').innerHTML = missionDef.description;
-
-                const objectivesEl = modal.querySelector('#mission-modal-objectives');
-                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + 
-                    missionDef.objectives.map(obj => `<li>${obj.text}</li>`).join('') + '</ul>';
-                objectivesEl.innerHTML = objectivesHtml;
-                objectivesEl.style.display = 'block';
-
-                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-                if (missionDef.rewards) {
-                     const rewardsHtml = Object.entries(missionDef.rewards).map(([key, val]) => {
-                        if(key === 'credits') return `<span class="credits-text-pulsing">${formatCredits(val, true)}</span>`;
-                        return `${val} ${key.toUpperCase()}`;
-                     }).join(', ');
-                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
-                    rewardsEl.style.display = 'block';
-                } else {
-                    rewardsEl.innerHTML = '';
-                    rewardsEl.style.display = 'none';
-                }
-
-                const buttonsEl = modal.querySelector('#mission-modal-buttons');
-                const isActive = window.MissionService.isMissionActive(missionDef.id);
-                
-                if (isActive) {
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80" disabled>In Progress</button>`;
-                } else {
-                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${missionDef.id}">Accept</button>`;
-                     const btn = buttonsEl.querySelector('button');
-                     btn.onclick = () => {
-                         window.MissionService.startMission(missionDef.id);
-                         closeHandler();
-                     };
-                }
-            }
-        };
-        this.manager.queueModal('mission-modal', missionDef.title, missionDef.description, null, options);
     }
 
     _showMissionDetailsModal(mission) {
@@ -17984,261 +17701,244 @@ export class GameState {
 --- END OF FILE: ./js/services/GameState.js ---
 
 --- START OF FILE: ./js/services/MissionService.js ---
+// js/services/MissionService.js
 /**
- * MissionService.js
- * * THE MISSION ENGINE
- * * This service is now a generic logic processor. It does not know about specific missions.
- * It strictly follows the instructions provided by the MissionRegistry data.
- * * Workflow:
- * 1. Event happens in game (e.g. 'ENEMY_KILLED') -> Game calls MissionService.handleEvent()
- * 2. Service checks all ACTIVE missions.
- * 3. If event matches a mission objective, progress is updated.
- * 4. If all objectives in a mission are done, mission is completed.
+ * @fileoverview Manages the state and flow of player missions.
  */
+import { DB } from '../data/database.js';
+import { formatCredits } from '../utils.js';
 
 export class MissionService {
+    /**
+     * @param {import('./GameState.js').GameState} gameState The central game state.
+     * @param {import('./UIManager.js').UIManager} uiManager The UI manager instance.
+     * @param {import('./LoggingService.js').Logger} logger The logging utility.
+     */
     constructor(gameState, uiManager, logger) {
         this.gameState = gameState;
         this.uiManager = uiManager;
         this.logger = logger;
-
-        this.activeMissions = []; // Array of hydrated mission objects with current progress
-        this.completedMissionIds = []; // Array of strings (IDs)
-        this.missionHistory = []; // Log of past completions for stats
-        
-        // Internal event mapping to optimize lookups
-        // Key: EventType (string), Value: Array of MissionIDs listening for this
-        this.eventListeners = new Map();
-
-        // [[CORE LOGIC]] Assign global singleton so non-module services (like MarketService) 
-        // can access it without complex injection chains.
-        window.MissionService = this;
-    }
-
-    init() {
-        console.log("MissionService: Engine Initialized.");
-        // Load save data here if applicable in future phases
-        // this.loadState(); 
-        
-        // Initial check for auto-start missions (like the Intro)
-        this.checkForNewMissions();
+        this.simulationService = null; // Will be injected post-instantiation
     }
 
     /**
-     * The heartbeat of the system.
-     * Checks the Registry for any missions that match current player state.
+     * Injects the SimulationService after all services have been instantiated.
+     * @param {import('./SimulationService.js').SimulationService} simulationService
      */
-    checkForNewMissions() {
-        if (!window.MissionRegistry) return;
+    setSimulationService(simulationService) {
+        this.simulationService = simulationService;
+    }
 
-        // Get all known definitions
-        window.MissionRegistry.definitions.forEach(missionDef => {
-            // 1. Skip if already active or completed
-            if (this.isMissionActive(missionDef.id) || this.isMissionCompleted(missionDef.id)) {
+    /**
+     * Checks if all prerequisites for a given mission are met.
+     * @param {string} missionId The ID of the mission to check.
+     * @returns {boolean} True if all prerequisites are met, false otherwise.
+     */
+    arePrerequisitesMet(missionId) {
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.prerequisites) {
+            return true; // No prerequisites, so it's met.
+        }
+
+        return mission.prerequisites.every(prereq => {
+            switch (prereq.type) {
+                case 'mission_completed':
+                    return this.gameState.missions.completedMissionIds.includes(prereq.missionId);
+                case 'revealed_tier':
+                    return this.gameState.player.revealedTier >= prereq.tier;
+                // Future prerequisite types like 'player_level' or 'item_owned' can be added here.
+                default:
+                    return false; // Unknown prerequisite type fails validation.
+            }
+        });
+    }
+    
+    /**
+     * Gets a list of all missions that are currently available to the player.
+     * A mission is available if it's not active, not completed, and its prerequisites are met.
+     * @returns {Array<object>} An array of available mission objects.
+     */
+    getAvailableMissions() {
+        const { activeMissionId, completedMissionIds } = this.gameState.missions;
+        return Object.values(DB.MISSIONS).filter(mission => {
+            const isAvailable =
+                mission.id !== activeMissionId &&
+                !completedMissionIds.includes(mission.id) &&
+                this.arePrerequisitesMet(mission.id);
+            return isAvailable;
+        });
+    }
+
+    /**
+     * Accepts a new mission, setting it as the active mission.
+     * @param {string} missionId The ID of the mission to accept.
+     * @param {boolean} [force=false] If true, bypasses checks and abandons current mission if necessary.
+     */
+    acceptMission(missionId, force = false) {
+        const mission = DB.MISSIONS[missionId];
+        
+        // 1. Validation (skipped if forced)
+        if (!force) {
+            if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
                 return;
             }
+        }
 
-            // 2. Check Prerequisites (The Gating System)
-            // We pass a mock 'gameState' - in a real scenario, pass the actual Game.state object
-            const gameState = {
-                completedMissions: this.completedMissionIds,
-                level: window.Game?.state?.level || 1,
-                credits: window.Game?.state?.credits || 0
-            };
-
-            if (window.MissionRegistry.isMissionAvailable(missionDef.id, gameState)) {
-                // 3. Auto-accept logic (if mission type implies it, e.g. 'tutorial')
-                // Later, this can be moved to a "Mission Board" UI check
-                if (missionDef.type === 'tutorial' || missionDef.auto_start) {
-                    this.startMission(missionDef.id);
-                }
+        // 2. Handle existing mission collision (Force logic)
+        if (this.gameState.missions.activeMissionId) {
+            if (force) {
+                this.abandonMission(); // Clear the way
+            } else {
+                return; // Should have been caught by validation, but safety first
             }
-        });
+        }
+
+        // 3. Initialize State
+        this.gameState.missions.activeMissionId = missionId;
+        this.gameState.missions.missionProgress[missionId] = {
+            objectives: {}
+        };
+        
+        this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
+        
+        // 4. Grant Start Items
+        if (this.simulationService) {
+            this.simulationService.grantMissionCargo(missionId);
+        }
+        
+        // 5. Initial Check & Render
+        this.checkTriggers(); 
+
+        // If the mission has no objectives, complete it immediately.
+        if (!mission.objectives || mission.objectives.length === 0) {
+            this.completeActiveMission();
+        } else {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
-     * Activates a mission from the Registry.
-     * Hydrates the static data into a dynamic tracking object.
+     * Abandons the currently active mission.
      */
-    startMission(missionId) {
-        const def = window.MissionRegistry.getMission(missionId);
-        if (!def) {
-            console.error(`MissionService: Cannot start unknown mission '${missionId}'`);
+    abandonMission() {
+        const abandonedMissionId = this.gameState.missions.activeMissionId;
+        if (!abandonedMissionId) return;
+
+        this.gameState.missions.activeMissionId = null;
+        this.gameState.missions.activeMissionObjectivesMet = false;
+        this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${abandonedMissionId}`);
+        // Note: We keep missionProgress so the player doesn't lose partial progress if they re-accept.
+        this.gameState.setState({});
+        this.uiManager.render(this.gameState.getState());
+    }
+
+    /**
+     * Checks all mission triggers against the current game state.
+     * Primarily checks item possession for delivery/acquisition objectives.
+     */
+    checkTriggers() {
+        const { activeMissionId } = this.gameState.missions;
+        if (!activeMissionId) {
+            if (this.gameState.missions.activeMissionObjectivesMet) {
+                this.gameState.missions.activeMissionObjectivesMet = false;
+                this.gameState.setState({}); // Notify of change
+            }
             return;
         }
-
-        console.log(`MissionService: Starting mission '${def.title}'`);
-
-        // Create a tracking object (The instance)
-        const missionInstance = {
-            id: def.id,
-            objectives: def.objectives.map(obj => ({
-                id: obj.id,
-                current: 0,
-                target: obj.count || 1,
-                isComplete: false,
-                definition: obj // Reference to static logic
-            })),
-            startTime: Date.now()
-        };
-
-        this.activeMissions.push(missionInstance);
-        
-        // Map listeners for performance (O(1) lookup instead of iterating all missions on every click)
-        this.mapEventListeners();
-
-        // Notify UI
-        if (this.uiManager && this.uiManager.showToast) {
-            this.uiManager.showToast(`Mission Started: ${def.title}`);
+    
+        const mission = DB.MISSIONS[activeMissionId];
+        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+        if (!mission || !inventory) {
+            this.gameState.missions.activeMissionObjectivesMet = false;
+            return;
+        }
+    
+        let allObjectivesMet = true;
+        let progressChanged = false;
+    
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item') {
+                const currentQuantity = inventory[obj.goodId]?.quantity || 0;
+                const progress = this.gameState.missions.missionProgress[activeMissionId];
+    
+                if (!progress.objectives[obj.goodId]) {
+                    progress.objectives[obj.goodId] = { current: 0 };
+                }
+    
+                if (progress.objectives[obj.goodId].current !== currentQuantity) {
+                    progress.objectives[obj.goodId].current = currentQuantity;
+                    progressChanged = true;
+                }
+    
+                if (currentQuantity < obj.quantity) {
+                    allObjectivesMet = false;
+                }
+            }
+        });
+    
+        // Only update state and re-render if there's a change.
+        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet || progressChanged) {
+            if (allObjectivesMet && !this.gameState.missions.activeMissionObjectivesMet) {
+                this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${activeMissionId} are met.`);
+            }
+            this.gameState.missions.activeMissionObjectivesMet = allObjectivesMet;
+            this.gameState.setState({}); // Set the new state
+            this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
+            if (progressChanged) {
+                this.uiManager.flashObjectiveProgress();
+            }
         }
     }
 
     /**
-     * Re-calculates which events we need to listen for based on active missions.
-     * Optimization: Prevents checking 'MINING' events if no mining missions are active.
+     * Completes the active mission, granting rewards and removing objective items.
+     * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
      */
-    mapEventListeners() {
-        this.eventListeners.clear();
+    completeActiveMission(force = false) {
+        const { activeMissionId } = this.gameState.missions;
+        if (!activeMissionId) return;
         
-        this.activeMissions.forEach(mission => {
+        // Temporarily set objectivesMet to true for objective-less missions OR if forced
+        const originalObjectivesMet = this.gameState.missions.activeMissionObjectivesMet;
+        const mission = DB.MISSIONS[activeMissionId];
+        
+        // Check Conditions
+        const metRequirements = this.gameState.missions.activeMissionObjectivesMet;
+        const noObjectives = !mission.objectives || mission.objectives.length === 0;
+        
+        if (!metRequirements && !noObjectives && !force) {
+            return; // Can't complete yet
+        }
+
+        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+
+        // 1. Deduct objective items (Only if strictly met or forced-but-available)
+        // Note: If forcing completion without items, this might result in negative inventory if not careful,
+        // so we check possession before deducting even on force.
+        if (mission.objectives) {
             mission.objectives.forEach(obj => {
-                if (!obj.isComplete) {
-                    const evt = obj.definition.target_event;
-                    if (!this.eventListeners.has(evt)) {
-                        this.eventListeners.set(evt, []);
-                    }
-                    this.eventListeners.get(evt).push({
-                        missionId: mission.id,
-                        objectiveId: obj.id
-                    });
+                if (obj.type === 'have_item' && inventory[obj.goodId]) {
+                    // Safe deduct: don't go below zero even on force
+                    const qtyToRemove = Math.min(inventory[obj.goodId].quantity, obj.quantity);
+                    inventory[obj.goodId].quantity -= qtyToRemove;
                 }
             });
-        });
-    }
-
-    /**
-     * CORE ENGINE METHOD
-     * Called by Game.js whenever something interesting happens.
-     * @param {string} eventType - e.g., "PLAYER_BOUGHT_ITEM", "ENEMY_KILLED"
-     * @param {object} eventData - Context (e.g., { itemId: "fuel", quantity: 1 })
-     */
-    handleEvent(eventType, eventData = {}) {
-        // 1. Fast exit if no missions care about this event
-        if (!this.eventListeners.has(eventType)) return;
-
-        // 2. Iterate listeners
-        const listeners = this.eventListeners.get(eventType);
-        let progressMade = false;
-
-        listeners.forEach(listener => {
-            const mission = this.activeMissions.find(m => m.id === listener.missionId);
-            if (!mission) return;
-
-            const objective = mission.objectives.find(o => o.id === listener.objectiveId);
-            if (!objective || objective.isComplete) return;
-
-            // 3. Verify Criteria (e.g. did they buy the *right* item?)
-            // This relies on the 'target' field in the JSON data matching eventData
-            // Simple implementation: If definition has 'required_item', check eventData.itemId
-            const def = objective.definition;
-            let matches = true;
-
-            if (def.required_item && def.required_item !== eventData.itemId) matches = false;
-            if (def.required_target && def.required_target !== eventData.targetId) matches = false;
-
-            if (matches) {
-                // 4. Update Progress
-                objective.current += (eventData.quantity || 1);
-                if (objective.current >= objective.target) {
-                    objective.current = objective.target;
-                    objective.isComplete = true;
-                    console.log(`MissionService: Objective '${def.text}' Complete!`);
-                }
-                progressMade = true;
-            }
-        });
-
-        if (progressMade) {
-            this.checkCompletions();
-            this.mapEventListeners(); // Remap to stop listening for completed objectives
-        }
-    }
-
-    /**
-     * Checks if any active missions have all objectives fulfilled.
-     */
-    checkCompletions() {
-        // Filter out completed missions
-        const newlyCompleted = [];
-        
-        this.activeMissions = this.activeMissions.filter(mission => {
-            const allDone = mission.objectives.every(obj => obj.isComplete);
-            
-            if (allDone) {
-                newlyCompleted.push(mission);
-                return false; // Remove from active
-            }
-            return true; // Keep in active
-        });
-
-        // Process completions
-        newlyCompleted.forEach(mission => {
-            this.completeMission(mission.id);
-        });
-    }
-
-    completeMission(missionId) {
-        const def = window.MissionRegistry.getMission(missionId);
-        this.completedMissionIds.push(missionId);
-        
-        console.log(`MissionService: MISSION COMPLETE - ${def.title}`);
-
-        // 1. Grant Rewards
-        if (def.rewards) {
-            this.grantRewards(def.rewards);
         }
 
-        // 2. Trigger Next Steps (Chaining)
-        if (def.on_complete) {
-            if (def.on_complete.trigger_event && this.uiManager) {
-                // Example trigger for UI Toasts
-                if (def.on_complete.trigger_event === "SHOW_TOAST") {
-                    this.uiManager.showToast(def.on_complete.trigger_args[0]);
-                }
-            }
-            
-            if (def.on_complete.auto_accept_next) {
-                this.startMission(def.on_complete.auto_accept_next);
-            }
+        // 2. Grant rewards via SimulationService
+        if (this.simulationService) {
+            this.simulationService._grantRewards(mission.rewards, mission.name);
         }
+        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId} ${force ? '(FORCED)' : ''}`);
 
-        // 3. Refresh available missions (newly unlocked stuff)
-        this.checkForNewMissions();
-    }
+        // 3. Update mission state
+        this.gameState.missions.completedMissionIds.push(activeMissionId);
+        this.gameState.missions.activeMissionId = null;
+        this.gameState.missions.activeMissionObjectivesMet = false;
 
-    grantRewards(rewards) {
-        // Hook into Player/Game state
-        if (rewards.credits && this.gameState) {
-            console.log(`> Reward: ${rewards.credits} Credits`);
-            // Access state directly or via setter if available
-            // this.gameState.state.credits += rewards.credits; 
-            // Better: use a dedicated method in GameState if it exists, or direct modification for now
-            this.gameState.state.credits += rewards.credits;
-        }
-        if (rewards.xp) {
-            console.log(`> Reward: ${rewards.xp} XP`);
-        }
-        // Add item logic here
-    }
-
-    // --- Utility ---
-
-    isMissionActive(id) {
-        return this.activeMissions.some(m => m.id === id);
-    }
-
-    isMissionCompleted(id) {
-        return this.completedMissionIds.includes(id);
+        // 4. Update state and re-render
+        this.gameState.setState({});
+        this.uiManager.render(this.gameState.getState());
     }
 }
 --- END OF FILE: ./js/services/MissionService.js ---
@@ -19325,19 +19025,6 @@ export class MarketService {
         // --- END CHANGE ---
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
-
-        // --- MISSION ENGINE TRIGGER ---
-        // Notify MissionService that a trade occurred
-        if (window.MissionService && window.MissionService.handleEvent) {
-            window.MissionService.handleEvent(
-                transactionType === 'buy' ? 'PLAYER_BOUGHT_ITEM' : 'PLAYER_SOLD_ITEM',
-                {
-                    itemId: goodId,
-                    quantity: quantity,
-                    locationId: this.gameState.currentLocationId
-                }
-            );
-        }
     }
 
     // --- VIRTUAL WORKBENCH: NEW METHOD ---
@@ -20352,112 +20039,6 @@ export class TimeService {
     }
 }
 --- END OF FILE: ./js/services/world/TimeService.js ---
-
---- START OF FILE: ./js/services/MissionRegistry.js ---
-/**
- * MissionRegistry.js
- * * Central database for all mission definitions.
- * Decouples logic (MissionService) from content (Mission Data).
- * Allows for modular loading of mission packs (e.g. Intro, Act 1, Side Quests).
- */
-
-const MissionRegistry = {
-    // storage for all loaded definitions
-    definitions: new Map(),
-    
-    // Categorization for faster lookups
-    categories: {
-        story: new Set(),
-        side: new Set(),
-        dynamic: new Set(),
-        tutorial: new Set()
-    },
-
-    /**
-     * Loads a pack of missions into the game.
-     * @param {Array} missionPack - Array of MissionDefinition objects
-     */
-    registerPack: function(missionPack) {
-        if (!Array.isArray(missionPack)) {
-            console.error("MissionRegistry: Failed to register pack. Expected Array.");
-            return;
-        }
-
-        missionPack.forEach(mission => {
-            if (this.validateMission(mission)) {
-                this.definitions.set(mission.id, mission);
-                
-                // Index by type/category
-                const type = mission.type || 'side';
-                if (!this.categories[type]) {
-                    this.categories[type] = new Set();
-                }
-                this.categories[type].add(mission.id);
-            }
-        });
-
-        console.log(`MissionRegistry: Loaded ${missionPack.length} missions.`);
-    },
-
-    /**
-     * specific lookup for a mission by ID
-     */
-    getMission: function(id) {
-        return this.definitions.get(id);
-    },
-
-    /**
-     * Validates that a mission object has the required schema structure.
-     * Essential for the future 'Mission Maker' app integration.
-     */
-    validateMission: function(mission) {
-        const requiredFields = ['id', 'title', 'type'];
-        const missing = requiredFields.filter(field => !mission[field]);
-        
-        if (missing.length > 0) {
-            console.error(`MissionRegistry: Invalid mission ${mission.id || 'unknown'}. Missing: ${missing.join(', ')}`);
-            return false;
-        }
-        return true;
-    },
-
-    /**
-     * Evaluates if a mission is available to the player based on state.
-     * @param {string} missionId 
-     * @param {object} gameState - The entire player state object
-     * @returns {boolean}
-     */
-    isMissionAvailable: function(missionId, gameState) {
-        const mission = this.definitions.get(missionId);
-        if (!mission) return false;
-
-        // 1. Check Prerequisite Missions
-        if (mission.prerequisites && mission.prerequisites.completed_missions) {
-            for (let reqId of mission.prerequisites.completed_missions) {
-                if (!gameState.completedMissions.includes(reqId)) return false;
-            }
-        }
-
-        // 2. Check Exclusions (Mutually exclusive choices)
-        if (mission.prerequisites && mission.prerequisites.excluded_by) {
-            for (let excId of mission.prerequisites.excluded_by) {
-                if (gameState.completedMissions.includes(excId)) return false;
-            }
-        }
-
-        // 3. Check Stats (Level, Credits, etc)
-        if (mission.prerequisites && mission.prerequisites.stats) {
-            const stats = mission.prerequisites.stats;
-            if (stats.min_level && gameState.level < stats.min_level) return false;
-            if (stats.min_credits && gameState.credits < stats.min_credits) return false;
-        }
-
-        return true;
-    }
-};
-
-window.MissionRegistry = MissionRegistry;
---- END OF FILE: ./js/services/MissionRegistry.js ---
 
 --- START OF FILE: ./js/services/game/IntroService.js ---
 // js/services/game/IntroService.js
@@ -28930,16 +28511,16 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [34.88] - 2026-1-26
+# [34.87] - 2026-1-26
 -  refactored lore
 -  refactored tutorials
 -  added tuts_economy.js
 -  added tuts_intro.js
--  added tuts_ships.js
--  added tuts_upgrades.js
+-  added tuts_progression.js
 -  added lore_broadstrokes.js
 -  added loreRegistry.js
--  tutorial intro sequence polish
+-  tutorial polish
+-  fixed hangar screen refresh bug
 -  updated meta files
 
 # [34.79] - 2026-1-25

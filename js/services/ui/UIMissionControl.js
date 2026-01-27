@@ -14,7 +14,6 @@ export class UIMissionControl {
 
     /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * Updated to check the new MissionService Engine.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -23,32 +22,14 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Check for missions in the NEW engine first
-        const activeMission = window.MissionService && window.MissionService.activeMissions.length > 0 
-            ? window.MissionService.activeMissions[0] 
-            : null;
-
-        if (activeMission) {
-            // New Engine Logic
-            const objective = activeMission.objectives.find(o => !o.isComplete) || activeMission.objectives[0];
-            const def = objective.definition;
-            
-            objectiveTextEl.textContent = def.text;
-            objectiveProgressEl.textContent = `[${objective.current}/${objective.target}]`;
-
-            // Default style for now
-            const hostClass = 'host-station'; 
-            contentEl.className = `sticky-content sci-fi-frame ${hostClass}`;
-            stickyBarEl.style.display = 'block';
-
-        } else if (gameState.missions.activeMissionId) {
-            // Fallback to Old System (if any old missions are still active)
+        if (gameState.missions.activeMissionId) {
             const mission = DB.MISSIONS[gameState.missions.activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;
             }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
+
             const objective = mission.objectives[0];
             const current = progress.objectives[objective.goodId]?.current ?? 0;
             const target = objective.quantity;
@@ -82,24 +63,10 @@ export class UIMissionControl {
     }
 
     /**
-     * Orchestrates showing the correct mission modal.
-     * Updated to support the new Registry.
+     * Orchestrates showing the correct mission modal (Details vs Completion).
      * @param {string} missionId 
      */
     showMissionModal(missionId) {
-        // Try New System
-        if (window.MissionRegistry) {
-            const def = window.MissionRegistry.getMission(missionId);
-            if (def) {
-                // Determine if we are completing it or viewing details
-                // This logic will be fully built out in Phase 4. 
-                // For now, we show details.
-                this._showMissionDetailsModalNew(def);
-                return;
-            }
-        }
-
-        // Fallback to Old System
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
@@ -113,58 +80,6 @@ export class UIMissionControl {
         } else {
             this._showMissionDetailsModal(mission);
         }
-    }
-
-    _showMissionDetailsModalNew(missionDef) {
-        const options = {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const modalContent = modal.querySelector('.modal-content');
-                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                
-                // Style from definition
-                if (missionDef.ui_style && missionDef.ui_style.theme) {
-                    modalContent.classList.add(missionDef.ui_style.theme);
-                }
-
-                modal.querySelector('#mission-modal-type').textContent = missionDef.type || "MISSION";
-                modal.querySelector('#mission-modal-description').innerHTML = missionDef.description;
-
-                const objectivesEl = modal.querySelector('#mission-modal-objectives');
-                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + 
-                    missionDef.objectives.map(obj => `<li>${obj.text}</li>`).join('') + '</ul>';
-                objectivesEl.innerHTML = objectivesHtml;
-                objectivesEl.style.display = 'block';
-
-                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-                if (missionDef.rewards) {
-                     const rewardsHtml = Object.entries(missionDef.rewards).map(([key, val]) => {
-                        if(key === 'credits') return `<span class="credits-text-pulsing">${formatCredits(val, true)}</span>`;
-                        return `${val} ${key.toUpperCase()}`;
-                     }).join(', ');
-                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
-                    rewardsEl.style.display = 'block';
-                } else {
-                    rewardsEl.innerHTML = '';
-                    rewardsEl.style.display = 'none';
-                }
-
-                const buttonsEl = modal.querySelector('#mission-modal-buttons');
-                const isActive = window.MissionService.isMissionActive(missionDef.id);
-                
-                if (isActive) {
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80" disabled>In Progress</button>`;
-                } else {
-                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${missionDef.id}">Accept</button>`;
-                     const btn = buttonsEl.querySelector('button');
-                     btn.onclick = () => {
-                         window.MissionService.startMission(missionDef.id);
-                         closeHandler();
-                     };
-                }
-            }
-        };
-        this.manager.queueModal('mission-modal', missionDef.title, missionDef.description, null, options);
     }
 
     _showMissionDetailsModal(mission) {

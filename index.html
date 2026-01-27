@@ -5,17 +5,23 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
+        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
+        
+        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
+     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
+        
+        // Prevent the browser's default error handling.
         return true;
       };
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.88</title>
+    <title>Orbital Trading 34.87</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -63,7 +69,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.88</p>
+            <p>Version 34.87</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -296,10 +302,6 @@
     </div>
 
     <script src="https://unpkg.com/@popperjs/core@2"></script>
-
-    <script src="./js/services/MissionRegistry.js"></script>
-    <script src="./js/data/missions/Missions_Intro.js"></script>
-
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
