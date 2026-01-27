@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.88] - 2026-1-26
+-  refactored missions
+-  added license_missions.js
+-  added missionRegistry.js
+-  added tutorial_missions.js
+-  updated meta files
+
 # [34.87] - 2026-1-26
 -  refactored lore
 -  refactored tutorials

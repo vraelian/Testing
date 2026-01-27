@@ -528,3 +528,43 @@ Pro: Clean separation of state (persisted) and view (ephemeral).
 Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
 
 Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller. 
+
+ADR-024: Tutorial Architecture (Logic-View Separation)
+Status: Accepted (2026-01-26)
+
+Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
+
+Decision: Split the tutorial responsibilities into two distinct layers:
+
+TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
+
+UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
+
+Consequences:
+
+Pro: Clean separation of state (persisted) and view (ephemeral).
+
+Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
+
+Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
+
+ADR-025: Mission Data Registry (Facade Pattern)
+Status: Accepted (2026-01-26)
+
+Context: The `missions.js` file was becoming a monolith, mixing tutorial logic, license unlocks, and generic delivery contracts. This structure made it difficult to integrate with external "Mission Maker" tools and complicated the addition of new mission "packs" (e.g., Story Act 1).
+
+Decision: Implemented a Registry Facade pattern for Missions, mirroring the Event and Lore architectures.
+
+Modular Storage: Missions are defined in specialized files within `js/data/missions/` (e.g., `tutorial_missions.js`, `license_missions.js`).
+
+Central Registry: `missionRegistry.js` aggregates these modules and exports a single `MISSION_REGISTRY` object.
+
+Database Integration: `database.js` imports the registry instead of individual files, maintaining a clean dependency graph.
+
+Consequences:
+
+Pro: Facilitates "plug-and-play" content expansion; new mission packs can be added by simply importing/spreading them in the registry.
+
+Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
+
+Pro: Prepares the architecture for automated content generation and ingestion.

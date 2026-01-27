@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.87</title>
+    <title>Orbital Trading 34.88</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.87</p>
+            <p>Version 34.88</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -9059,7 +9059,7 @@ export const MISSIONS = {
 --- START OF FILE: ./js/data/database.js ---
 // js/data/database.js
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
-import { MISSIONS } from './missions.js';
+import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
 import { TUTORIAL_DATA } from './tutorials.js';
@@ -9497,7 +9497,7 @@ export const DB = {
     ],
 
     // --- Mission Data ---
-    MISSIONS: MISSIONS,
+    MISSIONS: MISSION_REGISTRY,
 
     // --- Tutorial System Data ---
     TUTORIAL_DATA: TUTORIAL_DATA
@@ -9550,6 +9550,98 @@ export const NEWS_FLAVOR = [
     "[PUBLIC] Remember: All cargo must be declared. Smuggling is a system-wide offense."
 ];
 --- END OF FILE: ./js/data/news_flavor.js ---
+
+--- START OF FILE: ./js/data/missions/tutorial_missions.js ---
+// js/data/missions/tutorial_missions.js
+/**
+ * @fileoverview
+ * Defines tutorial-specific mission data.
+ */
+export const TUTORIAL_MISSIONS = {
+    'mission_tutorial_01': {
+        id: "mission_tutorial_01",
+        name: "Milk Run to Luna",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Hey buddy, you're a new captain, right? My hauler's reactor is fried and I'm on the hook for a delivery to Luna.<br><br>Could you deliver this load of <b>Plasteel</b> to the <b>Moon</b> for me? I don't have any credits to spare, but I've padded the manifest.<br><br>Deliver what I owe, keep the rest. You won't have trouble selling it there, trust me.",
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
+        ],
+        completion: {
+            "locationId": "loc_luna",
+            "title": "Favor Complete",
+            "text": "The freelancer sends his thanks.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [],
+        providedCargo: [ // Cargo given to the player on mission acceptance.
+            { "goodId": "plasteel", "quantity": 6 }
+        ]
+    },
+    'mission_tutorial_02': {
+        id: "mission_tutorial_02",
+        name: "Martian Resupply",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat.",
+        prerequisites: [ // This mission only becomes available after 'mission_tutorial_01' is complete.
+            { "type": "mission_completed", "missionId": "mission_tutorial_01" }
+        ],
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 2 }
+        ],
+        completion: {
+            "locationId": "loc_mars",
+            "title": "Delivery Complete",
+            "text": "The construction foreman thanks you for the Plasteel.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [
+            { "type": "credits", "amount": 7500 }
+        ]
+    }
+};
+--- END OF FILE: ./js/data/missions/tutorial_missions.js ---
+
+--- START OF FILE: ./js/data/missions/license_missions.js ---
+// js/data/missions/license_missions.js
+/**
+ * @fileoverview
+ * Defines license granting mission data.
+ */
+export const LICENSE_MISSIONS = {
+    'mission_license_t3': {
+         id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
+    },
+    'mission_license_t5': {
+         id: "mission_license_t5", name: "Governor's Contract", type: "LICENSE_GRANT", host: "STATION", isRepeatable: false, isAbandonable: false, description: "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 5 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
+    },
+    'mission_license_t7': {
+         id: "mission_license_t7", name: "Legendary Run", type: "LICENSE_GRANT", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Your name is spoken in the farthest corners of the system. Only a legend of your stature may be granted the right to trade the most advanced technologies known.", prerequisites: [{ "type": "revealed_tier", "tier": 7 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
+    }
+};
+--- END OF FILE: ./js/data/missions/license_missions.js ---
+
+--- START OF FILE: ./js/data/missions/missionRegistry.js ---
+// js/data/missions/missionRegistry.js
+/**
+ * @fileoverview Mission Registry (Facade)
+ * Aggregates all mission modules into the single MISSION_REGISTRY export.
+ * New mission packs should be imported and spread here.
+ */
+import { TUTORIAL_MISSIONS } from './tutorial_missions.js';
+import { LICENSE_MISSIONS } from './license_missions.js';
+
+export const MISSION_REGISTRY = {
+    ...TUTORIAL_MISSIONS,
+    ...LICENSE_MISSIONS
+    // Future mission packs (e.g. story_act_1, side_quests) will be spread here.
+};
+--- END OF FILE: ./js/data/missions/missionRegistry.js ---
 
 --- START OF FILE: ./js/data/age_events.js ---
 // js/data/age_events.js
@@ -28511,6 +28603,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.88] - 2026-1-26
+-  refactored missions
+-  added license_missions.js
+-  added missionRegistry.js
+-  added tutorial_missions.js
+-  updated meta files
+
 # [34.87] - 2026-1-26
 -  refactored lore
 -  refactored tutorials
@@ -31548,6 +31647,46 @@ Pro: Clean separation of state (persisted) and view (ephemeral).
 Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
 
 Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller. 
+
+ADR-024: Tutorial Architecture (Logic-View Separation)
+Status: Accepted (2026-01-26)
+
+Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
+
+Decision: Split the tutorial responsibilities into two distinct layers:
+
+TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
+
+UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
+
+Consequences:
+
+Pro: Clean separation of state (persisted) and view (ephemeral).
+
+Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
+
+Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
+
+ADR-025: Mission Data Registry (Facade Pattern)
+Status: Accepted (2026-01-26)
+
+Context: The `missions.js` file was becoming a monolith, mixing tutorial logic, license unlocks, and generic delivery contracts. This structure made it difficult to integrate with external "Mission Maker" tools and complicated the addition of new mission "packs" (e.g., Story Act 1).
+
+Decision: Implemented a Registry Facade pattern for Missions, mirroring the Event and Lore architectures.
+
+Modular Storage: Missions are defined in specialized files within `js/data/missions/` (e.g., `tutorial_missions.js`, `license_missions.js`).
+
+Central Registry: `missionRegistry.js` aggregates these modules and exports a single `MISSION_REGISTRY` object.
+
+Database Integration: `database.js` imports the registry instead of individual files, maintaining a clean dependency graph.
+
+Consequences:
+
+Pro: Facilitates "plug-and-play" content expansion; new mission packs can be added by simply importing/spreading them in the registry.
+
+Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
+
+Pro: Prepares the architecture for automated content generation and ingestion.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -31827,6 +31966,65 @@ graph TD
         M -- No --> N[End Batch & Clear Lock];
     end
 
+2.10 Tutorial Trigger & Interaction Flow
+The interaction loop between Logic (TutorialService) and View (UITutorialManager).
+
+Code snippet
+graph TD
+    subgraph Triggering
+        A[User Action / Screen Load] --> B[TutorialService.checkState];
+        B --> C{Matches Trigger?};
+        C -- Yes --> D[Set activeBatchId / activeStepId];
+        D --> E[Mutate GameState (NavLock)];
+    end
+
+    subgraph Visualization
+        E --> F[UIManager.render];
+        F --> G[UITutorialManager.showTutorialToast];
+        G --> H[Calculate Popper.js Position];
+        G --> I[Render SVG Highlights];
+        H & I --> J[DOM Update];
+    end
+
+    subgraph Progression
+        J --> K[User Clicks 'Next' or 'Action'];
+        K --> L[TutorialService.advanceStep];
+        L --> M{Next Step Exists?};
+        M -- Yes --> D;
+        M -- No --> N[End Batch & Clear Lock];
+    end
+
+2.11 Mission System Architecture
+Flow from static Registry definition to dynamic player state and UI interaction.
+
+Code snippet
+graph TD
+    subgraph Definition
+        A[Mission Modules] --> B[missionRegistry.js];
+        B --> C[DB.MISSIONS (Facade)];
+    end
+
+    subgraph Availability Check
+        C --> D[MissionService.getAvailableMissions];
+        D --> E{Check Prerequisites};
+        E -- Met --> F[Available Pool];
+        E -- Not Met --> G[Hidden/Locked];
+    end
+
+    subgraph Lifecycle
+        F --> H[User Accepts Mission];
+        H --> I[SimulationService.grantMissionCargo];
+        I --> J[Set activeMissionId];
+        J --> K((Mutate GameState));
+    end
+
+    subgraph Completion
+        K --> L[UIMissionControl: Render Sticky Bar];
+        L --> M[User Delivers Goods];
+        M --> N[MissionService.completeActiveMission];
+        N --> O[Grant Rewards / Remove Cargo];
+        O --> P[Add to completedMissionIds];
+    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---

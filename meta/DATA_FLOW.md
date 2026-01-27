@@ -273,3 +273,63 @@ graph TD
         M -- Yes --> D;
         M -- No --> N[End Batch & Clear Lock];
     end
+
+2.10 Tutorial Trigger & Interaction Flow
+The interaction loop between Logic (TutorialService) and View (UITutorialManager).
+
+Code snippet
+graph TD
+    subgraph Triggering
+        A[User Action / Screen Load] --> B[TutorialService.checkState];
+        B --> C{Matches Trigger?};
+        C -- Yes --> D[Set activeBatchId / activeStepId];
+        D --> E[Mutate GameState (NavLock)];
+    end
+
+    subgraph Visualization
+        E --> F[UIManager.render];
+        F --> G[UITutorialManager.showTutorialToast];
+        G --> H[Calculate Popper.js Position];
+        G --> I[Render SVG Highlights];
+        H & I --> J[DOM Update];
+    end
+
+    subgraph Progression
+        J --> K[User Clicks 'Next' or 'Action'];
+        K --> L[TutorialService.advanceStep];
+        L --> M{Next Step Exists?};
+        M -- Yes --> D;
+        M -- No --> N[End Batch & Clear Lock];
+    end
+
+2.11 Mission System Architecture
+Flow from static Registry definition to dynamic player state and UI interaction.
+
+Code snippet
+graph TD
+    subgraph Definition
+        A[Mission Modules] --> B[missionRegistry.js];
+        B --> C[DB.MISSIONS (Facade)];
+    end
+
+    subgraph Availability Check
+        C --> D[MissionService.getAvailableMissions];
+        D --> E{Check Prerequisites};
+        E -- Met --> F[Available Pool];
+        E -- Not Met --> G[Hidden/Locked];
+    end
+
+    subgraph Lifecycle
+        F --> H[User Accepts Mission];
+        H --> I[SimulationService.grantMissionCargo];
+        I --> J[Set activeMissionId];
+        J --> K((Mutate GameState));
+    end
+
+    subgraph Completion
+        K --> L[UIMissionControl: Render Sticky Bar];
+        L --> M[User Delivers Goods];
+        M --> N[MissionService.completeActiveMission];
+        N --> O[Grant Rewards / Remove Cargo];
+        O --> P[Add to completedMissionIds];
+    end

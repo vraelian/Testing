@@ -1,6 +1,6 @@
 // js/data/database.js
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
-import { MISSIONS } from './missions.js';
+import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
 import { TUTORIAL_DATA } from './tutorials.js';
@@ -438,7 +438,7 @@ export const DB = {
     ],
 
     // --- Mission Data ---
-    MISSIONS: MISSIONS,
+    MISSIONS: MISSION_REGISTRY,
 
     // --- Tutorial System Data ---
     TUTORIAL_DATA: TUTORIAL_DATA
