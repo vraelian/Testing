@@ -11,6 +11,10 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added tuts_progression.js
 -  added lore_broadstrokes.js
 -  added loreRegistry.js
+-  added MATH_REGISTRY.md
+-  added CODING_STANDARDS.md
+-  added UI_LIBRARY.md
+-  added LORE_COMPENDIUM.md
 -  tutorial polish
 -  fixed hangar screen refresh bug
 -  updated meta files

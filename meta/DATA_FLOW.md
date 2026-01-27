@@ -1,25 +1,23 @@
-# Orbital Trading - Data Flow Architecture
+Orbital Trading - Data Flow Architecture
+1. System Overview
+The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
 
-## 1. System Overview
+Core Layers
+Input Layer: EventManager (Global Listeners), ActionClickHandler (Delegation).
 
-The application follows a **Strict Unidirectional Data Flow**:
-`Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)`
+Logic Layer: SimulationService (Facade), Domain Services (MarketService, PlayerActionService).
 
-### Core Layers
-* **Input Layer**: `EventManager` (Global Listeners), `ActionClickHandler` (Delegation).
-* **Logic Layer**: `SimulationService` (Facade), Domain Services (`MarketService`, `PlayerActionService`).
-* **State Layer**: `GameState` (Single Source of Truth).
-* **Output Layer**: `UIManager` (Facade), Domain Controllers (`UIMarketControl`, etc.).
-* **Persistence Layer**: `AssetStorageService` (IndexedDB), `AssetService` (Memory Cache).
+State Layer: GameState (Single Source of Truth).
 
----
+Output Layer: UIManager (Facade), Domain Controllers (UIMarketControl, etc.).
 
-## 2. Process Diagrams
+Persistence Layer: AssetStorageService (IndexedDB), AssetService (Memory Cache).
 
-### 2.1 Core Game Loop
+2. Process Diagrams
+2.1 Core Game Loop
 The primary cycle for user interaction and state updates.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Input Layer
         A[User Interaction] --> B{EventManager};
@@ -44,13 +42,10 @@ graph TD
 
     H --> A;
 
-```
-
-### 2.2 Boot Sequence & Pre-Flight (ADR-021)
-
+2.2 Boot Sequence & Pre-Flight (ADR-021)
 Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -72,13 +67,10 @@ graph TD
         K --> L[UIManager.render: Game];
     end
 
-```
-
-### 2.3 Asset Hydration Architecture
-
+2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -102,13 +94,10 @@ graph TD
         D & H --> K[DOM Image Element];
     end
 
-```
-
-### 2.4 Intel Market System (Local Data Broker)
-
+2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
 
-```mermaid
+Code snippet
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -133,13 +122,10 @@ graph TD
         M -- No --> O[Return Standard Price];
     end
 
-```
-
-### 2.5 Upgrade Installation (Destructive Replacement)
-
+2.5 Upgrade Installation (Destructive Replacement)
 Logic handling the 3-slot limit and replacement confirmation.
 
-```mermaid
+Code snippet
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -162,13 +148,10 @@ graph TD
         K --> L((Update Ship State));
     end
 
-```
-
-### 2.6 Animated Transaction Flow
-
+2.6 Animated Transaction Flow
 Handling asynchronous visual blocking during state transitions.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -191,13 +174,10 @@ graph TD
         I --> J[UIManager.render];
     end
 
-```
-
-### 2.7 Automated Testing Bot
-
+2.7 Automated Testing Bot
 Headless execution path bypassing the input layer.
 
-```mermaid
+Code snippet
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -215,13 +195,10 @@ graph TD
         G --> A;
     end
 
-```
-
-### 2.8 Travel Sequence (Visual Handoff)
-
+2.8 Travel Sequence (Visual Handoff)
 Separation of instant logic calculation and delayed visual presentation.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[SimulationService.handleTravel];
@@ -243,13 +220,10 @@ graph TD
         K -- Yes --> L[Show Event Modal];
     end
 
-```
-
-### 2.9 Event System 2.0 Resolution
-
+2.9 Event System 2.0 Resolution
 Data-driven event selection and effect application.
 
-```mermaid
+Code snippet
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];
@@ -271,4 +245,31 @@ graph TD
         H --> I[DynamicValueResolver: Calculate Quantities];
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
+    end
+2.10 Tutorial Trigger & Interaction Flow
+The interaction loop between Logic (TutorialService) and View (UITutorialManager).
+
+Code snippet
+graph TD
+    subgraph Triggering
+        A[User Action / Screen Load] --> B[TutorialService.checkState];
+        B --> C{Matches Trigger?};
+        C -- Yes --> D[Set activeBatchId / activeStepId];
+        D --> E[Mutate GameState (NavLock)];
+    end
+
+    subgraph Visualization
+        E --> F[UIManager.render];
+        F --> G[UITutorialManager.showTutorialToast];
+        G --> H[Calculate Popper.js Position];
+        G --> I[Render SVG Highlights];
+        H & I --> J[DOM Update];
+    end
+
+    subgraph Progression
+        J --> K[User Clicks 'Next' or 'Action'];
+        K --> L[TutorialService.advanceStep];
+        L --> M{Next Step Exists?};
+        M -- Yes --> D;
+        M -- No --> N[End Batch & Clear Lock];
     end
