@@ -5,7 +5,7 @@
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
@@ -36,8 +36,9 @@ export class TravelService {
     /**
      * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
+     * @param {boolean} [useFoldedSpace=false] - Whether to consume an artifact for instant travel.
      */
-    travelTo(locationId) {
+    travelTo(locationId, useFoldedSpace = false) {
         this.uiManager.resetMarketTransactionState();
         const { tutorials } = this.gameState;
         const { navLock } = tutorials;
@@ -60,6 +61,23 @@ export class TravelService {
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
+
+        // --- FOLDED SPACE LOGIC (PHASE 3) ---
+        if (useFoldedSpace) {
+            // 1. Verify Item Existence
+            const shipInv = state.player.inventories[activeShip.id];
+            const artifactQty = shipInv && shipInv[COMMODITY_IDS.FOLDED_DRIVES] ? shipInv[COMMODITY_IDS.FOLDED_DRIVES].quantity : 0;
+
+            if (artifactQty < 1) {
+                this.uiManager.queueModal('event-modal', "Artifact Missing", "You do not possess a Folded-Space Drive to consume.");
+                return;
+            }
+
+            // 2. Proceed to Travel with Override Flag
+            this.initiateTravel(locationId, { useFoldedSpace: true });
+            return;
+        }
+        // ------------------------------------
 
         // --- UPGRADE SYSTEM & Z-CLASS LOGIC ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
@@ -136,107 +154,140 @@ export class TravelService {
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
 
-        // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
-        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-            travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
-        }
-
-        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
-        const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
-        
-        travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
-        travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
-
-        // --- Z-CLASS EXECUTION LOGIC ---
-
-        // ATTR_METABOLIC_BURN
-        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
-        }
-
-        // ATTR_HYPER_CALCULATION (-25% Time)
-        if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
-            travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
-        }
-
-        // ATTR_SOLAR_HARMONY (0 Fuel Inward)
-        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-            const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
-            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
-            if (toDist < fromDist) {
-                travelInfo.fuelCost = 0;
-                this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
+        // --- PHASE 3: FOLDED SPACE EXECUTION ---
+        if (eventMods.useFoldedSpace) {
+            // A. Consume Artifact
+            const shipInv = this.gameState.player.inventories[activeShip.id];
+            if (shipInv && shipInv[COMMODITY_IDS.FOLDED_DRIVES]) {
+                shipInv[COMMODITY_IDS.FOLDED_DRIVES].quantity--;
+                this.logger.info.player(state.day, 'ARTIFACT_USE', 'Consumed Folded-Space Drive for instant travel.');
             }
-        }
 
-        // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
-        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            // B. Apply Overrides (Instant, No Fuel, No Damage)
+            travelInfo.time = 0;
             travelInfo.fuelCost = 0;
-            travelInfo.time *= 10;
+            
+            // Visual feedback
+            this.uiManager.createFloatingText("Folded Space Jump", window.innerWidth / 2, window.innerHeight / 2, '#8b5cf6'); // Violet
+            
+            // Note: We bypass Hull Damage calculation and Attribute logic below
+            // by forcing the values after calculation or returning early?
+            // Cleaner to let the state update happen, but override values now.
         }
+        // ---------------------------------------
 
-        // Legacy: Sleeper
-        shipAttributes.forEach(attrId => {
-            const def = GameAttributes.getDefinition(attrId);
-            if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                // Prevent double dipping if handled above, but legacy logic kept for safety
-                if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
+        if (!eventMods.useFoldedSpace) {
+            // --- STANDARD NEWTONIAN LOGIC ---
+
+            // 1. Attribute Logic (Time & Fuel)
+            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+                travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
             }
-            if (attrId === 'ATTR_SLEEPER') {
-                travelInfo.time *= 4.5;
+
+            const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
+            const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
+            
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+            travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
+
+            // ATTR_METABOLIC_BURN
+            if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
+            }
+
+            // ATTR_HYPER_CALCULATION (-25% Time)
+            if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+                travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
+            }
+
+            // ATTR_SOLAR_HARMONY (0 Fuel Inward)
+            if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+                const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+                if (toDist < fromDist) {
+                    travelInfo.fuelCost = 0;
+                    this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
+                }
+            }
+
+            // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
+            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 travelInfo.fuelCost = 0;
+                travelInfo.time *= 10;
             }
-        });
 
-        if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
-            if (Math.random() < 0.15) {
-                travelInfo.fuelCost = 0;
-                travelInfo.time *= 2;
-                this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+            // Legacy: Sleeper
+            shipAttributes.forEach(attrId => {
+                const def = GameAttributes.getDefinition(attrId);
+                if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
+                    if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
+                }
+                if (attrId === 'ATTR_SLEEPER') {
+                    travelInfo.time *= 4.5;
+                    travelInfo.fuelCost = 0;
+                }
+            });
+
+            if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
+                if (Math.random() < 0.15) {
+                    travelInfo.fuelCost = 0;
+                    travelInfo.time *= 2;
+                    this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+                }
+            }
+
+            // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
+            const speedBonus = state.player.statModifiers?.travelSpeed || 0;
+            if (speedBonus > 0) {
+                travelInfo.time = travelInfo.time / (1 + speedBonus);
             }
         }
 
-        // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
-        const speedBonus = state.player.statModifiers?.travelSpeed || 0;
-        if (speedBonus > 0) {
-            travelInfo.time = travelInfo.time / (1 + speedBonus);
-        }
-
+        // Apply Event Modifications (e.g. from Random Event outcome)
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
-        travelInfo.time = Math.max(1, Math.round(travelInfo.time));
+        
+        // Finalize Values
+        travelInfo.time = eventMods.useFoldedSpace ? 0 : Math.max(1, Math.round(travelInfo.time));
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
-        if (activeShipState.fuel < travelInfo.fuelCost) {
+        // Check Fuel Again (unless Folded Space)
+        if (!eventMods.useFoldedSpace && activeShipState.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
             return;
         }
 
-        if (eventMods.forceEvent) {
+        // Force Event Check (Legacy/Debug)
+        if (eventMods.forceEvent && !eventMods.useFoldedSpace) {
             if (this._checkForRandomEvent(locationId, true)) {
                 return;
             }
         }
 
-        let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
-        
-        // --- Z-CLASS HULL LOGIC ---
-        if (shipAttributes.includes('ATTR_XENO_HULL') || 
-            shipAttributes.includes('ATTR_FLUID_HULL') || 
-            shipAttributes.includes('ATTR_NO_DECAY')) {
-            travelHullDamage = 0;
-        } else if (shipAttributes.includes('ATTR_RESILIENT')) {
-            travelHullDamage *= 0.5;
+        // Calculate Hull Damage
+        let travelHullDamage = 0;
+        if (!eventMods.useFoldedSpace) {
+            travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
+            
+            // --- Z-CLASS HULL LOGIC ---
+            if (shipAttributes.includes('ATTR_XENO_HULL') || 
+                shipAttributes.includes('ATTR_FLUID_HULL') || 
+                shipAttributes.includes('ATTR_NO_DECAY')) {
+                travelHullDamage = 0;
+            } else if (shipAttributes.includes('ATTR_RESILIENT')) {
+                travelHullDamage *= 0.5;
+            }
+            
+            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         }
-        
-        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
-        
+
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
+        // Apply Hull Damage
         activeShipState.health -= totalHullDamageValue;
         this.simulationService._checkHullWarnings(activeShip.id);
 
@@ -245,8 +296,14 @@ export class TravelService {
             return;
         }
         
+        // Apply Fuel Consumption
         activeShipState.fuel -= travelInfo.fuelCost;
-        this.timeService.advanceDays(travelInfo.time);
+        
+        // Advance Time (if > 0)
+        if (travelInfo.time > 0) {
+            this.timeService.advanceDays(travelInfo.time);
+        }
+        
         if (this.gameState.isGameOver) return;
         
         this.simulationService.newsTickerService.onLocationChange(locationId);
@@ -256,8 +313,10 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
-        // --- Z-CLASS POST-TRAVEL LOGIC ---
-
+        // --- Z-CLASS POST-TRAVEL LOGIC (Only if not using Folded Space?) ---
+        // Design Decision: Z-Class attributes like "Atlas" (Refill on 20th trip) should probably still fire?
+        // Let's assume they DO fire, as a "Trip" occurred, even if instant.
+        
         // ATTR_TRAVELLER (Atlas)
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
@@ -281,7 +340,8 @@ export class TravelService {
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
         }
 
-        // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
+        // ATTR_MATTER_ABSORPTION (Finality of Whispers)
+        // Folded Space costs 0 fuel, so refund is 0. Logic holds.
         if (shipAttributes.includes('ATTR_MATTER_ABSORPTION')) {
             const refund = travelInfo.fuelCost * 0.5;
             if (refund > 0) {

@@ -1,0 +1,333 @@
+/* css/screens/sol-station.css */
+
+.sol-dashboard {
+    padding: 1rem;
+    color: #e2e8f0;
+    font-family: 'Oxanium', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Header & Bank */
+.sol-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--active-mode-color);
+    padding-bottom: 0.5rem;
+}
+
+.sol-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.sol-level {
+    font-size: 0.9rem;
+    color: var(--active-mode-color);
+    margin-left: 0.5rem;
+}
+
+.sol-bank {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.bank-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.bank-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.bank-value {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.btn-harvest {
+    background: var(--active-mode-color);
+    color: #0f172a;
+    font-weight: bold;
+}
+
+/* Status Panel */
+.sol-status-panel {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid #334155;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.status-row:last-child {
+    margin-bottom: 0;
+}
+
+.status-label {
+    width: 140px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.bar-container {
+    flex-grow: 1;
+    height: 12px;
+    background: #1e293b;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.xp-fill {
+    background-color: #3b82f6;
+}
+
+.status-value {
+    width: 80px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+/* Lever */
+.sol-lever-container {
+    background: #0f172a;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.lever-track {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.mode-option {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+    background: #1e293b;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    opacity: 0.6;
+}
+
+.mode-option:hover {
+    background: #334155;
+}
+
+.mode-option.active {
+    background: rgba(var(--mode-color), 0.1); /* This requires RGB splitting or just use border */
+    border-color: var(--mode-color);
+    box-shadow: 0 0 15px var(--mode-color);
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.mode-label {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--mode-color);
+}
+
+.mode-flavor {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+}
+
+/* Caches */
+.sol-caches-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tier-group {
+    background: rgba(0,0,0,0.2);
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.tier-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cache-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+.cache-card {
+    display: flex;
+    align-items: center;
+    background: #1e293b;
+    border-left: 4px solid #fff;
+    padding: 0.5rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.cache-icon {
+    width: 48px;
+    height: 48px;
+    background-size: cover;
+    margin-right: 0.75rem;
+    border-radius: 4px;
+    background-color: #0f172a;
+}
+
+.cache-info {
+    flex-grow: 1;
+}
+
+.cache-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.cache-stock {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+.cache-time {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.btn-donate {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #334155;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    border-radius: 4px;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-donate.active {
+    background: #22c55e;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+
+.btn-donate.active:hover {
+    background: #16a34a;
+    transform: scale(1.05);
+}
+
+.sol-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* Modal Roster Styles */
+.roster-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.roster-section h3 {
+    border-bottom: 1px solid #334155;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: #94a3b8;
+}
+
+.roster-slots, .roster-pool {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.officer-card {
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #334155;
+}
+
+.officer-card.empty-slot {
+    justify-content: center;
+    border-style: dashed;
+    color: #475569;
+    height: 80px;
+}
+
+.officer-portrait {
+    width: 60px;
+    height: 60px;
+    background-color: #1e293b;
+    border-radius: 50%;
+    margin-right: 1rem;
+    background-size: cover;
+    background-position: center;
+}
+
+.officer-info {
+    flex-grow: 1;
+}
+
+.officer-name {
+    font-weight: bold;
+    color: #e2e8f0;
+}
+
+.officer-role {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.officer-buffs {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.text-green { color: #4ade80; }
+.text-red { color: #f87171; }

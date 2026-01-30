@@ -2,6 +2,7 @@
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { skewedRandom } from '../utils.js';
+import { STATION_CONFIG } from '../data/station_config.js'; // Import Config
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
@@ -203,6 +204,25 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- VIRTUAL WORKBENCH: SOL STATION (PHASE 1) ---
+            solStation: {
+                unlocked: false,
+                level: 1,
+                xp: 0,
+                entropy: 100.0,
+                mode: STATION_CONFIG.MODES.STABILIZATION.id,
+                lastBurnDay: 0,
+                accumulated: {
+                    credits: 0,
+                    antimatter: 0
+                },
+                caches: {}, // Dynamically filled below
+                roster: {
+                    assigned: Array(STATION_CONFIG.INITIAL_ROSTER_SLOTS).fill(null)
+                }
+            },
+            // --- END VIRTUAL WORKBENCH ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,
@@ -270,6 +290,15 @@ export class GameState {
                 };
             });
         });
+
+        // --- VIRTUAL WORKBENCH: Initialize Sol Station Caches ---
+        // Caches exist for commodities Tier 1 through 6
+        DB.COMMODITIES.forEach(c => {
+            if (c.tier && c.tier <= 6) {
+                initialState.solStation.caches[c.id] = 0;
+            }
+        });
+        // --- END VIRTUAL WORKBENCH ---
 
         Object.assign(this, initialState);
         this._calculateGalacticAverages();

@@ -43,6 +43,7 @@ export class TimeService {
         this.newsTickerService = newsTickerService;
         this.simulationService = null; // Injected by SimulationService
         this.intelService = null;      // Injected by SimulationService
+        this.solStationService = null; // [[NEW]] Injected by SimulationService
     }
 
     /**
@@ -73,6 +74,13 @@ export class TimeService {
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
+
+            // --- [[NEW]] SOL STATION ENGINE ---
+            // Process the station's daily entropy and production
+            if (this.solStationService) {
+                this.solStationService.processDailyTick();
+            }
+            // --- [[END]] SOL STATION ENGINE ---
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Base upgrade modifier

@@ -46,9 +46,7 @@ export class ActionClickHandler {
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
-                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    
                     await this.simulationService.buyShip(shipId, { target });
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
@@ -62,9 +60,7 @@ export class ActionClickHandler {
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
-                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
-
                     await this.simulationService.sellShip(shipId, { target });
                 });
                 break;
@@ -92,8 +88,36 @@ export class ActionClickHandler {
             }
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- [[NEW]] SOL STATION ACTIONS (Phase 4) ---
+            case 'sol-set-mode':
+                if (dataset.mode) {
+                    this.uiManager.solStationControl.handleSetMode(dataset.mode);
+                }
+                break;
+            case 'sol-donate':
+                if (dataset.goodId) {
+                    this.uiManager.solStationControl.handleDonate(dataset.goodId, e);
+                }
+                break;
+            case 'sol-harvest':
+                this.uiManager.solStationControl.handleHarvest(e);
+                break;
+            case 'sol-open-roster':
+                this.uiManager.solStationControl.showRosterModal();
+                break;
+            case 'sol-assign':
+                if (dataset.officerId) {
+                    this.uiManager.solStationControl.handleAssignOfficer(dataset.officerId);
+                }
+                break;
+            case 'sol-unassign':
+                if (dataset.slot) {
+                    this.uiManager.solStationControl.handleUnassignOfficer(parseInt(dataset.slot));
+                }
+                break;
+            // --- END SOL STATION ACTIONS ---
+
             // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
-            // Handles the purchase and installation flow for upgrades
             case 'install_upgrade': {
                 const { upgradeId } = dataset;
                 if (!upgradeId) return;
@@ -104,42 +128,30 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
-                // [[NEW]] Calculate total cost server-side logic (Hardware + Labor)
                 const hardwareCost = upgradeDef.value;
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
 
-                // 1. Basic Checks
                 if (player.credits < totalCost) {
                     this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade and installation fee.');
                     return;
                 }
 
-                // 2. Trigger Triple-Confirmation Flow
-                // Pass hardwareCost and laborFee separately for the UI breakdown
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
                     
-                    // 3. Execution (Callback)
-                    
-                    // Deduct Credits
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
                         this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
-                    // Handle Replacement (Dismantle)
                     if (replaceIndex !== -1) {
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
-                    // Install New Upgrade
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
 
-                    // REQUEST D: Post-purchase Navigation Switch
-                    // Switch to Hangar, lock to 'hangar' (owned ships) view, and focus the active ship
                     this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     
-                    // Ensure the carousel index points to the active ship so the player sees the new pill immediately
                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                     
@@ -147,7 +159,6 @@ export class ActionClickHandler {
                 });
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
                 const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
@@ -250,29 +261,19 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
-            // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
-            // New case for fast-tracking from Map Modal to Navigation/Launch
             case 'navigate-to-poi': {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
-                // 1. Close the map modal
                 this.uiManager.hideMapDetailModal();
-
-                // 2. Switch to Navigation Screen
-                // Explicitly navigate to Ship -> Navigation
                 this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
 
-                // 3. Fast-track to Launch Modal
-                // Slight delay ensures the screen transition logic (if any) is processed
-                // before the modal logic triggers.
                 setTimeout(() => {
                     this.uiManager.showLaunchModal(locationId);
                 }, 100);
                 
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
@@ -331,7 +332,7 @@ export class ActionClickHandler {
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
-                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
+                // Deprecated
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);

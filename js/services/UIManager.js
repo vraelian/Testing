@@ -1,7 +1,7 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
 // --- Screen Renderers ---
@@ -14,19 +14,21 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
+import { StationRenderer } from '../ui/renderers/StationRenderer.js'; // [[NEW]]
 
 // --- Services & Logic ---
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 
-// --- [[NEW]] Domain Controllers ---
+// --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
 import { UITutorialManager } from './ui/UITutorialManager.js';
 import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
+import { UISolStationControl } from './ui/UISolStationControl.js'; // [[NEW]]
 
 export class UIManager {
     /**
@@ -51,13 +53,14 @@ export class UIManager {
         this.effectsManager = new EffectsManager();
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
-        // --- [[NEW]] Domain Controllers (The Switchboard) ---
+        // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
         this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
+        this.solStationControl = new UISolStationControl(this); // [[NEW]]
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -248,7 +251,6 @@ export class UIManager {
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
         
-        // [[NEW]] Add conditional class for max credits state to the container
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
@@ -340,8 +342,15 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
-                if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                // [[NEW]] Sol Station Override
+                if (gameState.currentLocationId === LOCATION_IDS.SUN) {
+                    // Render Sol Station Dashboard
+                    StationRenderer.render(this.cache.servicesScreen, gameState);
+                } else {
+                    // Standard Services
+                    this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                    if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                }
                 break;
             case SCREEN_IDS.MARKET:
                 // Delegate: Market Control
@@ -351,8 +360,6 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
-                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
@@ -437,7 +444,6 @@ export class UIManager {
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
-    // [[FIXED]] Added _calculateSaleDetails proxy to UIMarketControl
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
     // --- Mission Control ---
