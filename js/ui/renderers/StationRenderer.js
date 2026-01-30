@@ -4,11 +4,11 @@ import { formatCredits } from '../../utils.js';
 
 export class StationRenderer {
     /**
-     * Renders the Sol Station Dashboard into the container.
-     * @param {HTMLElement} container 
+     * Returns the HTML string for the Sol Station Dashboard.
      * @param {object} gameState 
+     * @returns {string}
      */
-    static render(container, gameState) {
+    static getHTML(gameState) {
         const state = gameState.solStation;
         const modeDef = STATION_CONFIG.MODES[state.mode];
         
@@ -79,66 +79,21 @@ export class StationRenderer {
             </div>
         `;
 
-        // 4. Maintenance Caches (The Burn)
-        // Group by Tier
-        let cachesHtml = '<div class="sol-caches-grid">';
-        
-        const tierGroups = {};
-        Object.keys(state.caches).forEach(chemId => {
-            const def = DB.COMMODITIES.find(c => c.id === chemId);
-            if (!def) return;
-            if (!tierGroups[def.tier]) tierGroups[def.tier] = [];
-            tierGroups[def.tier].push({ id: chemId, qty: state.caches[chemId], def });
-        });
-
-        // Iterate Tiers 1-6
-        for (let t = 1; t <= 6; t++) {
-            if (!tierGroups[t]) continue;
-            const burnReq = STATION_CONFIG.WEEKLY_BURN[t];
-            
-            cachesHtml += `<div class="tier-group"><div class="tier-label">TIER ${t} (Burn: ${burnReq}/wk)</div><div class="cache-row">`;
-            
-            tierGroups[t].forEach(item => {
-                const daysRemaining = item.qty > 0 ? (item.qty / (burnReq/7)).toFixed(1) : '0.0';
-                const playerStock = gameState.player.inventories[gameState.player.activeShipId]?.[item.id]?.quantity || 0;
-                const canDonate = playerStock > 0;
-
-                cachesHtml += `
-                    <div class="cache-card tier-${t}" style="border-color: var(--tier-${t}-color)">
-                        <div class="cache-icon" style="background-image: url('assets/commodities/${item.id}.png')"></div>
-                        <div class="cache-info">
-                            <div class="cache-name">${item.def.name}</div>
-                            <div class="cache-stock ${item.qty === 0 ? 'text-red' : ''}">${Math.floor(item.qty)} Units</div>
-                            <div class="cache-time">${daysRemaining} Days</div>
-                        </div>
-                        <button class="btn-donate ${canDonate ? 'active' : ''}" 
-                                data-action="sol-donate" 
-                                data-good-id="${item.id}"
-                                ${!canDonate ? 'disabled' : ''}>
-                            +
-                        </button>
-                    </div>
-                `;
-            });
-            cachesHtml += `</div></div>`;
-        }
-        cachesHtml += '</div>';
-
-        // 5. Footer (Roster Button)
-        const footerHtml = `
-            <div class="sol-footer">
+        // 4. Action Buttons (Replaced Inline Caches)
+        const actionsHtml = `
+            <div class="sol-actions-row" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-wide" data-action="sol-open-caches">MANAGE MAINTENANCE CACHES</button>
                 <button class="btn btn-wide" data-action="sol-open-roster">MANAGE DIRECTORATE</button>
             </div>
         `;
 
         // Assemble
-        container.innerHTML = `
+        return `
             <div class="sol-dashboard" style="--active-mode-color: ${modeDef.color}">
                 ${headerHtml}
                 ${statusHtml}
                 ${leverHtml}
-                ${cachesHtml}
-                ${footerHtml}
+                ${actionsHtml}
             </div>
         `;
     }

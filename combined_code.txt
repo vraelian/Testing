@@ -6260,11 +6260,11 @@ import { formatCredits } from '../../utils.js';
 
 export class StationRenderer {
     /**
-     * Renders the Sol Station Dashboard into the container.
-     * @param {HTMLElement} container 
+     * Returns the HTML string for the Sol Station Dashboard.
      * @param {object} gameState 
+     * @returns {string}
      */
-    static render(container, gameState) {
+    static getHTML(gameState) {
         const state = gameState.solStation;
         const modeDef = STATION_CONFIG.MODES[state.mode];
         
@@ -6335,66 +6335,21 @@ export class StationRenderer {
             </div>
         `;
 
-        // 4. Maintenance Caches (The Burn)
-        // Group by Tier
-        let cachesHtml = '<div class="sol-caches-grid">';
-        
-        const tierGroups = {};
-        Object.keys(state.caches).forEach(chemId => {
-            const def = DB.COMMODITIES.find(c => c.id === chemId);
-            if (!def) return;
-            if (!tierGroups[def.tier]) tierGroups[def.tier] = [];
-            tierGroups[def.tier].push({ id: chemId, qty: state.caches[chemId], def });
-        });
-
-        // Iterate Tiers 1-6
-        for (let t = 1; t <= 6; t++) {
-            if (!tierGroups[t]) continue;
-            const burnReq = STATION_CONFIG.WEEKLY_BURN[t];
-            
-            cachesHtml += `<div class="tier-group"><div class="tier-label">TIER ${t} (Burn: ${burnReq}/wk)</div><div class="cache-row">`;
-            
-            tierGroups[t].forEach(item => {
-                const daysRemaining = item.qty > 0 ? (item.qty / (burnReq/7)).toFixed(1) : '0.0';
-                const playerStock = gameState.player.inventories[gameState.player.activeShipId]?.[item.id]?.quantity || 0;
-                const canDonate = playerStock > 0;
-
-                cachesHtml += `
-                    <div class="cache-card tier-${t}" style="border-color: var(--tier-${t}-color)">
-                        <div class="cache-icon" style="background-image: url('assets/commodities/${item.id}.png')"></div>
-                        <div class="cache-info">
-                            <div class="cache-name">${item.def.name}</div>
-                            <div class="cache-stock ${item.qty === 0 ? 'text-red' : ''}">${Math.floor(item.qty)} Units</div>
-                            <div class="cache-time">${daysRemaining} Days</div>
-                        </div>
-                        <button class="btn-donate ${canDonate ? 'active' : ''}" 
-                                data-action="sol-donate" 
-                                data-good-id="${item.id}"
-                                ${!canDonate ? 'disabled' : ''}>
-                            +
-                        </button>
-                    </div>
-                `;
-            });
-            cachesHtml += `</div></div>`;
-        }
-        cachesHtml += '</div>';
-
-        // 5. Footer (Roster Button)
-        const footerHtml = `
-            <div class="sol-footer">
+        // 4. Action Buttons (Replaced Inline Caches)
+        const actionsHtml = `
+            <div class="sol-actions-row" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-wide" data-action="sol-open-caches">MANAGE MAINTENANCE CACHES</button>
                 <button class="btn btn-wide" data-action="sol-open-roster">MANAGE DIRECTORATE</button>
             </div>
         `;
 
         // Assemble
-        container.innerHTML = `
+        return `
             <div class="sol-dashboard" style="--active-mode-color: ${modeDef.color}">
                 ${headerHtml}
                 ${statusHtml}
                 ${leverHtml}
-                ${cachesHtml}
-                ${footerHtml}
+                ${actionsHtml}
             </div>
         `;
     }
@@ -7717,6 +7672,7 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS, UPGRADE_COLORS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { StationRenderer } from '../renderers/StationRenderer.js';
 
 /**
  * Renders the entire Services screen UI.
@@ -7726,7 +7682,10 @@ import { GameAttributes } from '../../services/GameAttributes.js';
  */
 export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
-    const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
+    
+    // Default to 'station' if at Sun, otherwise 'supply'
+    const defaultTab = currentLocationId === LOCATION_IDS.SUN ? 'station' : 'supply';
+    const { servicesTab = defaultTab } = gameState.uiState;
 
     const STARPORT_NAMES = {
         [LOCATION_IDS.SUN]: "Sol Station",
@@ -7757,18 +7716,37 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- Sub-Nav Render ---
     const supplyActive = servicesTab === 'supply' ? 'active' : '';
     const tuningActive = servicesTab === 'tuning' ? 'active' : '';
+    const stationActive = servicesTab === 'station' ? 'active' : '';
     
-    const supplyStyle = servicesTab === 'supply' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
-    const tuningStyle = servicesTab === 'tuning' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
+    const activeStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"`;
 
-    const subNavHtml = `
+    let subNavHtml = `
         <div class="sub-nav-bar" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; justify-content: center;">
-            <button class="sub-nav-button ${supplyActive}" ${supplyStyle} data-action="set-services-tab" data-target="supply">SUPPLY</button>
-            <button class="sub-nav-button ${tuningActive}" ${tuningStyle} data-action="set-services-tab" data-target="tuning">TUNING</button>
-        </div>
+            <button class="sub-nav-button ${supplyActive}" ${servicesTab === 'supply' ? activeStyle : ''} data-action="set-services-tab" data-target="supply">SUPPLY</button>
+            <button class="sub-nav-button ${tuningActive}" ${servicesTab === 'tuning' ? activeStyle : ''} data-action="set-services-tab" data-target="tuning">TUNING</button>
     `;
 
+    // Add Station Tab if at Sol
+    if (currentLocationId === LOCATION_IDS.SUN) {
+        subNavHtml += `<button class="sub-nav-button ${stationActive}" ${servicesTab === 'station' ? activeStyle : ''} data-action="set-services-tab" data-target="station">STATION</button>`;
+    }
+    subNavHtml += `</div>`;
+
     // --- View Routing ---
+    
+    // 1. SOL STATION DASHBOARD
+    if (servicesTab === 'station' && currentLocationId === LOCATION_IDS.SUN) {
+        return `
+            <div class="flex flex-col h-full">
+                ${subNavHtml}
+                <div class="services-scroll-panel flex-grow min-h-0">
+                    ${StationRenderer.getHTML(gameState)}
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. TUNING VIEW (Upgrade Shop)
     if (servicesTab === 'tuning') {
         return `
             <div class="flex flex-col h-full">
@@ -7781,7 +7759,7 @@ export function renderServicesScreen(gameState, simulationService) {
         `;
     }
 
-    // --- Fallback / Default View (Supply) ---
+    // 3. SUPPLY VIEW (Fallback / Default)
     if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
         return `
             <div class="flex flex-col h-full">
@@ -16309,6 +16287,9 @@ export class UISolStationControl {
             this.uiManager.render(gameState);
             this.uiManager.createFloatingText(`Donated ${amount}x ${goodName}`, event.clientX, event.clientY, '#22c55e');
             this.uiManager.triggerEffect('systemSurge', { theme: 'green' });
+
+            // [[FIX]] Refresh the modal to show updated values
+            this.showCachesModal();
         }
     }
 
@@ -16328,6 +16309,62 @@ export class UISolStationControl {
         } else {
             this.uiManager.queueModal('event-modal', 'Empty Banks', 'Production buffers are empty.');
         }
+    }
+
+    // --- Caches Management (NEW) ---
+
+    showCachesModal() {
+        const state = this.uiManager.lastKnownState.solStation;
+        const player = this.uiManager.lastKnownState.player;
+        const inventory = player.inventories[player.activeShipId] || {};
+
+        let content = '<div class="sol-caches-grid">';
+        
+        // Group by Tier logic
+        const tierGroups = {};
+        Object.keys(state.caches).forEach(chemId => {
+            const def = DB.COMMODITIES.find(c => c.id === chemId);
+            if (!def) return;
+            if (!tierGroups[def.tier]) tierGroups[def.tier] = [];
+            tierGroups[def.tier].push({ id: chemId, qty: state.caches[chemId], def });
+        });
+
+        for (let t = 1; t <= 6; t++) {
+            if (!tierGroups[t]) continue;
+            const burnReq = STATION_CONFIG.WEEKLY_BURN[t];
+            content += `<div class="tier-group"><div class="tier-label">TIER ${t} (Burn: ${burnReq}/wk)</div><div class="cache-row">`;
+            
+            tierGroups[t].forEach(item => {
+                const daysRemaining = item.qty > 0 ? (item.qty / (burnReq/7)).toFixed(1) : '0.0';
+                const playerStock = inventory[item.id]?.quantity || 0;
+                const canDonate = playerStock > 0;
+
+                content += `
+                    <div class="cache-card tier-${t}" style="border-color: var(--tier-${t}-color)">
+                        <div class="cache-icon" style="background-image: url('assets/commodities/${item.id}.png')"></div>
+                        <div class="cache-info">
+                            <div class="cache-name">${item.def.name}</div>
+                            <div class="cache-stock ${item.qty === 0 ? 'text-red' : ''}">${Math.floor(item.qty)} Units</div>
+                            <div class="cache-time">${daysRemaining} Days</div>
+                        </div>
+                        <button class="btn-donate ${canDonate ? 'active' : ''}" 
+                                data-action="sol-donate" 
+                                data-good-id="${item.id}"
+                                ${!canDonate ? 'disabled' : ''}>
+                            +
+                        </button>
+                    </div>
+                `;
+            });
+            content += `</div></div>`;
+        }
+        content += '</div>';
+
+        // Use 'event-modal' for reliability, repurposing it for custom HTML content
+        this.uiManager.queueModal('event-modal', 'Maintenance Caches', content, null, {
+            modalClass: 'sol-station-modal',
+            dismissOutside: true
+        });
     }
 
     // --- Roster Management ---
@@ -16360,8 +16397,10 @@ export class UISolStationControl {
         });
         content += `</div></div></div>`;
 
-        this.uiManager.queueModal('custom-modal', 'Station Directorate', content, null, {
-            modalClass: 'sol-station-modal'
+        // [[FIX]] Use standard 'event-modal' logic
+        this.uiManager.queueModal('event-modal', 'Station Directorate', content, null, {
+            modalClass: 'sol-station-modal',
+            dismissOutside: true
         });
     }
 
@@ -24633,7 +24672,6 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
-import { StationRenderer } from '../ui/renderers/StationRenderer.js'; // [[NEW]]
 
 // --- Services & Logic ---
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
@@ -24647,7 +24685,7 @@ import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
-import { UISolStationControl } from './ui/UISolStationControl.js'; // [[NEW]]
+import { UISolStationControl } from './ui/UISolStationControl.js'; 
 
 export class UIManager {
     /**
@@ -24679,7 +24717,7 @@ export class UIManager {
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
-        this.solStationControl = new UISolStationControl(this); // [[NEW]]
+        this.solStationControl = new UISolStationControl(this); 
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -24961,15 +24999,9 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                // [[NEW]] Sol Station Override
-                if (gameState.currentLocationId === LOCATION_IDS.SUN) {
-                    // Render Sol Station Dashboard
-                    StationRenderer.render(this.cache.servicesScreen, gameState);
-                } else {
-                    // Standard Services
-                    this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
-                    if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
-                }
+                // [[UPDATED]] Unified Service Rendering
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
+                if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
                 // Delegate: Market Control
@@ -28263,7 +28295,7 @@ export class ActionClickHandler {
             // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION (PHASE 1) ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
-                if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
+                if (tabId && (tabId === 'supply' || tabId === 'tuning' || tabId === 'station')) {
                     this.gameState.setState({
                         uiState: {
                             ...state.uiState,
@@ -28291,6 +28323,9 @@ export class ActionClickHandler {
                 break;
             case 'sol-open-roster':
                 this.uiManager.solStationControl.showRosterModal();
+                break;
+            case 'sol-open-caches': // [[NEW]]
+                this.uiManager.solStationControl.showCachesModal();
                 break;
             case 'sol-assign':
                 if (dataset.officerId) {

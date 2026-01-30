@@ -14,7 +14,6 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
-import { StationRenderer } from '../ui/renderers/StationRenderer.js'; // [[NEW]]
 
 // --- Services & Logic ---
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
@@ -28,7 +27,7 @@ import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
-import { UISolStationControl } from './ui/UISolStationControl.js'; // [[NEW]]
+import { UISolStationControl } from './ui/UISolStationControl.js'; 
 
 export class UIManager {
     /**
@@ -60,7 +59,7 @@ export class UIManager {
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
-        this.solStationControl = new UISolStationControl(this); // [[NEW]]
+        this.solStationControl = new UISolStationControl(this); 
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -342,15 +341,9 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                // [[NEW]] Sol Station Override
-                if (gameState.currentLocationId === LOCATION_IDS.SUN) {
-                    // Render Sol Station Dashboard
-                    StationRenderer.render(this.cache.servicesScreen, gameState);
-                } else {
-                    // Standard Services
-                    this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
-                    if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
-                }
+                // [[UPDATED]] Unified Service Rendering
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
+                if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
                 // Delegate: Market Control

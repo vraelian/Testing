@@ -48,6 +48,9 @@ export class UISolStationControl {
             this.uiManager.render(gameState);
             this.uiManager.createFloatingText(`Donated ${amount}x ${goodName}`, event.clientX, event.clientY, '#22c55e');
             this.uiManager.triggerEffect('systemSurge', { theme: 'green' });
+
+            // [[FIX]] Refresh the modal to show updated values
+            this.showCachesModal();
         }
     }
 
@@ -67,6 +70,62 @@ export class UISolStationControl {
         } else {
             this.uiManager.queueModal('event-modal', 'Empty Banks', 'Production buffers are empty.');
         }
+    }
+
+    // --- Caches Management (NEW) ---
+
+    showCachesModal() {
+        const state = this.uiManager.lastKnownState.solStation;
+        const player = this.uiManager.lastKnownState.player;
+        const inventory = player.inventories[player.activeShipId] || {};
+
+        let content = '<div class="sol-caches-grid">';
+        
+        // Group by Tier logic
+        const tierGroups = {};
+        Object.keys(state.caches).forEach(chemId => {
+            const def = DB.COMMODITIES.find(c => c.id === chemId);
+            if (!def) return;
+            if (!tierGroups[def.tier]) tierGroups[def.tier] = [];
+            tierGroups[def.tier].push({ id: chemId, qty: state.caches[chemId], def });
+        });
+
+        for (let t = 1; t <= 6; t++) {
+            if (!tierGroups[t]) continue;
+            const burnReq = STATION_CONFIG.WEEKLY_BURN[t];
+            content += `<div class="tier-group"><div class="tier-label">TIER ${t} (Burn: ${burnReq}/wk)</div><div class="cache-row">`;
+            
+            tierGroups[t].forEach(item => {
+                const daysRemaining = item.qty > 0 ? (item.qty / (burnReq/7)).toFixed(1) : '0.0';
+                const playerStock = inventory[item.id]?.quantity || 0;
+                const canDonate = playerStock > 0;
+
+                content += `
+                    <div class="cache-card tier-${t}" style="border-color: var(--tier-${t}-color)">
+                        <div class="cache-icon" style="background-image: url('assets/commodities/${item.id}.png')"></div>
+                        <div class="cache-info">
+                            <div class="cache-name">${item.def.name}</div>
+                            <div class="cache-stock ${item.qty === 0 ? 'text-red' : ''}">${Math.floor(item.qty)} Units</div>
+                            <div class="cache-time">${daysRemaining} Days</div>
+                        </div>
+                        <button class="btn-donate ${canDonate ? 'active' : ''}" 
+                                data-action="sol-donate" 
+                                data-good-id="${item.id}"
+                                ${!canDonate ? 'disabled' : ''}>
+                            +
+                        </button>
+                    </div>
+                `;
+            });
+            content += `</div></div>`;
+        }
+        content += '</div>';
+
+        // Use 'event-modal' for reliability, repurposing it for custom HTML content
+        this.uiManager.queueModal('event-modal', 'Maintenance Caches', content, null, {
+            modalClass: 'sol-station-modal',
+            dismissOutside: true
+        });
     }
 
     // --- Roster Management ---
@@ -99,8 +158,10 @@ export class UISolStationControl {
         });
         content += `</div></div></div>`;
 
-        this.uiManager.queueModal('custom-modal', 'Station Directorate', content, null, {
-            modalClass: 'sol-station-modal'
+        // [[FIX]] Use standard 'event-modal' logic
+        this.uiManager.queueModal('event-modal', 'Station Directorate', content, null, {
+            modalClass: 'sol-station-modal',
+            dismissOutside: true
         });
     }
 

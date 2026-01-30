@@ -76,7 +76,7 @@ export class ActionClickHandler {
             // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION (PHASE 1) ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
-                if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
+                if (tabId && (tabId === 'supply' || tabId === 'tuning' || tabId === 'station')) {
                     this.gameState.setState({
                         uiState: {
                             ...state.uiState,
@@ -104,6 +104,9 @@ export class ActionClickHandler {
                 break;
             case 'sol-open-roster':
                 this.uiManager.solStationControl.showRosterModal();
+                break;
+            case 'sol-open-caches': // [[NEW]]
+                this.uiManager.solStationControl.showCachesModal();
                 break;
             case 'sol-assign':
                 if (dataset.officerId) {
