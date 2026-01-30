@@ -499,6 +499,16 @@ ${logHistory}
             }},
             // ----------------------------------
 
+            // --- [[NEW]] SOL STATION UNLOCK ---
+            unlockSolStation: { name: 'Unlock Sol Station', type: 'button', handler: () => {
+                if (this.gameState.solStation) {
+                    this.gameState.solStation.unlocked = true;
+                    this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                    this.gameState.setState({});
+                }
+            }},
+            // ----------------------------------
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -714,6 +724,10 @@ ${logHistory}
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
+        
+        // --- [[NEW]] SOL STATION UNLOCK (TRIGGER MENU) ---
+        triggerFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
+        // -------------------------------------------------
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');

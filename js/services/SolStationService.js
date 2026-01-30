@@ -21,10 +21,11 @@ export class SolStationService {
      * The master heartbeat for the Sol Station. Called daily by TimeService.
      */
     processDailyTick() {
-        const state = this.gameState.state.solStation;
+        // [FIX] Access state directly from gameState instance, not .state property
+        const state = this.gameState.solStation;
         
         // 1. Guard Clause: Station must be unlocked
-        if (!state.unlocked) return;
+        if (!state || !state.unlocked) return;
 
         // 2. Calculate Aggregate Modifiers (Mode + Officers + Level)
         const modifiers = this.calculateModifiers();
@@ -47,7 +48,7 @@ export class SolStationService {
      * @returns {object} { creditMult, antimatterMult, entropyMult, decayFlatMod }
      */
     calculateModifiers() {
-        const state = this.gameState.state.solStation;
+        const state = this.gameState.solStation;
         const modeConfig = STATION_CONFIG.MODES[state.mode];
 
         // A. Base Modifiers from Mode
@@ -150,7 +151,7 @@ export class SolStationService {
                 state.xp = 0; // Reset or Overflow? GDD implies "Lvl 2 @ 100 XP", let's use overflow
                 // actually simpler to reset for now based on "100 XP required" phrasing
                 
-                this.logger.info.system('Sol Station', this.gameState.state.day, 'LEVEL UP', `Station reached Level ${state.level}`);
+                this.logger.info.system('Sol Station', this.gameState.day, 'LEVEL UP', `Station reached Level ${state.level}`);
                 
                 // Unlock Officer Slot? (Every 5 levels)
                 if (state.level % 5 === 0) {
@@ -161,7 +162,7 @@ export class SolStationService {
     }
 
     _checkWeeklyBurn(state) {
-        const currentDay = this.gameState.state.day;
+        const currentDay = this.gameState.day;
         if (currentDay - state.lastBurnDay >= 7) {
             this.performWeeklyBurn(state);
             state.lastBurnDay = currentDay;
@@ -191,9 +192,9 @@ export class SolStationService {
         }
 
         if (emptyCachesFound > 0) {
-            this.logger.warn('Sol Station', this.gameState.state.day, 'BURN CYCLE', `${emptyCachesFound} caches depleted.`);
+            this.logger.warn('Sol Station', this.gameState.day, 'BURN CYCLE', `${emptyCachesFound} caches depleted.`);
         } else {
-            this.logger.info.system('Sol Station', this.gameState.state.day, 'BURN CYCLE', 'All systems nominal.');
+            this.logger.info.system('Sol Station', this.gameState.day, 'BURN CYCLE', 'All systems nominal.');
         }
     }
 
@@ -201,14 +202,16 @@ export class SolStationService {
 
     setMode(newModeId) {
         if (STATION_CONFIG.MODES[newModeId]) {
-            this.gameState.state.solStation.mode = newModeId;
+            // [FIX] Correct state access
+            this.gameState.solStation.mode = newModeId;
             return true;
         }
         return false;
     }
 
     donateCargo(commodityId, quantity) {
-        const state = this.gameState.state.solStation;
+        // [FIX] Correct state access
+        const state = this.gameState.solStation;
         if (state.caches.hasOwnProperty(commodityId)) {
             state.caches[commodityId] += quantity;
             return true;
@@ -217,17 +220,21 @@ export class SolStationService {
     }
 
     withdrawAccumulated() {
-        const state = this.gameState.state.solStation;
+        // [FIX] Correct state access
+        const state = this.gameState.solStation;
         const payout = {
             credits: Math.floor(state.accumulated.credits),
             antimatter: Math.floor(state.accumulated.antimatter)
         };
 
         if (payout.credits > 0 || payout.antimatter > 0) {
-            this.gameState.state.player.credits += payout.credits;
+            // [FIX] Correct player state access
+            this.gameState.player.credits += payout.credits;
+            
             // TODO: Add Antimatter to inventory? 
             // For now, assuming Antimatter is just a score/resource or directly added if item exists
-            if (this.gameState.state.player.inventories.hasOwnProperty('antimatter') && payout.antimatter > 0) {
+            // [FIX] Correct inventory access
+            if (this.gameState.player.inventories.hasOwnProperty('antimatter') && payout.antimatter > 0) {
                  // Add logic if Antimatter is a real item in player inv
             }
             
