@@ -203,6 +203,20 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- SOL STATION (PHASE 1 IMPLEMENTATION) ---
+            solStation: {
+                entropy: 0,          // 0-100% Station Entropy
+                mode: 'DEFAULT',     // Current operation mode
+                caches: {},          // Storage for Tier 1-6 commodities { commodityId: amount }
+                officers: [],        // Array of assigned officers
+                lastWeeklyBurn: 0,   // Timestamp (day) of last consumption
+                bank: {              // Accrued resources
+                    credits: 0,
+                    antimatter: 0
+                }
+            },
+            // --- END SOL STATION ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,

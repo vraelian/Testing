@@ -17,6 +17,7 @@ import { TravelService } from './services/world/TravelService.js';
 // --- [[START]] PHASE 4 IMPORT ---
 import { AssetService } from './services/AssetService.js';
 import { SHIP_IDS } from './data/constants.js'; 
+import { SolStationService } from './services/SolStationService.js'; // Added Import
 // --- [[END]] PHASE 4 IMPORT ---
 
 /**
@@ -166,7 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', setAppHeight);
     }
 
-
+    // Expose SolStationService for Debugging
+    window.SolStationService = SolStationService; // Added
 
     // Set up the main start button to initialize and begin the game.
     startButton.addEventListener('click', () => {

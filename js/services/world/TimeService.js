@@ -3,6 +3,7 @@ import { DB } from '../../data/database.js';
 import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { SolStationService } from '../SolStationService.js'; // Added Import
 
 // --- ERA 2: TRANSHUMANIST EVENT DATA (Age 100-195) ---
 const CYBORG_EVENTS = {
@@ -127,6 +128,11 @@ export class TimeService {
                 this.marketService._updateShipyardStock(); 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
+
+            // --- SOL STATION: Daily Simulation Tick ---
+            // Handles Entropy and Weekly Commodity Burn
+            SolStationService.handleDailyUpdate(this.gameState.day);
+            // --- END SOL STATION ---
 
             // Intel Expiration
             const activeDeal = this.gameState.activeIntelDeal; 
