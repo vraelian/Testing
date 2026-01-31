@@ -15,8 +15,7 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
-import { RandomEventService } from './RandomEventService.js'; 
-import { SolStationService } from './SolStationService.js'; // [[NEW]]
+import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -41,15 +40,7 @@ export class SimulationService {
 
          // Instantiate all services
         this.marketService = new MarketService(gameState);
-        
-        // [[NEW]] Instantiate SolStationService
-        this.solStationService = new SolStationService(this.gameState, this.logger);
-
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
-        
-        // [[NEW]] Inject SolStationService into TimeService
-        this.timeService.solStationService = this.solStationService;
-
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);

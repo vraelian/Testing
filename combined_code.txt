@@ -4780,342 +4780,6 @@ WORKBENCH --- */
 }
 --- END OF FILE: ./css/screens/finance-screen.css ---
 
---- START OF FILE: ./css/screens/sol-station.css ---
-/* css/screens/sol-station.css */
-
-.sol-dashboard {
-    padding: 1rem;
-    color: #e2e8f0;
-    font-family: 'Oxanium', sans-serif;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    animation: fadeIn 0.5s ease-out;
-}
-
-/* Header & Bank */
-.sol-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--active-mode-color);
-    padding-bottom: 0.5rem;
-}
-
-.sol-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-}
-
-.sol-level {
-    font-size: 0.9rem;
-    color: var(--active-mode-color);
-    margin-left: 0.5rem;
-}
-
-.sol-bank {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.bank-item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.bank-label {
-    font-size: 0.7rem;
-    color: #94a3b8;
-}
-
-.bank-value {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-}
-
-.btn-harvest {
-    background: var(--active-mode-color);
-    color: #0f172a;
-    font-weight: bold;
-}
-
-/* Status Panel */
-.sol-status-panel {
-    background: rgba(15, 23, 42, 0.6);
-    padding: 1rem;
-    border-radius: 4px;
-    border: 1px solid #334155;
-}
-
-.status-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.status-row:last-child {
-    margin-bottom: 0;
-}
-
-.status-label {
-    width: 140px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #cbd5e1;
-}
-
-.bar-container {
-    flex-grow: 1;
-    height: 12px;
-    background: #1e293b;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.bar-fill {
-    height: 100%;
-    transition: width 0.5s ease;
-}
-
-.xp-fill {
-    background-color: #3b82f6;
-}
-
-.status-value {
-    width: 80px;
-    text-align: right;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-}
-
-/* Lever */
-.sol-lever-container {
-    background: #0f172a;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
-}
-
-.lever-track {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.mode-option {
-    flex: 1;
-    text-align: center;
-    padding: 1rem;
-    background: #1e293b;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 4px;
-    opacity: 0.6;
-}
-
-.mode-option:hover {
-    background: #334155;
-}
-
-.mode-option.active {
-    background: rgba(var(--mode-color), 0.1); /* This requires RGB splitting or just use border */
-    border-color: var(--mode-color);
-    box-shadow: 0 0 15px var(--mode-color);
-    opacity: 1;
-    transform: translateY(-2px);
-}
-
-.mode-label {
-    font-weight: 800;
-    font-size: 1rem;
-    color: var(--mode-color);
-}
-
-.mode-flavor {
-    font-size: 0.7rem;
-    color: #94a3b8;
-    margin-top: 0.25rem;
-}
-
-/* Caches */
-.sol-caches-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.tier-group {
-    background: rgba(0,0,0,0.2);
-    padding: 0.5rem;
-    border-radius: 4px;
-}
-
-.tier-label {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.cache-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.75rem;
-}
-
-.cache-card {
-    display: flex;
-    align-items: center;
-    background: #1e293b;
-    border-left: 4px solid #fff;
-    padding: 0.5rem;
-    border-radius: 0 4px 4px 0;
-}
-
-.cache-icon {
-    width: 48px;
-    height: 48px;
-    background-size: cover;
-    margin-right: 0.75rem;
-    border-radius: 4px;
-    background-color: #0f172a;
-}
-
-.cache-info {
-    flex-grow: 1;
-}
-
-.cache-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.cache-stock {
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    color: #cbd5e1;
-}
-
-.cache-time {
-    font-size: 0.7rem;
-    color: #64748b;
-}
-
-.btn-donate {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background: #334155;
-    color: #94a3b8;
-    font-size: 1.5rem;
-    border-radius: 4px;
-    cursor: not-allowed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.btn-donate.active {
-    background: #22c55e;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
-}
-
-.btn-donate.active:hover {
-    background: #16a34a;
-    transform: scale(1.05);
-}
-
-.sol-footer {
-    display: flex;
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-/* Modal Roster Styles */
-.roster-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.roster-section h3 {
-    border-bottom: 1px solid #334155;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    color: #94a3b8;
-}
-
-.roster-slots, .roster-pool {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.officer-card {
-    display: flex;
-    align-items: center;
-    background: #0f172a;
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #334155;
-}
-
-.officer-card.empty-slot {
-    justify-content: center;
-    border-style: dashed;
-    color: #475569;
-    height: 80px;
-}
-
-.officer-portrait {
-    width: 60px;
-    height: 60px;
-    background-color: #1e293b;
-    border-radius: 50%;
-    margin-right: 1rem;
-    background-size: cover;
-    background-position: center;
-}
-
-.officer-info {
-    flex-grow: 1;
-}
-
-.officer-name {
-    font-weight: bold;
-    color: #e2e8f0;
-}
-
-.officer-role {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-}
-
-.officer-buffs {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.text-green { color: #4ade80; }
-.text-red { color: #f87171; }
---- END OF FILE: ./css/screens/sol-station.css ---
-
 --- START OF FILE: ./css/screens/hangar-screen.css ---
 /* css/screens/hangar-screen.css */
 
@@ -6252,109 +5916,6 @@ export class IntelMarketRenderer {
     }
 }
 --- END OF FILE: ./js/ui/renderers/IntelMarketRenderer.js ---
-
---- START OF FILE: ./js/ui/renderers/StationRenderer.js ---
-import { STATION_CONFIG } from '../../data/station_config.js';
-import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
-
-export class StationRenderer {
-    /**
-     * Returns the HTML string for the Sol Station Dashboard.
-     * @param {object} gameState 
-     * @returns {string}
-     */
-    static getHTML(gameState) {
-        const state = gameState.solStation;
-        const modeDef = STATION_CONFIG.MODES[state.mode];
-        
-        // 1. Header & Bank
-        const headerHtml = `
-            <div class="sol-header">
-                <div class="sol-title">SOL STATION <span class="sol-level">LVL ${state.level}</span></div>
-                <div class="sol-bank">
-                    <div class="bank-item">
-                        <span class="bank-label">CREDITS</span>
-                        <span class="bank-value credits-text">${formatCredits(state.accumulated.credits)}</span>
-                    </div>
-                    <div class="bank-item">
-                        <span class="bank-label">ANTIMATTER</span>
-                        <span class="bank-value antimatter-text">${state.accumulated.antimatter.toFixed(3)}</span>
-                    </div>
-                    <button class="btn btn-sm btn-harvest" data-action="sol-harvest">HARVEST</button>
-                </div>
-            </div>
-        `;
-
-        // 2. Status Bars (Entropy & XP)
-        const entropyPct = state.entropy;
-        const entropyColor = entropyPct > 70 ? '#22c55e' : entropyPct > 30 ? '#eab308' : '#ef4444';
-        
-        // XP Calculation
-        const xpReq = STATION_CONFIG.getXPForLevel(state.level);
-        const xpPct = (state.xp / xpReq) * 100;
-
-        const statusHtml = `
-            <div class="sol-status-panel">
-                <div class="status-row">
-                    <span class="status-label">ENTROPY STABILITY</span>
-                    <div class="bar-container">
-                        <div class="bar-fill" style="width: ${entropyPct}%; background-color: ${entropyColor};"></div>
-                    </div>
-                    <span class="status-value">${entropyPct.toFixed(1)}%</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">PROGRESS</span>
-                    <div class="bar-container">
-                        <div class="bar-fill xp-fill" style="width: ${xpPct}%;"></div>
-                    </div>
-                    <span class="status-value">${state.xp}/${xpReq} XP</span>
-                </div>
-            </div>
-        `;
-
-        // 3. The Lever (Mode Switch)
-        const modesHtml = Object.values(STATION_CONFIG.MODES).map(m => {
-            const isActive = m.id === state.mode;
-            return `
-                <div class="mode-option ${isActive ? 'active' : ''}" 
-                     data-action="sol-set-mode" 
-                     data-mode="${m.id}"
-                     style="--mode-color: ${m.color}">
-                    <div class="mode-label">${m.label}</div>
-                    <div class="mode-flavor">${m.flavor}</div>
-                </div>
-            `;
-        }).join('');
-
-        const leverHtml = `
-            <div class="sol-lever-container">
-                <div class="lever-track">
-                    ${modesHtml}
-                </div>
-            </div>
-        `;
-
-        // 4. Action Buttons (Replaced Inline Caches)
-        const actionsHtml = `
-            <div class="sol-actions-row" style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button class="btn btn-wide" data-action="sol-open-caches">MANAGE MAINTENANCE CACHES</button>
-                <button class="btn btn-wide" data-action="sol-open-roster">MANAGE DIRECTORATE</button>
-            </div>
-        `;
-
-        // Assemble
-        return `
-            <div class="sol-dashboard" style="--active-mode-color: ${modeDef.color}">
-                ${headerHtml}
-                ${statusHtml}
-                ${leverHtml}
-                ${actionsHtml}
-            </div>
-        `;
-    }
-}
---- END OF FILE: ./js/ui/renderers/StationRenderer.js ---
 
 --- START OF FILE: ./js/ui/components/MapScreen.js ---
 // js/ui/components/MapScreen.js
@@ -7672,7 +7233,6 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS, UPGRADE_COLORS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
-import { StationRenderer } from '../renderers/StationRenderer.js';
 
 /**
  * Renders the entire Services screen UI.
@@ -7682,10 +7242,7 @@ import { StationRenderer } from '../renderers/StationRenderer.js';
  */
 export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
-    
-    // Default to 'station' if at Sun, otherwise 'supply'
-    const defaultTab = currentLocationId === LOCATION_IDS.SUN ? 'station' : 'supply';
-    const { servicesTab = defaultTab } = gameState.uiState;
+    const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
 
     const STARPORT_NAMES = {
         [LOCATION_IDS.SUN]: "Sol Station",
@@ -7716,37 +7273,18 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- Sub-Nav Render ---
     const supplyActive = servicesTab === 'supply' ? 'active' : '';
     const tuningActive = servicesTab === 'tuning' ? 'active' : '';
-    const stationActive = servicesTab === 'station' ? 'active' : '';
     
-    const activeStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"`;
+    const supplyStyle = servicesTab === 'supply' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
+    const tuningStyle = servicesTab === 'tuning' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
 
-    let subNavHtml = `
+    const subNavHtml = `
         <div class="sub-nav-bar" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; justify-content: center;">
-            <button class="sub-nav-button ${supplyActive}" ${servicesTab === 'supply' ? activeStyle : ''} data-action="set-services-tab" data-target="supply">SUPPLY</button>
-            <button class="sub-nav-button ${tuningActive}" ${servicesTab === 'tuning' ? activeStyle : ''} data-action="set-services-tab" data-target="tuning">TUNING</button>
+            <button class="sub-nav-button ${supplyActive}" ${supplyStyle} data-action="set-services-tab" data-target="supply">SUPPLY</button>
+            <button class="sub-nav-button ${tuningActive}" ${tuningStyle} data-action="set-services-tab" data-target="tuning">TUNING</button>
+        </div>
     `;
 
-    // Add Station Tab if at Sol
-    if (currentLocationId === LOCATION_IDS.SUN) {
-        subNavHtml += `<button class="sub-nav-button ${stationActive}" ${servicesTab === 'station' ? activeStyle : ''} data-action="set-services-tab" data-target="station">STATION</button>`;
-    }
-    subNavHtml += `</div>`;
-
     // --- View Routing ---
-    
-    // 1. SOL STATION DASHBOARD
-    if (servicesTab === 'station' && currentLocationId === LOCATION_IDS.SUN) {
-        return `
-            <div class="flex flex-col h-full">
-                ${subNavHtml}
-                <div class="services-scroll-panel flex-grow min-h-0">
-                    ${StationRenderer.getHTML(gameState)}
-                </div>
-            </div>
-        `;
-    }
-
-    // 2. TUNING VIEW (Upgrade Shop)
     if (servicesTab === 'tuning') {
         return `
             <div class="flex flex-col h-full">
@@ -7759,7 +7297,7 @@ export function renderServicesScreen(gameState, simulationService) {
         `;
     }
 
-    // 3. SUPPLY VIEW (Fallback / Default)
+    // --- Fallback / Default View (Supply) ---
     if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
         return `
             <div class="flex flex-col h-full">
@@ -10120,68 +9658,6 @@ import { PERK_IDS } from './constants.js';
 export const AGE_EVENTS = [];
 --- END OF FILE: ./js/data/age_events.js ---
 
---- START OF FILE: ./js/data/officers/officers_guild.js ---
-export const OFFICERS_GUILD = [
-    {
-        id: "off_gld_01",
-        name: "Logistics Officer Haren",
-        faction: "GUILD",
-        role: "Logistics",
-        portrait: "assets/portraits/guild_01.png", // Placeholder path
-        flavor: "Former blockade runner turned efficiency expert. He smells slightly of ozone and desperate margins.",
-        buffs: {
-            entropy_decay_mult: -0.05, // -5% Decay
-            credit_output_mult: 0.10,  // +10% Credits
-            antimatter_output_mult: 0.0,
-            burn_rate_mult: 0.0
-        },
-        unlockCondition: {
-            type: "LICENSE",
-            value: "license_tier_4"
-        }
-    },
-    {
-        id: "off_gld_02",
-        name: "Auditor Vex",
-        faction: "GUILD",
-        role: "Finance",
-        portrait: "assets/portraits/guild_02.png",
-        flavor: "A walking spreadsheet. Claims to have optimized her own sleep cycle to 2 hours a day.",
-        buffs: {
-            entropy_decay_mult: 0.0,
-            credit_output_mult: 0.15, // +15% Credits
-            antimatter_output_mult: -0.05, // -5% Antimatter (Penalty)
-            burn_rate_mult: -0.05 // -5% Consumption
-        },
-        unlockCondition: {
-            type: "WEALTH",
-            value: 10000000
-        }
-    }
-];
---- END OF FILE: ./js/data/officers/officers_guild.js ---
-
---- START OF FILE: ./js/data/officers/officerRegistry.js ---
-import { OFFICERS_GUILD } from './officers_guild.js';
-// Future imports: OFFICERS_SYNDICATE, OFFICERS_KINTSUGI
-
-/**
- * Master Registry for Sol Station Directorate Officers.
- * Aggregates all faction lists into a single queryable object.
- */
-export const OFFICER_REGISTRY = {
-    ...OFFICERS_GUILD.reduce((acc, off) => {
-        acc[off.id] = off;
-        return acc;
-    }, {}),
-    // Spread other factions here as they are added
-};
-
-export const ALL_OFFICERS = [
-    ...OFFICERS_GUILD,
-];
---- END OF FILE: ./js/data/officers/officerRegistry.js ---
-
 --- START OF FILE: ./js/data/lore/lore_broadstrokes.js ---
 // js/data/lore/lore_broadstrokes.js
 /**
@@ -10217,34 +9693,6 @@ export const LORE_REGISTRY = {
     // Future volumes (Acts, Arcs) will be spread here.
 };
 --- END OF FILE: ./js/data/lore/loreRegistry.js ---
-
---- START OF FILE: ./js/data/consumable_items.js ---
-import { COMMODITY_IDS } from './constants.js';
-
-export const CONSUMABLE_ITEMS = {
-    [COMMODITY_IDS.FOLDED_DRIVES]: {
-        id: COMMODITY_IDS.FOLDED_DRIVES,
-        name: "Folded-Space Drive",
-        type: "ARTIFACT",
-        isConsumable: true,
-        
-        // Metadata for the Travel UI
-        usageInteraction: {
-            type: "TRAVEL_MODIFIER",
-            label: "Activate Folded-Space Drive",
-            description: "Consume 1 Drive to warp instantly (0 Days, 0 Fuel).",
-            triggerLocation: "LAUNCH_MODAL" 
-        },
-
-        // Logic handled in TravelService, but defined here for reference
-        effects: {
-            travelTimeOverride: 0,
-            fuelCostOverride: 0,
-            consumeOnUse: true
-        }
-    }
-};
---- END OF FILE: ./js/data/consumable_items.js ---
 
 --- START OF FILE: ./js/data/intelMessages.js ---
 // js/data/intelMessages.js
@@ -13899,69 +13347,6 @@ export const EULA_CONTENT = `
 `;
 --- END OF FILE: ./js/data/eulaContent.js ---
 
---- START OF FILE: ./js/data/station_config.js ---
-import { COMMODITY_IDS } from './constants.js';
-
-export const STATION_CONFIG = {
-    // Core Mechanics
-    BASE_DECAY: 0.2, // Daily % entropy decay
-    CACHE_PENALTY: 2.0, // Added % decay per empty cache
-    MAX_PENALTY: 24.0, // Cap on penalty
-    XP_PER_DAY: 1, // Passive XP gain if entropy > 30%
-    
-    // Leveling Curve: Base 100 XP + 120 XP per subsequent level
-    // Returns XP required to complete the CURRENT level
-    getXPForLevel: (level) => {
-        return 100 + ((level - 1) * 120);
-    },
-
-    // Buff Scaling per Level
-    LEVEL_BUFFS: {
-        DECAY_REDUCTION: 0.005, // -0.5% per level
-        OUTPUT_BONUS: 0.0025    // +0.25% per level
-    },
-
-    // Operation Modes (Hegelian Synthesis)
-    MODES: {
-        PRODUCTION: {
-            id: 'PRODUCTION',
-            label: 'Syndicate (Chaos)',
-            flavor: 'Maximum Output',
-            color: '#ef4444', // Crimson
-            modifiers: { credit: 1.0, antimatter: 2.0, entropy: 3.0 }
-        },
-        COMMERCE: {
-            id: 'COMMERCE',
-            label: 'Guild (Order)',
-            flavor: 'Trade Optimization',
-            color: '#eab308', // Gold
-            modifiers: { credit: 2.0, antimatter: 1.0, entropy: 2.0 }
-        },
-        STABILIZATION: {
-            id: 'STABILIZATION',
-            label: 'Kintsugi (Evolution)',
-            flavor: 'System Repair',
-            color: '#06b6d4', // Cyan
-            modifiers: { credit: 1.0, antimatter: 1.0, entropy: 1.0 }
-        }
-    },
-
-    // Weekly Burn Requirements (Consumption per 7 Days)
-    // Mapped by Commodity Tier
-    WEEKLY_BURN: {
-        1: 10,
-        2: 8,
-        3: 6,
-        4: 4,
-        5: 2,
-        6: 1
-    },
-
-    // Default Roster Slots
-    INITIAL_ROSTER_SLOTS: 3
-};
---- END OF FILE: ./js/data/station_config.js ---
-
 --- START OF FILE: ./js/services/ui/UIMissionControl.js ---
 // js/services/ui/UIMissionControl.js
 import { DB } from '../../data/database.js';
@@ -16236,230 +15621,6 @@ export class UIHangarControl {
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
 
---- START OF FILE: ./js/services/ui/UISolStationControl.js ---
-import { STATION_CONFIG } from '../../data/station_config.js';
-import { ALL_OFFICERS } from '../../data/officers/officerRegistry.js';
-import { DB } from '../../data/database.js';
-
-export class UISolStationControl {
-    constructor(uiManager) {
-        this.uiManager = uiManager;
-    }
-
-    /**
-     * Handles the mode switch lever interaction.
-     * @param {string} modeId 
-     */
-    handleSetMode(modeId) {
-        if (!this._getService()) return;
-        const success = this._getService().setMode(modeId);
-        if (success) {
-            this.uiManager.render(this.uiManager.lastKnownState);
-            this.uiManager.createFloatingText("Station Mode Updated", window.innerWidth/2, window.innerHeight/2, STATION_CONFIG.MODES[modeId].color);
-        }
-    }
-
-    /**
-     * Handles donating a commodity to the station cache.
-     * Donates the maximum available amount from the player's active ship.
-     * @param {string} commodityId 
-     * @param {Event} event 
-     */
-    handleDonate(commodityId, event) {
-        const gameState = this.uiManager.lastKnownState;
-        const player = gameState.player;
-        const inventory = player.inventories[player.activeShipId];
-        
-        if (!inventory || !inventory[commodityId] || inventory[commodityId].quantity <= 0) {
-            this.uiManager.queueModal('event-modal', 'No Cargo', 'You do not have any of this commodity to donate.');
-            return;
-        }
-
-        const amount = inventory[commodityId].quantity;
-        const goodName = DB.COMMODITIES.find(c => c.id === commodityId).name;
-
-        const success = this._getService().donateCargo(commodityId, amount);
-        
-        if (success) {
-            // Remove from player inventory
-            inventory[commodityId].quantity = 0;
-            
-            this.uiManager.render(gameState);
-            this.uiManager.createFloatingText(`Donated ${amount}x ${goodName}`, event.clientX, event.clientY, '#22c55e');
-            this.uiManager.triggerEffect('systemSurge', { theme: 'green' });
-
-            // [[FIX]] Refresh the modal to show updated values
-            this.showCachesModal();
-        }
-    }
-
-    /**
-     * Harvests accumulated resources (Credits/Antimatter).
-     * @param {Event} event 
-     */
-    handleHarvest(event) {
-        const payout = this._getService().withdrawAccumulated();
-        if (payout) {
-            let msg = [];
-            if (payout.credits > 0) msg.push(`${payout.credits} Credits`);
-            if (payout.antimatter > 0) msg.push(`${payout.antimatter.toFixed(2)} Antimatter`);
-            
-            this.uiManager.render(this.uiManager.lastKnownState);
-            this.uiManager.createFloatingText(`Harvested: ${msg.join(', ')}`, event.clientX, event.clientY, '#fbbf24');
-        } else {
-            this.uiManager.queueModal('event-modal', 'Empty Banks', 'Production buffers are empty.');
-        }
-    }
-
-    // --- Caches Management (NEW) ---
-
-    showCachesModal() {
-        const state = this.uiManager.lastKnownState.solStation;
-        const player = this.uiManager.lastKnownState.player;
-        const inventory = player.inventories[player.activeShipId] || {};
-
-        let content = '<div class="sol-caches-grid">';
-        
-        // Group by Tier logic
-        const tierGroups = {};
-        Object.keys(state.caches).forEach(chemId => {
-            const def = DB.COMMODITIES.find(c => c.id === chemId);
-            if (!def) return;
-            if (!tierGroups[def.tier]) tierGroups[def.tier] = [];
-            tierGroups[def.tier].push({ id: chemId, qty: state.caches[chemId], def });
-        });
-
-        for (let t = 1; t <= 6; t++) {
-            if (!tierGroups[t]) continue;
-            const burnReq = STATION_CONFIG.WEEKLY_BURN[t];
-            content += `<div class="tier-group"><div class="tier-label">TIER ${t} (Burn: ${burnReq}/wk)</div><div class="cache-row">`;
-            
-            tierGroups[t].forEach(item => {
-                const daysRemaining = item.qty > 0 ? (item.qty / (burnReq/7)).toFixed(1) : '0.0';
-                const playerStock = inventory[item.id]?.quantity || 0;
-                const canDonate = playerStock > 0;
-
-                content += `
-                    <div class="cache-card tier-${t}" style="border-color: var(--tier-${t}-color)">
-                        <div class="cache-icon" style="background-image: url('assets/commodities/${item.id}.png')"></div>
-                        <div class="cache-info">
-                            <div class="cache-name">${item.def.name}</div>
-                            <div class="cache-stock ${item.qty === 0 ? 'text-red' : ''}">${Math.floor(item.qty)} Units</div>
-                            <div class="cache-time">${daysRemaining} Days</div>
-                        </div>
-                        <button class="btn-donate ${canDonate ? 'active' : ''}" 
-                                data-action="sol-donate" 
-                                data-good-id="${item.id}"
-                                ${!canDonate ? 'disabled' : ''}>
-                            +
-                        </button>
-                    </div>
-                `;
-            });
-            content += `</div></div>`;
-        }
-        content += '</div>';
-
-        // Use 'event-modal' for reliability, repurposing it for custom HTML content
-        this.uiManager.queueModal('event-modal', 'Maintenance Caches', content, null, {
-            modalClass: 'sol-station-modal',
-            dismissOutside: true
-        });
-    }
-
-    // --- Roster Management ---
-
-    showRosterModal() {
-        const state = this.uiManager.lastKnownState.solStation;
-        const assigned = state.roster.assigned;
-        
-        let content = `<div class="roster-grid">`;
-        
-        // 1. Assigned Slots
-        content += `<div class="roster-section"><h3>Directorate</h3><div class="roster-slots">`;
-        assigned.forEach((offId, idx) => {
-            if (offId) {
-                const officer = ALL_OFFICERS.find(o => o.id === offId);
-                content += this._renderOfficerCard(officer, true, idx);
-            } else {
-                content += `<div class="officer-card empty-slot"><span>VACANT SLOT</span></div>`;
-            }
-        });
-        content += `</div></div>`;
-
-        // 2. Available Pool
-        content += `<div class="roster-section"><h3>Candidates</h3><div class="roster-pool">`;
-        ALL_OFFICERS.forEach(officer => {
-            if (!assigned.includes(officer.id)) {
-                // Future: Check unlock conditions here
-                content += this._renderOfficerCard(officer, false, null);
-            }
-        });
-        content += `</div></div></div>`;
-
-        // [[FIX]] Use standard 'event-modal' logic
-        this.uiManager.queueModal('event-modal', 'Station Directorate', content, null, {
-            modalClass: 'sol-station-modal',
-            dismissOutside: true
-        });
-    }
-
-    _renderOfficerCard(officer, isAssigned, slotIdx) {
-        const action = isAssigned ? `data-action="sol-unassign" data-slot="${slotIdx}"` : `data-action="sol-assign" data-officer-id="${officer.id}"`;
-        const btnText = isAssigned ? "Dismiss" : "Assign";
-        const btnClass = isAssigned ? "btn-danger" : "btn-confirm";
-        
-        // Buffs formatting
-        const buffs = Object.entries(officer.buffs).map(([k, v]) => {
-            if (v === 0) return '';
-            const val = (v * 100).toFixed(1);
-            // Heuristic for color: Negative decay is good, Positive output is good
-            const isGood = (k.includes('decay') && v < 0) || (!k.includes('decay') && v > 0);
-            return `<div class="buff-row ${isGood ? 'text-green' : 'text-red'}">${k.replace('_mult', '')}: ${val}%</div>`;
-        }).join('');
-
-        return `
-            <div class="officer-card">
-                <div class="officer-portrait" style="background-image: url('${officer.portrait}')"></div>
-                <div class="officer-info">
-                    <div class="officer-name">${officer.name}</div>
-                    <div class="officer-role">${officer.role}</div>
-                    <div class="officer-buffs">${buffs}</div>
-                </div>
-                <button class="btn ${btnClass} btn-sm" ${action}>${btnText}</button>
-            </div>
-        `;
-    }
-
-    handleAssignOfficer(officerId) {
-        const state = this.uiManager.lastKnownState.solStation;
-        // Find first empty slot
-        const emptyIdx = state.roster.assigned.indexOf(null);
-        if (emptyIdx === -1) {
-            this.uiManager.queueModal('event-modal', 'Directorate Full', 'No vacant slots available. Dismiss an officer first.');
-            return;
-        }
-        
-        state.roster.assigned[emptyIdx] = officerId;
-        this.uiManager.render(this.uiManager.lastKnownState);
-        this.uiManager.hideModal(); 
-        this.showRosterModal(); 
-    }
-
-    handleUnassignOfficer(slotIdx) {
-        const state = this.uiManager.lastKnownState.solStation;
-        state.roster.assigned[slotIdx] = null;
-        this.uiManager.render(this.uiManager.lastKnownState);
-        this.uiManager.hideModal();
-        this.showRosterModal();
-    }
-
-    _getService() {
-        return this.uiManager.simulationService.solStationService;
-    }
-}
---- END OF FILE: ./js/services/ui/UISolStationControl.js ---
-
 --- START OF FILE: ./js/services/ui/UIModalEngine.js ---
 // js/services/ui/UIModalEngine.js
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS } from '../../data/constants.js';
@@ -17509,16 +16670,6 @@ ${logHistory}
             }},
             // ----------------------------------
 
-            // --- [[NEW]] SOL STATION UNLOCK ---
-            unlockSolStation: { name: 'Unlock Sol Station', type: 'button', handler: () => {
-                if (this.gameState.solStation) {
-                    this.gameState.solStation.unlocked = true;
-                    this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
-                    this.gameState.setState({});
-                }
-            }},
-            // ----------------------------------
-
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -17734,10 +16885,6 @@ ${logHistory}
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
-        
-        // --- [[NEW]] SOL STATION UNLOCK (TRIGGER MENU) ---
-        triggerFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
-        // -------------------------------------------------
 
         // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
@@ -18316,7 +17463,6 @@ export class RandomEventService {
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { skewedRandom } from '../utils.js';
-import { STATION_CONFIG } from '../data/station_config.js'; // Import Config
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
@@ -18518,25 +17664,6 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
-            // --- VIRTUAL WORKBENCH: SOL STATION (PHASE 1) ---
-            solStation: {
-                unlocked: false,
-                level: 1,
-                xp: 0,
-                entropy: 100.0,
-                mode: STATION_CONFIG.MODES.STABILIZATION.id,
-                lastBurnDay: 0,
-                accumulated: {
-                    credits: 0,
-                    antimatter: 0
-                },
-                caches: {}, // Dynamically filled below
-                roster: {
-                    assigned: Array(STATION_CONFIG.INITIAL_ROSTER_SLOTS).fill(null)
-                }
-            },
-            // --- END VIRTUAL WORKBENCH ---
-
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,
@@ -18605,15 +17732,6 @@ export class GameState {
             });
         });
 
-        // --- VIRTUAL WORKBENCH: Initialize Sol Station Caches ---
-        // Caches exist for commodities Tier 1 through 6
-        DB.COMMODITIES.forEach(c => {
-            if (c.tier && c.tier <= 6) {
-                initialState.solStation.caches[c.id] = 0;
-            }
-        });
-        // --- END VIRTUAL WORKBENCH ---
-
         Object.assign(this, initialState);
         this._calculateGalacticAverages();
         this._seedInitialMarketPrices();
@@ -18664,258 +17782,6 @@ export class GameState {
     }
 }
 --- END OF FILE: ./js/services/GameState.js ---
-
---- START OF FILE: ./js/services/SolStationService.js ---
-// js/services/SolStationService.js
-import { STATION_CONFIG } from '../data/station_config.js';
-import { OFFICER_REGISTRY } from '../data/officers/officerRegistry.js';
-import { DB } from '../data/database.js';
-
-// Base Production values (Can be tuned here)
-const BASE_CREDIT_YIELD = 500; 
-const BASE_ANTIMATTER_YIELD = 0.1; // Accumulates over time
-
-export class SolStationService {
-    /**
-     * @param {import('./GameState.js').GameState} gameState 
-     * @param {import('./LoggingService.js').Logger} logger 
-     */
-    constructor(gameState, logger) {
-        this.gameState = gameState;
-        this.logger = logger;
-    }
-
-    /**
-     * The master heartbeat for the Sol Station. Called daily by TimeService.
-     */
-    processDailyTick() {
-        // [FIX] Access state directly from gameState instance, not .state property
-        const state = this.gameState.solStation;
-        
-        // 1. Guard Clause: Station must be unlocked
-        if (!state || !state.unlocked) return;
-
-        // 2. Calculate Aggregate Modifiers (Mode + Officers + Level)
-        const modifiers = this.calculateModifiers();
-
-        // 3. Process Entropy (Health)
-        this._processEntropy(state, modifiers);
-
-        // 4. Process Production (Wealth)
-        this._processProduction(state, modifiers);
-
-        // 5. Process Progression (XP)
-        this._processProgression(state);
-
-        // 6. Check Weekly Burn Cycle
-        this._checkWeeklyBurn(state);
-    }
-
-    /**
-     * Aggregates all active multipliers from Mode, Level, and Officers.
-     * @returns {object} { creditMult, antimatterMult, entropyMult, decayFlatMod }
-     */
-    calculateModifiers() {
-        const state = this.gameState.solStation;
-        const modeConfig = STATION_CONFIG.MODES[state.mode];
-
-        // A. Base Modifiers from Mode
-        let mods = {
-            creditMult: modeConfig.modifiers.credit,
-            antimatterMult: modeConfig.modifiers.antimatter,
-            entropyMult: modeConfig.modifiers.entropy, // Higher entropyMult means FASTER decay
-            decayFlatMod: 0 // Flat reduction to decay (e.g. from Level)
-        };
-
-        // B. Level Buffs
-        // -0.5% Decay per Level, +0.25% Output per level
-        const levelDecayRed = (state.level - 1) * STATION_CONFIG.LEVEL_BUFFS.DECAY_REDUCTION;
-        const levelOutputBon = (state.level - 1) * STATION_CONFIG.LEVEL_BUFFS.OUTPUT_BONUS;
-
-        mods.decayFlatMod -= levelDecayRed; 
-        mods.creditMult += levelOutputBon;
-        mods.antimatterMult += levelOutputBon;
-
-        // C. Officer Buffs
-        state.roster.assigned.forEach(officerId => {
-            if (!officerId) return;
-            const officer = OFFICER_REGISTRY[officerId];
-            if (officer && officer.buffs) {
-                // Officer Decay Mult is usually negative (e.g. -0.05 for 5% reduction)
-                // We apply it as a flat modifier to the decay rate for simplicity in this model
-                mods.decayFlatMod += (officer.buffs.entropy_decay_mult || 0);
-                mods.creditMult += (officer.buffs.credit_output_mult || 0);
-                mods.antimatterMult += (officer.buffs.antimatter_output_mult || 0);
-            }
-        });
-
-        return mods;
-    }
-
-    _processEntropy(state, mods) {
-        // Base Decay scaled by Mode
-        let dailyDecay = STATION_CONFIG.BASE_DECAY * mods.entropyMult;
-
-        // Apply Flat Modifiers (Level + Officers)
-        // e.g. If decay is 0.6%, and Level gives -0.5%, effective is 0.1%
-        // But we ensure it doesn't go negative (healing) purely from buffs unless intended
-        dailyDecay = Math.max(0.01, dailyDecay + mods.decayFlatMod);
-
-        // Empty Cache Penalties
-        let penalty = 0;
-        Object.keys(STATION_CONFIG.WEEKLY_BURN).forEach(tier => {
-            // Find specific commodities of this tier
-            const commodityIds = DB.COMMODITIES.filter(c => c.tier === parseInt(tier)).map(c => c.id);
-            
-            // If ANY cache of this tier is empty (0), apply penalty? 
-            // GDD Rule: "If a commodity cache... hits 0". 
-            // Implementation: We iterate the State Caches directly.
-            Object.entries(state.caches).forEach(([chemId, qty]) => {
-                // We only care about commodities that HAVE a burn requirement. 
-                // Implicit check: If it's in state.caches, it's trackable.
-                if (qty <= 0) {
-                    penalty += STATION_CONFIG.CACHE_PENALTY;
-                }
-            });
-        });
-
-        // Cap Penalty
-        penalty = Math.min(penalty, STATION_CONFIG.MAX_PENALTY);
-
-        // Final Calculation
-        // If we have stock (penalty === 0), the station AUTOMATICALLY REPAIRS itself
-        // "Repair: Automatic consumption... negates decay."
-        // Design Logic: If Penalty > 0, we decay. If Penalty == 0, we heal/maintain.
-        
-        if (penalty > 0) {
-            state.entropy = Math.max(0, state.entropy - (dailyDecay + penalty));
-        } else {
-            // Healing Logic: If all caches full, slowly repair entropy
-            state.entropy = Math.min(100, state.entropy + 0.5);
-        }
-    }
-
-    _processProduction(state, mods) {
-        if (state.entropy <= 0) return; // Dead station produces nothing
-
-        // Calculate Yield
-        const creditYield = BASE_CREDIT_YIELD * mods.creditMult;
-        const antimatterYield = BASE_ANTIMATTER_YIELD * mods.antimatterMult;
-
-        // Add to "The Bank"
-        state.accumulated.credits += creditYield;
-        state.accumulated.antimatter += antimatterYield;
-    }
-
-    _processProgression(state) {
-        // XP Gain if health > 30%
-        if (state.entropy > 30) {
-            state.xp += STATION_CONFIG.XP_PER_DAY;
-            
-            // Level Up Check
-            const requiredXP = STATION_CONFIG.getXPForLevel(state.level);
-            if (state.xp >= requiredXP) {
-                state.level++;
-                state.xp = 0; // Reset or Overflow? GDD implies "Lvl 2 @ 100 XP", let's use overflow
-                // actually simpler to reset for now based on "100 XP required" phrasing
-                
-                this.logger.info.system('Sol Station', this.gameState.day, 'LEVEL UP', `Station reached Level ${state.level}`);
-                
-                // Unlock Officer Slot? (Every 5 levels)
-                if (state.level % 5 === 0) {
-                    state.roster.assigned.push(null);
-                }
-            }
-        }
-    }
-
-    _checkWeeklyBurn(state) {
-        const currentDay = this.gameState.day;
-        if (currentDay - state.lastBurnDay >= 7) {
-            this.performWeeklyBurn(state);
-            state.lastBurnDay = currentDay;
-        }
-    }
-
-    performWeeklyBurn(state) {
-        const burnMap = STATION_CONFIG.WEEKLY_BURN;
-        let emptyCachesFound = 0;
-
-        // Iterate all tracked caches
-        for (const [chemId, qty] of Object.entries(state.caches)) {
-            // Find tier of this chem
-            const chemDef = DB.COMMODITIES.find(c => c.id === chemId);
-            if (!chemDef) continue;
-
-            const burnAmount = burnMap[chemDef.tier] || 0;
-            if (burnAmount > 0) {
-                if (state.caches[chemId] >= burnAmount) {
-                    state.caches[chemId] -= burnAmount;
-                } else {
-                    // Partial burn, empty it
-                    state.caches[chemId] = 0;
-                    emptyCachesFound++;
-                }
-            }
-        }
-
-        if (emptyCachesFound > 0) {
-            this.logger.warn('Sol Station', this.gameState.day, 'BURN CYCLE', `${emptyCachesFound} caches depleted.`);
-        } else {
-            this.logger.info.system('Sol Station', this.gameState.day, 'BURN CYCLE', 'All systems nominal.');
-        }
-    }
-
-    // --- Public Interaction Methods (called by UI) ---
-
-    setMode(newModeId) {
-        if (STATION_CONFIG.MODES[newModeId]) {
-            // [FIX] Correct state access
-            this.gameState.solStation.mode = newModeId;
-            return true;
-        }
-        return false;
-    }
-
-    donateCargo(commodityId, quantity) {
-        // [FIX] Correct state access
-        const state = this.gameState.solStation;
-        if (state.caches.hasOwnProperty(commodityId)) {
-            state.caches[commodityId] += quantity;
-            return true;
-        }
-        return false;
-    }
-
-    withdrawAccumulated() {
-        // [FIX] Correct state access
-        const state = this.gameState.solStation;
-        const payout = {
-            credits: Math.floor(state.accumulated.credits),
-            antimatter: Math.floor(state.accumulated.antimatter)
-        };
-
-        if (payout.credits > 0 || payout.antimatter > 0) {
-            // [FIX] Correct player state access
-            this.gameState.player.credits += payout.credits;
-            
-            // TODO: Add Antimatter to inventory? 
-            // For now, assuming Antimatter is just a score/resource or directly added if item exists
-            // [FIX] Correct inventory access
-            if (this.gameState.player.inventories.hasOwnProperty('antimatter') && payout.antimatter > 0) {
-                 // Add logic if Antimatter is a real item in player inv
-            }
-            
-            // Clear Bank
-            state.accumulated.credits = 0;
-            state.accumulated.antimatter = 0;
-            
-            return payout;
-        }
-        return null;
-    }
-}
---- END OF FILE: ./js/services/SolStationService.js ---
 
 --- START OF FILE: ./js/services/MissionService.js ---
 // js/services/MissionService.js
@@ -20377,7 +19243,7 @@ export class MarketService {
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
@@ -20408,9 +19274,8 @@ export class TravelService {
     /**
      * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
-     * @param {boolean} [useFoldedSpace=false] - Whether to consume an artifact for instant travel.
      */
-    travelTo(locationId, useFoldedSpace = false) {
+    travelTo(locationId) {
         this.uiManager.resetMarketTransactionState();
         const { tutorials } = this.gameState;
         const { navLock } = tutorials;
@@ -20433,23 +19298,6 @@ export class TravelService {
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
-
-        // --- FOLDED SPACE LOGIC (PHASE 3) ---
-        if (useFoldedSpace) {
-            // 1. Verify Item Existence
-            const shipInv = state.player.inventories[activeShip.id];
-            const artifactQty = shipInv && shipInv[COMMODITY_IDS.FOLDED_DRIVES] ? shipInv[COMMODITY_IDS.FOLDED_DRIVES].quantity : 0;
-
-            if (artifactQty < 1) {
-                this.uiManager.queueModal('event-modal', "Artifact Missing", "You do not possess a Folded-Space Drive to consume.");
-                return;
-            }
-
-            // 2. Proceed to Travel with Override Flag
-            this.initiateTravel(locationId, { useFoldedSpace: true });
-            return;
-        }
-        // ------------------------------------
 
         // --- UPGRADE SYSTEM & Z-CLASS LOGIC ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
@@ -20526,140 +19374,107 @@ export class TravelService {
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
 
-        // --- PHASE 3: FOLDED SPACE EXECUTION ---
-        if (eventMods.useFoldedSpace) {
-            // A. Consume Artifact
-            const shipInv = this.gameState.player.inventories[activeShip.id];
-            if (shipInv && shipInv[COMMODITY_IDS.FOLDED_DRIVES]) {
-                shipInv[COMMODITY_IDS.FOLDED_DRIVES].quantity--;
-                this.logger.info.player(state.day, 'ARTIFACT_USE', 'Consumed Folded-Space Drive for instant travel.');
-            }
-
-            // B. Apply Overrides (Instant, No Fuel, No Damage)
-            travelInfo.time = 0;
-            travelInfo.fuelCost = 0;
-            
-            // Visual feedback
-            this.uiManager.createFloatingText("Folded Space Jump", window.innerWidth / 2, window.innerHeight / 2, '#8b5cf6'); // Violet
-            
-            // Note: We bypass Hull Damage calculation and Attribute logic below
-            // by forcing the values after calculation or returning early?
-            // Cleaner to let the state update happen, but override values now.
+        // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
         }
-        // ---------------------------------------
 
-        if (!eventMods.useFoldedSpace) {
-            // --- STANDARD NEWTONIAN LOGIC ---
+        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
+        const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
+        
+        travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+        travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
-            // 1. Attribute Logic (Time & Fuel)
-            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-                travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
-                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
-            }
+        // --- Z-CLASS EXECUTION LOGIC ---
 
-            const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
-            const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
-            
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
-            travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
+        // ATTR_METABOLIC_BURN
+        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
+        }
 
-            // ATTR_METABOLIC_BURN
-            if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
-                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
-            }
+        // ATTR_HYPER_CALCULATION (-25% Time)
+        if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+            travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
+        }
 
-            // ATTR_HYPER_CALCULATION (-25% Time)
-            if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
-                travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
-            }
-
-            // ATTR_SOLAR_HARMONY (0 Fuel Inward)
-            if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-                const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
-                const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
-                if (toDist < fromDist) {
-                    travelInfo.fuelCost = 0;
-                    this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
-                }
-            }
-
-            // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
-            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+        // ATTR_SOLAR_HARMONY (0 Fuel Inward)
+        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+            const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+            if (toDist < fromDist) {
                 travelInfo.fuelCost = 0;
-                travelInfo.time *= 10;
-            }
-
-            // Legacy: Sleeper
-            shipAttributes.forEach(attrId => {
-                const def = GameAttributes.getDefinition(attrId);
-                if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                    if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
-                }
-                if (attrId === 'ATTR_SLEEPER') {
-                    travelInfo.time *= 4.5;
-                    travelInfo.fuelCost = 0;
-                }
-            });
-
-            if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
-                if (Math.random() < 0.15) {
-                    travelInfo.fuelCost = 0;
-                    travelInfo.time *= 2;
-                    this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
-                }
-            }
-
-            // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
-            const speedBonus = state.player.statModifiers?.travelSpeed || 0;
-            if (speedBonus > 0) {
-                travelInfo.time = travelInfo.time / (1 + speedBonus);
+                this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
             }
         }
 
-        // Apply Event Modifications (e.g. from Random Event outcome)
+        // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
+        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+            travelInfo.fuelCost = 0;
+            travelInfo.time *= 10;
+        }
+
+        // Legacy: Sleeper
+        shipAttributes.forEach(attrId => {
+            const def = GameAttributes.getDefinition(attrId);
+            if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
+                // Prevent double dipping if handled above, but legacy logic kept for safety
+                if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
+            }
+            if (attrId === 'ATTR_SLEEPER') {
+                travelInfo.time *= 4.5;
+                travelInfo.fuelCost = 0;
+            }
+        });
+
+        if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
+            if (Math.random() < 0.15) {
+                travelInfo.fuelCost = 0;
+                travelInfo.time *= 2;
+                this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+            }
+        }
+
+        // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
+        const speedBonus = state.player.statModifiers?.travelSpeed || 0;
+        if (speedBonus > 0) {
+            travelInfo.time = travelInfo.time / (1 + speedBonus);
+        }
+
         if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
         if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
         if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
-        
-        // Finalize Values
-        travelInfo.time = eventMods.useFoldedSpace ? 0 : Math.max(1, Math.round(travelInfo.time));
+        travelInfo.time = Math.max(1, Math.round(travelInfo.time));
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
-        // Check Fuel Again (unless Folded Space)
-        if (!eventMods.useFoldedSpace && activeShipState.fuel < travelInfo.fuelCost) {
+        if (activeShipState.fuel < travelInfo.fuelCost) {
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
             return;
         }
 
-        // Force Event Check (Legacy/Debug)
-        if (eventMods.forceEvent && !eventMods.useFoldedSpace) {
+        if (eventMods.forceEvent) {
             if (this._checkForRandomEvent(locationId, true)) {
                 return;
             }
         }
 
-        // Calculate Hull Damage
-        let travelHullDamage = 0;
-        if (!eventMods.useFoldedSpace) {
-            travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
-            
-            // --- Z-CLASS HULL LOGIC ---
-            if (shipAttributes.includes('ATTR_XENO_HULL') || 
-                shipAttributes.includes('ATTR_FLUID_HULL') || 
-                shipAttributes.includes('ATTR_NO_DECAY')) {
-                travelHullDamage = 0;
-            } else if (shipAttributes.includes('ATTR_RESILIENT')) {
-                travelHullDamage *= 0.5;
-            }
-            
-            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
+        let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
+        
+        // --- Z-CLASS HULL LOGIC ---
+        if (shipAttributes.includes('ATTR_XENO_HULL') || 
+            shipAttributes.includes('ATTR_FLUID_HULL') || 
+            shipAttributes.includes('ATTR_NO_DECAY')) {
+            travelHullDamage = 0;
+        } else if (shipAttributes.includes('ATTR_RESILIENT')) {
+            travelHullDamage *= 0.5;
         }
-
+        
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
+        
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
         const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
-        // Apply Hull Damage
         activeShipState.health -= totalHullDamageValue;
         this.simulationService._checkHullWarnings(activeShip.id);
 
@@ -20668,14 +19483,8 @@ export class TravelService {
             return;
         }
         
-        // Apply Fuel Consumption
         activeShipState.fuel -= travelInfo.fuelCost;
-        
-        // Advance Time (if > 0)
-        if (travelInfo.time > 0) {
-            this.timeService.advanceDays(travelInfo.time);
-        }
-        
+        this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
         this.simulationService.newsTickerService.onLocationChange(locationId);
@@ -20685,10 +19494,8 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
-        // --- Z-CLASS POST-TRAVEL LOGIC (Only if not using Folded Space?) ---
-        // Design Decision: Z-Class attributes like "Atlas" (Refill on 20th trip) should probably still fire?
-        // Let's assume they DO fire, as a "Trip" occurred, even if instant.
-        
+        // --- Z-CLASS POST-TRAVEL LOGIC ---
+
         // ATTR_TRAVELLER (Atlas)
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
@@ -20712,8 +19519,7 @@ export class TravelService {
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
         }
 
-        // ATTR_MATTER_ABSORPTION (Finality of Whispers)
-        // Folded Space costs 0 fuel, so refund is 0. Logic holds.
+        // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
         if (shipAttributes.includes('ATTR_MATTER_ABSORPTION')) {
             const refund = travelInfo.fuelCost * 0.5;
             if (refund > 0) {
@@ -20992,7 +19798,6 @@ export class TimeService {
         this.newsTickerService = newsTickerService;
         this.simulationService = null; // Injected by SimulationService
         this.intelService = null;      // Injected by SimulationService
-        this.solStationService = null; // [[NEW]] Injected by SimulationService
     }
 
     /**
@@ -21023,13 +19828,6 @@ export class TimeService {
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
-
-            // --- [[NEW]] SOL STATION ENGINE ---
-            // Process the station's daily entropy and production
-            if (this.solStationService) {
-                this.solStationService.processDailyTick();
-            }
-            // --- [[END]] SOL STATION ENGINE ---
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Base upgrade modifier
@@ -21633,8 +20431,7 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
-import { RandomEventService } from './RandomEventService.js'; 
-import { SolStationService } from './SolStationService.js'; // [[NEW]]
+import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -21659,15 +20456,7 @@ export class SimulationService {
 
          // Instantiate all services
         this.marketService = new MarketService(gameState);
-        
-        // [[NEW]] Instantiate SolStationService
-        this.solStationService = new SolStationService(this.gameState, this.logger);
-
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
-        
-        // [[NEW]] Inject SolStationService into TimeService
-        this.timeService.solStationService = this.solStationService;
-
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
@@ -24659,7 +23448,7 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
 // --- Screen Renderers ---
@@ -24678,14 +23467,13 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 
-// --- Domain Controllers ---
+// --- [[NEW]] Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
 import { UITutorialManager } from './ui/UITutorialManager.js';
 import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
-import { UISolStationControl } from './ui/UISolStationControl.js'; 
 
 export class UIManager {
     /**
@@ -24710,14 +23498,13 @@ export class UIManager {
         this.effectsManager = new EffectsManager();
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
-        // --- Domain Controllers (The Switchboard) ---
+        // --- [[NEW]] Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
         this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
-        this.solStationControl = new UISolStationControl(this); 
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -24908,6 +23695,7 @@ export class UIManager {
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
         
+        // [[NEW]] Add conditional class for max credits state to the container
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
@@ -24999,8 +23787,7 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                // [[UPDATED]] Unified Service Rendering
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
@@ -25011,6 +23798,8 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
+                // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
@@ -25095,6 +23884,7 @@ export class UIManager {
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
+    // [[FIXED]] Added _calculateSaleDetails proxy to UIMarketControl
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
     // --- Mission Control ---
@@ -28265,7 +27055,9 @@ export class ActionClickHandler {
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
+                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
+                    
                     await this.simulationService.buyShip(shipId, { target });
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
@@ -28279,7 +27071,9 @@ export class ActionClickHandler {
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
+                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
+
                     await this.simulationService.sellShip(shipId, { target });
                 });
                 break;
@@ -28295,7 +27089,7 @@ export class ActionClickHandler {
             // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION (PHASE 1) ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
-                if (tabId && (tabId === 'supply' || tabId === 'tuning' || tabId === 'station')) {
+                if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
                     this.gameState.setState({
                         uiState: {
                             ...state.uiState,
@@ -28307,39 +27101,8 @@ export class ActionClickHandler {
             }
             // --- END VIRTUAL WORKBENCH ---
 
-            // --- [[NEW]] SOL STATION ACTIONS (Phase 4) ---
-            case 'sol-set-mode':
-                if (dataset.mode) {
-                    this.uiManager.solStationControl.handleSetMode(dataset.mode);
-                }
-                break;
-            case 'sol-donate':
-                if (dataset.goodId) {
-                    this.uiManager.solStationControl.handleDonate(dataset.goodId, e);
-                }
-                break;
-            case 'sol-harvest':
-                this.uiManager.solStationControl.handleHarvest(e);
-                break;
-            case 'sol-open-roster':
-                this.uiManager.solStationControl.showRosterModal();
-                break;
-            case 'sol-open-caches': // [[NEW]]
-                this.uiManager.solStationControl.showCachesModal();
-                break;
-            case 'sol-assign':
-                if (dataset.officerId) {
-                    this.uiManager.solStationControl.handleAssignOfficer(dataset.officerId);
-                }
-                break;
-            case 'sol-unassign':
-                if (dataset.slot) {
-                    this.uiManager.solStationControl.handleUnassignOfficer(parseInt(dataset.slot));
-                }
-                break;
-            // --- END SOL STATION ACTIONS ---
-
             // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
+            // Handles the purchase and installation flow for upgrades
             case 'install_upgrade': {
                 const { upgradeId } = dataset;
                 if (!upgradeId) return;
@@ -28350,30 +27113,42 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
+                // [[NEW]] Calculate total cost server-side logic (Hardware + Labor)
                 const hardwareCost = upgradeDef.value;
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
 
+                // 1. Basic Checks
                 if (player.credits < totalCost) {
                     this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade and installation fee.');
                     return;
                 }
 
+                // 2. Trigger Triple-Confirmation Flow
+                // Pass hardwareCost and laborFee separately for the UI breakdown
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
                     
+                    // 3. Execution (Callback)
+                    
+                    // Deduct Credits
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
                         this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
+                    // Handle Replacement (Dismantle)
                     if (replaceIndex !== -1) {
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
+                    // Install New Upgrade
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
 
+                    // REQUEST D: Post-purchase Navigation Switch
+                    // Switch to Hangar, lock to 'hangar' (owned ships) view, and focus the active ship
                     this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     
+                    // Ensure the carousel index points to the active ship so the player sees the new pill immediately
                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                     
@@ -28381,6 +27156,7 @@ export class ActionClickHandler {
                 });
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
                 const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
@@ -28483,19 +27259,29 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
+            // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
+            // New case for fast-tracking from Map Modal to Navigation/Launch
             case 'navigate-to-poi': {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
+                // 1. Close the map modal
                 this.uiManager.hideMapDetailModal();
+
+                // 2. Switch to Navigation Screen
+                // Explicitly navigate to Ship -> Navigation
                 this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
 
+                // 3. Fast-track to Launch Modal
+                // Slight delay ensures the screen transition logic (if any) is processed
+                // before the modal logic triggers.
                 setTimeout(() => {
                     this.uiManager.showLaunchModal(locationId);
                 }, 100);
                 
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
 
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
@@ -28554,7 +27340,7 @@ export class ActionClickHandler {
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
-                // Deprecated
+                this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
             case ACTION_IDS.ACQUIRE_LICENSE:
                 this._handleAcquireLicense(dataset.licenseId, e);

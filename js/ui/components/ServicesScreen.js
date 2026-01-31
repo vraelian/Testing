@@ -8,7 +8,6 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS, UPGRADE_COLORS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
-import { StationRenderer } from '../renderers/StationRenderer.js';
 
 /**
  * Renders the entire Services screen UI.
@@ -18,10 +17,7 @@ import { StationRenderer } from '../renderers/StationRenderer.js';
  */
 export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
-    
-    // Default to 'station' if at Sun, otherwise 'supply'
-    const defaultTab = currentLocationId === LOCATION_IDS.SUN ? 'station' : 'supply';
-    const { servicesTab = defaultTab } = gameState.uiState;
+    const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
 
     const STARPORT_NAMES = {
         [LOCATION_IDS.SUN]: "Sol Station",
@@ -52,37 +48,18 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- Sub-Nav Render ---
     const supplyActive = servicesTab === 'supply' ? 'active' : '';
     const tuningActive = servicesTab === 'tuning' ? 'active' : '';
-    const stationActive = servicesTab === 'station' ? 'active' : '';
     
-    const activeStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"`;
+    const supplyStyle = servicesTab === 'supply' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
+    const tuningStyle = servicesTab === 'tuning' ? `style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; box-shadow: 0 0 10px rgba(0,0,0,0.5);"` : '';
 
-    let subNavHtml = `
+    const subNavHtml = `
         <div class="sub-nav-bar" style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem; justify-content: center;">
-            <button class="sub-nav-button ${supplyActive}" ${servicesTab === 'supply' ? activeStyle : ''} data-action="set-services-tab" data-target="supply">SUPPLY</button>
-            <button class="sub-nav-button ${tuningActive}" ${servicesTab === 'tuning' ? activeStyle : ''} data-action="set-services-tab" data-target="tuning">TUNING</button>
+            <button class="sub-nav-button ${supplyActive}" ${supplyStyle} data-action="set-services-tab" data-target="supply">SUPPLY</button>
+            <button class="sub-nav-button ${tuningActive}" ${tuningStyle} data-action="set-services-tab" data-target="tuning">TUNING</button>
+        </div>
     `;
 
-    // Add Station Tab if at Sol
-    if (currentLocationId === LOCATION_IDS.SUN) {
-        subNavHtml += `<button class="sub-nav-button ${stationActive}" ${servicesTab === 'station' ? activeStyle : ''} data-action="set-services-tab" data-target="station">STATION</button>`;
-    }
-    subNavHtml += `</div>`;
-
     // --- View Routing ---
-    
-    // 1. SOL STATION DASHBOARD
-    if (servicesTab === 'station' && currentLocationId === LOCATION_IDS.SUN) {
-        return `
-            <div class="flex flex-col h-full">
-                ${subNavHtml}
-                <div class="services-scroll-panel flex-grow min-h-0">
-                    ${StationRenderer.getHTML(gameState)}
-                </div>
-            </div>
-        `;
-    }
-
-    // 2. TUNING VIEW (Upgrade Shop)
     if (servicesTab === 'tuning') {
         return `
             <div class="flex flex-col h-full">
@@ -95,7 +72,7 @@ export function renderServicesScreen(gameState, simulationService) {
         `;
     }
 
-    // 3. SUPPLY VIEW (Fallback / Default)
+    // --- Fallback / Default View (Supply) ---
     if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
         return `
             <div class="flex flex-col h-full">
