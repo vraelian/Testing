@@ -1,100 +1,148 @@
+/**
+ * StationRenderer.js
+ * * Responsible for rendering the visual components of the Sol Station Interface.
+ * Handles the "Face" of the station: Dashboard, Metrics, and Mode Lever.
+ */
+
 import { STATION_CONFIG } from '../../data/station_config.js';
-import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
 
 export class StationRenderer {
+    constructor() {
+        this.container = null;
+    }
+
     /**
-     * Returns the HTML string for the Sol Station Dashboard.
-     * @param {object} gameState 
-     * @returns {string}
+     * Main Render Entry
+     * @param {string} containerId - The DOM ID to render into.
+     * @param {Object} state - The current station state from Service.
      */
-    static getHTML(gameState) {
-        const state = gameState.solStation;
-        const modeDef = STATION_CONFIG.MODES[state.mode];
-        
-        // 1. Header & Bank
-        const headerHtml = `
-            <div class="sol-header">
-                <div class="sol-title">SOL STATION <span class="sol-level">LVL ${state.level}</span></div>
-                <div class="sol-bank">
-                    <div class="bank-item">
-                        <span class="bank-label">CREDITS</span>
-                        <span class="bank-value credits-text">${formatCredits(state.accumulated.credits)}</span>
+    render(containerId, state) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+
+        // Base Grid Layout
+        let html = `
+            <div class="sol-station-wrapper">
+                ${this._renderHeader(state)}
+                
+                <div class="sol-dashboard-grid">
+                    <div class="sol-metrics-panel">
+                        ${this._renderMetrics(state)}
                     </div>
-                    <div class="bank-item">
-                        <span class="bank-label">ANTIMATTER</span>
-                        <span class="bank-value antimatter-text">${state.accumulated.antimatter.toFixed(3)}</span>
+
+                    <div class="sol-core-panel">
+                        ${this._renderBank(state)}
+                        ${this._renderLever(state)}
                     </div>
-                    <button class="btn btn-sm btn-harvest" data-action="sol-harvest">HARVEST</button>
+
+                    <div class="sol-actions-panel">
+                        ${this._renderMenu(state)}
+                    </div>
                 </div>
             </div>
         `;
 
-        // 2. Status Bars (Entropy & XP)
-        const entropyPct = state.entropy;
-        const entropyColor = entropyPct > 70 ? '#22c55e' : entropyPct > 30 ? '#eab308' : '#ef4444';
-        
-        // XP Calculation
-        const xpReq = STATION_CONFIG.getXPForLevel(state.level);
-        const xpPct = (state.xp / xpReq) * 100;
+        this.container.innerHTML = html;
+    }
 
-        const statusHtml = `
-            <div class="sol-status-panel">
-                <div class="status-row">
-                    <span class="status-label">ENTROPY STABILITY</span>
-                    <div class="bar-container">
-                        <div class="bar-fill" style="width: ${entropyPct}%; background-color: ${entropyColor};"></div>
-                    </div>
-                    <span class="status-value">${entropyPct.toFixed(1)}%</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">PROGRESS</span>
-                    <div class="bar-container">
-                        <div class="bar-fill xp-fill" style="width: ${xpPct}%;"></div>
-                    </div>
-                    <span class="status-value">${state.xp}/${xpReq} XP</span>
-                </div>
-            </div>
-        `;
-
-        // 3. The Lever (Mode Switch)
-        const modesHtml = Object.values(STATION_CONFIG.MODES).map(m => {
-            const isActive = m.id === state.mode;
-            return `
-                <div class="mode-option ${isActive ? 'active' : ''}" 
-                     data-action="sol-set-mode" 
-                     data-mode="${m.id}"
-                     style="--mode-color: ${m.color}">
-                    <div class="mode-label">${m.label}</div>
-                    <div class="mode-flavor">${m.flavor}</div>
-                </div>
-            `;
-        }).join('');
-
-        const leverHtml = `
-            <div class="sol-lever-container">
-                <div class="lever-track">
-                    ${modesHtml}
-                </div>
-            </div>
-        `;
-
-        // 4. Action Buttons (Replaced Inline Caches)
-        const actionsHtml = `
-            <div class="sol-actions-row" style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button class="btn btn-wide" data-action="sol-open-caches">MANAGE MAINTENANCE CACHES</button>
-                <button class="btn btn-wide" data-action="sol-open-roster">MANAGE DIRECTORATE</button>
-            </div>
-        `;
-
-        // Assemble
+    _renderHeader(state) {
         return `
-            <div class="sol-dashboard" style="--active-mode-color: ${modeDef.color}">
-                ${headerHtml}
-                ${statusHtml}
-                ${leverHtml}
-                ${actionsHtml}
+            <div class="sol-header">
+                <div class="station-identity">
+                    <h1>SOL STATION <span class="tier-badge">TIER 7</span></h1>
+                    <div class="sub-identity">PERIHELION OUTPOST</div>
+                </div>
+                <div class="station-status-text">
+                    STATUS: <span class="status-indicator ${state.mode === 'overdrive' ? 'status-critical' : 'status-optimal'}">
+                        ${state.mode === 'overdrive' ? 'OVERDRIVE' : 'NOMINAL'}
+                    </span>
+                </div>
             </div>
+        `;
+    }
+
+    _renderMetrics(state) {
+        // Entropy (0-100%) - Inverted visual (100% Health = 0% Entropy)
+        // We render "Structural Integrity" or "Entropy Level" based on GDD. 
+        // GDD says "Station Entropy".
+        const entropyPct = state.entropy || 0;
+        const xpPct = state.xpProgress || 0; // Assuming 0-100 float
+
+        return `
+            <div class="metric-container">
+                <div class="metric-label">
+                    <span>STATION ENTROPY</span>
+                    <span class="metric-value danger-text">${entropyPct.toFixed(1)}%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill entropy-fill" style="width: ${entropyPct}%"></div>
+                </div>
+            </div>
+
+            <div class="metric-container">
+                <div class="metric-label">
+                    <span>DIRECTORATE ACCESS</span>
+                    <span class="metric-value gold-text">LEVEL ${state.level || 1}</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill xp-fill" style="width: ${xpPct}%"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    _renderBank(state) {
+        // Formatter for numbers
+        const fmt = (n) => n.toLocaleString();
+
+        return `
+            <div class="sol-bank-display">
+                <div class="readout-box antimatter-box">
+                    <div class="readout-label">ANTIMATTER</div>
+                    <div class="readout-value purple-glow">${fmt(state.antimatter || 0)} <span class="unit">AM</span></div>
+                </div>
+                <div class="readout-box credits-box">
+                    <div class="readout-label">CREDITS</div>
+                    <div class="readout-value blue-glow">${fmt(state.credits || 0)} <span class="unit">CR</span></div>
+                </div>
+            </div>
+        `;
+    }
+
+    _renderLever(state) {
+        const isOverdrive = state.mode === 'overdrive';
+        
+        return `
+            <div class="lever-wrapper">
+                <div class="lever-label ${!isOverdrive ? 'active-text' : ''}">STANDARD</div>
+                
+                <div id="sol-mode-toggle" class="sol-toggle-switch ${isOverdrive ? 'toggled-on' : ''}">
+                    <div class="toggle-handle"></div>
+                    <div class="toggle-track-decor"></div>
+                </div>
+
+                <div class="lever-label ${isOverdrive ? 'danger-text' : ''}">OVERDRIVE</div>
+            </div>
+            <div class="lever-help-text">
+                ${isOverdrive ? 'WARNING: ENTROPY ACCELERATED' : 'STATION SYSTEMS STABLE'}
+            </div>
+        `;
+    }
+
+    _renderMenu(state) {
+        return `
+            <button id="btn-sol-maintenance" class="sol-action-btn">
+                <span class="icon">🛠️</span>
+                <span class="label">MAINTENANCE CACHES</span>
+            </button>
+            <button id="btn-sol-directorate" class="sol-action-btn">
+                <span class="icon">👥</span>
+                <span class="label">DIRECTORATE</span>
+            </button>
+            <button id="btn-sol-trade" class="sol-action-btn">
+                <span class="icon">⚖️</span>
+                <span class="label">COMMODITY EXCHANGE</span>
+            </button>
         `;
     }
 }

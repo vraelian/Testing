@@ -1,333 +1,249 @@
 /* css/screens/sol-station.css */
 
-.sol-dashboard {
-    padding: 1rem;
-    color: #e2e8f0;
-    font-family: 'Oxanium', sans-serif;
+/* --- Main Layout --- */
+.sol-station-wrapper {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    animation: fadeIn 0.5s ease-out;
+    padding: 1rem;
+    color: #e2e8f0;
+    font-family: 'Oxanium', sans-serif;
+    height: 100%;
+    overflow-y: auto;
+    background: radial-gradient(circle at top right, #1a202c 0%, #000000 100%);
 }
 
-/* Header & Bank */
+/* --- Header --- */
 .sol-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid var(--active-mode-color);
-    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #4a5568;
+    padding-bottom: 1rem;
 }
 
-.sol-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
+.station-identity h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
-.sol-level {
+.tier-badge {
+    background: #d69e2e; /* Gold */
+    color: #000;
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+.sub-identity {
     font-size: 0.9rem;
-    color: var(--active-mode-color);
-    margin-left: 0.5rem;
+    color: #a0aec0;
+    margin-top: 0.2rem;
 }
 
-.sol-bank {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+.station-status-text {
+    font-size: 0.9rem;
+    color: #718096;
 }
 
-.bank-item {
+.status-indicator {
+    font-weight: bold;
+}
+.status-indicator.status-optimal { color: #48bb78; text-shadow: 0 0 5px #48bb78; }
+.status-indicator.status-critical { color: #f56565; text-shadow: 0 0 5px #f56565; }
+
+/* --- Dashboard Grid --- */
+.sol-dashboard-grid {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    gap: 2rem;
 }
 
-.bank-label {
-    font-size: 0.7rem;
-    color: #94a3b8;
-}
-
-.bank-value {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-}
-
-.btn-harvest {
-    background: var(--active-mode-color);
-    color: #0f172a;
-    font-weight: bold;
-}
-
-/* Status Panel */
-.sol-status-panel {
-    background: rgba(15, 23, 42, 0.6);
-    padding: 1rem;
-    border-radius: 4px;
-    border: 1px solid #334155;
-}
-
-.status-row {
+/* --- Metrics (Bars) --- */
+.sol-metrics-panel {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 1rem;
-    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #2d3748;
 }
 
-.status-row:last-child {
-    margin-bottom: 0;
+.metric-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
 }
 
-.status-label {
-    width: 140px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #cbd5e1;
+.metric-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
-.bar-container {
-    flex-grow: 1;
+.progress-track {
+    background: #1a202c;
     height: 12px;
-    background: #1e293b;
-    border-radius: 2px;
+    border-radius: 6px;
     overflow: hidden;
+    border: 1px solid #4a5568;
+    position: relative;
 }
 
-.bar-fill {
+.progress-fill {
     height: 100%;
-    transition: width 0.5s ease;
+    transition: width 0.5s ease-out;
+}
+
+.entropy-fill {
+    background: linear-gradient(90deg, #ed8936, #c53030); /* Orange to Red */
+    box-shadow: 0 0 10px #c53030;
 }
 
 .xp-fill {
-    background-color: #3b82f6;
+    background: linear-gradient(90deg, #667eea, #764ba2); /* Blue to Purple */
+    box-shadow: 0 0 10px #764ba2;
 }
 
-.status-value {
-    width: 80px;
-    text-align: right;
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
+.danger-text { color: #fc8181; }
+.gold-text { color: #f6ad55; }
+
+/* --- Core Panel (Bank & Lever) --- */
+.sol-core-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
 }
 
-/* Lever */
-.sol-lever-container {
-    background: #0f172a;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+/* On mobile, stack them */
+@media (max-width: 600px) {
+    .sol-core-panel {
+        grid-template-columns: 1fr;
+    }
 }
 
-.lever-track {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.mode-option {
-    flex: 1;
-    text-align: center;
-    padding: 1rem;
-    background: #1e293b;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 4px;
-    opacity: 0.6;
-}
-
-.mode-option:hover {
-    background: #334155;
-}
-
-.mode-option.active {
-    background: rgba(var(--mode-color), 0.1); /* This requires RGB splitting or just use border */
-    border-color: var(--mode-color);
-    box-shadow: 0 0 15px var(--mode-color);
-    opacity: 1;
-    transform: translateY(-2px);
-}
-
-.mode-label {
-    font-weight: 800;
-    font-size: 1rem;
-    color: var(--mode-color);
-}
-
-.mode-flavor {
-    font-size: 0.7rem;
-    color: #94a3b8;
-    margin-top: 0.25rem;
-}
-
-/* Caches */
-.sol-caches-grid {
+/* Bank Readouts */
+.sol-bank-display {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    max-height: 400px;
-    overflow-y: auto;
+    gap: 0.8rem;
 }
 
-.tier-group {
-    background: rgba(0,0,0,0.2);
-    padding: 0.5rem;
+.readout-box {
+    background: #000;
+    border: 1px solid #4a5568;
+    padding: 0.8rem;
     border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace; /* Digital look */
+    position: relative;
 }
 
-.tier-label {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
+.readout-box.antimatter-box { border-left: 4px solid #9f7aea; }
+.readout-box.credits-box { border-left: 4px solid #4299e1; }
 
-.cache-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.75rem;
-}
-
-.cache-card {
-    display: flex;
-    align-items: center;
-    background: #1e293b;
-    border-left: 4px solid #fff;
-    padding: 0.5rem;
-    border-radius: 0 4px 4px 0;
-}
-
-.cache-icon {
-    width: 48px;
-    height: 48px;
-    background-size: cover;
-    margin-right: 0.75rem;
-    border-radius: 4px;
-    background-color: #0f172a;
-}
-
-.cache-info {
-    flex-grow: 1;
-}
-
-.cache-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.cache-stock {
-    font-family: 'Courier New', monospace;
-    font-size: 0.85rem;
-    color: #cbd5e1;
-}
-
-.cache-time {
+.readout-label {
     font-size: 0.7rem;
-    color: #64748b;
+    color: #718096;
+    letter-spacing: 1px;
 }
 
-.btn-donate {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background: #334155;
-    color: #94a3b8;
-    font-size: 1.5rem;
-    border-radius: 4px;
-    cursor: not-allowed;
+.readout-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+.unit { font-size: 0.9rem; color: #4a5568; }
+.purple-glow { color: #d6bcfa; text-shadow: 0 0 5px #9f7aea; }
+.blue-glow { color: #90cdf4; text-shadow: 0 0 5px #4299e1; }
+
+/* Lever (Toggle Switch) */
+.lever-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 1rem;
+    background: rgba(0,0,0,0.3);
+    padding: 1rem;
+    border-radius: 50px; /* Pill shape */
+    border: 1px solid #2d3748;
+}
+
+.lever-label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #4a5568;
+    transition: color 0.3s;
+}
+.lever-label.active-text { color: #48bb78; text-shadow: 0 0 5px #48bb78; }
+.lever-label.danger-text { color: #f56565; text-shadow: 0 0 5px #f56565; }
+
+/* The Physical Switch */
+.sol-toggle-switch {
+    width: 80px;
+    height: 40px;
+    background: #2d3748;
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    transition: background 0.3s;
+}
+
+.sol-toggle-switch.toggled-on {
+    background: #742a2a; /* Dark Red background for Overdrive */
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 0 10px #c53030;
+}
+
+.toggle-handle {
+    width: 34px;
+    height: 34px;
+    background: #cbd5e0;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.sol-toggle-switch.toggled-on .toggle-handle {
+    transform: translateX(40px);
+    background: #fc8181; /* Red handle */
+}
+
+/* --- Action Buttons --- */
+.sol-actions-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.sol-action-btn {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.btn-donate.active {
-    background: #22c55e;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+.sol-action-btn:hover {
+    background: #4a5568;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-.btn-donate.active:hover {
-    background: #16a34a;
-    transform: scale(1.05);
-}
-
-.sol-footer {
-    display: flex;
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-/* Modal Roster Styles */
-.roster-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.roster-section h3 {
-    border-bottom: 1px solid #334155;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    color: #94a3b8;
-}
-
-.roster-slots, .roster-pool {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.officer-card {
-    display: flex;
-    align-items: center;
-    background: #0f172a;
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #334155;
-}
-
-.officer-card.empty-slot {
-    justify-content: center;
-    border-style: dashed;
-    color: #475569;
-    height: 80px;
-}
-
-.officer-portrait {
-    width: 60px;
-    height: 60px;
-    background-color: #1e293b;
-    border-radius: 50%;
-    margin-right: 1rem;
-    background-size: cover;
-    background-position: center;
-}
-
-.officer-info {
-    flex-grow: 1;
-}
-
-.officer-name {
-    font-weight: bold;
-    color: #e2e8f0;
-}
-
-.officer-role {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-}
-
-.officer-buffs {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.text-green { color: #4ade80; }
-.text-red { color: #f87171; }
+.sol-action-btn .icon { font-size: 1.5rem; }
+.sol-action-btn .label { font-size: 0.8rem; text-align: center; }
