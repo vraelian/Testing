@@ -4781,202 +4781,7 @@ WORKBENCH --- */
 --- END OF FILE: ./css/screens/finance-screen.css ---
 
 --- START OF FILE: ./css/screens/sol-station.css ---
-/* css/screens/sol-station.css */
 
-/* --- Container & Theme --- */
-.sol-station-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background-color: #050505; /* Deep Void Black */
-    color: #e0e0e0;
-    font-family: 'Oxanium', sans-serif;
-    overflow-y: auto;
-    padding-bottom: 80px; /* Nav spacing */
-}
-
-/* --- Header & Entropy --- */
-.sol-header {
-    padding: 1rem;
-    border-bottom: 2px solid #333;
-    background: linear-gradient(180deg, #1a0f00 0%, #050505 100%);
-    text-align: center;
-}
-
-.sol-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #ffae00; /* Solar Orange */
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 0 10px rgba(255, 174, 0, 0.3);
-}
-
-.entropy-container {
-    margin-top: 10px;
-    background: #111;
-    border: 1px solid #444;
-    padding: 10px;
-    border-radius: 4px;
-}
-
-.entropy-label {
-    font-size: 0.8rem;
-    color: #888;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.entropy-bar-track {
-    width: 100%;
-    height: 12px;
-    background: #222;
-    border-radius: 2px;
-    overflow: hidden;
-    position: relative;
-}
-
-.entropy-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #00ff44 0%, #ffff00 50%, #ff0000 100%);
-    width: 0%; /* Dynamic */
-    transition: width 0.5s ease-out;
-}
-
-/* --- Control Deck (Modes & Bank) --- */
-.sol-deck {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-/* Mode Switcher */
-.mode-switcher {
-    display: flex;
-    justify-content: space-between;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 4px;
-}
-
-.mode-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #666;
-    font-family: 'Oxanium', sans-serif;
-    font-weight: 600;
-    padding: 10px 0;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 4px;
-}
-
-.mode-btn.active {
-    background: #ffae00;
-    color: #000;
-    box-shadow: 0 0 8px rgba(255, 174, 0, 0.5);
-}
-
-.mode-btn:hover:not(.active) {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-/* Bank Readout */
-.sol-bank {
-    display: flex;
-    gap: 10px;
-}
-
-.bank-module {
-    flex: 1;
-    background: #0f0f0f;
-    border: 1px solid #333;
-    padding: 10px;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.bank-label {
-    font-size: 0.7rem;
-    color: #666;
-    text-transform: uppercase;
-}
-
-.bank-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    margin-top: 4px;
-}
-
-.bank-value.credits { color: #00ffaa; }
-.bank-value.antimatter { color: #d400ff; }
-
-/* --- Maintenance Grid (Caches) --- */
-.sol-section-title {
-    padding: 0 1rem;
-    font-size: 0.9rem;
-    color: #888;
-    text-transform: uppercase;
-    border-left: 3px solid #ffae00;
-    margin: 10px 0 5px 1rem;
-}
-
-.cache-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 1rem;
-}
-
-/* Phase 3 Placeholder for Cache Cards */
-.cache-card-placeholder {
-    background: #111;
-    border: 1px dashed #444;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #444;
-    font-size: 0.8rem;
-}
-
-/* --- Officer Roster --- */
-.officer-roster {
-    padding: 1rem;
-}
-
-.roster-slot {
-    background: #111;
-    border: 1px solid #333;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.slot-label {
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.slot-status {
-    color: #333;
-    font-style: italic;
-    font-size: 0.8rem;
-}
 --- END OF FILE: ./css/screens/sol-station.css ---
 
 --- START OF FILE: ./css/screens/hangar-screen.css ---
@@ -7172,148 +6977,6 @@ export function renderNavigationScreen(gameState) {
 }
 --- END OF FILE: ./js/ui/components/NavigationScreen.js ---
 
---- START OF FILE: ./js/ui/components/SolStationScreen.js ---
-// js/ui/components/SolStationScreen.js
-import { formatCredits } from '../../utils.js';
-import { STATION_CONFIG } from '../../data/station_config.js';
-
-export class SolStationScreen {
-    constructor(container, uiManager) {
-        this.container = container;
-        this.uiManager = uiManager;
-        this.dom = null;
-    }
-
-    /**
-     * Builds the static DOM structure.
-     */
-    mount() {
-        this.container.innerHTML = `
-            <div class="sol-station-container">
-                <div class="sol-header">
-                    <div class="sol-title">Sol Station Directorate</div>
-                    <div class="entropy-container">
-                        <div class="entropy-label">
-                            <span>STATION ENTROPY</span>
-                            <span id="sol-entropy-value">0%</span>
-                        </div>
-                        <div class="entropy-bar-track">
-                            <div id="sol-entropy-fill" class="entropy-bar-fill"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sol-deck">
-                    <div class="mode-switcher" id="sol-mode-switcher">
-                        <button class="mode-btn" data-mode="DEFAULT">STATION KEEPING</button>
-                        <button class="mode-btn" data-mode="SIPHON">SOLAR SIPHON</button>
-                        <button class="mode-btn" data-mode="FORTIFY">FORTIFY</button>
-                    </div>
-
-                    <div class="sol-bank">
-                        <div class="bank-module">
-                            <span class="bank-label">Accrued Credits</span>
-                            <span class="bank-value credits" id="sol-bank-credits">0</span>
-                        </div>
-                        <div class="bank-module">
-                            <span class="bank-label">Antimatter</span>
-                            <span class="bank-value antimatter" id="sol-bank-antimatter">0.000</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sol-section-title">Maintenance Caches (Weekly Burn)</div>
-                <div class="cache-grid" id="sol-cache-grid">
-                    <div class="cache-card-placeholder">Loading Caches...</div>
-                </div>
-
-                <div class="sol-section-title">Command Staff</div>
-                <div class="officer-roster" id="sol-officer-roster">
-                    <div class="roster-slot">
-                        <span class="slot-label">Commander</span>
-                        <span class="slot-status">Vacant</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Bind events after mounting
-        this.bindEvents();
-    }
-
-    /**
-     * Updates the UI with current GameState data.
-     * @param {Object} state - Full GameState
-     */
-    update(state) {
-        const station = state.solStation;
-        if (!station) return;
-
-        // 1. Update Entropy
-        const entropyVal = document.getElementById('sol-entropy-value');
-        const entropyFill = document.getElementById('sol-entropy-fill');
-        if (entropyVal && entropyFill) {
-            const pct = Math.floor(station.entropy);
-            entropyVal.textContent = `${pct}%`;
-            entropyFill.style.width = `${pct}%`;
-            
-            // Visual Color Logic based on thresholds
-            if (pct < 20) entropyFill.style.background = '#00ffaa'; // Good
-            else if (pct < 80) entropyFill.style.background = '#ffae00'; // Warning
-            else entropyFill.style.background = '#ff0000'; // Critical
-        }
-
-        // 2. Update Mode Buttons
-        const buttons = document.querySelectorAll('.mode-btn');
-        buttons.forEach(btn => {
-            if (btn.dataset.mode === station.mode) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-
-        // 3. Update Bank
-        const bankCredits = document.getElementById('sol-bank-credits');
-        const bankAM = document.getElementById('sol-bank-antimatter');
-        if (bankCredits) bankCredits.textContent = formatCredits(Math.floor(station.bank.credits));
-        if (bankAM) bankAM.textContent = station.bank.antimatter.toFixed(3);
-
-        // 4. Update Caches (Skeleton for now)
-        // In Phase 4, we will fully populate this.
-        // For Phase 3, we just clear the "Loading" text.
-        const grid = document.getElementById('sol-cache-grid');
-        if (grid && grid.children[0]?.classList.contains('cache-card-placeholder')) {
-             grid.innerHTML = ''; // Clear placeholder once
-             // Temporary placeholder logic until Phase 4
-             grid.innerHTML = `<div style="grid-column: span 2; text-align:center; color:#555; padding:20px;">
-                Cache Management Interface Offline (Phase 3)
-             </div>`;
-        }
-    }
-
-    bindEvents() {
-        const switcher = document.getElementById('sol-mode-switcher');
-        if (switcher) {
-            switcher.addEventListener('click', (e) => {
-                if (e.target.classList.contains('mode-btn')) {
-                    const newMode = e.target.dataset.mode;
-                    this.handleModeSwitch(newMode);
-                }
-            });
-        }
-    }
-
-    handleModeSwitch(newMode) {
-        // Optimistic update via GameState
-        // In a real implementation, we might call SolStationService directly 
-        // or emit an event. For now, direct state mutation is consistent 
-        // with this codebase's "Mutate & Notify" pattern.
-        window.gameState.update('solStation.mode', newMode);
-    }
-}
---- END OF FILE: ./js/ui/components/SolStationScreen.js ---
-
 --- START OF FILE: ./js/ui/components/MissionsScreen.js ---
 // js/ui/components/MissionsScreen.js
 /**
@@ -9029,7 +8692,6 @@ export const SCREEN_IDS = Object.freeze({
     MISSIONS: 'missions',
     FINANCE: 'finance',
     INTEL: 'intel',
-    SOL_STATION: 'SOL_STATION' // <--- PHASE 3 ADDITION
 });
 
 /**
@@ -9334,6 +8996,7 @@ export const WEALTH_MILESTONES = [
  * @type {string}
  */
 export const SAVE_KEY = 'orbitalTraderSave_v2';
+
 --- END OF FILE: ./js/data/constants.js ---
 
 --- START OF FILE: ./js/data/missions.js ---
@@ -24085,7 +23748,6 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
-import { SolStationScreen } from '../ui/components/SolStationScreen.js'; // <--- PHASE 3 IMPORT
 
 // --- Services & Logic ---
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
@@ -24148,12 +23810,6 @@ export class UIManager {
         this.getItemPrice = this.marketControl.getItemPrice.bind(this.marketControl);
         
         window.addEventListener('resize', this._setAppHeight);
-
-        // --- PHASE 3: Initialize Sol Station Screen Component ---
-        // Unlike legacy screens which are functions, this is a class instance.
-        // We initialize it here but render it in renderActiveScreen.
-        // We create a container dynamically if it doesn't exist in cache yet (it won't in standard HTML).
-        this.solStationScreen = new SolStationScreen(this.cache.screenContainer, this); 
     }
 
     // --- Service Injection Methods ---
@@ -24175,7 +23831,6 @@ export class UIManager {
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
-            screenContainer: document.getElementById('screen-content'), // Added for SolStation mounting
             navBar: document.getElementById('nav-bar'),
             newsTickerBar: document.getElementById('news-ticker-bar'), 
             topBarContainer: document.getElementById('top-bar-container'),
@@ -24401,53 +24056,11 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
-        // --- PHASE 3: Sol Station Screen Check ---
-        if (gameState.activeScreen === SCREEN_IDS.SOL_STATION) {
-            // Clear the screen container (since SolStationScreen handles its own mounting)
-            // Note: In legacy, specific divs like #market-screen exist.
-            // SolStation uses .sol-station-container inside #screen-content.
-            // We need to ensure other screens are hidden.
-            
-            // Hide Legacy Screens
-            Object.values(this.cache).forEach(el => {
-                if (el && el.id && el.id.endsWith('-screen')) {
-                    el.style.display = 'none';
-                }
-            });
-
-            // Mount if not mounted (or if innerHTML was wiped)
-            // We check for our specific container class
-            if (!this.cache.screenContainer.querySelector('.sol-station-container')) {
-                this.solStationScreen.mount();
-            }
-            
-            // Update
-            this.solStationScreen.update(gameState);
-            return;
-        } else {
-            // Remove Sol Station if we navigated away
-            const solContainer = this.cache.screenContainer.querySelector('.sol-station-container');
-            if (solContainer) solContainer.remove();
-            
-            // Show Legacy Screens Container
-            // (We restore display block to the active screen below)
-        }
-        // --- END PHASE 3 CHECK ---
-
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
-        
-        // Hide all screens first (reset state)
-        Object.values(this.cache).forEach(el => {
-            if (el && el.id && el.id.endsWith('-screen')) {
-                el.style.display = 'none';
-            }
-        });
-
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
         }
         if (activeScreenEl) {
-            activeScreenEl.style.display = 'block'; // Ensure visibility
             activeScreenEl.classList.add('active-screen');
             this.lastActiveScreenEl = activeScreenEl;
         }

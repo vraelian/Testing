@@ -19,7 +19,6 @@ export const SCREEN_IDS = Object.freeze({
     MISSIONS: 'missions',
     FINANCE: 'finance',
     INTEL: 'intel',
-    SOL_STATION: 'SOL_STATION' // <--- PHASE 3 ADDITION
 });
 
 /**

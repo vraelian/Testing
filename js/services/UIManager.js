@@ -14,7 +14,6 @@ import { renderMissionsScreen } from '../ui/components/MissionsScreen.js';
 import { renderFinanceScreen } from '../ui/components/FinanceScreen.js';
 import { renderIntelScreen } from '../ui/components/IntelScreen.js';
 import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
-import { SolStationScreen } from '../ui/components/SolStationScreen.js'; // <--- PHASE 3 IMPORT
 
 // --- Services & Logic ---
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
@@ -77,12 +76,6 @@ export class UIManager {
         this.getItemPrice = this.marketControl.getItemPrice.bind(this.marketControl);
         
         window.addEventListener('resize', this._setAppHeight);
-
-        // --- PHASE 3: Initialize Sol Station Screen Component ---
-        // Unlike legacy screens which are functions, this is a class instance.
-        // We initialize it here but render it in renderActiveScreen.
-        // We create a container dynamically if it doesn't exist in cache yet (it won't in standard HTML).
-        this.solStationScreen = new SolStationScreen(this.cache.screenContainer, this); 
     }
 
     // --- Service Injection Methods ---
@@ -104,7 +97,6 @@ export class UIManager {
     _cacheDOM() {
         this.cache = {
             gameContainer: document.getElementById('game-container'),
-            screenContainer: document.getElementById('screen-content'), // Added for SolStation mounting
             navBar: document.getElementById('nav-bar'),
             newsTickerBar: document.getElementById('news-ticker-bar'), 
             topBarContainer: document.getElementById('top-bar-container'),
@@ -330,53 +322,11 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
-        // --- PHASE 3: Sol Station Screen Check ---
-        if (gameState.activeScreen === SCREEN_IDS.SOL_STATION) {
-            // Clear the screen container (since SolStationScreen handles its own mounting)
-            // Note: In legacy, specific divs like #market-screen exist.
-            // SolStation uses .sol-station-container inside #screen-content.
-            // We need to ensure other screens are hidden.
-            
-            // Hide Legacy Screens
-            Object.values(this.cache).forEach(el => {
-                if (el && el.id && el.id.endsWith('-screen')) {
-                    el.style.display = 'none';
-                }
-            });
-
-            // Mount if not mounted (or if innerHTML was wiped)
-            // We check for our specific container class
-            if (!this.cache.screenContainer.querySelector('.sol-station-container')) {
-                this.solStationScreen.mount();
-            }
-            
-            // Update
-            this.solStationScreen.update(gameState);
-            return;
-        } else {
-            // Remove Sol Station if we navigated away
-            const solContainer = this.cache.screenContainer.querySelector('.sol-station-container');
-            if (solContainer) solContainer.remove();
-            
-            // Show Legacy Screens Container
-            // (We restore display block to the active screen below)
-        }
-        // --- END PHASE 3 CHECK ---
-
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
-        
-        // Hide all screens first (reset state)
-        Object.values(this.cache).forEach(el => {
-            if (el && el.id && el.id.endsWith('-screen')) {
-                el.style.display = 'none';
-            }
-        });
-
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
         }
         if (activeScreenEl) {
-            activeScreenEl.style.display = 'block'; // Ensure visibility
             activeScreenEl.classList.add('active-screen');
             this.lastActiveScreenEl = activeScreenEl;
         }
