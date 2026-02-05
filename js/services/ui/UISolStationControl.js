@@ -92,7 +92,8 @@ export class UISolStationControl {
             </div>
         `;
 
-        this.uiManager.queueModal('sol-dashboard-modal', 'Sol Station Directorate', contentHtml, null, {
+        // [[FIXED]] Changed target from 'sol-dashboard-modal' (non-existent) to 'event-modal'
+        this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
             width: '800px', // Custom width for dashboard
             dismissOutside: true
         });
