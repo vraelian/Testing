@@ -430,7 +430,9 @@ ${logHistory}
                 this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
                 this.gameState.player.revealedTier = 7;
                 this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
+                if (this.gameState.solStation) this.gameState.solStation.unlocked = true;
                 this.gameState.setState({});
+                this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             // --- [[START]] PHASE 3: NEW UNLOCK BUTTONS ---
             unlockSolarCore: { name: 'Unlock Solar Core (Sun/Mercury)', type: 'button', handler: () => {
@@ -447,6 +449,17 @@ ${logHistory}
                     this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#fbbf24');
                     this.logger.info.system('Debug', 'Sol Station unlocked via debug.');
                 }
+            }},
+            // NEW: SOL TESTING BUTTON
+            solTesting: { name: 'Sol Testing', type: 'button', handler: () => {
+                // 1. Unlock All (including station)
+                this.actions.unlockAll.handler();
+                // 2. God Mode
+                this.actions.godMode.handler();
+                // 3. Teleport to Sun
+                this.gameState.currentLocationId = LOCATION_IDS.SUN;
+                this.gameState.setState({});
+                this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
@@ -611,6 +624,10 @@ ${logHistory}
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
+        // MOVED FROM ECONOMY: Unlock All
+        flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // NEW: Sol Testing
+        flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
@@ -689,7 +706,7 @@ ${logHistory}
 
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // REMOVED: Unlock All (Moved to Game Flow)
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
         this.economyFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
 

@@ -2650,21 +2650,40 @@ card.
 .sol-dashboard-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem; /* Reduced from 1.5rem for compactness */
     font-family: 'Orbitron', sans-serif;
     color: #fff;
+    /* Phase 1 Fixes: Clipping & Scroll */
+    max-height: calc(var(--app-height, 100vh) - 140px);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollbar Styling for Webkit */
+.sol-dashboard-container::-webkit-scrollbar {
+    width: 6px;
+}
+.sol-dashboard-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+.sol-dashboard-container::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    border-radius: 3px;
 }
 
 /* Header & Status */
 .sol-header-panel {
     background: rgba(0, 0, 0, 0.3);
-    padding: 1rem;
+    padding: 0.75rem; /* Compacted */
     border-radius: 8px;
     border: 1px solid #4b5563;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .sol-health-bar-container {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem; /* Compacted */
 }
 
 .sol-health-bar-label {
@@ -2714,16 +2733,17 @@ card.
 /* Mode Control */
 .sol-mode-control {
     background: rgba(0, 0, 0, 0.3);
-    padding: 1rem;
+    padding: 0.75rem; /* Compacted */
     border-radius: 8px;
     border: 1px solid #4b5563;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .section-title {
     font-size: 0.9rem;
     color: #9ca3af;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Compacted */
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -2732,7 +2752,7 @@ card.
     display: flex;
     gap: 0.5rem;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Compacted */
 }
 
 .mode-btn {
@@ -2740,9 +2760,9 @@ card.
     background: transparent;
     border: 1px solid #4b5563;
     color: #9ca3af;
-    padding: 0.75rem;
+    padding: 0.5rem; /* Compacted */
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Slightly smaller text */
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
@@ -2780,20 +2800,24 @@ card.
 }
 
 /* Cache Grid */
+.sol-cache-section {
+    flex-shrink: 0;
+}
+
 .cache-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: 0.5rem; /* Compacted */
 }
 
 .cache-card {
     background: rgba(17, 24, 39, 0.8);
     border: 1px solid #374151;
     border-radius: 6px;
-    padding: 0.75rem;
+    padding: 0.5rem; /* Compacted */
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem; /* Compacted */
 }
 
 .cache-header {
@@ -2803,8 +2827,8 @@ card.
 }
 
 .cache-icon {
-    width: 32px;
-    height: 32px;
+    width: 24px; /* Smaller icon */
+    height: 24px;
     background-size: cover;
     background-position: center;
     border-radius: 4px;
@@ -2816,14 +2840,14 @@ card.
 }
 
 .cache-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Compacted */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .cache-tier {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: #6b7280;
 }
 
@@ -2841,7 +2865,7 @@ card.
 }
 
 .cache-details {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #9ca3af;
     text-align: right;
     font-family: monospace;
@@ -2855,7 +2879,7 @@ card.
 }
 
 .player-stock {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #6b7280;
 }
 
@@ -2863,8 +2887,8 @@ card.
     background: #374151;
     border: none;
     color: #fff;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem; /* Compacted */
+    font-size: 0.65rem;
     border-radius: 4px;
     cursor: pointer;
     font-family: 'Orbitron', sans-serif;
@@ -2880,15 +2904,20 @@ card.
 }
 
 /* Officer Slots */
+.sol-officer-section {
+    flex-shrink: 0;
+    padding-bottom: 0.5rem; /* Bottom spacing for scroll */
+}
+
 .officer-slot-container {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem; /* Compacted */
     justify-content: center;
 }
 
 .officer-slot {
-    width: 140px;
-    height: 160px;
+    width: 120px; /* Slightly narrower */
+    height: 140px; /* Slightly shorter */
     background: rgba(17, 24, 39, 0.8);
     border: 1px dashed #4b5563;
     border-radius: 6px;
@@ -2914,33 +2943,33 @@ card.
 .slot-header {
     font-size: 0.65rem;
     color: #6b7280;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .empty-label {
     margin-top: auto;
     margin-bottom: auto;
     color: #9ca3af;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .officer-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: bold;
     color: #e5e7eb;
 }
 
 .officer-role {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #60a5fa;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .officer-buffs-mini {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: #9ca3af;
     margin-top: auto;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 /* Roster Modal */
@@ -16206,7 +16235,7 @@ export class UISolStationControl {
                             <button class="btn btn-sm btn-pulse-gold w-full h-full" 
                                     data-action="sol-claim-output" 
                                     ${!hasStockpile ? 'disabled' : ''}>
-                                CLAIM OUTPUT
+                                CLAIM
                             </button>
                         </div>
                         <div class="readout-item">
@@ -16244,8 +16273,8 @@ export class UISolStationControl {
             </div>
         `;
 
-        this.uiManager.queueModal('sol-dashboard-modal', 'Sol Station Directorate', contentHtml, null, {
-            width: '800px', // Custom width for dashboard
+        this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
+            width: '800px', // Custom width for dashboard; constrained by CSS max-width
             dismissOutside: true
         });
     }
@@ -16320,9 +16349,9 @@ export class UISolStationControl {
 
     _getModeDescription(mode) {
         switch (mode) {
-            case 'STABILITY': return "Minimized Entropy. Standard Output. <span class='text-green-400'>Low Maintenance.</span>";
-            case 'COMMERCE': return "Maximizes Credit generation. <span class='text-orange-400'>High Entropy.</span>";
-            case 'PRODUCTION': return "Maximizes Antimatter generation. <span class='text-red-500'>Extreme Entropy.</span>";
+            case 'STABILITY': return "Min Decay. Std Output. <span class='text-green-400'>Low Maint.</span>";
+            case 'COMMERCE': return "Max Credits. <span class='text-orange-400'>High Decay.</span>";
+            case 'PRODUCTION': return "Max AM. <span class='text-red-500'>Extreme Decay.</span>";
             default: return "";
         }
     }
@@ -16418,9 +16447,10 @@ export class UISolStationControl {
 
     _formatBuffs(buffs, mini = false) {
         const parts = [];
-        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${buffs.entropy * 100}% Decay</span>`);
-        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${buffs.creditMult * 100}% Credits</span>`);
-        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${buffs.amMult * 100}% Antimatter</span>`);
+        // Rounded values and shortened labels for UI compactness
+        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
+        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${Math.round(buffs.creditMult * 100)}% Credits</span>`);
+        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${Math.round(buffs.amMult * 100)}% AM</span>`);
         
         return parts.join(mini ? '<br>' : ' • ');
     }
@@ -17454,7 +17484,9 @@ ${logHistory}
                 this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
                 this.gameState.player.revealedTier = 7;
                 this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
+                if (this.gameState.solStation) this.gameState.solStation.unlocked = true;
                 this.gameState.setState({});
+                this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             // --- [[START]] PHASE 3: NEW UNLOCK BUTTONS ---
             unlockSolarCore: { name: 'Unlock Solar Core (Sun/Mercury)', type: 'button', handler: () => {
@@ -17471,6 +17503,17 @@ ${logHistory}
                     this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#fbbf24');
                     this.logger.info.system('Debug', 'Sol Station unlocked via debug.');
                 }
+            }},
+            // NEW: SOL TESTING BUTTON
+            solTesting: { name: 'Sol Testing', type: 'button', handler: () => {
+                // 1. Unlock All (including station)
+                this.actions.unlockAll.handler();
+                // 2. God Mode
+                this.actions.godMode.handler();
+                // 3. Teleport to Sun
+                this.gameState.currentLocationId = LOCATION_IDS.SUN;
+                this.gameState.setState({});
+                this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
@@ -17635,6 +17678,10 @@ ${logHistory}
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
+        // MOVED FROM ECONOMY: Unlock All
+        flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // NEW: Sol Testing
+        flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
@@ -17713,7 +17760,7 @@ ${logHistory}
 
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // REMOVED: Unlock All (Moved to Game Flow)
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
         this.economyFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
 

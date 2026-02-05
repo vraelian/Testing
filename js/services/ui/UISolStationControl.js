@@ -54,7 +54,7 @@ export class UISolStationControl {
                             <button class="btn btn-sm btn-pulse-gold w-full h-full" 
                                     data-action="sol-claim-output" 
                                     ${!hasStockpile ? 'disabled' : ''}>
-                                CLAIM OUTPUT
+                                CLAIM
                             </button>
                         </div>
                         <div class="readout-item">
@@ -92,9 +92,8 @@ export class UISolStationControl {
             </div>
         `;
 
-        // [[FIXED]] Changed target from 'sol-dashboard-modal' (non-existent) to 'event-modal'
         this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
-            width: '800px', // Custom width for dashboard
+            width: '800px', // Custom width for dashboard; constrained by CSS max-width
             dismissOutside: true
         });
     }
@@ -169,9 +168,9 @@ export class UISolStationControl {
 
     _getModeDescription(mode) {
         switch (mode) {
-            case 'STABILITY': return "Minimized Entropy. Standard Output. <span class='text-green-400'>Low Maintenance.</span>";
-            case 'COMMERCE': return "Maximizes Credit generation. <span class='text-orange-400'>High Entropy.</span>";
-            case 'PRODUCTION': return "Maximizes Antimatter generation. <span class='text-red-500'>Extreme Entropy.</span>";
+            case 'STABILITY': return "Min Decay. Std Output. <span class='text-green-400'>Low Maint.</span>";
+            case 'COMMERCE': return "Max Credits. <span class='text-orange-400'>High Decay.</span>";
+            case 'PRODUCTION': return "Max AM. <span class='text-red-500'>Extreme Decay.</span>";
             default: return "";
         }
     }
@@ -267,9 +266,10 @@ export class UISolStationControl {
 
     _formatBuffs(buffs, mini = false) {
         const parts = [];
-        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${buffs.entropy * 100}% Decay</span>`);
-        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${buffs.creditMult * 100}% Credits</span>`);
-        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${buffs.amMult * 100}% Antimatter</span>`);
+        // Rounded values and shortened labels for UI compactness
+        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
+        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${Math.round(buffs.creditMult * 100)}% Credits</span>`);
+        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${Math.round(buffs.amMult * 100)}% AM</span>`);
         
         return parts.join(mini ? '<br>' : ' • ');
     }
