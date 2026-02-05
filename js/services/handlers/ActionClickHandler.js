@@ -398,20 +398,15 @@ export class ActionClickHandler {
             }
 
             case 'sol-assign-officer': {
-                const targetSlot = parseInt(dataset.slotId);
+                const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
                 
-                // [[FIXED]] CRITICAL: Modifying 'state' (copy) does nothing. 
-                // Must modify this.gameState (real) AND call setState() on the service.
-                const realSolStation = this.gameState.solStation;
-                const slotIndex = realSolStation.officers.findIndex(s => s.slotId === targetSlot);
+                // [[MODIFIED]] Delegated to Service (Dumb Handler)
+                const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);
                 
-                if (slotIndex !== -1) {
-                    realSolStation.officers[slotIndex].assignedOfficerId = officerId;
-                    this.gameState.setState({}); // Commit change & Notify listeners
-                    
-                    // Go back to the dashboard view (which triggers a swap)
-                    // Pass fresh state to ensure the roster slot updates visually
+                if (success) {
+                    // Refresh UI
+                    // Note: We use this.gameState.getState() to pass a fresh snapshot
                     this.uiManager.showSolStationDashboard(this.gameState.getState());
                 }
                 break;

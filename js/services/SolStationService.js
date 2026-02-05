@@ -250,4 +250,29 @@ export class SolStationService {
             entropy: this.calculateEntropy(modeConfig.entropyMult)
         };
     }
+
+    /**
+     * Assigns an officer to a specific directorate slot.
+     * @param {number|string} slotId - The slot to assign to.
+     * @param {string|null} officerId - The officer ID to assign, or null to clear.
+     * @returns {boolean} True if successful.
+     */
+    assignOfficer(slotId, officerId) {
+        const station = this.gameState.solStation;
+        const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
+        
+        if (slotIndex === -1) {
+            this.logger.warn('SolStationService', `Invalid slot ID: ${slotId}`);
+            return false;
+        }
+
+        const officerName = officerId ? (OFFICERS[officerId]?.name || officerId) : "None";
+        const action = officerId ? "assigned" : "unassigned";
+
+        station.officers[slotIndex].assignedOfficerId = officerId;
+        
+        this.logger.info.player(this.gameState.day, 'OFFICER_ASSIGN', `Officer ${officerName} ${action} to Slot ${slotId}.`);
+        this.gameState.setState({}); // Commit and Notify
+        return true;
+    }
 }
