@@ -17734,6 +17734,31 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION ---
+            solStation: {
+                unlocked: false, // Default locked until acquired via endgame conditions
+                mode: "STABILITY", // Default safe mode
+                health: 100, // Aggregate health percentage
+                caches: {
+                    tier1: { current: 1000, max: 5000 },
+                    tier2: { current: 800, max: 4000 },
+                    tier3: { current: 600, max: 3000 },
+                    tier4: { current: 400, max: 2000 },
+                    tier5: { current: 200, max: 1000 },
+                    tier6: { current: 100, max: 500 }
+                },
+                officers: [
+                    { slotId: 1, assignedOfficerId: null },
+                    { slotId: 2, assignedOfficerId: null },
+                    { slotId: 3, assignedOfficerId: null }
+                ],
+                stockpile: {
+                    credits: 0,
+                    antimatter: 0
+                }
+            },
+            // --- END VIRTUAL WORKBENCH ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,
@@ -17852,6 +17877,195 @@ export class GameState {
     }
 }
 --- END OF FILE: ./js/services/GameState.js ---
+
+--- START OF FILE: ./js/services/SolStationService.js ---
+// js/services/SolStationService.js
+import { DB } from '../data/database.js';
+
+/**
+ * Constants defining the station's operational parameters.
+ */
+const MODES = {
+    STABILITY: { id: 'STABILITY', entropyMult: 1, amMult: 1, creditMult: 1 },
+    COMMERCE: { id: 'COMMERCE', entropyMult: 3, amMult: 1, creditMult: 4 },
+    PRODUCTION: { id: 'PRODUCTION', entropyMult: 4, amMult: 4, creditMult: 1 }
+};
+
+const BASE_DECAY_RATE = 0.05; // 5% base decay per day
+const BASE_CREDIT_OUTPUT = 1000; // Base credits generated per day at 100% health
+const BASE_AM_OUTPUT = 0.1; // Base antimatter generated per day at 100% health
+
+/**
+ * @class SolStationService
+ * @description Manages the Sol Station endgame engine. Handles daily entropy decay,
+ * resource consumption, and output generation.
+ */
+export class SolStationService {
+    /**
+     * @param {import('./GameState.js').GameState} gameState
+     * @param {import('./LoggingService.js').Logger} logger
+     */
+    constructor(gameState, logger) {
+        this.gameState = gameState;
+        this.logger = logger;
+    }
+
+    /**
+     * Processes one day of station operations.
+     * 1. Calculates Entropy based on Mode.
+     * 2. Consumes resources from caches (Decay).
+     * 3. Updates Station Health.
+     * 4. Generates Output (Credits/Antimatter) if operational.
+     */
+    processTick() {
+        const station = this.gameState.solStation;
+        
+        // If not unlocked, the station does not operate.
+        if (!station.unlocked) return;
+
+        const modeConfig = MODES[station.mode];
+        const entropy = this.calculateEntropy(modeConfig.entropyMult);
+
+        // 1. Decay Caches
+        let totalFillRatio = 0;
+        let activeCaches = 0;
+
+        for (const [tierKey, cache] of Object.entries(station.caches)) {
+            // Calculate decay amount: Current * Base Rate * Entropy Multiplier
+            // Minimum decay of 1 unit if cache has items
+            let decayAmount = Math.ceil(cache.current * BASE_DECAY_RATE * entropy);
+            
+            // Apply decay
+            if (cache.current > 0) {
+                cache.current = Math.max(0, cache.current - decayAmount);
+            }
+
+            // Track health metrics
+            totalFillRatio += (cache.current / cache.max);
+            activeCaches++;
+        }
+
+        // 2. Update Health
+        // Health is the average fill percentage of all caches
+        const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+        station.health = Math.round(averageFill * 100);
+
+        // 3. Generate Output
+        // Station goes offline at 0% health
+        if (station.health > 0) {
+            // Efficiency Logic:
+            // 100% Health = 100% Efficiency
+            // < 50% Health = Significant drop (Squared curve)
+            let efficiency = averageFill;
+            if (averageFill < 0.5) {
+                efficiency = Math.pow(averageFill, 2); 
+            }
+
+            // Calculate Outputs
+            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency);
+            const amOutput = BASE_AM_OUTPUT * modeConfig.amMult * efficiency;
+
+            // Add to Stockpile
+            station.stockpile.credits += creditOutput;
+            station.stockpile.antimatter += amOutput;
+
+            // Log operational tick if efficiency is low, to warn player
+            if (station.health < 20) {
+                this.logger.info.system('SolStation', this.gameState.day, 'CRITICAL', `Station health critical (${station.health}%). Efficiency plummeting.`);
+            }
+        } else {
+            this.logger.info.system('SolStation', this.gameState.day, 'OFFLINE', `Station resources depleted. Systems offline.`);
+        }
+    }
+
+    /**
+     * Calculates the final entropy multiplier, accounting for Officer buffs (Phase 2).
+     * @param {number} baseModeMult - The multiplier from the active mode.
+     * @returns {number} The final entropy scalar.
+     */
+    calculateEntropy(baseModeMult) {
+        let multiplier = baseModeMult;
+        
+        // PHASE 2 TODO: Iterate through station.officers and subtract entropy mitigation buffs.
+        // Example: multiplier -= officer.entropyReduction;
+
+        return Math.max(0.1, multiplier); // Entropy cannot drop below 0.1x
+    }
+
+    /**
+     * Switches the station's operating mode.
+     * @param {string} newModeId - 'STABILITY', 'COMMERCE', 'PRODUCTION'
+     */
+    setMode(newModeId) {
+        if (MODES[newModeId]) {
+            this.gameState.solStation.mode = newModeId;
+            this.logger.info.player(this.gameState.day, 'STATION_MODE', `Sol Station mode switched to ${newModeId}`);
+            this.gameState.setState({}); // Commit state
+        }
+    }
+
+    /**
+     * Transfers cargo from the player's active ship to a specific station cache.
+     * @param {string} tierKey - 'tier1' through 'tier6'.
+     * @param {string} commodityId - The ID of the item being donated.
+     * @param {number} quantity - Amount to donate.
+     * @returns {object} { success: boolean, message: string }
+     */
+    donateToCache(tierKey, commodityId, quantity) {
+        const station = this.gameState.solStation;
+        const cache = station.caches[tierKey];
+        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+
+        // Validation
+        if (!cache) return { success: false, message: "Invalid cache tier." };
+        if (!inventory[commodityId] || inventory[commodityId].quantity < quantity) {
+            return { success: false, message: "Insufficient cargo." };
+        }
+        
+        // Check Capacity
+        const spaceAvailable = cache.max - cache.current;
+        if (quantity > spaceAvailable) {
+            return { success: false, message: `Cache full. Can only accept ${spaceAvailable} units.` };
+        }
+
+        // Execute Transfer
+        inventory[commodityId].quantity -= quantity;
+        cache.current += quantity;
+
+        // Recalculate Health immediately for UI feedback
+        let totalFillRatio = 0;
+        let activeCaches = 0;
+        for (const c of Object.values(station.caches)) {
+            totalFillRatio += (c.current / c.max);
+            activeCaches++;
+        }
+        station.health = Math.round((totalFillRatio / activeCaches) * 100);
+
+        this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to ${tierKey} cache.`);
+        this.gameState.setState({});
+        
+        return { success: true, message: "Resources transferred." };
+    }
+
+    /**
+     * Helper to get the current output estimates for the UI.
+     */
+    getProjectedOutput() {
+        const station = this.gameState.solStation;
+        const modeConfig = MODES[station.mode];
+        const averageFill = station.health / 100;
+        
+        let efficiency = averageFill;
+        if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
+
+        return {
+            credits: Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency),
+            antimatter: (BASE_AM_OUTPUT * modeConfig.amMult * efficiency).toFixed(2),
+            entropy: this.calculateEntropy(modeConfig.entropyMult)
+        };
+    }
+}
+--- END OF FILE: ./js/services/SolStationService.js ---
 
 --- START OF FILE: ./js/services/MissionService.js ---
 // js/services/MissionService.js
@@ -19899,6 +20113,7 @@ export class TimeService {
         this.newsTickerService = newsTickerService;
         this.simulationService = null; // Injected by SimulationService
         this.intelService = null;      // Injected by SimulationService
+        this.solStationService = null; // Injected by SimulationService
     }
 
     /**
@@ -19929,6 +20144,12 @@ export class TimeService {
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
+
+            // --- SOL STATION: PROCESS TICK ---
+            if (this.solStationService) {
+                this.solStationService.processTick();
+            }
+            // ---------------------------------
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Base upgrade modifier
@@ -20532,7 +20753,8 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
-import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
+import { RandomEventService } from './RandomEventService.js'; 
+import { SolStationService } from './SolStationService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -20565,6 +20787,12 @@ export class SimulationService {
         // --- EVENT SYSTEM 2.0 ---
         this.randomEventService = new RandomEventService();
         // ------------------------
+
+        // --- SOL STATION SERVICE ---
+        this.solStationService = new SolStationService(gameState, logger);
+        // Inject into TimeService for daily tick processing
+        this.timeService.solStationService = this.solStationService;
+        // ---------------------------
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
@@ -29930,7 +30158,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
-{ "project_info": {
+{
+  "project_info": {
     "project_name": "Orbital Trading",
     "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
     "core_mechanics": [
@@ -29941,29 +30170,16 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "wealth_milestones",
       "deal-on-demand intel",
       "modular_ship_upgrades",
-      "station_quirks"
+      "station_quirks",
+      "sol_station_management"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
-  "ai_collaboration_guidelines": {
-    "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
-    "bug_reporting_protocol": {
-      "title": "Standard Bug Reporting and Diagnostic Workflow",
-      "steps": [
-        "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
-        "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
-        "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
-        "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
-        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
-        "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
-      ]
-    },
-    "logging_utility_overview": {
-      "title": "About the Centralized Logging System",
-      "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
-    }
-  },
   "key_concepts": {
+    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that consumes vast amounts of commodities to generate Antimatter and Credits.",
+    "Entropy_Mode": "The operational state of the Sol Station (Stability, Commerce, Production). Determines the trade-off between resource consumption (Decay) and output generation.",
+    "Cache_Decay": "The daily loss of stored commodities at the Sol Station, driven by solar entropy. Must be countered by player donations.",
+    "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
     "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
@@ -29977,6 +30193,22 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station."
   },
   "service_summaries": {
+    "SolStationService": {
+      "description": "Manages the logic for the Sol Station endgame engine. Handles daily entropy decay calculations, resource consumption from caches, and the generation of Antimatter/Credits based on the active mode.",
+      "dependencies": [
+        "GameState",
+        "Logger"
+      ],
+      "key_functions": {
+        "processTick": "Calculates daily decay and output generation.",
+        "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
+        "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
+        "calculateEntropy": "Determines the current decay multiplier."
+      },
+      "mutates_state": [
+        "solStation"
+      ]
+    },
     "GameState": {
       "description": "The single source of truth for all mutable game data. It holds the current state and notifies other services of changes.",
       "dependencies": [],
@@ -29996,7 +30228,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "introSequenceActive",
         "uiState",
         "intelMarket",
-        "activeIntelDeal"
+        "activeIntelDeal",
+        "solStation"
       ]
     },
     "SimulationService": {
@@ -30014,6 +30247,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "MissionService",
         "NewsTickerService",
         "IntelService",
+        "SolStationService",
         "js/services/ui/AnimationService.js"
       ],
       "key_functions": {
@@ -30126,7 +30360,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "Logger",
         "SimulationService (Facade)",
         "js/data/age_events.js",
-        "IntelService"
+        "IntelService",
+        "SolStationService"
       ],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
@@ -30138,7 +30373,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "player.shipStates.health",
         "market.prices",
         "market.inventory",
-        "activeIntelDeal"
+        "activeIntelDeal",
+        "solStation"
       ]
     },
     "MarketService": {
@@ -30655,7 +30891,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/services/world/TimeService.js",
       "role": "LOGIC_SERVICE",
       "dependencies": [
-        "js/services/IntelService.js"
+        "js/services/IntelService.js",
+        "js/services/SolStationService.js"
       ]
     },
     "F036": {
@@ -30949,6 +31186,11 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "F097": {
       "path": "./meta/LORE_COMPENDIUM.md",
       "role": "DOCUMENTATION"
+    },
+    "F098": {
+      "path": "./js/services/SolStationService.js",
+      "role": "LOGIC_SERVICE",
+      "description": "Core logic for the Sol Station endgame engine."
     }
   }
 }
@@ -32170,11 +32412,6 @@ graph TD
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
-{
-type: file_update,
-fileName: meta/STATE_SCHEMA.md,
-fullContent:
-
 # Orbital Trading: State Schema Definition
 
 ## 1. Root State Object
@@ -32196,6 +32433,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
 | `missions` | Object | State regarding active and completed missions. |
+| `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 
 **Pending Travel Structure (`state.pendingTravel`)**
@@ -32315,6 +32553,20 @@ Manages the progress and locking mechanisms for interactive tutorials.
 | `skippedTutorialBatches` | Array<String> | List of tutorial IDs the player explicitly skipped. |
 | `navLock` | Object | `{ navId, screenId }` - If set, restricts navigation to this target. |
 
+---
+
+## 7. Sol Station State (`state.solStation`)
+
+Manages the Endgame Engine mechanics.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `unlocked` | Boolean | Whether the player has acquired access (default: false). |
+| `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
+| `health` | Number | Aggregate health (0-100) based on cache fill %. |
+| `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
+| `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
+| `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---

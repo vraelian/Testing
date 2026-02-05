@@ -15,7 +15,8 @@ import { TimeService } from './world/TimeService.js';
 import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
-import { RandomEventService } from './RandomEventService.js'; // IMPORT ADDED
+import { RandomEventService } from './RandomEventService.js'; 
+import { SolStationService } from './SolStationService.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -48,6 +49,12 @@ export class SimulationService {
         // --- EVENT SYSTEM 2.0 ---
         this.randomEventService = new RandomEventService();
         // ------------------------
+
+        // --- SOL STATION SERVICE ---
+        this.solStationService = new SolStationService(gameState, logger);
+        // Inject into TimeService for daily tick processing
+        this.timeService.solStationService = this.solStationService;
+        // ---------------------------
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         

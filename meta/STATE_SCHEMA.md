@@ -1,8 +1,3 @@
-{
-type: file_update,
-fileName: meta/STATE_SCHEMA.md,
-fullContent:
-
 # Orbital Trading: State Schema Definition
 
 ## 1. Root State Object
@@ -24,6 +19,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
 | `missions` | Object | State regarding active and completed missions. |
+| `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 
 **Pending Travel Structure (`state.pendingTravel`)**
@@ -142,3 +138,18 @@ Manages the progress and locking mechanisms for interactive tutorials.
 | `seenBatchIds` | Array<String> | List of tutorial IDs the player has already completed. |
 | `skippedTutorialBatches` | Array<String> | List of tutorial IDs the player explicitly skipped. |
 | `navLock` | Object | `{ navId, screenId }` - If set, restricts navigation to this target. |
+
+---
+
+## 7. Sol Station State (`state.solStation`)
+
+Manages the Endgame Engine mechanics.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `unlocked` | Boolean | Whether the player has acquired access (default: false). |
+| `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
+| `health` | Number | Aggregate health (0-100) based on cache fill %. |
+| `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
+| `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
+| `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |

@@ -203,6 +203,31 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
+            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION ---
+            solStation: {
+                unlocked: false, // Default locked until acquired via endgame conditions
+                mode: "STABILITY", // Default safe mode
+                health: 100, // Aggregate health percentage
+                caches: {
+                    tier1: { current: 1000, max: 5000 },
+                    tier2: { current: 800, max: 4000 },
+                    tier3: { current: 600, max: 3000 },
+                    tier4: { current: 400, max: 2000 },
+                    tier5: { current: 200, max: 1000 },
+                    tier6: { current: 100, max: 500 }
+                },
+                officers: [
+                    { slotId: 1, assignedOfficerId: null },
+                    { slotId: 2, assignedOfficerId: null },
+                    { slotId: 3, assignedOfficerId: null }
+                ],
+                stockpile: {
+                    credits: 0,
+                    antimatter: 0
+                }
+            },
+            // --- END VIRTUAL WORKBENCH ---
+
             tutorials: {
                 activeBatchId: null,
                 activeStepId: null,

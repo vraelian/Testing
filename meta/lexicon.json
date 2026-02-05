@@ -1,4 +1,5 @@
-{ "project_info": {
+{
+  "project_info": {
     "project_name": "Orbital Trading",
     "synopsis": "A single-player, persistent browser game about interstellar arbitrage trading and capital accumulation.",
     "core_mechanics": [
@@ -9,29 +10,16 @@
       "wealth_milestones",
       "deal-on-demand intel",
       "modular_ship_upgrades",
-      "station_quirks"
+      "station_quirks",
+      "sol_station_management"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
-  "ai_collaboration_guidelines": {
-    "description": "Instructions for AI developers to optimize the collaborative workflow with the human designer/playtester.",
-    "bug_reporting_protocol": {
-      "title": "Standard Bug Reporting and Diagnostic Workflow",
-      "steps": [
-        "When the user reports a bug or unexpected behavior, ALWAYS first ask them to generate a bug report.",
-        "Instruct the user to open the debug panel (using the backtick '`' key) and click the 'Generate Bug Report' button.",
-        "Ask the user to paste the entire clipboard content, which will contain both the full game state snapshot and the recent log history.",
-        "Analyze the provided game state to understand the exact conditions at the time of the bug. Do not assume; use the state as the single source of truth.",
-        "Analyze the log history to trace the sequence of events leading up to the bug. The logs provide context that a simple description cannot.",
-        "Use the combined information from the state snapshot and log history to perform a root cause analysis and propose a specific, targeted code fix."
-      ]
-    },
-    "logging_utility_overview": {
-      "title": "About the Centralized Logging System",
-      "description": "The project uses a centralized LoggingService (F030) to manage all console output. This system is designed to provide clear, filterable, and context-rich information for debugging. Ad-hoc 'console.log' statements should not be used; all new logging must be routed through this service."
-    }
-  },
   "key_concepts": {
+    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that consumes vast amounts of commodities to generate Antimatter and Credits.",
+    "Entropy_Mode": "The operational state of the Sol Station (Stability, Commerce, Production). Determines the trade-off between resource consumption (Decay) and output generation.",
+    "Cache_Decay": "The daily loss of stored commodities at the Sol Station, driven by solar entropy. Must be countered by player donations.",
+    "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
     "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
@@ -45,6 +33,22 @@
     "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station."
   },
   "service_summaries": {
+    "SolStationService": {
+      "description": "Manages the logic for the Sol Station endgame engine. Handles daily entropy decay calculations, resource consumption from caches, and the generation of Antimatter/Credits based on the active mode.",
+      "dependencies": [
+        "GameState",
+        "Logger"
+      ],
+      "key_functions": {
+        "processTick": "Calculates daily decay and output generation.",
+        "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
+        "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
+        "calculateEntropy": "Determines the current decay multiplier."
+      },
+      "mutates_state": [
+        "solStation"
+      ]
+    },
     "GameState": {
       "description": "The single source of truth for all mutable game data. It holds the current state and notifies other services of changes.",
       "dependencies": [],
@@ -64,7 +68,8 @@
         "introSequenceActive",
         "uiState",
         "intelMarket",
-        "activeIntelDeal"
+        "activeIntelDeal",
+        "solStation"
       ]
     },
     "SimulationService": {
@@ -82,6 +87,7 @@
         "MissionService",
         "NewsTickerService",
         "IntelService",
+        "SolStationService",
         "js/services/ui/AnimationService.js"
       ],
       "key_functions": {
@@ -194,7 +200,8 @@
         "Logger",
         "SimulationService (Facade)",
         "js/data/age_events.js",
-        "IntelService"
+        "IntelService",
+        "SolStationService"
       ],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
@@ -206,7 +213,8 @@
         "player.shipStates.health",
         "market.prices",
         "market.inventory",
-        "activeIntelDeal"
+        "activeIntelDeal",
+        "solStation"
       ]
     },
     "MarketService": {
@@ -723,7 +731,8 @@
       "path": "./js/services/world/TimeService.js",
       "role": "LOGIC_SERVICE",
       "dependencies": [
-        "js/services/IntelService.js"
+        "js/services/IntelService.js",
+        "js/services/SolStationService.js"
       ]
     },
     "F036": {
@@ -1017,6 +1026,11 @@
     "F097": {
       "path": "./meta/LORE_COMPENDIUM.md",
       "role": "DOCUMENTATION"
+    },
+    "F098": {
+      "path": "./js/services/SolStationService.js",
+      "role": "LOGIC_SERVICE",
+      "description": "Core logic for the Sol Station endgame engine."
     }
   }
 }
