@@ -246,7 +246,10 @@ export class ActionClickHandler {
             }
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
-                this.simulationService.travelTo(dataset.locationId);
+                // --- VIRTUAL WORKBENCH (Phase 6): Pass useFoldedDrive flag ---
+                const useFoldedDrive = dataset.useFoldedDrive === 'true';
+                this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
+                // --- END VIRTUAL WORKBENCH ---
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 

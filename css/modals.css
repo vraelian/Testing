@@ -161,13 +161,37 @@
     border: none;
     box-shadow: none;
     width: auto; /* Allow the content to define the width */
-    max-width: 450px;
+    max-width: none; /* [[UPDATED]] Removed 450px constraint */
 }
 
-.launch-modal-wrapper .flavor-text {
-    font-size: 0.9rem;
-    color: #cbd5e1;
-    opacity: 0.8;
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 80vw; /* [[UPDATED]] Set to 50% screen width */
+    /* max-width: 350px; REMOVED */
+    height: 366px; /* Increased by 20% */
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+.travel-info-text {
+    font-size: 15px; /* Increased by 3pt from 12px */
+    font-family: 'Roboto Mono', monospace;
 }
 
 .launch-modal-wrapper .commodity-name {
@@ -375,40 +399,6 @@
 /* --- [[END]] GENERIC THEMED GLOW --- */
 
 /* --- [[START]] LAUNCH MODAL STYLES --- */
-#launch-modal .modal-content {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
-.launch-modal-wrapper {
-    position: relative;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border: 2px solid;
-    border-radius: 15px;
-    padding: 1rem;
-    width: 100%;
-    max-width: 350px;
-    height: 366px; /* Increased by 20% */
-    margin: 0 auto;
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-}
-.launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
-}
-.flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
-    opacity: 0.80;
-}
-.travel-info-text {
-    font-size: 15px; /* Increased by 3pt from 12px */
-    font-family: 'Roboto Mono', monospace;
-}
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);

@@ -5,6 +5,7 @@ import { LORE_REGISTRY } from '../../data/lore/loreRegistry.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
+import { COMMODITY_IDS } from '../../data/constants.js';
 
 export class UIEventControl {
     /**
@@ -163,6 +164,32 @@ export class UIEventControl {
 
         if (!travelInfo) return;
 
+        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Check ---
+        const playerTier = state.player.revealedTier || 1;
+        const inventory = state.player.inventories[state.player.activeShipId] || {};
+        const foldedDriveQty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
+        
+        const canFoldSpace = playerTier >= 7 && foldedDriveQty > 0;
+        
+        let foldSpaceHtml = '';
+        if (canFoldSpace) {
+             // [[REFINED]]: Split lines, centered, dynamic color
+             foldSpaceHtml = `
+                <div class="mt-4 flex flex-col items-center justify-center text-center space-y-1">
+                    <div class="flex items-center justify-center space-x-2">
+                        <input type="checkbox" id="fold-space-checkbox" class="w-5 h-5 cursor-pointer" style="accent-color: ${theme.borderColor};">
+                        <label for="fold-space-checkbox" class="text-sm font-orbitron font-bold cursor-pointer select-none" style="color: ${theme.borderColor};">
+                            FOLD SPACE
+                        </label>
+                    </div>
+                    <div class="text-xs font-roboto-mono" style="color: ${theme.borderColor}; opacity: 0.9;">
+                        (1x Folded Drive)
+                    </div>
+                </div>
+            `;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
@@ -170,11 +197,12 @@ export class UIEventControl {
                      <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
 
-                <div class="flex-grow flex items-center justify-center">
-                     <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                <div class="flex-grow flex items-center justify-center flex-col">
+                     <button id="btn-launch-travel" class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                     ${foldSpaceHtml}
                 </div>
 
-                <div class="travel-info-text">
+                <div class="travel-info-text" id="launch-travel-info">
                      <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
@@ -183,6 +211,36 @@ export class UIEventControl {
         const modal = this.manager.cache.launchModal;
         this.manager.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
+
+        // --- VIRTUAL WORKBENCH: Event Listener for Checkbox ---
+        if (canFoldSpace) {
+            const checkbox = modal.querySelector('#fold-space-checkbox');
+            const infoText = modal.querySelector('#launch-travel-info');
+            const launchBtn = modal.querySelector('#btn-launch-travel');
+
+            if (checkbox && infoText && launchBtn) {
+                checkbox.addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    
+                    // Update Launch Button Dataset
+                    launchBtn.dataset.useFoldedDrive = isChecked ? 'true' : 'false';
+                    
+                    // Update Info Text
+                    if (isChecked) {
+                        infoText.innerHTML = `
+                            <p class="font-bold animate-pulse" style="color: ${theme.borderColor};">Travel Time: INSTANT (Warp)</p>
+                            <p style="color: ${theme.borderColor};">Fuel: 0 (Folded Space)</p>
+                        `;
+                    } else {
+                        infoText.innerHTML = `
+                            <p>Travel Time: ${travelInfo.time} Days</p>
+                            <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                        `;
+                    }
+                });
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');

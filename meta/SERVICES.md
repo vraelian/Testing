@@ -32,7 +32,11 @@ TravelService (F036)
 
 Responsibility: Manages the travel loop. Calculates fuel/time costs, triggers random events.
 
-Key Behavior: Uses GameState.TRAVEL_DATA for distances. Pauses travel for event resolution. Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel. Uses MOD_FUEL_BURN for consumption logic.
+Key Behavior:
+* Uses GameState.TRAVEL_DATA for distances.
+* Pauses travel for event resolution.
+* Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
+* **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
 
 Dependencies: GameState, TimeService, RandomEventService.
 
@@ -152,7 +156,7 @@ UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel intera
 
 UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
 
-UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA).
+UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
 
 IntelMarketRenderer (F058)
 
@@ -191,7 +195,7 @@ Dependencies: DB (Travel Visuals).
 5. Input & Event Handling
 EventManager (F015): The root listener. Binds global click/touch events.
 
-ActionClickHandler (F039): Routes data-action clicks to services. Now handles Upgrade Installation logic.
+ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation and Travel initiation (including Consumable flags).
 
 HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
 
@@ -219,6 +223,8 @@ ship_database.js: Defines the static data for all player-tradable ships.
 assets_config.js: Defines configuration for ship asset variants.
 
 constants.js: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
+
+items.js: Defines the registry of Consumable Items (e.g., Folded Space Drives).
 
 age_events.js: Defines static data for narrative events triggered by game progression.
 
@@ -254,4 +260,4 @@ eulaContent.js: Defines the static HTML content for the EULA modal.
 
 lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
 
-lore/lore_broadstrokes.js: Defines the base lore content. 
+lore/lore_broadstrokes.js: Defines the base lore content.

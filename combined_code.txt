@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.88</title>
+    <title>Orbital Trading 34.92</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.88</p>
+            <p>Version 34.92</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2284,13 +2284,37 @@ card.
     border: none;
     box-shadow: none;
     width: auto; /* Allow the content to define the width */
-    max-width: 450px;
+    max-width: none; /* [[UPDATED]] Removed 450px constraint */
 }
 
-.launch-modal-wrapper .flavor-text {
-    font-size: 0.9rem;
-    color: #cbd5e1;
-    opacity: 0.8;
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 80vw; /* [[UPDATED]] Set to 50% screen width */
+    /* max-width: 350px; REMOVED */
+    height: 366px; /* Increased by 20% */
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem; /* 26px */
+}
+.flavor-text {
+    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    opacity: 0.80;
+}
+.travel-info-text {
+    font-size: 15px; /* Increased by 3pt from 12px */
+    font-family: 'Roboto Mono', monospace;
 }
 
 .launch-modal-wrapper .commodity-name {
@@ -2498,40 +2522,6 @@ card.
 /* --- [[END]] GENERIC THEMED GLOW --- */
 
 /* --- [[START]] LAUNCH MODAL STYLES --- */
-#launch-modal .modal-content {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-}
-.launch-modal-wrapper {
-    position: relative;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
-    border: 2px solid;
-    border-radius: 15px;
-    padding: 1rem;
-    width: 100%;
-    max-width: 350px;
-    height: 366px; /* Increased by 20% */
-    margin: 0 auto;
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1rem;
-}
-.launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
-}
-.flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
-    opacity: 0.80;
-}
-.travel-info-text {
-    font-size: 15px; /* Increased by 3pt from 12px */
-    font-family: 'Roboto Mono', monospace;
-}
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
@@ -9066,6 +9056,9 @@ import { TUTORIAL_DATA } from './tutorials.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+// --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
+import { CONSUMABLES } from './items.js';
+// --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -9133,9 +9126,9 @@ export const DB = {
           buttonClass: 'btn-pulse-gold'
         },
         {
-          id: 'signature',
-          title: 'SIGN YOUR NAME',
-          description: `
+            id: 'signature',
+            title: 'SIGN YOUR NAME',
+            description: `
             <p class="text-sm text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
           `,
           buttonText: 'Submit Application'
@@ -9203,6 +9196,10 @@ export const DB = {
     // It is now replaced by the imported SHIP_DATABASE object from js/data/ship_database.js
     SHIPS: SHIP_DATABASE,
     // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+    
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
+    ITEMS: CONSUMABLES,
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
@@ -9491,7 +9488,7 @@ export const DB = {
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
-                [COMMODITY_IDS.CYBERNETICS]: 0.5
+                [COMMODITY_IDS.CYBERNETICS]: 0.5 
             } 
         }
     ],
@@ -11192,6 +11189,21 @@ export const TUTORIAL_DATA = {
     // Future modules (e.g., TUTS_COMBAT, TUTS_ECONOMY) will be added here.
 };
 --- END OF FILE: ./js/data/tutorials.js ---
+
+--- START OF FILE: ./js/data/items.js ---
+// js/data/items.js
+import { COMMODITY_IDS } from './constants.js';
+
+export const CONSUMABLES = {
+    [COMMODITY_IDS.FOLDED_DRIVES]: {
+        id: COMMODITY_IDS.FOLDED_DRIVES,
+        name: 'Folded-Space Drive',
+        effectType: 'INSTANT_TRAVEL',
+        description: 'Consuming this drive folds space-time, allowing for instant travel to any known location without fuel cost.',
+        consumeOnUse: true
+    }
+};
+--- END OF FILE: ./js/data/items.js ---
 
 --- START OF FILE: ./js/data/tutorials/tuts_progression.js ---
 
@@ -13762,6 +13774,7 @@ import { LORE_REGISTRY } from '../../data/lore/loreRegistry.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
+import { COMMODITY_IDS } from '../../data/constants.js';
 
 export class UIEventControl {
     /**
@@ -13920,6 +13933,32 @@ export class UIEventControl {
 
         if (!travelInfo) return;
 
+        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Check ---
+        const playerTier = state.player.revealedTier || 1;
+        const inventory = state.player.inventories[state.player.activeShipId] || {};
+        const foldedDriveQty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
+        
+        const canFoldSpace = playerTier >= 7 && foldedDriveQty > 0;
+        
+        let foldSpaceHtml = '';
+        if (canFoldSpace) {
+             // [[REFINED]]: Split lines, centered, dynamic color
+             foldSpaceHtml = `
+                <div class="mt-4 flex flex-col items-center justify-center text-center space-y-1">
+                    <div class="flex items-center justify-center space-x-2">
+                        <input type="checkbox" id="fold-space-checkbox" class="w-5 h-5 cursor-pointer" style="accent-color: ${theme.borderColor};">
+                        <label for="fold-space-checkbox" class="text-sm font-orbitron font-bold cursor-pointer select-none" style="color: ${theme.borderColor};">
+                            FOLD SPACE
+                        </label>
+                    </div>
+                    <div class="text-xs font-roboto-mono" style="color: ${theme.borderColor}; opacity: 0.9;">
+                        (1x Folded Drive)
+                    </div>
+                </div>
+            `;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
@@ -13927,11 +13966,12 @@ export class UIEventControl {
                      <p class="flavor-text italic">${location.launchFlavor}</p>
                 </div>
 
-                <div class="flex-grow flex items-center justify-center">
-                     <button class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                <div class="flex-grow flex items-center justify-center flex-col">
+                     <button id="btn-launch-travel" class="btn-launch-glow" data-action="travel" data-location-id="${locationId}" style="--launch-glow-color: ${theme.borderColor};">Launch</button>
+                     ${foldSpaceHtml}
                 </div>
 
-                <div class="travel-info-text">
+                <div class="travel-info-text" id="launch-travel-info">
                      <p>Travel Time: ${travelInfo.time} Days</p>
                     <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
                 </div>
@@ -13940,6 +13980,36 @@ export class UIEventControl {
         const modal = this.manager.cache.launchModal;
         this.manager.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
+
+        // --- VIRTUAL WORKBENCH: Event Listener for Checkbox ---
+        if (canFoldSpace) {
+            const checkbox = modal.querySelector('#fold-space-checkbox');
+            const infoText = modal.querySelector('#launch-travel-info');
+            const launchBtn = modal.querySelector('#btn-launch-travel');
+
+            if (checkbox && infoText && launchBtn) {
+                checkbox.addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    
+                    // Update Launch Button Dataset
+                    launchBtn.dataset.useFoldedDrive = isChecked ? 'true' : 'false';
+                    
+                    // Update Info Text
+                    if (isChecked) {
+                        infoText.innerHTML = `
+                            <p class="font-bold animate-pulse" style="color: ${theme.borderColor};">Travel Time: INSTANT (Warp)</p>
+                            <p style="color: ${theme.borderColor};">Fuel: 0 (Folded Space)</p>
+                        `;
+                    } else {
+                        infoText.innerHTML = `
+                            <p>Travel Time: ${travelInfo.time} Days</p>
+                            <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                        `;
+                    }
+                });
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
 
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
@@ -19243,7 +19313,7 @@ export class MarketService {
  * initiating trips, calculating costs, and managing the random event system.
  */
 import { DB } from '../../data/database.js';
-import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS } from '../../data/constants.js';
+import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
@@ -19274,8 +19344,9 @@ export class TravelService {
     /**
      * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
+     * @param {boolean} [useFoldedDrive=false] - Whether to consume a Folded Drive for instant travel.
      */
-    travelTo(locationId) {
+    travelTo(locationId, useFoldedDrive = false) {
         this.uiManager.resetMarketTransactionState();
         const { tutorials } = this.gameState;
         const { navLock } = tutorials;
@@ -19309,37 +19380,51 @@ export class TravelService {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // 1. Apply Perk Modifier
-        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-            requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
-        }
+        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Logic ---
+        if (useFoldedDrive) {
+             const inventory = state.player.inventories[activeShip.id] || {};
+             const qty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
 
-        // 2. Apply Attribute/Upgrade Modifier
-        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
-        requiredFuel = Math.round(requiredFuel * attrFuelMod);
+             if (qty <= 0) {
+                 this.uiManager.queueModal('event-modal', "Missing Component", "You do not have a Folded-Space Drive to consume.");
+                 return;
+             }
 
-        // --- Z-CLASS VALIDATION OVERRIDES ---
-        
-        // ATTR_METABOLIC_BURN: 50% Fuel Cost
-        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
-            requiredFuel = Math.round(requiredFuel * 0.5);
-        }
+             // Folded Space = 0 Fuel, Instant Travel
+             requiredFuel = 0;
+        } else {
+             // Standard Fuel Logic
+            // 1. Apply Perk Modifier
+            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+                requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
+            }
 
-        // ATTR_SOLAR_HARMONY: 0 Fuel if traveling inward
-        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-            const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
-            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
-            if (toDist < fromDist) {
+            // 2. Apply Attribute/Upgrade Modifier
+            const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
+            requiredFuel = Math.round(requiredFuel * attrFuelMod);
+
+            // --- Z-CLASS VALIDATION OVERRIDES ---
+            
+            // ATTR_METABOLIC_BURN: 50% Fuel Cost
+            if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+                requiredFuel = Math.round(requiredFuel * 0.5);
+            }
+
+            // ATTR_SOLAR_HARMONY: 0 Fuel if traveling inward
+            if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
+                const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+                if (toDist < fromDist) {
+                    requiredFuel = 0;
+                }
+            }
+
+            // ATTR_NEWTONS_GHOST: 0 Fuel always (Cryo Pod)
+            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 requiredFuel = 0;
             }
         }
-
-        // ATTR_NEWTONS_GHOST: 0 Fuel always (Cryo Pod)
-        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
-            requiredFuel = 0;
-        }
-
-        // --- END Z-CLASS OVERRIDES ---
+        // --- END VIRTUAL WORKBENCH ---
 
         if (effectiveMaxFuel < requiredFuel) {
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
@@ -19351,13 +19436,13 @@ export class TravelService {
         }
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
-        if (!isFirstTutorialFlight) {
+        if (!isFirstTutorialFlight && !useFoldedDrive) { // Bypass event check if warping
             if (this._checkForRandomEvent(locationId)) {
                 return;
             }
         }
 
-        this.initiateTravel(locationId);
+        this.initiateTravel(locationId, { useFoldedDrive });
     }
 
     /**
@@ -19374,77 +19459,93 @@ export class TravelService {
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
 
-        // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
-        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
-            travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
-        }
-
-        const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
-        const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
-        
-        travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
-        travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
-
-        // --- Z-CLASS EXECUTION LOGIC ---
-
-        // ATTR_METABOLIC_BURN
-        if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
-            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
-        }
-
-        // ATTR_HYPER_CALCULATION (-25% Time)
-        if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
-            travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
-        }
-
-        // ATTR_SOLAR_HARMONY (0 Fuel Inward)
-        if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-            const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
-            const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
-            if (toDist < fromDist) {
-                travelInfo.fuelCost = 0;
-                this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
-            }
-        }
-
-        // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
-        if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
+        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Consumption ---
+        if (eventMods.useFoldedDrive) {
+            travelInfo.time = 0;
             travelInfo.fuelCost = 0;
-            travelInfo.time *= 10;
-        }
 
-        // Legacy: Sleeper
-        shipAttributes.forEach(attrId => {
-            const def = GameAttributes.getDefinition(attrId);
-            if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                // Prevent double dipping if handled above, but legacy logic kept for safety
-                if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
+            const inv = this.gameState.player.inventories[activeShip.id];
+            if (inv && inv[COMMODITY_IDS.FOLDED_DRIVES]) {
+                inv[COMMODITY_IDS.FOLDED_DRIVES].quantity = Math.max(0, inv[COMMODITY_IDS.FOLDED_DRIVES].quantity - 1);
+                this.uiManager.createFloatingText("-1 Folded Drive", window.innerWidth / 2, window.innerHeight / 2, '#ef4444');
+                this.logger.info.player(state.day, 'ITEM_CONSUMED', 'Folded-Space Drive consumed for instant travel.');
             }
-            if (attrId === 'ATTR_SLEEPER') {
-                travelInfo.time *= 4.5;
+        } else {
+             // Standard Logic
+            // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
+            if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+                travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
+            }
+
+            const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
+            const attrTimeMod = GameAttributes.getTravelTimeModifier(upgrades);
+            
+            travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
+            travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
+
+            // --- Z-CLASS EXECUTION LOGIC ---
+
+            // ATTR_METABOLIC_BURN
+            if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
+            }
+
+            // ATTR_HYPER_CALCULATION (-25% Time)
+            if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
+                travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
+            }
+
+            // ATTR_SOLAR_HARMONY (0 Fuel Inward)
+            if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+                const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
+                if (toDist < fromDist) {
+                    travelInfo.fuelCost = 0;
+                    this.uiManager.createFloatingText("Solar Harmony Active", window.innerWidth / 2, window.innerHeight / 2, '#fbbf24');
+                }
+            }
+
+            // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
+            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 travelInfo.fuelCost = 0;
+                travelInfo.time *= 10;
             }
-        });
 
-        if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
-            if (Math.random() < 0.15) {
-                travelInfo.fuelCost = 0;
-                travelInfo.time *= 2;
-                this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+            // Legacy: Sleeper
+            shipAttributes.forEach(attrId => {
+                const def = GameAttributes.getDefinition(attrId);
+                if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
+                    // Prevent double dipping if handled above, but legacy logic kept for safety
+                    if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
+                }
+                if (attrId === 'ATTR_SLEEPER') {
+                    travelInfo.time *= 4.5;
+                    travelInfo.fuelCost = 0;
+                }
+            });
+
+            if (shipAttributes.includes('ATTR_SOLAR_SAIL')) {
+                if (Math.random() < 0.15) {
+                    travelInfo.fuelCost = 0;
+                    travelInfo.time *= 2;
+                    this.uiManager.createFloatingText("Solar Winds Caught!", window.innerWidth / 2, window.innerHeight / 2, '#60a5fa');
+                }
             }
-        }
 
-        // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
-        const speedBonus = state.player.statModifiers?.travelSpeed || 0;
-        if (speedBonus > 0) {
-            travelInfo.time = travelInfo.time / (1 + speedBonus);
-        }
+            // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
+            const speedBonus = state.player.statModifiers?.travelSpeed || 0;
+            if (speedBonus > 0) {
+                travelInfo.time = travelInfo.time / (1 + speedBonus);
+            }
 
-        if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
-        if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
-        if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
-        travelInfo.time = Math.max(1, Math.round(travelInfo.time));
+            if (eventMods.travelTimeAdd) travelInfo.time += eventMods.travelTimeAdd;
+            if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
+            if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        travelInfo.time = Math.max(0, Math.round(travelInfo.time)); // Allow 0 for warp
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
         if (activeShipState.fuel < travelInfo.fuelCost) {
@@ -19520,7 +19621,7 @@ export class TravelService {
         }
 
         // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
-        if (shipAttributes.includes('ATTR_MATTER_ABSORPTION')) {
+        if (shipAttributes.includes('ATTR_MATTER_ABSORPTION') && !eventMods.useFoldedDrive) {
             const refund = travelInfo.fuelCost * 0.5;
             if (refund > 0) {
                 activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + refund);
@@ -20792,7 +20893,10 @@ export class SimulationService {
     repairTick() { return this.playerActionService.repairTick(); }
     
     // TravelService Delegation
-    travelTo(locationId) { this.travelService.travelTo(locationId); }
+    // --- VIRTUAL WORKBENCH: Added useFoldedDrive param ---
+    travelTo(locationId, useFoldedDrive = false) { this.travelService.travelTo(locationId, useFoldedDrive); }
+    // --- END VIRTUAL WORKBENCH ---
+    
     resumeTravel() { this.travelService.resumeTravel(); }
 
     // NewsTickerService Delegation
@@ -27255,7 +27359,10 @@ export class ActionClickHandler {
             }
             case ACTION_IDS.TRAVEL:
                 this.uiManager.hideModal('launch-modal');
-                this.simulationService.travelTo(dataset.locationId);
+                // --- VIRTUAL WORKBENCH (Phase 6): Pass useFoldedDrive flag ---
+                const useFoldedDrive = dataset.useFoldedDrive === 'true';
+                this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
+                // --- END VIRTUAL WORKBENCH ---
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
 
@@ -28622,6 +28729,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [34.92] - 2026-2-4
+-  updated launch modal width
+-  added folded space travel
+-  added items.js for consumables
 
 # [34.89] - 2026-1-26
 -  fixed intro sequence race condition
@@ -30914,7 +31026,11 @@ TravelService (F036)
 
 Responsibility: Manages the travel loop. Calculates fuel/time costs, triggers random events.
 
-Key Behavior: Uses GameState.TRAVEL_DATA for distances. Pauses travel for event resolution. Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel. Uses MOD_FUEL_BURN for consumption logic.
+Key Behavior:
+* Uses GameState.TRAVEL_DATA for distances.
+* Pauses travel for event resolution.
+* Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
+* **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
 
 Dependencies: GameState, TimeService, RandomEventService.
 
@@ -31034,7 +31150,7 @@ UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel intera
 
 UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
 
-UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA).
+UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
 
 IntelMarketRenderer (F058)
 
@@ -31073,7 +31189,7 @@ Dependencies: DB (Travel Visuals).
 5. Input & Event Handling
 EventManager (F015): The root listener. Binds global click/touch events.
 
-ActionClickHandler (F039): Routes data-action clicks to services. Now handles Upgrade Installation logic.
+ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation and Travel initiation (including Consumable flags).
 
 HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
 
@@ -31101,6 +31217,8 @@ ship_database.js: Defines the static data for all player-tradable ships.
 assets_config.js: Defines configuration for ship asset variants.
 
 constants.js: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
+
+items.js: Defines the registry of Consumable Items (e.g., Folded Space Drives).
 
 age_events.js: Defines static data for narrative events triggered by game progression.
 
@@ -31136,7 +31254,7 @@ eulaContent.js: Defines the static HTML content for the EULA modal.
 
 lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
 
-lore/lore_broadstrokes.js: Defines the base lore content. 
+lore/lore_broadstrokes.js: Defines the base lore content.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -31961,33 +32079,6 @@ graph TD
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end
-2.10 Tutorial Trigger & Interaction Flow
-The interaction loop between Logic (TutorialService) and View (UITutorialManager).
-
-Code snippet
-graph TD
-    subgraph Triggering
-        A[User Action / Screen Load] --> B[TutorialService.checkState];
-        B --> C{Matches Trigger?};
-        C -- Yes --> D[Set activeBatchId / activeStepId];
-        D --> E[Mutate GameState (NavLock)];
-    end
-
-    subgraph Visualization
-        E --> F[UIManager.render];
-        F --> G[UITutorialManager.showTutorialToast];
-        G --> H[Calculate Popper.js Position];
-        G --> I[Render SVG Highlights];
-        H & I --> J[DOM Update];
-    end
-
-    subgraph Progression
-        J --> K[User Clicks 'Next' or 'Action'];
-        K --> L[TutorialService.advanceStep];
-        L --> M{Next Step Exists?};
-        M -- Yes --> D;
-        M -- No --> N[End Batch & Clear Lock];
-    end
 
 2.10 Tutorial Trigger & Interaction Flow
 The interaction loop between Logic (TutorialService) and View (UITutorialManager).
@@ -32047,6 +32138,34 @@ graph TD
         M --> N[MissionService.completeActiveMission];
         N --> O[Grant Rewards / Remove Cargo];
         O --> P[Add to completedMissionIds];
+    end
+
+2.12 Consumable Item Usage (Folded Space)
+Flow for using an item to bypass standard travel costs.
+
+Code snippet
+graph TD
+    subgraph UI Interaction
+        A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
+        B -- Yes --> C[Render 'Fold Space' Checkbox];
+        C -- Checked --> D[Update Button Dataset (useFoldedDrive=true)];
+    end
+
+    subgraph Initiation
+        D -- Click Launch --> E[ActionClickHandler];
+        E --> F[SimulationService.travelTo(locId, true)];
+    end
+
+    subgraph Execution
+        F --> G[TravelService.initiateTravel];
+        G --> H{useFoldedDrive == True?};
+        H -- Yes --> I[Set Time=0, Fuel=0];
+        I --> J[Consume Item from Inventory];
+        H -- No --> K[Standard Calculation];
+    end
+    
+    subgraph Resolution
+        J & K --> L[Execute Travel (Anim + State)];
     end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 

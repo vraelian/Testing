@@ -376,7 +376,10 @@ export class SimulationService {
     repairTick() { return this.playerActionService.repairTick(); }
     
     // TravelService Delegation
-    travelTo(locationId) { this.travelService.travelTo(locationId); }
+    // --- VIRTUAL WORKBENCH: Added useFoldedDrive param ---
+    travelTo(locationId, useFoldedDrive = false) { this.travelService.travelTo(locationId, useFoldedDrive); }
+    // --- END VIRTUAL WORKBENCH ---
+    
     resumeTravel() { this.travelService.resumeTravel(); }
 
     // NewsTickerService Delegation

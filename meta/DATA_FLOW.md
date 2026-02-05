@@ -246,33 +246,6 @@ graph TD
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end
-2.10 Tutorial Trigger & Interaction Flow
-The interaction loop between Logic (TutorialService) and View (UITutorialManager).
-
-Code snippet
-graph TD
-    subgraph Triggering
-        A[User Action / Screen Load] --> B[TutorialService.checkState];
-        B --> C{Matches Trigger?};
-        C -- Yes --> D[Set activeBatchId / activeStepId];
-        D --> E[Mutate GameState (NavLock)];
-    end
-
-    subgraph Visualization
-        E --> F[UIManager.render];
-        F --> G[UITutorialManager.showTutorialToast];
-        G --> H[Calculate Popper.js Position];
-        G --> I[Render SVG Highlights];
-        H & I --> J[DOM Update];
-    end
-
-    subgraph Progression
-        J --> K[User Clicks 'Next' or 'Action'];
-        K --> L[TutorialService.advanceStep];
-        L --> M{Next Step Exists?};
-        M -- Yes --> D;
-        M -- No --> N[End Batch & Clear Lock];
-    end
 
 2.10 Tutorial Trigger & Interaction Flow
 The interaction loop between Logic (TutorialService) and View (UITutorialManager).
@@ -332,4 +305,32 @@ graph TD
         M --> N[MissionService.completeActiveMission];
         N --> O[Grant Rewards / Remove Cargo];
         O --> P[Add to completedMissionIds];
+    end
+
+2.12 Consumable Item Usage (Folded Space)
+Flow for using an item to bypass standard travel costs.
+
+Code snippet
+graph TD
+    subgraph UI Interaction
+        A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
+        B -- Yes --> C[Render 'Fold Space' Checkbox];
+        C -- Checked --> D[Update Button Dataset (useFoldedDrive=true)];
+    end
+
+    subgraph Initiation
+        D -- Click Launch --> E[ActionClickHandler];
+        E --> F[SimulationService.travelTo(locId, true)];
+    end
+
+    subgraph Execution
+        F --> G[TravelService.initiateTravel];
+        G --> H{useFoldedDrive == True?};
+        H -- Yes --> I[Set Time=0, Fuel=0];
+        I --> J[Consume Item from Inventory];
+        H -- No --> K[Standard Calculation];
+    end
+    
+    subgraph Resolution
+        J & K --> L[Execute Travel (Anim + State)];
     end

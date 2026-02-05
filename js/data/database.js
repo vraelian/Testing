@@ -7,6 +7,9 @@ import { TUTORIAL_DATA } from './tutorials.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+// --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
+import { CONSUMABLES } from './items.js';
+// --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -74,9 +77,9 @@ export const DB = {
           buttonClass: 'btn-pulse-gold'
         },
         {
-          id: 'signature',
-          title: 'SIGN YOUR NAME',
-          description: `
+            id: 'signature',
+            title: 'SIGN YOUR NAME',
+            description: `
             <p class="text-sm text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
           `,
           buttonText: 'Submit Application'
@@ -144,6 +147,10 @@ export const DB = {
     // It is now replaced by the imported SHIP_DATABASE object from js/data/ship_database.js
     SHIPS: SHIP_DATABASE,
     // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
+    
+    // --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
+    ITEMS: CONSUMABLES,
+    // --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
@@ -432,7 +439,7 @@ export const DB = {
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
-                [COMMODITY_IDS.CYBERNETICS]: 0.5
+                [COMMODITY_IDS.CYBERNETICS]: 0.5 
             } 
         }
     ],
