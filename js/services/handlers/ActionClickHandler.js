@@ -346,6 +346,52 @@ export class ActionClickHandler {
                     this.gameState.setState({});
                 }
                 break;
+
+            // =================================================================
+            // --- SOL STATION (PHASE 3) ---
+            // =================================================================
+            case 'open-sol-dashboard':
+                this.uiManager.showSolStationDashboard(state);
+                break;
+
+            case 'sol-set-mode':
+                const newMode = dataset.mode;
+                if (newMode) {
+                    this.simulationService.solStationService.setMode(newMode);
+                    // Refresh dashboard
+                    this.uiManager.showSolStationDashboard(state);
+                }
+                break;
+
+            case 'sol-donate':
+                const tier = dataset.tier;
+                const commId = dataset.commodityId;
+                const donateResult = this.simulationService.solStationService.donateToCache(tier, commId, 100);
+                if (donateResult.success) {
+                    this.uiManager.createFloatingText("+DONATED", e.clientX, e.clientY, "#34d399");
+                    this.uiManager.showSolStationDashboard(state);
+                } else {
+                    this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
+                }
+                break;
+
+            case 'sol-open-roster':
+                const slotId = dataset.slotId;
+                this.uiManager.showOfficerRoster(slotId, state);
+                break;
+
+            case 'sol-assign-officer':
+                const targetSlot = parseInt(dataset.slotId);
+                const officerId = dataset.officerId === "null" ? null : dataset.officerId;
+                const solState = state.solStation;
+                const slotIndex = solState.officers.findIndex(s => s.slotId === targetSlot);
+                
+                if (slotIndex !== -1) {
+                    solState.officers[slotIndex].assignedOfficerId = officerId;
+                    state.setState({});
+                    this.uiManager.showSolStationDashboard(state);
+                }
+                break;
         }
 
         if (actionData) {

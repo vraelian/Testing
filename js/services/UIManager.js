@@ -27,6 +27,7 @@ import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
+import { UISolStationControl } from './ui/UISolStationControl.js'; // NEW IMPORT
 
 export class UIManager {
     /**
@@ -51,13 +52,14 @@ export class UIManager {
         this.effectsManager = new EffectsManager();
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
-        // --- [[NEW]] Domain Controllers (The Switchboard) ---
+        // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
         this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
+        this.solStationControl = new UISolStationControl(this); // NEW CONTROLLER
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -248,7 +250,6 @@ export class UIManager {
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
         
-        // [[NEW]] Add conditional class for max credits state to the container
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
@@ -340,7 +341,7 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
@@ -351,8 +352,8 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
-                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
+                // Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
@@ -437,7 +438,6 @@ export class UIManager {
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
-    // [[FIXED]] Added _calculateSaleDetails proxy to UIMarketControl
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
     // --- Mission Control ---
@@ -467,6 +467,10 @@ export class UIManager {
     showCargoDetailModal(...args) { this.eventControl.showCargoDetailModal(...args); }
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
+
+    // --- Sol Station Control (NEW) ---
+    showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
+    showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
     // =========================================================================
     // GENERAL UI UTILITIES (Generic Tooltips & Effects)
@@ -585,10 +589,6 @@ export class UIManager {
     // LEGACY / SAFEGUARD METHODS
     // =========================================================================
 
-    /**
-     * Shows a confirmation modal for buying or selling a ship.
-     * Retained in Facade to ensure ActionClickHandler compatibility without re-issuing HangarControl.
-     */
     showShipTransactionConfirmation(shipId, transactionType, onConfirm) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
@@ -610,7 +610,6 @@ export class UIManager {
             description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
         } else {
             title = "Confirm Sale";
-            // Logic duplicated from HangarControl to ensure accuracy
             const shipState = this.lastKnownState.player.shipStates[shipId];
             let upgradeValue = 0;
             if (shipState && shipState.upgrades) {

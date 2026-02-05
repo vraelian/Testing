@@ -3,6 +3,7 @@
  * @fileoverview This file contains the rendering logic for the Station Services screen.
  * It displays options for refueling and repairing the player's active ship, calculating
  * costs based on the current location and any active player perks.
+ * * UPDATED: Includes Sol Station Directorate entry point (Phase 3).
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -110,6 +111,27 @@ export function renderServicesScreen(gameState, simulationService) {
             effectiveMaxHealth = stats.maxHealth;
             effectiveMaxFuel = stats.maxFuel;
         }
+    }
+
+    // =========================================================================
+    // --- PHASE 3: SOL STATION ENTRY POINT ---
+    // =========================================================================
+    let solStationButtonHtml = '';
+    // Show button if at Sun AND Station is unlocked
+    if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
+        solStationButtonHtml = `
+            <div class="flex justify-center mb-6">
+                <button class="sol-directorate-btn" data-action="open-sol-dashboard">
+                    <div class="btn-content">
+                        <span class="btn-icon">☀</span>
+                        <div class="btn-text">
+                            <span class="btn-title">SOL DIRECTORATE</span>
+                            <span class="btn-subtitle">Manage Station Systems</span>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        `;
     }
 
     // =========================================================================
@@ -222,6 +244,8 @@ export function renderServicesScreen(gameState, simulationService) {
             </div>
             <div class="services-scroll-panel flex-grow min-h-0">
                 
+                ${solStationButtonHtml}
+
                 <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
                     <div class="themed-header-bar">
                         <div class="ship-header-title" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>

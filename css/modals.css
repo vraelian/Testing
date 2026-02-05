@@ -49,10 +49,10 @@
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on backdrop */
+    animation: fadeOut 1s ease-out forwards;
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on content */
+    animation: fadeOut 1s ease-out forwards;
 }
 
 /* New class for the splash screen's unique exit animation */
@@ -69,8 +69,8 @@
 
 /* Travel Animation Modal */
 #travel-animation-modal.modal-backdrop {
-    background-color: #0c101d; /* Use the game's base background color for a seamless transition */
-    transition: opacity 0.5s ease-out; /* Add a fade for the modal itself to maintain a smooth feel */
+    background-color: #0c101d; 
+    transition: opacity 0.5s ease-out;
 }
 
 #travel-animation-content {
@@ -117,13 +117,11 @@
     animation: fadeIn 1s ease-out forwards;
 }
 
-/* --- [[START]] SIGNATURE MODAL KEYBOARD FIX --- */
+/* --- SIGNATURE MODAL KEYBOARD FIX --- */
 #signature-modal {
-    align-items: flex-start; /* Override the default vertical centering */
-    padding-top: 15vh;      /* Push the modal down from the top edge */
+    align-items: flex-start;
+    padding-top: 15vh;
 }
-/* --- [[END]] SIGNATURE MODAL KEYBOARD FIX --- */
-
 
 /* Hide modal backdrops by default */
 .modal-backdrop.hidden {
@@ -160,8 +158,8 @@
     background: transparent;
     border: none;
     box-shadow: none;
-    width: auto; /* Allow the content to define the width */
-    max-width: none; /* [[UPDATED]] Removed 450px constraint */
+    width: auto;
+    max-width: none;
 }
 
 .launch-modal-wrapper {
@@ -170,9 +168,8 @@
     border: 2px solid;
     border-radius: 15px;
     padding: 1rem;
-    width: 80vw; /* [[UPDATED]] Set to 50% screen width */
-    /* max-width: 350px; REMOVED */
-    height: 366px; /* Increased by 20% */
+    width: 80vw;
+    height: 366px;
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
@@ -183,14 +180,14 @@
 }
 
 .launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
+    font-size: 1.625rem;
 }
 .flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    font-size: 0.8125rem;
     opacity: 0.80;
 }
 .travel-info-text {
-    font-size: 15px; /* Increased by 3pt from 12px */
+    font-size: 15px;
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -216,7 +213,7 @@
 
 .max-cargo-modal-content .commodity-card {
     margin-bottom: 1rem;
-    transform: scale(1.2); /* Make the card a bit larger */
+    transform: scale(1.2);
 }
 
 /* Random Event Modal */
@@ -312,7 +309,7 @@
 }
 
 
-/* Tutorial Log Modal (DEPRECATED - was tooltip) */
+/* Tutorial Log Modal */
 #tutorial-log-modal {
     opacity: 0;
     transition: opacity 1s;
@@ -334,14 +331,14 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding-right: 0.5rem; /* For scrollbar */
+    padding-right: 0.5rem;
 }
 
-/* --- [[START]] LORE MODAL --- */
+/* --- LORE MODAL --- */
 #lore-modal .modal-content {
-    width: 600px; /* Wider than default */
+    width: 600px;
     max-width: 90vw;
-    height: 70vh; /* Taller */
+    height: 70vh;
     max-height: 800px;
     display: flex;
     flex-direction: column;
@@ -350,22 +347,16 @@
 #lore-modal-content {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 1rem; /* Space for scrollbar */
+    padding-right: 1rem;
     font-size: 1.1rem;
     line-height: 1.6;
 }
-/* --- [[END]] LORE MODAL --- */
 
-/* --- [[START]] VIRTUAL WORKBENCH (Ship Info Modal) --- */
-/* REMOVED */
-/* --- [[END]] VIRTUAL WORKBENCH (Ship Info Modal) --- */
-
-
-/* --- [[START]] VIRTUAL WORKBENCH (EULA Modal) --- */
+/* --- EULA Modal --- */
 #eula-modal .modal-content {
-    width: 600px; /* Wider than default */
+    width: 600px;
     max-width: 90vw;
-    height: 70vh; /* Taller */
+    height: 70vh;
     max-height: 800px;
     display: flex;
     flex-direction: column;
@@ -374,14 +365,12 @@
 #eula-modal-content {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 1rem; /* Space for scrollbar */
+    padding-right: 1rem;
     font-size: 1.1rem;
     line-height: 1.6;
 }
-/* --- [[END]] VIRTUAL WORKBENCH (EULA Modal) --- */
 
-
-/* --- [[START]] GENERIC THEMED GLOW --- */
+/* --- GENERIC THEMED GLOW --- */
 @keyframes themed-glow-animation {
     0%, 100% {
         box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
@@ -396,9 +385,8 @@
 .is-glowing {
     animation: themed-glow-animation 3s infinite;
 }
-/* --- [[END]] GENERIC THEMED GLOW --- */
 
-/* --- [[START]] LAUNCH MODAL STYLES --- */
+/* --- LAUNCH MODAL STYLES --- */
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
@@ -424,7 +412,7 @@
     cursor: pointer;
     transition: all 0.1s ease-in-out;
     animation: launch-glow-animation 2.5s infinite;
-    margin: 0 auto; /* Center the button */
+    margin: 0 auto;
     text-shadow: 0 0 5px #fff;
 }
 
@@ -432,93 +420,89 @@
     transform: translateY(2px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
 }
-/* --- [[END]] LAUNCH MODAL STYLES --- */
 
 /* Loan Agreement Modal Title */
 #charter-modal #charter-title {
-    font-family: 'Zorque', sans-serif; /* MODIFIED */
-    font-size: 1.95rem; /* Larger font size */
-    text-align: center; /* Center-align text */
-    width: 100%;       /* Ensure element spans modal width for centering */
+    font-family: 'Zorque', sans-serif;
+    font-size: 1.95rem;
+    text-align: center;
+    width: 100%;
 }
 
-/* --- [[START]] EVENT BUTTON CONTAINER ALIGNMENT --- */
+/* --- EVENT BUTTON CONTAINER ALIGNMENT --- */
 #event-button-container {
     display: flex;
-    justify-content: center; /* Centers buttons */
+    justify-content: center;
     gap: 1rem;
     width: 100%;
 }
-/* --- [[END]] EVENT BUTTON CONTAINER ALIGNMENT --- */
 
-/* --- [[START]] MODAL COST TEXT --- */
+/* --- MODAL COST TEXT --- */
 .modal-cost-text {
-    font-size: 1.1rem; /* Approx 1.5pt larger than 0.875rem */
+    font-size: 1.1rem;
 }
-/* --- [[END]] MODAL COST TEXT --- */
 
-/* --- [[START]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
+/* --- EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
 .event-choice-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     line-height: 1.2;
-    height: auto; /* Allow growth */
-    min-height: 3.5rem; /* Ensure substantial click area */
+    height: auto;
+    min-height: 3.5rem;
 }
 
 .choice-header {
     font-size: 1rem;
     font-weight: 600;
-    color: #f3f4f6; /* gray-100 */
+    color: #f3f4f6;
     margin-bottom: 0.25rem;
-    pointer-events: none; /* Let clicks pass to button */
+    pointer-events: none;
 }
 
 .choice-subtext {
     font-size: 0.85rem;
     font-weight: 500;
-    pointer-events: none; /* Let clicks pass to button */
+    pointer-events: none;
 }
 
 /* Event Color Utilities */
 .text-cost-orange {
-    color: #fb923c !important; /* orange-400 - Force override */
+    color: #fb923c !important;
 }
 
 .text-req-yellow {
-    color: #facc15 !important; /* yellow-400 - Force override */
+    color: #facc15 !important;
 }
 
 .text-delay-blue {
-    color: #60a5fa !important; /* blue-400 - Force override */
+    color: #60a5fa !important;
 }
 
 /* Event Result Text Colors (PHASE 3: Semantics) */
 .text-result-hull {
-    color: #4ade80 !important; /* green-400 */
+    color: #4ade80 !important;
 }
 .text-result-fuel {
-    color: #60a5fa !important; /* blue-400 */
+    color: #60a5fa !important;
 }
 .text-result-time {
-    color: #9ca3af !important; /* gray-400 */
+    color: #9ca3af !important;
 }
 .text-result-cargo {
-    color: #facc15 !important; /* yellow-400 */
+    color: #facc15 !important;
 }
 .text-result-credit-gain {
-    color: #22d3ee !important; /* cyan-400 */
+    color: #22d3ee !important;
     text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 .text-result-credit-loss {
-    color: #ef4444 !important; /* red-500 */
+    color: #ef4444 !important;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
-/* --- [[END]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
 
-/* --- [[START]] VIRTUAL WORKBENCH: MODAL MARQUEE --- */
+/* --- MODAL MARQUEE --- */
 .marquee-container {
     overflow: hidden;
     white-space: nowrap;
@@ -535,4 +519,397 @@
     0% { transform: translateX(0); }
     100% { transform: translateX(-100%); }
 }
-/* --- [[END]] VIRTUAL WORKBENCH: MODAL MARQUEE --- */
+
+/* ========================================================================= */
+/* --- SOL STATION DASHBOARD (PHASE 3) --- */
+/* ========================================================================= */
+
+.sol-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+}
+
+/* Header & Status */
+.sol-header-panel {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+}
+
+.sol-health-bar-container {
+    margin-bottom: 1rem;
+}
+
+.sol-health-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: #9ca3af;
+}
+
+.sol-health-track {
+    width: 100%;
+    height: 12px;
+    background-color: #374151;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.sol-readout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+}
+
+.readout-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.readout-item .label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.readout-item .value {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Mode Control */
+.sol-mode-control {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    text-align: center;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mode-toggle-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.mode-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    padding: 0.75rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.mode-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #6b7280;
+}
+
+.mode-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    cursor: default;
+}
+
+.mode-btn.mode-stability.active {
+    border-color: #34d399; /* Green */
+    color: #34d399;
+}
+.mode-btn.mode-commerce.active {
+    border-color: #fbbf24; /* Amber */
+    color: #fbbf24;
+}
+.mode-btn.mode-production.active {
+    border-color: #f87171; /* Red */
+    color: #f87171;
+}
+
+.mode-description {
+    font-size: 0.8rem;
+    color: #d1d5db;
+    min-height: 1.2rem;
+}
+
+/* Cache Grid */
+.cache-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.cache-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cache-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cache-icon {
+    width: 32px;
+    height: 32px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    border: 1px solid #4b5563;
+}
+
+.cache-info {
+    overflow: hidden;
+}
+
+.cache-name {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cache-tier {
+    font-size: 0.65rem;
+    color: #6b7280;
+}
+
+.cache-bar-track {
+    width: 100%;
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+}
+
+.cache-bar-fill {
+    height: 100%;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.cache-details {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    text-align: right;
+    font-family: monospace;
+}
+
+.cache-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.player-stock {
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+
+.btn-donate {
+    background: #374151;
+    border: none;
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.btn-donate:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.btn-donate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Officer Slots */
+.officer-slot-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.officer-slot {
+    width: 140px;
+    height: 160px;
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px dashed #4b5563;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.officer-slot:hover {
+    border-color: #9ca3af;
+    background: rgba(31, 41, 55, 0.8);
+}
+
+.officer-slot.filled {
+    border-style: solid;
+    border-color: #60a5fa; /* Blue */
+    background: rgba(30, 58, 138, 0.2);
+}
+
+.slot-header {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.empty-label {
+    margin-top: auto;
+    margin-bottom: auto;
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.officer-name {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #e5e7eb;
+}
+
+.officer-role {
+    font-size: 0.7rem;
+    color: #60a5fa;
+    margin-bottom: 0.5rem;
+}
+
+.officer-buffs-mini {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-top: auto;
+    line-height: 1.2;
+}
+
+/* Roster Modal */
+.roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.roster-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #374151;
+}
+
+.roster-card .officer-info {
+    text-align: left;
+}
+
+.roster-card .officer-buffs {
+    font-size: 0.8rem;
+    color: #d1d5db;
+}
+
+.roster-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #374151;
+}
+
+.btn-red {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+.btn-red:hover {
+    background-color: #7f1d1d;
+}
+
+/* Sol Directorate Entry Button (Services Screen) */
+.sol-directorate-btn {
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.sol-directorate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+    border-color: #93c5fd;
+}
+
+.sol-directorate-btn .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.sol-directorate-btn .btn-icon {
+    font-size: 2rem;
+    color: #fbbf24; /* Sun Yellow */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+.sol-directorate-btn .btn-text {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.sol-directorate-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.sol-directorate-btn .btn-subtitle {
+    font-size: 0.8rem;
+    color: #bfdbfe;
+}

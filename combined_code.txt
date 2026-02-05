@@ -2172,10 +2172,10 @@ card.
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on backdrop */
+    animation: fadeOut 1s ease-out forwards;
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 1s ease-out forwards; /* Uses global fadeOut on content */
+    animation: fadeOut 1s ease-out forwards;
 }
 
 /* New class for the splash screen's unique exit animation */
@@ -2192,8 +2192,8 @@ card.
 
 /* Travel Animation Modal */
 #travel-animation-modal.modal-backdrop {
-    background-color: #0c101d; /* Use the game's base background color for a seamless transition */
-    transition: opacity 0.5s ease-out; /* Add a fade for the modal itself to maintain a smooth feel */
+    background-color: #0c101d; 
+    transition: opacity 0.5s ease-out;
 }
 
 #travel-animation-content {
@@ -2240,13 +2240,11 @@ card.
     animation: fadeIn 1s ease-out forwards;
 }
 
-/* --- [[START]] SIGNATURE MODAL KEYBOARD FIX --- */
+/* --- SIGNATURE MODAL KEYBOARD FIX --- */
 #signature-modal {
-    align-items: flex-start; /* Override the default vertical centering */
-    padding-top: 15vh;      /* Push the modal down from the top edge */
+    align-items: flex-start;
+    padding-top: 15vh;
 }
-/* --- [[END]] SIGNATURE MODAL KEYBOARD FIX --- */
-
 
 /* Hide modal backdrops by default */
 .modal-backdrop.hidden {
@@ -2283,8 +2281,8 @@ card.
     background: transparent;
     border: none;
     box-shadow: none;
-    width: auto; /* Allow the content to define the width */
-    max-width: none; /* [[UPDATED]] Removed 450px constraint */
+    width: auto;
+    max-width: none;
 }
 
 .launch-modal-wrapper {
@@ -2293,9 +2291,8 @@ card.
     border: 2px solid;
     border-radius: 15px;
     padding: 1rem;
-    width: 80vw; /* [[UPDATED]] Set to 50% screen width */
-    /* max-width: 350px; REMOVED */
-    height: 366px; /* Increased by 20% */
+    width: 80vw;
+    height: 366px;
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
@@ -2306,14 +2303,14 @@ card.
 }
 
 .launch-modal-wrapper h3 {
-    font-size: 1.625rem; /* 26px */
+    font-size: 1.625rem;
 }
 .flavor-text {
-    font-size: 0.8125rem; /* 13px, a 1pt reduction */
+    font-size: 0.8125rem;
     opacity: 0.80;
 }
 .travel-info-text {
-    font-size: 15px; /* Increased by 3pt from 12px */
+    font-size: 15px;
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -2339,7 +2336,7 @@ card.
 
 .max-cargo-modal-content .commodity-card {
     margin-bottom: 1rem;
-    transform: scale(1.2); /* Make the card a bit larger */
+    transform: scale(1.2);
 }
 
 /* Random Event Modal */
@@ -2435,7 +2432,7 @@ card.
 }
 
 
-/* Tutorial Log Modal (DEPRECATED - was tooltip) */
+/* Tutorial Log Modal */
 #tutorial-log-modal {
     opacity: 0;
     transition: opacity 1s;
@@ -2457,14 +2454,14 @@ card.
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding-right: 0.5rem; /* For scrollbar */
+    padding-right: 0.5rem;
 }
 
-/* --- [[START]] LORE MODAL --- */
+/* --- LORE MODAL --- */
 #lore-modal .modal-content {
-    width: 600px; /* Wider than default */
+    width: 600px;
     max-width: 90vw;
-    height: 70vh; /* Taller */
+    height: 70vh;
     max-height: 800px;
     display: flex;
     flex-direction: column;
@@ -2473,22 +2470,16 @@ card.
 #lore-modal-content {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 1rem; /* Space for scrollbar */
+    padding-right: 1rem;
     font-size: 1.1rem;
     line-height: 1.6;
 }
-/* --- [[END]] LORE MODAL --- */
 
-/* --- [[START]] VIRTUAL WORKBENCH (Ship Info Modal) --- */
-/* REMOVED */
-/* --- [[END]] VIRTUAL WORKBENCH (Ship Info Modal) --- */
-
-
-/* --- [[START]] VIRTUAL WORKBENCH (EULA Modal) --- */
+/* --- EULA Modal --- */
 #eula-modal .modal-content {
-    width: 600px; /* Wider than default */
+    width: 600px;
     max-width: 90vw;
-    height: 70vh; /* Taller */
+    height: 70vh;
     max-height: 800px;
     display: flex;
     flex-direction: column;
@@ -2497,14 +2488,12 @@ card.
 #eula-modal-content {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 1rem; /* Space for scrollbar */
+    padding-right: 1rem;
     font-size: 1.1rem;
     line-height: 1.6;
 }
-/* --- [[END]] VIRTUAL WORKBENCH (EULA Modal) --- */
 
-
-/* --- [[START]] GENERIC THEMED GLOW --- */
+/* --- GENERIC THEMED GLOW --- */
 @keyframes themed-glow-animation {
     0%, 100% {
         box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
@@ -2519,9 +2508,8 @@ card.
 .is-glowing {
     animation: themed-glow-animation 3s infinite;
 }
-/* --- [[END]] GENERIC THEMED GLOW --- */
 
-/* --- [[START]] LAUNCH MODAL STYLES --- */
+/* --- LAUNCH MODAL STYLES --- */
 @keyframes launch-glow-animation {
     0%, 100% {
         box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
@@ -2547,7 +2535,7 @@ card.
     cursor: pointer;
     transition: all 0.1s ease-in-out;
     animation: launch-glow-animation 2.5s infinite;
-    margin: 0 auto; /* Center the button */
+    margin: 0 auto;
     text-shadow: 0 0 5px #fff;
 }
 
@@ -2555,93 +2543,89 @@ card.
     transform: translateY(2px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
 }
-/* --- [[END]] LAUNCH MODAL STYLES --- */
 
 /* Loan Agreement Modal Title */
 #charter-modal #charter-title {
-    font-family: 'Zorque', sans-serif; /* MODIFIED */
-    font-size: 1.95rem; /* Larger font size */
-    text-align: center; /* Center-align text */
-    width: 100%;       /* Ensure element spans modal width for centering */
+    font-family: 'Zorque', sans-serif;
+    font-size: 1.95rem;
+    text-align: center;
+    width: 100%;
 }
 
-/* --- [[START]] EVENT BUTTON CONTAINER ALIGNMENT --- */
+/* --- EVENT BUTTON CONTAINER ALIGNMENT --- */
 #event-button-container {
     display: flex;
-    justify-content: center; /* Centers buttons */
+    justify-content: center;
     gap: 1rem;
     width: 100%;
 }
-/* --- [[END]] EVENT BUTTON CONTAINER ALIGNMENT --- */
 
-/* --- [[START]] MODAL COST TEXT --- */
+/* --- MODAL COST TEXT --- */
 .modal-cost-text {
-    font-size: 1.1rem; /* Approx 1.5pt larger than 0.875rem */
+    font-size: 1.1rem;
 }
-/* --- [[END]] MODAL COST TEXT --- */
 
-/* --- [[START]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
+/* --- EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
 .event-choice-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     line-height: 1.2;
-    height: auto; /* Allow growth */
-    min-height: 3.5rem; /* Ensure substantial click area */
+    height: auto;
+    min-height: 3.5rem;
 }
 
 .choice-header {
     font-size: 1rem;
     font-weight: 600;
-    color: #f3f4f6; /* gray-100 */
+    color: #f3f4f6;
     margin-bottom: 0.25rem;
-    pointer-events: none; /* Let clicks pass to button */
+    pointer-events: none;
 }
 
 .choice-subtext {
     font-size: 0.85rem;
     font-weight: 500;
-    pointer-events: none; /* Let clicks pass to button */
+    pointer-events: none;
 }
 
 /* Event Color Utilities */
 .text-cost-orange {
-    color: #fb923c !important; /* orange-400 - Force override */
+    color: #fb923c !important;
 }
 
 .text-req-yellow {
-    color: #facc15 !important; /* yellow-400 - Force override */
+    color: #facc15 !important;
 }
 
 .text-delay-blue {
-    color: #60a5fa !important; /* blue-400 - Force override */
+    color: #60a5fa !important;
 }
 
 /* Event Result Text Colors (PHASE 3: Semantics) */
 .text-result-hull {
-    color: #4ade80 !important; /* green-400 */
+    color: #4ade80 !important;
 }
 .text-result-fuel {
-    color: #60a5fa !important; /* blue-400 */
+    color: #60a5fa !important;
 }
 .text-result-time {
-    color: #9ca3af !important; /* gray-400 */
+    color: #9ca3af !important;
 }
 .text-result-cargo {
-    color: #facc15 !important; /* yellow-400 */
+    color: #facc15 !important;
 }
 .text-result-credit-gain {
-    color: #22d3ee !important; /* cyan-400 */
+    color: #22d3ee !important;
     text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 .text-result-credit-loss {
-    color: #ef4444 !important; /* red-500 */
+    color: #ef4444 !important;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
-/* --- [[END]] EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
 
-/* --- [[START]] VIRTUAL WORKBENCH: MODAL MARQUEE --- */
+/* --- MODAL MARQUEE --- */
 .marquee-container {
     overflow: hidden;
     white-space: nowrap;
@@ -2658,7 +2642,400 @@ card.
     0% { transform: translateX(0); }
     100% { transform: translateX(-100%); }
 }
-/* --- [[END]] VIRTUAL WORKBENCH: MODAL MARQUEE --- */
+
+/* ========================================================================= */
+/* --- SOL STATION DASHBOARD (PHASE 3) --- */
+/* ========================================================================= */
+
+.sol-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+}
+
+/* Header & Status */
+.sol-header-panel {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+}
+
+.sol-health-bar-container {
+    margin-bottom: 1rem;
+}
+
+.sol-health-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: #9ca3af;
+}
+
+.sol-health-track {
+    width: 100%;
+    height: 12px;
+    background-color: #374151;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.sol-readout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+}
+
+.readout-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.readout-item .label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.readout-item .value {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Mode Control */
+.sol-mode-control {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    text-align: center;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mode-toggle-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.mode-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    padding: 0.75rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.mode-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #6b7280;
+}
+
+.mode-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    cursor: default;
+}
+
+.mode-btn.mode-stability.active {
+    border-color: #34d399; /* Green */
+    color: #34d399;
+}
+.mode-btn.mode-commerce.active {
+    border-color: #fbbf24; /* Amber */
+    color: #fbbf24;
+}
+.mode-btn.mode-production.active {
+    border-color: #f87171; /* Red */
+    color: #f87171;
+}
+
+.mode-description {
+    font-size: 0.8rem;
+    color: #d1d5db;
+    min-height: 1.2rem;
+}
+
+/* Cache Grid */
+.cache-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.cache-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cache-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cache-icon {
+    width: 32px;
+    height: 32px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    border: 1px solid #4b5563;
+}
+
+.cache-info {
+    overflow: hidden;
+}
+
+.cache-name {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cache-tier {
+    font-size: 0.65rem;
+    color: #6b7280;
+}
+
+.cache-bar-track {
+    width: 100%;
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+}
+
+.cache-bar-fill {
+    height: 100%;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.cache-details {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    text-align: right;
+    font-family: monospace;
+}
+
+.cache-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.player-stock {
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+
+.btn-donate {
+    background: #374151;
+    border: none;
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.btn-donate:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.btn-donate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Officer Slots */
+.officer-slot-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.officer-slot {
+    width: 140px;
+    height: 160px;
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px dashed #4b5563;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.officer-slot:hover {
+    border-color: #9ca3af;
+    background: rgba(31, 41, 55, 0.8);
+}
+
+.officer-slot.filled {
+    border-style: solid;
+    border-color: #60a5fa; /* Blue */
+    background: rgba(30, 58, 138, 0.2);
+}
+
+.slot-header {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.empty-label {
+    margin-top: auto;
+    margin-bottom: auto;
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.officer-name {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #e5e7eb;
+}
+
+.officer-role {
+    font-size: 0.7rem;
+    color: #60a5fa;
+    margin-bottom: 0.5rem;
+}
+
+.officer-buffs-mini {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-top: auto;
+    line-height: 1.2;
+}
+
+/* Roster Modal */
+.roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.roster-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #374151;
+}
+
+.roster-card .officer-info {
+    text-align: left;
+}
+
+.roster-card .officer-buffs {
+    font-size: 0.8rem;
+    color: #d1d5db;
+}
+
+.roster-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #374151;
+}
+
+.btn-red {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+.btn-red:hover {
+    background-color: #7f1d1d;
+}
+
+/* Sol Directorate Entry Button (Services Screen) */
+.sol-directorate-btn {
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.sol-directorate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+    border-color: #93c5fd;
+}
+
+.sol-directorate-btn .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.sol-directorate-btn .btn-icon {
+    font-size: 2rem;
+    color: #fbbf24; /* Sun Yellow */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+.sol-directorate-btn .btn-text {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.sol-directorate-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.sol-directorate-btn .btn-subtitle {
+    font-size: 0.8rem;
+    color: #bfdbfe;
+}
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -7218,6 +7595,7 @@ export function renderFinanceScreen(gameState) {
  * @fileoverview This file contains the rendering logic for the Station Services screen.
  * It displays options for refueling and repairing the player's active ship, calculating
  * costs based on the current location and any active player perks.
+ * * UPDATED: Includes Sol Station Directorate entry point (Phase 3).
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -7325,6 +7703,27 @@ export function renderServicesScreen(gameState, simulationService) {
             effectiveMaxHealth = stats.maxHealth;
             effectiveMaxFuel = stats.maxFuel;
         }
+    }
+
+    // =========================================================================
+    // --- PHASE 3: SOL STATION ENTRY POINT ---
+    // =========================================================================
+    let solStationButtonHtml = '';
+    // Show button if at Sun AND Station is unlocked
+    if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
+        solStationButtonHtml = `
+            <div class="flex justify-center mb-6">
+                <button class="sol-directorate-btn" data-action="open-sol-dashboard">
+                    <div class="btn-content">
+                        <span class="btn-icon">☀</span>
+                        <div class="btn-text">
+                            <span class="btn-title">SOL DIRECTORATE</span>
+                            <span class="btn-subtitle">Manage Station Systems</span>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        `;
     }
 
     // =========================================================================
@@ -7437,6 +7836,8 @@ export function renderServicesScreen(gameState, simulationService) {
             </div>
             <div class="services-scroll-panel flex-grow min-h-0">
                 
+                ${solStationButtonHtml}
+
                 <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
                     <div class="themed-header-bar">
                         <div class="ship-header-title" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>
@@ -15748,6 +16149,340 @@ export class UIHangarControl {
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
 
+--- START OF FILE: ./js/services/ui/UISolStationControl.js ---
+// js/services/ui/UISolStationControl.js
+import { DB } from '../../data/database.js';
+import { OFFICERS } from '../../data/officers.js';
+import { formatCredits } from '../../utils.js';
+import { ACTION_IDS } from '../../data/constants.js';
+
+/**
+ * @class UISolStationControl
+ * @description Domain Controller responsible for the Sol Station Dashboard,
+ * managing the Mode Lever, Cache Grid, and Officer Directorate UI.
+ */
+export class UISolStationControl {
+    /**
+     * @param {import('../UIManager.js').UIManager} uiManager
+     */
+    constructor(uiManager) {
+        this.uiManager = uiManager;
+    }
+
+    /**
+     * Builds and displays the main Sol Station Dashboard modal.
+     * @param {object} gameState
+     */
+    showDashboard(gameState) {
+        const station = gameState.solStation;
+        if (!station.unlocked) return; // Should not happen if button is gated
+
+        // Calculate projections
+        // We need access to the service for accurate projections, but UI should only read state.
+        // Ideally, we replicate the projection logic or get it from state if cached.
+        // For now, we will perform a lightweight calculation matching the service logic for display.
+        const output = this._calculateProjections(gameState);
+
+        const contentHtml = `
+            <div class="sol-dashboard-container">
+                <div class="sol-header-panel">
+                    <div class="sol-health-bar-container">
+                        <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-track">
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
+                        </div>
+                    </div>
+                    <div class="sol-readout-grid">
+                        <div class="readout-item">
+                            <span class="label">CREDIT OUTPUT</span>
+                            <span class="value credits-text">${formatCredits(output.credits)}/day</span>
+                        </div>
+                        <div class="readout-item">
+                            <span class="label">ANTIMATTER</span>
+                            <span class="value text-purple-400">${output.antimatter}/day</span>
+                        </div>
+                        <div class="readout-item">
+                            <span class="label">ENTROPY</span>
+                            <span class="value text-red-400">${output.entropy.toFixed(2)}x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sol-mode-control">
+                    <div class="section-title">OPERATIONAL MODE</div>
+                    <div class="mode-toggle-group">
+                        ${this._renderModeButton('STABILITY', station.mode)}
+                        ${this._renderModeButton('COMMERCE', station.mode)}
+                        ${this._renderModeButton('PRODUCTION', station.mode)}
+                    </div>
+                    <div class="mode-description">
+                        ${this._getModeDescription(station.mode)}
+                    </div>
+                </div>
+
+                <div class="sol-cache-section">
+                    <div class="section-title">MAINTENANCE CACHES</div>
+                    <div class="cache-grid">
+                        ${this._renderCacheGrid(gameState)}
+                    </div>
+                </div>
+
+                <div class="sol-officer-section">
+                    <div class="section-title">DIRECTORATE ASSIGNMENTS</div>
+                    <div class="officer-slot-container">
+                        ${this._renderOfficerSlots(gameState)}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.uiManager.queueModal('sol-dashboard-modal', 'Sol Station Directorate', contentHtml, null, {
+            width: '800px', // Custom width for dashboard
+            dismissOutside: true
+        });
+    }
+
+    /**
+     * Renders the Officer Roster modal for selecting an officer.
+     * @param {number} slotId 
+     * @param {object} gameState 
+     */
+    showOfficerRoster(slotId, gameState) {
+        const roster = gameState.solStation.roster || [];
+        const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
+        
+        // Filter: Available officers only (in roster AND not currently assigned)
+        const availableOfficers = roster.filter(id => !assignedIds.includes(id));
+
+        let contentHtml = '';
+
+        if (availableOfficers.length === 0) {
+            contentHtml = `<div class="text-center p-4 text-gray-400">No unassigned officers available.</div>`;
+        } else {
+            const listHtml = availableOfficers.map(officerId => {
+                const officer = OFFICERS[officerId];
+                if (!officer) return '';
+                
+                return `
+                    <div class="roster-card" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="${officerId}">
+                        <div class="officer-info">
+                            <div class="officer-name">${officer.name}</div>
+                            <div class="officer-role">${officer.role}</div>
+                        </div>
+                        <div class="officer-buffs">
+                            ${this._formatBuffs(officer.buffs)}
+                        </div>
+                        <button class="btn btn-sm btn-action">ASSIGN</button>
+                    </div>
+                `;
+            }).join('');
+            
+            contentHtml = `<div class="roster-list">${listHtml}</div>`;
+        }
+
+        // Add "Clear Slot" option if slot is currently occupied
+        const currentAssignment = gameState.solStation.officers.find(s => s.slotId === parseInt(slotId));
+        if (currentAssignment && currentAssignment.assignedOfficerId) {
+            contentHtml += `
+                <div class="roster-footer">
+                    <button class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
+                        UNASSIGN CURRENT OFFICER
+                    </button>
+                </div>
+            `;
+        }
+
+        this.uiManager.queueModal('event-modal', 'Staff Roster', contentHtml);
+    }
+
+    // --- RENDER HELPERS ---
+
+    _renderModeButton(modeId, currentMode) {
+        const isActive = modeId === currentMode;
+        const activeClass = isActive ? 'active' : '';
+        return `
+            <button class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
+                    data-action="sol-set-mode" 
+                    data-mode="${modeId}"
+                    ${isActive ? 'disabled' : ''}>
+                ${modeId}
+            </button>
+        `;
+    }
+
+    _getModeDescription(mode) {
+        switch (mode) {
+            case 'STABILITY': return "Minimized Entropy. Standard Output. <span class='text-green-400'>Low Maintenance.</span>";
+            case 'COMMERCE': return "Maximizes Credit generation. <span class='text-orange-400'>High Entropy.</span>";
+            case 'PRODUCTION': return "Maximizes Antimatter generation. <span class='text-red-500'>Extreme Entropy.</span>";
+            default: return "";
+        }
+    }
+
+    _renderCacheGrid(gameState) {
+        const caches = gameState.solStation.caches;
+        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
+
+        return Object.entries(caches).map(([tierKey, cache]) => {
+            // Determine Commodity for this Tier (simplified mapping based on game design)
+            // Tier 1: Hydrogen (good_hydrogen)
+            // Tier 2: Water Ice (good_water_ice) -> Ore (good_ore) ... 
+            // *NOTE*: The GDD implies caches accept "Tier X commodities". 
+            // For V1 implementation, we will map specific "Fuel/Maintenance" commodities or accept ANY of that tier.
+            // However, `donateToCache` takes a specific commodityID.
+            // To simplify UI, we will request specific common commodities for maintenance.
+            
+            // Mapping Tier to Commodity ID (Hardcoded for V1 Simplicity as per "Feed vast quantities")
+            const tierMap = {
+                tier1: { id: 'good_hydrogen', name: 'Hydrogen' },
+                tier2: { id: 'good_water_ice', name: 'Water Ice' },
+                tier3: { id: 'good_ore', name: 'Ore' },
+                tier4: { id: 'good_machinery', name: 'Machinery' },
+                tier5: { id: 'good_cybernetics', name: 'Cybernetics' },
+                tier6: { id: 'good_antimatter', name: 'Antimatter' } // Wait, T6 shouldn't be AM? AM is T7.
+                // Let's use 'good_neural_processors' for T6 or similar high-tier.
+            };
+            
+            // Correction: Check DB for tiers
+            // Using a representative commodity for each tier cache for the UI
+            // T1: Hydrogen, T2: Plasteel, T3: Machinery, T4: Cybernetics, T5: Neural Proc, T6: ?
+            // Let's assume strict mapping for now.
+            const targetId = this._getCommodityForTier(tierKey);
+            const commodity = DB.COMMODITIES.find(c => c.id === targetId);
+            const fillPct = (cache.current / cache.max) * 100;
+            
+            // Player Stock
+            const playerStock = playerInventory[targetId]?.quantity || 0;
+            const canDonate = playerStock > 0 && cache.current < cache.max;
+
+            return `
+                <div class="cache-card">
+                    <div class="cache-header">
+                        <div class="cache-icon" style="background-image: url('${commodity.image}')"></div>
+                        <div class="cache-info">
+                            <div class="cache-name">${commodity.name}</div>
+                            <div class="cache-tier">${tierKey.toUpperCase()}</div>
+                        </div>
+                    </div>
+                    <div class="cache-bar-track">
+                        <div class="cache-bar-fill" style="width: ${fillPct}%; background-color: var(--tier-${tierKey}-color, #fff);"></div>
+                    </div>
+                    <div class="cache-details">
+                        <span>${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</span>
+                    </div>
+                    <div class="cache-actions">
+                        <span class="player-stock">Cargo: ${playerStock}</span>
+                        <button class="btn-donate" 
+                                data-action="sol-donate" 
+                                data-tier="${tierKey}" 
+                                data-commodity-id="${targetId}"
+                                ${!canDonate ? 'disabled' : ''}>
+                            + DONATE
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    _getCommodityForTier(tierKey) {
+        // Hardcoded mapping for the maintenance sinks
+        switch(tierKey) {
+            case 'tier1': return 'good_hydrogen';
+            case 'tier2': return 'good_water_ice';
+            case 'tier3': return 'good_ore'; // Or Plasteel
+            case 'tier4': return 'good_machinery';
+            case 'tier5': return 'good_cybernetics';
+            case 'tier6': return 'good_neural_processors'; // Assuming high tier
+            default: return 'good_hydrogen';
+        }
+    }
+
+    _renderOfficerSlots(gameState) {
+        const slots = gameState.solStation.officers;
+        
+        return slots.map(slot => {
+            const officerId = slot.assignedOfficerId;
+            const officer = officerId ? OFFICERS[officerId] : null;
+
+            if (officer) {
+                return `
+                    <div class="officer-slot filled" data-action="sol-open-roster" data-slot-id="${slot.slotId}">
+                        <div class="slot-header">SLOT ${slot.slotId}</div>
+                        <div class="officer-name">${officer.name}</div>
+                        <div class="officer-role">${officer.role}</div>
+                        <div class="officer-buffs-mini">${this._formatBuffs(officer.buffs, true)}</div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="officer-slot empty" data-action="sol-open-roster" data-slot-id="${slot.slotId}">
+                        <div class="slot-header">SLOT ${slot.slotId}</div>
+                        <div class="empty-label">+ ASSIGN</div>
+                    </div>
+                `;
+            }
+        }).join('');
+    }
+
+    _formatBuffs(buffs, mini = false) {
+        const parts = [];
+        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${buffs.entropy * 100}% Decay</span>`);
+        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${buffs.creditMult * 100}% Credits</span>`);
+        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${buffs.amMult * 100}% Antimatter</span>`);
+        
+        return parts.join(mini ? '<br>' : ' • ');
+    }
+
+    _calculateProjections(gameState) {
+        // Replicating basic service logic for the UI view
+        const station = gameState.solStation;
+        const MODES = {
+            STABILITY: { entropyMult: 1, amMult: 1, creditMult: 1 },
+            COMMERCE: { entropyMult: 3, amMult: 1, creditMult: 4 },
+            PRODUCTION: { entropyMult: 4, amMult: 4, creditMult: 1 }
+        };
+        const BASE_CREDIT_OUTPUT = 1000;
+        const BASE_AM_OUTPUT = 0.1;
+
+        const modeConfig = MODES[station.mode];
+        
+        // Get Buffs
+        let buffTotals = { entropy: 0, creditMult: 0, amMult: 0 };
+        station.officers.forEach(slot => {
+            if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
+                const b = OFFICERS[slot.assignedOfficerId].buffs;
+                buffTotals.entropy += b.entropy;
+                buffTotals.creditMult += b.creditMult;
+                buffTotals.amMult += b.amMult;
+            }
+        });
+
+        // Calculate
+        let entropy = Math.max(0.1, modeConfig.entropyMult + buffTotals.entropy);
+        let efficiency = station.health / 100;
+        if (efficiency < 0.5) efficiency = Math.pow(efficiency, 2);
+
+        const credits = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + buffTotals.creditMult) * efficiency);
+        const antimatter = (BASE_AM_OUTPUT * (modeConfig.amMult + buffTotals.amMult) * efficiency).toFixed(2);
+
+        return { credits, antimatter, entropy };
+    }
+
+    _getHealthColorClass(health) {
+        if (health >= 80) return 'text-green-400';
+        if (health >= 50) return 'text-yellow-400';
+        return 'text-red-500';
+    }
+
+    _getHealthColorVar(health) {
+        if (health >= 80) return '--ot-green-base';
+        if (health >= 50) return '--ot-yellow-base';
+        return '--ot-red-base';
+    }
+}
+--- END OF FILE: ./js/services/ui/UISolStationControl.js ---
+
 --- START OF FILE: ./js/services/ui/UIModalEngine.js ---
 // js/services/ui/UIModalEngine.js
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS } from '../../data/constants.js';
@@ -23912,6 +24647,7 @@ import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
+import { UISolStationControl } from './ui/UISolStationControl.js'; // NEW IMPORT
 
 export class UIManager {
     /**
@@ -23936,13 +24672,14 @@ export class UIManager {
         this.effectsManager = new EffectsManager();
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
 
-        // --- [[NEW]] Domain Controllers (The Switchboard) ---
+        // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
         this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
+        this.solStationControl = new UISolStationControl(this); // NEW CONTROLLER
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -24133,7 +24870,6 @@ export class UIManager {
         const creditText = isMax ? '⌬ MAXIMUM CREDITS ⌬' : formatCredits(player.credits);
         const creditClass = isMax ? 'text-glow-gold' : 'credits-text-pulsing';
         
-        // [[NEW]] Add conditional class for max credits state to the container
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
@@ -24225,7 +24961,7 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState);
+                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
@@ -24236,8 +24972,8 @@ export class UIManager {
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
                 break;
             case SCREEN_IDS.HANGAR:
-                // [[FIXED]] Expanded Full Render condition for Boarding/Buy/Sell
-                // Added check for tutorial step change to trigger refresh for button unlock (1/26/26)
+                // Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
@@ -24322,7 +25058,6 @@ export class UIManager {
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
-    // [[FIXED]] Added _calculateSaleDetails proxy to UIMarketControl
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
     // --- Mission Control ---
@@ -24352,6 +25087,10 @@ export class UIManager {
     showCargoDetailModal(...args) { this.eventControl.showCargoDetailModal(...args); }
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
+
+    // --- Sol Station Control (NEW) ---
+    showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
+    showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
     // =========================================================================
     // GENERAL UI UTILITIES (Generic Tooltips & Effects)
@@ -24470,10 +25209,6 @@ export class UIManager {
     // LEGACY / SAFEGUARD METHODS
     // =========================================================================
 
-    /**
-     * Shows a confirmation modal for buying or selling a ship.
-     * Retained in Facade to ensure ActionClickHandler compatibility without re-issuing HangarControl.
-     */
     showShipTransactionConfirmation(shipId, transactionType, onConfirm) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
@@ -24495,7 +25230,6 @@ export class UIManager {
             description += `<br><br>Cost: <span class="credits-text-pulsing">${amountStr}</span>`;
         } else {
             title = "Confirm Sale";
-            // Logic duplicated from HangarControl to ensure accuracy
             const shipState = this.lastKnownState.player.shipStates[shipId];
             let upgradeValue = 0;
             if (shipState && shipState.upgrades) {
@@ -27791,6 +28525,52 @@ export class ActionClickHandler {
                 if (dataset.goodId) {
                     this.gameState.uiState.marketCardMinimized[dataset.goodId] = !this.gameState.uiState.marketCardMinimized[dataset.goodId];
                     this.gameState.setState({});
+                }
+                break;
+
+            // =================================================================
+            // --- SOL STATION (PHASE 3) ---
+            // =================================================================
+            case 'open-sol-dashboard':
+                this.uiManager.showSolStationDashboard(state);
+                break;
+
+            case 'sol-set-mode':
+                const newMode = dataset.mode;
+                if (newMode) {
+                    this.simulationService.solStationService.setMode(newMode);
+                    // Refresh dashboard
+                    this.uiManager.showSolStationDashboard(state);
+                }
+                break;
+
+            case 'sol-donate':
+                const tier = dataset.tier;
+                const commId = dataset.commodityId;
+                const donateResult = this.simulationService.solStationService.donateToCache(tier, commId, 100);
+                if (donateResult.success) {
+                    this.uiManager.createFloatingText("+DONATED", e.clientX, e.clientY, "#34d399");
+                    this.uiManager.showSolStationDashboard(state);
+                } else {
+                    this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
+                }
+                break;
+
+            case 'sol-open-roster':
+                const slotId = dataset.slotId;
+                this.uiManager.showOfficerRoster(slotId, state);
+                break;
+
+            case 'sol-assign-officer':
+                const targetSlot = parseInt(dataset.slotId);
+                const officerId = dataset.officerId === "null" ? null : dataset.officerId;
+                const solState = state.solStation;
+                const slotIndex = solState.officers.findIndex(s => s.slotId === targetSlot);
+                
+                if (slotIndex !== -1) {
+                    solState.officers[slotIndex].assignedOfficerId = officerId;
+                    state.setState({});
+                    this.uiManager.showSolStationDashboard(state);
                 }
                 break;
         }
