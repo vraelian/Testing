@@ -1,6 +1,7 @@
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js'; // Phase 2: Import Registry
+import { COMMODITY_IDS } from '../data/constants.js';
 
 /**
  * Constants defining the station's operational parameters.
@@ -191,6 +192,43 @@ export class SolStationService {
         this.gameState.setState({});
         
         return { success: true, message: "Resources transferred." };
+    }
+
+    /**
+     * Transfers accumulated stockpile to player wallet/cargo.
+     */
+    claimStockpile() {
+        const stockpile = this.gameState.solStation.stockpile;
+        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+        
+        let claimedCredits = 0;
+        let claimedAM = 0;
+
+        // Claim Credits
+        if (stockpile.credits > 0) {
+            this.gameState.player.credits += Math.floor(stockpile.credits);
+            claimedCredits = Math.floor(stockpile.credits);
+            stockpile.credits = 0;
+        }
+
+        // Claim Antimatter (Commodity)
+        if (stockpile.antimatter >= 1) {
+            const amountToTake = Math.floor(stockpile.antimatter);
+            if (!inventory[COMMODITY_IDS.ANTIMATTER]) {
+                inventory[COMMODITY_IDS.ANTIMATTER] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[COMMODITY_IDS.ANTIMATTER].quantity += amountToTake;
+            claimedAM = amountToTake;
+            stockpile.antimatter -= amountToTake;
+        }
+
+        if (claimedCredits === 0 && claimedAM === 0) {
+            return { success: false, message: "No full units to claim." };
+        }
+
+        this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
+        this.gameState.setState({});
+        return { success: true, message: `Claimed ${claimedCredits} Cr & ${claimedAM} AM.` };
     }
 
     /**

@@ -16154,7 +16154,7 @@ export class UIHangarControl {
 import { DB } from '../../data/database.js';
 import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
-import { ACTION_IDS } from '../../data/constants.js';
+import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
  * @class UISolStationControl
@@ -16178,10 +16178,9 @@ export class UISolStationControl {
         if (!station.unlocked) return; // Should not happen if button is gated
 
         // Calculate projections
-        // We need access to the service for accurate projections, but UI should only read state.
-        // Ideally, we replicate the projection logic or get it from state if cached.
-        // For now, we will perform a lightweight calculation matching the service logic for display.
         const output = this._calculateProjections(gameState);
+        const stockpile = station.stockpile;
+        const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
 
         const contentHtml = `
             <div class="sol-dashboard-container">
@@ -16194,12 +16193,21 @@ export class UISolStationControl {
                     </div>
                     <div class="sol-readout-grid">
                         <div class="readout-item">
-                            <span class="label">CREDIT OUTPUT</span>
-                            <span class="value credits-text">${formatCredits(output.credits)}/day</span>
+                            <span class="label">OUTPUT/DAY</span>
+                            <span class="value credits-text">${formatCredits(output.credits)}</span>
+                            <span class="value text-purple-400 text-sm">+${output.antimatter} AM</span>
                         </div>
                         <div class="readout-item">
-                            <span class="label">ANTIMATTER</span>
-                            <span class="value text-purple-400">${output.antimatter}/day</span>
+                            <span class="label">STOCKPILE</span>
+                            <span class="value credits-text">${formatCredits(stockpile.credits)}</span>
+                            <span class="value text-purple-400 text-sm">${stockpile.antimatter.toFixed(2)} AM</span>
+                        </div>
+                        <div class="readout-action">
+                            <button class="btn btn-sm btn-pulse-gold w-full h-full" 
+                                    data-action="sol-claim-output" 
+                                    ${!hasStockpile ? 'disabled' : ''}>
+                                CLAIM OUTPUT
+                            </button>
                         </div>
                         <div class="readout-item">
                             <span class="label">ENTROPY</span>
@@ -16324,31 +16332,14 @@ export class UISolStationControl {
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
 
         return Object.entries(caches).map(([tierKey, cache]) => {
-            // Determine Commodity for this Tier (simplified mapping based on game design)
-            // Tier 1: Hydrogen (good_hydrogen)
-            // Tier 2: Water Ice (good_water_ice) -> Ore (good_ore) ... 
-            // *NOTE*: The GDD implies caches accept "Tier X commodities". 
-            // For V1 implementation, we will map specific "Fuel/Maintenance" commodities or accept ANY of that tier.
-            // However, `donateToCache` takes a specific commodityID.
-            // To simplify UI, we will request specific common commodities for maintenance.
-            
-            // Mapping Tier to Commodity ID (Hardcoded for V1 Simplicity as per "Feed vast quantities")
-            const tierMap = {
-                tier1: { id: 'good_hydrogen', name: 'Hydrogen' },
-                tier2: { id: 'good_water_ice', name: 'Water Ice' },
-                tier3: { id: 'good_ore', name: 'Ore' },
-                tier4: { id: 'good_machinery', name: 'Machinery' },
-                tier5: { id: 'good_cybernetics', name: 'Cybernetics' },
-                tier6: { id: 'good_antimatter', name: 'Antimatter' } // Wait, T6 shouldn't be AM? AM is T7.
-                // Let's use 'good_neural_processors' for T6 or similar high-tier.
-            };
-            
-            // Correction: Check DB for tiers
-            // Using a representative commodity for each tier cache for the UI
-            // T1: Hydrogen, T2: Plasteel, T3: Machinery, T4: Cybernetics, T5: Neural Proc, T6: ?
-            // Let's assume strict mapping for now.
             const targetId = this._getCommodityForTier(tierKey);
             const commodity = DB.COMMODITIES.find(c => c.id === targetId);
+            
+            // Fallback for safety if ID doesn't match
+            if (!commodity) {
+                return `<div class="cache-card"><div class="cache-name">Error: ${targetId}</div></div>`;
+            }
+
             const fillPct = (cache.current / cache.max) * 100;
             
             // Player Stock
@@ -16358,7 +16349,7 @@ export class UISolStationControl {
             return `
                 <div class="cache-card">
                     <div class="cache-header">
-                        <div class="cache-icon" style="background-image: url('${commodity.image}')"></div>
+                        <div class="cache-icon" style="background-image: url('${commodity.image || ''}')"></div>
                         <div class="cache-info">
                             <div class="cache-name">${commodity.name}</div>
                             <div class="cache-tier">${tierKey.toUpperCase()}</div>
@@ -16386,15 +16377,15 @@ export class UISolStationControl {
     }
 
     _getCommodityForTier(tierKey) {
-        // Hardcoded mapping for the maintenance sinks
+        // Mapped to actual constants in database.js
         switch(tierKey) {
-            case 'tier1': return 'good_hydrogen';
-            case 'tier2': return 'good_water_ice';
-            case 'tier3': return 'good_ore'; // Or Plasteel
-            case 'tier4': return 'good_machinery';
-            case 'tier5': return 'good_cybernetics';
-            case 'tier6': return 'good_neural_processors'; // Assuming high tier
-            default: return 'good_hydrogen';
+            case 'tier1': return COMMODITY_IDS.WATER_ICE;
+            case 'tier2': return COMMODITY_IDS.HYDROPONICS;
+            case 'tier3': return COMMODITY_IDS.PROPELLANT;
+            case 'tier4': return COMMODITY_IDS.GRAPHENE_LATTICES;
+            case 'tier5': return COMMODITY_IDS.ATMO_PROCESSORS;
+            case 'tier6': return COMMODITY_IDS.SENTIENT_AI; 
+            default: return COMMODITY_IDS.WATER_ICE;
         }
     }
 
@@ -17473,6 +17464,14 @@ ${logHistory}
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Solar Core Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
+            unlockSolStation: { name: 'Unlock Sol Station', type: 'button', handler: () => {
+                if (this.gameState.solStation) {
+                    this.gameState.solStation.unlocked = true;
+                    this.gameState.setState({});
+                    this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#fbbf24');
+                    this.logger.info.system('Debug', 'Sol Station unlocked via debug.');
+                }
+            }},
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -17716,6 +17715,7 @@ ${logHistory}
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
+        this.economyFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
@@ -18675,6 +18675,7 @@ export class GameState {
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js'; // Phase 2: Import Registry
+import { COMMODITY_IDS } from '../data/constants.js';
 
 /**
  * Constants defining the station's operational parameters.
@@ -18865,6 +18866,43 @@ export class SolStationService {
         this.gameState.setState({});
         
         return { success: true, message: "Resources transferred." };
+    }
+
+    /**
+     * Transfers accumulated stockpile to player wallet/cargo.
+     */
+    claimStockpile() {
+        const stockpile = this.gameState.solStation.stockpile;
+        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+        
+        let claimedCredits = 0;
+        let claimedAM = 0;
+
+        // Claim Credits
+        if (stockpile.credits > 0) {
+            this.gameState.player.credits += Math.floor(stockpile.credits);
+            claimedCredits = Math.floor(stockpile.credits);
+            stockpile.credits = 0;
+        }
+
+        // Claim Antimatter (Commodity)
+        if (stockpile.antimatter >= 1) {
+            const amountToTake = Math.floor(stockpile.antimatter);
+            if (!inventory[COMMODITY_IDS.ANTIMATTER]) {
+                inventory[COMMODITY_IDS.ANTIMATTER] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[COMMODITY_IDS.ANTIMATTER].quantity += amountToTake;
+            claimedAM = amountToTake;
+            stockpile.antimatter -= amountToTake;
+        }
+
+        if (claimedCredits === 0 && claimedAM === 0) {
+            return { success: false, message: "No full units to claim." };
+        }
+
+        this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
+        this.gameState.setState({});
+        return { success: true, message: `Claimed ${claimedCredits} Cr & ${claimedAM} AM.` };
     }
 
     /**
@@ -28553,6 +28591,16 @@ export class ActionClickHandler {
                     this.uiManager.showSolStationDashboard(state);
                 } else {
                     this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
+                }
+                break;
+
+            case 'sol-claim-output':
+                const claimResult = this.simulationService.solStationService.claimStockpile();
+                if (claimResult.success) {
+                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
+                    this.uiManager.showSolStationDashboard(state);
+                } else {
+                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
                 }
                 break;
 

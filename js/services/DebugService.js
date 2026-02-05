@@ -440,6 +440,14 @@ ${logHistory}
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Solar Core Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
+            unlockSolStation: { name: 'Unlock Sol Station', type: 'button', handler: () => {
+                if (this.gameState.solStation) {
+                    this.gameState.solStation.unlocked = true;
+                    this.gameState.setState({});
+                    this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#fbbf24');
+                    this.logger.info.system('Debug', 'Sol Station unlocked via debug.');
+                }
+            }},
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -683,6 +691,7 @@ ${logHistory}
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
         this.economyFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
+        this.economyFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
 
         const triggerFolder = this.gui.addFolder('Triggers');
         

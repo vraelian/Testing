@@ -2,7 +2,7 @@
 import { DB } from '../../data/database.js';
 import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
-import { ACTION_IDS } from '../../data/constants.js';
+import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 
 /**
  * @class UISolStationControl
@@ -26,10 +26,9 @@ export class UISolStationControl {
         if (!station.unlocked) return; // Should not happen if button is gated
 
         // Calculate projections
-        // We need access to the service for accurate projections, but UI should only read state.
-        // Ideally, we replicate the projection logic or get it from state if cached.
-        // For now, we will perform a lightweight calculation matching the service logic for display.
         const output = this._calculateProjections(gameState);
+        const stockpile = station.stockpile;
+        const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
 
         const contentHtml = `
             <div class="sol-dashboard-container">
@@ -42,12 +41,21 @@ export class UISolStationControl {
                     </div>
                     <div class="sol-readout-grid">
                         <div class="readout-item">
-                            <span class="label">CREDIT OUTPUT</span>
-                            <span class="value credits-text">${formatCredits(output.credits)}/day</span>
+                            <span class="label">OUTPUT/DAY</span>
+                            <span class="value credits-text">${formatCredits(output.credits)}</span>
+                            <span class="value text-purple-400 text-sm">+${output.antimatter} AM</span>
                         </div>
                         <div class="readout-item">
-                            <span class="label">ANTIMATTER</span>
-                            <span class="value text-purple-400">${output.antimatter}/day</span>
+                            <span class="label">STOCKPILE</span>
+                            <span class="value credits-text">${formatCredits(stockpile.credits)}</span>
+                            <span class="value text-purple-400 text-sm">${stockpile.antimatter.toFixed(2)} AM</span>
+                        </div>
+                        <div class="readout-action">
+                            <button class="btn btn-sm btn-pulse-gold w-full h-full" 
+                                    data-action="sol-claim-output" 
+                                    ${!hasStockpile ? 'disabled' : ''}>
+                                CLAIM OUTPUT
+                            </button>
                         </div>
                         <div class="readout-item">
                             <span class="label">ENTROPY</span>
@@ -172,31 +180,14 @@ export class UISolStationControl {
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
 
         return Object.entries(caches).map(([tierKey, cache]) => {
-            // Determine Commodity for this Tier (simplified mapping based on game design)
-            // Tier 1: Hydrogen (good_hydrogen)
-            // Tier 2: Water Ice (good_water_ice) -> Ore (good_ore) ... 
-            // *NOTE*: The GDD implies caches accept "Tier X commodities". 
-            // For V1 implementation, we will map specific "Fuel/Maintenance" commodities or accept ANY of that tier.
-            // However, `donateToCache` takes a specific commodityID.
-            // To simplify UI, we will request specific common commodities for maintenance.
-            
-            // Mapping Tier to Commodity ID (Hardcoded for V1 Simplicity as per "Feed vast quantities")
-            const tierMap = {
-                tier1: { id: 'good_hydrogen', name: 'Hydrogen' },
-                tier2: { id: 'good_water_ice', name: 'Water Ice' },
-                tier3: { id: 'good_ore', name: 'Ore' },
-                tier4: { id: 'good_machinery', name: 'Machinery' },
-                tier5: { id: 'good_cybernetics', name: 'Cybernetics' },
-                tier6: { id: 'good_antimatter', name: 'Antimatter' } // Wait, T6 shouldn't be AM? AM is T7.
-                // Let's use 'good_neural_processors' for T6 or similar high-tier.
-            };
-            
-            // Correction: Check DB for tiers
-            // Using a representative commodity for each tier cache for the UI
-            // T1: Hydrogen, T2: Plasteel, T3: Machinery, T4: Cybernetics, T5: Neural Proc, T6: ?
-            // Let's assume strict mapping for now.
             const targetId = this._getCommodityForTier(tierKey);
             const commodity = DB.COMMODITIES.find(c => c.id === targetId);
+            
+            // Fallback for safety if ID doesn't match
+            if (!commodity) {
+                return `<div class="cache-card"><div class="cache-name">Error: ${targetId}</div></div>`;
+            }
+
             const fillPct = (cache.current / cache.max) * 100;
             
             // Player Stock
@@ -206,7 +197,7 @@ export class UISolStationControl {
             return `
                 <div class="cache-card">
                     <div class="cache-header">
-                        <div class="cache-icon" style="background-image: url('${commodity.image}')"></div>
+                        <div class="cache-icon" style="background-image: url('${commodity.image || ''}')"></div>
                         <div class="cache-info">
                             <div class="cache-name">${commodity.name}</div>
                             <div class="cache-tier">${tierKey.toUpperCase()}</div>
@@ -234,15 +225,15 @@ export class UISolStationControl {
     }
 
     _getCommodityForTier(tierKey) {
-        // Hardcoded mapping for the maintenance sinks
+        // Mapped to actual constants in database.js
         switch(tierKey) {
-            case 'tier1': return 'good_hydrogen';
-            case 'tier2': return 'good_water_ice';
-            case 'tier3': return 'good_ore'; // Or Plasteel
-            case 'tier4': return 'good_machinery';
-            case 'tier5': return 'good_cybernetics';
-            case 'tier6': return 'good_neural_processors'; // Assuming high tier
-            default: return 'good_hydrogen';
+            case 'tier1': return COMMODITY_IDS.WATER_ICE;
+            case 'tier2': return COMMODITY_IDS.HYDROPONICS;
+            case 'tier3': return COMMODITY_IDS.PROPELLANT;
+            case 'tier4': return COMMODITY_IDS.GRAPHENE_LATTICES;
+            case 'tier5': return COMMODITY_IDS.ATMO_PROCESSORS;
+            case 'tier6': return COMMODITY_IDS.SENTIENT_AI; 
+            default: return COMMODITY_IDS.WATER_ICE;
         }
     }
 

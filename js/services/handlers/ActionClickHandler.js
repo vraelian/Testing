@@ -375,6 +375,16 @@ export class ActionClickHandler {
                 }
                 break;
 
+            case 'sol-claim-output':
+                const claimResult = this.simulationService.solStationService.claimStockpile();
+                if (claimResult.success) {
+                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
+                    this.uiManager.showSolStationDashboard(state);
+                } else {
+                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
+                }
+                break;
+
             case 'sol-open-roster':
                 const slotId = dataset.slotId;
                 this.uiManager.showOfficerRoster(slotId, state);
