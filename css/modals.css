@@ -64,6 +64,24 @@
     animation: scanlineFadeOut 2s ease-in-out forwards;
 }
 
+/* [[FIXED]] Added missing keyframes for the boot sequence */
+@keyframes scanlineFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(1.5) blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+        filter: brightness(0) blur(4px);
+    }
+}
+
 
 /* Specific Modal Styling */
 

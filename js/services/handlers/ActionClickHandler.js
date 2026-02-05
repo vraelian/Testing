@@ -244,7 +244,7 @@ export class ActionClickHandler {
                 actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
             }
-            case ACTION_IDS.TRAVEL:
+            case ACTION_IDS.TRAVEL: {
                 this.uiManager.hideModal('launch-modal');
                 // --- VIRTUAL WORKBENCH (Phase 6): Pass useFoldedDrive flag ---
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
@@ -252,6 +252,7 @@ export class ActionClickHandler {
                 // --- END VIRTUAL WORKBENCH ---
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
+            }
 
             // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
             // New case for fast-tracking from Map Modal to Navigation/Launch
@@ -354,57 +355,67 @@ export class ActionClickHandler {
                 this.uiManager.showSolStationDashboard(state);
                 break;
 
-            case 'sol-set-mode':
+            case 'sol-set-mode': {
                 const newMode = dataset.mode;
                 if (newMode) {
                     this.simulationService.solStationService.setMode(newMode);
-                    // Live Update
-                    this.uiManager.solStationControl.update(state);
+                    // Live Update: Pass FRESH state (mode just changed)
+                    this.uiManager.solStationControl.update(this.gameState.getState());
                 }
                 break;
+            }
 
-            case 'sol-donate':
+            case 'sol-donate': {
                 const commId = dataset.commodityId;
                 // Hardcoded 100 units for now per button click
                 const donateResult = this.simulationService.solStationService.donateToCache(commId, 100);
                 if (donateResult.success) {
                     this.uiManager.createFloatingText("+DONATED", e.clientX, e.clientY, "#34d399");
-                    // Live Update
-                    this.uiManager.solStationControl.update(state);
+                    // Live Update: Pass FRESH state (inv/cache just changed)
+                    this.uiManager.solStationControl.update(this.gameState.getState());
                 } else {
                     this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
                 }
                 break;
+            }
 
-            case 'sol-claim-output':
+            case 'sol-claim-output': {
                 const claimResult = this.simulationService.solStationService.claimStockpile();
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
-                    // Live Update
-                    this.uiManager.solStationControl.update(state);
+                    // Live Update: Pass FRESH state (stockpile just changed)
+                    this.uiManager.solStationControl.update(this.gameState.getState());
                 } else {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
                 }
                 break;
+            }
 
-            case 'sol-open-roster':
+            case 'sol-open-roster': {
                 const slotId = dataset.slotId;
                 this.uiManager.showOfficerRoster(slotId, state);
                 break;
+            }
 
-            case 'sol-assign-officer':
+            case 'sol-assign-officer': {
                 const targetSlot = parseInt(dataset.slotId);
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
-                const solState = state.solStation;
-                const slotIndex = solState.officers.findIndex(s => s.slotId === targetSlot);
+                
+                // [[FIXED]] CRITICAL: Modifying 'state' (copy) does nothing. 
+                // Must modify this.gameState (real) AND call setState() on the service.
+                const realSolStation = this.gameState.solStation;
+                const slotIndex = realSolStation.officers.findIndex(s => s.slotId === targetSlot);
                 
                 if (slotIndex !== -1) {
-                    solState.officers[slotIndex].assignedOfficerId = officerId;
-                    state.setState({});
+                    realSolStation.officers[slotIndex].assignedOfficerId = officerId;
+                    this.gameState.setState({}); // Commit change & Notify listeners
+                    
                     // Go back to the dashboard view (which triggers a swap)
-                    this.uiManager.showSolStationDashboard(state);
+                    // Pass fresh state to ensure the roster slot updates visually
+                    this.uiManager.showSolStationDashboard(this.gameState.getState());
                 }
                 break;
+            }
         }
 
         if (actionData) {
