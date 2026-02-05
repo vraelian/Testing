@@ -358,18 +358,19 @@ export class ActionClickHandler {
                 const newMode = dataset.mode;
                 if (newMode) {
                     this.simulationService.solStationService.setMode(newMode);
-                    // Refresh dashboard
-                    this.uiManager.showSolStationDashboard(state);
+                    // Live Update
+                    this.uiManager.solStationControl.update(state);
                 }
                 break;
 
             case 'sol-donate':
-                const tier = dataset.tier;
                 const commId = dataset.commodityId;
-                const donateResult = this.simulationService.solStationService.donateToCache(tier, commId, 100);
+                // Hardcoded 100 units for now per button click
+                const donateResult = this.simulationService.solStationService.donateToCache(commId, 100);
                 if (donateResult.success) {
                     this.uiManager.createFloatingText("+DONATED", e.clientX, e.clientY, "#34d399");
-                    this.uiManager.showSolStationDashboard(state);
+                    // Live Update
+                    this.uiManager.solStationControl.update(state);
                 } else {
                     this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
                 }
@@ -379,7 +380,8 @@ export class ActionClickHandler {
                 const claimResult = this.simulationService.solStationService.claimStockpile();
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
-                    this.uiManager.showSolStationDashboard(state);
+                    // Live Update
+                    this.uiManager.solStationControl.update(state);
                 } else {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
                 }
@@ -399,6 +401,7 @@ export class ActionClickHandler {
                 if (slotIndex !== -1) {
                     solState.officers[slotIndex].assignedOfficerId = officerId;
                     state.setState({});
+                    // Go back to the dashboard view (which triggers a swap)
                     this.uiManager.showSolStationDashboard(state);
                 }
                 break;

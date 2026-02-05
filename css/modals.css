@@ -683,7 +683,8 @@
 
 .cache-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* Phase 3 Fix: 2 Columns for better vertical scrolling */
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem; /* Compacted */
 }
 

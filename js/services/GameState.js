@@ -1,5 +1,5 @@
 // js/services/GameState.js
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { skewedRandom } from '../utils.js';
 
@@ -140,6 +140,32 @@ export class GameState {
      * @param {string} playerName - The name entered by the player.
      */
     startNewGame(playerName) {
+        // --- SOL STATION CACHE INITIALIZATION ---
+        // Dynamically create a cache for every commodity except Antimatter (Tier 7)
+        // Capacity scales inversely with Tier.
+        const solCaches = {};
+        const TIER_CAPACITY = {
+            1: 5000,
+            2: 4000,
+            3: 3000,
+            4: 2000,
+            5: 1000,
+            6: 500
+        };
+
+        DB.COMMODITIES.forEach(c => {
+            if (c.id !== COMMODITY_IDS.ANTIMATTER) {
+                // Default to small capacity if tier is undefined or unexpected
+                const cap = TIER_CAPACITY[c.tier] || 100;
+                
+                // Initialize with ~20% fill for flavor
+                solCaches[c.id] = { 
+                    current: Math.floor(cap * 0.2), 
+                    max: cap 
+                };
+            }
+        });
+
         const initialState = {
             day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
             subNavCollapsed: false,
@@ -208,14 +234,7 @@ export class GameState {
                 unlocked: false, // Default locked until acquired via endgame conditions
                 mode: "STABILITY", // Default safe mode
                 health: 100, // Aggregate health percentage
-                caches: {
-                    tier1: { current: 1000, max: 5000 },
-                    tier2: { current: 800, max: 4000 },
-                    tier3: { current: 600, max: 3000 },
-                    tier4: { current: 400, max: 2000 },
-                    tier5: { current: 200, max: 1000 },
-                    tier6: { current: 100, max: 500 }
-                },
+                caches: solCaches, // NOW DYNAMICALLY POPULATED
                 roster: [], // Unlocked officer IDs
                 officers: [
                     { slotId: 1, assignedOfficerId: null },

@@ -23,15 +23,176 @@ export class UISolStationControl {
      */
     showDashboard(gameState) {
         const station = gameState.solStation;
-        if (!station.unlocked) return; // Should not happen if button is gated
+        if (!station.unlocked) return; 
 
-        // Calculate projections
+        const contentHtml = this._buildDashboardHtml(gameState);
+
+        // CHECK: Is the modal already open?
+        const existingRoot = document.getElementById('sol-dashboard-root');
+        if (existingRoot) {
+            // SWAP CONTENT: Maintain the modal shell, just update the inner interface
+            // This handles the "Back" navigation from the Roster view
+            existingRoot.outerHTML = contentHtml;
+            // Re-bind listeners if necessary (ActionClickHandler delegates, so we are good)
+        } else {
+            // OPEN MODAL: First time launch
+            this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
+                width: '800px', 
+                dismissOutside: true
+            });
+        }
+    }
+
+    /**
+     * Surgically updates the values in the existing dashboard without re-rendering.
+     * Used for "Live" feedback on click (Donate, Mode Switch, etc).
+     * @param {object} gameState 
+     */
+    update(gameState) {
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return; // Modal not open
+
+        const station = gameState.solStation;
+        const output = this._calculateProjections(gameState);
+        const stockpile = station.stockpile;
+
+        // 1. Update Header Bars & Text
+        const integrityLabel = root.querySelector('.sol-health-bar-label span');
+        const integrityBar = root.querySelector('.sol-health-fill');
+        if (integrityLabel && integrityBar) {
+            integrityLabel.className = this._getHealthColorClass(station.health);
+            integrityLabel.textContent = `${station.health}%`;
+            integrityBar.style.width = `${station.health}%`;
+            integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
+        }
+
+        // 2. Update Readouts
+        const creditsVal = root.querySelector('[data-id="output-credits"]');
+        const amVal = root.querySelector('[data-id="output-am"]');
+        const entropyVal = root.querySelector('[data-id="output-entropy"]');
+        const stockCreds = root.querySelector('[data-id="stock-credits"]');
+        const stockAm = root.querySelector('[data-id="stock-am"]');
+        const claimBtn = root.querySelector('button[data-action="sol-claim-output"]');
+
+        if (creditsVal) creditsVal.textContent = formatCredits(output.credits);
+        if (amVal) amVal.textContent = `+${output.antimatter} AM`;
+        if (entropyVal) entropyVal.textContent = `${output.entropy.toFixed(2)}x`;
+        if (stockCreds) stockCreds.textContent = formatCredits(stockpile.credits);
+        if (stockAm) stockAm.textContent = `${stockpile.antimatter.toFixed(2)} AM`;
+        
+        if (claimBtn) {
+            const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
+            claimBtn.disabled = !hasStockpile;
+        }
+
+        // 3. Update Mode Buttons
+        root.querySelectorAll('.mode-btn').forEach(btn => {
+            const mode = btn.dataset.mode;
+            const isActive = mode === station.mode;
+            if (isActive) {
+                btn.classList.add('active');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('active');
+                btn.disabled = false;
+            }
+        });
+        const modeDesc = root.querySelector('.mode-description');
+        if (modeDesc) modeDesc.innerHTML = this._getModeDescription(station.mode);
+
+        // 4. Update Caches (Progress Bars & Values)
+        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
+        Object.entries(station.caches).forEach(([commId, cache]) => {
+            const card = root.querySelector(`.cache-card[data-comm-id="${commId}"]`);
+            if (card) {
+                const bar = card.querySelector('.cache-bar-fill');
+                const details = card.querySelector('.cache-details span');
+                const stock = card.querySelector('.player-stock');
+                const btn = card.querySelector('.btn-donate');
+
+                const fillPct = (cache.current / cache.max) * 100;
+                const playerStock = playerInventory[commId]?.quantity || 0;
+                const canDonate = playerStock > 0 && cache.current < cache.max;
+
+                if (bar) bar.style.width = `${fillPct}%`;
+                if (details) details.textContent = `${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}`;
+                if (stock) stock.textContent = `Cargo: ${playerStock}`;
+                if (btn) btn.disabled = !canDonate;
+            }
+        });
+    }
+
+    /**
+     * Renders the Officer Roster IN-PLACE (Sub-view).
+     * @param {number} slotId 
+     * @param {object} gameState 
+     */
+    showOfficerRoster(slotId, gameState) {
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return; // Should allow fallback, but strictly enforcing flow here
+
+        const roster = gameState.solStation.roster || [];
+        const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
+        const availableOfficers = roster.filter(id => !assignedIds.includes(id));
+
+        let listHtml = '';
+        if (availableOfficers.length === 0) {
+            listHtml = `<div class="text-center p-4 text-gray-400">No unassigned officers available.</div>`;
+        } else {
+            listHtml = availableOfficers.map(officerId => {
+                const officer = OFFICERS[officerId];
+                if (!officer) return '';
+                return `
+                    <div class="roster-card" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="${officerId}">
+                        <div class="officer-info">
+                            <div class="officer-name">${officer.name}</div>
+                            <div class="officer-role">${officer.role}</div>
+                        </div>
+                        <div class="officer-buffs">
+                            ${this._formatBuffs(officer.buffs)}
+                        </div>
+                        <button class="btn btn-sm btn-action">ASSIGN</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add "Unassign" option if occupied
+        const currentAssignment = gameState.solStation.officers.find(s => s.slotId === parseInt(slotId));
+        let footerHtml = '';
+        if (currentAssignment && currentAssignment.assignedOfficerId) {
+            footerHtml = `
+                <div class="roster-footer">
+                    <button class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
+                        UNASSIGN CURRENT OFFICER
+                    </button>
+                </div>
+            `;
+        }
+
+        // Replace Dashboard content with Roster content + Back Button
+        root.innerHTML = `
+            <div class="sol-subview-header flex justify-between items-center mb-4">
+                <button class="btn btn-sm btn-secondary" data-action="open-sol-dashboard">← BACK</button>
+                <div class="section-title mb-0">SELECT OFFICER (SLOT ${slotId})</div>
+                <div style="width: 60px;"></div> </div>
+            <div class="roster-list text-left">
+                ${listHtml}
+            </div>
+            ${footerHtml}
+        `;
+    }
+
+    // --- HTML GENERATORS ---
+
+    _buildDashboardHtml(gameState) {
+        const station = gameState.solStation;
         const output = this._calculateProjections(gameState);
         const stockpile = station.stockpile;
         const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
 
-        const contentHtml = `
-            <div class="sol-dashboard-container">
+        return `
+            <div id="sol-dashboard-root" class="sol-dashboard-container">
                 <div class="sol-header-panel">
                     <div class="sol-health-bar-container">
                         <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
@@ -42,13 +203,13 @@ export class UISolStationControl {
                     <div class="sol-readout-grid">
                         <div class="readout-item">
                             <span class="label">OUTPUT/DAY</span>
-                            <span class="value credits-text">${formatCredits(output.credits)}</span>
-                            <span class="value text-purple-400 text-sm">+${output.antimatter} AM</span>
+                            <span class="value credits-text" data-id="output-credits">${formatCredits(output.credits)}</span>
+                            <span class="value text-purple-400 text-sm" data-id="output-am">+${output.antimatter} AM</span>
                         </div>
                         <div class="readout-item">
                             <span class="label">STOCKPILE</span>
-                            <span class="value credits-text">${formatCredits(stockpile.credits)}</span>
-                            <span class="value text-purple-400 text-sm">${stockpile.antimatter.toFixed(2)} AM</span>
+                            <span class="value credits-text" data-id="stock-credits">${formatCredits(stockpile.credits)}</span>
+                            <span class="value text-purple-400 text-sm" data-id="stock-am">${stockpile.antimatter.toFixed(2)} AM</span>
                         </div>
                         <div class="readout-action">
                             <button class="btn btn-sm btn-pulse-gold w-full h-full" 
@@ -59,7 +220,7 @@ export class UISolStationControl {
                         </div>
                         <div class="readout-item">
                             <span class="label">ENTROPY</span>
-                            <span class="value text-red-400">${output.entropy.toFixed(2)}x</span>
+                            <span class="value text-red-400" data-id="output-entropy">${output.entropy.toFixed(2)}x</span>
                         </div>
                     </div>
                 </div>
@@ -91,67 +252,7 @@ export class UISolStationControl {
                 </div>
             </div>
         `;
-
-        this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
-            width: '800px', // Custom width for dashboard; constrained by CSS max-width
-            dismissOutside: true
-        });
     }
-
-    /**
-     * Renders the Officer Roster modal for selecting an officer.
-     * @param {number} slotId 
-     * @param {object} gameState 
-     */
-    showOfficerRoster(slotId, gameState) {
-        const roster = gameState.solStation.roster || [];
-        const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
-        
-        // Filter: Available officers only (in roster AND not currently assigned)
-        const availableOfficers = roster.filter(id => !assignedIds.includes(id));
-
-        let contentHtml = '';
-
-        if (availableOfficers.length === 0) {
-            contentHtml = `<div class="text-center p-4 text-gray-400">No unassigned officers available.</div>`;
-        } else {
-            const listHtml = availableOfficers.map(officerId => {
-                const officer = OFFICERS[officerId];
-                if (!officer) return '';
-                
-                return `
-                    <div class="roster-card" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="${officerId}">
-                        <div class="officer-info">
-                            <div class="officer-name">${officer.name}</div>
-                            <div class="officer-role">${officer.role}</div>
-                        </div>
-                        <div class="officer-buffs">
-                            ${this._formatBuffs(officer.buffs)}
-                        </div>
-                        <button class="btn btn-sm btn-action">ASSIGN</button>
-                    </div>
-                `;
-            }).join('');
-            
-            contentHtml = `<div class="roster-list">${listHtml}</div>`;
-        }
-
-        // Add "Clear Slot" option if slot is currently occupied
-        const currentAssignment = gameState.solStation.officers.find(s => s.slotId === parseInt(slotId));
-        if (currentAssignment && currentAssignment.assignedOfficerId) {
-            contentHtml += `
-                <div class="roster-footer">
-                    <button class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
-                        UNASSIGN CURRENT OFFICER
-                    </button>
-                </div>
-            `;
-        }
-
-        this.uiManager.queueModal('event-modal', 'Staff Roster', contentHtml);
-    }
-
-    // --- RENDER HELPERS ---
 
     _renderModeButton(modeId, currentMode) {
         const isActive = modeId === currentMode;
@@ -179,32 +280,26 @@ export class UISolStationControl {
         const caches = gameState.solStation.caches;
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
 
-        return Object.entries(caches).map(([tierKey, cache]) => {
-            const targetId = this._getCommodityForTier(tierKey);
-            const commodity = DB.COMMODITIES.find(c => c.id === targetId);
-            
-            // Fallback for safety if ID doesn't match
-            if (!commodity) {
-                return `<div class="cache-card"><div class="cache-name">Error: ${targetId}</div></div>`;
-            }
+        return Object.entries(caches).map(([commodityId, cache]) => {
+            const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+            if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
-            
-            // Player Stock
-            const playerStock = playerInventory[targetId]?.quantity || 0;
+            const playerStock = playerInventory[commodityId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
+            const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
             return `
-                <div class="cache-card">
+                <div class="cache-card" data-comm-id="${commodityId}">
                     <div class="cache-header">
                         <div class="cache-icon" style="background-image: url('${commodity.image || ''}')"></div>
                         <div class="cache-info">
                             <div class="cache-name">${commodity.name}</div>
-                            <div class="cache-tier">${tierKey.toUpperCase()}</div>
+                            <div class="cache-tier">TIER ${commodity.tier}</div>
                         </div>
                     </div>
                     <div class="cache-bar-track">
-                        <div class="cache-bar-fill" style="width: ${fillPct}%; background-color: var(--tier-${tierKey}-color, #fff);"></div>
+                        <div class="cache-bar-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
                     </div>
                     <div class="cache-details">
                         <span>${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</span>
@@ -213,8 +308,7 @@ export class UISolStationControl {
                         <span class="player-stock">Cargo: ${playerStock}</span>
                         <button class="btn-donate" 
                                 data-action="sol-donate" 
-                                data-tier="${tierKey}" 
-                                data-commodity-id="${targetId}"
+                                data-commodity-id="${commodityId}"
                                 ${!canDonate ? 'disabled' : ''}>
                             + DONATE
                         </button>
@@ -222,19 +316,6 @@ export class UISolStationControl {
                 </div>
             `;
         }).join('');
-    }
-
-    _getCommodityForTier(tierKey) {
-        // Mapped to actual constants in database.js
-        switch(tierKey) {
-            case 'tier1': return COMMODITY_IDS.WATER_ICE;
-            case 'tier2': return COMMODITY_IDS.HYDROPONICS;
-            case 'tier3': return COMMODITY_IDS.PROPELLANT;
-            case 'tier4': return COMMODITY_IDS.GRAPHENE_LATTICES;
-            case 'tier5': return COMMODITY_IDS.ATMO_PROCESSORS;
-            case 'tier6': return COMMODITY_IDS.SENTIENT_AI; 
-            default: return COMMODITY_IDS.WATER_ICE;
-        }
     }
 
     _renderOfficerSlots(gameState) {
@@ -266,16 +347,13 @@ export class UISolStationControl {
 
     _formatBuffs(buffs, mini = false) {
         const parts = [];
-        // Rounded values and shortened labels for UI compactness
         if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
         if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${Math.round(buffs.creditMult * 100)}% Credits</span>`);
         if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${Math.round(buffs.amMult * 100)}% AM</span>`);
-        
         return parts.join(mini ? '<br>' : ' • ');
     }
 
     _calculateProjections(gameState) {
-        // Replicating basic service logic for the UI view
         const station = gameState.solStation;
         const MODES = {
             STABILITY: { entropyMult: 1, amMult: 1, creditMult: 1 },
@@ -286,9 +364,8 @@ export class UISolStationControl {
         const BASE_AM_OUTPUT = 0.1;
 
         const modeConfig = MODES[station.mode];
-        
-        // Get Buffs
         let buffTotals = { entropy: 0, creditMult: 0, amMult: 0 };
+        
         station.officers.forEach(slot => {
             if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
                 const b = OFFICERS[slot.assignedOfficerId].buffs;
@@ -298,7 +375,6 @@ export class UISolStationControl {
             }
         });
 
-        // Calculate
         let entropy = Math.max(0.1, modeConfig.entropyMult + buffTotals.entropy);
         let efficiency = station.health / 100;
         if (efficiency < 0.5) efficiency = Math.pow(efficiency, 2);
