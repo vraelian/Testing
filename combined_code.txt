@@ -9640,6 +9640,63 @@ export const MISSION_REGISTRY = {
 };
 --- END OF FILE: ./js/data/missions/missionRegistry.js ---
 
+--- START OF FILE: ./js/data/officers.js ---
+/**
+ * @fileoverview Registry of all Sol Station Directorate officers.
+ * Officers are acquired via missions and provide passive buffs to the station when assigned.
+ */
+
+export const OFFICERS = {
+    // --- OPERATIONS (Entropy Reduction) ---
+    "off_ops_alpha": {
+        id: "off_ops_alpha",
+        name: "Cmdr. Harken",
+        role: "Operations",
+        description: "A veteran of the Jupiter run. Specialized in structural integrity and decay mitigation.",
+        buffs: { entropy: -0.05, creditMult: 0, amMult: 0 } // -5% Decay
+    },
+    "off_ops_beta": {
+        id: "off_ops_beta",
+        name: "Lt. Syla",
+        role: "Operations",
+        description: "Former station architect. Her maintenance algorithms are highly efficient.",
+        buffs: { entropy: -0.10, creditMult: 0, amMult: 0 } // -10% Decay
+    },
+
+    // --- LOGISTICS (Credit Yield) ---
+    "off_log_alpha": {
+        id: "off_log_alpha",
+        name: "Broker Krell",
+        role: "Logistics",
+        description: "A ruthless negotiator who squeezes every credit out of station commerce.",
+        buffs: { entropy: 0, creditMult: 0.15, amMult: 0 } // +15% Credits
+    },
+    "off_log_beta": {
+        id: "off_log_beta",
+        name: "Quartermaster Vance",
+        role: "Logistics",
+        description: "Optimizes supply chains to maximize commercial throughput.",
+        buffs: { entropy: 0, creditMult: 0.25, amMult: 0 } // +25% Credits
+    },
+
+    // --- ENGINEERING (Antimatter Yield) ---
+    "off_eng_alpha": {
+        id: "off_eng_alpha",
+        name: "Dr. Aris",
+        role: "Engineering",
+        description: "Particle physicist obsessed with maximizing collider efficiency.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0.10 } // +10% Antimatter
+    },
+    "off_eng_beta": {
+        id: "off_eng_beta",
+        name: "Chief O'Rin",
+        role: "Engineering",
+        description: "Pushing the reactor beyond safety limits is his specialty.",
+        buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30 } // +30% Antimatter, but +5% Decay (Trade-off)
+    }
+};
+--- END OF FILE: ./js/data/officers.js ---
+
 --- START OF FILE: ./js/data/age_events.js ---
 // js/data/age_events.js
 /**
@@ -17747,6 +17804,7 @@ export class GameState {
                     tier5: { current: 200, max: 1000 },
                     tier6: { current: 100, max: 500 }
                 },
+                roster: [], // Unlocked officer IDs
                 officers: [
                     { slotId: 1, assignedOfficerId: null },
                     { slotId: 2, assignedOfficerId: null },
@@ -17881,6 +17939,7 @@ export class GameState {
 --- START OF FILE: ./js/services/SolStationService.js ---
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
+import { OFFICERS } from '../data/officers.js'; // Phase 2: Import Registry
 
 /**
  * Constants defining the station's operational parameters.
@@ -17924,6 +17983,9 @@ export class SolStationService {
         if (!station.unlocked) return;
 
         const modeConfig = MODES[station.mode];
+        // Phase 2: Retrieve Buffs
+        const officerBuffs = this.getOfficerBuffs();
+
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
 
         // 1. Decay Caches
@@ -17961,9 +18023,10 @@ export class SolStationService {
                 efficiency = Math.pow(averageFill, 2); 
             }
 
-            // Calculate Outputs
-            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency);
-            const amOutput = BASE_AM_OUTPUT * modeConfig.amMult * efficiency;
+            // Calculate Outputs with Officer Buffs
+            // Buffs are added to the Mode Multiplier (e.g., 4x + 0.25x = 4.25x)
+            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency);
+            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency;
 
             // Add to Stockpile
             station.stockpile.credits += creditOutput;
@@ -17986,10 +18049,32 @@ export class SolStationService {
     calculateEntropy(baseModeMult) {
         let multiplier = baseModeMult;
         
-        // PHASE 2 TODO: Iterate through station.officers and subtract entropy mitigation buffs.
-        // Example: multiplier -= officer.entropyReduction;
+        // Phase 2: Apply Officer Mitigation
+        // Entropy buffs are negative values (e.g. -0.05), so we add them.
+        const buffs = this.getOfficerBuffs();
+        multiplier += buffs.entropy; 
 
         return Math.max(0.1, multiplier); // Entropy cannot drop below 0.1x
+    }
+
+    /**
+     * Helper to aggregate buffs from all assigned officers.
+     * @returns {object} { entropy, creditMult, amMult }
+     */
+    getOfficerBuffs() {
+        const station = this.gameState.solStation;
+        let total = { entropy: 0, creditMult: 0, amMult: 0 };
+        
+        station.officers.forEach(slot => {
+            if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
+                const b = OFFICERS[slot.assignedOfficerId].buffs;
+                total.entropy += b.entropy;
+                total.creditMult += b.creditMult;
+                total.amMult += b.amMult;
+            }
+        });
+
+        return total;
     }
 
     /**
@@ -18055,12 +18140,15 @@ export class SolStationService {
         const modeConfig = MODES[station.mode];
         const averageFill = station.health / 100;
         
+        // Phase 2: Include Buffs in projections
+        const buffs = this.getOfficerBuffs();
+
         let efficiency = averageFill;
         if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
 
         return {
-            credits: Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency),
-            antimatter: (BASE_AM_OUTPUT * modeConfig.amMult * efficiency).toFixed(2),
+            credits: Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + buffs.creditMult) * efficiency),
+            antimatter: (BASE_AM_OUTPUT * (modeConfig.amMult + buffs.amMult) * efficiency).toFixed(2),
             entropy: this.calculateEntropy(modeConfig.entropyMult)
         };
     }
@@ -20754,7 +20842,8 @@ import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { RandomEventService } from './RandomEventService.js'; 
-import { SolStationService } from './SolStationService.js'; // IMPORT ADDED
+import { SolStationService } from './SolStationService.js'; 
+import { OFFICERS } from '../data/officers.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -21436,6 +21525,23 @@ export class SimulationService {
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
+                }
+            }
+            // --- PHASE 2: OFFICER REWARD ---
+            if (reward.type === 'OFFICER') {
+                const officerId = reward.officerId;
+                const officer = OFFICERS[officerId];
+
+                // Add to Roster if not already present
+                if (officer && !this.gameState.solStation.roster.includes(officerId)) {
+                    this.gameState.solStation.roster.push(officerId);
+                    this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
+                    
+                    // Visual Feedback
+                    this.uiManager.queueModal('event-modal', 
+                        'New Officer Recruited', 
+                        `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
+                    );
                 }
             }
         });

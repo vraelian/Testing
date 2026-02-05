@@ -16,7 +16,8 @@ import { TravelService } from './world/TravelService.js';
 import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { RandomEventService } from './RandomEventService.js'; 
-import { SolStationService } from './SolStationService.js'; // IMPORT ADDED
+import { SolStationService } from './SolStationService.js'; 
+import { OFFICERS } from '../data/officers.js'; // IMPORT ADDED
 
 /**
  * @class SimulationService
@@ -698,6 +699,23 @@ export class SimulationService {
                     const license = DB.LICENSES[reward.licenseId];
                     this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                     this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
+                }
+            }
+            // --- PHASE 2: OFFICER REWARD ---
+            if (reward.type === 'OFFICER') {
+                const officerId = reward.officerId;
+                const officer = OFFICERS[officerId];
+
+                // Add to Roster if not already present
+                if (officer && !this.gameState.solStation.roster.includes(officerId)) {
+                    this.gameState.solStation.roster.push(officerId);
+                    this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
+                    
+                    // Visual Feedback
+                    this.uiManager.queueModal('event-modal', 
+                        'New Officer Recruited', 
+                        `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
+                    );
                 }
             }
         });

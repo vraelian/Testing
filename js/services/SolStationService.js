@@ -1,5 +1,6 @@
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
+import { OFFICERS } from '../data/officers.js'; // Phase 2: Import Registry
 
 /**
  * Constants defining the station's operational parameters.
@@ -43,6 +44,9 @@ export class SolStationService {
         if (!station.unlocked) return;
 
         const modeConfig = MODES[station.mode];
+        // Phase 2: Retrieve Buffs
+        const officerBuffs = this.getOfficerBuffs();
+
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
 
         // 1. Decay Caches
@@ -80,9 +84,10 @@ export class SolStationService {
                 efficiency = Math.pow(averageFill, 2); 
             }
 
-            // Calculate Outputs
-            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency);
-            const amOutput = BASE_AM_OUTPUT * modeConfig.amMult * efficiency;
+            // Calculate Outputs with Officer Buffs
+            // Buffs are added to the Mode Multiplier (e.g., 4x + 0.25x = 4.25x)
+            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency);
+            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency;
 
             // Add to Stockpile
             station.stockpile.credits += creditOutput;
@@ -105,10 +110,32 @@ export class SolStationService {
     calculateEntropy(baseModeMult) {
         let multiplier = baseModeMult;
         
-        // PHASE 2 TODO: Iterate through station.officers and subtract entropy mitigation buffs.
-        // Example: multiplier -= officer.entropyReduction;
+        // Phase 2: Apply Officer Mitigation
+        // Entropy buffs are negative values (e.g. -0.05), so we add them.
+        const buffs = this.getOfficerBuffs();
+        multiplier += buffs.entropy; 
 
         return Math.max(0.1, multiplier); // Entropy cannot drop below 0.1x
+    }
+
+    /**
+     * Helper to aggregate buffs from all assigned officers.
+     * @returns {object} { entropy, creditMult, amMult }
+     */
+    getOfficerBuffs() {
+        const station = this.gameState.solStation;
+        let total = { entropy: 0, creditMult: 0, amMult: 0 };
+        
+        station.officers.forEach(slot => {
+            if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
+                const b = OFFICERS[slot.assignedOfficerId].buffs;
+                total.entropy += b.entropy;
+                total.creditMult += b.creditMult;
+                total.amMult += b.amMult;
+            }
+        });
+
+        return total;
     }
 
     /**
@@ -174,12 +201,15 @@ export class SolStationService {
         const modeConfig = MODES[station.mode];
         const averageFill = station.health / 100;
         
+        // Phase 2: Include Buffs in projections
+        const buffs = this.getOfficerBuffs();
+
         let efficiency = averageFill;
         if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
 
         return {
-            credits: Math.floor(BASE_CREDIT_OUTPUT * modeConfig.creditMult * efficiency),
-            antimatter: (BASE_AM_OUTPUT * modeConfig.amMult * efficiency).toFixed(2),
+            credits: Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + buffs.creditMult) * efficiency),
+            antimatter: (BASE_AM_OUTPUT * (modeConfig.amMult + buffs.amMult) * efficiency).toFixed(2),
             entropy: this.calculateEntropy(modeConfig.entropyMult)
         };
     }

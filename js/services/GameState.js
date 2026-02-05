@@ -216,6 +216,7 @@ export class GameState {
                     tier5: { current: 200, max: 1000 },
                     tier6: { current: 100, max: 500 }
                 },
+                roster: [], // Unlocked officer IDs
                 officers: [
                     { slotId: 1, assignedOfficerId: null },
                     { slotId: 2, assignedOfficerId: null },
