@@ -138,7 +138,10 @@ export class UIModalEngine {
             }
         }
 
+        // FIX: Ensure we start from a clean state.
+        // If a zombie "modal-hiding" class exists, this removes it so the incoming fadeIn works.
         modal.classList.remove('hidden');
+        modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
     }
 
@@ -152,6 +155,13 @@ export class UIModalEngine {
             modal.classList.add('modal-hiding');
             
             modal.addEventListener('animationend', () => {
+                // FIX: Zombie Listener Guard Clause
+                // If the 'modal-hiding' class was removed (e.g. by a forced re-open),
+                // we abort this cleanup logic. This prevents the old listener from closing the new modal.
+                if (!modal.classList.contains('modal-hiding')) {
+                    return;
+                }
+
                 modal.classList.add('hidden');
                 modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
                 

@@ -297,7 +297,8 @@ export class UISolStationControl {
             if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
-            const playerStock = playerInventory[commId]?.quantity || 0;
+            // [FIX] Corrected variable name from 'commId' to 'commodityId'
+            const playerStock = playerInventory[commodityId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
             const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
