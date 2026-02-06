@@ -3,7 +3,7 @@ import { DB } from '../../data/database.js';
 import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
-import { AssetService } from '../AssetService.js'; // Added for Commodity Art
+import { AssetService } from '../AssetService.js'; 
 
 /**
  * @class UISolStationControl
@@ -116,7 +116,12 @@ export class UISolStationControl {
 
         // 4. Update Caches (NEW LIST LAYOUT)
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
-        Object.entries(station.caches).forEach(([commId, cache]) => {
+        
+        // Filter out excluded items (Folded Drives)
+        const cacheEntries = Object.entries(station.caches)
+            .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
+
+        cacheEntries.forEach(([commId, cache]) => {
             // Target the row by data-comm-id
             const row = root.querySelector(`.sol-cache-row[data-comm-id="${commId}"]`);
             if (row) {
@@ -134,7 +139,6 @@ export class UISolStationControl {
                 
                 if (btn) {
                     btn.disabled = !canDonate;
-                    // Optional: Update tooltip or opacity to reflect stock status if desired
                     btn.style.opacity = canDonate ? '1' : '0.5';
                 }
             }
@@ -295,6 +299,10 @@ export class UISolStationControl {
 
     /**
      * Renders the new "Collapsed Commodity Style" list.
+     * UPDATED: 
+     * - Filters out Folded Drives (Tier 7)
+     * - Restructured for 2-column layout (Name/Bar left, Button right)
+     * - Opaque Artwork with text outlines
      * @param {object} gameState 
      */
     _renderCacheList(gameState) {
@@ -302,46 +310,53 @@ export class UISolStationControl {
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const playerVisualSeed = gameState.player.visualSeed;
 
-        return Object.entries(caches).map(([commodityId, cache]) => {
-            const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
-            if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
+        return Object.entries(caches)
+            .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES) // Filter out Folded Drives
+            .map(([commodityId, cache]) => {
+                const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+                if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
 
-            const fillPct = (cache.current / cache.max) * 100;
-            const playerStock = playerInventory[commodityId]?.quantity || 0;
-            const canDonate = playerStock > 0 && cache.current < cache.max;
-            const tierColorVar = `--tier-${commodity.tier || 1}-color`;
+                const fillPct = (cache.current / cache.max) * 100;
+                const playerStock = playerInventory[commodityId]?.quantity || 0;
+                const canDonate = playerStock > 0 && cache.current < cache.max;
+                const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
-            // Get background art
-            const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
-            const bgStyle = bgImage ? `background-image: url('${bgImage}');` : '';
+                // Get background art
+                const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
+                // Force opacity: 1 and remove filters to reveal artwork
+                const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
+                
+                // High contrast text shadow (Outline effect)
+                const textShadow = '1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
-            return `
-                <div class="sol-cache-row" data-comm-id="${commodityId}">
-                    <div class="sol-cache-row-bg" style="${bgStyle}"></div>
-                    
-                    <div class="sol-cache-content">
-                        <div class="sol-row-name" title="${commodity.name}">${commodity.name}</div>
+                return `
+                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem;">
+                        <div class="sol-cache-row-bg" style="${bgStyle}"></div>
                         
-                        <div class="sol-row-track-container">
-                            <div class="sol-progress-track">
-                                <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
-                                <div class="sol-threshold-marker" style="left: 20%;"></div>
-                                <div class="sol-progress-text">${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</div>
+                        <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                            <div class="sol-row-name" title="${commodity.name}" style="text-align: left; font-size: 0.85rem; margin-bottom: 4px; text-shadow: ${textShadow};">${commodity.name}</div>
+                            
+                            <div class="sol-row-track-container" style="width: 100%;">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
+                                    <div class="sol-threshold-marker" style="left: 20%;"></div>
+                                    <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="sol-row-action">
+                        <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
                             <button class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
                                     ${!canDonate ? 'disabled' : ''}>
                                 DEPOSIT
                             </button>
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
     }
 
     _renderOfficerSlots(gameState) {

@@ -326,6 +326,7 @@ export class ActionClickHandler {
             case 'sol-set-mode': {
                 const newMode = dataset.mode;
                 if (newMode) {
+                    e.stopPropagation(); // FIX: Prevent event bubbling to map/background elements
                     this.simulationService.solStationService.setMode(newMode);
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 }
