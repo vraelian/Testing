@@ -46,9 +46,7 @@ export class ActionClickHandler {
                 const target = e.target; 
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
-                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    
                     await this.simulationService.buyShip(shipId, { target });
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
@@ -62,9 +60,7 @@ export class ActionClickHandler {
                 const target = e.target;
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
-                    // [[FIXED]] Trigger animation BEFORE state mutation destroys the DOM element
                     await this.uiManager.runShipTransactionAnimation(shipId);
-
                     await this.simulationService.sellShip(shipId, { target });
                 });
                 break;
@@ -77,7 +73,7 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION (PHASE 1) ---
+            // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
                 if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
@@ -90,10 +86,8 @@ export class ActionClickHandler {
                 }
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
-            // --- VIRTUAL WORKBENCH: PHASE 5 (UPGRADE INSTALLATION) ---
-            // Handles the purchase and installation flow for upgrades
+            // --- VIRTUAL WORKBENCH: UPGRADE INSTALLATION ---
             case 'install_upgrade': {
                 const { upgradeId } = dataset;
                 if (!upgradeId) return;
@@ -104,42 +98,29 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
-                // [[NEW]] Calculate total cost server-side logic (Hardware + Labor)
                 const hardwareCost = upgradeDef.value;
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
 
-                // 1. Basic Checks
                 if (player.credits < totalCost) {
                     this.uiManager.queueModal('event-modal', 'Insufficient Funds', 'You cannot afford this upgrade and installation fee.');
                     return;
                 }
 
-                // 2. Trigger Triple-Confirmation Flow
-                // Pass hardwareCost and laborFee separately for the UI breakdown
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
-                    
-                    // 3. Execution (Callback)
-                    
-                    // Deduct Credits
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
                         this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
-                    // Handle Replacement (Dismantle)
                     if (replaceIndex !== -1) {
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
-                    // Install New Upgrade
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
 
-                    // REQUEST D: Post-purchase Navigation Switch
-                    // Switch to Hangar, lock to 'hangar' (owned ships) view, and focus the active ship
                     this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     
-                    // Ensure the carousel index points to the active ship so the player sees the new pill immediately
                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                     
@@ -147,7 +128,6 @@ export class ActionClickHandler {
                 });
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
             
             case 'show_ship_lore': {
                 const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
@@ -246,37 +226,25 @@ export class ActionClickHandler {
             }
             case ACTION_IDS.TRAVEL: {
                 this.uiManager.hideModal('launch-modal');
-                // --- VIRTUAL WORKBENCH (Phase 6): Pass useFoldedDrive flag ---
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
                 this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
-                // --- END VIRTUAL WORKBENCH ---
                 actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: NAVIGATE TO POI (FAST TRACK) ---
-            // New case for fast-tracking from Map Modal to Navigation/Launch
             case 'navigate-to-poi': {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
-                // 1. Close the map modal
                 this.uiManager.hideMapDetailModal();
-
-                // 2. Switch to Navigation Screen
-                // Explicitly navigate to Ship -> Navigation
                 this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
 
-                // 3. Fast-track to Launch Modal
-                // Slight delay ensures the screen transition logic (if any) is processed
-                // before the modal logic triggers.
                 setTimeout(() => {
                     this.uiManager.showLaunchModal(locationId);
                 }, 100);
                 
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
@@ -349,7 +317,7 @@ export class ActionClickHandler {
                 break;
 
             // =================================================================
-            // --- SOL STATION (PHASE 3) ---
+            // --- SOL STATION ---
             // =================================================================
             case 'open-sol-dashboard':
                 this.uiManager.showSolStationDashboard(state);
@@ -359,22 +327,39 @@ export class ActionClickHandler {
                 const newMode = dataset.mode;
                 if (newMode) {
                     this.simulationService.solStationService.setMode(newMode);
-                    // Live Update: Pass FRESH state (mode just changed)
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 }
                 break;
             }
 
-            case 'sol-donate': {
+            // NEW: "Deposit All" Logic
+            case 'sol-donate-all': {
                 const commId = dataset.commodityId;
-                // Hardcoded 100 units for now per button click
-                const donateResult = this.simulationService.solStationService.donateToCache(commId, 100);
-                if (donateResult.success) {
-                    this.uiManager.createFloatingText("+DONATED", e.clientX, e.clientY, "#34d399");
-                    // Live Update: Pass FRESH state (inv/cache just changed)
-                    this.uiManager.solStationControl.update(this.gameState.getState());
+                const station = this.gameState.solStation;
+                const cache = station.caches[commId];
+                const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
+                
+                if (!cache || !inventory) return;
+
+                // 1. Calculate Player Max
+                const playerStock = inventory[commId]?.quantity || 0;
+                
+                // 2. Calculate Space Max
+                const spaceAvailable = cache.max - cache.current;
+
+                // 3. Determine actual donate amount (min of stock vs space)
+                const donateAmount = Math.min(playerStock, spaceAvailable);
+
+                if (donateAmount > 0) {
+                    const donateResult = this.simulationService.solStationService.donateToCache(commId, donateAmount);
+                    if (donateResult.success) {
+                        this.uiManager.createFloatingText(`+${donateAmount} DONATED`, e.clientX, e.clientY, "#34d399");
+                        this.uiManager.solStationControl.update(this.gameState.getState());
+                    } else {
+                        this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
+                    }
                 } else {
-                    this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
+                     this.uiManager.createFloatingText("No cargo or cache full", e.clientX, e.clientY, "#ef4444");
                 }
                 break;
             }
@@ -383,7 +368,6 @@ export class ActionClickHandler {
                 const claimResult = this.simulationService.solStationService.claimStockpile();
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
-                    // Live Update: Pass FRESH state (stockpile just changed)
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 } else {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
@@ -400,13 +384,9 @@ export class ActionClickHandler {
             case 'sol-assign-officer': {
                 const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
-                
-                // [[MODIFIED]] Delegated to Service (Dumb Handler)
                 const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);
                 
                 if (success) {
-                    // Refresh UI
-                    // Note: We use this.gameState.getState() to pass a fresh snapshot
                     this.uiManager.showSolStationDashboard(this.gameState.getState());
                 }
                 break;

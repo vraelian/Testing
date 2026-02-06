@@ -336,3 +336,161 @@
     color: #000 !important; /* Force black text on hover */
     box-shadow: 0 0 10px var(--item-glow);
 }
+
+/* ========================================= */
+/* --- SOL STATION: MAINTENANCE CACHE OVERHAUL --- */
+/* ========================================= */
+
+.sol-cache-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.sol-cache-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 64px; /* Fixed height for consistency */
+    border: 1px solid #334155;
+    background: #0f172a;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: border-color 0.2s;
+}
+
+.sol-cache-row:hover {
+    border-color: #64748b;
+}
+
+/* Background Art Layer */
+.sol-cache-row-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.25; /* Subtle visibility */
+    filter: grayscale(100%); /* Desaturated for professional look */
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Content Container (On top of bg) */
+.sol-cache-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    padding: 0 1rem;
+    gap: 1rem;
+}
+
+/* Item Name */
+.sol-row-name {
+    width: 30%;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px #000;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+}
+
+/* Progress Track Container */
+.sol-row-track-container {
+    flex-grow: 1; /* Takes up remaining middle space */
+    position: relative;
+    height: 24px;
+}
+
+.sol-progress-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #475569;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sol-progress-fill {
+    height: 100%;
+    background-color: #fff; /* Overridden by inline style var() */
+    width: 0%;
+    transition: width 0.4s ease-out;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* The Low Threshold Marker (Red Line at 20%) */
+.sol-threshold-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #ef4444; /* Red-500 */
+    box-shadow: 0 0 4px #ef4444;
+    z-index: 5;
+    opacity: 0.9;
+}
+
+/* Overlay Text on Bar */
+.sol-progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: #fff;
+    text-shadow: 0 1px 2px #000, 0 0 4px #000;
+    font-weight: 700;
+    z-index: 6;
+}
+
+/* Action Button Area */
+.sol-row-action {
+    width: 15%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Deposit Button */
+.btn-deposit-all {
+    background: linear-gradient(to bottom, #3b82f6, #2563eb);
+    border: 1px solid #60a5fa;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 0.25rem 0.75rem;
+    border-radius: 3px;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-deposit-all:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-deposit-all:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn-deposit-all:disabled {
+    background: #475569;
+    border-color: #64748b;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.5;
+}

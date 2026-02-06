@@ -3,11 +3,12 @@ import { DB } from '../../data/database.js';
 import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
+import { AssetService } from '../AssetService.js'; // Added for Commodity Art
 
 /**
  * @class UISolStationControl
  * @description Domain Controller responsible for the Sol Station Dashboard,
- * managing the Mode Lever, Cache Grid, and Officer Directorate UI.
+ * managing the Mode Lever, Cache List, and Officer Directorate UI.
  */
 export class UISolStationControl {
     /**
@@ -29,7 +30,7 @@ export class UISolStationControl {
 
         const modalContainer = document.getElementById('event-modal');
         
-        // FIX: Detect and resolve "Zombie" modal state (stuck in closing animation)
+        // FIX: Detect and resolve "Zombie" modal state
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
             modalContainer.classList.remove('modal-hiding');
@@ -37,43 +38,33 @@ export class UISolStationControl {
         }
 
         const existingRoot = document.getElementById('sol-dashboard-root');
-        // Check visibility after potential cleanup. If hidden, we must Queue, not Swap.
         const isModalVisible = modalContainer && !modalContainer.classList.contains('hidden');
 
         if (existingRoot && isModalVisible) {
-            // SWAP CONTENT: Maintain the modal shell, just update the inner interface
-            // This handles the "Back" navigation from the Roster view or Live Updates
             existingRoot.outerHTML = contentHtml;
-
-            // RESET FOOTER BUTTON: If we were in Roster mode, the footer button was hijacked.
-            // We must restore it to "Dismiss" state.
-            // [FIX] Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
                 footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
             }
-
         } else {
-            // OPEN MODAL: First time launch or Re-launch after close
             this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
-                specialClass: 'sol-station-modal', // Enforce 80% width / 90vh
+                specialClass: 'sol-station-modal',
                 buttonText: 'Dismiss',
-                buttonClass: 'btn-dismiss-sm' // Smaller, shorter button
+                buttonClass: 'btn-dismiss-sm'
             });
         }
     }
 
     /**
      * Surgically updates the values in the existing dashboard without re-rendering.
-     * Used for "Live" feedback on click (Donate, Mode Switch, etc).
      * @param {object} gameState 
      */
     update(gameState) {
         const root = document.getElementById('sol-dashboard-root');
-        if (!root) return; // Modal not open
+        if (!root) return; 
 
         const station = gameState.solStation;
         const output = this._calculateProjections(gameState);
@@ -123,33 +114,33 @@ export class UISolStationControl {
         const modeDesc = root.querySelector('.mode-description');
         if (modeDesc) modeDesc.innerHTML = this._getModeDescription(station.mode);
 
-        // 4. Update Caches (Progress Bars & Values)
+        // 4. Update Caches (NEW LIST LAYOUT)
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         Object.entries(station.caches).forEach(([commId, cache]) => {
-            const card = root.querySelector(`.cache-card[data-comm-id="${commId}"]`);
-            if (card) {
-                const bar = card.querySelector('.cache-bar-fill');
-                const details = card.querySelector('.cache-details span');
-                const stock = card.querySelector('.player-stock');
-                const btn = card.querySelector('.btn-donate');
+            // Target the row by data-comm-id
+            const row = root.querySelector(`.sol-cache-row[data-comm-id="${commId}"]`);
+            if (row) {
+                const bar = row.querySelector('.sol-progress-fill');
+                const text = row.querySelector('.sol-progress-text');
+                const btn = row.querySelector('.btn-deposit-all');
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commId]?.quantity || 0;
+                // Enable deposit if we have stock AND cache has space
                 const canDonate = playerStock > 0 && cache.current < cache.max;
 
                 if (bar) bar.style.width = `${fillPct}%`;
-                if (details) details.textContent = `${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}`;
-                if (stock) stock.textContent = `Cargo: ${playerStock}`;
-                if (btn) btn.disabled = !canDonate;
+                if (text) text.textContent = `${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}`;
+                
+                if (btn) {
+                    btn.disabled = !canDonate;
+                    // Optional: Update tooltip or opacity to reflect stock status if desired
+                    btn.style.opacity = canDonate ? '1' : '0.5';
+                }
             }
         });
     }
 
-    /**
-     * Renders the Officer Roster IN-PLACE (Sub-view).
-     * @param {number} slotId 
-     * @param {object} gameState 
-     */
     showOfficerRoster(slotId, gameState) {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
@@ -180,7 +171,6 @@ export class UISolStationControl {
             }).join('');
         }
 
-        // Add "Unassign" option if occupied
         const currentAssignment = gameState.solStation.officers.find(s => s.slotId === parseInt(slotId));
         let footerHtml = '';
         if (currentAssignment && currentAssignment.assignedOfficerId) {
@@ -193,7 +183,6 @@ export class UISolStationControl {
             `;
         }
 
-        // Replace Dashboard content with Roster content
         root.innerHTML = `
             <div class="sol-subview-header flex justify-center items-center mb-4">
                 <div class="section-title mb-0">SELECT OFFICER (SLOT ${slotId})</div>
@@ -204,12 +193,9 @@ export class UISolStationControl {
             ${footerHtml}
         `;
 
-        // [FIX] Hijack the footer button to serve as the Back button
-        // Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr;'; // Arrow symbol
-            // Override the close handler to instead go back to dashboard
+            footerBtn.innerHTML = '&larr;'; 
             footerBtn.onclick = () => this.showDashboard(gameState);
         }
     }
@@ -270,8 +256,8 @@ export class UISolStationControl {
 
                 <div class="sol-cache-section">
                     <div class="section-title">MAINTENANCE CACHES</div>
-                    <div class="cache-grid">
-                        ${this._renderCacheGrid(gameState)}
+                    <div class="sol-cache-list">
+                        ${this._renderCacheList(gameState)}
                     </div>
                 </div>
 
@@ -307,42 +293,51 @@ export class UISolStationControl {
         }
     }
 
-    _renderCacheGrid(gameState) {
+    /**
+     * Renders the new "Collapsed Commodity Style" list.
+     * @param {object} gameState 
+     */
+    _renderCacheList(gameState) {
         const caches = gameState.solStation.caches;
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
+        const playerVisualSeed = gameState.player.visualSeed;
 
         return Object.entries(caches).map(([commodityId, cache]) => {
             const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
-            if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
+            if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
             const playerStock = playerInventory[commodityId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
             const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
+            // Get background art
+            const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
+            const bgStyle = bgImage ? `background-image: url('${bgImage}');` : '';
+
             return `
-                <div class="cache-card" data-comm-id="${commodityId}">
-                    <div class="cache-header">
-                        <div class="cache-icon" style="background-image: url('${commodity.image || ''}')"></div>
-                        <div class="cache-info">
-                            <div class="cache-name">${commodity.name}</div>
-                            <div class="cache-tier">TIER ${commodity.tier}</div>
+                <div class="sol-cache-row" data-comm-id="${commodityId}">
+                    <div class="sol-cache-row-bg" style="${bgStyle}"></div>
+                    
+                    <div class="sol-cache-content">
+                        <div class="sol-row-name" title="${commodity.name}">${commodity.name}</div>
+                        
+                        <div class="sol-row-track-container">
+                            <div class="sol-progress-track">
+                                <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
+                                <div class="sol-threshold-marker" style="left: 20%;"></div>
+                                <div class="sol-progress-text">${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="cache-bar-track">
-                        <div class="cache-bar-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
-                    </div>
-                    <div class="cache-details">
-                        <span>${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</span>
-                    </div>
-                    <div class="cache-actions">
-                        <span class="player-stock">Cargo: ${playerStock}</span>
-                        <button class="btn-donate" 
-                                data-action="sol-donate" 
-                                data-commodity-id="${commodityId}"
-                                ${!canDonate ? 'disabled' : ''}>
-                            + DONATE
-                        </button>
+
+                        <div class="sol-row-action">
+                            <button class="btn-deposit-all" 
+                                    data-action="sol-donate-all" 
+                                    data-commodity-id="${commodityId}"
+                                    ${!canDonate ? 'disabled' : ''}>
+                                DEPOSIT
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
