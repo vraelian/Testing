@@ -27,15 +27,27 @@ export class UISolStationControl {
 
         const contentHtml = this._buildDashboardHtml(gameState);
 
-        // CHECK: Is the modal already open?
+        const modalContainer = document.getElementById('event-modal');
+        
+        // FIX: Detect and resolve "Zombie" modal state (stuck in closing animation)
+        // If the modal has 'modal-hiding', it implies it's closing but hasn't finished (animationend missed).
+        // We force it to 'hidden' so the UIModalEngine queue logic sees it as available.
+        if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
+            modalContainer.classList.add('hidden');
+            modalContainer.classList.remove('modal-hiding');
+            modalContainer.classList.remove('modal-visible');
+        }
+
         const existingRoot = document.getElementById('sol-dashboard-root');
-        if (existingRoot) {
+        // Check visibility after potential cleanup. If hidden, we must Queue, not Swap.
+        const isModalVisible = modalContainer && !modalContainer.classList.contains('hidden');
+
+        if (existingRoot && isModalVisible) {
             // SWAP CONTENT: Maintain the modal shell, just update the inner interface
-            // This handles the "Back" navigation from the Roster view
+            // This handles the "Back" navigation from the Roster view or Live Updates
             existingRoot.outerHTML = contentHtml;
-            // Re-bind listeners if necessary (ActionClickHandler delegates, so we are good)
         } else {
-            // OPEN MODAL: First time launch
+            // OPEN MODAL: First time launch or Re-launch after close
             this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true
@@ -285,7 +297,7 @@ export class UISolStationControl {
             if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
-            const playerStock = playerInventory[commodityId]?.quantity || 0;
+            const playerStock = playerInventory[commId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
             const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
