@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.96</title>
+    <title>Orbital Trading 34.98</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.96</p>
+            <p>Version 34.98</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -16553,7 +16553,7 @@ export class UISolStationControl {
                         <div class="officer-buffs">
                             ${this._formatBuffs(officer.buffs)}
                         </div>
-                        <button class="btn btn-sm btn-action">ASSIGN</button>
+                        <button type="button" class="btn btn-sm btn-action">ASSIGN</button>
                     </div>
                 `;
             }).join('');
@@ -16564,7 +16564,7 @@ export class UISolStationControl {
         if (currentAssignment && currentAssignment.assignedOfficerId) {
             footerHtml = `
                 <div class="roster-footer">
-                    <button class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
+                    <button type="button" class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
                         UNASSIGN CURRENT OFFICER
                     </button>
                 </div>
@@ -16617,7 +16617,7 @@ export class UISolStationControl {
                             <span class="value text-purple-400 text-sm" data-id="stock-am">${stockpile.antimatter.toFixed(2)} AM</span>
                         </div>
                         <div class="readout-action">
-                            <button class="btn btn-sm btn-pulse-gold w-full h-full" 
+                            <button type="button" class="btn btn-sm btn-pulse-gold w-full h-full" 
                                     data-action="sol-claim-output" 
                                     ${!hasStockpile ? 'disabled' : ''}>
                                 CLAIM
@@ -16663,7 +16663,7 @@ export class UISolStationControl {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
         return `
-            <button class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
+            <button type="button" class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive ? 'disabled' : ''}>
@@ -16732,7 +16732,7 @@ export class UISolStationControl {
                         </div>
 
                         <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
-                            <button class="btn-deposit-all" 
+                            <button type="button" class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
                                     style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
@@ -29032,6 +29032,7 @@ export class ActionClickHandler {
                 break;
 
             case 'sol-set-mode': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const newMode = dataset.mode;
                 if (newMode) {
                     e.stopPropagation(); // FIX: Prevent event bubbling to map/background elements
@@ -29043,6 +29044,7 @@ export class ActionClickHandler {
 
             // NEW: "Deposit All" Logic
             case 'sol-donate-all': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const commId = dataset.commodityId;
                 const station = this.gameState.solStation;
                 const cache = station.caches[commId];
@@ -29074,6 +29076,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-claim-output': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const claimResult = this.simulationService.solStationService.claimStockpile();
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
@@ -29091,6 +29094,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-assign-officer': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
                 const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);
@@ -30371,6 +30375,11 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.98] - 2026-2-6
+-  sol interface polish
+-  fixed mars travel operation button bug
+-  updated meta files
+
 # [34.96] - 2026-2-5
 -  implemented Sol Station Interface v1
 -  added Sol Station Testing debugging
@@ -31245,6 +31254,10 @@ If OutcomeRoll < 70, Success triggers.
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
+{
+type: file_update,
+fileName: meta/UI_LIBRARY.md,
+fullContent:
 Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 TypographyThe game uses a dual-font system to establish its "Industrial Sci-Fi" aesthetic.Primary Font: Oxanium (Variable Weight)Usage: All UI text, data readouts, body copy, and buttons.Weights: Light (300) for body, Medium (500) for labels, Bold (700) for headers.Accent Font: Zorque (Regular)Usage: Logos, Major Section Headers, "Hero" numbers (e.g., Credits balance).Characteristics: Blocky, retro-futuristic.1.2 Color Palette (CSS Variables)Do not hardcode hex values. Use these semantic variables defined in global.css.VariableRole--bg-colorApp background (Deep Space Black).--panel-bgComponent background (Semi-transparent dark grey).--color-text-primaryMain text (White/Off-White).--color-text-secondaryLabels and dim text (Light Grey).--color-accentPrimary action color (Cyan/Blue).--color-successPositive values/Profits (Green).--color-dangerNegative values/Costs/Alerts (Red).--color-warningCautions (Yellow/Orange).--color-borderStandard border color for cards/panels.1.3 Z-Index RegistryStrict layering ensures modals and overlays behave correctly.LayerZ-IndexComponentsBase0Background, Canvas Starfield.Content10Main Screen Containers, Carousel.Chrome50Top Bar, Bottom Nav, Sticky HUD.Modal Mask900The generic modal-overlay background.Modal1000Active Modal Dialogs.Toast2000Tutorial Popups, Notifications.Cursor9999Custom hardware cursors (if applicable).2. Component Blueprints2.1 Standard Card (.card)Used for Commodities, Ships, and Missions.HTML<div class="card" data-id="{id}">
     <div class="card-header">
         <span class="card-title">{Title}</span>
@@ -31262,7 +31275,9 @@ Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 Typo
         <button class="btn btn-secondary" data-action="...">Action</button>
     </div>
 </div>
-2.2 Action Button (.btn)Interactive elements must always use the .btn class..btn-primary: Main call to action (Solid Accent Color)..btn-secondary: Alternative actions (Outline or Dark Grey)..btn-danger: Destructive actions (Red)..btn-disabled: Visual state for inactive buttons (Opacity 0.5, pointer-events: none).2.3 Attribute Pill (.attribute-pill)Used in Hangar/Shipyard to show stats. Now explicitly a <button> for better mobile touch handling (ADR-011).HTML<button class="attribute-pill" data-type="{type}" data-tooltip="{text}">
+2.2 Action Button (.btn)
+Interactive elements must always use the `.btn` class and **MUST** include `type="button"` to prevent page reloads.
+2.3 Attribute Pill (.attribute-pill)Used in Hangar/Shipyard to show stats. Now explicitly a <button> for better mobile touch handling (ADR-011).HTML<button class="attribute-pill" data-type="{type}" data-tooltip="{text}">
     <span class="label">{Label}</span>
     <span class="value">{Value}</span>
 </button>
@@ -31279,9 +31294,14 @@ Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 Typo
     </div>
 </div>
 3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
+}
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
+{
+type: file_update,
+fileName: meta/CODING_STANDARDS.md,
+fullContent:
 Orbital Trading: Coding Standards & Protocols
 1. AI Implementation Protocols
 These rules govern how the AI Assistant (Gemini) must interact with the codebase.
@@ -31369,6 +31389,16 @@ Correction: UI interactions must call a Service method (via ActionClickHandler o
 Maintenance: Avoid hardcoded numbers in logic files (e.g., if (price > 1000)).
 
 Correction: Define these as constants in js/data/constants.js and import them.
+
+3.4 Implicit Button Types
+**Stability:** Never define a `<button>` without a `type` attribute.
+**Risk:** Browsers default to `type="submit"`, causing page reloads that dump game state (The "Mars Revert" Bug).
+**Correction:** Always write `<button type="button" ...>`.
+
+3.5 Unhandled Default Events
+**Stability:** When handling a click for a game action, always assume the browser might have a default behavior attached.
+**Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
+}
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
@@ -32948,6 +32978,10 @@ officers.js: Defines the registry of Sol Station Directorate officers and their 
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
+{
+type: file_update,
+fileName: meta/ARCHITECTURAL_DECISIONS.md,
+fullContent:
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -33477,25 +33511,6 @@ Pro: Clean separation of state (persisted) and view (ephemeral).
 
 Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
 
-Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller. 
-
-ADR-024: Tutorial Architecture (Logic-View Separation)
-Status: Accepted (2026-01-26)
-
-Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
-
-Decision: Split the tutorial responsibilities into two distinct layers:
-
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
-
-UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
-
-Consequences:
-
-Pro: Clean separation of state (persisted) and view (ephemeral).
-
-Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
-
 Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
 
 ADR-025: Mission Data Registry (Facade Pattern)
@@ -33518,6 +33533,24 @@ Pro: Facilitates "plug-and-play" content expansion; new mission packs can be add
 Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
 
 Pro: Prepares the architecture for automated content generation and ingestion.
+
+ADR-026: Defensive Button Interaction Strategy (The "Mars Revert" Protocol)
+Status: Accepted (2026-02-06)
+
+Context: During the Sol Station UI implementation, clicking operational mode buttons caused the game to inexplicably reload or revert state (manifesting as a jump to "Mars", the default/last save location). This was caused by the browser interpreting untyped `<button>` elements as `type="submit"`, triggering a form submission or default page action that bypassed the Single Page Application (SPA) routing.
+
+Decision: A strict "Safety First" protocol was adopted for all UI interactions:
+1. **Explicit Type Declaration:** All `<button>` elements used for game logic MUST explicitly state `type="button"`.
+2. **Event default Prevention:** All delegated action handlers in `ActionClickHandler` (and similar) MUST call `e.preventDefault()` immediately, even if `type="button"` is present, to act as a double-layer fail-safe against browser quirks.
+
+Consequences:
+
+Pro: Permanently eliminates "phantom" page reloads and state reverts.
+
+Pro: Decouples game logic triggers from standard HTML form behaviors.
+
+Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
+}
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---

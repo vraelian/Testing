@@ -1,3 +1,7 @@
+{
+type: file_update,
+fileName: meta/CODING_STANDARDS.md,
+fullContent:
 Orbital Trading: Coding Standards & Protocols
 1. AI Implementation Protocols
 These rules govern how the AI Assistant (Gemini) must interact with the codebase.
@@ -85,3 +89,13 @@ Correction: UI interactions must call a Service method (via ActionClickHandler o
 Maintenance: Avoid hardcoded numbers in logic files (e.g., if (price > 1000)).
 
 Correction: Define these as constants in js/data/constants.js and import them.
+
+3.4 Implicit Button Types
+**Stability:** Never define a `<button>` without a `type` attribute.
+**Risk:** Browsers default to `type="submit"`, causing page reloads that dump game state (The "Mars Revert" Bug).
+**Correction:** Always write `<button type="button" ...>`.
+
+3.5 Unhandled Default Events
+**Stability:** When handling a click for a game action, always assume the browser might have a default behavior attached.
+**Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
+}

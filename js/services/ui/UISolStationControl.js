@@ -169,7 +169,7 @@ export class UISolStationControl {
                         <div class="officer-buffs">
                             ${this._formatBuffs(officer.buffs)}
                         </div>
-                        <button class="btn btn-sm btn-action">ASSIGN</button>
+                        <button type="button" class="btn btn-sm btn-action">ASSIGN</button>
                     </div>
                 `;
             }).join('');
@@ -180,7 +180,7 @@ export class UISolStationControl {
         if (currentAssignment && currentAssignment.assignedOfficerId) {
             footerHtml = `
                 <div class="roster-footer">
-                    <button class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
+                    <button type="button" class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
                         UNASSIGN CURRENT OFFICER
                     </button>
                 </div>
@@ -233,7 +233,7 @@ export class UISolStationControl {
                             <span class="value text-purple-400 text-sm" data-id="stock-am">${stockpile.antimatter.toFixed(2)} AM</span>
                         </div>
                         <div class="readout-action">
-                            <button class="btn btn-sm btn-pulse-gold w-full h-full" 
+                            <button type="button" class="btn btn-sm btn-pulse-gold w-full h-full" 
                                     data-action="sol-claim-output" 
                                     ${!hasStockpile ? 'disabled' : ''}>
                                 CLAIM
@@ -279,7 +279,7 @@ export class UISolStationControl {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
         return `
-            <button class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
+            <button type="button" class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive ? 'disabled' : ''}>
@@ -348,7 +348,7 @@ export class UISolStationControl {
                         </div>
 
                         <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
-                            <button class="btn-deposit-all" 
+                            <button type="button" class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
                                     style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"

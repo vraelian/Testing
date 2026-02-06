@@ -324,6 +324,7 @@ export class ActionClickHandler {
                 break;
 
             case 'sol-set-mode': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const newMode = dataset.mode;
                 if (newMode) {
                     e.stopPropagation(); // FIX: Prevent event bubbling to map/background elements
@@ -335,6 +336,7 @@ export class ActionClickHandler {
 
             // NEW: "Deposit All" Logic
             case 'sol-donate-all': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const commId = dataset.commodityId;
                 const station = this.gameState.solStation;
                 const cache = station.caches[commId];
@@ -366,6 +368,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-claim-output': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const claimResult = this.simulationService.solStationService.claimStockpile();
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
@@ -383,6 +386,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-assign-officer': {
+                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
                 const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
                 const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);

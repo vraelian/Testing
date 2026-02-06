@@ -1,3 +1,7 @@
+{
+type: file_update,
+fileName: meta/ARCHITECTURAL_DECISIONS.md,
+fullContent:
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -527,25 +531,6 @@ Pro: Clean separation of state (persisted) and view (ephemeral).
 
 Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
 
-Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller. 
-
-ADR-024: Tutorial Architecture (Logic-View Separation)
-Status: Accepted (2026-01-26)
-
-Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
-
-Decision: Split the tutorial responsibilities into two distinct layers:
-
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
-
-UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
-
-Consequences:
-
-Pro: Clean separation of state (persisted) and view (ephemeral).
-
-Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
-
 Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
 
 ADR-025: Mission Data Registry (Facade Pattern)
@@ -568,3 +553,21 @@ Pro: Facilitates "plug-and-play" content expansion; new mission packs can be add
 Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
 
 Pro: Prepares the architecture for automated content generation and ingestion.
+
+ADR-026: Defensive Button Interaction Strategy (The "Mars Revert" Protocol)
+Status: Accepted (2026-02-06)
+
+Context: During the Sol Station UI implementation, clicking operational mode buttons caused the game to inexplicably reload or revert state (manifesting as a jump to "Mars", the default/last save location). This was caused by the browser interpreting untyped `<button>` elements as `type="submit"`, triggering a form submission or default page action that bypassed the Single Page Application (SPA) routing.
+
+Decision: A strict "Safety First" protocol was adopted for all UI interactions:
+1. **Explicit Type Declaration:** All `<button>` elements used for game logic MUST explicitly state `type="button"`.
+2. **Event default Prevention:** All delegated action handlers in `ActionClickHandler` (and similar) MUST call `e.preventDefault()` immediately, even if `type="button"` is present, to act as a double-layer fail-safe against browser quirks.
+
+Consequences:
+
+Pro: Permanently eliminates "phantom" page reloads and state reverts.
+
+Pro: Decouples game logic triggers from standard HTML form behaviors.
+
+Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
+}
