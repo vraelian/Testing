@@ -2665,43 +2665,68 @@ card.
 /* --- SOL STATION DASHBOARD (PHASE 3) --- */
 /* ========================================================================= */
 
+/* Special Override for Sol Station Modal Dimensions */
+.sol-station-modal .modal-content {
+    width: 80% !important;
+    max-width: 1200px !important;
+    max-height: 90vh; /* Prevent clipping on small screens */
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+/* [FIX] Target the Description Wrapper injected by UIModalEngine */
+/* This element must grow and scroll to prevent the modal from exploding vertically */
+.sol-station-modal #event-description {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    margin-bottom: 0.5rem;
+    padding-right: 0.25rem; /* Space for scrollbar */
+}
+
 .sol-dashboard-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* Reduced from 1.5rem for compactness */
+    gap: 0.75rem; /* [FIX] Tighter gap */
     font-family: 'Orbitron', sans-serif;
     color: #fff;
-    /* Phase 1 Fixes: Clipping & Scroll */
-    max-height: calc(var(--app-height, 100vh) - 140px);
-    overflow-y: auto;
-    padding-right: 0.25rem;
-    -webkit-overflow-scrolling: touch;
+    /* Removed flex scroll here, letting parent (#event-description) handle it */
 }
 
 /* Scrollbar Styling for Webkit */
-.sol-dashboard-container::-webkit-scrollbar {
+.sol-station-modal #event-description::-webkit-scrollbar {
     width: 6px;
 }
-.sol-dashboard-container::-webkit-scrollbar-track {
+.sol-station-modal #event-description::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 3px;
 }
-.sol-dashboard-container::-webkit-scrollbar-thumb {
+.sol-station-modal #event-description::-webkit-scrollbar-thumb {
     background-color: #4b5563;
     border-radius: 3px;
+}
+
+/* Compact Dismiss Button */
+.btn-dismiss-sm {
+    font-size: 0.85rem;
+    padding: 0.35rem 1.5rem;
+    line-height: 1.2;
+    height: auto;
+    min-height: 0;
 }
 
 /* Header & Status */
 .sol-header-panel {
     background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem; /* Compacted */
+    padding: 0.75rem; 
     border-radius: 8px;
     border: 1px solid #4b5563;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0; 
 }
 
 .sol-health-bar-container {
-    margin-bottom: 0.75rem; /* Compacted */
+    margin-bottom: 0.75rem; 
 }
 
 .sol-health-bar-label {
@@ -2751,7 +2776,7 @@ card.
 /* Mode Control */
 .sol-mode-control {
     background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem; /* Compacted */
+    padding: 0.75rem; 
     border-radius: 8px;
     border: 1px solid #4b5563;
     text-align: center;
@@ -2761,16 +2786,16 @@ card.
 .section-title {
     font-size: 0.9rem;
     color: #9ca3af;
-    margin-bottom: 0.5rem; /* Compacted */
+    margin-bottom: 0.5rem; 
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .mode-toggle-group {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem; /* [FIX] Tighter gap for buttons */
     justify-content: center;
-    margin-bottom: 0.5rem; /* Compacted */
+    margin-bottom: 0.5rem; 
 }
 
 .mode-btn {
@@ -2778,12 +2803,13 @@ card.
     background: transparent;
     border: 1px solid #4b5563;
     color: #9ca3af;
-    padding: 0.5rem; /* Compacted */
+    padding: 0.35rem 0.25rem; /* [FIX] Reduced padding */
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem; /* Slightly smaller text */
+    font-size: 0.7rem; /* [FIX] Smaller font */
     cursor: pointer;
     transition: all 0.2s;
     text-transform: uppercase;
+    white-space: nowrap; /* Prevent wrapping */
 }
 
 .mode-btn:hover:not(:disabled) {
@@ -2826,17 +2852,17 @@ card.
     display: grid;
     /* Phase 3 Fix: 2 Columns for better vertical scrolling */
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem; /* Compacted */
+    gap: 0.5rem; 
 }
 
 .cache-card {
     background: rgba(17, 24, 39, 0.8);
     border: 1px solid #374151;
     border-radius: 6px;
-    padding: 0.5rem; /* Compacted */
+    padding: 0.4rem; /* [FIX] Reduced padding */
     display: flex;
     flex-direction: column;
-    gap: 0.25rem; /* Compacted */
+    gap: 0.25rem; 
 }
 
 .cache-header {
@@ -2846,7 +2872,7 @@ card.
 }
 
 .cache-icon {
-    width: 24px; /* Smaller icon */
+    width: 24px; 
     height: 24px;
     background-size: cover;
     background-position: center;
@@ -2859,7 +2885,7 @@ card.
 }
 
 .cache-name {
-    font-size: 0.75rem; /* Compacted */
+    font-size: 0.7rem; /* [FIX] Smaller font */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2906,7 +2932,7 @@ card.
     background: #374151;
     border: none;
     color: #fff;
-    padding: 0.2rem 0.4rem; /* Compacted */
+    padding: 0.2rem 0.4rem; 
     font-size: 0.65rem;
     border-radius: 4px;
     cursor: pointer;
@@ -2925,18 +2951,18 @@ card.
 /* Officer Slots */
 .sol-officer-section {
     flex-shrink: 0;
-    padding-bottom: 0.5rem; /* Bottom spacing for scroll */
+    padding-bottom: 0.5rem; 
 }
 
 .officer-slot-container {
     display: flex;
-    gap: 0.75rem; /* Compacted */
+    gap: 0.75rem; 
     justify-content: center;
 }
 
 .officer-slot {
-    width: 120px; /* Slightly narrower */
-    height: 140px; /* Slightly shorter */
+    width: 120px; 
+    height: 140px; 
     background: rgba(17, 24, 39, 0.8);
     border: 1px dashed #4b5563;
     border-radius: 6px;
@@ -16230,8 +16256,6 @@ export class UISolStationControl {
         const modalContainer = document.getElementById('event-modal');
         
         // FIX: Detect and resolve "Zombie" modal state (stuck in closing animation)
-        // If the modal has 'modal-hiding', it implies it's closing but hasn't finished (animationend missed).
-        // We force it to 'hidden' so the UIModalEngine queue logic sees it as available.
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
             modalContainer.classList.remove('modal-hiding');
@@ -16246,11 +16270,24 @@ export class UISolStationControl {
             // SWAP CONTENT: Maintain the modal shell, just update the inner interface
             // This handles the "Back" navigation from the Roster view or Live Updates
             existingRoot.outerHTML = contentHtml;
+
+            // RESET FOOTER BUTTON: If we were in Roster mode, the footer button was hijacked.
+            // We must restore it to "Dismiss" state.
+            // [FIX] Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
+            const footerBtn = document.querySelector('#event-button-container button');
+            if (footerBtn) {
+                footerBtn.innerHTML = 'Dismiss';
+                footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
+            }
+
         } else {
             // OPEN MODAL: First time launch or Re-launch after close
             this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
                 width: '800px', 
-                dismissOutside: true
+                dismissOutside: true,
+                specialClass: 'sol-station-modal', // Enforce 80% width / 90vh
+                buttonText: 'Dismiss',
+                buttonClass: 'btn-dismiss-sm' // Smaller, shorter button
             });
         }
     }
@@ -16341,7 +16378,7 @@ export class UISolStationControl {
      */
     showOfficerRoster(slotId, gameState) {
         const root = document.getElementById('sol-dashboard-root');
-        if (!root) return; // Should allow fallback, but strictly enforcing flow here
+        if (!root) return; 
 
         const roster = gameState.solStation.roster || [];
         const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
@@ -16382,17 +16419,25 @@ export class UISolStationControl {
             `;
         }
 
-        // Replace Dashboard content with Roster content + Back Button
+        // Replace Dashboard content with Roster content
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-4">
-                <button class="btn btn-sm btn-secondary" data-action="open-sol-dashboard">← BACK</button>
+            <div class="sol-subview-header flex justify-center items-center mb-4">
                 <div class="section-title mb-0">SELECT OFFICER (SLOT ${slotId})</div>
-                <div style="width: 60px;"></div> </div>
+            </div>
             <div class="roster-list text-left">
                 ${listHtml}
             </div>
             ${footerHtml}
         `;
+
+        // [FIX] Hijack the footer button to serve as the Back button
+        // Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
+        const footerBtn = document.querySelector('#event-button-container button');
+        if (footerBtn) {
+            footerBtn.innerHTML = '&larr;'; // Arrow symbol
+            // Override the close handler to instead go back to dashboard
+            footerBtn.onclick = () => this.showDashboard(gameState);
+        }
     }
 
     // --- HTML GENERATORS ---
@@ -16497,7 +16542,6 @@ export class UISolStationControl {
             if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
-            // [FIX] Corrected variable name from 'commId' to 'commodityId'
             const playerStock = playerInventory[commodityId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
             const tierColorVar = `--tier-${commodity.tier || 1}-color`;

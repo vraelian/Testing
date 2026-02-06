@@ -30,8 +30,6 @@ export class UISolStationControl {
         const modalContainer = document.getElementById('event-modal');
         
         // FIX: Detect and resolve "Zombie" modal state (stuck in closing animation)
-        // If the modal has 'modal-hiding', it implies it's closing but hasn't finished (animationend missed).
-        // We force it to 'hidden' so the UIModalEngine queue logic sees it as available.
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
             modalContainer.classList.remove('modal-hiding');
@@ -46,11 +44,24 @@ export class UISolStationControl {
             // SWAP CONTENT: Maintain the modal shell, just update the inner interface
             // This handles the "Back" navigation from the Roster view or Live Updates
             existingRoot.outerHTML = contentHtml;
+
+            // RESET FOOTER BUTTON: If we were in Roster mode, the footer button was hijacked.
+            // We must restore it to "Dismiss" state.
+            // [FIX] Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
+            const footerBtn = document.querySelector('#event-button-container button');
+            if (footerBtn) {
+                footerBtn.innerHTML = 'Dismiss';
+                footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
+            }
+
         } else {
             // OPEN MODAL: First time launch or Re-launch after close
             this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
                 width: '800px', 
-                dismissOutside: true
+                dismissOutside: true,
+                specialClass: 'sol-station-modal', // Enforce 80% width / 90vh
+                buttonText: 'Dismiss',
+                buttonClass: 'btn-dismiss-sm' // Smaller, shorter button
             });
         }
     }
@@ -141,7 +152,7 @@ export class UISolStationControl {
      */
     showOfficerRoster(slotId, gameState) {
         const root = document.getElementById('sol-dashboard-root');
-        if (!root) return; // Should allow fallback, but strictly enforcing flow here
+        if (!root) return; 
 
         const roster = gameState.solStation.roster || [];
         const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
@@ -182,17 +193,25 @@ export class UISolStationControl {
             `;
         }
 
-        // Replace Dashboard content with Roster content + Back Button
+        // Replace Dashboard content with Roster content
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-4">
-                <button class="btn btn-sm btn-secondary" data-action="open-sol-dashboard">← BACK</button>
+            <div class="sol-subview-header flex justify-center items-center mb-4">
                 <div class="section-title mb-0">SELECT OFFICER (SLOT ${slotId})</div>
-                <div style="width: 60px;"></div> </div>
+            </div>
             <div class="roster-list text-left">
                 ${listHtml}
             </div>
             ${footerHtml}
         `;
+
+        // [FIX] Hijack the footer button to serve as the Back button
+        // Corrected Selector ID from '#event-modal-button-container' to '#event-button-container'
+        const footerBtn = document.querySelector('#event-button-container button');
+        if (footerBtn) {
+            footerBtn.innerHTML = '&larr;'; // Arrow symbol
+            // Override the close handler to instead go back to dashboard
+            footerBtn.onclick = () => this.showDashboard(gameState);
+        }
     }
 
     // --- HTML GENERATORS ---
@@ -297,7 +316,6 @@ export class UISolStationControl {
             if (!commodity) return `<div class="cache-card"><div class="cache-name">Error: ${commodityId}</div></div>`;
 
             const fillPct = (cache.current / cache.max) * 100;
-            // [FIX] Corrected variable name from 'commId' to 'commodityId'
             const playerStock = playerInventory[commodityId]?.quantity || 0;
             const canDonate = playerStock > 0 && cache.current < cache.max;
             const tierColorVar = `--tier-${commodity.tier || 1}-color`;
