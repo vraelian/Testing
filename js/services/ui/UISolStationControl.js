@@ -303,6 +303,8 @@ export class UISolStationControl {
      * - Filters out Folded Drives (Tier 7)
      * - Restructured for 2-column layout (Name/Bar left, Button right)
      * - Opaque Artwork with text outlines
+     * - FIX: Added white-space: nowrap and overflow: visible to prevent text truncation
+     * - FIX: Enhanced text contrast with heavy drop shadow + outline
      * @param {object} gameState 
      */
     _renderCacheList(gameState) {
@@ -326,15 +328,15 @@ export class UISolStationControl {
                 // Force opacity: 1 and remove filters to reveal artwork
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
                 
-                // High contrast text shadow (Outline effect)
-                const textShadow = '1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
+                // High contrast text shadow (Outline effect + Drop Shadow)
+                const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
                 return `
                     <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem;">
                         <div class="sol-cache-row-bg" style="${bgStyle}"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
-                            <div class="sol-row-name" title="${commodity.name}" style="text-align: left; font-size: 0.85rem; margin-bottom: 4px; text-shadow: ${textShadow};">${commodity.name}</div>
+                            <div class="sol-row-name" title="${commodity.name}" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">${commodity.name}</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
