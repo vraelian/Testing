@@ -58,8 +58,10 @@ export class DebugService {
             botProgress: 'Idle',
             logLevel: 'INFO',
             
-            shipToBoard: null, 
+            // Ship Debugging
             selectedUpgrade: null, 
+            selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
+            quantityToAdd: 10,
             
             // [[DEBUG FLAG STATE]]
             alwaysTriggerEvents: false,
@@ -154,6 +156,28 @@ ${logHistory}
     }
 
     // --- GAME FLOW & CHEAT METHODS ---
+
+    /**
+     * Internal helper to unlock all endgame locations and features.
+     * @private
+     */
+    _unlockEndgame() {
+        const { player, solStation } = this.gameState;
+        
+        // Unlock Mercury and Sun if not present
+        if (!player.unlockedLocationIds.includes(LOCATION_IDS.MERCURY)) {
+            player.unlockedLocationIds.push(LOCATION_IDS.MERCURY);
+        }
+        if (!player.unlockedLocationIds.includes(LOCATION_IDS.SUN)) {
+            player.unlockedLocationIds.push(LOCATION_IDS.SUN);
+        }
+
+        // Unlock Sol Station Interface
+        if (solStation) {
+            solStation.unlocked = true;
+        }
+    }
+
     godMode() {
         this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
@@ -172,6 +196,9 @@ ${logHistory}
         this.gameState.player.revealedTier = 7;
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
+
+        // [REQ] Ensure Endgame Unlocks
+        this._unlockEndgame();
 
         this.uiManager.showGameContainer();
         this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
@@ -287,36 +314,26 @@ ${logHistory}
         }
     }
 
-    fillWithCybernetics() {
-         const ship = this.simulationService._getActiveShip();
+    /**
+     * Gives a specific item and quantity to the active ship.
+     * [REQ] Added for precise debugging.
+     */
+    giveItemToShip() {
+        const ship = this.simulationService._getActiveShip();
         const inventory = this.simulationService._getActiveInventory();
-        if (ship && inventory) {
-            this.removeAllCargo();
-            const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
-            if (!inventory[COMMODITY_IDS.CYBERNETICS]) {
-                inventory[COMMODITY_IDS.CYBERNETICS] = { quantity: 0, avgCost: 0 };
+        const itemId = this.debugState.selectedCommodityToAdd;
+        const qty = this.debugState.quantityToAdd;
+
+        if (ship && inventory && itemId) {
+            if (!inventory[itemId]) {
+                inventory[itemId] = { quantity: 0, avgCost: 0 };
             }
-            inventory[COMMODITY_IDS.CYBERNETICS].quantity = space;
-            this.logger.warn('DebugService', `Filled cargo with ${space} Cybernetics.`);
+            inventory[itemId].quantity += qty;
+            
+            this.logger.warn('DebugService', `Added ${qty}x ${itemId} to ${ship.name}.`);
+            this.uiManager.createFloatingText(`+${qty} ${itemId}`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
             this.gameState.setState({});
         }
-    }
-
-    grantAllItems() {
-        const inventory = this.simulationService._getActiveInventory();
-        if (!inventory) {
-             this.logger.warn('DebugService', 'Cannot grant items: No active inventory found.');
-            return;
-        }
-        DB.COMMODITIES.forEach(commodity => {
-            if (inventory[commodity.id]) {
-                inventory[commodity.id].quantity += 1;
-            } else {
-                inventory[commodity.id] = { quantity: 1, avgCost: 0 };
-            }
-         });
-        this.logger.warn('DebugService', 'Debug: Granted 1x of all commodities.');
-        this.gameState.setState({});
     }
 
     fillShipyard() {
@@ -387,6 +404,79 @@ ${logHistory}
         this.gameState.setState({});
     }
 
+    // --- NEW ECONOMIC MANIPULATION TOOLS ---
+
+    resetEconomyMemory() {
+        const { market } = this.gameState;
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(c => {
+                const item = market.inventory[loc.id][c.id];
+                if (item) {
+                    item.marketPressure = 0;
+                    item.lastPlayerInteractionTimestamp = 0;
+                    item.priceLockEndDay = 0;
+                    item.isDepleted = false;
+                    item.depletionDay = 0;
+                    item.depletionBonusDay = 0;
+                }
+            });
+        });
+        this.uiManager.createFloatingText('Economic Memory Reset', window.innerWidth/2, window.innerHeight/2, '#facc15');
+        this.gameState.setState({});
+    }
+
+    sootheEconomy() {
+        // Force minimum prices (Bullish for player buying)
+        const { market } = this.gameState;
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(c => {
+                const minPrice = c.basePriceRange[0];
+                market.prices[loc.id][c.id] = minPrice;
+            });
+        });
+        this.uiManager.createFloatingText('Economy Soothed (Min Prices)', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+        this.gameState.setState({});
+    }
+
+    riotEconomy() {
+        // Force maximum prices (Bearish for player buying, good for selling)
+        const { market } = this.gameState;
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(c => {
+                const maxPrice = c.basePriceRange[1];
+                market.prices[loc.id][c.id] = maxPrice;
+            });
+        });
+        this.uiManager.createFloatingText('Economy Rioting (Max Prices)', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+        this.gameState.setState({});
+    }
+
+    injectStock() {
+        const { market } = this.gameState;
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(c => {
+                const item = market.inventory[loc.id][c.id];
+                if (item) {
+                    item.quantity += 100;
+                }
+            });
+        });
+        this.uiManager.createFloatingText('+100 Stock Injected System-Wide', window.innerWidth/2, window.innerHeight/2, '#facc15');
+        this.gameState.setState({});
+    }
+
+    /**
+     * Fills all Sol Station maintenance caches to max capacity.
+     */
+    fillSolCaches() {
+        if (this.gameState.solStation && this.gameState.solStation.caches) {
+            Object.values(this.gameState.solStation.caches).forEach(cache => {
+                cache.current = cache.max;
+            });
+            this.uiManager.createFloatingText('Sol Caches Filled', window.innerWidth/2, window.innerHeight/2, '#facc15');
+            this.gameState.setState({});
+        }
+    }
 
     /**
      * @private
@@ -430,29 +520,17 @@ ${logHistory}
                 this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
                 this.gameState.player.revealedTier = 7;
                 this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
-                if (this.gameState.solStation) this.gameState.solStation.unlocked = true;
+                
+                // [REQ] Ensure Endgame Unlocks
+                this._unlockEndgame();
+
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
-            // --- [[START]] PHASE 3: NEW UNLOCK BUTTONS ---
-            unlockSolarCore: { name: 'Unlock Solar Core (Sun/Mercury)', type: 'button', handler: () => {
-                const currentUnlocks = this.gameState.player.unlockedLocationIds;
-                if (!currentUnlocks.includes(LOCATION_IDS.SUN)) currentUnlocks.push(LOCATION_IDS.SUN);
-                if (!currentUnlocks.includes(LOCATION_IDS.MERCURY)) currentUnlocks.push(LOCATION_IDS.MERCURY);
-                this.gameState.setState({});
-                this.uiManager.createFloatingText('Solar Core Unlocked!', window.innerWidth/2, window.innerHeight/2, '#facc15');
-            }},
-            unlockSolStation: { name: 'Unlock Sol Station', type: 'button', handler: () => {
-                if (this.gameState.solStation) {
-                    this.gameState.solStation.unlocked = true;
-                    this.gameState.setState({});
-                    this.uiManager.createFloatingText('Sol Station Unlocked!', window.innerWidth/2, window.innerHeight/2, '#fbbf24');
-                    this.logger.info.system('Debug', 'Sol Station unlocked via debug.');
-                }
-            }},
+            
             // NEW: SOL TESTING BUTTON
             solTesting: { name: 'Sol Testing', type: 'button', handler: () => {
-                // 1. Unlock All (including station)
+                // 1. Unlock All (including station/endgame)
                 this.actions.unlockAll.handler();
                 // 2. God Mode
                 this.actions.godMode.handler();
@@ -483,8 +561,8 @@ ${logHistory}
             // --- MODIFIED: Advance Time now forces refresh using the correct method ---
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
                 this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
-                // Trigger re-render to see new art assets immediately
-                // FIX: Used .render() instead of .renderCurrentScreen()
+                // [REQ] Trigger FULL UI re-render (render instead of setState)
+                // This ensures components with explicit update loops (like Sol Dashboard) refresh
                 this.uiManager.render(this.gameState.getState());
             }},
             // ------------------------------------------------------------------------
@@ -542,12 +620,20 @@ ${logHistory}
              deductFuel20: { name: 'Deduct 20 Fuel', type: 'button', handler: () => this.deductFuel(20) },
             restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
-            grantAllItems: { name: 'Grant 1x All Items', type: 'button', handler: () => this.grantAllItems() },
-            fillWithCybernetics: { name: 'Fill w/ Cybernetics', type: 'button', handler: () => this.fillWithCybernetics() },
+            
+            // [REQ] Precise Item Giving
+            giveItemToShip: { name: 'Give Item', type: 'button', handler: () => this.giveItemToShip() },
 
             // GAME ATTRIBUTES ACTIONS
             applyRandomUpgrades: { name: 'Apply 3 Random Upgrades', type: 'button', handler: () => this.applyRandomUpgrades() },
             removeAllUpgrades: { name: 'Remove All Upgrades', type: 'button', handler: () => this.removeAllUpgrades() },
+
+            // [REQ] Economy Actions
+            resetEconomyMemory: { name: 'Reset Econ Memory', type: 'button', handler: () => this.resetEconomyMemory() },
+            sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
+            riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
+            injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
+            fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
 
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
             generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
@@ -641,31 +727,11 @@ ${logHistory}
         const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
-        // Populate Dropdown Options from Database
-        const shipOptions = {};
-        Object.values(DB.SHIPS).forEach(ship => {
-            shipOptions[ship.name] = ship.id;
-        });
-
-        shipFolder.add(this.debugState, 'shipToBoard', shipOptions)
-            .name('Board Ship')
-            .onChange((shipId) => {
-                if (!shipId) return;
-                // 1. Grant if not owned
-                if (!this.gameState.player.ownedShipIds.includes(shipId)) {
-                    this.simulationService.addShipToHangar(shipId);
-                }
-                // 2. Set Active
-                this.simulationService.playerActionService.executeSetActiveShip(shipId);
-                // 3. Navigate to Hangar to see it
-                this.gameState.uiState.hangarShipyardToggleState = 'hangar';
-                this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                // 4. Hydrate the newly boarded ship immediately
-                AssetService.hydrateAssets([{ type: 'ship', id: shipId, seed: this.gameState.player.visualSeed }]);
-                // 5. Refresh
-                this.gameState.setState({});
-                this.logger.info.system('Debug', `DEBUG: Boarded ${shipId}`);
-            });
+        // Populate Commodity Dropdown for "Give Item"
+        const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
+        shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
+        shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
+        shipFolder.add(this.actions.giveItemToShip, 'handler').name(this.actions.giveItemToShip.name);
 
         const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
         shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
@@ -676,8 +742,6 @@ ${logHistory}
         shipFolder.add(this.actions.deductFuel20, 'handler').name(this.actions.deductFuel20.name);
         shipFolder.add(this.actions.restoreFuel, 'handler').name(this.actions.restoreFuel.name);
         shipFolder.add(this.actions.removeAllCargo, 'handler').name(this.actions.removeAllCargo.name);
-        shipFolder.add(this.actions.grantAllItems, 'handler').name(this.actions.grantAllItems.name);
-        shipFolder.add(this.actions.fillWithCybernetics, 'handler').name(this.actions.fillWithCybernetics.name);
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
@@ -706,9 +770,12 @@ ${logHistory}
 
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        // REMOVED: Unlock All (Moved to Game Flow)
-        this.economyFolder.add(this.actions.unlockSolarCore, 'handler').name('Unlock Solar Core');
-        this.economyFolder.add(this.actions.unlockSolStation, 'handler').name('Unlock Sol Station');
+        // [REQ] New Economy Tools
+        this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
+        this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
+        this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
+        this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
+        this.economyFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
