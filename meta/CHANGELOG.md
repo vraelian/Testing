@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.96] - 2026-2-5
+-  implemented Sol Station Interface v1
+-  added Sol Station Testing debugging
+-  added SolStationService.js
+-  added UISolStationControl.js
+-  updated meta files
+
 # [34.92] - 2026-2-4
 -  updated launch modal width
 -  added folded space travel

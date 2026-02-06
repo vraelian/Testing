@@ -30,7 +30,10 @@
     "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
     "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund.",
-    "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station."
+    "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station.",
+    "Directorate": "The roster of officers assigned to the Sol Station. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Station_Integrity": "The overall health percentage of the Sol Station, calculated as the average fill ratio of all Maintenance Caches. Efficiency drops significantly below 50%.",
+    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity."
   },
   "service_summaries": {
     "SolStationService": {
@@ -170,7 +173,7 @@
       "mutates_state": []
     },
     "TravelService": {
-      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from the `js/data/events.js` facade.",
+      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js` facade.",
       "dependencies": [
         "GameState",
         "UIManager",
@@ -291,7 +294,7 @@
       ]
     },
     "UIManager": {
-      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 6 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`). Responsible for the main render loop and proxying logic to delegates.",
+      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
         "Logger",
         "EffectsManager",
@@ -301,7 +304,8 @@
         "UIMarketControl",
         "UIMissionControl",
         "UIHangarControl",
-        "UIEventControl"
+        "UIEventControl",
+        "UISolStationControl"
       ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
@@ -361,6 +365,15 @@
       "key_functions": {
         "showRandomEventModal": "Renders an event choice.",
         "showMapDetailModal": "Shows location details."
+      }
+    },
+    "UISolStationControl": {
+      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, and Officer Directorate UI.",
+      "dependencies": ["UIManager (Facade)"],
+      "key_functions": {
+        "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",
+        "update": "Surgically updates the values in the existing dashboard without re-rendering.",
+        "showOfficerRoster": "Renders the Officer Roster IN-PLACE (Sub-view)."
       }
     },
     "AssetStorageService": {
@@ -651,7 +664,8 @@
         "js/services/ui/UIMarketControl.js",
         "js/services/ui/UIMissionControl.js",
         "js/services/ui/UIHangarControl.js",
-        "js/services/ui/UIEventControl.js"
+        "js/services/ui/UIEventControl.js",
+        "js/services/ui/UISolStationControl.js"
       ]
     },
     "F018": {
@@ -1031,6 +1045,16 @@
       "path": "./js/services/SolStationService.js",
       "role": "LOGIC_SERVICE",
       "description": "Core logic for the Sol Station endgame engine."
+    },
+    "F099": {
+      "path": "./js/services/ui/UISolStationControl.js",
+      "role": "UI_CONTROLLER",
+      "description": "Domain Controller: Manages the Sol Station Dashboard, Cache Grid, and Directorate UI."
+    },
+    "F100": {
+      "path": "./js/data/officers.js",
+      "role": "DATA_DEFINITION",
+      "description": "Registry of Sol Station Directorate officers and their stats."
     }
   }
 }

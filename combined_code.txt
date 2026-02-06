@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 34.92</title>
+    <title>Orbital Trading 34.96</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 34.92</p>
+            <p>Version 34.96</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -30109,6 +30109,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [34.96] - 2026-2-5
+-  implemented Sol Station Interface v1
+-  added Sol Station Testing debugging
+-  added SolStationService.js
+-  added UISolStationControl.js
+-  updated meta files
+
 # [34.92] - 2026-2-4
 -  updated launch modal width
 -  added folded space travel
@@ -31341,7 +31348,10 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
     "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund.",
-    "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station."
+    "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station.",
+    "Directorate": "The roster of officers assigned to the Sol Station. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Station_Integrity": "The overall health percentage of the Sol Station, calculated as the average fill ratio of all Maintenance Caches. Efficiency drops significantly below 50%.",
+    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity."
   },
   "service_summaries": {
     "SolStationService": {
@@ -31481,7 +31491,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "mutates_state": []
     },
     "TravelService": {
-      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from the `js/data/events.js` facade.",
+      "description": "Handles all aspects of interstellar travel, including initiating trips, calculating costs, and managing the random event system during transit. Draws event data from `js/data/events.js` facade.",
       "dependencies": [
         "GameState",
         "UIManager",
@@ -31602,7 +31612,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       ]
     },
     "UIManager": {
-      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 6 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`). Responsible for the main render loop and proxying logic to delegates.",
+      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
         "Logger",
         "EffectsManager",
@@ -31612,7 +31622,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "UIMarketControl",
         "UIMissionControl",
         "UIHangarControl",
-        "UIEventControl"
+        "UIEventControl",
+        "UISolStationControl"
       ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
@@ -31672,6 +31683,15 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "key_functions": {
         "showRandomEventModal": "Renders an event choice.",
         "showMapDetailModal": "Shows location details."
+      }
+    },
+    "UISolStationControl": {
+      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, and Officer Directorate UI.",
+      "dependencies": ["UIManager (Facade)"],
+      "key_functions": {
+        "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",
+        "update": "Surgically updates the values in the existing dashboard without re-rendering.",
+        "showOfficerRoster": "Renders the Officer Roster IN-PLACE (Sub-view)."
       }
     },
     "AssetStorageService": {
@@ -31962,7 +31982,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "js/services/ui/UIMarketControl.js",
         "js/services/ui/UIMissionControl.js",
         "js/services/ui/UIHangarControl.js",
-        "js/services/ui/UIEventControl.js"
+        "js/services/ui/UIEventControl.js",
+        "js/services/ui/UISolStationControl.js"
       ]
     },
     "F018": {
@@ -32342,6 +32363,16 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/services/SolStationService.js",
       "role": "LOGIC_SERVICE",
       "description": "Core logic for the Sol Station endgame engine."
+    },
+    "F099": {
+      "path": "./js/services/ui/UISolStationControl.js",
+      "role": "UI_CONTROLLER",
+      "description": "Domain Controller: Manages the Sol Station Dashboard, Cache Grid, and Directorate UI."
+    },
+    "F100": {
+      "path": "./js/data/officers.js",
+      "role": "DATA_DEFINITION",
+      "description": "Registry of Sol Station Directorate officers and their stats."
     }
   }
 }
@@ -32525,11 +32556,11 @@ Dependencies: GameState, SimulationService, DynamicValueResolver.
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
 
-Responsibility: The master "Switchboard". Instantiates and coordinates the 6 Domain Controllers. Handles the main render loop and navigation bars.
+Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers. Handles the main render loop and navigation bars.
 
 Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
 
-Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl.
+Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
 
 Controllers (Delegates):
 
@@ -32544,6 +32575,8 @@ UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel intera
 UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
 
 UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
+
+UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, and the in-modal Officer Roster sub-view.
 
 IntelMarketRenderer (F058)
 
@@ -32648,6 +32681,8 @@ eulaContent.js: Defines the static HTML content for the EULA modal.
 lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
 
 lore/lore_broadstrokes.js: Defines the base lore content.
+
+officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---

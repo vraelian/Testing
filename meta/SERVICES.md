@@ -138,11 +138,11 @@ Dependencies: GameState, SimulationService, DynamicValueResolver.
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
 
-Responsibility: The master "Switchboard". Instantiates and coordinates the 6 Domain Controllers. Handles the main render loop and navigation bars.
+Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers. Handles the main render loop and navigation bars.
 
 Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
 
-Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl.
+Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
 
 Controllers (Delegates):
 
@@ -157,6 +157,8 @@ UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel intera
 UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
 
 UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
+
+UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, and the in-modal Officer Roster sub-view.
 
 IntelMarketRenderer (F058)
 
@@ -261,3 +263,5 @@ eulaContent.js: Defines the static HTML content for the EULA modal.
 lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
 
 lore/lore_broadstrokes.js: Defines the base lore content.
+
+officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.
