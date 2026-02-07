@@ -77,6 +77,7 @@ export class UISolStationControl {
         if (integrityLabel && integrityBar) {
             integrityLabel.className = this._getHealthColorClass(station.health);
             integrityLabel.textContent = `${station.health}%`;
+            // Force transition by ensuring width is set
             integrityBar.style.width = `${station.health}%`;
             integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
         }

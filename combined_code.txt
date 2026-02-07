@@ -3249,6 +3249,17 @@ card.
 --- START OF FILE: ./css/screens/services-screen.css ---
 /* css/screens/services-screen.css */
 
+/* --- VIRTUAL WORKBENCH: GLOBAL VARIABLES & UTILITIES --- */
+:root {
+    --ot-green-base: #4ade80;
+    --ot-yellow-base: #facc15;
+    --ot-red-base: #ef4444;
+}
+
+.text-green-400 { color: #4ade80; }
+.text-yellow-400 { color: #facc15; }
+.text-red-500 { color: #ef4444; }
+
 /* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
 .themed-header-bar {
     position: relative;
@@ -3673,7 +3684,7 @@ card.
     height: 100%; 
     background-color: #fff; /* Overridden by inline style var() */
     width: 0%;
-    transition: width 0.4s ease-out;
+    transition: width 0.4s ease-out; /* Added Transition */
     box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
 }
 
@@ -3820,7 +3831,7 @@ card.
 }
 .sol-health-fill {
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width 0.5s ease-in-out; /* Added Transition */
 }
 
 /* Output Container Encapsulation */
@@ -3950,7 +3961,7 @@ card.
     font-size: 1.5rem;
     color: var(--ot-cyan-base, #08d9d6);
     text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
-} 
+}
 --- END OF FILE: ./css/screens/services-screen.css ---
 
 --- START OF FILE: ./css/screens/map-screen.css ---
@@ -16668,6 +16679,7 @@ export class UISolStationControl {
         if (integrityLabel && integrityBar) {
             integrityLabel.className = this._getHealthColorClass(station.health);
             integrityLabel.textContent = `${station.health}%`;
+            // Force transition by ensuring width is set
             integrityBar.style.width = `${station.health}%`;
             integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
         }
