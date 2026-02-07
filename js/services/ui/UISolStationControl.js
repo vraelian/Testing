@@ -9,6 +9,7 @@ import { AssetService } from '../AssetService.js';
  * @class UISolStationControl
  * @description Domain Controller responsible for the Sol Station Dashboard,
  * managing the Mode Lever, Cache List, and Officer Directorate UI.
+ * Now supports Real-Time operation ticks while visible.
  */
 export class UISolStationControl {
     /**
@@ -16,6 +17,7 @@ export class UISolStationControl {
      */
     constructor(uiManager) {
         this.uiManager = uiManager;
+        this.refreshInterval = null;
     }
 
     /**
@@ -44,7 +46,10 @@ export class UISolStationControl {
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
-                footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
+                footerBtn.onclick = () => {
+                    this._stopRefreshLoop();
+                    this.uiManager.hideModal('event-modal');
+                };
             }
         } else {
             this.uiManager.queueModal('event-modal', 'Orbital Interface', contentHtml, null, {
@@ -52,9 +57,15 @@ export class UISolStationControl {
                 dismissOutside: true,
                 specialClass: 'sol-station-modal', // Applies custom theme
                 buttonText: 'Dismiss',
-                buttonClass: 'btn-dismiss-sm'
+                buttonClass: 'btn-dismiss-sm',
+                // We hook the modal close in UIModalEngine usually, but as a backup, 
+                // the loop self-terminates if the DOM is gone.
             });
         }
+        
+        // Begin the real-time simulation tick
+        // [[CHANGED]] We do not pass gameState here anymore to avoid stale closure state
+        this._startRefreshLoop();
     }
 
     /**
@@ -104,7 +115,7 @@ export class UISolStationControl {
         const credVal = root.querySelector('[data-id="stock-credits"]');
         const credCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]');
 
-        if (credVal) credVal.textContent = formatCredits(stockpile.credits);
+        if (credVal) credVal.textContent = formatCredits(Math.floor(stockpile.credits));
         if (credCollectBtn) {
             credCollectBtn.disabled = stockpile.credits <= 0;
             credCollectBtn.style.opacity = stockpile.credits > 0 ? '1' : '0.5';
@@ -147,7 +158,7 @@ export class UISolStationControl {
                 const canDonate = playerStock > 0 && cache.current < cache.max;
 
                 if (bar) bar.style.width = `${fillPct}%`;
-                if (text) text.textContent = `${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}`;
+                if (text) text.textContent = `${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}`;
                 
                 if (btn) {
                     btn.disabled = !canDonate;
@@ -157,9 +168,51 @@ export class UISolStationControl {
         });
     }
 
+    _startRefreshLoop() {
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
+        
+        // Tick every 1 second
+        this.refreshInterval = setInterval(() => {
+            const root = document.getElementById('sol-dashboard-root');
+            
+            // Self-cleaning: If modal is closed or removed, stop the loop
+            if (!root || !document.body.contains(root) || root.closest('.hidden')) {
+                this._stopRefreshLoop();
+                return;
+            }
+
+            // Attempt to trigger the real-time tick via SimulationService
+            const simService = this.uiManager.simulationService;
+            if (simService && simService.solStationService) {
+                simService.solStationService.processRealTimeTick();
+            }
+
+            // [[CHANGED]] Use this.uiManager.lastKnownState to ensure we always use FRESH state.
+            // Using the closure variable from showDashboard causes "Mode Reversion" because
+            // the closure holds a stale snapshot of the state from when the modal opened.
+            const freshState = this.uiManager.lastKnownState;
+            if (freshState) {
+                this.update(freshState);
+            }
+
+        }, 1000);
+    }
+
+    _stopRefreshLoop() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+
     showOfficerRoster(slotId, gameState) {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
+
+        // Roster pauses the real-time view (since we replace the HTML), 
+        // so we can stop the loop here, or just let it run (it won't find elements to update).
+        // Safest to stop and restart when returning.
+        this._stopRefreshLoop();
 
         const roster = gameState.solStation.roster || [];
         const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
@@ -283,7 +336,7 @@ export class UISolStationControl {
                     <div class="sol-credits-block">
                         <div class="credits-info">
                             <div class="label">INCOME</div>
-                            <div class="value" data-id="stock-credits">${formatCredits(stockpile.credits)}</div>
+                            <div class="value" data-id="stock-credits">${formatCredits(Math.floor(stockpile.credits))}</div>
                         </div>
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
@@ -380,7 +433,7 @@ export class UISolStationControl {
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
                                     <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
                                     <div class="sol-threshold-marker" style="left: 20%;"></div>
-                                    <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</div>
+                                    <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
                             </div>
                         </div>

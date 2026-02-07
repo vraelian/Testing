@@ -66,6 +66,10 @@ export class SimulationService {
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
         
+        // --- [[FIX]] Inject self into UIManager to allow UI Controls to trigger active ticks ---
+        this.uiManager.setSimulationService(this);
+        // -------------------------------------------------------------------------------------
+
         this.newsTickerService.setServices(this, this.marketService);
     }
 

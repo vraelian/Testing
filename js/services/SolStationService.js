@@ -17,6 +17,11 @@ const BASE_CREDIT_OUTPUT = 1000; // Base credits generated per day at 100% healt
 const BASE_AM_OUTPUT = 0.1; // Base antimatter generated per day at 100% health
 const MAX_ANTIMATTER_STOCKPILE = 150; // Cap for Antimatter storage
 
+// Tuning: How much "Game Time" passes per "Real Time Second" when viewing?
+// 0.02 Days per tick = 50 seconds real-time to simulate 1 Game Day.
+// At 1000 Credits/Day, this gives ~20 Credits/Second.
+const REAL_TIME_DAY_FACTOR = 0.02; 
+
 /**
  * @class SolStationService
  * @description Manages the Sol Station endgame engine. Handles daily entropy decay,
@@ -33,13 +38,11 @@ export class SolStationService {
     }
 
     /**
-     * Processes one day of station operations.
-     * 1. Calculates Entropy based on Mode.
-     * 2. Consumes resources from caches (Decay).
-     * 3. Updates Station Health.
-     * 4. Generates Output (Credits/Antimatter) if operational.
+     * Legacy/Batch method for TimeService.
+     * Processes exactly 1 day of operations (or specified amount).
+     * @param {number} days - The number of days to simulate (default 1).
      */
-    processTick() {
+    processTimeStep(days = 1) {
         const station = this.gameState.solStation;
         
         // If not unlocked, the station does not operate.
@@ -47,7 +50,6 @@ export class SolStationService {
 
         const modeConfig = MODES[station.mode];
         const officerBuffs = this.getOfficerBuffs();
-
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
 
         // 1. Decay Caches
@@ -55,9 +57,9 @@ export class SolStationService {
         let activeCaches = 0;
 
         for (const [commodityId, cache] of Object.entries(station.caches)) {
-            // Calculate decay amount: Current * Base Rate * Entropy Multiplier
-            // Minimum decay of 1 unit if cache has items
-            let decayAmount = Math.ceil(cache.current * BASE_DECAY_RATE * entropy);
+            // Calculate decay amount: Current * Base Rate * Entropy Multiplier * Days Passed
+            // We use floating point math here to support micro-ticks
+            let decayAmount = cache.current * BASE_DECAY_RATE * entropy * days;
             
             // Apply decay
             if (cache.current > 0) {
@@ -85,11 +87,12 @@ export class SolStationService {
                 efficiency = Math.pow(averageFill, 2); 
             }
 
-            // Calculate Outputs with Officer Buffs
-            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency);
-            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency;
+            // Calculate Outputs with Officer Buffs & Delta Time
+            // We remove Math.floor here to allow fractional accumulation during real-time ticks
+            const creditOutput = BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency * days;
+            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency * days;
 
-            // Add to Stockpile
+            // Add to Stockpile (Float addition)
             station.stockpile.credits += creditOutput;
 
             // Cap Antimatter
@@ -97,13 +100,24 @@ export class SolStationService {
                 station.stockpile.antimatter = Math.min(MAX_ANTIMATTER_STOCKPILE, station.stockpile.antimatter + amOutput);
             }
 
-            // Log operational tick if efficiency is low, to warn player
-            if (station.health < 20) {
+            // Log operational tick if efficiency is low, to warn player (Only on full day ticks to avoid spam)
+            if (days >= 1 && station.health < 20) {
                 this.logger.info.system('SolStation', this.gameState.day, 'CRITICAL', `Station health critical (${station.health}%). Efficiency plummeting.`);
             }
         } else {
-            this.logger.info.system('SolStation', this.gameState.day, 'OFFLINE', `Station resources depleted. Systems offline.`);
+            // Only log offline on full day ticks
+            if (days >= 1) {
+                this.logger.info.system('SolStation', this.gameState.day, 'OFFLINE', `Station resources depleted. Systems offline.`);
+            }
         }
+    }
+
+    /**
+     * Executes a micro-tick for the Real-Time display.
+     * Equivalent to passing a fraction of a day.
+     */
+    processRealTimeTick() {
+        this.processTimeStep(REAL_TIME_DAY_FACTOR);
     }
 
     /**
@@ -207,9 +221,11 @@ export class SolStationService {
 
         // Claim Credits
         if ((!type || type === 'credits') && stockpile.credits > 0) {
-            this.gameState.player.credits += Math.floor(stockpile.credits);
-            claimedCredits = Math.floor(stockpile.credits);
-            stockpile.credits = 0;
+            const amount = Math.floor(stockpile.credits);
+            this.gameState.player.credits += amount;
+            claimedCredits = amount;
+            stockpile.credits -= amount; // Subtract the integer amount claimed, leaving any fractional float
+            if(stockpile.credits < 0.1) stockpile.credits = 0; // Clean up floating point dust
         }
 
         // Claim Antimatter (Commodity)
@@ -227,7 +243,6 @@ export class SolStationService {
             return { success: false, message: "Nothing to collect." };
         }
 
-        // this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
         this.gameState.setState({});
         
         const msgParts = [];

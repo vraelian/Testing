@@ -76,8 +76,9 @@ export class TimeService {
             }
 
             // --- SOL STATION: PROCESS TICK ---
+            // Replaced .processTick() with .processTimeStep(1) to align with new real-time logic
             if (this.solStationService) {
-                this.solStationService.processTick();
+                this.solStationService.processTimeStep(1); 
             }
             // ---------------------------------
 
