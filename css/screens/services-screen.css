@@ -419,8 +419,9 @@
     overflow: hidden;
 }
 
+/* FIX: Ensure fill height is 100% of parent */
 .sol-progress-fill {
-    height: 100%;
+    height: 100%; 
     background-color: #fff; /* Overridden by inline style var() */
     width: 0%;
     transition: width 0.4s ease-out;
@@ -494,3 +495,210 @@
     cursor: not-allowed;
     opacity: 0.5;
 }
+
+/* === SOL STATION NEW STYLES === */
+
+/* Golden Entry Button (Services Screen) */
+.sol-interface-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem;
+    
+    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); /* Amber to Yellow */
+    border: 2px solid #fcd34d; /* Bright Yellow border */
+    border-radius: 6px;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+    
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.sol-interface-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    filter: brightness(1.1);
+}
+
+.sol-interface-btn .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sol-interface-btn .btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.sol-interface-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    letter-spacing: 0.05em;
+}
+
+.sol-interface-btn .btn-subtitle {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: #fffbeb;
+    opacity: 0.9;
+}
+
+/* Modal Theme: Sol Station Specific */
+.sol-station-modal .modal-content {
+    background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+    border: 1px solid #fbbf24;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+}
+
+/* Integrity Bar Fix */
+.sol-health-track {
+    width: 100%;
+    height: 12px; /* Needs explicit height */
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Output Container Encapsulation */
+.sol-output-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* NEW: Flex Container for the buttons */
+.mode-toggle-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+/* Base Mode Button Styles */
+.mode-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: #1f2937;
+    
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    transition: all 0.2s;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* --- INACTIVE STATES --- */
+/* Defined Colors for Inactive state (dim but colored text) */
+.mode-btn.stability { color: #6b7280; border-color: #374151; }
+.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } /* Muted Cyan */
+.mode-btn.production{ color: #7e22ce; border-color: #581c87; } /* Muted Purple */
+
+/* --- ACTIVE STATE OVERRIDES --- */
+/* We use !important on opacity/color to force override the browser's default :disabled styling */
+
+.mode-btn.active,
+.mode-btn.active:disabled {
+    background: #111827 !important;
+    border-color: #fbbf24 !important; /* GLOBAL: Golden Yellow Border for ALL active modes */
+    opacity: 1 !important; /* Fixes the "dim" issue */
+    filter: none !important; /* Fixes any grayscale filters */
+    cursor: default;
+}
+
+/* 1. STABILITY: White Glow */
+.mode-btn.stability.active,
+.mode-btn.stability.active:disabled {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255,255,255,0.8);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* 2. COMMERCE: Cyan Glow */
+.mode-btn.commerce.active,
+.mode-btn.commerce.active:disabled {
+    color: #22d3ee !important;
+    text-shadow: 0 0 8px #0891b2;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+/* 3. PRODUCTION: Purple Glow */
+.mode-btn.production.active,
+.mode-btn.production.active:disabled {
+    color: #d8b4fe !important;
+    text-shadow: 0 0 8px #9333ea;
+    box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
+}
+
+/* === OPTION 1: THE "SOLAR TREASURY" INCOME BAR === */
+.sol-credits-block {
+    /* Base Background with Radial Gradient (Option 1) */
+    background: radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+    /* Honeycomb Pattern (Option 1) */
+    background-image: 
+        radial-gradient(rgba(251, 191, 36, 0.15) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+    background-size: 16px 16px, 100% 100%;
+    
+    border: 1px solid #78350f; /* Dark Amber Border */
+    border-radius: 4px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 70px;
+    
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    margin-bottom: 0.5rem; /* Ensure spacing if stacked */
+}
+
+.sol-credits-block .credits-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Label: Metallic Gold + Wide Tracking (Option 1) */
+.sol-credits-block .credits-info .label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.10rem;
+    font-weight: 700;
+    color: #fbbf24; /* Metallic Gold */
+    letter-spacing: 0.2em; /* Wide tracking */
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    margin-bottom: 2px;
+}
+
+/* Value: Cyan (Retained per instruction F) */
+.sol-credits-block .credits-info .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    color: var(--ot-cyan-base, #08d9d6);
+    text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
+} 

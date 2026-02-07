@@ -324,10 +324,10 @@ export class ActionClickHandler {
                 break;
 
             case 'sol-set-mode': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const newMode = dataset.mode;
                 if (newMode) {
-                    e.stopPropagation(); // FIX: Prevent event bubbling to map/background elements
+                    e.stopPropagation(); 
                     this.simulationService.solStationService.setMode(newMode);
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 }
@@ -336,7 +336,7 @@ export class ActionClickHandler {
 
             // NEW: "Deposit All" Logic
             case 'sol-donate-all': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const commId = dataset.commodityId;
                 const station = this.gameState.solStation;
                 const cache = station.caches[commId];
@@ -356,7 +356,8 @@ export class ActionClickHandler {
                 if (donateAmount > 0) {
                     const donateResult = this.simulationService.solStationService.donateToCache(commId, donateAmount);
                     if (donateResult.success) {
-                        this.uiManager.createFloatingText(`+${donateAmount} DONATED`, e.clientX, e.clientY, "#34d399");
+                        // CHANGE: Red floating text '-XXX'
+                        this.uiManager.createFloatingText(`-${donateAmount}`, e.clientX, e.clientY, "#ef4444");
                         this.uiManager.solStationControl.update(this.gameState.getState());
                     } else {
                         this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
@@ -368,12 +369,32 @@ export class ActionClickHandler {
             }
 
             case 'sol-claim-output': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const type = dataset.type; // 'credits' or 'antimatter'
+                const stockpile = this.gameState.solStation.stockpile;
+                
+                // Prepare floating text content based on what we are about to claim
+                let text = '';
+                let color = '#fff';
+
+                if (type === 'credits') {
+                    const amount = Math.floor(stockpile.credits);
+                    if (amount > 0) {
+                        text = `+${amount}`;
+                        color = '#34d399'; // Green
+                    }
+                } else if (type === 'antimatter') {
+                    const amount = Math.floor(stockpile.antimatter);
+                    if (amount >= 1) {
+                        text = `+${amount} Antimatter`;
+                        color = '#a855f7'; // Purple
+                    }
+                }
+
                 const claimResult = this.simulationService.solStationService.claimStockpile(type);
                 
                 if (claimResult.success) {
-                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
+                    this.uiManager.createFloatingText(text || claimResult.message, e.clientX, e.clientY, color);
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 } else {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
@@ -388,7 +409,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-assign-officer': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
                 const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);

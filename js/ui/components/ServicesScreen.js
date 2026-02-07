@@ -3,7 +3,7 @@
  * @fileoverview This file contains the rendering logic for the Station Services screen.
  * It displays options for refueling and repairing the player's active ship, calculating
  * costs based on the current location and any active player perks.
- * * UPDATED: Includes Sol Station Directorate entry point (Phase 3).
+ * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -114,18 +114,17 @@ export function renderServicesScreen(gameState, simulationService) {
     }
 
     // =========================================================================
-    // --- PHASE 3: SOL STATION ENTRY POINT ---
+    // --- PHASE 3: SOL STATION ENTRY POINT (UPDATED) ---
     // =========================================================================
     let solStationButtonHtml = '';
     // Show button if at Sun AND Station is unlocked
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6">
-                <button class="sol-directorate-btn" data-action="open-sol-dashboard">
+                <button class="sol-interface-btn" data-action="open-sol-dashboard">
                     <div class="btn-content">
-                        <span class="btn-icon">☀</span>
                         <div class="btn-text">
-                            <span class="btn-title">SOL DIRECTORATE</span>
+                            <span class="btn-title">ORBITAL INTERFACE</span>
                             <span class="btn-subtitle">Manage Station Systems</span>
                         </div>
                     </div>

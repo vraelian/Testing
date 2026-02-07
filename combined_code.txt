@@ -3668,8 +3668,9 @@ card.
     overflow: hidden;
 }
 
+/* FIX: Ensure fill height is 100% of parent */
 .sol-progress-fill {
-    height: 100%;
+    height: 100%; 
     background-color: #fff; /* Overridden by inline style var() */
     width: 0%;
     transition: width 0.4s ease-out;
@@ -3743,6 +3744,213 @@ card.
     cursor: not-allowed;
     opacity: 0.5;
 }
+
+/* === SOL STATION NEW STYLES === */
+
+/* Golden Entry Button (Services Screen) */
+.sol-interface-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem;
+    
+    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); /* Amber to Yellow */
+    border: 2px solid #fcd34d; /* Bright Yellow border */
+    border-radius: 6px;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+    
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.sol-interface-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    filter: brightness(1.1);
+}
+
+.sol-interface-btn .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sol-interface-btn .btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.sol-interface-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    letter-spacing: 0.05em;
+}
+
+.sol-interface-btn .btn-subtitle {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: #fffbeb;
+    opacity: 0.9;
+}
+
+/* Modal Theme: Sol Station Specific */
+.sol-station-modal .modal-content {
+    background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+    border: 1px solid #fbbf24;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+}
+
+/* Integrity Bar Fix */
+.sol-health-track {
+    width: 100%;
+    height: 12px; /* Needs explicit height */
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Output Container Encapsulation */
+.sol-output-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* NEW: Flex Container for the buttons */
+.mode-toggle-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+/* Base Mode Button Styles */
+.mode-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: #1f2937;
+    
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    transition: all 0.2s;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* --- INACTIVE STATES --- */
+/* Defined Colors for Inactive state (dim but colored text) */
+.mode-btn.stability { color: #6b7280; border-color: #374151; }
+.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } /* Muted Cyan */
+.mode-btn.production{ color: #7e22ce; border-color: #581c87; } /* Muted Purple */
+
+/* --- ACTIVE STATE OVERRIDES --- */
+/* We use !important on opacity/color to force override the browser's default :disabled styling */
+
+.mode-btn.active,
+.mode-btn.active:disabled {
+    background: #111827 !important;
+    border-color: #fbbf24 !important; /* GLOBAL: Golden Yellow Border for ALL active modes */
+    opacity: 1 !important; /* Fixes the "dim" issue */
+    filter: none !important; /* Fixes any grayscale filters */
+    cursor: default;
+}
+
+/* 1. STABILITY: White Glow */
+.mode-btn.stability.active,
+.mode-btn.stability.active:disabled {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255,255,255,0.8);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* 2. COMMERCE: Cyan Glow */
+.mode-btn.commerce.active,
+.mode-btn.commerce.active:disabled {
+    color: #22d3ee !important;
+    text-shadow: 0 0 8px #0891b2;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+/* 3. PRODUCTION: Purple Glow */
+.mode-btn.production.active,
+.mode-btn.production.active:disabled {
+    color: #d8b4fe !important;
+    text-shadow: 0 0 8px #9333ea;
+    box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
+}
+
+/* === OPTION 1: THE "SOLAR TREASURY" INCOME BAR === */
+.sol-credits-block {
+    /* Base Background with Radial Gradient (Option 1) */
+    background: radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+    /* Honeycomb Pattern (Option 1) */
+    background-image: 
+        radial-gradient(rgba(251, 191, 36, 0.15) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+    background-size: 16px 16px, 100% 100%;
+    
+    border: 1px solid #78350f; /* Dark Amber Border */
+    border-radius: 4px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 70px;
+    
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    margin-bottom: 0.5rem; /* Ensure spacing if stacked */
+}
+
+.sol-credits-block .credits-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Label: Metallic Gold + Wide Tracking (Option 1) */
+.sol-credits-block .credits-info .label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.10rem;
+    font-weight: 700;
+    color: #fbbf24; /* Metallic Gold */
+    letter-spacing: 0.2em; /* Wide tracking */
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    margin-bottom: 2px;
+}
+
+/* Value: Cyan (Retained per instruction F) */
+.sol-credits-block .credits-info .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    color: var(--ot-cyan-base, #08d9d6);
+    text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
+} 
 --- END OF FILE: ./css/screens/services-screen.css ---
 
 --- START OF FILE: ./css/screens/map-screen.css ---
@@ -7827,7 +8035,7 @@ export function renderFinanceScreen(gameState) {
  * @fileoverview This file contains the rendering logic for the Station Services screen.
  * It displays options for refueling and repairing the player's active ship, calculating
  * costs based on the current location and any active player perks.
- * * UPDATED: Includes Sol Station Directorate entry point (Phase 3).
+ * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -7938,18 +8146,17 @@ export function renderServicesScreen(gameState, simulationService) {
     }
 
     // =========================================================================
-    // --- PHASE 3: SOL STATION ENTRY POINT ---
+    // --- PHASE 3: SOL STATION ENTRY POINT (UPDATED) ---
     // =========================================================================
     let solStationButtonHtml = '';
     // Show button if at Sun AND Station is unlocked
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6">
-                <button class="sol-directorate-btn" data-action="open-sol-dashboard">
+                <button class="sol-interface-btn" data-action="open-sol-dashboard">
                     <div class="btn-content">
-                        <span class="btn-icon">☀</span>
                         <div class="btn-text">
-                            <span class="btn-title">SOL DIRECTORATE</span>
+                            <span class="btn-title">ORBITAL INTERFACE</span>
                             <span class="btn-subtitle">Manage Station Systems</span>
                         </div>
                     </div>
@@ -16414,7 +16621,6 @@ export class UISolStationControl {
 
         const modalContainer = document.getElementById('event-modal');
         
-        // FIX: Detect and resolve "Zombie" modal state
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
             modalContainer.classList.remove('modal-hiding');
@@ -16432,10 +16638,10 @@ export class UISolStationControl {
                 footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
             }
         } else {
-            this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
+            this.uiManager.queueModal('event-modal', 'Orbital Interface', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
-                specialClass: 'sol-station-modal',
+                specialClass: 'sol-station-modal', // Applies custom theme
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm'
             });
@@ -16473,15 +16679,14 @@ export class UISolStationControl {
         const amText = root.querySelector('.sol-am-text');
         const amCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]');
         
-        // Hardcoded max for display per requirements (150)
         const amMax = 150; 
-        const amCurrent = Math.min(amMax, stockpile.antimatter); // Clamp visual
+        const amCurrent = Math.min(amMax, stockpile.antimatter); 
         const amFillPct = (amCurrent / amMax) * 100;
         
         if (amBar) amBar.style.width = `${amFillPct}%`;
-        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`; // Integer display
+        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`;
         if (amCollectBtn) {
-             amCollectBtn.disabled = amCurrent < 1; // Can collect if at least 1 unit
+             amCollectBtn.disabled = amCurrent < 1; 
              amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
@@ -16499,11 +16704,15 @@ export class UISolStationControl {
         root.querySelectorAll('.mode-btn').forEach(btn => {
             const mode = btn.dataset.mode;
             const isActive = mode === station.mode;
+            
+            // Remove all active/inactive classes first to be safe
+            btn.classList.remove('active', 'inactive');
+            
             if (isActive) {
                 btn.classList.add('active');
                 btn.disabled = true;
             } else {
-                btn.classList.remove('active');
+                btn.classList.add('inactive'); // Just in case we need it, though 'active' absence is usually enough
                 btn.disabled = false;
             }
         });
@@ -16513,7 +16722,6 @@ export class UISolStationControl {
         // 4. Update Caches
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         
-        // Filter out excluded items (Folded Drives)
         const cacheEntries = Object.entries(station.caches)
             .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
 
@@ -16526,7 +16734,6 @@ export class UISolStationControl {
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commId]?.quantity || 0;
-                // Enable deposit if we have stock AND cache has space
                 const canDonate = playerStock > 0 && cache.current < cache.max;
 
                 if (bar) bar.style.width = `${fillPct}%`;
@@ -16622,7 +16829,7 @@ export class UISolStationControl {
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+                <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
@@ -16635,7 +16842,7 @@ export class UISolStationControl {
                     </div>
                 </div>
 
-                <div class="sol-production-section">
+                <div class="sol-output-container">
                     <div class="section-title">STATION OUTPUT</div>
                     
                     <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
@@ -16663,15 +16870,15 @@ export class UISolStationControl {
                         </div>
                     </div>
 
-                    <div class="sol-credits-block" style="background: rgba(17, 24, 39, 0.8); border: 1px solid #374151; border-radius: 4px; padding: 0.5rem; display: flex; align-items: center; justify-content: space-between; min-height: 70px;">
-                        <div class="credits-info" style="display: flex; flex-direction: column; justify-content: center;">
-                            <div class="label" style="font-size: 0.7rem; color: #6b7280; font-family: 'Orbitron', sans-serif;">GENERATED WEALTH</div>
-                            <div class="value" data-id="stock-credits" style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #60a5fa; text-shadow: 0 0 8px rgba(96, 165, 250, 0.6);">${formatCredits(stockpile.credits)}</div>
+                    <div class="sol-credits-block">
+                        <div class="credits-info">
+                            <div class="label">INCOME</div>
+                            <div class="value" data-id="stock-credits">${formatCredits(stockpile.credits)}</div>
                         </div>
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
                                 data-type="credits"
-                                style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #fbbf24, #d97706); border-color: #fbbf24;"
+                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
                                 ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
@@ -16710,8 +16917,11 @@ export class UISolStationControl {
     _renderModeButton(modeId, currentMode) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
+        // Add specific class for CSS targeting (lower case)
+        const typeClass = modeId.toLowerCase(); 
+        
         return `
-            <button type="button" class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
+            <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive ? 'disabled' : ''}>
@@ -16722,9 +16932,9 @@ export class UISolStationControl {
 
     _getModeDescription(mode) {
         switch (mode) {
-            case 'STABILITY': return "Min Decay. Std Output. <span class='text-green-400'>Low Maint.</span>";
-            case 'COMMERCE': return "Max Credits. <span class='text-orange-400'>High Decay.</span>";
-            case 'PRODUCTION': return "Max AM. <span class='text-red-500'>Extreme Decay.</span>";
+            case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
+            case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
+            case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
             default: return "";
         }
     }
@@ -29072,10 +29282,10 @@ export class ActionClickHandler {
                 break;
 
             case 'sol-set-mode': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const newMode = dataset.mode;
                 if (newMode) {
-                    e.stopPropagation(); // FIX: Prevent event bubbling to map/background elements
+                    e.stopPropagation(); 
                     this.simulationService.solStationService.setMode(newMode);
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 }
@@ -29084,7 +29294,7 @@ export class ActionClickHandler {
 
             // NEW: "Deposit All" Logic
             case 'sol-donate-all': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const commId = dataset.commodityId;
                 const station = this.gameState.solStation;
                 const cache = station.caches[commId];
@@ -29104,7 +29314,8 @@ export class ActionClickHandler {
                 if (donateAmount > 0) {
                     const donateResult = this.simulationService.solStationService.donateToCache(commId, donateAmount);
                     if (donateResult.success) {
-                        this.uiManager.createFloatingText(`+${donateAmount} DONATED`, e.clientX, e.clientY, "#34d399");
+                        // CHANGE: Red floating text '-XXX'
+                        this.uiManager.createFloatingText(`-${donateAmount}`, e.clientX, e.clientY, "#ef4444");
                         this.uiManager.solStationControl.update(this.gameState.getState());
                     } else {
                         this.uiManager.createFloatingText(donateResult.message, e.clientX, e.clientY, "#ef4444");
@@ -29116,12 +29327,32 @@ export class ActionClickHandler {
             }
 
             case 'sol-claim-output': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const type = dataset.type; // 'credits' or 'antimatter'
+                const stockpile = this.gameState.solStation.stockpile;
+                
+                // Prepare floating text content based on what we are about to claim
+                let text = '';
+                let color = '#fff';
+
+                if (type === 'credits') {
+                    const amount = Math.floor(stockpile.credits);
+                    if (amount > 0) {
+                        text = `+${amount}`;
+                        color = '#34d399'; // Green
+                    }
+                } else if (type === 'antimatter') {
+                    const amount = Math.floor(stockpile.antimatter);
+                    if (amount >= 1) {
+                        text = `+${amount} Antimatter`;
+                        color = '#a855f7'; // Purple
+                    }
+                }
+
                 const claimResult = this.simulationService.solStationService.claimStockpile(type);
                 
                 if (claimResult.success) {
-                    this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
+                    this.uiManager.createFloatingText(text || claimResult.message, e.clientX, e.clientY, color);
                     this.uiManager.solStationControl.update(this.gameState.getState());
                 } else {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#9ca3af");
@@ -29136,7 +29367,7 @@ export class ActionClickHandler {
             }
 
             case 'sol-assign-officer': {
-                e.preventDefault(); // FIX: Explicitly prevent form submission/reload
+                e.preventDefault(); 
                 const targetSlot = dataset.slotId;
                 const officerId = dataset.officerId === "null" ? null : dataset.officerId;
                 const success = this.simulationService.solStationService.assignOfficer(targetSlot, officerId);

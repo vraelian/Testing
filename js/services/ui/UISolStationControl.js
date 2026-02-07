@@ -30,7 +30,6 @@ export class UISolStationControl {
 
         const modalContainer = document.getElementById('event-modal');
         
-        // FIX: Detect and resolve "Zombie" modal state
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
             modalContainer.classList.remove('modal-hiding');
@@ -48,10 +47,10 @@ export class UISolStationControl {
                 footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
             }
         } else {
-            this.uiManager.queueModal('event-modal', 'Sol Station Directorate', contentHtml, null, {
+            this.uiManager.queueModal('event-modal', 'Orbital Interface', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
-                specialClass: 'sol-station-modal',
+                specialClass: 'sol-station-modal', // Applies custom theme
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm'
             });
@@ -89,15 +88,14 @@ export class UISolStationControl {
         const amText = root.querySelector('.sol-am-text');
         const amCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]');
         
-        // Hardcoded max for display per requirements (150)
         const amMax = 150; 
-        const amCurrent = Math.min(amMax, stockpile.antimatter); // Clamp visual
+        const amCurrent = Math.min(amMax, stockpile.antimatter); 
         const amFillPct = (amCurrent / amMax) * 100;
         
         if (amBar) amBar.style.width = `${amFillPct}%`;
-        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`; // Integer display
+        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`;
         if (amCollectBtn) {
-             amCollectBtn.disabled = amCurrent < 1; // Can collect if at least 1 unit
+             amCollectBtn.disabled = amCurrent < 1; 
              amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
@@ -115,11 +113,15 @@ export class UISolStationControl {
         root.querySelectorAll('.mode-btn').forEach(btn => {
             const mode = btn.dataset.mode;
             const isActive = mode === station.mode;
+            
+            // Remove all active/inactive classes first to be safe
+            btn.classList.remove('active', 'inactive');
+            
             if (isActive) {
                 btn.classList.add('active');
                 btn.disabled = true;
             } else {
-                btn.classList.remove('active');
+                btn.classList.add('inactive'); // Just in case we need it, though 'active' absence is usually enough
                 btn.disabled = false;
             }
         });
@@ -129,7 +131,6 @@ export class UISolStationControl {
         // 4. Update Caches
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         
-        // Filter out excluded items (Folded Drives)
         const cacheEntries = Object.entries(station.caches)
             .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
 
@@ -142,7 +143,6 @@ export class UISolStationControl {
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commId]?.quantity || 0;
-                // Enable deposit if we have stock AND cache has space
                 const canDonate = playerStock > 0 && cache.current < cache.max;
 
                 if (bar) bar.style.width = `${fillPct}%`;
@@ -238,7 +238,7 @@ export class UISolStationControl {
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+                <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
@@ -251,7 +251,7 @@ export class UISolStationControl {
                     </div>
                 </div>
 
-                <div class="sol-production-section">
+                <div class="sol-output-container">
                     <div class="section-title">STATION OUTPUT</div>
                     
                     <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
@@ -279,15 +279,15 @@ export class UISolStationControl {
                         </div>
                     </div>
 
-                    <div class="sol-credits-block" style="background: rgba(17, 24, 39, 0.8); border: 1px solid #374151; border-radius: 4px; padding: 0.5rem; display: flex; align-items: center; justify-content: space-between; min-height: 70px;">
-                        <div class="credits-info" style="display: flex; flex-direction: column; justify-content: center;">
-                            <div class="label" style="font-size: 0.7rem; color: #6b7280; font-family: 'Orbitron', sans-serif;">GENERATED WEALTH</div>
-                            <div class="value" data-id="stock-credits" style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #60a5fa; text-shadow: 0 0 8px rgba(96, 165, 250, 0.6);">${formatCredits(stockpile.credits)}</div>
+                    <div class="sol-credits-block">
+                        <div class="credits-info">
+                            <div class="label">INCOME</div>
+                            <div class="value" data-id="stock-credits">${formatCredits(stockpile.credits)}</div>
                         </div>
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
                                 data-type="credits"
-                                style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #fbbf24, #d97706); border-color: #fbbf24;"
+                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
                                 ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
@@ -326,8 +326,11 @@ export class UISolStationControl {
     _renderModeButton(modeId, currentMode) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
+        // Add specific class for CSS targeting (lower case)
+        const typeClass = modeId.toLowerCase(); 
+        
         return `
-            <button type="button" class="mode-btn ${activeClass} mode-${modeId.toLowerCase()}" 
+            <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive ? 'disabled' : ''}>
@@ -338,9 +341,9 @@ export class UISolStationControl {
 
     _getModeDescription(mode) {
         switch (mode) {
-            case 'STABILITY': return "Min Decay. Std Output. <span class='text-green-400'>Low Maint.</span>";
-            case 'COMMERCE': return "Max Credits. <span class='text-orange-400'>High Decay.</span>";
-            case 'PRODUCTION': return "Max AM. <span class='text-red-500'>Extreme Decay.</span>";
+            case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
+            case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
+            case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
             default: return "";
         }
     }
