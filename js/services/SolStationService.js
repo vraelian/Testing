@@ -1,6 +1,6 @@
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
-import { OFFICERS } from '../data/officers.js'; // Phase 2: Import Registry
+import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS } from '../data/constants.js';
 
 /**
@@ -15,6 +15,7 @@ const MODES = {
 const BASE_DECAY_RATE = 0.05; // 5% base decay per day
 const BASE_CREDIT_OUTPUT = 1000; // Base credits generated per day at 100% health
 const BASE_AM_OUTPUT = 0.1; // Base antimatter generated per day at 100% health
+const MAX_ANTIMATTER_STOCKPILE = 150; // Cap for Antimatter storage
 
 /**
  * @class SolStationService
@@ -45,7 +46,6 @@ export class SolStationService {
         if (!station.unlocked) return;
 
         const modeConfig = MODES[station.mode];
-        // Phase 2: Retrieve Buffs
         const officerBuffs = this.getOfficerBuffs();
 
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
@@ -86,13 +86,16 @@ export class SolStationService {
             }
 
             // Calculate Outputs with Officer Buffs
-            // Buffs are added to the Mode Multiplier (e.g., 4x + 0.25x = 4.25x)
             const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency);
             const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency;
 
             // Add to Stockpile
             station.stockpile.credits += creditOutput;
-            station.stockpile.antimatter += amOutput;
+
+            // Cap Antimatter
+            if (station.stockpile.antimatter < MAX_ANTIMATTER_STOCKPILE) {
+                station.stockpile.antimatter = Math.min(MAX_ANTIMATTER_STOCKPILE, station.stockpile.antimatter + amOutput);
+            }
 
             // Log operational tick if efficiency is low, to warn player
             if (station.health < 20) {
@@ -104,15 +107,13 @@ export class SolStationService {
     }
 
     /**
-     * Calculates the final entropy multiplier, accounting for Officer buffs (Phase 2).
+     * Calculates the final entropy multiplier, accounting for Officer buffs.
      * @param {number} baseModeMult - The multiplier from the active mode.
      * @returns {number} The final entropy scalar.
      */
     calculateEntropy(baseModeMult) {
         let multiplier = baseModeMult;
         
-        // Phase 2: Apply Officer Mitigation
-        // Entropy buffs are negative values (e.g. -0.05), so we add them.
         const buffs = this.getOfficerBuffs();
         multiplier += buffs.entropy; 
 
@@ -195,8 +196,9 @@ export class SolStationService {
 
     /**
      * Transfers accumulated stockpile to player wallet/cargo.
+     * @param {string} [type] - Optional: 'credits' or 'antimatter'. If omitted, claims both.
      */
-    claimStockpile() {
+    claimStockpile(type = null) {
         const stockpile = this.gameState.solStation.stockpile;
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         
@@ -204,14 +206,14 @@ export class SolStationService {
         let claimedAM = 0;
 
         // Claim Credits
-        if (stockpile.credits > 0) {
+        if ((!type || type === 'credits') && stockpile.credits > 0) {
             this.gameState.player.credits += Math.floor(stockpile.credits);
             claimedCredits = Math.floor(stockpile.credits);
             stockpile.credits = 0;
         }
 
         // Claim Antimatter (Commodity)
-        if (stockpile.antimatter >= 1) {
+        if ((!type || type === 'antimatter') && stockpile.antimatter >= 1) {
             const amountToTake = Math.floor(stockpile.antimatter);
             if (!inventory[COMMODITY_IDS.ANTIMATTER]) {
                 inventory[COMMODITY_IDS.ANTIMATTER] = { quantity: 0, avgCost: 0 };
@@ -222,12 +224,17 @@ export class SolStationService {
         }
 
         if (claimedCredits === 0 && claimedAM === 0) {
-            return { success: false, message: "No full units to claim." };
+            return { success: false, message: "Nothing to collect." };
         }
 
-        this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
+        // this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
         this.gameState.setState({});
-        return { success: true, message: `Claimed ${claimedCredits} Cr & ${claimedAM} AM.` };
+        
+        const msgParts = [];
+        if (claimedCredits > 0) msgParts.push(`${claimedCredits} Cr`);
+        if (claimedAM > 0) msgParts.push(`${claimedAM} AM`);
+        
+        return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
 
     /**
@@ -238,7 +245,6 @@ export class SolStationService {
         const modeConfig = MODES[station.mode];
         const averageFill = station.health / 100;
         
-        // Phase 2: Include Buffs in projections
         const buffs = this.getOfficerBuffs();
 
         let efficiency = averageFill;

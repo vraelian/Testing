@@ -369,7 +369,9 @@ export class ActionClickHandler {
 
             case 'sol-claim-output': {
                 e.preventDefault(); // FIX: Explicitly prevent form submission/reload
-                const claimResult = this.simulationService.solStationService.claimStockpile();
+                const type = dataset.type; // 'credits' or 'antimatter'
+                const claimResult = this.simulationService.solStationService.claimStockpile(type);
+                
                 if (claimResult.success) {
                     this.uiManager.createFloatingText(claimResult.message, e.clientX, e.clientY, "#fbbf24");
                     this.uiManager.solStationControl.update(this.gameState.getState());

@@ -70,33 +70,45 @@ export class UISolStationControl {
         const output = this._calculateProjections(gameState);
         const stockpile = station.stockpile;
 
-        // 1. Update Header Bars & Text
+        // 1. Update Header (Integrity & Entropy)
         const integrityLabel = root.querySelector('.sol-health-bar-label span');
         const integrityBar = root.querySelector('.sol-health-fill');
+        const entropyVal = root.querySelector('[data-id="output-entropy"]');
+        
         if (integrityLabel && integrityBar) {
             integrityLabel.className = this._getHealthColorClass(station.health);
             integrityLabel.textContent = `${station.health}%`;
             integrityBar.style.width = `${station.health}%`;
             integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
         }
-
-        // 2. Update Readouts
-        const creditsVal = root.querySelector('[data-id="output-credits"]');
-        const amVal = root.querySelector('[data-id="output-am"]');
-        const entropyVal = root.querySelector('[data-id="output-entropy"]');
-        const stockCreds = root.querySelector('[data-id="stock-credits"]');
-        const stockAm = root.querySelector('[data-id="stock-am"]');
-        const claimBtn = root.querySelector('button[data-action="sol-claim-output"]');
-
-        if (creditsVal) creditsVal.textContent = formatCredits(output.credits);
-        if (amVal) amVal.textContent = `+${output.antimatter} AM`;
         if (entropyVal) entropyVal.textContent = `${output.entropy.toFixed(2)}x`;
-        if (stockCreds) stockCreds.textContent = formatCredits(stockpile.credits);
-        if (stockAm) stockAm.textContent = `${stockpile.antimatter.toFixed(2)} AM`;
+
+        // 2. Update Production Module (Antimatter & Credits)
+        // 2a. Antimatter
+        const amBar = root.querySelector('.sol-am-fill');
+        const amText = root.querySelector('.sol-am-text');
+        const amCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]');
         
-        if (claimBtn) {
-            const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
-            claimBtn.disabled = !hasStockpile;
+        // Hardcoded max for display per requirements (150)
+        const amMax = 150; 
+        const amCurrent = Math.min(amMax, stockpile.antimatter); // Clamp visual
+        const amFillPct = (amCurrent / amMax) * 100;
+        
+        if (amBar) amBar.style.width = `${amFillPct}%`;
+        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`; // Integer display
+        if (amCollectBtn) {
+             amCollectBtn.disabled = amCurrent < 1; // Can collect if at least 1 unit
+             amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
+        }
+
+        // 2b. Credits
+        const credVal = root.querySelector('[data-id="stock-credits"]');
+        const credCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]');
+
+        if (credVal) credVal.textContent = formatCredits(stockpile.credits);
+        if (credCollectBtn) {
+            credCollectBtn.disabled = stockpile.credits <= 0;
+            credCollectBtn.style.opacity = stockpile.credits > 0 ? '1' : '0.5';
         }
 
         // 3. Update Mode Buttons
@@ -114,7 +126,7 @@ export class UISolStationControl {
         const modeDesc = root.querySelector('.mode-description');
         if (modeDesc) modeDesc.innerHTML = this._getModeDescription(station.mode);
 
-        // 4. Update Caches (NEW LIST LAYOUT)
+        // 4. Update Caches
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         
         // Filter out excluded items (Folded Drives)
@@ -122,7 +134,6 @@ export class UISolStationControl {
             .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
 
         cacheEntries.forEach(([commId, cache]) => {
-            // Target the row by data-comm-id
             const row = root.querySelector(`.sol-cache-row[data-comm-id="${commId}"]`);
             if (row) {
                 const bar = row.querySelector('.sol-progress-fill');
@@ -210,43 +221,80 @@ export class UISolStationControl {
         const station = gameState.solStation;
         const output = this._calculateProjections(gameState);
         const stockpile = station.stockpile;
-        const hasStockpile = stockpile.credits > 0 || stockpile.antimatter > 0;
+        const playerVisualSeed = gameState.player.visualSeed;
+
+        // Assets
+        const amBgImage = AssetService.getCommodityImage("Antimatter", playerVisualSeed);
+        const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
+        const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
+
+        // Caps
+        const amMax = 150;
+        const amCurrent = Math.min(amMax, stockpile.antimatter);
+        const amFillPct = (amCurrent / amMax) * 100;
+        const hasAm = amCurrent >= 1;
+        const hasCredits = stockpile.credits > 0;
 
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
-                <div class="sol-header-panel">
-                    <div class="sol-health-bar-container">
+                
+                <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+                    <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                         </div>
                     </div>
-                    <div class="sol-readout-grid">
-                        <div class="readout-item">
-                            <span class="label">OUTPUT/DAY</span>
-                            <span class="value credits-text" data-id="output-credits">${formatCredits(output.credits)}</span>
-                            <span class="value text-purple-400 text-sm" data-id="output-am">+${output.antimatter} AM</span>
-                        </div>
-                        <div class="readout-item">
-                            <span class="label">STOCKPILE</span>
-                            <span class="value credits-text" data-id="stock-credits">${formatCredits(stockpile.credits)}</span>
-                            <span class="value text-purple-400 text-sm" data-id="stock-am">${stockpile.antimatter.toFixed(2)} AM</span>
-                        </div>
-                        <div class="readout-action">
-                            <button type="button" class="btn btn-sm btn-pulse-gold w-full h-full" 
-                                    data-action="sol-claim-output" 
-                                    ${!hasStockpile ? 'disabled' : ''}>
-                                CLAIM
-                            </button>
-                        </div>
-                        <div class="readout-item">
-                            <span class="label">ENTROPY</span>
-                            <span class="value text-red-400" data-id="output-entropy">${output.entropy.toFixed(2)}x</span>
-                        </div>
+                    <div class="sol-entropy-readout" style="text-align: right;">
+                        <div class="label" style="font-size: 0.7rem; color: #6b7280;">ENTROPY</div>
+                        <div class="value text-red-400" data-id="output-entropy" style="font-size: 1.2rem; font-weight: bold;">${output.entropy.toFixed(2)}x</div>
                     </div>
                 </div>
 
-                <div class="sol-mode-control">
+                <div class="sol-production-section">
+                    <div class="section-title">STATION OUTPUT</div>
+                    
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
+                        <div class="sol-cache-row-bg" style="${amBgStyle}"></div>
+                        
+                        <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                            <div class="sol-row-name" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">ANTIMATTER</div>
+                            
+                            <div class="sol-row-track-container" style="width: 100%;">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
+                                    <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCurrent)} / ${amMax}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
+                            <button type="button" class="btn-deposit-all" 
+                                    data-action="sol-claim-output"
+                                    data-type="antimatter"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
+                                    ${!hasAm ? 'disabled' : ''}>
+                                COLLECT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sol-credits-block" style="background: rgba(17, 24, 39, 0.8); border: 1px solid #374151; border-radius: 4px; padding: 0.5rem; display: flex; align-items: center; justify-content: space-between; min-height: 70px;">
+                        <div class="credits-info" style="display: flex; flex-direction: column; justify-content: center;">
+                            <div class="label" style="font-size: 0.7rem; color: #6b7280; font-family: 'Orbitron', sans-serif;">GENERATED WEALTH</div>
+                            <div class="value" data-id="stock-credits" style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #60a5fa; text-shadow: 0 0 8px rgba(96, 165, 250, 0.6);">${formatCredits(stockpile.credits)}</div>
+                        </div>
+                        <button type="button" class="btn-deposit-all" 
+                                data-action="sol-claim-output"
+                                data-type="credits"
+                                style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); background: linear-gradient(to bottom, #fbbf24, #d97706); border-color: #fbbf24;"
+                                ${!hasCredits ? 'disabled' : ''}>
+                            COLLECT
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sol-mode-control" style="margin-top: 0.75rem;">
                     <div class="section-title">OPERATIONAL MODE</div>
                     <div class="mode-toggle-group">
                         ${this._renderModeButton('STABILITY', station.mode)}
@@ -297,23 +345,13 @@ export class UISolStationControl {
         }
     }
 
-    /**
-     * Renders the new "Collapsed Commodity Style" list.
-     * UPDATED: 
-     * - Filters out Folded Drives (Tier 7)
-     * - Restructured for 2-column layout (Name/Bar left, Button right)
-     * - Opaque Artwork with text outlines
-     * - FIX: Added white-space: nowrap and overflow: visible to prevent text truncation
-     * - FIX: Enhanced text contrast with heavy drop shadow + outline
-     * @param {object} gameState 
-     */
     _renderCacheList(gameState) {
         const caches = gameState.solStation.caches;
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const playerVisualSeed = gameState.player.visualSeed;
 
         return Object.entries(caches)
-            .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES) // Filter out Folded Drives
+            .filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES) 
             .map(([commodityId, cache]) => {
                 const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
                 if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
@@ -323,12 +361,8 @@ export class UISolStationControl {
                 const canDonate = playerStock > 0 && cache.current < cache.max;
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
-                // Get background art
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
-                // Force opacity: 1 and remove filters to reveal artwork
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
-                
-                // High contrast text shadow (Outline effect + Drop Shadow)
                 const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
                 return `
