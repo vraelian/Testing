@@ -6,6 +6,7 @@
 
 export const DEFAULT_VARIANT_COUNT = 5;
 export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
+export const DEFAULT_LOCATION_VARIANT_COUNT = 4;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -72,4 +73,14 @@ export const COMMODITY_VARIANT_COUNTS = {
     'Sentient AI Cores': 1,   // File: Sentient_AI_Cores_A.png
     'Antimatter': 1,          // File: Antimatter_A.png
     'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
+};
+
+/**
+ * A map of Location file prefixes to their specific variant counts.
+ * Key: The prefix used in filenames (e.g., "sol", "mercury", "belt").
+ * Value: Number of available images.
+ * Defaults to DEFAULT_LOCATION_VARIANT_COUNT (4) if not listed.
+ */
+export const LOCATION_VARIANT_COUNTS = {
+    // Example: 'sol': 6,
 };

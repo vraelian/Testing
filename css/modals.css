@@ -129,6 +129,44 @@
     box-shadow: 0 0 8px var(--progress-glow-color, #fff), 0 0 12px var(--progress-glow-color, #fff);
 }
 
+/* --- [[PHASE 2]] TRAVEL CINEMATIC STYLES --- */
+
+/* Hide the legacy canvas */
+#travel-canvas {
+    display: none !important;
+}
+
+/* Container for the cinematic image */
+#travel-image-wrapper {
+    width: 100%;
+    height: 350px; /* Cinematic aspect ratio area */
+    overflow: hidden;
+    position: relative;
+    background-color: #000;
+    border-left: 1px solid #374151;
+    border-right: 1px solid #374151;
+}
+
+/* The actual image element */
+#travel-background-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0; /* Starts hidden, fades in via JS */
+    transition: opacity 0.5s ease-in-out;
+    transform-origin: center center;
+}
+
+/* The Zoom Animation Class (Ken Burns Effect) */
+.travel-zoom-active {
+    animation: travelZoom 4s ease-out forwards;
+}
+
+@keyframes travelZoom {
+    0% { transform: scale(1.0); }
+    100% { transform: scale(1.15); } /* Subtle zoom in */
+}
+
 
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal .modal-backdrop:not(.hidden) .modal-content {

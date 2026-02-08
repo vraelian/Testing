@@ -1,13 +1,12 @@
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
+import { AssetService } from '../AssetService.js';
 
 export class TravelAnimationService {
     constructor(isMobile) {
         this.isMobile = isMobile;
         this.modal = document.getElementById('travel-animation-modal');
         this.gameContainer = document.getElementById('game-container');
-        this.canvas = document.getElementById('travel-canvas');
-        this.ctx = this.canvas.getContext('2d');
         this.statusText = document.getElementById('travel-status-text');
         this.arrivalLore = document.getElementById('travel-arrival-lore');
         this.progressBar = document.getElementById('travel-progress-bar');
@@ -17,17 +16,44 @@ export class TravelAnimationService {
         this.hullDamageText = document.getElementById('travel-hull-damage');
         this.confirmButton = document.getElementById('travel-confirm-button');
         
+        // Canvas (Legacy) - Kept in DOM check but unused logic-wise
+        this.canvas = document.getElementById('travel-canvas');
+        
         this.animationFrame = null;
-        this.starLayers = [];
-        this.engineParticles = [];
-        this.celestialObjects = [];
+
+        // Ensure the DOM structure for the Cinematic Image view exists
+        this._ensureDomStructure();
+        
+        this.imageElement = document.getElementById('travel-background-image');
+        this.imageWrapper = document.getElementById('travel-image-wrapper');
+    }
+
+    /**
+     * Injects the Cinematic Image DOM elements if they are missing from index.html.
+     * This allows us to upgrade the visuals without modifying the monolithic HTML file directly.
+     */
+    _ensureDomStructure() {
+        if (!document.getElementById('travel-image-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'travel-image-wrapper';
+            
+            const img = document.createElement('img');
+            img.id = 'travel-background-image';
+            img.alt = 'Destination';
+            
+            wrapper.appendChild(img);
+
+            // Insert after the header panel, replacing/hiding the canvas visually
+            const header = document.getElementById('travel-header-panel');
+            if (header && header.nextSibling) {
+                header.parentNode.insertBefore(wrapper, header.nextSibling);
+            }
+        }
     }
 
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
-        // this.gameContainer.classList.add('fade-out');
-
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -39,10 +65,10 @@ export class TravelAnimationService {
         this.progressBar.style.setProperty('--progress-glow-color', theme.borderColor);
 
         this._setupInitialState(to, travelInfo);
-        this._setupAnimationElements(from, to);
+        this._startCinematicSequence(to);
 
         let startTime = null;
-        const duration = 2500;
+        const duration = 2500; // Duration of travel sequence
 
         const animate = (currentTime) => {
             if (!startTime) startTime = currentTime;
@@ -55,7 +81,7 @@ export class TravelAnimationService {
                 progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
             }
 
-            this._draw(progress, from, to);
+            // Only updating the progress bar width now; no canvas drawing
             this.progressBar.style.width = `${progress * 100}%`;
 
             if (progress < 1) {
@@ -79,13 +105,16 @@ export class TravelAnimationService {
 
             // A short delay to ensure the market screen is rendered before the fade-in starts.
             setTimeout(() => {
-                // this.gameContainer.classList.remove('fade-out');
                 this.gameContainer.classList.add('fade-in');
             }, 50); // Small buffer
 
             setTimeout(() => {
                 this.modal.classList.add('hidden');
                 this.modal.classList.remove('modal-hiding', 'dismiss-disabled');
+                
+                // Cleanup Cinematic State
+                this.imageElement.classList.remove('travel-zoom-active');
+                this.imageElement.style.opacity = 0;
             }, 1000); // 1s to match CSS transition
         };
     }
@@ -116,7 +145,6 @@ export class TravelAnimationService {
         return `linear-gradient(to right, ${lightenedColors.join(', ')})`;
     }
 
-
     _setupInitialState(to, travelInfo) {
         this.statusText.textContent = `Traveling to ${to.name}...`;
         this.arrivalLore.textContent = '';
@@ -128,143 +156,28 @@ export class TravelAnimationService {
         this.progressBar.style.width = '0%';
     }
 
-    _setupAnimationElements(from, to) {
-        this.canvas.width = this.canvas.clientWidth;
-        this.canvas.height = this.canvas.clientHeight;
-        this.starLayers = [
-            this._createStarLayer(80, 0.5, 0.8),
-            this._createStarLayer(50, 1.2, 1.2),
-            this._createStarLayer(20, 1.8, 2.0)
-        ];
-        this.engineParticles = [];
-
-        this.backgroundGradient = this._getBackgroundGradient(from, to);
-        this.celestialObjects = this._getCelestialObjects(from.id, to.id);
-    }
-
-    _createStarLayer(count, minSpeed, maxSpeed) {
-        let stars = [];
-        for (let i = 0; i < count; i++) {
-            stars.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                radius: Math.random() * 1.5,
-                speed: minSpeed + Math.random() * (maxSpeed - minSpeed),
-                alpha: 0.5 + Math.random() * 0.5
-            });
-        }
-        return stars;
-    }
-
-    _getBackgroundGradient(from, to) {
-        const getZone = (location) => {
-            for (const zoneName in DB.TRAVEL_VISUALS.zones) {
-                if (DB.TRAVEL_VISUALS.zones[zoneName].locations.includes(location.id)) {
-                    return DB.TRAVEL_VISUALS.zones[zoneName];
-                }
-            }
-            return DB.TRAVEL_VISUALS.zones.inner_sphere; // Default fallback
-        };
-        const toZone = getZone(to);
+    /**
+     * Initializes the static artwork and triggers the zoom effect.
+     * Replaces the old _setupAnimationElements method.
+     */
+    _startCinematicSequence(to) {
+        // 1. Fetch the random variant image for this location
+        // Example: 'loc_mars' -> 'assets/locations/mars_C.jpeg'
+        const imagePath = AssetService.getLocationImage(to.id);
         
-        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-        gradient.addColorStop(0, toZone.gradient[0]);
-        gradient.addColorStop(1, toZone.gradient[1]);
-        return gradient;
-    }
-
-    _getCelestialObjects(fromId, toId) {
-        const routeKey = `${fromId}_to_${toId}`;
-        const objects = DB.TRAVEL_VISUALS.objects[routeKey] || [];
-        return objects.map(obj => ({
-            ...obj,
-            x: this.canvas.width + Math.random() * 200,
-            y: obj.position.y * this.canvas.height,
-        }));
-    }
-
-    _draw(progress, from, to) {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = this.backgroundGradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        this.starLayers.forEach((layer, index) => {
-            const speedMultiplier = progress < 0.8 ? 1 : 1 - ((progress - 0.8) / 0.2);
+        if (imagePath) {
+            this.imageElement.src = imagePath;
             
-            layer.forEach(star => {
-                star.x -= star.speed * speedMultiplier;
-                if (star.x < 0) star.x = this.canvas.width;
-                this.ctx.beginPath();
-                this.ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                this.ctx.globalAlpha = star.alpha;
-                this.ctx.fillStyle = '#FFF';
-                this.ctx.fill();
-            });
-
-            if (index === 1) {
-                this.celestialObjects.forEach(obj => {
-                    obj.x -= obj.speed * speedMultiplier;
-                    this.ctx.font = `${40 * (obj.scale || 1)}px sans-serif`;
-                    this.ctx.globalAlpha = 0.5;
-                    this.ctx.fillText(obj.emoji, obj.x, obj.y);
-                });
-            }
-        });
-        this.ctx.globalAlpha = 1.0;
-
-        const padding = 60;
-        const startX = padding;
-        const endX = this.canvas.width - padding;
-        const y = this.canvas.height / 2;
-        this.ctx.font = '42px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(DB.LOCATION_VISUALS[from.id] || '❓', startX, y);
-        this.ctx.fillText(DB.LOCATION_VISUALS[to.id] || '❓', endX, y);
-        
-        const shipX = startX + (endX - startX) * progress;
-        this.ctx.save();
-        this.ctx.translate(shipX, y);
-        this.ctx.font = '17px sans-serif';
-        this.ctx.fillText('🚀', 0, 0);
-        this.ctx.restore();
-
-        this._updateEngineParticles(shipX, y);
-        this._drawEngineParticles();
-    }
-    
-    _updateEngineParticles(shipX, shipY) {
-        if(Math.random() > 0.5) {
-            this.engineParticles.push({
-                x: shipX - 15,
-                y: shipY + (Math.random() - 0.5) * 8,
-                life: 1,
-                speedX: -2 - Math.random() * 2,
-                speedY: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 2 + 1
-            });
+            // 2. Trigger Fade In and Zoom
+            // Small delay to ensure the src is applied before opacity transition starts
+            setTimeout(() => {
+                this.imageElement.style.opacity = 1;
+                this.imageElement.classList.add('travel-zoom-active');
+            }, 50);
+        } else {
+            // Fallback if no image found (shouldn't happen with correct config)
+            console.warn(`[TravelAnimation] No image found for ${to.id}`);
         }
-        
-        for (let i = this.engineParticles.length - 1; i >= 0; i--) {
-            const p = this.engineParticles[i];
-            p.x += p.speedX;
-            p.y += p.speedY;
-            p.life -= 0.05;
-            if (p.life <= 0) {
-                this.engineParticles.splice(i, 1);
-            }
-        }
-    }
-    
-    _drawEngineParticles() {
-        this.engineParticles.forEach(p => {
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.globalAlpha = p.life;
-            this.ctx.fillStyle = `rgba(255, 220, 180, ${p.life})`;
-            this.ctx.fill();
-        });
-        this.ctx.globalAlpha = 1.0;
     }
 
     _onArrival(to, travelInfo, totalHullDamagePercent, finalCallback) {

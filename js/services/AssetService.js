@@ -10,7 +10,9 @@ import {
     DEFAULT_VARIANT_COUNT, 
     SHIP_VARIANT_COUNTS, 
     DEFAULT_COMMODITY_VARIANT_COUNT, 
-    COMMODITY_VARIANT_COUNTS 
+    COMMODITY_VARIANT_COUNTS,
+    DEFAULT_LOCATION_VARIANT_COUNT,
+    LOCATION_VARIANT_COUNTS
 } from '../data/assets_config.js';
 import { AssetStorageService } from './AssetStorageService.js';
 
@@ -20,6 +22,27 @@ export class AssetService {
     
     // In-Memory Cache: Maps FilePath -> BlobURL (e.g. "blob:http://localhost/...")
     static blobCache = new Map();
+
+    /**
+     * Map of Location IDs to the specific filename prefixes requested by design.
+     * Ensures internal IDs (e.g. 'loc_sun') map to file system names (e.g. 'sol').
+     */
+    static LOCATION_FILENAME_MAP = {
+        'loc_sun': 'sol',
+        'loc_mercury': 'mercury',
+        'loc_venus': 'venus',
+        'loc_earth': 'earth',
+        'loc_luna': 'luna',
+        'loc_mars': 'mars',
+        'loc_belt': 'belt',
+        'loc_exchange': 'exchange',
+        'loc_jupiter': 'jupiter',
+        'loc_saturn': 'saturn',
+        'loc_uranus': 'uranus',
+        'loc_neptune': 'neptune',
+        'loc_kepler': 'kepler',
+        'loc_pluto': 'pluto'
+    };
 
     /**
      * Initializes the storage backend.
@@ -71,6 +94,30 @@ export class AssetService {
         const variantLetter = String.fromCharCode(65 + variantIndex);
         const fileNamePrefix = commodityName.replace(/ /g, '_');
         return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
+    }
+
+    static _generateLocationPath(locationId) {
+        // 1. Resolve filename prefix
+        // Try the map first, fallback to stripping 'loc_' if not found
+        let filePrefix = this.LOCATION_FILENAME_MAP[locationId];
+        if (!filePrefix) {
+            // Safe fallback if an ID isn't in the explicit map
+            filePrefix = locationId.replace('loc_', '');
+        }
+
+        // 2. Determine Variant Count for this specific location (if overridden)
+        const variantCount = LOCATION_VARIANT_COUNTS[filePrefix] !== undefined
+            ? LOCATION_VARIANT_COUNTS[filePrefix]
+            : DEFAULT_LOCATION_VARIANT_COUNT;
+            
+        // 3. Randomize Variant 
+        // Travel images are random each time, not seeded by player ID
+        const variantIndex = Math.floor(Math.random() * variantCount);
+        const variantLetter = String.fromCharCode(65 + variantIndex); // A, B, C...
+
+        // 4. Construct Path
+        // Pattern: assets/locations/[prefix]_[Letter].jpeg
+        return `assets/locations/${filePrefix}_${variantLetter}.jpeg`;
     }
 
     // --- Public API ---
@@ -127,6 +174,20 @@ export class AssetService {
     }
 
     /**
+     * Generates a random target image URL for a location.
+     * Used for the Travel Animation sequence.
+     */
+    static getLocationImage(locationId) {
+        const path = this._generateLocationPath(locationId);
+        if (!path) return '';
+
+        if (this.blobCache.has(path)) {
+            return this.blobCache.get(path);
+        }
+        return path;
+    }
+
+    /**
      * Hydrates (Fetches, Stores, and Caches) a list of assets.
      * This replaces the old "new Image()" preloading.
      * @param {Array<{type: 'ship'|'commodity'|'location', id: string, seed?: number, path?: string}>} assetRequests 
@@ -143,8 +204,16 @@ export class AssetService {
                 const name = DB.COMMODITIES.find(c => c.id === req.id)?.name;
                 if (name) path = this._generateCommodityPath(name, req.seed || 0);
             } else if (req.type === 'location') {
-                // Future-proofing: If DB.MARKETS has image properties
-                if (req.path) path = req.path; 
+                // If a direct path is provided (legacy), use it
+                if (req.path) {
+                    path = req.path;
+                } 
+                // If an ID is provided, generate a random path (New System)
+                // Note: We might want to hydrate ALL variants for a location to prevent pop-in, 
+                // but for now we just hydrate the one requested if the caller specifies logic.
+                else if (req.id) {
+                    path = this._generateLocationPath(req.id);
+                }
             }
             if (path) uniquePaths.add(path);
         });
