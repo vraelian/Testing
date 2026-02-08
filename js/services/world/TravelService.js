@@ -143,6 +143,13 @@ export class TravelService {
     initiateTravel(locationId, eventMods = {}) {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
+        
+        // --- SOL STATION: STOP SIMULATION IF DEPARTING ---
+        if (fromId === LOCATION_IDS.SUN && this.timeService.solStationService) {
+            this.timeService.solStationService.stopRealTimeSimulation();
+        }
+        // -------------------------------------------------
+
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
         this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
 
@@ -340,6 +347,12 @@ export class TravelService {
         });
 
         const finalCallback = () => {
+            // --- SOL STATION: START SIMULATION IF ARRIVING ---
+            if (locationId === LOCATION_IDS.SUN && this.timeService.solStationService) {
+                this.timeService.solStationService.startRealTimeSimulation();
+            }
+            // -------------------------------------------------
+
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {

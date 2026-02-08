@@ -7,9 +7,8 @@ import { AssetService } from '../AssetService.js';
 
 /**
  * @class UISolStationControl
- * @description Domain Controller responsible for the Sol Station Dashboard,
- * managing the Mode Lever, Cache List, and Officer Directorate UI.
- * Now supports Real-Time operation ticks while visible.
+ * @description Domain Controller responsible for the Sol Station Dashboard.
+ * Visualizes the SolStationService state in real-time.
  */
 export class UISolStationControl {
     /**
@@ -18,7 +17,6 @@ export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
         this.refreshInterval = null;
-        this.lastTickTime = 0; // Tracks Delta Time
     }
 
     /**
@@ -53,19 +51,16 @@ export class UISolStationControl {
                 };
             }
         } else {
-            // [UPDATE] Header title removed (passed as empty string) per user request
             this.uiManager.queueModal('event-modal', '', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
-                specialClass: 'sol-station-modal', // Applies custom theme
+                specialClass: 'sol-station-modal',
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
-                // We hook the modal close in UIModalEngine usually, but as a backup, 
-                // the loop self-terminates if the DOM is gone.
             });
         }
         
-        // Begin the real-time simulation tick
+        // Begin the visualization loop
         this._startRefreshLoop();
     }
 
@@ -89,14 +84,12 @@ export class UISolStationControl {
         if (integrityLabel && integrityBar) {
             integrityLabel.className = this._getHealthColorClass(station.health);
             integrityLabel.textContent = `${station.health}%`;
-            // Force transition by ensuring width is set
             integrityBar.style.width = `${station.health}%`;
             integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
         }
         if (entropyVal) entropyVal.textContent = `${output.entropy.toFixed(2)}x`;
 
         // 2. Update Production Module (Antimatter & Credits)
-        // 2a. Antimatter
         const amBar = root.querySelector('.sol-am-fill');
         const amText = root.querySelector('.sol-am-text');
         const amCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]');
@@ -112,7 +105,6 @@ export class UISolStationControl {
              amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
-        // 2b. Credits
         const credVal = root.querySelector('[data-id="stock-credits"]');
         const credCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]');
 
@@ -127,14 +119,13 @@ export class UISolStationControl {
             const mode = btn.dataset.mode;
             const isActive = mode === station.mode;
             
-            // Remove all active/inactive classes first to be safe
             btn.classList.remove('active', 'inactive');
             
             if (isActive) {
                 btn.classList.add('active');
                 btn.disabled = true;
             } else {
-                btn.classList.add('inactive'); // Just in case we need it, though 'active' absence is usually enough
+                btn.classList.add('inactive'); 
                 btn.disabled = false;
             }
         });
@@ -172,43 +163,25 @@ export class UISolStationControl {
     _startRefreshLoop() {
         if (this.refreshInterval) clearInterval(this.refreshInterval);
         
-        // Initialize Delta Time tracker
-        this.lastTickTime = performance.now();
-
-        // Tick every 3 seconds (The 3-Second Glide)
+        // Rapid 100ms update for smooth visualization
+        // (Note: The actual simulation heartbeat is in SolStationService at 1000ms)
         this.refreshInterval = setInterval(() => {
             const root = document.getElementById('sol-dashboard-root');
             
-            // Self-cleaning: If modal is closed or removed, stop the loop
             if (!root || !document.body.contains(root) || root.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }
 
-            // Delta Time Calculation
-            const now = performance.now();
-            const deltaTime = (now - this.lastTickTime) / 1000; // Convert ms to seconds
-            this.lastTickTime = now;
-
-            // Trigger Real-Time Simulation with exact time elapsed
+            // Retrieve live state directly from service to catch micro-updates
             const simService = this.uiManager.simulationService;
-            let liveGameState = null;
+            const liveGameState = simService && simService.solStationService ? simService.solStationService.gameState : this.uiManager.lastKnownState;
 
-            if (simService && simService.solStationService) {
-                simService.solStationService.processRealTimeTick(deltaTime);
-                // CRITICAL FIX: Retrieve the LIVE state directly from the service.
-                // UIManager.lastKnownState is a snapshot and will be stale during micro-ticks.
-                liveGameState = simService.solStationService.gameState; 
+            if (liveGameState) {
+                this.update(liveGameState);
             }
 
-            // Fallback to manager state if service retrieval fails, but prefer live state.
-            const stateToRender = liveGameState || this.uiManager.lastKnownState;
-
-            if (stateToRender) {
-                this.update(stateToRender);
-            }
-
-        }, 3000); // 3000ms Heartbeat
+        }, 100); 
     }
 
     _stopRefreshLoop() {
@@ -222,7 +195,7 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
 
-        // Roster pauses the real-time view
+        // Roster pauses the visualization view (not the sim)
         this._stopRefreshLoop();
 
         const roster = gameState.solStation.roster || [];
@@ -288,12 +261,10 @@ export class UISolStationControl {
         const stockpile = station.stockpile;
         const playerVisualSeed = gameState.player.visualSeed;
 
-        // Assets
         const amBgImage = AssetService.getCommodityImage("Antimatter", playerVisualSeed);
         const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
-        // Caps
         const amMax = 150;
         const amCurrent = Math.min(amMax, stockpile.antimatter);
         const amFillPct = (amCurrent / amMax) * 100;
@@ -391,7 +362,6 @@ export class UISolStationControl {
     _renderModeButton(modeId, currentMode) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
-        // Add specific class for CSS targeting (lower case)
         const typeClass = modeId.toLowerCase(); 
         
         return `
@@ -499,35 +469,11 @@ export class UISolStationControl {
     }
 
     _calculateProjections(gameState) {
-        const station = gameState.solStation;
-        const MODES = {
-            STABILITY: { entropyMult: 1, amMult: 1, creditMult: 1 },
-            COMMERCE: { entropyMult: 3, amMult: 1, creditMult: 4 },
-            PRODUCTION: { entropyMult: 4, amMult: 4, creditMult: 1 }
-        };
-        const BASE_CREDIT_OUTPUT = 1000;
-        const BASE_AM_OUTPUT = 0.1;
-
-        const modeConfig = MODES[station.mode];
-        let buffTotals = { entropy: 0, creditMult: 0, amMult: 0 };
-        
-        station.officers.forEach(slot => {
-            if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
-                const b = OFFICERS[slot.assignedOfficerId].buffs;
-                buffTotals.entropy += b.entropy;
-                buffTotals.creditMult += b.creditMult;
-                buffTotals.amMult += b.amMult;
-            }
-        });
-
-        let entropy = Math.max(0.1, modeConfig.entropyMult + buffTotals.entropy);
-        let efficiency = station.health / 100;
-        if (efficiency < 0.5) efficiency = Math.pow(efficiency, 2);
-
-        const credits = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + buffTotals.creditMult) * efficiency);
-        const antimatter = (BASE_AM_OUTPUT * (modeConfig.amMult + buffTotals.amMult) * efficiency).toFixed(2);
-
-        return { credits, antimatter, entropy };
+        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+            return this.uiManager.simulationService.solStationService.getProjectedOutput();
+        }
+        // Fallback if service not ready (should rarely happen)
+        return { credits: 0, antimatter: 0, entropy: 1 };
     }
 
     _getHealthColorClass(health) {

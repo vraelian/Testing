@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js'; // Added LOCATION_IDS
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -17,7 +17,7 @@ import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { RandomEventService } from './RandomEventService.js'; 
 import { SolStationService } from './SolStationService.js'; 
-import { OFFICERS } from '../data/officers.js'; // IMPORT ADDED
+import { OFFICERS } from '../data/officers.js'; 
 
 /**
  * @class SimulationService
@@ -35,8 +35,8 @@ export class SimulationService {
         this.uiManager = uiManager;
         this.logger = logger;
         this.newsTickerService = newsTickerService; 
-        this.tutorialService = null; // Injected post-instantiation.
-        this.missionService = null;  // Injected post-instantiation.
+        this.tutorialService = null; 
+        this.missionService = null;  
         
         this.intelService = null; 
 
@@ -66,11 +66,16 @@ export class SimulationService {
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
         
-        // --- [[FIX]] Inject self into UIManager to allow UI Controls to trigger active ticks ---
+        // Inject self into UIManager to allow UI Controls to trigger active ticks
         this.uiManager.setSimulationService(this);
-        // -------------------------------------------------------------------------------------
-
+        
         this.newsTickerService.setServices(this, this.marketService);
+
+        // --- INITIALIZATION CHECK ---
+        // If the game loads and we are already at Sol Station, start the heartbeat.
+        if (this.gameState.currentLocationId === LOCATION_IDS.SUN) {
+            this.solStationService.startRealTimeSimulation();
+        }
     }
 
     /**
