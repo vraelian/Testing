@@ -69,8 +69,10 @@ export class SolStationService {
             const deltaTime = (now - this.lastTickTime) / 1000; // Seconds since last tick
             this.lastTickTime = now;
             
-            // Clamp delta to prevent massive jumps if tab was inactive
-            const safeDelta = Math.min(deltaTime, 5); 
+            // Fix: Clamp delta to 1 day (86400s) instead of 5s.
+            // This allows the game to "catch up" if the tab was backgrounded/throttled,
+            // while preventing massive jumps from system hibernation.
+            const safeDelta = Math.min(deltaTime, 86400); 
             
             this.processRealTimeTick(safeDelta);
         }, 1000);
@@ -138,7 +140,7 @@ export class SolStationService {
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        // CRITICAL FIX: Filter out non-maintenance items (like Folded Drives or Antimatter)
+        // Filter out non-maintenance items (like Folded Drives or Antimatter)
         // Checks for specific ID exclusion AND ensuring max > 0 to prevent division by zero.
         const validCacheEntries = Object.entries(station.caches).filter(([id, cache]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache.max > 0;
@@ -169,10 +171,16 @@ export class SolStationService {
 
         // 4. Generate Output (If Health > 0)
         if (station.health > 0) {
-            // Efficiency Logic: < 50% Health = Squared drop
+            // Efficiency Logic:
+            // Fix: Use a continuous Bezier curve below 50% to prevent the "Efficiency Cliff".
+            // Old: efficiency = averageFill^2 (at 0.49 -> 0.24, huge drop from 0.50)
+            // New: efficiency = 2 * (averageFill^2)
+            // At 0.50 -> 2 * 0.25 = 0.50 (Smooth connection)
+            // At 0.40 -> 2 * 0.16 = 0.32
+            // At 0.25 -> 2 * 0.0625 = 0.125
             let efficiency = averageFill;
             if (averageFill < 0.5) {
-                efficiency = Math.pow(averageFill, 2); 
+                efficiency = 2 * Math.pow(averageFill, 2); 
             }
 
             // Calculate Base Outputs (Per Second * Seconds Passed)
@@ -262,7 +270,7 @@ export class SolStationService {
         // Recalculate Health immediately using filtered logic
         let totalFillRatio = 0;
         let activeCaches = 0;
-        // CRITICAL FIX: Filter non-maintenance items in donation recalculation too
+        // Filter non-maintenance items in donation recalculation too
         const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
         });
@@ -331,7 +339,7 @@ export class SolStationService {
         const buffs = this.getOfficerBuffs();
 
         let efficiency = averageFill;
-        if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
+        if (averageFill < 0.5) efficiency = 2 * Math.pow(averageFill, 2);
 
         // Daily Estimate = RatePerSec * 120 * Efficiency * Buffs
         const credits = Math.floor(modeConfig.creditsPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
