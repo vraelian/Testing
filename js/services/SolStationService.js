@@ -131,26 +131,30 @@ export class SolStationService {
         const officerBuffs = this.getOfficerBuffs();
         
         // 1. Calculate Entropy
-        // Entropy scales with *Days Passed* specifically, to keep decay meaningful over long periods
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
 
         // 2. Decay Caches
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        for (const [commodityId, cache] of Object.entries(station.caches)) {
+        // [FIX] Filter out non-maintenance items (like Folded Drives) 
+        // to prevent division by zero or NaN health which breaks generation.
+        const validCacheEntries = Object.entries(station.caches).filter(([id, cache]) => {
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && cache.max > 0;
+        });
+
+        for (const [commodityId, cache] of validCacheEntries) {
             // Rate is "Percentage of Total Stock" per second
-            // Decay = Max Capacity * RatePerSec * Seconds * Entropy Scalar
             const baseDecay = cache.max * modeConfig.decayPerSec * seconds;
-            
-            // Entropy accelerates decay
             const actualDecay = baseDecay * entropy;
 
             if (cache.current > 0) {
                 cache.current = Math.max(0, cache.current - actualDecay);
             }
 
-            totalFillRatio += (cache.current / cache.max);
+            // Safe division check
+            const fillRatio = cache.max > 0 ? (cache.current / cache.max) : 0;
+            totalFillRatio += fillRatio;
             activeCaches++;
         }
 
@@ -160,58 +164,42 @@ export class SolStationService {
 
         // 4. Generate Output (If Health > 0)
         if (station.health > 0) {
-            // Efficiency Logic: < 50% Health = Squared drop
             let efficiency = averageFill;
             if (averageFill < 0.5) {
                 efficiency = Math.pow(averageFill, 2); 
             }
 
-            // Calculate Base Outputs (Per Second * Seconds Passed)
             let creditGen = modeConfig.creditsPerSec * seconds;
             let amGen = modeConfig.amPerSec * seconds;
 
-            // Apply Officer Buffs (Additively)
-            // Example: +10% buff = 1.1 multiplier
             creditGen *= (1 + officerBuffs.creditMult);
             amGen *= (1 + officerBuffs.amMult);
 
-            // Apply Efficiency
             creditGen *= efficiency;
             amGen *= efficiency;
 
-            // Apply to Stockpile
             station.stockpile.credits += creditGen;
             
             if (station.stockpile.antimatter < MAX_ANTIMATTER_STOCKPILE) {
                 station.stockpile.antimatter = Math.min(MAX_ANTIMATTER_STOCKPILE, station.stockpile.antimatter + amGen);
             }
 
-            // Log operational warnings only on significant time steps (full days)
             if (daysEquivalent >= 1 && station.health < 20) {
                 this.logger.info.system('SolStation', this.gameState.day, 'CRITICAL', `Station health critical (${station.health}%). Efficiency plummeting.`);
             }
         }
     }
 
-    /**
-     * Calculates the final entropy multiplier.
-     * @param {number} baseModeMult 
-     */
     calculateEntropy(baseModeMult) {
         let multiplier = baseModeMult;
         const buffs = this.getOfficerBuffs();
-        multiplier += buffs.entropy; // Officer buffs are usually negative here (reducing entropy)
+        multiplier += buffs.entropy; 
         return Math.max(0.1, multiplier);
     }
 
-    /**
-     * Helper to aggregate buffs from all assigned officers.
-     * @returns {object} { entropy, creditMult, amMult }
-     */
     getOfficerBuffs() {
         const station = this.gameState.solStation;
         let total = { entropy: 0, creditMult: 0, amMult: 0 };
-        
         station.officers.forEach(slot => {
             if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
                 const b = OFFICERS[slot.assignedOfficerId].buffs;
@@ -220,7 +208,6 @@ export class SolStationService {
                 total.amMult += b.amMult;
             }
         });
-
         return total;
     }
 
@@ -250,10 +237,14 @@ export class SolStationService {
         inventory[commodityId].quantity -= quantity;
         cache.current += quantity;
 
-        // Recalculate Health immediately
+        // Recalculate Health immediately using filtered logic
         let totalFillRatio = 0;
         let activeCaches = 0;
-        for (const c of Object.values(station.caches)) {
+        const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && c.max > 0;
+        });
+
+        for (const [id, c] of validCacheEntries) {
             totalFillRatio += (c.current / c.max);
             activeCaches++;
         }
@@ -303,10 +294,6 @@ export class SolStationService {
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
 
-    /**
-     * Helper to get the current output estimates per day for the UI (Projections).
-     * Calculates based on 120 seconds (1 day).
-     */
     getProjectedOutput() {
         const station = this.gameState.solStation;
         const modeConfig = MODES[station.mode];
@@ -316,7 +303,6 @@ export class SolStationService {
         let efficiency = averageFill;
         if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
 
-        // Daily Estimate = RatePerSec * 120 * Efficiency * Buffs
         const credits = Math.floor(modeConfig.creditsPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
         const antimatter = (modeConfig.amPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
