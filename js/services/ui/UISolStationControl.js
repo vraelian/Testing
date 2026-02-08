@@ -53,7 +53,8 @@ export class UISolStationControl {
                 };
             }
         } else {
-            this.uiManager.queueModal('event-modal', 'Orbital Interface', contentHtml, null, {
+            // [UPDATE] Header title removed (passed as empty string) per user request
+            this.uiManager.queueModal('event-modal', '', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
                 specialClass: 'sol-station-modal', // Applies custom theme
@@ -105,7 +106,7 @@ export class UISolStationControl {
         const amFillPct = (amCurrent / amMax) * 100;
         
         if (amBar) amBar.style.width = `${amFillPct}%`;
-        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`;
+        if (amText) amText.textContent = `${amCurrent.toFixed(2)} / ${amMax}`;
         if (amCollectBtn) {
              amCollectBtn.disabled = amCurrent < 1; 
              amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
@@ -191,14 +192,20 @@ export class UISolStationControl {
 
             // Trigger Real-Time Simulation with exact time elapsed
             const simService = this.uiManager.simulationService;
+            let liveGameState = null;
+
             if (simService && simService.solStationService) {
                 simService.solStationService.processRealTimeTick(deltaTime);
+                // CRITICAL FIX: Retrieve the LIVE state directly from the service.
+                // UIManager.lastKnownState is a snapshot and will be stale during micro-ticks.
+                liveGameState = simService.solStationService.gameState; 
             }
 
-            // Update UI with fresh state
-            const freshState = this.uiManager.lastKnownState;
-            if (freshState) {
-                this.update(freshState);
+            // Fallback to manager state if service retrieval fails, but prefer live state.
+            const stateToRender = liveGameState || this.uiManager.lastKnownState;
+
+            if (stateToRender) {
+                this.update(stateToRender);
             }
 
         }, 3000); // 3000ms Heartbeat
@@ -298,7 +305,7 @@ export class UISolStationControl {
                 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)}); transition: width 3s linear;"></div>
                         </div>
@@ -321,7 +328,7 @@ export class UISolStationControl {
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
                                     <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%; transition: width 3s linear;"></div>
-                                    <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCurrent)} / ${amMax}</div>
+                                    <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${amCurrent.toFixed(2)} / ${amMax}</div>
                                 </div>
                             </div>
                         </div>
@@ -339,7 +346,7 @@ export class UISolStationControl {
 
                     <div class="sol-credits-block">
                         <div class="credits-info">
-                            <div class="label">INCOME</div>
+                            <div class="label">CREDITS</div>
                             <div class="value" data-id="stock-credits">${formatCredits(Math.floor(stockpile.credits))}</div>
                         </div>
                         <button type="button" class="btn-deposit-all" 
@@ -364,7 +371,7 @@ export class UISolStationControl {
                     </div>
                 </div>
 
-                <div class="sol-cache-section">
+                <div class="sol-cache-section" style="margin-top: 2rem;">
                     <div class="section-title">MAINTENANCE CACHES</div>
                     <div class="sol-cache-list">
                         ${this._renderCacheList(gameState)}

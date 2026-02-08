@@ -16611,6 +16611,7 @@ import { AssetService } from '../AssetService.js';
  * @class UISolStationControl
  * @description Domain Controller responsible for the Sol Station Dashboard,
  * managing the Mode Lever, Cache List, and Officer Directorate UI.
+ * Now supports Real-Time operation ticks while visible.
  */
 export class UISolStationControl {
     /**
@@ -16618,6 +16619,8 @@ export class UISolStationControl {
      */
     constructor(uiManager) {
         this.uiManager = uiManager;
+        this.refreshInterval = null;
+        this.lastTickTime = 0; // Tracks Delta Time
     }
 
     /**
@@ -16646,17 +16649,26 @@ export class UISolStationControl {
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
-                footerBtn.onclick = () => this.uiManager.hideModal('event-modal');
+                footerBtn.onclick = () => {
+                    this._stopRefreshLoop();
+                    this.uiManager.hideModal('event-modal');
+                };
             }
         } else {
-            this.uiManager.queueModal('event-modal', 'Orbital Interface', contentHtml, null, {
+            // [UPDATE] Header title removed (passed as empty string) per user request
+            this.uiManager.queueModal('event-modal', '', contentHtml, null, {
                 width: '800px', 
                 dismissOutside: true,
                 specialClass: 'sol-station-modal', // Applies custom theme
                 buttonText: 'Dismiss',
-                buttonClass: 'btn-dismiss-sm'
+                buttonClass: 'btn-dismiss-sm',
+                // We hook the modal close in UIModalEngine usually, but as a backup, 
+                // the loop self-terminates if the DOM is gone.
             });
         }
+        
+        // Begin the real-time simulation tick
+        this._startRefreshLoop();
     }
 
     /**
@@ -16696,7 +16708,7 @@ export class UISolStationControl {
         const amFillPct = (amCurrent / amMax) * 100;
         
         if (amBar) amBar.style.width = `${amFillPct}%`;
-        if (amText) amText.textContent = `${Math.floor(amCurrent)} / ${amMax}`;
+        if (amText) amText.textContent = `${amCurrent.toFixed(2)} / ${amMax}`;
         if (amCollectBtn) {
              amCollectBtn.disabled = amCurrent < 1; 
              amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
@@ -16706,7 +16718,7 @@ export class UISolStationControl {
         const credVal = root.querySelector('[data-id="stock-credits"]');
         const credCollectBtn = root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]');
 
-        if (credVal) credVal.textContent = formatCredits(stockpile.credits);
+        if (credVal) credVal.textContent = formatCredits(Math.floor(stockpile.credits));
         if (credCollectBtn) {
             credCollectBtn.disabled = stockpile.credits <= 0;
             credCollectBtn.style.opacity = stockpile.credits > 0 ? '1' : '0.5';
@@ -16749,7 +16761,7 @@ export class UISolStationControl {
                 const canDonate = playerStock > 0 && cache.current < cache.max;
 
                 if (bar) bar.style.width = `${fillPct}%`;
-                if (text) text.textContent = `${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}`;
+                if (text) text.textContent = `${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}`;
                 
                 if (btn) {
                     btn.disabled = !canDonate;
@@ -16759,9 +16771,61 @@ export class UISolStationControl {
         });
     }
 
+    _startRefreshLoop() {
+        if (this.refreshInterval) clearInterval(this.refreshInterval);
+        
+        // Initialize Delta Time tracker
+        this.lastTickTime = performance.now();
+
+        // Tick every 3 seconds (The 3-Second Glide)
+        this.refreshInterval = setInterval(() => {
+            const root = document.getElementById('sol-dashboard-root');
+            
+            // Self-cleaning: If modal is closed or removed, stop the loop
+            if (!root || !document.body.contains(root) || root.closest('.hidden')) {
+                this._stopRefreshLoop();
+                return;
+            }
+
+            // Delta Time Calculation
+            const now = performance.now();
+            const deltaTime = (now - this.lastTickTime) / 1000; // Convert ms to seconds
+            this.lastTickTime = now;
+
+            // Trigger Real-Time Simulation with exact time elapsed
+            const simService = this.uiManager.simulationService;
+            let liveGameState = null;
+
+            if (simService && simService.solStationService) {
+                simService.solStationService.processRealTimeTick(deltaTime);
+                // CRITICAL FIX: Retrieve the LIVE state directly from the service.
+                // UIManager.lastKnownState is a snapshot and will be stale during micro-ticks.
+                liveGameState = simService.solStationService.gameState; 
+            }
+
+            // Fallback to manager state if service retrieval fails, but prefer live state.
+            const stateToRender = liveGameState || this.uiManager.lastKnownState;
+
+            if (stateToRender) {
+                this.update(stateToRender);
+            }
+
+        }, 3000); // 3000ms Heartbeat
+    }
+
+    _stopRefreshLoop() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+
     showOfficerRoster(slotId, gameState) {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
+
+        // Roster pauses the real-time view
+        this._stopRefreshLoop();
 
         const roster = gameState.solStation.roster || [];
         const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
@@ -16843,9 +16907,9 @@ export class UISolStationControl {
                 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
-                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)}); transition: width 3s linear;"></div>
                         </div>
                     </div>
                     <div class="sol-entropy-readout" style="text-align: right;">
@@ -16865,8 +16929,8 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
-                                    <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCurrent)} / ${amMax}</div>
+                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%; transition: width 3s linear;"></div>
+                                    <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${amCurrent.toFixed(2)} / ${amMax}</div>
                                 </div>
                             </div>
                         </div>
@@ -16884,8 +16948,8 @@ export class UISolStationControl {
 
                     <div class="sol-credits-block">
                         <div class="credits-info">
-                            <div class="label">INCOME</div>
-                            <div class="value" data-id="stock-credits">${formatCredits(stockpile.credits)}</div>
+                            <div class="label">CREDITS</div>
+                            <div class="value" data-id="stock-credits">${formatCredits(Math.floor(stockpile.credits))}</div>
                         </div>
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
@@ -16909,7 +16973,7 @@ export class UISolStationControl {
                     </div>
                 </div>
 
-                <div class="sol-cache-section">
+                <div class="sol-cache-section" style="margin-top: 2rem;">
                     <div class="section-title">MAINTENANCE CACHES</div>
                     <div class="sol-cache-list">
                         ${this._renderCacheList(gameState)}
@@ -16980,9 +17044,9 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
+                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff); transition: width 3s linear;"></div>
                                     <div class="sol-threshold-marker" style="left: 20%;"></div>
-                                    <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(cache.current, false)} / ${formatCredits(cache.max, false)}</div>
+                                    <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
                             </div>
                         </div>
@@ -19412,6 +19476,11 @@ const BASE_CREDIT_OUTPUT = 1000; // Base credits generated per day at 100% healt
 const BASE_AM_OUTPUT = 0.1; // Base antimatter generated per day at 100% health
 const MAX_ANTIMATTER_STOCKPILE = 150; // Cap for Antimatter storage
 
+// Tuning: How much "Game Time" passes per "Real Time Second" when viewing?
+// 0.02 Days per tick = 50 seconds real-time to simulate 1 Game Day.
+// At 1000 Credits/Day, this gives ~20 Credits/Second.
+const REAL_TIME_DAY_FACTOR = 0.02; 
+
 /**
  * @class SolStationService
  * @description Manages the Sol Station endgame engine. Handles daily entropy decay,
@@ -19428,13 +19497,11 @@ export class SolStationService {
     }
 
     /**
-     * Processes one day of station operations.
-     * 1. Calculates Entropy based on Mode.
-     * 2. Consumes resources from caches (Decay).
-     * 3. Updates Station Health.
-     * 4. Generates Output (Credits/Antimatter) if operational.
+     * Legacy/Batch method for TimeService.
+     * Processes exactly 1 day of operations (or specified amount).
+     * @param {number} days - The number of days to simulate (default 1).
      */
-    processTick() {
+    processTimeStep(days = 1) {
         const station = this.gameState.solStation;
         
         // If not unlocked, the station does not operate.
@@ -19442,7 +19509,6 @@ export class SolStationService {
 
         const modeConfig = MODES[station.mode];
         const officerBuffs = this.getOfficerBuffs();
-
         const entropy = this.calculateEntropy(modeConfig.entropyMult);
 
         // 1. Decay Caches
@@ -19450,9 +19516,9 @@ export class SolStationService {
         let activeCaches = 0;
 
         for (const [commodityId, cache] of Object.entries(station.caches)) {
-            // Calculate decay amount: Current * Base Rate * Entropy Multiplier
-            // Minimum decay of 1 unit if cache has items
-            let decayAmount = Math.ceil(cache.current * BASE_DECAY_RATE * entropy);
+            // Calculate decay amount: Current * Base Rate * Entropy Multiplier * Days Passed
+            // We use floating point math here to support micro-ticks
+            let decayAmount = cache.current * BASE_DECAY_RATE * entropy * days;
             
             // Apply decay
             if (cache.current > 0) {
@@ -19480,11 +19546,12 @@ export class SolStationService {
                 efficiency = Math.pow(averageFill, 2); 
             }
 
-            // Calculate Outputs with Officer Buffs
-            const creditOutput = Math.floor(BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency);
-            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency;
+            // Calculate Outputs with Officer Buffs & Delta Time
+            // We remove Math.floor here to allow fractional accumulation during real-time ticks
+            const creditOutput = BASE_CREDIT_OUTPUT * (modeConfig.creditMult + officerBuffs.creditMult) * efficiency * days;
+            const amOutput = BASE_AM_OUTPUT * (modeConfig.amMult + officerBuffs.amMult) * efficiency * days;
 
-            // Add to Stockpile
+            // Add to Stockpile (Float addition)
             station.stockpile.credits += creditOutput;
 
             // Cap Antimatter
@@ -19492,13 +19559,32 @@ export class SolStationService {
                 station.stockpile.antimatter = Math.min(MAX_ANTIMATTER_STOCKPILE, station.stockpile.antimatter + amOutput);
             }
 
-            // Log operational tick if efficiency is low, to warn player
-            if (station.health < 20) {
+            // Log operational tick if efficiency is low, to warn player (Only on full day ticks to avoid spam)
+            if (days >= 1 && station.health < 20) {
                 this.logger.info.system('SolStation', this.gameState.day, 'CRITICAL', `Station health critical (${station.health}%). Efficiency plummeting.`);
             }
         } else {
-            this.logger.info.system('SolStation', this.gameState.day, 'OFFLINE', `Station resources depleted. Systems offline.`);
+            // Only log offline on full day ticks
+            if (days >= 1) {
+                this.logger.info.system('SolStation', this.gameState.day, 'OFFLINE', `Station resources depleted. Systems offline.`);
+            }
         }
+    }
+
+    /**
+     * Executes a micro-tick for the Real-Time display.
+     * Uses Delta Time to ensure accurate processing regardless of frame rate.
+     * @param {number} secondsPassed - Actual real-time seconds elapsed since last tick.
+     */
+    processRealTimeTick(secondsPassed = 1) {
+        // Safety Clamp: Never simulate more than 15 seconds of real-time at once.
+        // This prevents massive decay spikes if the browser tab was suspended for an hour.
+        const safeSeconds = Math.min(secondsPassed, 15);
+        
+        // Convert real-time seconds to game-days
+        const gameDays = safeSeconds * REAL_TIME_DAY_FACTOR;
+        
+        this.processTimeStep(gameDays);
     }
 
     /**
@@ -19602,9 +19688,11 @@ export class SolStationService {
 
         // Claim Credits
         if ((!type || type === 'credits') && stockpile.credits > 0) {
-            this.gameState.player.credits += Math.floor(stockpile.credits);
-            claimedCredits = Math.floor(stockpile.credits);
-            stockpile.credits = 0;
+            const amount = Math.floor(stockpile.credits);
+            this.gameState.player.credits += amount;
+            claimedCredits = amount;
+            stockpile.credits -= amount; // Subtract the integer amount claimed, leaving any fractional float
+            if(stockpile.credits < 0.1) stockpile.credits = 0; // Clean up floating point dust
         }
 
         // Claim Antimatter (Commodity)
@@ -19622,7 +19710,6 @@ export class SolStationService {
             return { success: false, message: "Nothing to collect." };
         }
 
-        // this.logger.info.player(this.gameState.day, 'STATION_CLAIM', `Claimed ${claimedCredits} credits and ${claimedAM} Antimatter.`);
         this.gameState.setState({});
         
         const msgParts = [];
@@ -21758,8 +21845,9 @@ export class TimeService {
             }
 
             // --- SOL STATION: PROCESS TICK ---
+            // Replaced .processTick() with .processTimeStep(1) to align with new real-time logic
             if (this.solStationService) {
-                this.solStationService.processTick();
+                this.solStationService.processTimeStep(1); 
             }
             // ---------------------------------
 
@@ -22416,6 +22504,10 @@ export class SimulationService {
         // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
         
+        // --- [[FIX]] Inject self into UIManager to allow UI Controls to trigger active ticks ---
+        this.uiManager.setSimulationService(this);
+        // -------------------------------------------------------------------------------------
+
         this.newsTickerService.setServices(this, this.marketService);
     }
 
