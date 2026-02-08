@@ -3,6 +3,12 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [35.02] - 2026-2-7
+-  sol simulation updated
+-  sol operation rates updated
+-  sol simulation bug fixes
+-  sol testing debug updated 
+
 # [34.98] - 2026-2-6
 -  sol interface polish
 -  fixed mars travel operation button bug
