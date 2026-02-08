@@ -18,6 +18,7 @@ export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
         this.refreshInterval = null;
+        this.lastTickTime = 0; // Tracks Delta Time
     }
 
     /**
@@ -64,7 +65,6 @@ export class UISolStationControl {
         }
         
         // Begin the real-time simulation tick
-        // [[CHANGED]] We do not pass gameState here anymore to avoid stale closure state
         this._startRefreshLoop();
     }
 
@@ -171,7 +171,10 @@ export class UISolStationControl {
     _startRefreshLoop() {
         if (this.refreshInterval) clearInterval(this.refreshInterval);
         
-        // Tick every 1 second
+        // Initialize Delta Time tracker
+        this.lastTickTime = performance.now();
+
+        // Tick every 3 seconds (The 3-Second Glide)
         this.refreshInterval = setInterval(() => {
             const root = document.getElementById('sol-dashboard-root');
             
@@ -181,21 +184,24 @@ export class UISolStationControl {
                 return;
             }
 
-            // Attempt to trigger the real-time tick via SimulationService
+            // Delta Time Calculation
+            const now = performance.now();
+            const deltaTime = (now - this.lastTickTime) / 1000; // Convert ms to seconds
+            this.lastTickTime = now;
+
+            // Trigger Real-Time Simulation with exact time elapsed
             const simService = this.uiManager.simulationService;
             if (simService && simService.solStationService) {
-                simService.solStationService.processRealTimeTick();
+                simService.solStationService.processRealTimeTick(deltaTime);
             }
 
-            // [[CHANGED]] Use this.uiManager.lastKnownState to ensure we always use FRESH state.
-            // Using the closure variable from showDashboard causes "Mode Reversion" because
-            // the closure holds a stale snapshot of the state from when the modal opened.
+            // Update UI with fresh state
             const freshState = this.uiManager.lastKnownState;
             if (freshState) {
                 this.update(freshState);
             }
 
-        }, 1000);
+        }, 3000); // 3000ms Heartbeat
     }
 
     _stopRefreshLoop() {
@@ -209,9 +215,7 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
 
-        // Roster pauses the real-time view (since we replace the HTML), 
-        // so we can stop the loop here, or just let it run (it won't find elements to update).
-        // Safest to stop and restart when returning.
+        // Roster pauses the real-time view
         this._stopRefreshLoop();
 
         const roster = gameState.solStation.roster || [];
@@ -296,7 +300,7 @@ export class UISolStationControl {
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION INTEGRITY: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
-                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)}); transition: width 3s linear;"></div>
                         </div>
                     </div>
                     <div class="sol-entropy-readout" style="text-align: right;">
@@ -316,7 +320,7 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
+                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%; transition: width 3s linear;"></div>
                                     <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCurrent)} / ${amMax}</div>
                                 </div>
                             </div>
@@ -431,7 +435,7 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
+                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff); transition: width 3s linear;"></div>
                                     <div class="sol-threshold-marker" style="left: 20%;"></div>
                                     <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>

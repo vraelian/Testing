@@ -114,10 +114,18 @@ export class SolStationService {
 
     /**
      * Executes a micro-tick for the Real-Time display.
-     * Equivalent to passing a fraction of a day.
+     * Uses Delta Time to ensure accurate processing regardless of frame rate.
+     * @param {number} secondsPassed - Actual real-time seconds elapsed since last tick.
      */
-    processRealTimeTick() {
-        this.processTimeStep(REAL_TIME_DAY_FACTOR);
+    processRealTimeTick(secondsPassed = 1) {
+        // Safety Clamp: Never simulate more than 15 seconds of real-time at once.
+        // This prevents massive decay spikes if the browser tab was suspended for an hour.
+        const safeSeconds = Math.min(secondsPassed, 15);
+        
+        // Convert real-time seconds to game-days
+        const gameDays = safeSeconds * REAL_TIME_DAY_FACTOR;
+        
+        this.processTimeStep(gameDays);
     }
 
     /**
