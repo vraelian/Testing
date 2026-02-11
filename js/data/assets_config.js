@@ -82,5 +82,18 @@ export const COMMODITY_VARIANT_COUNTS = {
  * Defaults to DEFAULT_LOCATION_VARIANT_COUNT (4) if not listed.
  */
 export const LOCATION_VARIANT_COUNTS = {
-    // Example: 'sol': 6,
+    'Neptune': 12,
+    'Mercury': 15,
+    'Venus': 12,
+    'Earth': 19,
+    'Luna': 11,
+    'Mars': 10,
+    'Belt': 7,
+    'Exchange': 6,
+    'Jupiter': 9,
+    'Saturn': 11,
+    'Uranus': 16,
+    'Kepler': 12,
+    'Pluto': 11,
+    'sol': 11,
 };

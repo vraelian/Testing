@@ -140,11 +140,13 @@
 #travel-image-wrapper {
     width: 100%;
     height: 350px; /* Cinematic aspect ratio area */
-    overflow: hidden;
+    overflow: hidden; /* Critical to crop the zoomed image */
     position: relative;
     background-color: #000;
     border-left: 1px solid #374151;
     border-right: 1px solid #374151;
+    z-index: 5; 
+    pointer-events: none;
 }
 
 /* The actual image element */
@@ -152,19 +154,26 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0; /* Starts hidden, fades in via JS */
-    transition: opacity 0.5s ease-in-out;
+    
+    /* INITIAL STATE: Zoomed IN (1.1) and Invisible */
+    opacity: 0;
+    transform: scale(1.1);
+    
+    /* Hardware acceleration for smooth animation on iOS */
+    will-change: transform, opacity;
+    backface-visibility: hidden;
     transform-origin: center center;
+
+    /* The transition duration (matches JS logic roughly) */
+    /* Opacity is faster (1s) to reveal, Transform is slower (2.5s) for the effect */
+    transition: opacity 1.0s ease-in, transform 2.5s ease-out;
 }
 
-/* The Zoom Animation Class (Ken Burns Effect) */
-.travel-zoom-active {
-    animation: travelZoom 4s ease-out forwards;
-}
-
-@keyframes travelZoom {
-    0% { transform: scale(1.0); }
-    100% { transform: scale(1.15); } /* Subtle zoom in */
+/* ACTIVE STATE: Zoomed OUT (1.0) */
+/* The JS adds this class 50ms after the image loads */
+#travel-background-image.travel-zoom-active {
+    transform: scale(1.0);
+    /* Opacity is handled via inline style in JS, but this ensures transition applies */
 }
 
 

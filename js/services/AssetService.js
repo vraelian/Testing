@@ -24,24 +24,24 @@ export class AssetService {
     static blobCache = new Map();
 
     /**
-     * Map of Location IDs to the specific filename prefixes requested by design.
-     * Ensures internal IDs (e.g. 'loc_sun') map to file system names (e.g. 'sol').
+     * Map of Location IDs to the specific Capitalized Folder/Filename prefixes.
+     * Maps internal IDs (e.g. 'loc_sun') to Title Case file system names (e.g. 'Sol').
      */
     static LOCATION_FILENAME_MAP = {
-        'loc_sun': 'sol',
-        'loc_mercury': 'mercury',
-        'loc_venus': 'venus',
-        'loc_earth': 'earth',
-        'loc_luna': 'luna',
-        'loc_mars': 'mars',
-        'loc_belt': 'belt',
-        'loc_exchange': 'exchange',
-        'loc_jupiter': 'jupiter',
-        'loc_saturn': 'saturn',
-        'loc_uranus': 'uranus',
-        'loc_neptune': 'neptune',
-        'loc_kepler': 'kepler',
-        'loc_pluto': 'pluto'
+        'loc_sun': 'Sol',
+        'loc_mercury': 'Mercury',
+        'loc_venus': 'Venus',
+        'loc_earth': 'Earth',
+        'loc_luna': 'Luna',
+        'loc_mars': 'Mars',
+        'loc_belt': 'Belt',
+        'loc_exchange': 'Exchange',
+        'loc_jupiter': 'Jupiter',
+        'loc_saturn': 'Saturn',
+        'loc_uranus': 'Uranus',
+        'loc_neptune': 'Neptune',
+        'loc_kepler': 'Kepler',
+        'loc_pluto': 'Pluto'
     };
 
     /**
@@ -53,17 +53,32 @@ export class AssetService {
 
     // --- Path Generators (Private Helpers) ---
 
+    /**
+     * Converts a 0-based index to a variant suffix using Base-26 logic.
+     * 0 -> A, 25 -> Z, 26 -> AA, 27 -> AB
+     * @param {number} index 
+     * @returns {string} The alphabetic suffix.
+     */
+    static _getVariantSuffix(index) {
+        let suffix = '';
+        while (index >= 0) {
+            suffix = String.fromCharCode(65 + (index % 26)) + suffix;
+            index = Math.floor(index / 26) - 1;
+        }
+        return suffix;
+    }
+
     static _generateShipPath(shipId, visualSeed) {
         const shipData = DB.SHIPS[shipId];
         if (!shipData) return null;
 
-        // 1. Determine Variant Letter (A, B, C...)
+        // 1. Determine Variant Letter (A, B, C... AA, AB...)
         const variantCount = SHIP_VARIANT_COUNTS[shipId] !== undefined 
             ? SHIP_VARIANT_COUNTS[shipId] 
             : DEFAULT_VARIANT_COUNT;
         
         const variantIndex = Math.abs(visualSeed) % variantCount;
-        const variantLetter = String.fromCharCode(65 + variantIndex); // 65 is 'A'
+        const variantLetter = this._getVariantSuffix(variantIndex);
         
         // 2. Branch Logic Based on Ship Class
         // Class Z (Alien) and F (Failsafe) use the HYBRID structure
@@ -91,21 +106,24 @@ export class AssetService {
         if (variantCount === undefined) variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
         if (variantCount <= 0) return null;
         const variantIndex = Math.abs(visualSeed) % variantCount;
-        const variantLetter = String.fromCharCode(65 + variantIndex);
+        const variantLetter = this._getVariantSuffix(variantIndex);
         const fileNamePrefix = commodityName.replace(/ /g, '_');
         return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
     }
 
     static _generateLocationPath(locationId) {
-        // 1. Resolve filename prefix
-        // Try the map first, fallback to stripping 'loc_' if not found
+        // 1. Resolve filename prefix (Folder & File Start)
         let filePrefix = this.LOCATION_FILENAME_MAP[locationId];
+        
         if (!filePrefix) {
-            // Safe fallback if an ID isn't in the explicit map
-            filePrefix = locationId.replace('loc_', '');
+            // Safe fallback: Strip 'loc_', capitalize first letter
+            // Example: 'loc_unknown' -> 'Unknown'
+            const raw = locationId.replace('loc_', '');
+            filePrefix = raw.charAt(0).toUpperCase() + raw.slice(1);
         }
 
-        // 2. Determine Variant Count for this specific location (if overridden)
+        // 2. Determine Variant Count
+        // NOTE: assets_config.js keys must now match the Capitalized prefix (e.g. 'Sol')
         const variantCount = LOCATION_VARIANT_COUNTS[filePrefix] !== undefined
             ? LOCATION_VARIANT_COUNTS[filePrefix]
             : DEFAULT_LOCATION_VARIANT_COUNT;
@@ -113,11 +131,11 @@ export class AssetService {
         // 3. Randomize Variant 
         // Travel images are random each time, not seeded by player ID
         const variantIndex = Math.floor(Math.random() * variantCount);
-        const variantLetter = String.fromCharCode(65 + variantIndex); // A, B, C...
+        const variantLetter = this._getVariantSuffix(variantIndex); // A...Z, AA...
 
         // 4. Construct Path
-        // Pattern: assets/locations/[prefix]_[Letter].jpeg
-        return `assets/locations/${filePrefix}_${variantLetter}.jpeg`;
+        // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].jpeg
+        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.jpeg`;
     }
 
     // --- Public API ---

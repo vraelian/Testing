@@ -3,6 +3,10 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [35.17] - 2026-2-10
+-  added location assets
+-  travel animation overhaul v3
+
 # [35.03] - 2026-2-7
 -  sol simulation performance polish
 

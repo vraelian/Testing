@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.02</title>
+    <title>Orbital Trading 35.17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.02</p>
+            <p>Version 35.17</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -2250,6 +2250,53 @@ card.
 
 #travel-progress-bar {
     box-shadow: 0 0 8px var(--progress-glow-color, #fff), 0 0 12px var(--progress-glow-color, #fff);
+}
+
+/* --- [[PHASE 2]] TRAVEL CINEMATIC STYLES --- */
+
+/* Hide the legacy canvas */
+#travel-canvas {
+    display: none !important;
+}
+
+/* Container for the cinematic image */
+#travel-image-wrapper {
+    width: 100%;
+    height: 350px; /* Cinematic aspect ratio area */
+    overflow: hidden; /* Critical to crop the zoomed image */
+    position: relative;
+    background-color: #000;
+    border-left: 1px solid #374151;
+    border-right: 1px solid #374151;
+    z-index: 5; 
+    pointer-events: none;
+}
+
+/* The actual image element */
+#travel-background-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    
+    /* INITIAL STATE: Zoomed IN (1.1) and Invisible */
+    opacity: 0;
+    transform: scale(1.1);
+    
+    /* Hardware acceleration for smooth animation on iOS */
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-origin: center center;
+
+    /* The transition duration (matches JS logic roughly) */
+    /* Opacity is faster (1s) to reveal, Transform is slower (2.5s) for the effect */
+    transition: opacity 1.0s ease-in, transform 2.5s ease-out;
+}
+
+/* ACTIVE STATE: Zoomed OUT (1.0) */
+/* The JS adds this class 50ms after the image loads */
+#travel-background-image.travel-zoom-active {
+    transform: scale(1.0);
+    /* Opacity is handled via inline style in JS, but this ensures transition applies */
 }
 
 
@@ -12382,6 +12429,7 @@ export const TUTS_INTRO = {
 
 export const DEFAULT_VARIANT_COUNT = 5;
 export const DEFAULT_COMMODITY_VARIANT_COUNT = 1;
+export const DEFAULT_LOCATION_VARIANT_COUNT = 4;
 
 /**
  * A map of Ship IDs to their specific variant counts.
@@ -12448,6 +12496,29 @@ export const COMMODITY_VARIANT_COUNTS = {
     'Sentient AI Cores': 1,   // File: Sentient_AI_Cores_A.png
     'Antimatter': 1,          // File: Antimatter_A.png
     'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
+};
+
+/**
+ * A map of Location file prefixes to their specific variant counts.
+ * Key: The prefix used in filenames (e.g., "sol", "mercury", "belt").
+ * Value: Number of available images.
+ * Defaults to DEFAULT_LOCATION_VARIANT_COUNT (4) if not listed.
+ */
+export const LOCATION_VARIANT_COUNTS = {
+    'Neptune': 12,
+    'Mercury': 15,
+    'Venus': 12,
+    'Earth': 19,
+    'Luna': 11,
+    'Mars': 10,
+    'Belt': 7,
+    'Exchange': 6,
+    'Jupiter': 9,
+    'Saturn': 11,
+    'Uranus': 16,
+    'Kepler': 12,
+    'Pluto': 11,
+    'sol': 11,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -15838,14 +15909,13 @@ export class UIMarketControl {
 --- START OF FILE: ./js/services/ui/TravelAnimationService.js ---
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
+import { AssetService } from '../AssetService.js';
 
 export class TravelAnimationService {
     constructor(isMobile) {
         this.isMobile = isMobile;
         this.modal = document.getElementById('travel-animation-modal');
         this.gameContainer = document.getElementById('game-container');
-        this.canvas = document.getElementById('travel-canvas');
-        this.ctx = this.canvas.getContext('2d');
         this.statusText = document.getElementById('travel-status-text');
         this.arrivalLore = document.getElementById('travel-arrival-lore');
         this.progressBar = document.getElementById('travel-progress-bar');
@@ -15855,17 +15925,44 @@ export class TravelAnimationService {
         this.hullDamageText = document.getElementById('travel-hull-damage');
         this.confirmButton = document.getElementById('travel-confirm-button');
         
+        // Canvas (Legacy) - Kept in DOM check but unused logic-wise
+        this.canvas = document.getElementById('travel-canvas');
+        
         this.animationFrame = null;
-        this.starLayers = [];
-        this.engineParticles = [];
-        this.celestialObjects = [];
+
+        // Ensure the DOM structure for the Cinematic Image view exists
+        this._ensureDomStructure();
+        
+        this.imageElement = document.getElementById('travel-background-image');
+        this.imageWrapper = document.getElementById('travel-image-wrapper');
+    }
+
+    /**
+     * Injects the Cinematic Image DOM elements if they are missing from index.html.
+     * This allows us to upgrade the visuals without modifying the monolithic HTML file directly.
+     */
+    _ensureDomStructure() {
+        if (!document.getElementById('travel-image-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'travel-image-wrapper';
+            
+            const img = document.createElement('img');
+            img.id = 'travel-background-image';
+            img.alt = 'Destination';
+            
+            wrapper.appendChild(img);
+
+            // Insert after the header panel, replacing/hiding the canvas visually
+            const header = document.getElementById('travel-header-panel');
+            if (header && header.nextSibling) {
+                header.parentNode.insertBefore(wrapper, header.nextSibling);
+            }
+        }
     }
 
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
-        // this.gameContainer.classList.add('fade-out');
-
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -15877,10 +15974,10 @@ export class TravelAnimationService {
         this.progressBar.style.setProperty('--progress-glow-color', theme.borderColor);
 
         this._setupInitialState(to, travelInfo);
-        this._setupAnimationElements(from, to);
+        this._startCinematicSequence(to);
 
         let startTime = null;
-        const duration = 2500;
+        const duration = 2500; // Duration of travel sequence
 
         const animate = (currentTime) => {
             if (!startTime) startTime = currentTime;
@@ -15893,7 +15990,7 @@ export class TravelAnimationService {
                 progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
             }
 
-            this._draw(progress, from, to);
+            // Only updating the progress bar width now; no canvas drawing
             this.progressBar.style.width = `${progress * 100}%`;
 
             if (progress < 1) {
@@ -15917,13 +16014,16 @@ export class TravelAnimationService {
 
             // A short delay to ensure the market screen is rendered before the fade-in starts.
             setTimeout(() => {
-                // this.gameContainer.classList.remove('fade-out');
                 this.gameContainer.classList.add('fade-in');
             }, 50); // Small buffer
 
             setTimeout(() => {
                 this.modal.classList.add('hidden');
                 this.modal.classList.remove('modal-hiding', 'dismiss-disabled');
+                
+                // Cleanup Cinematic State
+                this.imageElement.classList.remove('travel-zoom-active');
+                this.imageElement.style.opacity = 0;
             }, 1000); // 1s to match CSS transition
         };
     }
@@ -15954,7 +16054,6 @@ export class TravelAnimationService {
         return `linear-gradient(to right, ${lightenedColors.join(', ')})`;
     }
 
-
     _setupInitialState(to, travelInfo) {
         this.statusText.textContent = `Traveling to ${to.name}...`;
         this.arrivalLore.textContent = '';
@@ -15966,143 +16065,28 @@ export class TravelAnimationService {
         this.progressBar.style.width = '0%';
     }
 
-    _setupAnimationElements(from, to) {
-        this.canvas.width = this.canvas.clientWidth;
-        this.canvas.height = this.canvas.clientHeight;
-        this.starLayers = [
-            this._createStarLayer(80, 0.5, 0.8),
-            this._createStarLayer(50, 1.2, 1.2),
-            this._createStarLayer(20, 1.8, 2.0)
-        ];
-        this.engineParticles = [];
-
-        this.backgroundGradient = this._getBackgroundGradient(from, to);
-        this.celestialObjects = this._getCelestialObjects(from.id, to.id);
-    }
-
-    _createStarLayer(count, minSpeed, maxSpeed) {
-        let stars = [];
-        for (let i = 0; i < count; i++) {
-            stars.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                radius: Math.random() * 1.5,
-                speed: minSpeed + Math.random() * (maxSpeed - minSpeed),
-                alpha: 0.5 + Math.random() * 0.5
-            });
-        }
-        return stars;
-    }
-
-    _getBackgroundGradient(from, to) {
-        const getZone = (location) => {
-            for (const zoneName in DB.TRAVEL_VISUALS.zones) {
-                if (DB.TRAVEL_VISUALS.zones[zoneName].locations.includes(location.id)) {
-                    return DB.TRAVEL_VISUALS.zones[zoneName];
-                }
-            }
-            return DB.TRAVEL_VISUALS.zones.inner_sphere; // Default fallback
-        };
-        const toZone = getZone(to);
+    /**
+     * Initializes the static artwork and triggers the zoom effect.
+     * Replaces the old _setupAnimationElements method.
+     */
+    _startCinematicSequence(to) {
+        // 1. Fetch the random variant image for this location
+        // Example: 'loc_mars' -> 'assets/locations/mars_C.jpeg'
+        const imagePath = AssetService.getLocationImage(to.id);
         
-        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-        gradient.addColorStop(0, toZone.gradient[0]);
-        gradient.addColorStop(1, toZone.gradient[1]);
-        return gradient;
-    }
-
-    _getCelestialObjects(fromId, toId) {
-        const routeKey = `${fromId}_to_${toId}`;
-        const objects = DB.TRAVEL_VISUALS.objects[routeKey] || [];
-        return objects.map(obj => ({
-            ...obj,
-            x: this.canvas.width + Math.random() * 200,
-            y: obj.position.y * this.canvas.height,
-        }));
-    }
-
-    _draw(progress, from, to) {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = this.backgroundGradient;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        this.starLayers.forEach((layer, index) => {
-            const speedMultiplier = progress < 0.8 ? 1 : 1 - ((progress - 0.8) / 0.2);
+        if (imagePath) {
+            this.imageElement.src = imagePath;
             
-            layer.forEach(star => {
-                star.x -= star.speed * speedMultiplier;
-                if (star.x < 0) star.x = this.canvas.width;
-                this.ctx.beginPath();
-                this.ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                this.ctx.globalAlpha = star.alpha;
-                this.ctx.fillStyle = '#FFF';
-                this.ctx.fill();
-            });
-
-            if (index === 1) {
-                this.celestialObjects.forEach(obj => {
-                    obj.x -= obj.speed * speedMultiplier;
-                    this.ctx.font = `${40 * (obj.scale || 1)}px sans-serif`;
-                    this.ctx.globalAlpha = 0.5;
-                    this.ctx.fillText(obj.emoji, obj.x, obj.y);
-                });
-            }
-        });
-        this.ctx.globalAlpha = 1.0;
-
-        const padding = 60;
-        const startX = padding;
-        const endX = this.canvas.width - padding;
-        const y = this.canvas.height / 2;
-        this.ctx.font = '42px sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(DB.LOCATION_VISUALS[from.id] || '❓', startX, y);
-        this.ctx.fillText(DB.LOCATION_VISUALS[to.id] || '❓', endX, y);
-        
-        const shipX = startX + (endX - startX) * progress;
-        this.ctx.save();
-        this.ctx.translate(shipX, y);
-        this.ctx.font = '17px sans-serif';
-        this.ctx.fillText('🚀', 0, 0);
-        this.ctx.restore();
-
-        this._updateEngineParticles(shipX, y);
-        this._drawEngineParticles();
-    }
-    
-    _updateEngineParticles(shipX, shipY) {
-        if(Math.random() > 0.5) {
-            this.engineParticles.push({
-                x: shipX - 15,
-                y: shipY + (Math.random() - 0.5) * 8,
-                life: 1,
-                speedX: -2 - Math.random() * 2,
-                speedY: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 2 + 1
-            });
+            // 2. Trigger Fade In and Zoom
+            // Small delay to ensure the src is applied before opacity transition starts
+            setTimeout(() => {
+                this.imageElement.style.opacity = 1;
+                this.imageElement.classList.add('travel-zoom-active');
+            }, 50);
+        } else {
+            // Fallback if no image found (shouldn't happen with correct config)
+            console.warn(`[TravelAnimation] No image found for ${to.id}`);
         }
-        
-        for (let i = this.engineParticles.length - 1; i >= 0; i--) {
-            const p = this.engineParticles[i];
-            p.x += p.speedX;
-            p.y += p.speedY;
-            p.life -= 0.05;
-            if (p.life <= 0) {
-                this.engineParticles.splice(i, 1);
-            }
-        }
-    }
-    
-    _drawEngineParticles() {
-        this.engineParticles.forEach(p => {
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.globalAlpha = p.life;
-            this.ctx.fillStyle = `rgba(255, 220, 180, ${p.life})`;
-            this.ctx.fill();
-        });
-        this.ctx.globalAlpha = 1.0;
     }
 
     _onArrival(to, travelInfo, totalHullDamagePercent, finalCallback) {
@@ -16129,6 +16113,7 @@ export class TravelAnimationService {
         }, 150);
     }
 }
+
 --- END OF FILE: ./js/services/ui/TravelAnimationService.js ---
 
 --- START OF FILE: ./js/services/ui/UIHangarControl.js ---
@@ -16880,7 +16865,7 @@ export class UISolStationControl {
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
                         <div class="sol-health-track">
-                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)}); transition: width 3s linear;"></div>
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                         </div>
                     </div>
                     <div class="sol-entropy-readout" style="text-align: right;">
@@ -16900,7 +16885,7 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%; transition: width 3s linear;"></div>
+                                    <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
                                     <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${amCurrent.toFixed(2)} / ${amMax}</div>
                                 </div>
                             </div>
@@ -17014,7 +16999,7 @@ export class UISolStationControl {
                             
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
-                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff); transition: width 3s linear;"></div>
+                                    <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
                                     <div class="sol-threshold-marker" style="left: 20%;"></div>
                                     <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
@@ -19478,8 +19463,10 @@ export class SolStationService {
             const deltaTime = (now - this.lastTickTime) / 1000; // Seconds since last tick
             this.lastTickTime = now;
             
-            // Clamp delta to prevent massive jumps if tab was inactive
-            const safeDelta = Math.min(deltaTime, 5); 
+            // Fix: Clamp delta to 1 day (86400s) instead of 5s.
+            // This allows the game to "catch up" if the tab was backgrounded/throttled,
+            // while preventing massive jumps from system hibernation.
+            const safeDelta = Math.min(deltaTime, 86400); 
             
             this.processRealTimeTick(safeDelta);
         }, 1000);
@@ -19547,7 +19534,7 @@ export class SolStationService {
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        // CRITICAL FIX: Filter out non-maintenance items (like Folded Drives or Antimatter)
+        // Filter out non-maintenance items (like Folded Drives or Antimatter)
         // Checks for specific ID exclusion AND ensuring max > 0 to prevent division by zero.
         const validCacheEntries = Object.entries(station.caches).filter(([id, cache]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache.max > 0;
@@ -19578,10 +19565,16 @@ export class SolStationService {
 
         // 4. Generate Output (If Health > 0)
         if (station.health > 0) {
-            // Efficiency Logic: < 50% Health = Squared drop
+            // Efficiency Logic:
+            // Fix: Use a continuous Bezier curve below 50% to prevent the "Efficiency Cliff".
+            // Old: efficiency = averageFill^2 (at 0.49 -> 0.24, huge drop from 0.50)
+            // New: efficiency = 2 * (averageFill^2)
+            // At 0.50 -> 2 * 0.25 = 0.50 (Smooth connection)
+            // At 0.40 -> 2 * 0.16 = 0.32
+            // At 0.25 -> 2 * 0.0625 = 0.125
             let efficiency = averageFill;
             if (averageFill < 0.5) {
-                efficiency = Math.pow(averageFill, 2); 
+                efficiency = 2 * Math.pow(averageFill, 2); 
             }
 
             // Calculate Base Outputs (Per Second * Seconds Passed)
@@ -19671,7 +19664,7 @@ export class SolStationService {
         // Recalculate Health immediately using filtered logic
         let totalFillRatio = 0;
         let activeCaches = 0;
-        // CRITICAL FIX: Filter non-maintenance items in donation recalculation too
+        // Filter non-maintenance items in donation recalculation too
         const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
         });
@@ -19740,7 +19733,7 @@ export class SolStationService {
         const buffs = this.getOfficerBuffs();
 
         let efficiency = averageFill;
-        if (averageFill < 0.5) efficiency = Math.pow(averageFill, 2);
+        if (averageFill < 0.5) efficiency = 2 * Math.pow(averageFill, 2);
 
         // Daily Estimate = RatePerSec * 120 * Efficiency * Buffs
         const credits = Math.floor(modeConfig.creditsPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
@@ -20383,7 +20376,9 @@ import {
     DEFAULT_VARIANT_COUNT, 
     SHIP_VARIANT_COUNTS, 
     DEFAULT_COMMODITY_VARIANT_COUNT, 
-    COMMODITY_VARIANT_COUNTS 
+    COMMODITY_VARIANT_COUNTS,
+    DEFAULT_LOCATION_VARIANT_COUNT,
+    LOCATION_VARIANT_COUNTS
 } from '../data/assets_config.js';
 import { AssetStorageService } from './AssetStorageService.js';
 
@@ -20395,6 +20390,27 @@ export class AssetService {
     static blobCache = new Map();
 
     /**
+     * Map of Location IDs to the specific Capitalized Folder/Filename prefixes.
+     * Maps internal IDs (e.g. 'loc_sun') to Title Case file system names (e.g. 'Sol').
+     */
+    static LOCATION_FILENAME_MAP = {
+        'loc_sun': 'Sol',
+        'loc_mercury': 'Mercury',
+        'loc_venus': 'Venus',
+        'loc_earth': 'Earth',
+        'loc_luna': 'Luna',
+        'loc_mars': 'Mars',
+        'loc_belt': 'Belt',
+        'loc_exchange': 'Exchange',
+        'loc_jupiter': 'Jupiter',
+        'loc_saturn': 'Saturn',
+        'loc_uranus': 'Uranus',
+        'loc_neptune': 'Neptune',
+        'loc_kepler': 'Kepler',
+        'loc_pluto': 'Pluto'
+    };
+
+    /**
      * Initializes the storage backend.
      */
     static async init() {
@@ -20403,17 +20419,32 @@ export class AssetService {
 
     // --- Path Generators (Private Helpers) ---
 
+    /**
+     * Converts a 0-based index to a variant suffix using Base-26 logic.
+     * 0 -> A, 25 -> Z, 26 -> AA, 27 -> AB
+     * @param {number} index 
+     * @returns {string} The alphabetic suffix.
+     */
+    static _getVariantSuffix(index) {
+        let suffix = '';
+        while (index >= 0) {
+            suffix = String.fromCharCode(65 + (index % 26)) + suffix;
+            index = Math.floor(index / 26) - 1;
+        }
+        return suffix;
+    }
+
     static _generateShipPath(shipId, visualSeed) {
         const shipData = DB.SHIPS[shipId];
         if (!shipData) return null;
 
-        // 1. Determine Variant Letter (A, B, C...)
+        // 1. Determine Variant Letter (A, B, C... AA, AB...)
         const variantCount = SHIP_VARIANT_COUNTS[shipId] !== undefined 
             ? SHIP_VARIANT_COUNTS[shipId] 
             : DEFAULT_VARIANT_COUNT;
         
         const variantIndex = Math.abs(visualSeed) % variantCount;
-        const variantLetter = String.fromCharCode(65 + variantIndex); // 65 is 'A'
+        const variantLetter = this._getVariantSuffix(variantIndex);
         
         // 2. Branch Logic Based on Ship Class
         // Class Z (Alien) and F (Failsafe) use the HYBRID structure
@@ -20441,9 +20472,36 @@ export class AssetService {
         if (variantCount === undefined) variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
         if (variantCount <= 0) return null;
         const variantIndex = Math.abs(visualSeed) % variantCount;
-        const variantLetter = String.fromCharCode(65 + variantIndex);
+        const variantLetter = this._getVariantSuffix(variantIndex);
         const fileNamePrefix = commodityName.replace(/ /g, '_');
         return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
+    }
+
+    static _generateLocationPath(locationId) {
+        // 1. Resolve filename prefix (Folder & File Start)
+        let filePrefix = this.LOCATION_FILENAME_MAP[locationId];
+        
+        if (!filePrefix) {
+            // Safe fallback: Strip 'loc_', capitalize first letter
+            // Example: 'loc_unknown' -> 'Unknown'
+            const raw = locationId.replace('loc_', '');
+            filePrefix = raw.charAt(0).toUpperCase() + raw.slice(1);
+        }
+
+        // 2. Determine Variant Count
+        // NOTE: assets_config.js keys must now match the Capitalized prefix (e.g. 'Sol')
+        const variantCount = LOCATION_VARIANT_COUNTS[filePrefix] !== undefined
+            ? LOCATION_VARIANT_COUNTS[filePrefix]
+            : DEFAULT_LOCATION_VARIANT_COUNT;
+            
+        // 3. Randomize Variant 
+        // Travel images are random each time, not seeded by player ID
+        const variantIndex = Math.floor(Math.random() * variantCount);
+        const variantLetter = this._getVariantSuffix(variantIndex); // A...Z, AA...
+
+        // 4. Construct Path
+        // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].jpeg
+        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.jpeg`;
     }
 
     // --- Public API ---
@@ -20500,6 +20558,20 @@ export class AssetService {
     }
 
     /**
+     * Generates a random target image URL for a location.
+     * Used for the Travel Animation sequence.
+     */
+    static getLocationImage(locationId) {
+        const path = this._generateLocationPath(locationId);
+        if (!path) return '';
+
+        if (this.blobCache.has(path)) {
+            return this.blobCache.get(path);
+        }
+        return path;
+    }
+
+    /**
      * Hydrates (Fetches, Stores, and Caches) a list of assets.
      * This replaces the old "new Image()" preloading.
      * @param {Array<{type: 'ship'|'commodity'|'location', id: string, seed?: number, path?: string}>} assetRequests 
@@ -20516,8 +20588,16 @@ export class AssetService {
                 const name = DB.COMMODITIES.find(c => c.id === req.id)?.name;
                 if (name) path = this._generateCommodityPath(name, req.seed || 0);
             } else if (req.type === 'location') {
-                // Future-proofing: If DB.MARKETS has image properties
-                if (req.path) path = req.path; 
+                // If a direct path is provided (legacy), use it
+                if (req.path) {
+                    path = req.path;
+                } 
+                // If an ID is provided, generate a random path (New System)
+                // Note: We might want to hydrate ALL variants for a location to prevent pop-in, 
+                // but for now we just hydrate the one requested if the caller specifies logic.
+                else if (req.id) {
+                    path = this._generateLocationPath(req.id);
+                }
             }
             if (path) uniquePaths.add(path);
         });
@@ -30771,6 +30851,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [35.17] - 2026-2-10
+-  added location assets
+-  travel animation overhaul v3
+
+# [35.03] - 2026-2-7
+-  sol simulation performance polish
 
 # [35.02] - 2026-2-7
 -  sol simulation updated
