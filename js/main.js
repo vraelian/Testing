@@ -240,6 +240,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Bindings ---
         eventManager.bindEvents();
         
+        // --- [[START]] CONSOLE EXPOSURE ---
+        // Expose services to the window for debugging/testing
+        if (DEV_MODE || true) {
+            window.game = {
+                gameState,
+                simulationService,
+                missionService,
+                uiManager,
+                eventManager
+            };
+            console.log("Game services exposed to window.game");
+        }
+        // --- [[END]] CONSOLE EXPOSURE ---
+
         if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
             

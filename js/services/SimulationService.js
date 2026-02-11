@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js'; // Added LOCATION_IDS
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -691,63 +691,283 @@ export class SimulationService {
         }
     }
 
-    _grantRewards(rewards, sourceName) {
-        rewards.forEach(reward => {
-            if (reward.type === 'credits') {
-              
-                // Apply credit cap
-                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+    /**
+     * Advances the simulation by one day.
+     * Handles market fluctuations, interest, and random events.
+     */
+    advanceDay() {
+        this.gameState.day++;
+        this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
-                this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
-            }
-            if (reward.type === 'license') {
-                if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
-                 
-                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
-                    const license = DB.LICENSES[reward.licenseId];
-                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
-                    this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
-                }
-            }
-            // --- PHASE 2: OFFICER REWARD ---
-            if (reward.type === 'OFFICER') {
-                const officerId = reward.officerId;
-                const officer = OFFICERS[officerId];
+        // 1. Market Simulation
+        this._updateMarkets();
 
-                // Add to Roster if not already present
-                if (officer && !this.gameState.solStation.roster.includes(officerId)) {
-                    this.gameState.solStation.roster.push(officerId);
-                    this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
-                    
-                    // Visual Feedback
-                    this.uiManager.queueModal('event-modal', 
-                        'New Officer Recruited', 
-                        `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
-                    );
-                }
-            }
-        });
+        // 2. Financials (Interest)
+        this._processFinancials();
+
+        // 3. Random Events
+        if (this.randomEventService) {
+            this.randomEventService.checkForRandomEvents();
+        }
+        
+        // 4. Mission System Tick (Check latent triggers)
+        if (this.missionService) {
+             this.missionService.checkTriggers();
+        }
+
+        // 5. Save State (Auto-save)
+        // this.gameState.saveGame();
+        
+        this.gameState.setState({}); // Trigger UI update
     }
-    
+
+    /**
+     * Grants the starting cargo for a mission (if any).
+     * @param {string} missionId 
+     */
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;
+
         const inventory = this._getActiveInventory();
         if (!inventory) {
             this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory found.');
             return;
         }
-        mission.providedCargo.forEach(cargo => {
-            if (!inventory[cargo.goodId]) {
-                inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
-         
-             }
-            inventory[cargo.goodId].quantity += cargo.quantity;
-            this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
+
+        mission.providedCargo.forEach(item => {
+            if (!inventory[item.goodId]) {
+                inventory[item.goodId] = { quantity: 0, avgCost: 0 };
+            }
+            if (inventory[item.goodId]) {
+                inventory[item.goodId].quantity += item.quantity;
+                // We don't affect avgCost for mission items (free)
+            }
         });
+        
+        this.logger.info.player(this.gameState.day, 'MISSION_CARGO', `Received mission cargo for ${missionId}`);
+        
+        // Force a trigger check immediately after granting to update UI progress bars
         if (this.missionService) {
             this.missionService.checkTriggers();
+        }
+    }
+
+    /**
+     * Internal helper to process reward arrays.
+     * @param {Array} rewards 
+     * @param {string} sourceName 
+     */
+    _grantRewards(rewards, sourceName) {
+        if (!rewards || rewards.length === 0) return;
+
+        rewards.forEach(reward => {
+            switch (reward.type) {
+                // --- CURRENCY ---
+                case 'credits':
+                    // Apply credit cap
+                    this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+                    this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
+                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+                    break;
+
+                // --- ITEMS ---
+                case 'item':
+                case 'commodity':
+                    const shipId = this.gameState.player.activeShipId;
+                    const inventory = this.gameState.player.inventories[shipId];
+                    if (inventory && inventory[reward.goodId]) {
+                        inventory[reward.goodId].quantity += reward.quantity;
+                    }
+                    break;
+
+                // --- PROGRESSION: LOCATIONS ---
+                case 'UNLOCK_LOCATION':
+                    if (!this.gameState.player.unlockedLocationIds.includes(reward.target)) {
+                        this.gameState.player.unlockedLocationIds.push(reward.target);
+                        this.logger.info.player(this.gameState.day, 'UNLOCK', `Unlocked location: ${reward.target}`);
+                    }
+                    break;
+
+                // --- PROGRESSION: TIERS & LICENSES ---
+                case 'UNLOCK_TIER':
+                    const newTier = Math.max(this.gameState.player.revealedTier, reward.value);
+                    if (newTier > this.gameState.player.revealedTier) {
+                        this.gameState.player.revealedTier = newTier;
+                        this.logger.info.player(this.gameState.day, 'UNLOCK', `Clearance Tier increased to ${newTier}`);
+                    }
+                    break;
+                
+                case 'license': // Legacy support / specific licenses
+                    if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
+                        this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                        const license = DB.LICENSES[reward.licenseId];
+                        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
+                        this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
+                    }
+                    break;
+
+                // --- ASSETS: SHIPS ---
+                case 'SHIP':
+                    const targetShipId = reward.target;
+                    if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
+                        this.gameState.player.ownedShipIds.push(targetShipId);
+                        // Initialize state for the new ship
+                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
+                    }
+                    break;
+
+                // --- TRAVEL: TELEPORT ---
+                case 'TELEPORT':
+                    this.gameState.currentLocationId = reward.target;
+                    this.gameState.pendingTravel = null; // Clear any active travel
+                    this.logger.info.player(this.gameState.day, 'TELEPORT', `Teleported to ${reward.target}`);
+                    break;
+
+                // --- SERVICES: MAINTENANCE ---
+                case 'REPAIR':
+                    const activeShip = this.gameState.player.activeShipId;
+                    if (this.gameState.player.shipStates[activeShip]) {
+                        this.gameState.player.shipStates[activeShip].health = DB.SHIPS[activeShip].maxHealth;
+                    }
+                    break;
+                
+                case 'REFUEL':
+                    const currentShip = this.gameState.player.activeShipId;
+                    if (this.gameState.player.shipStates[currentShip]) {
+                        this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
+                    }
+                    break;
+                
+                // --- ASSETS: UPGRADES ---
+                case 'UPGRADE':
+                     const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
+                     // Simple check: if not already owned (or if stackable logic is added later)
+                     // For now, we assume upgrades are unique per ship or just pushed.
+                     if (shipState && shipState.upgrades) {
+                         shipState.upgrades.push(reward.target);
+                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target}`);
+                     }
+                     break;
+                
+                // --- OFFICERS ---
+                case 'OFFICER':
+                    const officerId = reward.officerId;
+                    const officer = OFFICERS[officerId];
+
+                    // Add to Roster if not already present
+                    if (officer && !this.gameState.solStation.roster.includes(officerId)) {
+                        this.gameState.solStation.roster.push(officerId);
+                        this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
+                        
+                        // Visual Feedback
+                        this.uiManager.queueModal('event-modal', 
+                            'New Officer Recruited', 
+                            `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
+                        );
+                    }
+                    break;
+
+                default:
+                    console.warn(`Unknown reward type: ${reward.type}`);
+            }
+        });
+    }
+
+    /**
+     * Helper to initialize a fresh ship state object.
+     * Replicates logic from GameState to ensure standalone functionality.
+     * @param {string} shipId 
+     */
+    _initializeShipState(shipId) {
+        const ship = DB.SHIPS[shipId];
+        return {
+            health: ship ? ship.maxHealth : 100,
+            fuel: ship ? ship.maxFuel : 40,
+            hullAlerts: { one: false, two: false },
+            upgrades: [] 
+        };
+    }
+
+    /**
+     * Sets the active screen/tab for the Intel UI.
+     * @param {string} tabId 
+     */
+    setIntelTab(tabId) {
+        this.gameState.uiState.activeIntelTab = tabId;
+        this.gameState.setState({});
+    }
+
+    /**
+     * Forces a screen switch (used by Intel navigation buttons).
+     * @param {string} navId 
+     * @param {string} screenId 
+     */
+    setScreen(navId, screenId) {
+        this.gameState.activeNav = navId;
+        this.gameState.activeScreen = screenId;
+        this.gameState.setState({});
+    }
+
+    // ... (Existing private methods _updateMarkets, _processFinancials remain unchanged)
+    
+    _updateMarkets() {
+        const { market } = this.gameState;
+        
+        // 1. Decay/Update existing price history
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(good => {
+                // Ensure array exists
+                if (!market.priceHistory[loc.id][good.id]) {
+                    market.priceHistory[loc.id][good.id] = [];
+                }
+                
+                // Shift history (Max 30 days)
+                const history = market.priceHistory[loc.id][good.id];
+                history.push(market.prices[loc.id][good.id]);
+                if (history.length > 30) history.shift();
+            });
+        });
+
+        // 2. Calculate New Prices
+        // Simple random walk for now, bounded by +/- 20% of galactic average
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(good => {
+                const currentPrice = market.prices[loc.id][good.id];
+                const avg = market.galacticAverages[good.id];
+                
+                // Volatility Check (Intel/Events could boost this)
+                const volatility = 0.05; 
+                
+                let change = 1 + (Math.random() * volatility * 2 - volatility);
+                let newPrice = Math.round(currentPrice * change);
+                
+                // Soft Clamping
+                const min = avg * 0.5;
+                const max = avg * 1.5;
+                if (newPrice < min) newPrice = Math.round(min + Math.random() * 5);
+                if (newPrice > max) newPrice = Math.round(max - Math.random() * 5);
+
+                market.prices[loc.id][good.id] = newPrice;
+            });
+            
+            // 3. Update Shipyard Stock (Weekly)
+            if (this.gameState.day % 7 === 0) {
+                // Logic to rotate ships would go here
+            }
+        });
+
+        this.gameState.lastMarketUpdateDay = this.gameState.day;
+    }
+
+    _processFinancials() {
+        // Simple daily interest if in debt
+        if (this.gameState.player.debt > 0) {
+            const dailyRate = 0.001; // 0.1% daily
+            const interest = Math.ceil(this.gameState.player.debt * dailyRate);
+            this.gameState.player.debt += interest;
+            this.gameState.player.monthlyInterestAmount += interest;
         }
     }
 }

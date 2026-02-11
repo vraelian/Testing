@@ -246,6 +246,15 @@ export class ActionClickHandler {
                 break;
             }
 
+            // --- MISSION SYSTEM NAVIGATION ---
+            // Added to fix "Mission Log" button inactivity
+            case 'switch-mission-tab': {
+                if (this.uiManager.missionControl) {
+                    this.uiManager.missionControl.handleMissionTabSwitch(dataset.target);
+                }
+                break;
+            }
+
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
@@ -284,14 +293,18 @@ export class ActionClickHandler {
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
+                // Auto-switch to Log tab to show the new mission
+                if (this.uiManager.missionControl) {
+                    this.uiManager.missionControl.handleMissionTabSwitch('log');
+                }
                 actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
                 break;
             case 'abandon-mission':
-                this.simulationService.missionService.abandonMission();
+                this.simulationService.missionService.abandonMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
                 break;
             case 'complete-mission':
-                this.simulationService.missionService.completeActiveMission();
+                this.simulationService.missionService.completeMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
                 actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;
