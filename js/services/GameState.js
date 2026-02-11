@@ -256,10 +256,13 @@ export class GameState {
                 navLock: null
             },
             missions: {
-                activeMissionId: null,
+                // --- MISSION SYSTEM 2.0 (Phase 1) ---
+                // Renamed from activeMissionId to activeMissionIds (Array)
+                // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
+                activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {},
-                activeMissionObjectivesMet: false
+                missionProgress: {}
+                // --- END MISSION SYSTEM 2.0 ---
             },
             uiState: {
                 marketCardMinimized: {},
@@ -269,7 +272,9 @@ export class GameState {
                 // --- VIRTUAL WORKBENCH (A) ---
                 // Add state to track the active intel tab
                 activeIntelTab: 'intel-codex-content', // Matches DOM ID
-                servicesTab: 'supply' // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
+                servicesTab: 'supply', // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
+                // --- MISSION SYSTEM 2.0 (Phase 3) ---
+                activeMissionTab: 'terminal' // 'terminal' | 'log'
                 // --- END VIRTUAL WORKBENCH ---
             }
         };

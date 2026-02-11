@@ -1,219 +1,135 @@
 /* css/missions.css */
-.mission-card {
-    padding: 0.5rem 1rem;
+
+/* --- LAYOUT & SCROLLING --- */
+.missions-scroll-panel {
+    /* Ensures the list scrolls within the flex container */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- TAB NAVIGATION (PILLS) --- */
+.mission-tabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.mission-tab-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    padding: 0.5rem 1.5rem;
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 9999px; /* Pill shape */
+    transition: all 0.2s ease;
     cursor: pointer;
-    border-radius: 8px;
-}
-.mission-card:hover .sci-fi-frame::before, .mission-card:hover .sci-fi-frame::after {
-    border-color: rgba(96, 165, 250, 0.7);
-}
-.mission-type {
-    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-size: 0.85rem; /* Increased from 0.7rem */
-    color: #9ca3af;
-    letter-spacing: 0.1em;
-    font-weight: 800;
-}
-.mission-host {
-    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-size: 0.7rem;
-    color: #d1d5db;
-    font-weight: 800;
-}
-.mission-reward {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-size: 0.9rem;
-    /* color: #facc15; */ /* <-- VIRTUAL WORKBENCH: Phase 7 */
-    text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
-    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-/* Applied to mission card title */
-.mission-card .font-bold.text-base {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-weight: 800;
-    font-size: 1.15rem; /* Increased size */
+.mission-tab-btn:hover {
+    color: #ccc;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Applied to mission modal title */
-#mission-modal #mission-modal-title {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem; /* Increased size */
+.mission-tab-btn.active {
+    background: rgba(6, 182, 212, 0.15); /* Cyan tint */
+    border-color: #06b6d4;
+    color: #22d3ee;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
 }
 
-
-#mission-modal #mission-modal-description {
-    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
-    font-size: 1.0rem; 
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-    background: rgba(0, 0, 0, 0.25);
+/* --- MISSION CARDS --- */
+.mission-card {
+    position: relative;
     padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #4a6a8a; /* Thematic border */
-    text-align: left;
-    white-space: pre-wrap; 
-    
-    max-height: 36vh; /* Increased 20% (from 30vh) */
-    overflow-y: auto;
-    touch-action: pan-y;
-    scrollbar-width: none; 
-    -ms-overflow-style: none; 
+    margin-bottom: 0.75rem;
+    background: rgba(10, 10, 12, 0.7);
+    border: 1px solid #334155;
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+    overflow: hidden; /* For glow effects */
 }
 
-/* Hide Webkit scrollbar (Chrome, Safari, iOS) */
-#mission-modal #mission-modal-description::-webkit-scrollbar {
-    display: none;
+.mission-card:active {
+    transform: scale(0.98);
 }
 
+/* Host Themes (Borders & Accents) */
+.host-station { border-color: #3b82f6; box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); } /* Blue */
+.host-guild { border-color: #eab308; box-shadow: 0 0 5px rgba(234, 179, 8, 0.1); }   /* Gold */
+.host-syndicate { border-color: #a855f7; box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } /* Violet */
+.host-unknown { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }  /* Red */
 
-#mission-modal #mission-modal-objectives {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem; /* Increased space */
-    width: 100%; /* Ensure it spans width */
-}
-
-/* Applied to objective description text in modal */
-#mission-modal #mission-modal-objectives .flex-1 {
-    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-}
-
-/* Applied to objective progress text (e.g., "1 / 5") in modal */
-#mission-modal #mission-modal-objectives .font-roboto-mono {
-    font-family: 'Oxanium Medium', 'Roboto Mono', monospace; /* Use 'Oxanium Medium' font */
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-}
-
-
-#mission-modal #mission-modal-buttons {
-    margin-top: 1.5rem; /* Increased space */
-}
-
-/* Increase scale of modal buttons by 50% */
-#mission-modal #mission-modal-buttons .btn {
-    font-size: 1.2rem; 
-    padding: 0.75rem 1.125rem; 
-}
-
-
-/* Host Themes */
-.host-guild {
-    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
-    border-color: #FFD700;
-}
-#mission-modal .modal-content.host-guild {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
-    border-color: #FFD700;
-}
-#mission-modal .modal-content.host-guild #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #FFD700; */
-}
-
-.host-syndicate {
-    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
-    border-color: #a855f7;
-}
-#mission-modal .modal-content.host-syndicate {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
-    border-color: #a855f7;
-}
-#mission-modal .modal-content.host-syndicate #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #a855f7; */
-}
-
-.host-unknown {
-    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
-    border-color: #5f616b;
-}
-#mission-modal .modal-content.host-unknown {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
-    border-color: #5f616b;
-}
-#mission-modal .modal-content.host-unknown #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #5f616b; */
-}
-
-.host-crew {
-    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
-    border-color: #c9bfb1;
-}
-#mission-modal .modal-content.host-crew {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
-    border-color: #c9bfb1;
-}
-#mission-modal .modal-content.host-crew #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #c9bfb1; */
-}
-
-.host-tutorial {
-    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
-    border-color: #5aa66d;
-}
-#mission-modal .modal-content.host-tutorial {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
-    border-color: #5aa66d;
-}
-#mission-modal .modal-content.host-tutorial #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #5aa66d; */
-}
-
-.host-station {
-    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
-    border-color: #8f9acc;
-}
-#mission-modal .modal-content.host-station {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
-    border-color: #8f9acc;
-}
-#mission-modal .modal-content.host-station #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #8f9acc; */
-}
-
-/* Mission Status Styles */
+/* Available vs Active Styling */
 .mission-active {
-    box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
-    border-width: 3px;
-    border-color: rgba(96, 165, 250, 0.7);
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(10, 10, 12, 0.95));
+    border-left-width: 4px; /* Thicker left border indicator */
 }
-.mission-active .sci-fi-frame::before, .mission-active .sci-fi-frame::after {
-    border-color: #93c5fd;
-}
-.mission-complete {
-    opacity: 0.6;
-    background: #111827;
-}
-.mission-complete .sci-fi-frame::before, .mission-complete .sci-fi-frame::after {
-    border-color: #34d399;
+
+/* Ready to Turn In (Pulse Effect) */
+@keyframes turnInPulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); border-color: #22c55e; }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: #4ade80; }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: #22c55e; }
 }
 
 .mission-turn-in {
-    overflow: hidden;
-    position: relative;
-    --glow-color: #fde047;
-    animation: glow-border 2s infinite, shimmer-effect 3s linear infinite;
-    background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
-    background-repeat: no-repeat;
-    background-size: 400px 100%;
+    animation: turnInPulse 2s infinite;
+    border-color: #22c55e !important; /* Green override */
+}
+
+/* Text Styles */
+.mission-type {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.mission-host {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.mission-reward {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fbbf24; /* Amber-300 */
+}
+
+/* --- OBJECTIVE LIST --- */
+.objective-item {
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* --- STICKY BAR (HUD) --- */
+.sticky-content {
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #444;
+    backdrop-filter: blur(4px);
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 8px 8px; /* Rounded bottom */
+    border-top: none; /* Connect to top of screen */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
 }
 
 .objective-progress-flash {
-    animation: flash-green 0.7s ease-in-out;
+    animation: textFlash 0.5s ease-out;
+    color: #22d3ee; /* Cyan flash */
 }
 
-.missions-scroll-panel {
-    /* height: 68vh; */ /* REMOVED */
-    touch-action: pan-y;
+@keyframes textFlash {
+    0% { color: #fff; text-shadow: 0 0 10px #fff; }
+    100% { color: #22d3ee; text-shadow: none; }
 }

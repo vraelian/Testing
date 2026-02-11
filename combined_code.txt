@@ -321,223 +321,139 @@
 
 --- START OF FILE: ./css/missions.css ---
 /* css/missions.css */
-.mission-card {
-    padding: 0.5rem 1rem;
+
+/* --- LAYOUT & SCROLLING --- */
+.missions-scroll-panel {
+    /* Ensures the list scrolls within the flex container */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- TAB NAVIGATION (PILLS) --- */
+.mission-tabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.mission-tab-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    padding: 0.5rem 1.5rem;
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 9999px; /* Pill shape */
+    transition: all 0.2s ease;
     cursor: pointer;
-    border-radius: 8px;
-}
-.mission-card:hover .sci-fi-frame::before, .mission-card:hover .sci-fi-frame::after {
-    border-color: rgba(96, 165, 250, 0.7);
-}
-.mission-type {
-    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-size: 0.85rem; /* Increased from 0.7rem */
-    color: #9ca3af;
-    letter-spacing: 0.1em;
-    font-weight: 800;
-}
-.mission-host {
-    font-family: 'Oxanium ExtraBold', 'Roboto Mono', monospace;
-    font-size: 0.7rem;
-    color: #d1d5db;
-    font-weight: 800;
-}
-.mission-reward {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-size: 0.9rem;
-    /* color: #facc15; */ /* <-- VIRTUAL WORKBENCH: Phase 7 */
-    text-shadow: 0 0 5px rgba(250, 204, 21, 0.6);
-    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-/* Applied to mission card title */
-.mission-card .font-bold.text-base {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-weight: 800;
-    font-size: 1.15rem; /* Increased size */
+.mission-tab-btn:hover {
+    color: #ccc;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Applied to mission modal title */
-#mission-modal #mission-modal-title {
-    font-family: 'Oxanium ExtraBold', 'Orbitron', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem; /* Increased size */
+.mission-tab-btn.active {
+    background: rgba(6, 182, 212, 0.15); /* Cyan tint */
+    border-color: #06b6d4;
+    color: #22d3ee;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
 }
 
-
-#mission-modal #mission-modal-description {
-    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
-    font-size: 1.0rem; 
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-    background: rgba(0, 0, 0, 0.25);
+/* --- MISSION CARDS --- */
+.mission-card {
+    position: relative;
     padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #4a6a8a; /* Thematic border */
-    text-align: left;
-    white-space: pre-wrap; 
-    
-    max-height: 36vh; /* Increased 20% (from 30vh) */
-    overflow-y: auto;
-    touch-action: pan-y;
-    scrollbar-width: none; 
-    -ms-overflow-style: none; 
+    margin-bottom: 0.75rem;
+    background: rgba(10, 10, 12, 0.7);
+    border: 1px solid #334155;
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+    overflow: hidden; /* For glow effects */
 }
 
-/* Hide Webkit scrollbar (Chrome, Safari, iOS) */
-#mission-modal #mission-modal-description::-webkit-scrollbar {
-    display: none;
+.mission-card:active {
+    transform: scale(0.98);
 }
 
+/* Host Themes (Borders & Accents) */
+.host-station { border-color: #3b82f6; box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); } /* Blue */
+.host-guild { border-color: #eab308; box-shadow: 0 0 5px rgba(234, 179, 8, 0.1); }   /* Gold */
+.host-syndicate { border-color: #a855f7; box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } /* Violet */
+.host-unknown { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }  /* Red */
 
-#mission-modal #mission-modal-objectives {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem; /* Increased space */
-    width: 100%; /* Ensure it spans width */
-}
-
-/* Applied to objective description text in modal */
-#mission-modal #mission-modal-objectives .flex-1 {
-    font-family: 'Oxanium Medium', 'Exo 2', sans-serif; /* Use 'Oxanium Medium' font */
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-}
-
-/* Applied to objective progress text (e.g., "1 / 5") in modal */
-#mission-modal #mission-modal-objectives .font-roboto-mono {
-    font-family: 'Oxanium Medium', 'Roboto Mono', monospace; /* Use 'Oxanium Medium' font */
-    /* font-weight: 500; */ /* Removed, as font file handles this */
-}
-
-
-#mission-modal #mission-modal-buttons {
-    margin-top: 1.5rem; /* Increased space */
-}
-
-/* Increase scale of modal buttons by 50% */
-#mission-modal #mission-modal-buttons .btn {
-    font-size: 1.2rem; 
-    padding: 0.75rem 1.125rem; 
-}
-
-
-/* Host Themes */
-.host-guild {
-    background: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
-    border-color: #FFD700;
-}
-#mission-modal .modal-content.host-guild {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(255, 215, 0, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
-    border-color: #FFD700;
-}
-#mission-modal .modal-content.host-guild #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #FFD700; */
-}
-
-.host-syndicate {
-    background: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
-    border-color: #a855f7;
-}
-#mission-modal .modal-content.host-syndicate {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(168, 85, 247, 0.25) 0%, rgba(179, 71, 71, 0.35) 100%);
-    border-color: #a855f7;
-}
-#mission-modal .modal-content.host-syndicate #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #a855f7; */
-}
-
-.host-unknown {
-    background: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
-    border-color: #5f616b;
-}
-#mission-modal .modal-content.host-unknown {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(95, 97, 107, 0.35) 0%, rgba(12, 16, 29, 0.5) 100%);
-    border-color: #5f616b;
-}
-#mission-modal .modal-content.host-unknown #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #5f616b; */
-}
-
-.host-crew {
-    background: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
-    border-color: #c9bfb1;
-}
-#mission-modal .modal-content.host-crew {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(201, 191, 177, 0.35) 0%, rgba(245, 222, 179, 0.25) 100%);
-    border-color: #c9bfb1;
-}
-#mission-modal .modal-content.host-crew #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #c9bfb1; */
-}
-
-.host-tutorial {
-    background: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
-    border-color: #5aa66d;
-}
-#mission-modal .modal-content.host-tutorial {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(6, 78, 59, 0.45) 0%, rgba(90, 166, 109, 0.35) 100%);
-    border-color: #5aa66d;
-}
-#mission-modal .modal-content.host-tutorial #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #5aa66d; */
-}
-
-.host-station {
-    background: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
-    border-color: #8f9acc;
-}
-#mission-modal .modal-content.host-station {
-    background-color: #0c101d; /* Opaque base */
-    background-image: linear-gradient(105deg, rgba(143, 154, 204, 0.35) 0%, rgba(30, 64, 175, 0.3) 100%);
-    border-color: #8f9acc;
-}
-#mission-modal .modal-content.host-station #mission-modal-objectives {
-    /* border-width: 2px; */
-    /* border-color: #8f9acc; */
-}
-
-/* Mission Status Styles */
+/* Available vs Active Styling */
 .mission-active {
-    box-shadow: 0 0 16px rgba(96, 165, 250, 0.7), inset 0 0 12px rgba(96, 165, 250, 0.2);
-    border-width: 3px;
-    border-color: rgba(96, 165, 250, 0.7);
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(10, 10, 12, 0.95));
+    border-left-width: 4px; /* Thicker left border indicator */
 }
-.mission-active .sci-fi-frame::before, .mission-active .sci-fi-frame::after {
-    border-color: #93c5fd;
-}
-.mission-complete {
-    opacity: 0.6;
-    background: #111827;
-}
-.mission-complete .sci-fi-frame::before, .mission-complete .sci-fi-frame::after {
-    border-color: #34d399;
+
+/* Ready to Turn In (Pulse Effect) */
+@keyframes turnInPulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); border-color: #22c55e; }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: #4ade80; }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: #22c55e; }
 }
 
 .mission-turn-in {
-    overflow: hidden;
-    position: relative;
-    --glow-color: #fde047;
-    animation: glow-border 2s infinite, shimmer-effect 3s linear infinite;
-    background-image: linear-gradient(to right, transparent 0%, rgba(253, 224, 71, 0.2) 50%, transparent 100%);
-    background-repeat: no-repeat;
-    background-size: 400px 100%;
+    animation: turnInPulse 2s infinite;
+    border-color: #22c55e !important; /* Green override */
+}
+
+/* Text Styles */
+.mission-type {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.mission-host {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.mission-reward {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fbbf24; /* Amber-300 */
+}
+
+/* --- OBJECTIVE LIST --- */
+.objective-item {
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* --- STICKY BAR (HUD) --- */
+.sticky-content {
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #444;
+    backdrop-filter: blur(4px);
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 8px 8px; /* Rounded bottom */
+    border-top: none; /* Connect to top of screen */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
 }
 
 .objective-progress-flash {
-    animation: flash-green 0.7s ease-in-out;
+    animation: textFlash 0.5s ease-out;
+    color: #22d3ee; /* Cyan flash */
 }
 
-.missions-scroll-panel {
-    /* height: 68vh; */ /* REMOVED */
-    touch-action: pan-y;
+@keyframes textFlash {
+    0% { color: #fff; text-shadow: 0 0 10px #fff; }
+    100% { color: #22d3ee; text-shadow: none; }
 }
 --- END OF FILE: ./css/missions.css ---
 
@@ -7837,54 +7753,49 @@ export function renderNavigationScreen(gameState) {
 --- START OF FILE: ./js/ui/components/MissionsScreen.js ---
 // js/ui/components/MissionsScreen.js
 /**
- * @fileoverview This file contains the rendering logic for the Missions screen.
- * It is responsible for displaying the currently active mission and a list of all
- * available missions for the player.
+ * @fileoverview Rendering logic for Mission System 2.0.
+ * Supports split view: 'Terminal' (Available) vs 'Log' (Active).
  */
 import { DB } from '../../data/database.js';
-// --- VIRTUAL WORKBENCH: IMPORT formatCredits ---
 import { formatCredits } from '../../utils.js';
-// --- END VIRTUAL WORKBENCH ---
 
-/**
- * Renders the entire Missions screen UI.
- * @param {object} gameState - The current state of the game.
- * @param {import('../../services/MissionService.js').MissionService} missionService - An instance of the MissionService to fetch available missions.
- * @returns {string} The HTML content for the Missions screen.
- */
 export function renderMissionsScreen(gameState, missionService) {
-    const { missions, currentLocationId } = gameState;
-    const { activeMissionId, activeMissionObjectivesMet } = missions;
+    const { missions, uiState, currentLocationId } = gameState;
+    const { activeMissionIds, missionProgress } = missions;
+    const activeTab = uiState.activeMissionTab || 'terminal'; // Default to terminal
 
-    /**
-     * Generates the HTML for a single mission card.
-     * @param {object} mission - The mission object from the database.
-     * @param {string} status - The status of the mission ('active', 'completed', 'available').
-     * @returns {string} The HTML for the mission card.
-     */
-    const getMissionCardHtml = (mission, status) => {
-        let statusClass = '';
-        if (status === 'active') statusClass = 'mission-active';
-        if (status === 'completed') statusClass = 'mission-complete';
-        // Special class for an active mission that is ready to be turned in at the current location.
-        if (status === 'active' && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId) {
-            statusClass += ' mission-turn-in';
-        }
+    // --- SUB-COMPONENTS ---
 
-        const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    /** Renders the Tab Navigation (Pills) */
+    const renderTabs = () => {
+        const getTabClass = (tabId) => 
+            `mission-tab-btn ${activeTab === tabId ? 'active' : ''}`;
         
-        // --- VIRTUAL WORKBENCH START: Phase 7 ---
+        return `
+            <div class="mission-tabs-nav flex justify-center gap-4 mb-6">
+                <button class="${getTabClass('terminal')}" data-action="switch-mission-tab" data-target="terminal">
+                    MISSION TERMINAL
+                </button>
+                <button class="${getTabClass('log')}" data-action="switch-mission-tab" data-target="log">
+                    MISSION LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
+                </button>
+            </div>
+        `;
+    };
+
+    /** Renders a "Job Board" style card for available missions */
+    const renderTerminalCard = (mission) => {
+        const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
         const rewardText = mission.rewards.map(r => {
             if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
             return r.type.toUpperCase();
         }).join(', ');
-        // --- VIRTUAL WORKBENCH END: Phase 7 ---
 
         return `
-            <div class="mission-card sci-fi-frame ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+            <div class="mission-card sci-fi-frame ${hostClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 <div class="flex justify-between items-center w-full text-xs mb-1">
                     <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span class="mission-type">${mission.type}</span>
                     </div>
                     <span class="mission-host">${mission.host}</span>
@@ -7896,30 +7807,98 @@ export function renderMissionsScreen(gameState, missionService) {
             </div>`;
     };
 
-    let missionsHtml = '';
-    const activeMission = activeMissionId ? DB.MISSIONS[activeMissionId] : null;
-    if (activeMission) {
-        missionsHtml += getMissionCardHtml(activeMission, 'active');
-    }
-    
-    if (missionService) {
-        const availableMissions = missionService.getAvailableMissions();
-        availableMissions.forEach(mission => {
-            missionsHtml += getMissionCardHtml(mission, 'available');
-        });
-    }
+    /** Renders a detailed "Log" style card with progress bars */
+    const renderLogCard = (mission) => {
+        const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const progress = missionProgress[mission.id] || { objectives: {}, isCompletable: false };
+        
+        // Determine Status Class (Active vs Turn-In Ready)
+        let statusClass = 'mission-active';
+        if (progress.isCompletable && mission.completion.locationId === currentLocationId) {
+            statusClass += ' mission-turn-in';
+        }
 
-    if (missionsHtml === '') {
-        missionsHtml = '<p class="text-center text-gray-500 text-lg">No missions available at this terminal.</p>';
+        // Render Objectives with Progress Bars
+        let objectivesHtml = '';
+        if (mission.objectives) {
+            objectivesHtml = '<div class="mission-objectives-list space-y-2 mt-2">';
+            mission.objectives.forEach(obj => {
+                const objKey = obj.id || obj.goodId;
+                // Get generic desc
+                let desc = 'Objective';
+                if(obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
+                else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
+                else if (obj.type === 'wealth_gt') desc = 'Earn Credits';
+                
+                // Calculate %
+                const pObj = progress.objectives[objKey];
+                const current = pObj ? pObj.current : 0;
+                const target = pObj ? pObj.target : (obj.quantity || 1);
+                const percent = Math.min(100, Math.floor((current / target) * 100));
+
+                objectivesHtml += `
+                    <div class="objective-item text-xs">
+                        <div class="flex justify-between mb-0.5 text-gray-400">
+                            <span>${desc}</span>
+                            <span>${current}/${target}</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-cyan-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            objectivesHtml += '</div>';
+        }
+
+        return `
+            <div class="mission-card sci-fi-frame ${hostClass} ${statusClass} p-4" data-action="show-mission-modal" data-mission-id="${mission.id}">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-white">${mission.name}</h3>
+                    <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
+                </div>
+                <div class="text-xs text-gray-400 italic mb-2">${mission.completion.locationId ? `Return to: ${DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name}` : ''}</div>
+                ${objectivesHtml}
+            </div>
+        `;
+    };
+
+    // --- MAIN RENDER LOGIC ---
+
+    let contentHtml = '';
+
+    if (activeTab === 'terminal') {
+        // TERMINAL VIEW
+        if (missionService) {
+            const availableMissions = missionService.getAvailableMissions();
+            if (availableMissions.length > 0) {
+                contentHtml = '<div class="space-y-3 max-w-2xl mx-auto">';
+                availableMissions.forEach(m => contentHtml += renderTerminalCard(m));
+                contentHtml += '</div>';
+            } else {
+                contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">No contracts available at this location.</p></div>';
+            }
+        }
+    } else {
+        // LOG VIEW
+        if (activeMissionIds && activeMissionIds.length > 0) {
+            contentHtml = '<div class="space-y-4 max-w-2xl mx-auto">';
+            activeMissionIds.forEach(id => {
+                const mission = DB.MISSIONS[id];
+                if (mission) contentHtml += renderLogCard(mission);
+            });
+            contentHtml += '</div>';
+        } else {
+             contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">Mission Log Empty.</p></div>';
+        }
     }
 
     return `
         <div class="flex flex-col h-full">
-            <h1 class="text-3xl font-orbitron text-center mb-6 text-cyan-300 flex-shrink-0">Mission Terminal</h1>
-            <div class="missions-scroll-panel flex-grow min-h-0">
-                <div class="space-y-3 max-w-2xl mx-auto">
-                    ${missionsHtml}
-                </div>
+            <h1 class="text-3xl font-orbitron text-center mb-4 text-cyan-300 flex-shrink-0">Mission Control</h1>
+            ${renderTabs()}
+            <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
+                ${contentHtml}
             </div>
         </div>
     `;
@@ -14354,7 +14333,18 @@ export class UIMissionControl {
     }
 
     /**
+     * Handles switching between the 'Terminal' and 'Mission Log' tabs.
+     * @param {string} tabId - 'terminal' or 'log'
+     */
+    handleMissionTabSwitch(tabId) {
+        if (tabId !== 'terminal' && tabId !== 'log') return;
+        this.manager.lastKnownState.uiState.activeMissionTab = tabId;
+        this.manager.render();
+    }
+
+    /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
+     * Note: For Phase 1, this displays the FIRST active mission if multiple exist.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -14363,31 +14353,67 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        if (gameState.missions.activeMissionId) {
-            const mission = DB.MISSIONS[gameState.missions.activeMissionId];
+        // Phase 1: Just grab the first mission for the HUD
+        const activeMissionId = gameState.missions.activeMissionIds[0];
+
+        if (activeMissionId) {
+            const mission = DB.MISSIONS[activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;
             }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
 
-            const objective = mission.objectives[0];
-            const current = progress.objectives[objective.goodId]?.current ?? 0;
-            const target = objective.quantity;
-            const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
-            const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
+            // Find first incomplete objective for HUD
+            let objKey;
+            let current = 0;
+            let target = 1;
+            
+            // Try to find the first objective that matches our progress map
+            if (mission.objectives) {
+                const firstObj = mission.objectives[0];
+                objKey = firstObj.id || firstObj.goodId;
+                
+                if (progress.objectives[objKey]) {
+                    current = progress.objectives[objKey].current;
+                    target = progress.objectives[objKey].target;
+                } else {
+                     // Fallback for immediate render before checkTriggers runs
+                     current = 0;
+                     target = firstObj.quantity || firstObj.value || 1;
+                }
+            }
 
-            objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
+            const objectiveLabel = this._getObjectiveLabel(mission.objectives[0]);
+
+            objectiveTextEl.textContent = `${objectiveLabel}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
-            let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
+            
+            // Check specific mission completability
+            const isReady = progress.isCompletable && mission.completion.locationId === gameState.currentLocationId;
+            let turnInClass = isReady ? 'mission-turn-in' : '';
+            
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
 
             stickyBarEl.style.display = 'block';
         } else {
             stickyBarEl.style.display = 'none';
         }
+    }
+
+    _getObjectiveLabel(obj) {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+            return `Deliver ${goodName}`;
+        }
+        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${locName}`;
+        }
+        if (obj.type === 'wealth_gt') return `Earn Credits`;
+        return `Objective`;
     }
 
     /**
@@ -14412,9 +14438,15 @@ export class UIMissionControl {
         if (!mission) return;
 
         const { missions, currentLocationId } = this.manager.lastKnownState;
-        const { activeMissionId, activeMissionObjectivesMet } = missions;
-        const isActive = activeMissionId === missionId;
-        const canComplete = isActive && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId;
+        
+        // Check if this specific mission is active
+        const isActive = missions.activeMissionIds.includes(missionId);
+        
+        // Check specific progress
+        const progress = missions.missionProgress[missionId];
+        const isCompletable = progress ? progress.isCompletable : false;
+
+        const canComplete = isActive && isCompletable && mission.completion.locationId === currentLocationId;
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);
@@ -14425,9 +14457,15 @@ export class UIMissionControl {
 
     _showMissionDetailsModal(mission) {
         const { missions, tutorials } = this.manager.lastKnownState;
-        const isActive = missions.activeMissionId === mission.id;
-        const anotherMissionActive = missions.activeMissionId && !isActive;
-        let shouldBeDisabled = anotherMissionActive;
+        const isActive = missions.activeMissionIds.includes(mission.id);
+        
+        let shouldBeDisabled = false;
+        
+        // Check if we are at capacity (4) and this isn't active
+        if (!isActive && missions.activeMissionIds.length >= 4) {
+            shouldBeDisabled = true;
+        }
+
         if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
         }
@@ -14443,7 +14481,7 @@ export class UIMissionControl {
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
-                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>Deliver ${obj.quantity}x ${DB.COMMODITIES.find(c => c.id === obj.goodId).name}</li>`).join('') + '</ul>';
+                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
                 objectivesEl.innerHTML = objectivesHtml;
                 objectivesEl.style.display = 'block';
 
@@ -14465,7 +14503,8 @@ export class UIMissionControl {
                     const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
-                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
+                     const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
+                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                 }
             }
         };
@@ -14473,6 +14512,22 @@ export class UIMissionControl {
             shouldBeDisabled = true;
         }
         this.manager.queueModal('mission-modal', mission.name, mission.description, null, options);
+    }
+    
+    _getObjectiveDescription(obj) {
+        // Helper to textually describe generic objectives
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             return `Deliver ${obj.quantity || 1}x ${name}`;
+        }
+        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${name}`;
+        }
+         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
+             return `Amass ${formatCredits(obj.value)} Credits`;
+        }
+        return `Complete Objective`;
     }
 
     _showMissionCompletionModal(mission) {
@@ -14510,8 +14565,9 @@ export class UIMissionControl {
         };
        this.manager.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
     }
-
-    /**
+    
+    // ... Intel methods remain unchanged ...
+     /**
      * Handles switching tabs within the Intel Screen (Codex vs Market).
      * @param {HTMLElement} element 
      */
@@ -19280,10 +19336,13 @@ export class GameState {
                 navLock: null
             },
             missions: {
-                activeMissionId: null,
+                // --- MISSION SYSTEM 2.0 (Phase 1) ---
+                // Renamed from activeMissionId to activeMissionIds (Array)
+                // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
+                activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {},
-                activeMissionObjectivesMet: false
+                missionProgress: {}
+                // --- END MISSION SYSTEM 2.0 ---
             },
             uiState: {
                 marketCardMinimized: {},
@@ -19293,7 +19352,9 @@ export class GameState {
                 // --- VIRTUAL WORKBENCH (A) ---
                 // Add state to track the active intel tab
                 activeIntelTab: 'intel-codex-content', // Matches DOM ID
-                servicesTab: 'supply' // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
+                servicesTab: 'supply', // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
+                // --- MISSION SYSTEM 2.0 (Phase 3) ---
+                activeMissionTab: 'terminal' // 'terminal' | 'log'
                 // --- END VIRTUAL WORKBENCH ---
             }
         };
@@ -19765,9 +19826,12 @@ export class SolStationService {
 // js/services/MissionService.js
 /**
  * @fileoverview Manages the state and flow of player missions.
+ * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
+import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
+import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 
 export class MissionService {
     /**
@@ -19780,6 +19844,10 @@ export class MissionService {
         this.uiManager = uiManager;
         this.logger = logger;
         this.simulationService = null; // Will be injected post-instantiation
+        
+        // Initialize Logic Engines
+        this.objectiveEvaluator = new MissionObjectiveEvaluator();
+        this.triggerEvaluator = new MissionTriggerEvaluator();
     }
 
     /**
@@ -19792,38 +19860,30 @@ export class MissionService {
 
     /**
      * Checks if all prerequisites for a given mission are met.
+     * Delegates to MissionTriggerEvaluator.
      * @param {string} missionId The ID of the mission to check.
      * @returns {boolean} True if all prerequisites are met, false otherwise.
      */
     arePrerequisitesMet(missionId) {
         const mission = DB.MISSIONS[missionId];
-        if (!mission || !mission.prerequisites) {
-            return true; // No prerequisites, so it's met.
-        }
-
-        return mission.prerequisites.every(prereq => {
-            switch (prereq.type) {
-                case 'mission_completed':
-                    return this.gameState.missions.completedMissionIds.includes(prereq.missionId);
-                case 'revealed_tier':
-                    return this.gameState.player.revealedTier >= prereq.tier;
-                // Future prerequisite types like 'player_level' or 'item_owned' can be added here.
-                default:
-                    return false; // Unknown prerequisite type fails validation.
-            }
-        });
+        if (!mission) return false;
+        
+        // Support both old 'prerequisites' and new 'triggers' fields
+        const constraints = mission.triggers || mission.prerequisites;
+        
+        return this.triggerEvaluator.checkAll(constraints, this.gameState);
     }
     
     /**
      * Gets a list of all missions that are currently available to the player.
-     * A mission is available if it's not active, not completed, and its prerequisites are met.
+     * A mission is available if it's not active, not completed, and its triggers are met.
      * @returns {Array<object>} An array of available mission objects.
      */
     getAvailableMissions() {
-        const { activeMissionId, completedMissionIds } = this.gameState.missions;
+        const { activeMissionIds, completedMissionIds } = this.gameState.missions;
         return Object.values(DB.MISSIONS).filter(mission => {
             const isAvailable =
-                mission.id !== activeMissionId &&
+                !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
                 this.arePrerequisitesMet(mission.id);
             return isAvailable;
@@ -19831,33 +19891,37 @@ export class MissionService {
     }
 
     /**
-     * Accepts a new mission, setting it as the active mission.
+     * Accepts a new mission, setting it as active.
      * @param {string} missionId The ID of the mission to accept.
-     * @param {boolean} [force=false] If true, bypasses checks and abandons current mission if necessary.
+     * @param {boolean} [force=false] If true, bypasses checks.
      */
     acceptMission(missionId, force = false) {
         const mission = DB.MISSIONS[missionId];
         
         // 1. Validation (skipped if forced)
         if (!force) {
-            if (this.gameState.missions.activeMissionId || !mission || !this.arePrerequisitesMet(missionId)) {
+            // Check max missions (4)
+            if (this.gameState.missions.activeMissionIds.length >= 4) {
+                this.logger.warn('MissionService', `Cannot accept ${missionId}: Mission log full (4/4).`);
+                return;
+            }
+            if (!mission || !this.arePrerequisitesMet(missionId)) {
                 return;
             }
         }
 
-        // 2. Handle existing mission collision (Force logic)
-        if (this.gameState.missions.activeMissionId) {
-            if (force) {
-                this.abandonMission(); // Clear the way
-            } else {
-                return; // Should have been caught by validation, but safety first
-            }
+        // 2. Handle Existing (Prevent Duplicate)
+        if (this.gameState.missions.activeMissionIds.includes(missionId)) {
+            return; 
         }
 
         // 3. Initialize State
-        this.gameState.missions.activeMissionId = missionId;
+        this.gameState.missions.activeMissionIds.push(missionId);
+        
+        // Initialize progress with isCompletable flag
         this.gameState.missions.missionProgress[missionId] = {
-            objectives: {}
+            objectives: {},
+            isCompletable: false
         };
         
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
@@ -19872,130 +19936,154 @@ export class MissionService {
 
         // If the mission has no objectives, complete it immediately.
         if (!mission.objectives || mission.objectives.length === 0) {
-            this.completeActiveMission();
+            this.completeMission(missionId, force);
         } else {
             this.uiManager.render(this.gameState.getState());
         }
     }
 
     /**
-     * Abandons the currently active mission.
+     * Abandons a specific active mission.
+     * @param {string} missionId - The ID of the mission to abandon.
      */
-    abandonMission() {
-        const abandonedMissionId = this.gameState.missions.activeMissionId;
-        if (!abandonedMissionId) return;
+    abandonMission(missionId) {
+        if (!missionId || !this.gameState.missions.activeMissionIds.includes(missionId)) return;
 
-        this.gameState.missions.activeMissionId = null;
-        this.gameState.missions.activeMissionObjectivesMet = false;
-        this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${abandonedMissionId}`);
-        // Note: We keep missionProgress so the player doesn't lose partial progress if they re-accept.
+        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+        
+        // We do NOT delete from missionProgress to preserve partial progress if re-accepted.
+        // But we DO reset isCompletable to be safe.
+        if (this.gameState.missions.missionProgress[missionId]) {
+            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+
+        this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${missionId}`);
         this.gameState.setState({});
         this.uiManager.render(this.gameState.getState());
     }
 
     /**
      * Checks all mission triggers against the current game state.
-     * Primarily checks item possession for delivery/acquisition objectives.
+     * Iterates through ALL active missions and evaluates objectives using the Logic Engine.
      */
     checkTriggers() {
-        const { activeMissionId } = this.gameState.missions;
-        if (!activeMissionId) {
-            if (this.gameState.missions.activeMissionObjectivesMet) {
-                this.gameState.missions.activeMissionObjectivesMet = false;
-                this.gameState.setState({}); // Notify of change
+        const { activeMissionIds } = this.gameState.missions;
+        if (!activeMissionIds || activeMissionIds.length === 0) return;
+    
+        let stateChanged = false;
+
+        activeMissionIds.forEach(missionId => {
+            const mission = DB.MISSIONS[missionId];
+            if (!mission) return;
+
+            let allObjectivesMet = true;
+            let progressChanged = false;
+            
+            // Ensure progress object exists
+            if (!this.gameState.missions.missionProgress[missionId]) {
+                this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false };
             }
-            return;
-        }
-    
-        const mission = DB.MISSIONS[activeMissionId];
-        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
-        if (!mission || !inventory) {
-            this.gameState.missions.activeMissionObjectivesMet = false;
-            return;
-        }
-    
-        let allObjectivesMet = true;
-        let progressChanged = false;
-    
-        mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item') {
-                const currentQuantity = inventory[obj.goodId]?.quantity || 0;
-                const progress = this.gameState.missions.missionProgress[activeMissionId];
-    
-                if (!progress.objectives[obj.goodId]) {
-                    progress.objectives[obj.goodId] = { current: 0 };
-                }
-    
-                if (progress.objectives[obj.goodId].current !== currentQuantity) {
-                    progress.objectives[obj.goodId].current = currentQuantity;
-                    progressChanged = true;
-                }
-    
-                if (currentQuantity < obj.quantity) {
-                    allObjectivesMet = false;
+            const progress = this.gameState.missions.missionProgress[missionId];
+
+            if (mission.objectives) {
+                mission.objectives.forEach(obj => {
+                    // Use the new Evaluator
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState);
+                    
+                    // Identify the objective (fallback to legacy goodId if no specific ID)
+                    const objKey = obj.id || obj.goodId;
+                    
+                    if (!progress.objectives[objKey]) {
+                        progress.objectives[objKey] = { current: 0, target: result.target };
+                    }
+
+                    // Check for value change
+                    if (progress.objectives[objKey].current !== result.current) {
+                        progress.objectives[objKey].current = result.current;
+                        progress.objectives[objKey].target = result.target; // Update target just in case
+                        progressChanged = true;
+                    }
+
+                    // Check for Met status
+                    if (!result.isMet) {
+                        allObjectivesMet = false;
+                    }
+                });
+            } else {
+                // No objectives = auto meet
+                allObjectivesMet = true;
+            }
+
+            // Update Completion Status
+            if (progress.isCompletable !== allObjectivesMet) {
+                progress.isCompletable = allObjectivesMet;
+                stateChanged = true;
+                if (allObjectivesMet) {
+                    this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${missionId} are met.`);
                 }
             }
+
+            if (progressChanged) stateChanged = true;
         });
     
         // Only update state and re-render if there's a change.
-        if (this.gameState.missions.activeMissionObjectivesMet !== allObjectivesMet || progressChanged) {
-            if (allObjectivesMet && !this.gameState.missions.activeMissionObjectivesMet) {
-                this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${activeMissionId} are met.`);
-            }
-            this.gameState.missions.activeMissionObjectivesMet = allObjectivesMet;
+        if (stateChanged) {
             this.gameState.setState({}); // Set the new state
             this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
-            if (progressChanged) {
-                this.uiManager.flashObjectiveProgress();
-            }
+            this.uiManager.flashObjectiveProgress();
         }
     }
 
     /**
-     * Completes the active mission, granting rewards and removing objective items.
+     * Completes a specific active mission.
+     * @param {string} missionId - The ID of the mission to complete.
      * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
      */
-    completeActiveMission(force = false) {
-        const { activeMissionId } = this.gameState.missions;
-        if (!activeMissionId) return;
+    completeMission(missionId, force = false) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
         
-        // Temporarily set objectivesMet to true for objective-less missions OR if forced
-        const originalObjectivesMet = this.gameState.missions.activeMissionObjectivesMet;
-        const mission = DB.MISSIONS[activeMissionId];
+        const mission = DB.MISSIONS[missionId];
+        const progress = this.gameState.missions.missionProgress[missionId];
         
         // Check Conditions
-        const metRequirements = this.gameState.missions.activeMissionObjectivesMet;
+        const isCompletable = progress ? progress.isCompletable : false;
         const noObjectives = !mission.objectives || mission.objectives.length === 0;
         
-        if (!metRequirements && !noObjectives && !force) {
+        if (!isCompletable && !noObjectives && !force) {
             return; // Can't complete yet
         }
 
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
-        // 1. Deduct objective items (Only if strictly met or forced-but-available)
-        // Note: If forcing completion without items, this might result in negative inventory if not careful,
-        // so we check possession before deducting even on force.
+        // 1. Deduct objective items (if applicable)
         if (mission.objectives) {
             mission.objectives.forEach(obj => {
-                if (obj.type === 'have_item' && inventory[obj.goodId]) {
-                    // Safe deduct: don't go below zero even on force
-                    const qtyToRemove = Math.min(inventory[obj.goodId].quantity, obj.quantity);
-                    inventory[obj.goodId].quantity -= qtyToRemove;
+                // Only deduct if it's an item delivery type
+                if ((obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') && inventory) {
+                    const itemId = obj.goodId || obj.target;
+                    if (inventory[itemId]) {
+                        const targetQty = obj.quantity || 1;
+                        const qtyToRemove = Math.min(inventory[itemId].quantity, targetQty);
+                        inventory[itemId].quantity -= qtyToRemove;
+                    }
                 }
             });
         }
 
-        // 2. Grant rewards via SimulationService
+        // 2. Grant rewards
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
-        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${activeMissionId} ${force ? '(FORCED)' : ''}`);
+        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 
         // 3. Update mission state
-        this.gameState.missions.completedMissionIds.push(activeMissionId);
-        this.gameState.missions.activeMissionId = null;
-        this.gameState.missions.activeMissionObjectivesMet = false;
+        this.gameState.missions.completedMissionIds.push(missionId);
+        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+        
+        // Cleanup progress if desired, though keeping it is fine for history. 
+        if (this.gameState.missions.missionProgress[missionId]) {
+            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
 
         // 4. Update state and re-render
         this.gameState.setState({});
@@ -22529,6 +22617,150 @@ export class IntroService {
     }
 }
 --- END OF FILE: ./js/services/game/IntroService.js ---
+
+--- START OF FILE: ./js/services/mission/MissionObjectiveEvaluator.js ---
+// js/services/mission/MissionObjectiveEvaluator.js
+/**
+ * @fileoverview Stateless logic engine for evaluating mission objectives.
+ * Determines the current progress and completion status of a given objective against the GameState.
+ */
+import { DB } from '../../data/database.js';
+
+export class MissionObjectiveEvaluator {
+    /**
+     * Evaluates a single objective against the current game state.
+     * @param {object} objective - The objective schema object (e.g. { type: 'have_item', ... }).
+     * @param {import('../GameState.js').GameState} gameState - The current state of the game.
+     * @returns {object} { current: number, target: number, isMet: boolean }
+     */
+    evaluate(objective, gameState) {
+        let current = 0;
+        let target = objective.quantity || objective.value || 1; // Default target to 1 if not specified
+        let isMet = false;
+
+        switch (objective.type) {
+            // --- RESOURCE / INVENTORY CHECKS ---
+            case 'have_item':
+            case 'DELIVER_ITEM': // Alias for future proofing
+                const shipId = gameState.player.activeShipId;
+                const inventory = gameState.player.inventories[shipId];
+                // Support legacy 'goodId' or new 'target' property
+                const itemId = objective.goodId || objective.target;
+                if (inventory && inventory[itemId]) {
+                    current = inventory[itemId].quantity || 0;
+                }
+                break;
+
+            case 'have_credits':
+            case 'WEALTH_CHECK':
+                current = gameState.player.credits;
+                break;
+
+            // --- WORLD STATE CHECKS ---
+            case 'travel_to':
+            case 'TRAVEL_TO':
+                // For travel, 'current' is binary: 1 if there, 0 if not.
+                // We check against the objective.target (locationId).
+                const targetLoc = objective.target;
+                const atLocation = gameState.currentLocationId === targetLoc;
+                current = atLocation ? 1 : 0;
+                break;
+
+            // --- PLAYER STATE CHECKS ---
+            case 'have_ship':
+            case 'OWN_SHIP':
+                const requiredShipId = objective.target;
+                const ownsShip = gameState.player.ownedShipIds.includes(requiredShipId);
+                current = ownsShip ? 1 : 0;
+                break;
+            
+            case 'mission_complete':
+            case 'MISSION_COMPLETE':
+                const reqMissionId = objective.target;
+                const hasCompleted = gameState.missions.completedMissionIds.includes(reqMissionId);
+                current = hasCompleted ? 1 : 0;
+                break;
+
+            // --- FALLBACK ---
+            default:
+                console.warn(`[MissionObjectiveEvaluator] Unknown objective type: ${objective.type}`);
+                break;
+        }
+
+        // Determine satisfaction
+        // For simple numeric checks, current >= target.
+        // For specific boolean checks (like travel), we rely on the logic above setting current to 1.
+        if (current >= target) {
+            current = target; // Cap visual progress at 100%
+            isMet = true;
+        }
+
+        return { current, target, isMet };
+    }
+}
+--- END OF FILE: ./js/services/mission/MissionObjectiveEvaluator.js ---
+
+--- START OF FILE: ./js/services/mission/MissionTriggerEvaluator.js ---
+// js/services/mission/MissionTriggerEvaluator.js
+/**
+ * @fileoverview Stateless logic engine for evaluating mission availability triggers.
+ * Acts as the gatekeeper to determine if a mission should be shown in the terminal.
+ */
+
+export class MissionTriggerEvaluator {
+    /**
+     * Checks if a specific trigger condition is met.
+     * @param {object} trigger - The trigger/prerequisite object (e.g. { type: 'location_is', value: 'luna' }).
+     * @param {import('../GameState.js').GameState} gameState - The current state of the game.
+     * @returns {boolean} True if the condition is met.
+     */
+    check(trigger, gameState) {
+        switch (trigger.type) {
+            // --- HISTORY CHECKS ---
+            case 'mission_completed':
+                return gameState.missions.completedMissionIds.includes(trigger.missionId || trigger.value);
+
+            case 'mission_not_completed':
+                 return !gameState.missions.completedMissionIds.includes(trigger.missionId || trigger.value);
+
+            // --- ATTRIBUTE CHECKS ---
+            case 'revealed_tier':
+                return gameState.player.revealedTier >= (trigger.tier || trigger.value);
+            
+            case 'wealth_gt':
+                return gameState.player.credits >= trigger.value;
+
+            // --- LOCATION CHECKS ---
+            case 'location_is':
+                // Mission only available at specific station (Side Missions)
+                return gameState.currentLocationId === trigger.value;
+            
+            case 'location_is_not':
+                return gameState.currentLocationId !== trigger.value;
+
+            // --- SHIP CHECKS ---
+            case 'has_ship':
+                return gameState.player.ownedShipIds.includes(trigger.value);
+
+            // --- FALLBACK ---
+            default:
+                console.warn(`[MissionTriggerEvaluator] Unknown trigger type: ${trigger.type}`);
+                return false;
+        }
+    }
+
+    /**
+     * Helper to check an array of triggers. All must pass (AND logic).
+     * @param {Array<object>} triggers 
+     * @param {import('../GameState.js').GameState} gameState 
+     * @returns {boolean}
+     */
+    checkAll(triggers, gameState) {
+        if (!triggers || triggers.length === 0) return true;
+        return triggers.every(t => this.check(t, gameState));
+    }
+}
+--- END OF FILE: ./js/services/mission/MissionTriggerEvaluator.js ---
 
 --- START OF FILE: ./js/services/SimulationService.js ---
 // js/services/SimulationService.js
@@ -33165,12 +33397,28 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## Ongoing, WIP Effortsa
-- Sol Station Simulation
+## Mission Engine Updates
+-  Narrative missions should be available
+-  Side missions available at specific locations
+-  Mission chaining
+-  Mission completion triggers to include player actions (paying off debt, making an action in the UI, going somewhere specific, completing another mission or mission chain)	
+-  Update mission qty allowance to >1
+-  Improve UI appearance of mission cards for narrative mission, side mission, active mission, unavailable mission
+-  add events to blockade locations
+
+
+## Ongoing, WIP Efforts
+-  Mission System V2
+-  Increase chance for events depending on distance traveled
+-  How can I make time matter more?
+-  How to increase risk and add difficulty mid-game?
+-  How to increase usefulness of multiple ships, improve Muti-ship game play?
+-  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
+-  Review spawn logic of upgrades and by location.
+-  Scale upgrade price by percentage per tier instead of hardcoding.
 
 
 ## Imminent Projects
-- Overhaul Travel Screen
 
 
 ## Long-Term Goals, Ideas
@@ -33178,12 +33426,15 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - Additional tutorials
 - Finalize mobile views
 - Optimize repetitive calculations, long-term data accumulation, and re-renders
-- Storyline
 - Storyline Timeline Governor (Mission availability, System States, Features)
 - Design cononical missions
 - * Mango Plasteel Statue mission
 - Missions/contacts reference in-game ships, etc.
-- System states influencing market performance DEFERRED
+- System states influencing market performance
+- Add more events: reward type, story type, voucher type
+
+DEFERRED
+- Achievements
 - Art design refinement
 - Sound design (Audiomachine?)
 - Install tailwind CSS resources locally

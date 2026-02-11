@@ -13,7 +13,18 @@ export class UIMissionControl {
     }
 
     /**
+     * Handles switching between the 'Terminal' and 'Mission Log' tabs.
+     * @param {string} tabId - 'terminal' or 'log'
+     */
+    handleMissionTabSwitch(tabId) {
+        if (tabId !== 'terminal' && tabId !== 'log') return;
+        this.manager.lastKnownState.uiState.activeMissionTab = tabId;
+        this.manager.render();
+    }
+
+    /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
+     * Note: For Phase 1, this displays the FIRST active mission if multiple exist.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -22,31 +33,67 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        if (gameState.missions.activeMissionId) {
-            const mission = DB.MISSIONS[gameState.missions.activeMissionId];
+        // Phase 1: Just grab the first mission for the HUD
+        const activeMissionId = gameState.missions.activeMissionIds[0];
+
+        if (activeMissionId) {
+            const mission = DB.MISSIONS[activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
                 return;
             }
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
 
-            const objective = mission.objectives[0];
-            const current = progress.objectives[objective.goodId]?.current ?? 0;
-            const target = objective.quantity;
-            const goodName = DB.COMMODITIES.find(c => c.id === objective.goodId).name;
-            const locationName = DB.MARKETS.find(m => m.id === mission.completion.locationId).name;
+            // Find first incomplete objective for HUD
+            let objKey;
+            let current = 0;
+            let target = 1;
+            
+            // Try to find the first objective that matches our progress map
+            if (mission.objectives) {
+                const firstObj = mission.objectives[0];
+                objKey = firstObj.id || firstObj.goodId;
+                
+                if (progress.objectives[objKey]) {
+                    current = progress.objectives[objKey].current;
+                    target = progress.objectives[objKey].target;
+                } else {
+                     // Fallback for immediate render before checkTriggers runs
+                     current = 0;
+                     target = firstObj.quantity || firstObj.value || 1;
+                }
+            }
 
-            objectiveTextEl.textContent = `Deliver ${goodName} to ${locationName}`;
+            const objectiveLabel = this._getObjectiveLabel(mission.objectives[0]);
+
+            objectiveTextEl.textContent = `${objectiveLabel}`;
             objectiveProgressEl.textContent = `[${current}/${target}]`;
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
-            let turnInClass = gameState.missions.activeMissionObjectivesMet && mission.completion.locationId === gameState.currentLocationId ? 'mission-turn-in' : '';
+            
+            // Check specific mission completability
+            const isReady = progress.isCompletable && mission.completion.locationId === gameState.currentLocationId;
+            let turnInClass = isReady ? 'mission-turn-in' : '';
+            
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
 
             stickyBarEl.style.display = 'block';
         } else {
             stickyBarEl.style.display = 'none';
         }
+    }
+
+    _getObjectiveLabel(obj) {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+            return `Deliver ${goodName}`;
+        }
+        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${locName}`;
+        }
+        if (obj.type === 'wealth_gt') return `Earn Credits`;
+        return `Objective`;
     }
 
     /**
@@ -71,9 +118,15 @@ export class UIMissionControl {
         if (!mission) return;
 
         const { missions, currentLocationId } = this.manager.lastKnownState;
-        const { activeMissionId, activeMissionObjectivesMet } = missions;
-        const isActive = activeMissionId === missionId;
-        const canComplete = isActive && activeMissionObjectivesMet && mission.completion.locationId === currentLocationId;
+        
+        // Check if this specific mission is active
+        const isActive = missions.activeMissionIds.includes(missionId);
+        
+        // Check specific progress
+        const progress = missions.missionProgress[missionId];
+        const isCompletable = progress ? progress.isCompletable : false;
+
+        const canComplete = isActive && isCompletable && mission.completion.locationId === currentLocationId;
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);
@@ -84,9 +137,15 @@ export class UIMissionControl {
 
     _showMissionDetailsModal(mission) {
         const { missions, tutorials } = this.manager.lastKnownState;
-        const isActive = missions.activeMissionId === mission.id;
-        const anotherMissionActive = missions.activeMissionId && !isActive;
-        let shouldBeDisabled = anotherMissionActive;
+        const isActive = missions.activeMissionIds.includes(mission.id);
+        
+        let shouldBeDisabled = false;
+        
+        // Check if we are at capacity (4) and this isn't active
+        if (!isActive && missions.activeMissionIds.length >= 4) {
+            shouldBeDisabled = true;
+        }
+
         if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
         }
@@ -102,7 +161,7 @@ export class UIMissionControl {
                 modal.querySelector('#mission-modal-type').textContent = mission.type;
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
-                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>Deliver ${obj.quantity}x ${DB.COMMODITIES.find(c => c.id === obj.goodId).name}</li>`).join('') + '</ul>';
+                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
                 objectivesEl.innerHTML = objectivesHtml;
                 objectivesEl.style.display = 'block';
 
@@ -124,7 +183,8 @@ export class UIMissionControl {
                     const isAbandonable = mission.isAbandonable !== false;
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
                 } else {
-                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>Accept</button>`;
+                     const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
+                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                 }
             }
         };
@@ -132,6 +192,22 @@ export class UIMissionControl {
             shouldBeDisabled = true;
         }
         this.manager.queueModal('mission-modal', mission.name, mission.description, null, options);
+    }
+    
+    _getObjectiveDescription(obj) {
+        // Helper to textually describe generic objectives
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             return `Deliver ${obj.quantity || 1}x ${name}`;
+        }
+        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${name}`;
+        }
+         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
+             return `Amass ${formatCredits(obj.value)} Credits`;
+        }
+        return `Complete Objective`;
     }
 
     _showMissionCompletionModal(mission) {
@@ -169,8 +245,9 @@ export class UIMissionControl {
         };
        this.manager.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
     }
-
-    /**
+    
+    // ... Intel methods remain unchanged ...
+     /**
      * Handles switching tabs within the Intel Screen (Codex vs Market).
      * @param {HTMLElement} element 
      */
