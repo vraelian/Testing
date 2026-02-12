@@ -82,7 +82,7 @@ export class MissionService {
                 description: 'Simple delivery test. Deliver 1 Water Ice.',
                 triggers: [], // Always available
                 objectives: [
-                    { type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 1 }
+                    { id: 'obj_deliver_ice', type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 1 }
                 ],
                 providedCargo: [{ goodId: 'water_ice', quantity: 1 }],
                 completion: {
@@ -101,7 +101,7 @@ export class MissionService {
                 description: 'Simple travel test. Travel to any location.',
                 triggers: [],
                 objectives: [
-                    { type: 'TRAVEL_TO', target: 'loc_luna' } // Trivial target
+                    { id: 'obj_travel_luna', type: 'TRAVEL_TO', target: 'loc_luna' } // Trivial target
                 ],
                 completion: {
                     locationId: null,
@@ -119,7 +119,7 @@ export class MissionService {
                 description: 'Simple wealth check. Have > 1 Credit.',
                 triggers: [],
                 objectives: [
-                    { type: 'WEALTH_CHECK', value: 1 }
+                    { id: 'obj_wealth_check', type: 'WEALTH_CHECK', value: 1 }
                 ],
                 completion: {
                     locationId: null,
@@ -137,7 +137,7 @@ export class MissionService {
                 description: 'Tests checking CARGO for Propellant (Item).',
                 triggers: [],
                 objectives: [
-                    { type: 'have_item', goodId: 'propellant', quantity: 1 }
+                    { id: 'obj_check_prop', type: 'have_item', goodId: 'propellant', quantity: 1 }
                 ],
                 completion: {
                     locationId: null,
@@ -155,7 +155,7 @@ export class MissionService {
                 description: 'Tests checking SHIP TANK for Fuel Level.',
                 triggers: [],
                 objectives: [
-                    { type: 'have_fuel_tank', value: 10 }
+                    { id: 'obj_check_tank', type: 'have_fuel_tank', value: 10 }
                 ],
                 completion: {
                     locationId: null,
@@ -173,7 +173,7 @@ export class MissionService {
                 description: 'Requires Hull Integrity >= 90%. Repair if needed.',
                 triggers: [],
                 objectives: [
-                    { type: 'HAVE_HULL_PCT', value: 90, comparator: '>=' }
+                    { id: 'obj_check_hull', type: 'HAVE_HULL_PCT', value: 90, comparator: '>=' }
                 ],
                 completion: {
                     locationId: null,
@@ -191,7 +191,7 @@ export class MissionService {
                 description: 'Requires Empty Cargo Hold (0% Usage). Sell everything.',
                 triggers: [],
                 objectives: [
-                    { type: 'HAVE_CARGO_PCT', value: 0, comparator: '<=' }
+                    { id: 'obj_check_cargo_pct', type: 'HAVE_CARGO_PCT', value: 0, comparator: '<=' }
                 ],
                 completion: {
                     locationId: null,
@@ -313,8 +313,8 @@ export class MissionService {
 
             if (mission.objectives) {
                 mission.objectives.forEach(obj => {
-                    // Use the new Evaluator
-                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState);
+                    // [[FIX]] Pass simulationService to enable advanced checks (Effective Stats)
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService);
                     
                     // Identify the objective (fallback to legacy goodId if no specific ID)
                     const objKey = obj.id || obj.goodId;

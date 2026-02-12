@@ -7814,8 +7814,23 @@ export function renderMissionsScreen(gameState, missionService) {
         
         // Determine Status Class (Active vs Turn-In Ready)
         let statusClass = 'mission-active';
-        if (progress.isCompletable && mission.completion.locationId === currentLocationId) {
+        
+        // [FIX] Allow null location (Anywhere)
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+
+        if (progress.isCompletable && isAtCorrectLocation) {
             statusClass += ' mission-turn-in';
+        }
+
+        // [[UPDATED]] Dynamic Status Text Logic
+        let statusText = 'Status: In Progress';
+        if (progress.isCompletable) {
+            if (mission.completion.locationId) {
+                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'Unknown';
+                statusText = `Return to: ${locName}`;
+            } else {
+                statusText = 'Ready to Complete (Anywhere)';
+            }
         }
 
         // Render Objectives with Progress Bars
@@ -7824,23 +7839,65 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml = '<div class="mission-objectives-list space-y-2 mt-2">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
-                // Get generic desc
-                let desc = 'Objective';
-                if(obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
-                else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
-                else if (obj.type === 'wealth_gt') desc = 'Earn Credits';
-                
-                // Calculate %
                 const pObj = progress.objectives[objKey];
                 const current = pObj ? pObj.current : 0;
                 const target = pObj ? pObj.target : (obj.quantity || 1);
-                const percent = Math.min(100, Math.floor((current / target) * 100));
+                const comparator = obj.comparator || '>=';
+
+                // --- DESC & DISPLAY FORMATTING ---
+                let desc = 'Objective';
+                let displayStr = `${current}/${target}`;
+                let percent = 0;
+
+                // Handle specific types
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                    desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                } 
+                else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+                    desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
+                    displayStr = current === 1 ? 'Arrived' : 'En Route';
+                    percent = current * 100;
+                }
+                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
+                    desc = 'Earn Credits';
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                // [[FIX]] Handle percentage types gracefully
+                else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
+                    desc = 'Ship Fuel Level';
+                    displayStr = `${current}`;
+                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); // Rough visual approximation
+                }
+                else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
+                    desc = 'Hull Integrity';
+                    displayStr = `${current}% / ${comparator}${target}%`;
+                    
+                    if (comparator === '<=') {
+                        percent = current <= target ? 100 : 0;
+                    } else {
+                        percent = Math.min(100, current); 
+                    }
+                }
+                else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
+                    desc = 'Cargo Hold Usage';
+                    displayStr = `${current}% / ${comparator}${target}%`;
+                    
+                    if (comparator === '<=') {
+                        // Inverse logic for "Empty Hold"
+                        // If we are below target, we are "Good" (100% bar)
+                        // If we are above, we are "Bad" (0% bar)
+                        percent = current <= target ? 100 : 0;
+                    } else {
+                        percent = Math.min(100, current);
+                    }
+                }
 
                 objectivesHtml += `
                     <div class="objective-item text-xs">
                         <div class="flex justify-between mb-0.5 text-gray-400">
                             <span>${desc}</span>
-                            <span>${current}/${target}</span>
+                            <span>${displayStr}</span>
                         </div>
                         <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-cyan-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
@@ -7857,7 +7914,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <h3 class="font-bold text-lg text-white">${mission.name}</h3>
                     <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
                 </div>
-                <div class="text-xs text-gray-400 italic mb-2">${mission.completion.locationId ? `Return to: ${DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name}` : ''}</div>
+                <div class="text-xs text-gray-400 italic mb-2">${statusText}</div>
                 ${objectivesHtml}
             </div>
         `;
@@ -9140,6 +9197,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Bindings ---
         eventManager.bindEvents();
         
+        // --- [[START]] CONSOLE EXPOSURE ---
+        // Expose services to the window for debugging/testing
+        if (DEV_MODE || true) {
+            window.game = {
+                gameState,
+                simulationService,
+                missionService,
+                uiManager,
+                eventManager
+            };
+            console.log("Game services exposed to window.game");
+        }
+        // --- [[END]] CONSOLE EXPOSURE ---
+
         if (hasSave || isSimpleStart) {
             uiManager.showGameContainer(); 
             
@@ -9166,6 +9237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
     }
 });
+
 --- END OF FILE: ./js/main.js ---
 
 --- START OF FILE: ./js/utils.js ---
@@ -14334,10 +14406,17 @@ export class UIMissionControl {
 
     /**
      * Handles switching between the 'Terminal' and 'Mission Log' tabs.
+     * [[UPDATED]] Now forces a checkTriggers() call to ensure mission state is fresh.
      * @param {string} tabId - 'terminal' or 'log'
      */
     handleMissionTabSwitch(tabId) {
         if (tabId !== 'terminal' && tabId !== 'log') return;
+        
+        // Force re-evaluation of objectives (e.g. Travel checks) whenever we look at the log
+        if (this.manager.simulationService && this.manager.simulationService.missionService) {
+            this.manager.simulationService.missionService.checkTriggers();
+        }
+
         this.manager.lastKnownState.uiState.activeMissionTab = tabId;
         this.manager.render();
     }
@@ -14368,10 +14447,11 @@ export class UIMissionControl {
             let objKey;
             let current = 0;
             let target = 1;
+            let firstObj = null;
             
             // Try to find the first objective that matches our progress map
             if (mission.objectives) {
-                const firstObj = mission.objectives[0];
+                firstObj = mission.objectives[0];
                 objKey = firstObj.id || firstObj.goodId;
                 
                 if (progress.objectives[objKey]) {
@@ -14384,15 +14464,31 @@ export class UIMissionControl {
                 }
             }
 
-            const objectiveLabel = this._getObjectiveLabel(mission.objectives[0]);
+            const objectiveLabel = this._getObjectiveLabel(firstObj);
+            
+            // [[FIXED]] Format display string based on objective type (Logic from MissionsScreen)
+            let displayStr = `[${current}/${target}]`;
+            
+            if (firstObj) {
+                if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
+                    displayStr = `[${current}]`;
+                }
+                else if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                    const comparator = firstObj.comparator || '>=';
+                    displayStr = `[${current}% / ${comparator}${target}%]`;
+                }
+            }
 
             objectiveTextEl.textContent = `${objectiveLabel}`;
-            objectiveProgressEl.textContent = `[${current}/${target}]`;
+            objectiveProgressEl.textContent = displayStr;
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             // Check specific mission completability
-            const isReady = progress.isCompletable && mission.completion.locationId === gameState.currentLocationId;
+            // [FIX] Allow null location (Anywhere)
+            const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
+            const isReady = progress.isCompletable && isAtCorrectLocation;
+            
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
@@ -14404,6 +14500,7 @@ export class UIMissionControl {
     }
 
     _getObjectiveLabel(obj) {
+        if (!obj) return 'Objective';
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
             const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
             return `Deliver ${goodName}`;
@@ -14412,7 +14509,13 @@ export class UIMissionControl {
              const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${locName}`;
         }
-        if (obj.type === 'wealth_gt') return `Earn Credits`;
+        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
+        
+        // [[NEW]] Labels
+        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
+        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
+        if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
+        
         return `Objective`;
     }
 
@@ -14446,7 +14549,9 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        const canComplete = isActive && isCompletable && mission.completion.locationId === currentLocationId;
+        // [FIX] Allow null location (Anywhere)
+        const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        const canComplete = isActive && isCompletable && isLocationValid;
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);
@@ -17716,6 +17821,86 @@ const TUTORIAL_PRESETS_PERCENT = {
     topLeft: [15, 15],
 };
 
+// --- EPHEMERAL DEBUG MISSIONS ---
+// These are injected into DB.MISSIONS at runtime for testing purposes.
+const DEBUG_MISSIONS = {
+    'debug_kitchen_sink': {
+        id: 'debug_kitchen_sink',
+        name: '[DEBUG] Kitchen Sink Rewards',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Instantly completes to test multiple reward types (Credits, Items, Licenses).',
+        triggers: [],
+        objectives: [], // Auto-complete
+        completion: {
+            locationId: null, // Complete anywhere
+            title: 'Debug Success',
+            text: 'You have received a bounty of debug rewards.',
+            buttonText: 'Claim Loot'
+        },
+        rewards: [
+            { type: 'credits', amount: 50000 },
+            { type: 'item', goodId: 'fuel', quantity: 100 },
+            { type: 'license', licenseId: 't2_license' } 
+        ]
+    },
+    'debug_obj_travel': {
+        id: 'debug_obj_travel',
+        name: '[DEBUG] Travel Logic (Mars)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Requires travel to Mars to verify location triggers.',
+        triggers: [],
+        objectives: [
+            { type: 'TRAVEL_TO', target: 'loc_mars' }
+        ],
+        completion: {
+            locationId: 'loc_mars',
+            title: 'Arrived at Mars',
+            text: 'Travel objective verified.',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 100 }]
+    },
+    'debug_obj_wealth': {
+        id: 'debug_obj_wealth',
+        name: '[DEBUG] Wealth Check (>10k)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Requires player to have > 10,000 credits.',
+        triggers: [],
+        objectives: [
+            { type: 'WEALTH_CHECK', value: 10000 }
+        ],
+        completion: {
+            locationId: null,
+            title: 'Wealth Verified',
+            text: 'You are wealthy enough.',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 1 }]
+    },
+    'debug_obj_delivery': {
+        id: 'debug_obj_delivery',
+        name: '[DEBUG] Delivery (Water Ice)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Deliver 5 Water Ice. (Cargo provided on accept)',
+        triggers: [],
+        objectives: [
+            { type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 5 }
+        ],
+        providedCargo: [{ goodId: 'water_ice', quantity: 5 }],
+        completion: {
+            locationId: null,
+            title: 'Delivery Done',
+            text: 'Items deducted correctly?',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 500 }]
+    }
+};
+
 export class DebugService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state object.
@@ -17741,11 +17926,10 @@ export class DebugService {
             targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
-            // [FIX] Added safe check for empty array using optional chaining
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
-            // [FIX] Added safe check for empty array using optional chaining
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
-            selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
+            // Default to first debug mission if available
+            selectedMission: 'debug_kitchen_sink',
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
@@ -17784,6 +17968,13 @@ export class DebugService {
      */
     init() {
         if (this.gui) return;
+        
+        // --- INJECTION START ---
+        // Inject debug missions into the runtime database
+        Object.assign(DB.MISSIONS, DEBUG_MISSIONS);
+        this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
+        // --- INJECTION END ---
+
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
@@ -18236,6 +18427,15 @@ ${logHistory}
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
+            
+            // NEW: MISSION TESTING BUTTON
+            missionTest: { name: 'Mission Test', type: 'button', handler: () => {
+                if (this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.injectTestMissions();
+                    this.uiManager.createFloatingText('Test Missions Injected', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                }
+            }},
+            
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -18411,6 +18611,8 @@ ${logHistory}
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         // NEW: Sol Testing
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
+        // NEW: Mission Test
+        flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
@@ -18499,7 +18701,18 @@ ${logHistory}
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
-        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        // --- UPDATED MISSION OPTIONS (Include injected missions) ---
+        const missionOptions = Object.values(DB.MISSIONS)
+            .sort((a, b) => {
+                // Sort [DEBUG] missions to top
+                const aIsDebug = a.id.startsWith('debug_');
+                const bIsDebug = b.id.startsWith('debug_');
+                if (aIsDebug && !bIsDebug) return -1;
+                if (!aIsDebug && bIsDebug) return 1;
+                return a.name.localeCompare(b.name);
+            })
+            .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+
         // Always show mission controls
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
@@ -19877,6 +20090,7 @@ export class MissionService {
     /**
      * Gets a list of all missions that are currently available to the player.
      * A mission is available if it's not active, not completed, and its triggers are met.
+     * EXCLUDES 'DEBUG' TYPE MISSIONS.
      * @returns {Array<object>} An array of available mission objects.
      */
     getAvailableMissions() {
@@ -19885,9 +20099,159 @@ export class MissionService {
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
+                mission.type !== 'DEBUG' && // [FIX] Hide debug missions from standard terminal
                 this.arePrerequisitesMet(mission.id);
             return isAvailable;
         });
+    }
+
+    /**
+     * Generates and injects a set of test missions into the database.
+     * Covers various Hosts and Objective types with trivial requirements.
+     */
+    injectTestMissions() {
+        const timestamp = Date.now();
+        const testMissions = [
+            {
+                id: `test_station_delivery_${timestamp}`,
+                name: '[TEST] Station Delivery',
+                type: 'DELIVERY', // Standard type
+                host: 'STATION', // Host A
+                description: 'Simple delivery test. Deliver 1 Water Ice.',
+                triggers: [], // Always available
+                objectives: [
+                    { id: 'obj_deliver_ice', type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 1 }
+                ],
+                providedCargo: [{ goodId: 'water_ice', quantity: 1 }],
+                completion: {
+                    locationId: null,
+                    title: 'Delivery Success',
+                    text: 'Station delivery logic verified.',
+                    buttonText: 'Close'
+                },
+                rewards: [{ type: 'credits', amount: 100 }]
+            },
+            {
+                id: `test_guild_travel_${timestamp}`,
+                name: '[TEST] Guild Travel',
+                type: 'TRAVEL', // Standard type
+                host: 'GUILD', // Host B
+                description: 'Simple travel test. Travel to any location.',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_travel_luna', type: 'TRAVEL_TO', target: 'loc_luna' } // Trivial target
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Travel Success',
+                    text: 'Guild travel logic verified.',
+                    buttonText: 'Close'
+                },
+                rewards: [{ type: 'item', goodId: 'propellant', quantity: 10 }]
+            },
+            {
+                id: `test_syndicate_wealth_${timestamp}`,
+                name: '[TEST] Syndicate Wealth',
+                type: 'WEALTH',
+                host: 'SYNDICATE', // Host C
+                description: 'Simple wealth check. Have > 1 Credit.',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_wealth_check', type: 'WEALTH_CHECK', value: 1 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Wealth Success',
+                    text: 'Syndicate wealth logic verified.',
+                    buttonText: 'Pay Up'
+                },
+                rewards: [{ type: 'credits', amount: 666 }]
+            },
+            {
+                id: `test_unknown_cargo_${timestamp}`,
+                name: '[TEST] Unknown Protocol (Item)',
+                type: 'MYSTERY',
+                host: 'UNKNOWN', // Host D
+                description: 'Tests checking CARGO for Propellant (Item).',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_check_prop', type: 'have_item', goodId: 'propellant', quantity: 1 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Cargo Verified',
+                    text: 'Inventory item check successful.',
+                    buttonText: 'End'
+                },
+                rewards: [{ type: 'credits', amount: 5000 }]
+            },
+            {
+                id: `test_unknown_tank_${timestamp}`,
+                name: '[TEST] Unknown Protocol (Tank)',
+                type: 'MYSTERY',
+                host: 'UNKNOWN', // Host D
+                description: 'Tests checking SHIP TANK for Fuel Level.',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_check_tank', type: 'have_fuel_tank', value: 10 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Tank Verified',
+                    text: 'Ship fuel tank logic verified.',
+                    buttonText: 'Ignite'
+                },
+                rewards: [{ type: 'credits', amount: 5000 }]
+            },
+            {
+                id: `test_maintenance_std_${timestamp}`,
+                name: '[TEST] Maintenance Standard',
+                type: 'INSPECTION',
+                host: 'GUILD', 
+                description: 'Requires Hull Integrity >= 90%. Repair if needed.',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_check_hull', type: 'HAVE_HULL_PCT', value: 90, comparator: '>=' }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Inspection Passed',
+                    text: 'Your ship meets Guild safety standards.',
+                    buttonText: 'OK'
+                },
+                rewards: [{ type: 'credits', amount: 250 }]
+            },
+            {
+                id: `test_ghost_run_${timestamp}`,
+                name: '[TEST] Ghost Run',
+                type: 'SMUGGLING',
+                host: 'SYNDICATE',
+                description: 'Requires Empty Cargo Hold (0% Usage). Sell everything.',
+                triggers: [],
+                objectives: [
+                    { id: 'obj_check_cargo_pct', type: 'HAVE_CARGO_PCT', value: 0, comparator: '<=' }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Ghost Run Complete',
+                    text: 'You arrived clean. Good work.',
+                    buttonText: 'Vanish'
+                },
+                rewards: [{ type: 'credits', amount: 2000 }]
+            }
+        ];
+
+        // Inject into DB
+        testMissions.forEach(m => {
+            DB.MISSIONS[m.id] = m;
+        });
+
+        this.logger.warn('MissionService', `Injected ${testMissions.length} Test Missions into Mission Terminal.`);
+        
+        // Force refresh of the UI to show new missions in the terminal
+        if (this.uiManager) {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
@@ -19987,8 +20351,8 @@ export class MissionService {
 
             if (mission.objectives) {
                 mission.objectives.forEach(obj => {
-                    // Use the new Evaluator
-                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState);
+                    // [[FIX]] Pass simulationService to enable advanced checks (Effective Stats)
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService);
                     
                     // Identify the objective (fallback to legacy goodId if no specific ID)
                     const objKey = obj.id || obj.goodId;
@@ -21738,6 +22102,12 @@ export class TravelService {
         });
 
         const finalCallback = () => {
+            // [[FIXED]] Force Mission Trigger Check on Arrival
+            // This ensures missions like "Travel to X" complete instantly upon docking.
+            if (this.simulationService.missionService) {
+                this.simulationService.missionService.checkTriggers();
+            }
+
             // --- SOL STATION: START SIMULATION IF ARRIVING ---
             if (locationId === LOCATION_IDS.SUN && this.timeService.solStationService) {
                 this.timeService.solStationService.startRealTimeSimulation();
@@ -22629,22 +22999,37 @@ import { DB } from '../../data/database.js';
 export class MissionObjectiveEvaluator {
     /**
      * Evaluates a single objective against the current game state.
-     * @param {object} objective - The objective schema object (e.g. { type: 'have_item', ... }).
+     * @param {object} objective - The objective schema object.
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
+     * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState) {
+    evaluate(objective, gameState, simulationService) {
         let current = 0;
-        let target = objective.quantity || objective.value || 1; // Default target to 1 if not specified
+        
+        // [[FIX]] Allow 0 as a valid target (e.g. Empty Hold = 0 items)
+        // Previous logic `val || 1` treated 0 as falsey and defaulted to 1.
+        let val = objective.quantity !== undefined ? objective.quantity : objective.value;
+        let target = val !== undefined ? val : 1; 
+
         let isMet = false;
+        
+        const comparator = objective.comparator || '>='; 
+
+        // Helper to get ship stats (Effective > Base)
+        const getShipStats = (shipId) => {
+            if (simulationService) {
+                return simulationService.getEffectiveShipStats(shipId);
+            }
+            return DB.SHIPS[shipId];
+        };
 
         switch (objective.type) {
             // --- RESOURCE / INVENTORY CHECKS ---
             case 'have_item':
-            case 'DELIVER_ITEM': // Alias for future proofing
+            case 'DELIVER_ITEM':
                 const shipId = gameState.player.activeShipId;
                 const inventory = gameState.player.inventories[shipId];
-                // Support legacy 'goodId' or new 'target' property
                 const itemId = objective.goodId || objective.target;
                 if (inventory && inventory[itemId]) {
                     current = inventory[itemId].quantity || 0;
@@ -22656,11 +23041,48 @@ export class MissionObjectiveEvaluator {
                 current = gameState.player.credits;
                 break;
 
+            // --- SHIP STATE CHECKS ---
+            case 'have_fuel_tank':
+            case 'HAVE_FUEL_TANK':
+                const fShipState = gameState.player.shipStates[gameState.player.activeShipId];
+                if (fShipState) {
+                    current = Math.floor(fShipState.fuel); 
+                }
+                break;
+
+            // [[FIX]] Hull Percentage
+            case 'have_hull_pct':
+            case 'HAVE_HULL_PCT':
+                const activeShipId = gameState.player.activeShipId;
+                const hShipState = gameState.player.shipStates[activeShipId];
+                const hShipDef = getShipStats(activeShipId);
+                
+                if (hShipState && hShipDef && hShipDef.maxHealth > 0) {
+                    current = Math.floor((hShipState.health / hShipDef.maxHealth) * 100);
+                } else {
+                    current = 0;
+                }
+                break;
+
+            // [[FIX]] Cargo Percentage
+            case 'have_cargo_pct':
+            case 'HAVE_CARGO_PCT':
+                const cShipId = gameState.player.activeShipId;
+                const cShipDef = getShipStats(cShipId); // Use effective stats (upgrades included)
+                const cInventory = gameState.player.inventories[cShipId];
+                
+                // [[FIX]] Property is 'cargoCapacity', NOT 'maxCargo'
+                if (cShipDef && cInventory && cShipDef.cargoCapacity > 0) {
+                    const totalUsed = Object.values(cInventory).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    current = Math.floor((totalUsed / cShipDef.cargoCapacity) * 100);
+                } else {
+                    current = 0;
+                }
+                break;
+
             // --- WORLD STATE CHECKS ---
             case 'travel_to':
             case 'TRAVEL_TO':
-                // For travel, 'current' is binary: 1 if there, 0 if not.
-                // We check against the objective.target (locationId).
                 const targetLoc = objective.target;
                 const atLocation = gameState.currentLocationId === targetLoc;
                 current = atLocation ? 1 : 0;
@@ -22681,18 +23103,39 @@ export class MissionObjectiveEvaluator {
                 current = hasCompleted ? 1 : 0;
                 break;
 
-            // --- FALLBACK ---
             default:
                 console.warn(`[MissionObjectiveEvaluator] Unknown objective type: ${objective.type}`);
                 break;
         }
 
-        // Determine satisfaction
-        // For simple numeric checks, current >= target.
-        // For specific boolean checks (like travel), we rely on the logic above setting current to 1.
-        if (current >= target) {
-            current = target; // Cap visual progress at 100%
-            isMet = true;
+        // --- EVALUATION LOGIC ---
+        // Ensure current is a number to prevent "null" display
+        if (typeof current !== 'number' || isNaN(current)) {
+            current = 0;
+        }
+
+        switch (comparator) {
+            case '>=':
+                if (current >= target) {
+                    current = target; // Visual cap
+                    isMet = true;
+                }
+                break;
+            case '<=':
+                // For "Less Than" (e.g. Empty Hold), we do NOT cap visual progress.
+                // 50% used vs target 0% -> Display "50% / <= 0%" (Fail)
+                if (current <= target) {
+                    isMet = true;
+                }
+                break;
+            case '==':
+                if (current === target) {
+                    isMet = true;
+                }
+                break;
+            default:
+                console.warn(`[MissionObjectiveEvaluator] Unknown comparator: ${comparator}`);
+                if (current >= target) isMet = true;
         }
 
         return { current, target, isMet };
@@ -22771,7 +23214,7 @@ export class MissionTriggerEvaluator {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js'; // Added LOCATION_IDS
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -23456,63 +23899,283 @@ export class SimulationService {
         }
     }
 
-    _grantRewards(rewards, sourceName) {
-        rewards.forEach(reward => {
-            if (reward.type === 'credits') {
-              
-                // Apply credit cap
-                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+    /**
+     * Advances the simulation by one day.
+     * Handles market fluctuations, interest, and random events.
+     */
+    advanceDay() {
+        this.gameState.day++;
+        this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
-                this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
-            }
-            if (reward.type === 'license') {
-                if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
-                 
-                     this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
-                    const license = DB.LICENSES[reward.licenseId];
-                    this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
-                    this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license.name}.`);
-                }
-            }
-            // --- PHASE 2: OFFICER REWARD ---
-            if (reward.type === 'OFFICER') {
-                const officerId = reward.officerId;
-                const officer = OFFICERS[officerId];
+        // 1. Market Simulation
+        this._updateMarkets();
 
-                // Add to Roster if not already present
-                if (officer && !this.gameState.solStation.roster.includes(officerId)) {
-                    this.gameState.solStation.roster.push(officerId);
-                    this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
-                    
-                    // Visual Feedback
-                    this.uiManager.queueModal('event-modal', 
-                        'New Officer Recruited', 
-                        `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
-                    );
-                }
-            }
-        });
+        // 2. Financials (Interest)
+        this._processFinancials();
+
+        // 3. Random Events
+        if (this.randomEventService) {
+            this.randomEventService.checkForRandomEvents();
+        }
+        
+        // 4. Mission System Tick (Check latent triggers)
+        if (this.missionService) {
+             this.missionService.checkTriggers();
+        }
+
+        // 5. Save State (Auto-save)
+        // this.gameState.saveGame();
+        
+        this.gameState.setState({}); // Trigger UI update
     }
-    
+
+    /**
+     * Grants the starting cargo for a mission (if any).
+     * @param {string} missionId 
+     */
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;
+
         const inventory = this._getActiveInventory();
         if (!inventory) {
             this.logger.error('SimulationService', 'Cannot grant mission cargo: No active inventory found.');
             return;
         }
-        mission.providedCargo.forEach(cargo => {
-            if (!inventory[cargo.goodId]) {
-                inventory[cargo.goodId] = { quantity: 0, avgCost: 0 };
-         
-             }
-            inventory[cargo.goodId].quantity += cargo.quantity;
-            this.logger.info.player(this.gameState.day, 'CARGO_GRANT', `Received ${cargo.quantity}x ${DB.COMMODITIES.find(c=>c.id === cargo.goodId).name} from ${mission.name}.`);
+
+        mission.providedCargo.forEach(item => {
+            if (!inventory[item.goodId]) {
+                inventory[item.goodId] = { quantity: 0, avgCost: 0 };
+            }
+            if (inventory[item.goodId]) {
+                inventory[item.goodId].quantity += item.quantity;
+                // We don't affect avgCost for mission items (free)
+            }
         });
+        
+        this.logger.info.player(this.gameState.day, 'MISSION_CARGO', `Received mission cargo for ${missionId}`);
+        
+        // Force a trigger check immediately after granting to update UI progress bars
         if (this.missionService) {
             this.missionService.checkTriggers();
+        }
+    }
+
+    /**
+     * Internal helper to process reward arrays.
+     * @param {Array} rewards 
+     * @param {string} sourceName 
+     */
+    _grantRewards(rewards, sourceName) {
+        if (!rewards || rewards.length === 0) return;
+
+        rewards.forEach(reward => {
+            switch (reward.type) {
+                // --- CURRENCY ---
+                case 'credits':
+                    // Apply credit cap
+                    this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
+                    this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
+                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+                    break;
+
+                // --- ITEMS ---
+                case 'item':
+                case 'commodity':
+                    const shipId = this.gameState.player.activeShipId;
+                    const inventory = this.gameState.player.inventories[shipId];
+                    if (inventory && inventory[reward.goodId]) {
+                        inventory[reward.goodId].quantity += reward.quantity;
+                    }
+                    break;
+
+                // --- PROGRESSION: LOCATIONS ---
+                case 'UNLOCK_LOCATION':
+                    if (!this.gameState.player.unlockedLocationIds.includes(reward.target)) {
+                        this.gameState.player.unlockedLocationIds.push(reward.target);
+                        this.logger.info.player(this.gameState.day, 'UNLOCK', `Unlocked location: ${reward.target}`);
+                    }
+                    break;
+
+                // --- PROGRESSION: TIERS & LICENSES ---
+                case 'UNLOCK_TIER':
+                    const newTier = Math.max(this.gameState.player.revealedTier, reward.value);
+                    if (newTier > this.gameState.player.revealedTier) {
+                        this.gameState.player.revealedTier = newTier;
+                        this.logger.info.player(this.gameState.day, 'UNLOCK', `Clearance Tier increased to ${newTier}`);
+                    }
+                    break;
+                
+                case 'license': // Legacy support / specific licenses
+                    if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
+                        this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
+                        const license = DB.LICENSES[reward.licenseId];
+                        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
+                        this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
+                    }
+                    break;
+
+                // --- ASSETS: SHIPS ---
+                case 'SHIP':
+                    const targetShipId = reward.target;
+                    if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
+                        this.gameState.player.ownedShipIds.push(targetShipId);
+                        // Initialize state for the new ship
+                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
+                    }
+                    break;
+
+                // --- TRAVEL: TELEPORT ---
+                case 'TELEPORT':
+                    this.gameState.currentLocationId = reward.target;
+                    this.gameState.pendingTravel = null; // Clear any active travel
+                    this.logger.info.player(this.gameState.day, 'TELEPORT', `Teleported to ${reward.target}`);
+                    break;
+
+                // --- SERVICES: MAINTENANCE ---
+                case 'REPAIR':
+                    const activeShip = this.gameState.player.activeShipId;
+                    if (this.gameState.player.shipStates[activeShip]) {
+                        this.gameState.player.shipStates[activeShip].health = DB.SHIPS[activeShip].maxHealth;
+                    }
+                    break;
+                
+                case 'REFUEL':
+                    const currentShip = this.gameState.player.activeShipId;
+                    if (this.gameState.player.shipStates[currentShip]) {
+                        this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
+                    }
+                    break;
+                
+                // --- ASSETS: UPGRADES ---
+                case 'UPGRADE':
+                     const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
+                     // Simple check: if not already owned (or if stackable logic is added later)
+                     // For now, we assume upgrades are unique per ship or just pushed.
+                     if (shipState && shipState.upgrades) {
+                         shipState.upgrades.push(reward.target);
+                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target}`);
+                     }
+                     break;
+                
+                // --- OFFICERS ---
+                case 'OFFICER':
+                    const officerId = reward.officerId;
+                    const officer = OFFICERS[officerId];
+
+                    // Add to Roster if not already present
+                    if (officer && !this.gameState.solStation.roster.includes(officerId)) {
+                        this.gameState.solStation.roster.push(officerId);
+                        this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
+                        
+                        // Visual Feedback
+                        this.uiManager.queueModal('event-modal', 
+                            'New Officer Recruited', 
+                            `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
+                        );
+                    }
+                    break;
+
+                default:
+                    console.warn(`Unknown reward type: ${reward.type}`);
+            }
+        });
+    }
+
+    /**
+     * Helper to initialize a fresh ship state object.
+     * Replicates logic from GameState to ensure standalone functionality.
+     * @param {string} shipId 
+     */
+    _initializeShipState(shipId) {
+        const ship = DB.SHIPS[shipId];
+        return {
+            health: ship ? ship.maxHealth : 100,
+            fuel: ship ? ship.maxFuel : 40,
+            hullAlerts: { one: false, two: false },
+            upgrades: [] 
+        };
+    }
+
+    /**
+     * Sets the active screen/tab for the Intel UI.
+     * @param {string} tabId 
+     */
+    setIntelTab(tabId) {
+        this.gameState.uiState.activeIntelTab = tabId;
+        this.gameState.setState({});
+    }
+
+    /**
+     * Forces a screen switch (used by Intel navigation buttons).
+     * @param {string} navId 
+     * @param {string} screenId 
+     */
+    setScreen(navId, screenId) {
+        this.gameState.activeNav = navId;
+        this.gameState.activeScreen = screenId;
+        this.gameState.setState({});
+    }
+
+    // ... (Existing private methods _updateMarkets, _processFinancials remain unchanged)
+    
+    _updateMarkets() {
+        const { market } = this.gameState;
+        
+        // 1. Decay/Update existing price history
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(good => {
+                // Ensure array exists
+                if (!market.priceHistory[loc.id][good.id]) {
+                    market.priceHistory[loc.id][good.id] = [];
+                }
+                
+                // Shift history (Max 30 days)
+                const history = market.priceHistory[loc.id][good.id];
+                history.push(market.prices[loc.id][good.id]);
+                if (history.length > 30) history.shift();
+            });
+        });
+
+        // 2. Calculate New Prices
+        // Simple random walk for now, bounded by +/- 20% of galactic average
+        DB.MARKETS.forEach(loc => {
+            DB.COMMODITIES.forEach(good => {
+                const currentPrice = market.prices[loc.id][good.id];
+                const avg = market.galacticAverages[good.id];
+                
+                // Volatility Check (Intel/Events could boost this)
+                const volatility = 0.05; 
+                
+                let change = 1 + (Math.random() * volatility * 2 - volatility);
+                let newPrice = Math.round(currentPrice * change);
+                
+                // Soft Clamping
+                const min = avg * 0.5;
+                const max = avg * 1.5;
+                if (newPrice < min) newPrice = Math.round(min + Math.random() * 5);
+                if (newPrice > max) newPrice = Math.round(max - Math.random() * 5);
+
+                market.prices[loc.id][good.id] = newPrice;
+            });
+            
+            // 3. Update Shipyard Stock (Weekly)
+            if (this.gameState.day % 7 === 0) {
+                // Logic to rotate ships would go here
+            }
+        });
+
+        this.gameState.lastMarketUpdateDay = this.gameState.day;
+    }
+
+    _processFinancials() {
+        // Simple daily interest if in debt
+        if (this.gameState.player.debt > 0) {
+            const dailyRate = 0.001; // 0.1% daily
+            const interest = Math.ceil(this.gameState.player.debt * dailyRate);
+            this.gameState.player.debt += interest;
+            this.gameState.player.monthlyInterestAmount += interest;
         }
     }
 }
@@ -29640,6 +30303,21 @@ export class ActionClickHandler {
                 break;
             }
 
+            // --- MISSION SYSTEM NAVIGATION ---
+            // Fixed: Direct state mutation ensures UI updates correctly
+            case 'switch-mission-tab': {
+                const tabId = dataset.target;
+                if (tabId === 'terminal' || tabId === 'log') {
+                    this.gameState.setState({
+                        uiState: {
+                            ...state.uiState,
+                            activeMissionTab: tabId
+                        }
+                    });
+                }
+                break;
+            }
+
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
                 break;
@@ -29678,14 +30356,24 @@ export class ActionClickHandler {
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
+                // Auto-switch to Log tab to show the new mission
+                if (this.uiManager.missionControl) {
+                    // We can also trigger the tab switch directly via state here for consistency
+                    this.gameState.setState({
+                        uiState: {
+                            ...this.gameState.getState().uiState,
+                            activeMissionTab: 'log'
+                        }
+                    });
+                }
                 actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
                 break;
             case 'abandon-mission':
-                this.simulationService.missionService.abandonMission();
+                this.simulationService.missionService.abandonMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
                 break;
             case 'complete-mission':
-                this.simulationService.missionService.completeActiveMission();
+                this.simulationService.missionService.completeMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
                 actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;

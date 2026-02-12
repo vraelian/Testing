@@ -55,10 +55,11 @@ export class UIMissionControl {
             let objKey;
             let current = 0;
             let target = 1;
+            let firstObj = null;
             
             // Try to find the first objective that matches our progress map
             if (mission.objectives) {
-                const firstObj = mission.objectives[0];
+                firstObj = mission.objectives[0];
                 objKey = firstObj.id || firstObj.goodId;
                 
                 if (progress.objectives[objKey]) {
@@ -71,10 +72,23 @@ export class UIMissionControl {
                 }
             }
 
-            const objectiveLabel = this._getObjectiveLabel(mission.objectives[0]);
+            const objectiveLabel = this._getObjectiveLabel(firstObj);
+            
+            // [[FIXED]] Format display string based on objective type (Logic from MissionsScreen)
+            let displayStr = `[${current}/${target}]`;
+            
+            if (firstObj) {
+                if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
+                    displayStr = `[${current}]`;
+                }
+                else if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                    const comparator = firstObj.comparator || '>=';
+                    displayStr = `[${current}% / ${comparator}${target}%]`;
+                }
+            }
 
             objectiveTextEl.textContent = `${objectiveLabel}`;
-            objectiveProgressEl.textContent = `[${current}/${target}]`;
+            objectiveProgressEl.textContent = displayStr;
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
@@ -94,6 +108,7 @@ export class UIMissionControl {
     }
 
     _getObjectiveLabel(obj) {
+        if (!obj) return 'Objective';
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
             const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
             return `Deliver ${goodName}`;
@@ -103,6 +118,12 @@ export class UIMissionControl {
              return `Travel to ${locName}`;
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
+        
+        // [[NEW]] Labels
+        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
+        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
+        if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
+        
         return `Objective`;
     }
 
