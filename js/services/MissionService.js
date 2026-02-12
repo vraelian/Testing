@@ -109,7 +109,7 @@ export class MissionService {
                     text: 'Guild travel logic verified.',
                     buttonText: 'Close'
                 },
-                rewards: [{ type: 'item', goodId: 'fuel', quantity: 10 }]
+                rewards: [{ type: 'item', goodId: 'propellant', quantity: 10 }]
             },
             {
                 id: `test_syndicate_wealth_${timestamp}`,
@@ -130,22 +130,76 @@ export class MissionService {
                 rewards: [{ type: 'credits', amount: 666 }]
             },
             {
-                id: `test_unknown_scan_${timestamp}`,
-                name: '[TEST] Unknown Protocol',
+                id: `test_unknown_cargo_${timestamp}`,
+                name: '[TEST] Unknown Protocol (Item)',
                 type: 'MYSTERY',
                 host: 'UNKNOWN', // Host D
-                description: 'Simple possession test. Have 1 Fuel.',
+                description: 'Tests checking CARGO for Propellant (Item).',
                 triggers: [],
                 objectives: [
-                    { type: 'have_item', goodId: 'fuel', quantity: 1 }
+                    { type: 'have_item', goodId: 'propellant', quantity: 1 }
                 ],
                 completion: {
                     locationId: null,
-                    title: 'Protocol Complete',
-                    text: 'Unknown host logic verified.',
+                    title: 'Cargo Verified',
+                    text: 'Inventory item check successful.',
                     buttonText: 'End'
                 },
-                rewards: [{ type: 'credits', amount: 9999 }]
+                rewards: [{ type: 'credits', amount: 5000 }]
+            },
+            {
+                id: `test_unknown_tank_${timestamp}`,
+                name: '[TEST] Unknown Protocol (Tank)',
+                type: 'MYSTERY',
+                host: 'UNKNOWN', // Host D
+                description: 'Tests checking SHIP TANK for Fuel Level.',
+                triggers: [],
+                objectives: [
+                    { type: 'have_fuel_tank', value: 10 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Tank Verified',
+                    text: 'Ship fuel tank logic verified.',
+                    buttonText: 'Ignite'
+                },
+                rewards: [{ type: 'credits', amount: 5000 }]
+            },
+            {
+                id: `test_maintenance_std_${timestamp}`,
+                name: '[TEST] Maintenance Standard',
+                type: 'INSPECTION',
+                host: 'GUILD', 
+                description: 'Requires Hull Integrity >= 90%. Repair if needed.',
+                triggers: [],
+                objectives: [
+                    { type: 'HAVE_HULL_PCT', value: 90, comparator: '>=' }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Inspection Passed',
+                    text: 'Your ship meets Guild safety standards.',
+                    buttonText: 'OK'
+                },
+                rewards: [{ type: 'credits', amount: 250 }]
+            },
+            {
+                id: `test_ghost_run_${timestamp}`,
+                name: '[TEST] Ghost Run',
+                type: 'SMUGGLING',
+                host: 'SYNDICATE',
+                description: 'Requires Empty Cargo Hold (0% Usage). Sell everything.',
+                triggers: [],
+                objectives: [
+                    { type: 'HAVE_CARGO_PCT', value: 0, comparator: '<=' }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Ghost Run Complete',
+                    text: 'You arrived clean. Good work.',
+                    buttonText: 'Vanish'
+                },
+                rewards: [{ type: 'credits', amount: 2000 }]
             }
         ];
 
