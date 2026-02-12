@@ -412,44 +412,78 @@
     animation: readyPulse 2s infinite ease-in-out;
 }
 
-/* --- PROGRESS BARS --- */
+/* --- [[NEW]] STATUS BANNER --- */
+.mission-status-banner {
+    background: var(--theme-color);
+    color: #000; /* High contrast black text on bright theme color */
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 800;
+    text-align: center;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    
+    /* Pulsing Animation */
+    animation: readyPulseBanner 1.5s infinite ease-in-out;
+    
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 10px var(--theme-color-glow);
+    border-radius: 2px;
+}
+
+@keyframes readyPulseBanner {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 5px rgba(255,255,255,0.5); box-shadow: 0 0 15px var(--theme-color-glow); }
+    100% { opacity: 0.8; }
+}
+
+
+/* --- [[NEW]] PROGRESS BARS (FILLED BACKGROUND) --- */
 .mission-objectives-list {
     margin-top: 0.75rem;
     border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 0.5rem;
 }
 
-.objective-item {
-    font-family: 'Oxanium', sans-serif;
+.objective-row-filled {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
     margin-bottom: 0.5rem;
-}
-
-.objective-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
     overflow: hidden;
-    position: relative;
+    height: 28px; /* Fixed height for consistency */
+    display: flex;
+    align-items: center;
 }
 
-.objective-bar {
-    height: 100%;
-    background: var(--theme-color);
-    box-shadow: 0 0 10px var(--theme-color);
-    position: relative;
-}
-
-.objective-bar::after {
-    content: '';
+.objective-fill-bar {
     position: absolute;
     top: 0;
-    right: 0;
-    width: 4px;
+    left: 0;
     height: 100%;
-    background: #fff;
-    box-shadow: 0 0 5px #fff;
+    background: var(--theme-color);
+    opacity: 0.25; /* Translucent fill behind text */
+    z-index: 0;
+    transition: width 0.5s ease-out;
+    border-right: 1px solid var(--theme-color-glow);
 }
+
+.objective-text {
+    position: relative;
+    z-index: 1; /* Sit on top of the bar */
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 0.75rem;
+    
+    font-family: 'Oxanium', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
 
 /* --- SYSTEM IDLE STATE (EMPTY) --- */
 .mission-empty-state {

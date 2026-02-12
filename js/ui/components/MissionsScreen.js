@@ -119,16 +119,18 @@ export function renderMissionsScreen(gameState, missionService) {
             statusClass += ' mission-turn-in';
         }
 
-        // Dynamic Status Text Logic
-        let statusText = 'STATUS: IN PROGRESS';
+        // --- NEW STATUS BANNER LOGIC ---
+        let statusBannerHtml = '';
         if (progress.isCompletable) {
-            if (mission.completion.locationId) {
-                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
-                statusText = `RETURN TO: ${locName.toUpperCase()}`;
-            } else {
-                statusText = 'READY TO COMPLETE';
-            }
+             let bannerText = 'READY TO COMPLETE';
+             if (mission.completion.locationId) {
+                 const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
+                 bannerText = `RETURN TO: ${locName.toUpperCase()}`;
+             }
+             // Prominent pulsing banner
+             statusBannerHtml = `<div class="mission-status-banner">${bannerText}</div>`;
         }
+        // -------------------------------
 
         // Render Objectives with Continuous Flow Bars
         let objectivesHtml = '';
@@ -184,14 +186,13 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
 
+                // --- NEW PROGRESS FILL LAYOUT ---
                 objectivesHtml += `
-                    <div class="objective-item text-xs">
-                        <div class="flex justify-between mb-1 text-gray-400 font-bold">
+                    <div class="objective-row-filled">
+                        <div class="objective-fill-bar" style="width: ${percent}%"></div>
+                        <div class="objective-text">
                             <span>${desc}</span>
                             <span>${displayStr}</span>
-                        </div>
-                        <div class="objective-track">
-                            <div class="objective-bar transition-all duration-500" style="width: ${percent}%"></div>
                         </div>
                     </div>
                 `;
@@ -220,7 +221,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 
                 <div class="mission-title mb-2">${mission.name}</div>
                 
-                <div class="text-xs text-gray-400 font-bold mb-2 animate-pulse" style="color: var(--theme-color-glow)">${statusText}</div>
+                ${statusBannerHtml}
                 
                 ${objectivesHtml}
             </div>
@@ -259,11 +260,28 @@ export function renderMissionsScreen(gameState, missionService) {
     } else {
         // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
-            // [[FIX]] Removed space-y-0 to fix card crowding issue
             contentHtml = '<div class="max-w-2xl mx-auto">';
-            activeMissionIds.forEach(id => {
-                const mission = DB.MISSIONS[id];
-                if (mission) contentHtml += renderLogCard(mission);
+            
+            // --- NEW SORTING LOGIC ---
+            // 1. Map to Mission Objects
+            // 2. Sort: Completable First, then default
+            const sortedMissions = activeMissionIds
+                .map(id => DB.MISSIONS[id])
+                .filter(m => m) // Safety check
+                .sort((a, b) => {
+                    const progA = missionProgress[a.id] || { isCompletable: false };
+                    const progB = missionProgress[b.id] || { isCompletable: false };
+                    
+                    // Priority 1: Completable first
+                    if (progA.isCompletable && !progB.isCompletable) return -1;
+                    if (!progA.isCompletable && progB.isCompletable) return 1;
+                    
+                    // Fallback: Keep original order (usually insertion order)
+                    return 0; 
+                });
+
+            sortedMissions.forEach(mission => {
+                contentHtml += renderLogCard(mission);
             });
             contentHtml += '</div>';
         } else {
