@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.17</title>
+    <title>Orbital Trading 35.19</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.17</p>
+            <p>Version 35.19</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -322,138 +322,521 @@
 --- START OF FILE: ./css/missions.css ---
 /* css/missions.css */
 
-/* --- LAYOUT & SCROLLING --- */
-.missions-scroll-panel {
-    /* Ensures the list scrolls within the flex container */
-    -webkit-overflow-scrolling: touch;
+/* --- THEME ENGINE --- */
+/* Default Fallback (Earth/Azure) */
+:root {
+    --theme-color: #22d3ee;             /* Cyan-400 */
+    --theme-color-glow: #67e8f9;        /* Cyan-300 */
+    --theme-color-translucent: rgba(34, 211, 238, 0.15);
+    --theme-border: rgba(34, 211, 238, 0.3);
 }
 
-/* --- TAB NAVIGATION (PILLS) --- */
+/* Location-Specific Overrides (Scoped by class) */
+.loc-theme-sol {
+    --theme-color: #facc15;             /* Yellow-400 (Sun) */
+    --theme-color-glow: #fef08a;        /* Yellow-200 */
+    --theme-color-translucent: rgba(250, 204, 21, 0.15);
+    --theme-border: rgba(250, 204, 21, 0.3);
+}
+
+.loc-theme-mercury {
+    --theme-color: #fb923c;             /* Orange-400 (Rust) */
+    --theme-color-glow: #fdba74;
+    --theme-color-translucent: rgba(251, 146, 60, 0.15);
+    --theme-border: rgba(251, 146, 60, 0.3);
+}
+
+.loc-theme-venus {
+    --theme-color: #a3e635;             /* Lime-400 (Acid) */
+    --theme-color-glow: #bef264;
+    --theme-color-translucent: rgba(163, 230, 53, 0.15);
+    --theme-border: rgba(163, 230, 53, 0.3);
+}
+
+.loc-theme-earth {
+    --theme-color: #38bdf8;             /* Sky-400 (Water/Atmo) */
+    --theme-color-glow: #7dd3fc;
+    --theme-color-translucent: rgba(56, 189, 248, 0.15);
+    --theme-border: rgba(56, 189, 248, 0.3);
+}
+
+.loc-theme-luna {
+    --theme-color: #94a3b8;             /* Slate-400 (Regolith) */
+    --theme-color-glow: #cbd5e1;
+    --theme-color-translucent: rgba(148, 163, 184, 0.15);
+    --theme-border: rgba(148, 163, 184, 0.3);
+}
+
+.loc-theme-mars {
+    --theme-color: #ef4444;             /* Red-500 (Iron) */
+    --theme-color-glow: #fca5a5;
+    --theme-color-translucent: rgba(239, 68, 68, 0.15);
+    --theme-border: rgba(239, 68, 68, 0.3);
+}
+
+.loc-theme-belt {
+    --theme-color: #a855f7;             /* Purple-500 (The Exchange/Exotic) */
+    --theme-color-glow: #d8b4fe;
+    --theme-color-translucent: rgba(168, 85, 247, 0.15);
+    --theme-border: rgba(168, 85, 247, 0.3);
+}
+
+.loc-theme-jupiter {
+    --theme-color: #d97706;             /* Amber-600 (Storms) */
+    --theme-color-glow: #fbbf24;
+    --theme-color-translucent: rgba(217, 119, 6, 0.15);
+    --theme-border: rgba(217, 119, 6, 0.3);
+}
+
+.loc-theme-saturn {
+    --theme-color: #eab308;             /* Yellow-500 (Gold/Rings) */
+    --theme-color-glow: #fde047;
+    --theme-color-translucent: rgba(234, 179, 8, 0.15);
+    --theme-border: rgba(234, 179, 8, 0.3);
+}
+
+.loc-theme-uranus {
+    --theme-color: #2dd4bf;             /* Teal-400 (Ice) */
+    --theme-color-glow: #5eead4;
+    --theme-color-translucent: rgba(45, 212, 191, 0.15);
+    --theme-border: rgba(45, 212, 191, 0.3);
+}
+
+.loc-theme-neptune {
+    --theme-color: #3b82f6;             /* Blue-500 (Deep) */
+    --theme-color-glow: #60a5fa;
+    --theme-color-translucent: rgba(59, 130, 246, 0.15);
+    --theme-border: rgba(59, 130, 246, 0.3);
+}
+
+.loc-theme-pluto {
+    --theme-color: #818cf8;             /* Indigo-400 (Cold/Dark) */
+    --theme-color-glow: #a5b4fc;
+    --theme-color-translucent: rgba(129, 140, 248, 0.15);
+    --theme-border: rgba(129, 140, 248, 0.3);
+}
+
+.loc-theme-kepler {
+    --theme-color: #ec4899;             /* Pink-500 (Science/Lens) */
+    --theme-color-glow: #f472b6;
+    --theme-color-translucent: rgba(236, 72, 153, 0.15);
+    --theme-border: rgba(236, 72, 153, 0.3);
+}
+
+/* --- LAYOUT & ATMOSPHERE --- */
+
+/* The Main Container (injected in JS) */
+.missions-screen-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ambient Lighting Vignette */
+.missions-screen-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: radial-gradient(
+        ellipse at bottom center,
+        var(--theme-color-translucent) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+}
+
+.missions-scroll-panel {
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to bottom, transparent, black 20px, black 90%, transparent);
+    padding: 10px 4px 100px 4px; /* Increased bottom padding to 100px */
+}
+
+/* --- HOLOGRAPHIC RAIL NAVIGATION --- */
 .mission-tabs-nav {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 1.5rem auto;
+    padding: 4px;
+    
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9999px; /* Capsule Shape */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    
+    /* Perf */
+    transform: translateZ(0);
+    z-index: 20; /* Above vignette */
 }
 
 .mission-tab-btn {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #888;
-    padding: 0.5rem 1.5rem;
+    flex: 1;
+    position: relative;
+    padding: 0.6rem 0;
+    
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    
+    color: rgba(255, 255, 255, 0.4);
     font-family: 'Oxanium', sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.85rem;
-    border-radius: 9999px; /* Pill shape */
-    transition: all 0.2s ease;
-    cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
 }
 
 .mission-tab-btn:hover {
-    color: #ccc;
-    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .mission-tab-btn.active {
-    background: rgba(6, 182, 212, 0.15); /* Cyan tint */
-    border-color: #06b6d4;
-    color: #22d3ee;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    background: var(--theme-color-translucent);
+    color: #fff;
+    text-shadow: 0 0 10px var(--theme-color-glow);
+    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border);
 }
 
-/* --- MISSION CARDS --- */
+/* --- HOST FACTION COLORS & GRADIENTS --- */
+/* These now force an override of the default 'm-type-*' background to apply the unique dual gradients */
+
+/* Guild: Silver to Gold */
+.host-guild { 
+    --host-color: #fbbf24; 
+    background: linear-gradient(135deg, #52525b, #b45309) !important; /* Zinc-600 to Amber-700 */
+}
+
+/* Syndicate: Orange to Violet */
+.host-syndicate { 
+    --host-color: #a855f7; 
+    background: linear-gradient(135deg, #c2410c, #7e22ce) !important; /* Orange-700 to Purple-700 */
+}
+
+/* Station: Black to Dark Blue */
+.host-station { 
+    --host-color: #3b82f6; 
+    background: linear-gradient(135deg, #000000, #172554) !important; /* Black to Blue-950 */
+}
+
+/* Unknown: Red to Black */
+.host-unknown { 
+    --host-color: #ef4444; 
+    background: linear-gradient(135deg, #7f1d1d, #000000) !important; /* Red-900 to Black */
+}
+
+/* --- MISSION TYPE GRADIENTS (FALLBACKS/TINT) --- */
+/* These define the base tint if no Host override is present */
+.m-type-trade { 
+    --type-bg-start: rgba(0, 50, 60, 0.6); 
+    --type-bg-end: rgba(5, 15, 20, 0.85); 
+} 
+
+.m-type-combat { 
+    --type-bg-start: rgba(60, 10, 10, 0.6); 
+    --type-bg-end: rgba(20, 5, 5, 0.85); 
+}
+
+.m-type-exploration { 
+    --type-bg-start: rgba(40, 10, 60, 0.6); 
+    --type-bg-end: rgba(10, 5, 20, 0.85); 
+}
+
+.m-type-industrial { 
+    --type-bg-start: rgba(60, 40, 0, 0.6); 
+    --type-bg-end: rgba(20, 15, 5, 0.85); 
+}
+
+.m-type-standard { 
+    --type-bg-start: rgba(30, 35, 45, 0.6); 
+    --type-bg-end: rgba(10, 15, 20, 0.85); 
+}
+
+
+/* --- VOID-GLASS CARD ARCHITECTURE --- */
+@keyframes card-slide-in {
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 .mission-card {
     position: relative;
+    display: flex;
+    flex-direction: column;
     padding: 1rem;
-    margin-bottom: 0.75rem;
-    background: rgba(10, 10, 12, 0.7);
-    border: 1px solid #334155;
-    transition: all 0.2s ease-out;
+    
+    /* Increased spacing to reduce crowding */
+    margin-bottom: 1.25rem;
+    
+    /* Default Background (Overridden by .host-*) */
+    background: linear-gradient(145deg, var(--type-bg-start, rgba(30, 35, 45, 0.6)), var(--type-bg-end, rgba(10, 15, 20, 0.8)));
+    
+    /* Glass Effect */
+    backdrop-filter: blur(8px);
+    
+    /* Border & Shadow */
+    border: 1px solid var(--host-color, #444);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 0 5px rgba(255,255,255,0.05);
+    
+    border-radius: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    overflow: hidden; /* For glow effects */
+    overflow: hidden;
+    transform: translateZ(0);
+    
+    /* Entry Animation */
+    animation: card-slide-in 0.3s ease-out backwards;
 }
 
+/* Staggered Entry for the first 8 items */
+.mission-card:nth-child(1) { animation-delay: 0.05s; }
+.mission-card:nth-child(2) { animation-delay: 0.10s; }
+.mission-card:nth-child(3) { animation-delay: 0.15s; }
+.mission-card:nth-child(4) { animation-delay: 0.20s; }
+.mission-card:nth-child(5) { animation-delay: 0.25s; }
+.mission-card:nth-child(6) { animation-delay: 0.30s; }
+.mission-card:nth-child(7) { animation-delay: 0.35s; }
+.mission-card:nth-child(8) { animation-delay: 0.40s; }
+
+/* Touch Interaction (Active State) */
 .mission-card:active {
     transform: scale(0.98);
+    filter: brightness(1.3);
+    border-color: #fff;
+    box-shadow: 0 0 20px var(--host-color, #444), inset 0 0 15px rgba(255,255,255,0.1);
 }
 
-/* Host Themes (Borders & Accents) */
-.host-station { border-color: #3b82f6; box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); } /* Blue */
-.host-guild { border-color: #eab308; box-shadow: 0 0 5px rgba(234, 179, 8, 0.1); }   /* Gold */
-.host-syndicate { border-color: #a855f7; box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } /* Violet */
-.host-unknown { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }  /* Red */
+/* Desktop Hover (Secondary) */
+@media (hover: hover) {
+    .mission-card:hover {
+        filter: brightness(1.15);
+        box-shadow: 0 0 15px var(--host-color, #444), inset 0 0 10px rgba(0,0,0,0.5);
+        border-color: #fff;
+        transform: translateY(-2px);
+        z-index: 10;
+    }
+}
 
-/* Available vs Active Styling */
+/* --- [[NEW]] STAR TRACKING ICON --- */
+.mission-track-star {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 24px;
+    height: 24px;
+    
+    background: transparent;
+    border: none;
+    outline: none;
+    
+    color: rgba(255, 255, 255, 0.1); /* Default (Inactive) */
+    stroke: rgba(255, 255, 255, 0.5); /* Border only */
+    stroke-width: 2px;
+    fill: transparent;
+    
+    cursor: pointer;
+    z-index: 20; /* Above card content */
+    transition: all 0.2s ease;
+}
+
+.mission-track-star:hover {
+    color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.mission-track-star.active {
+    color: #fbbf24; /* Gold-400 */
+    fill: #fbbf24;
+    stroke: #f59e0b; /* Amber-500 */
+    filter: drop-shadow(0 0 5px #fbbf24);
+}
+
+/* --- TYPOGRAPHY & LAYOUT --- */
+.mission-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-family: 'Oxanium', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7); /* Slightly brighter for contrast on dark gradients */
+}
+
+.mission-type-badge {
+    color: var(--theme-color-glow);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mission-host-label {
+    font-weight: 700;
+    color: var(--host-color, #888);
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+.mission-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.mission-title {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    line-height: 1.1;
+    max-width: 70%;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Added shadow for legibility */
+}
+
+.mission-reward-data {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #fff;
+    text-align: right;
+    font-feature-settings: "tnum";
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* --- ACTIVE & READY STATES --- */
 .mission-active {
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(10, 10, 12, 0.95));
-    border-left-width: 4px; /* Thicker left border indicator */
+    border-left: 3px solid var(--theme-color);
 }
 
-/* Ready to Turn In (Pulse Effect) */
-@keyframes turnInPulse {
-    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); border-color: #22c55e; }
-    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: #4ade80; }
-    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: #22c55e; }
+.mission-active .mission-title {
+    color: var(--theme-color-glow);
+}
+
+@keyframes readyPulse {
+    0% { box-shadow: 0 0 5px var(--theme-color), inset 0 0 5px var(--theme-color); border-color: #fff; }
+    50% { box-shadow: 0 0 20px var(--theme-color), inset 0 0 15px var(--theme-color); border-color: var(--theme-color); }
+    100% { box-shadow: 0 0 5px var(--theme-color), inset 0 0 5px var(--theme-color); border-color: #fff; }
 }
 
 .mission-turn-in {
-    animation: turnInPulse 2s infinite;
-    border-color: #22c55e !important; /* Green override */
+    animation: readyPulse 2s infinite ease-in-out;
 }
 
-/* Text Styles */
-.mission-type {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.7rem;
-    color: #94a3b8;
-    background: rgba(0,0,0,0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
+/* --- PROGRESS BARS --- */
+.mission-objectives-list {
+    margin-top: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 0.5rem;
 }
 
-.mission-host {
-    font-family: 'Oxanium', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-}
-
-.mission-reward {
-    font-family: 'Oxanium', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #fbbf24; /* Amber-300 */
-}
-
-/* --- OBJECTIVE LIST --- */
 .objective-item {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Oxanium', sans-serif;
+    margin-bottom: 0.5rem;
+}
+
+.objective-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.objective-bar {
+    height: 100%;
+    background: var(--theme-color);
+    box-shadow: 0 0 10px var(--theme-color);
+    position: relative;
+}
+
+.objective-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+
+/* --- SYSTEM IDLE STATE (EMPTY) --- */
+.mission-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'Oxanium', sans-serif;
+    text-align: center;
+}
+
+.mission-empty-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+    animation: idlePulse 4s infinite ease-in-out;
+    color: var(--theme-color);
+}
+
+.mission-empty-text {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--theme-color);
+    text-shadow: 0 0 10px var(--theme-border);
+}
+
+@keyframes idlePulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
 }
 
 /* --- STICKY BAR (HUD) --- */
 .sticky-content {
-    background: rgba(0, 0, 0, 0.85);
-    border: 1px solid #444;
-    backdrop-filter: blur(4px);
-    padding: 0.5rem 1rem;
-    border-radius: 0 0 8px 8px; /* Rounded bottom */
-    border-top: none; /* Connect to top of screen */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid var(--theme-border);
+    backdrop-filter: blur(8px);
+    
+    /* Reduced vertical thickness (approx 15% reduction) */
+    padding: 0.35rem 1rem;
+    
+    /* Fully rounded corners (Pill shape) */
+    border-radius: 9999px;
+    
+    /* Slightly smaller text size */
+    font-size: 0.9rem;
+    
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transition: all 0.3s ease;
+    
+    /* Ensure it floats with margin */
+    margin-bottom: 0.5rem;
 }
 
 .objective-progress-flash {
     animation: textFlash 0.5s ease-out;
-    color: #22d3ee; /* Cyan flash */
+    color: var(--theme-color-glow);
 }
 
 @keyframes textFlash {
     0% { color: #fff; text-shadow: 0 0 10px #fff; }
-    100% { color: #22d3ee; text-shadow: none; }
+    100% { color: var(--theme-color-glow); text-shadow: none; }
 }
 --- END OF FILE: ./css/missions.css ---
 
@@ -7755,88 +8138,138 @@ export function renderNavigationScreen(gameState) {
 /**
  * @fileoverview Rendering logic for Mission System 2.0.
  * Supports split view: 'Terminal' (Available) vs 'Log' (Active).
+ * Phase 3 Update: Atmosphere, Animation, and Polish.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 
+// --- THEME MAPPING ---
+const THEME_MAP = {
+    'sol': 'loc-theme-sol',
+    'mercury': 'loc-theme-mercury',
+    'venus': 'loc-theme-venus',
+    'earth': 'loc-theme-earth',
+    'luna': 'loc-theme-luna',
+    'mars': 'loc-theme-mars',
+    'belt': 'loc-theme-belt',
+    'jupiter': 'loc-theme-jupiter',
+    'saturn': 'loc-theme-saturn',
+    'uranus': 'loc-theme-uranus',
+    'neptune': 'loc-theme-neptune',
+    'pluto': 'loc-theme-pluto',
+    'kepler': 'loc-theme-kepler'
+};
+
+const DEFAULT_THEME = 'loc-theme-earth';
+
+/**
+ * Returns a CSS class for the card gradient based on mission type keywords.
+ */
+const getMissionTypeClass = (missionType) => {
+    if (!missionType) return 'm-type-standard';
+    const type = missionType.toLowerCase();
+    
+    if (type.includes('trade') || type.includes('deliver') || type.includes('source') || type.includes('procurement')) {
+        return 'm-type-trade'; // Cyan/Teal
+    }
+    if (type.includes('combat') || type.includes('bounty') || type.includes('patrol') || type.includes('kill')) {
+        return 'm-type-combat'; // Red/Rust
+    }
+    if (type.includes('explor') || type.includes('travel') || type.includes('survey') || type.includes('scan')) {
+        return 'm-type-exploration'; // Purple/Void
+    }
+    if (type.includes('min') || type.includes('harvest') || type.includes('salvage') || type.includes('industr')) {
+        return 'm-type-industrial'; // Amber/Oil
+    }
+    
+    return 'm-type-standard';
+};
+
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, uiState, currentLocationId } = gameState;
-    const { activeMissionIds, missionProgress } = missions;
+    const { activeMissionIds, missionProgress, trackedMissionId } = missions;
     const activeTab = uiState.activeMissionTab || 'terminal'; // Default to terminal
+
+    // Resolve Theme Class
+    const themeClass = THEME_MAP[currentLocationId] || DEFAULT_THEME;
 
     // --- SUB-COMPONENTS ---
 
-    /** Renders the Tab Navigation (Pills) */
+    /** Renders the Holographic Rail Navigation */
     const renderTabs = () => {
         const getTabClass = (tabId) => 
             `mission-tab-btn ${activeTab === tabId ? 'active' : ''}`;
         
         return `
-            <div class="mission-tabs-nav flex justify-center gap-4 mb-6">
+            <div class="mission-tabs-nav ${themeClass}">
                 <button class="${getTabClass('terminal')}" data-action="switch-mission-tab" data-target="terminal">
-                    MISSION TERMINAL
+                    TERMINAL
                 </button>
                 <button class="${getTabClass('log')}" data-action="switch-mission-tab" data-target="log">
-                    MISSION LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
+                    LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
                 </button>
             </div>
         `;
     };
 
-    /** Renders a "Job Board" style card for available missions */
+    /** Renders a "Datapad" style card for available missions */
     const renderTerminalCard = (mission) => {
+        // Map Host to CSS Class for Color Variables
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        // Map Type to Gradient Class
+        const typeClass = getMissionTypeClass(mission.type);
+        
+        // Format Rewards
         const rewardText = mission.rewards.map(r => {
             if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
             return r.type.toUpperCase();
         }).join(', ');
 
         return `
-            <div class="mission-card sci-fi-frame ${hostClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                <div class="flex justify-between items-center w-full text-xs mb-1">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="mission-type">${mission.type}</span>
-                    </div>
-                    <span class="mission-host">${mission.host}</span>
+            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+                <div class="mission-meta-row">
+                    <span class="mission-type-badge">${mission.type}</span>
+                    <span class="mission-host-label">${mission.host}</span>
                 </div>
-                <div class="flex justify-between items-end w-full">
-                    <p class="font-bold text-base">${mission.name}</p>
-                    <span class="mission-reward">${rewardText}</span>
+                
+                <div class="mission-main-row">
+                    <div class="mission-title">${mission.name}</div>
+                    <div class="mission-reward-data">${rewardText}</div>
                 </div>
             </div>`;
     };
 
-    /** Renders a detailed "Log" style card with progress bars */
+    /** Renders a "Live Feed" style card with progress bars */
     const renderLogCard = (mission) => {
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const typeClass = getMissionTypeClass(mission.type);
         const progress = missionProgress[mission.id] || { objectives: {}, isCompletable: false };
         
         // Determine Status Class (Active vs Turn-In Ready)
         let statusClass = 'mission-active';
         
-        // [FIX] Allow null location (Anywhere)
+        // Allow null location (Anywhere)
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
 
         if (progress.isCompletable && isAtCorrectLocation) {
             statusClass += ' mission-turn-in';
         }
 
-        // [[UPDATED]] Dynamic Status Text Logic
-        let statusText = 'Status: In Progress';
+        // Dynamic Status Text Logic
+        let statusText = 'STATUS: IN PROGRESS';
         if (progress.isCompletable) {
             if (mission.completion.locationId) {
-                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'Unknown';
-                statusText = `Return to: ${locName}`;
+                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
+                statusText = `RETURN TO: ${locName.toUpperCase()}`;
             } else {
-                statusText = 'Ready to Complete (Anywhere)';
+                statusText = 'READY TO COMPLETE';
             }
         }
 
-        // Render Objectives with Progress Bars
+        // Render Objectives with Continuous Flow Bars
         let objectivesHtml = '';
         if (mission.objectives) {
-            objectivesHtml = '<div class="mission-objectives-list space-y-2 mt-2">';
+            objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
                 const pObj = progress.objectives[objKey];
@@ -7845,34 +8278,32 @@ export function renderMissionsScreen(gameState, missionService) {
                 const comparator = obj.comparator || '>=';
 
                 // --- DESC & DISPLAY FORMATTING ---
-                let desc = 'Objective';
+                let desc = 'OBJECTIVE';
                 let displayStr = `${current}/${target}`;
                 let percent = 0;
 
                 // Handle specific types
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
-                    desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
+                    desc = `DELIVER ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase()}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-                    desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
-                    displayStr = current === 1 ? 'Arrived' : 'En Route';
+                    desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
+                    displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
                 }
                 else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-                    desc = 'Earn Credits';
+                    desc = 'EARN CREDITS';
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
-                // [[FIX]] Handle percentage types gracefully
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
-                    desc = 'Ship Fuel Level';
+                    desc = 'FUEL LEVEL';
                     displayStr = `${current}`;
-                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); // Rough visual approximation
+                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
-                    desc = 'Hull Integrity';
-                    displayStr = `${current}% / ${comparator}${target}%`;
-                    
+                    desc = 'HULL INTEGRITY';
+                    displayStr = `${current}%`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
@@ -7880,13 +8311,9 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
-                    desc = 'Cargo Hold Usage';
-                    displayStr = `${current}% / ${comparator}${target}%`;
-                    
+                    desc = 'CARGO SPACE';
+                    displayStr = `${current}%`;
                     if (comparator === '<=') {
-                        // Inverse logic for "Empty Hold"
-                        // If we are below target, we are "Good" (100% bar)
-                        // If we are above, we are "Bad" (0% bar)
                         percent = current <= target ? 100 : 0;
                     } else {
                         percent = Math.min(100, current);
@@ -7895,12 +8322,12 @@ export function renderMissionsScreen(gameState, missionService) {
 
                 objectivesHtml += `
                     <div class="objective-item text-xs">
-                        <div class="flex justify-between mb-0.5 text-gray-400">
+                        <div class="flex justify-between mb-1 text-gray-400 font-bold">
                             <span>${desc}</span>
                             <span>${displayStr}</span>
                         </div>
-                        <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-cyan-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
+                        <div class="objective-track">
+                            <div class="objective-bar transition-all duration-500" style="width: ${percent}%"></div>
                         </div>
                     </div>
                 `;
@@ -7908,14 +8335,42 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml += '</div>';
         }
 
+        // [[NEW]] Star Tracking Logic
+        const isTracked = mission.id === trackedMissionId;
+        const starClass = isTracked ? 'active' : '';
+        const starIcon = `
+            <button class="mission-track-star ${starClass}" data-action="track-mission" data-mission-id="${mission.id}" title="Track on HUD">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </button>
+        `;
+
+        // [[UPDATED]] Added typeClass to the list
         return `
-            <div class="mission-card sci-fi-frame ${hostClass} ${statusClass} p-4" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-bold text-lg text-white">${mission.name}</h3>
-                    <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
+            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+                ${starIcon}
+                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
+                     <span class="mission-host-label">${mission.host}</span>
                 </div>
-                <div class="text-xs text-gray-400 italic mb-2">${statusText}</div>
+                
+                <div class="mission-title mb-2">${mission.name}</div>
+                
+                <div class="text-xs text-gray-400 font-bold mb-2 animate-pulse" style="color: var(--theme-color-glow)">${statusText}</div>
+                
                 ${objectivesHtml}
+            </div>
+        `;
+    };
+
+    /** Returns the "System Idle" Empty State */
+    const renderEmptyState = (msg) => {
+        return `
+            <div class="mission-empty-state">
+                <svg class="mission-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <div class="mission-empty-text">${msg}</div>
             </div>
         `;
     };
@@ -7929,30 +8384,33 @@ export function renderMissionsScreen(gameState, missionService) {
         if (missionService) {
             const availableMissions = missionService.getAvailableMissions();
             if (availableMissions.length > 0) {
-                contentHtml = '<div class="space-y-3 max-w-2xl mx-auto">';
+                // [[FIX]] Removed space-y-0 to fix card crowding issue
+                contentHtml = '<div class="max-w-2xl mx-auto">'; 
                 availableMissions.forEach(m => contentHtml += renderTerminalCard(m));
                 contentHtml += '</div>';
             } else {
-                contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">No contracts available at this location.</p></div>';
+                contentHtml = renderEmptyState('NO CONTRACTS DETECTED');
             }
         }
     } else {
         // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
-            contentHtml = '<div class="space-y-4 max-w-2xl mx-auto">';
+            // [[FIX]] Removed space-y-0 to fix card crowding issue
+            contentHtml = '<div class="max-w-2xl mx-auto">';
             activeMissionIds.forEach(id => {
                 const mission = DB.MISSIONS[id];
                 if (mission) contentHtml += renderLogCard(mission);
             });
             contentHtml += '</div>';
         } else {
-             contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">Mission Log Empty.</p></div>';
+             contentHtml = renderEmptyState('MISSION LOG EMPTY');
         }
     }
 
+    // [[PHASE 3]] Added missions-screen-container class for vignette support
     return `
-        <div class="flex flex-col h-full">
-            <h1 class="text-3xl font-orbitron text-center mb-4 text-cyan-300 flex-shrink-0">Mission Control</h1>
+        <div class="flex flex-col h-full ${themeClass} missions-screen-container">
+            <h1 class="text-3xl font-orbitron text-center mb-4 flex-shrink-0" style="color: var(--theme-color-glow); text-shadow: 0 0 10px var(--theme-border);">MISSION CONTROL</h1>
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
                 ${contentHtml}
@@ -14422,8 +14880,24 @@ export class UIMissionControl {
     }
 
     /**
+     * Handles the user clicking the star icon to track a specific mission.
+     * @param {string} missionId 
+     */
+    handleTrackMission(missionId) {
+        if (!missionId) return;
+        const gameState = this.manager.lastKnownState;
+        
+        // Update State
+        gameState.missions.trackedMissionId = missionId;
+        
+        // Re-render UI to update star icons and sticky bar
+        this.manager.render();
+    }
+
+    /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * Note: For Phase 1, this displays the FIRST active mission if multiple exist.
+     * [[UPDATED]] Now respects gameState.missions.trackedMissionId.
+     * [[UPDATED]] Now renders a "Progress Fill" background gradient.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -14432,10 +14906,10 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Phase 1: Just grab the first mission for the HUD
-        const activeMissionId = gameState.missions.activeMissionIds[0];
+        // Use Tracked ID, fallback to first active if not set (sanity check)
+        const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
-        if (activeMissionId) {
+        if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
             const mission = DB.MISSIONS[activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
@@ -14466,16 +14940,31 @@ export class UIMissionControl {
 
             const objectiveLabel = this._getObjectiveLabel(firstObj);
             
-            // [[FIXED]] Format display string based on objective type (Logic from MissionsScreen)
+            // Format display string based on objective type (Logic from MissionsScreen)
             let displayStr = `[${current}/${target}]`;
+            let percent = 0;
             
             if (firstObj) {
                 if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
                     displayStr = `[${current}]`;
+                    percent = Math.min(100, (current / (target || 100)) * 100);
                 }
-                else if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}% / ${comparator}${target}%]`;
+                    // Logic for hull: if we need > 90%, and we have 100%, that's 100% progress.
+                    // If we have 50%, that's 50/90 progress? Or just raw %?
+                    // Let's stick to raw value for the bar fill if comparator is >=
+                    percent = Math.min(100, current); 
+                }
+                else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                    const comparator = firstObj.comparator || '>=';
+                    displayStr = `[${current}% / ${comparator}${target}%]`;
+                    percent = Math.min(100, current);
+                }
+                else {
+                    // Standard quantity
+                    percent = Math.min(100, (current / target) * 100);
                 }
             }
 
@@ -14485,13 +14974,17 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             // Check specific mission completability
-            // [FIX] Allow null location (Anywhere)
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
+
+            // [[NEW]] Progress Fill Gradient
+            // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
+            // against the black background, while still providing a clear visual indicator.
+            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, rgba(0, 0, 0, 0.9) ${percent}%)`;
 
             stickyBarEl.style.display = 'block';
         } else {
@@ -14502,16 +14995,16 @@ export class UIMissionControl {
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
-            const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-            return `Deliver ${goodName}`;
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             return `Deliver ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `Travel to ${locName}`;
+             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${name}`;
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
-        // [[NEW]] Labels
+        // Labels
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
         if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
         if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
@@ -14549,7 +15042,7 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        // [FIX] Allow null location (Anywhere)
+        // Allow null location (Anywhere)
         const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
@@ -19554,7 +20047,9 @@ export class GameState {
                 // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
                 activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {}
+                missionProgress: {},
+                // [[NEW]] Phase 3: Tracked Mission ID for HUD
+                trackedMissionId: null
                 // --- END MISSION SYSTEM 2.0 ---
             },
             uiState: {
@@ -20170,7 +20665,7 @@ export class MissionService {
             {
                 id: `test_unknown_cargo_${timestamp}`,
                 name: '[TEST] Unknown Protocol (Item)',
-                type: 'MYSTERY',
+                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
                 host: 'UNKNOWN', // Host D
                 description: 'Tests checking CARGO for Propellant (Item).',
                 triggers: [],
@@ -20188,7 +20683,7 @@ export class MissionService {
             {
                 id: `test_unknown_tank_${timestamp}`,
                 name: '[TEST] Unknown Protocol (Tank)',
-                type: 'MYSTERY',
+                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
                 host: 'UNKNOWN', // Host D
                 description: 'Tests checking SHIP TANK for Fuel Level.',
                 triggers: [],
@@ -20287,6 +20782,11 @@ export class MissionService {
             objectives: {},
             isCompletable: false
         };
+
+        // [[NEW]] Auto-track logic: If no mission is being tracked, track this one.
+        if (!this.gameState.missions.trackedMissionId) {
+            this.gameState.missions.trackedMissionId = missionId;
+        }
         
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
         
@@ -20319,6 +20819,13 @@ export class MissionService {
         // But we DO reset isCompletable to be safe.
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+
+        // [[NEW]] Logic: If abandoned mission was tracked, clear tracking or pick next.
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            // Pick next active mission or null
+            const nextMission = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMission || null;
         }
 
         this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${missionId}`);
@@ -20447,6 +20954,13 @@ export class MissionService {
         // Cleanup progress if desired, though keeping it is fine for history. 
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+
+        // [[NEW]] Auto-Track Logic: If the completed mission was being tracked, auto-track the next one in the list.
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            // Grab the next available active mission (the list was already filtered above)
+            const nextMissionId = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMissionId || null;
         }
 
         // 4. Update state and re-render
@@ -30317,6 +30831,23 @@ export class ActionClickHandler {
                 }
                 break;
             }
+            
+            // [[FIX]] Phase 3: Star Icon Tracking Logic Fixed
+            // We now directly mutate the GameState source of truth instead of delegating to UI-only logic
+            case 'track-mission': {
+                e.stopPropagation();
+                const missionId = dataset.missionId;
+                if (!missionId) return;
+
+                const currentMissions = state.missions;
+                this.gameState.setState({
+                    missions: {
+                        ...currentMissions,
+                        trackedMissionId: missionId
+                    }
+                });
+                break;
+            }
 
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);
@@ -31771,6 +32302,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [35.19] - 2026-2-11
+-  overhauled mission system v2
+-  added mission debug
 
 # [35.17] - 2026-2-10
 -  added location assets

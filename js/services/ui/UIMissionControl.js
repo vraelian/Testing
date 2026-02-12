@@ -47,6 +47,7 @@ export class UIMissionControl {
     /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
      * [[UPDATED]] Now respects gameState.missions.trackedMissionId.
+     * [[UPDATED]] Now renders a "Progress Fill" background gradient.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -55,7 +56,7 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // [[FIX]] Use Tracked ID, fallback to first active if not set (sanity check)
+        // Use Tracked ID, fallback to first active if not set (sanity check)
         const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
         if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
@@ -91,14 +92,29 @@ export class UIMissionControl {
             
             // Format display string based on objective type (Logic from MissionsScreen)
             let displayStr = `[${current}/${target}]`;
+            let percent = 0;
             
             if (firstObj) {
                 if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
                     displayStr = `[${current}]`;
+                    percent = Math.min(100, (current / (target || 100)) * 100);
                 }
-                else if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}% / ${comparator}${target}%]`;
+                    // Logic for hull: if we need > 90%, and we have 100%, that's 100% progress.
+                    // If we have 50%, that's 50/90 progress? Or just raw %?
+                    // Let's stick to raw value for the bar fill if comparator is >=
+                    percent = Math.min(100, current); 
+                }
+                else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
+                    const comparator = firstObj.comparator || '>=';
+                    displayStr = `[${current}% / ${comparator}${target}%]`;
+                    percent = Math.min(100, current);
+                }
+                else {
+                    // Standard quantity
+                    percent = Math.min(100, (current / target) * 100);
                 }
             }
 
@@ -108,13 +124,17 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             // Check specific mission completability
-            // [FIX] Allow null location (Anywhere)
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
+
+            // [[NEW]] Progress Fill Gradient
+            // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
+            // against the black background, while still providing a clear visual indicator.
+            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, rgba(0, 0, 0, 0.9) ${percent}%)`;
 
             stickyBarEl.style.display = 'block';
         } else {
@@ -125,16 +145,16 @@ export class UIMissionControl {
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
-            const goodName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-            return `Deliver ${goodName}`;
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             return `Deliver ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `Travel to ${locName}`;
+             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
+             return `Travel to ${name}`;
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
-        // [[NEW]] Labels
+        // Labels
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
         if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
         if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
@@ -172,7 +192,7 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        // [FIX] Allow null location (Anywhere)
+        // Allow null location (Anywhere)
         const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
