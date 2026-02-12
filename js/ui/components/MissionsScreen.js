@@ -26,6 +26,29 @@ const THEME_MAP = {
 
 const DEFAULT_THEME = 'loc-theme-earth';
 
+/**
+ * Returns a CSS class for the card gradient based on mission type keywords.
+ */
+const getMissionTypeClass = (missionType) => {
+    if (!missionType) return 'm-type-standard';
+    const type = missionType.toLowerCase();
+    
+    if (type.includes('trade') || type.includes('deliver') || type.includes('source') || type.includes('procurement')) {
+        return 'm-type-trade'; // Cyan/Teal
+    }
+    if (type.includes('combat') || type.includes('bounty') || type.includes('patrol') || type.includes('kill')) {
+        return 'm-type-combat'; // Red/Rust
+    }
+    if (type.includes('explor') || type.includes('travel') || type.includes('survey') || type.includes('scan')) {
+        return 'm-type-exploration'; // Purple/Void
+    }
+    if (type.includes('min') || type.includes('harvest') || type.includes('salvage') || type.includes('industr')) {
+        return 'm-type-industrial'; // Amber/Oil
+    }
+    
+    return 'm-type-standard';
+};
+
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, uiState, currentLocationId } = gameState;
     const { activeMissionIds, missionProgress } = missions;
@@ -57,6 +80,8 @@ export function renderMissionsScreen(gameState, missionService) {
     const renderTerminalCard = (mission) => {
         // Map Host to CSS Class for Color Variables
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        // Map Type to Gradient Class
+        const typeClass = getMissionTypeClass(mission.type);
         
         // Format Rewards
         const rewardText = mission.rewards.map(r => {
@@ -65,7 +90,7 @@ export function renderMissionsScreen(gameState, missionService) {
         }).join(', ');
 
         return `
-            <div class="mission-card ${hostClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 <div class="mission-meta-row">
                     <span class="mission-type-badge">${mission.type}</span>
                     <span class="mission-host-label">${mission.host}</span>
@@ -81,6 +106,7 @@ export function renderMissionsScreen(gameState, missionService) {
     /** Renders a "Live Feed" style card with progress bars */
     const renderLogCard = (mission) => {
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const typeClass = getMissionTypeClass(mission.type);
         const progress = missionProgress[mission.id] || { objectives: {}, isCompletable: false };
         
         // Determine Status Class (Active vs Turn-In Ready)
@@ -173,8 +199,9 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml += '</div>';
         }
 
+        // [[UPDATED]] Added typeClass to the list
         return `
-            <div class="mission-card ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 <div class="mission-meta-row">
                      <span class="mission-type-badge">ACTIVE CONTRACT</span>
                      <span class="mission-host-label">${mission.host}</span>
