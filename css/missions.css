@@ -1,135 +1,411 @@
 /* css/missions.css */
 
-/* --- LAYOUT & SCROLLING --- */
-.missions-scroll-panel {
-    /* Ensures the list scrolls within the flex container */
-    -webkit-overflow-scrolling: touch;
+/* --- THEME ENGINE --- */
+/* Default Fallback (Earth/Azure) */
+:root {
+    --theme-color: #22d3ee;             /* Cyan-400 */
+    --theme-color-glow: #67e8f9;        /* Cyan-300 */
+    --theme-color-translucent: rgba(34, 211, 238, 0.15);
+    --theme-border: rgba(34, 211, 238, 0.3);
 }
 
-/* --- TAB NAVIGATION (PILLS) --- */
+/* Location-Specific Overrides (Scoped by class) */
+.loc-theme-sol {
+    --theme-color: #facc15;             /* Yellow-400 (Sun) */
+    --theme-color-glow: #fef08a;        /* Yellow-200 */
+    --theme-color-translucent: rgba(250, 204, 21, 0.15);
+    --theme-border: rgba(250, 204, 21, 0.3);
+}
+
+.loc-theme-mercury {
+    --theme-color: #fb923c;             /* Orange-400 (Rust) */
+    --theme-color-glow: #fdba74;
+    --theme-color-translucent: rgba(251, 146, 60, 0.15);
+    --theme-border: rgba(251, 146, 60, 0.3);
+}
+
+.loc-theme-venus {
+    --theme-color: #a3e635;             /* Lime-400 (Acid) */
+    --theme-color-glow: #bef264;
+    --theme-color-translucent: rgba(163, 230, 53, 0.15);
+    --theme-border: rgba(163, 230, 53, 0.3);
+}
+
+.loc-theme-earth {
+    --theme-color: #38bdf8;             /* Sky-400 (Water/Atmo) */
+    --theme-color-glow: #7dd3fc;
+    --theme-color-translucent: rgba(56, 189, 248, 0.15);
+    --theme-border: rgba(56, 189, 248, 0.3);
+}
+
+.loc-theme-luna {
+    --theme-color: #94a3b8;             /* Slate-400 (Regolith) */
+    --theme-color-glow: #cbd5e1;
+    --theme-color-translucent: rgba(148, 163, 184, 0.15);
+    --theme-border: rgba(148, 163, 184, 0.3);
+}
+
+.loc-theme-mars {
+    --theme-color: #ef4444;             /* Red-500 (Iron) */
+    --theme-color-glow: #fca5a5;
+    --theme-color-translucent: rgba(239, 68, 68, 0.15);
+    --theme-border: rgba(239, 68, 68, 0.3);
+}
+
+.loc-theme-belt {
+    --theme-color: #a855f7;             /* Purple-500 (The Exchange/Exotic) */
+    --theme-color-glow: #d8b4fe;
+    --theme-color-translucent: rgba(168, 85, 247, 0.15);
+    --theme-border: rgba(168, 85, 247, 0.3);
+}
+
+.loc-theme-jupiter {
+    --theme-color: #d97706;             /* Amber-600 (Storms) */
+    --theme-color-glow: #fbbf24;
+    --theme-color-translucent: rgba(217, 119, 6, 0.15);
+    --theme-border: rgba(217, 119, 6, 0.3);
+}
+
+.loc-theme-saturn {
+    --theme-color: #eab308;             /* Yellow-500 (Gold/Rings) */
+    --theme-color-glow: #fde047;
+    --theme-color-translucent: rgba(234, 179, 8, 0.15);
+    --theme-border: rgba(234, 179, 8, 0.3);
+}
+
+.loc-theme-uranus {
+    --theme-color: #2dd4bf;             /* Teal-400 (Ice) */
+    --theme-color-glow: #5eead4;
+    --theme-color-translucent: rgba(45, 212, 191, 0.15);
+    --theme-border: rgba(45, 212, 191, 0.3);
+}
+
+.loc-theme-neptune {
+    --theme-color: #3b82f6;             /* Blue-500 (Deep) */
+    --theme-color-glow: #60a5fa;
+    --theme-color-translucent: rgba(59, 130, 246, 0.15);
+    --theme-border: rgba(59, 130, 246, 0.3);
+}
+
+.loc-theme-pluto {
+    --theme-color: #818cf8;             /* Indigo-400 (Cold/Dark) */
+    --theme-color-glow: #a5b4fc;
+    --theme-color-translucent: rgba(129, 140, 248, 0.15);
+    --theme-border: rgba(129, 140, 248, 0.3);
+}
+
+.loc-theme-kepler {
+    --theme-color: #ec4899;             /* Pink-500 (Science/Lens) */
+    --theme-color-glow: #f472b6;
+    --theme-color-translucent: rgba(236, 72, 153, 0.15);
+    --theme-border: rgba(236, 72, 153, 0.3);
+}
+
+/* --- LAYOUT & ATMOSPHERE --- */
+
+/* The Main Container (injected in JS) */
+.missions-screen-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ambient Lighting Vignette */
+.missions-screen-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: radial-gradient(
+        ellipse at bottom center,
+        var(--theme-color-translucent) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+}
+
+.missions-scroll-panel {
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to bottom, transparent, black 20px, black 90%, transparent);
+    padding: 10px 4px 60px 4px; /* Bottom padding ensures last card clears the vignette/mask */
+}
+
+/* --- HOLOGRAPHIC RAIL NAVIGATION --- */
 .mission-tabs-nav {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 1.5rem auto;
+    padding: 4px;
+    
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9999px; /* Capsule Shape */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    
+    /* Perf */
+    transform: translateZ(0);
+    z-index: 20; /* Above vignette */
 }
 
 .mission-tab-btn {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #888;
-    padding: 0.5rem 1.5rem;
+    flex: 1;
+    position: relative;
+    padding: 0.6rem 0;
+    
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    
+    color: rgba(255, 255, 255, 0.4);
     font-family: 'Oxanium', sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.85rem;
-    border-radius: 9999px; /* Pill shape */
-    transition: all 0.2s ease;
-    cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
 }
 
 .mission-tab-btn:hover {
-    color: #ccc;
-    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .mission-tab-btn.active {
-    background: rgba(6, 182, 212, 0.15); /* Cyan tint */
-    border-color: #06b6d4;
-    color: #22d3ee;
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    background: var(--theme-color-translucent);
+    color: #fff;
+    text-shadow: 0 0 10px var(--theme-color-glow);
+    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border);
 }
 
-/* --- MISSION CARDS --- */
+/* --- HOST FACTION COLORS --- */
+.host-guild { --host-color: #fbbf24; }      /* Amber/Gold */
+.host-syndicate { --host-color: #a855f7; }  /* Purple/Violet */
+.host-station { --host-color: #3b82f6; }    /* Blue */
+.host-unknown { --host-color: #ef4444; }    /* Red */
+
+/* --- VOID-GLASS CARD ARCHITECTURE --- */
+@keyframes card-slide-in {
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 .mission-card {
     position: relative;
+    display: flex;
+    flex-direction: column;
     padding: 1rem;
     margin-bottom: 0.75rem;
-    background: rgba(10, 10, 12, 0.7);
-    border: 1px solid #334155;
-    transition: all 0.2s ease-out;
+    
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--host-color, #444);
+    border-radius: 4px;
+    
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    overflow: hidden; /* For glow effects */
+    overflow: hidden;
+    transform: translateZ(0);
+    
+    /* Entry Animation */
+    animation: card-slide-in 0.3s ease-out backwards;
+}
+
+/* Staggered Entry for the first 8 items */
+.mission-card:nth-child(1) { animation-delay: 0.05s; }
+.mission-card:nth-child(2) { animation-delay: 0.10s; }
+.mission-card:nth-child(3) { animation-delay: 0.15s; }
+.mission-card:nth-child(4) { animation-delay: 0.20s; }
+.mission-card:nth-child(5) { animation-delay: 0.25s; }
+.mission-card:nth-child(6) { animation-delay: 0.30s; }
+.mission-card:nth-child(7) { animation-delay: 0.35s; }
+.mission-card:nth-child(8) { animation-delay: 0.40s; }
+
+.mission-card:hover {
+    background: linear-gradient(to right, var(--theme-color-translucent), rgba(0,0,0,0.85));
+    box-shadow: 0 0 15px var(--host-color, #444), inset 0 0 10px rgba(0,0,0,0.5);
+    border-color: #fff;
+    transform: translateY(-2px);
+    z-index: 10;
 }
 
 .mission-card:active {
     transform: scale(0.98);
+    filter: brightness(1.5);
 }
 
-/* Host Themes (Borders & Accents) */
-.host-station { border-color: #3b82f6; box-shadow: 0 0 5px rgba(59, 130, 246, 0.1); } /* Blue */
-.host-guild { border-color: #eab308; box-shadow: 0 0 5px rgba(234, 179, 8, 0.1); }   /* Gold */
-.host-syndicate { border-color: #a855f7; box-shadow: 0 0 5px rgba(168, 85, 247, 0.1); } /* Violet */
-.host-unknown { border-color: #ef4444; box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }  /* Red */
+/* --- TYPOGRAPHY & LAYOUT --- */
+.mission-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-family: 'Oxanium', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+}
 
-/* Available vs Active Styling */
+.mission-type-badge {
+    color: var(--theme-color-glow);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mission-host-label {
+    font-weight: 700;
+    color: var(--host-color, #888);
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+.mission-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.mission-title {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    line-height: 1.1;
+    max-width: 70%;
+}
+
+.mission-reward-data {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #fff;
+    text-align: right;
+    font-feature-settings: "tnum";
+}
+
+/* --- ACTIVE & READY STATES --- */
 .mission-active {
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(10, 10, 12, 0.95));
-    border-left-width: 4px; /* Thicker left border indicator */
+    border-left: 3px solid var(--theme-color);
+    background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(10,10,12,0.95));
 }
 
-/* Ready to Turn In (Pulse Effect) */
-@keyframes turnInPulse {
-    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); border-color: #22c55e; }
-    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); border-color: #4ade80; }
-    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); border-color: #22c55e; }
+.mission-active .mission-title {
+    color: var(--theme-color-glow);
+}
+
+@keyframes readyPulse {
+    0% { box-shadow: 0 0 5px var(--theme-color), inset 0 0 5px var(--theme-color); border-color: #fff; }
+    50% { box-shadow: 0 0 20px var(--theme-color), inset 0 0 15px var(--theme-color); border-color: var(--theme-color); }
+    100% { box-shadow: 0 0 5px var(--theme-color), inset 0 0 5px var(--theme-color); border-color: #fff; }
 }
 
 .mission-turn-in {
-    animation: turnInPulse 2s infinite;
-    border-color: #22c55e !important; /* Green override */
+    animation: readyPulse 2s infinite ease-in-out;
+    background: rgba(0,0,0,0.9) !important;
 }
 
-/* Text Styles */
-.mission-type {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.7rem;
-    color: #94a3b8;
-    background: rgba(0,0,0,0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
+/* --- PROGRESS BARS --- */
+.mission-objectives-list {
+    margin-top: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 0.5rem;
 }
 
-.mission-host {
-    font-family: 'Oxanium', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-}
-
-.mission-reward {
-    font-family: 'Oxanium', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #fbbf24; /* Amber-300 */
-}
-
-/* --- OBJECTIVE LIST --- */
 .objective-item {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Oxanium', sans-serif;
+    margin-bottom: 0.5rem;
+}
+
+.objective-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.objective-bar {
+    height: 100%;
+    background: var(--theme-color);
+    box-shadow: 0 0 10px var(--theme-color);
+    position: relative;
+}
+
+.objective-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+
+/* --- SYSTEM IDLE STATE (EMPTY) --- */
+.mission-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'Oxanium', sans-serif;
+    text-align: center;
+}
+
+.mission-empty-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+    animation: idlePulse 4s infinite ease-in-out;
+    color: var(--theme-color);
+}
+
+.mission-empty-text {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--theme-color);
+    text-shadow: 0 0 10px var(--theme-border);
+}
+
+@keyframes idlePulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
 }
 
 /* --- STICKY BAR (HUD) --- */
 .sticky-content {
-    background: rgba(0, 0, 0, 0.85);
-    border: 1px solid #444;
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid var(--theme-border);
+    backdrop-filter: blur(8px);
     padding: 0.5rem 1rem;
-    border-radius: 0 0 8px 8px; /* Rounded bottom */
-    border-top: none; /* Connect to top of screen */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transition: all 0.3s ease;
 }
 
 .objective-progress-flash {
     animation: textFlash 0.5s ease-out;
-    color: #22d3ee; /* Cyan flash */
+    color: var(--theme-color-glow);
 }
 
 @keyframes textFlash {
     0% { color: #fff; text-shadow: 0 0 10px #fff; }
-    100% { color: #22d3ee; text-shadow: none; }
+    100% { color: var(--theme-color-glow); text-shadow: none; }
 }

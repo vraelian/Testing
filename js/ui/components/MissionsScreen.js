@@ -2,59 +2,83 @@
 /**
  * @fileoverview Rendering logic for Mission System 2.0.
  * Supports split view: 'Terminal' (Available) vs 'Log' (Active).
+ * Phase 3 Update: Atmosphere, Animation, and Polish.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
+
+// --- THEME MAPPING ---
+const THEME_MAP = {
+    'sol': 'loc-theme-sol',
+    'mercury': 'loc-theme-mercury',
+    'venus': 'loc-theme-venus',
+    'earth': 'loc-theme-earth',
+    'luna': 'loc-theme-luna',
+    'mars': 'loc-theme-mars',
+    'belt': 'loc-theme-belt',
+    'jupiter': 'loc-theme-jupiter',
+    'saturn': 'loc-theme-saturn',
+    'uranus': 'loc-theme-uranus',
+    'neptune': 'loc-theme-neptune',
+    'pluto': 'loc-theme-pluto',
+    'kepler': 'loc-theme-kepler'
+};
+
+const DEFAULT_THEME = 'loc-theme-earth';
 
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, uiState, currentLocationId } = gameState;
     const { activeMissionIds, missionProgress } = missions;
     const activeTab = uiState.activeMissionTab || 'terminal'; // Default to terminal
 
+    // Resolve Theme Class
+    const themeClass = THEME_MAP[currentLocationId] || DEFAULT_THEME;
+
     // --- SUB-COMPONENTS ---
 
-    /** Renders the Tab Navigation (Pills) */
+    /** Renders the Holographic Rail Navigation */
     const renderTabs = () => {
         const getTabClass = (tabId) => 
             `mission-tab-btn ${activeTab === tabId ? 'active' : ''}`;
         
         return `
-            <div class="mission-tabs-nav flex justify-center gap-4 mb-6">
+            <div class="mission-tabs-nav ${themeClass}">
                 <button class="${getTabClass('terminal')}" data-action="switch-mission-tab" data-target="terminal">
-                    MISSION TERMINAL
+                    TERMINAL
                 </button>
                 <button class="${getTabClass('log')}" data-action="switch-mission-tab" data-target="log">
-                    MISSION LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
+                    LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
                 </button>
             </div>
         `;
     };
 
-    /** Renders a "Job Board" style card for available missions */
+    /** Renders a "Datapad" style card for available missions */
     const renderTerminalCard = (mission) => {
+        // Map Host to CSS Class for Color Variables
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        
+        // Format Rewards
         const rewardText = mission.rewards.map(r => {
             if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
             return r.type.toUpperCase();
         }).join(', ');
 
         return `
-            <div class="mission-card sci-fi-frame ${hostClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                <div class="flex justify-between items-center w-full text-xs mb-1">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="mission-type">${mission.type}</span>
-                    </div>
-                    <span class="mission-host">${mission.host}</span>
+            <div class="mission-card ${hostClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+                <div class="mission-meta-row">
+                    <span class="mission-type-badge">${mission.type}</span>
+                    <span class="mission-host-label">${mission.host}</span>
                 </div>
-                <div class="flex justify-between items-end w-full">
-                    <p class="font-bold text-base">${mission.name}</p>
-                    <span class="mission-reward">${rewardText}</span>
+                
+                <div class="mission-main-row">
+                    <div class="mission-title">${mission.name}</div>
+                    <div class="mission-reward-data">${rewardText}</div>
                 </div>
             </div>`;
     };
 
-    /** Renders a detailed "Log" style card with progress bars */
+    /** Renders a "Live Feed" style card with progress bars */
     const renderLogCard = (mission) => {
         const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
         const progress = missionProgress[mission.id] || { objectives: {}, isCompletable: false };
@@ -62,28 +86,28 @@ export function renderMissionsScreen(gameState, missionService) {
         // Determine Status Class (Active vs Turn-In Ready)
         let statusClass = 'mission-active';
         
-        // [FIX] Allow null location (Anywhere)
+        // Allow null location (Anywhere)
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
 
         if (progress.isCompletable && isAtCorrectLocation) {
             statusClass += ' mission-turn-in';
         }
 
-        // [[UPDATED]] Dynamic Status Text Logic
-        let statusText = 'Status: In Progress';
+        // Dynamic Status Text Logic
+        let statusText = 'STATUS: IN PROGRESS';
         if (progress.isCompletable) {
             if (mission.completion.locationId) {
-                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'Unknown';
-                statusText = `Return to: ${locName}`;
+                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
+                statusText = `RETURN TO: ${locName.toUpperCase()}`;
             } else {
-                statusText = 'Ready to Complete (Anywhere)';
+                statusText = 'READY TO COMPLETE';
             }
         }
 
-        // Render Objectives with Progress Bars
+        // Render Objectives with Continuous Flow Bars
         let objectivesHtml = '';
         if (mission.objectives) {
-            objectivesHtml = '<div class="mission-objectives-list space-y-2 mt-2">';
+            objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
                 const pObj = progress.objectives[objKey];
@@ -92,34 +116,32 @@ export function renderMissionsScreen(gameState, missionService) {
                 const comparator = obj.comparator || '>=';
 
                 // --- DESC & DISPLAY FORMATTING ---
-                let desc = 'Objective';
+                let desc = 'OBJECTIVE';
                 let displayStr = `${current}/${target}`;
                 let percent = 0;
 
                 // Handle specific types
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
-                    desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
+                    desc = `DELIVER ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase()}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-                    desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
-                    displayStr = current === 1 ? 'Arrived' : 'En Route';
+                    desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
+                    displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
                 }
                 else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-                    desc = 'Earn Credits';
+                    desc = 'EARN CREDITS';
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
-                // [[FIX]] Handle percentage types gracefully
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
-                    desc = 'Ship Fuel Level';
+                    desc = 'FUEL LEVEL';
                     displayStr = `${current}`;
-                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); // Rough visual approximation
+                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
-                    desc = 'Hull Integrity';
-                    displayStr = `${current}% / ${comparator}${target}%`;
-                    
+                    desc = 'HULL INTEGRITY';
+                    displayStr = `${current}%`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
@@ -127,13 +149,9 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
-                    desc = 'Cargo Hold Usage';
-                    displayStr = `${current}% / ${comparator}${target}%`;
-                    
+                    desc = 'CARGO SPACE';
+                    displayStr = `${current}%`;
                     if (comparator === '<=') {
-                        // Inverse logic for "Empty Hold"
-                        // If we are below target, we are "Good" (100% bar)
-                        // If we are above, we are "Bad" (0% bar)
                         percent = current <= target ? 100 : 0;
                     } else {
                         percent = Math.min(100, current);
@@ -142,12 +160,12 @@ export function renderMissionsScreen(gameState, missionService) {
 
                 objectivesHtml += `
                     <div class="objective-item text-xs">
-                        <div class="flex justify-between mb-0.5 text-gray-400">
+                        <div class="flex justify-between mb-1 text-gray-400 font-bold">
                             <span>${desc}</span>
                             <span>${displayStr}</span>
                         </div>
-                        <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-cyan-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
+                        <div class="objective-track">
+                            <div class="objective-bar transition-all duration-500" style="width: ${percent}%"></div>
                         </div>
                     </div>
                 `;
@@ -156,13 +174,29 @@ export function renderMissionsScreen(gameState, missionService) {
         }
 
         return `
-            <div class="mission-card sci-fi-frame ${hostClass} ${statusClass} p-4" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-bold text-lg text-white">${mission.name}</h3>
-                    <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
+            <div class="mission-card ${hostClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+                <div class="mission-meta-row">
+                     <span class="mission-type-badge">ACTIVE CONTRACT</span>
+                     <span class="mission-host-label">${mission.host}</span>
                 </div>
-                <div class="text-xs text-gray-400 italic mb-2">${statusText}</div>
+                
+                <div class="mission-title mb-2">${mission.name}</div>
+                
+                <div class="text-xs text-gray-400 font-bold mb-2 animate-pulse" style="color: var(--theme-color-glow)">${statusText}</div>
+                
                 ${objectivesHtml}
+            </div>
+        `;
+    };
+
+    /** Returns the "System Idle" Empty State */
+    const renderEmptyState = (msg) => {
+        return `
+            <div class="mission-empty-state">
+                <svg class="mission-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <div class="mission-empty-text">${msg}</div>
             </div>
         `;
     };
@@ -176,30 +210,31 @@ export function renderMissionsScreen(gameState, missionService) {
         if (missionService) {
             const availableMissions = missionService.getAvailableMissions();
             if (availableMissions.length > 0) {
-                contentHtml = '<div class="space-y-3 max-w-2xl mx-auto">';
+                contentHtml = '<div class="space-y-0 max-w-2xl mx-auto">'; 
                 availableMissions.forEach(m => contentHtml += renderTerminalCard(m));
                 contentHtml += '</div>';
             } else {
-                contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">No contracts available at this location.</p></div>';
+                contentHtml = renderEmptyState('NO CONTRACTS DETECTED');
             }
         }
     } else {
         // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
-            contentHtml = '<div class="space-y-4 max-w-2xl mx-auto">';
+            contentHtml = '<div class="space-y-0 max-w-2xl mx-auto">';
             activeMissionIds.forEach(id => {
                 const mission = DB.MISSIONS[id];
                 if (mission) contentHtml += renderLogCard(mission);
             });
             contentHtml += '</div>';
         } else {
-             contentHtml = '<div class="flex h-64 items-center justify-center"><p class="text-gray-500 text-lg">Mission Log Empty.</p></div>';
+             contentHtml = renderEmptyState('MISSION LOG EMPTY');
         }
     }
 
+    // [[PHASE 3]] Added missions-screen-container class for vignette support
     return `
-        <div class="flex flex-col h-full">
-            <h1 class="text-3xl font-orbitron text-center mb-4 text-cyan-300 flex-shrink-0">Mission Control</h1>
+        <div class="flex flex-col h-full ${themeClass} missions-screen-container">
+            <h1 class="text-3xl font-orbitron text-center mb-4 flex-shrink-0" style="color: var(--theme-color-glow); text-shadow: 0 0 10px var(--theme-border);">MISSION CONTROL</h1>
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
                 ${contentHtml}
