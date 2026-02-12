@@ -61,7 +61,11 @@ export function renderMissionsScreen(gameState, missionService) {
         
         // Determine Status Class (Active vs Turn-In Ready)
         let statusClass = 'mission-active';
-        if (progress.isCompletable && mission.completion.locationId === currentLocationId) {
+        
+        // [FIX] Allow null location (Anywhere)
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+
+        if (progress.isCompletable && isAtCorrectLocation) {
             statusClass += ' mission-turn-in';
         }
 
@@ -75,7 +79,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 let desc = 'Objective';
                 if(obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
-                else if (obj.type === 'wealth_gt') desc = 'Earn Credits';
+                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') desc = 'Earn Credits';
                 
                 // Calculate %
                 const pObj = progress.objectives[objKey];
@@ -104,7 +108,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <h3 class="font-bold text-lg text-white">${mission.name}</h3>
                     <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
                 </div>
-                <div class="text-xs text-gray-400 italic mb-2">${mission.completion.locationId ? `Return to: ${DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name}` : ''}</div>
+                <div class="text-xs text-gray-400 italic mb-2">${mission.completion.locationId ? `Return to: ${DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name}` : 'Mission Complete'}</div>
                 ${objectivesHtml}
             </div>
         `;

@@ -247,10 +247,16 @@ export class ActionClickHandler {
             }
 
             // --- MISSION SYSTEM NAVIGATION ---
-            // Added to fix "Mission Log" button inactivity
+            // Fixed: Direct state mutation ensures UI updates correctly
             case 'switch-mission-tab': {
-                if (this.uiManager.missionControl) {
-                    this.uiManager.missionControl.handleMissionTabSwitch(dataset.target);
+                const tabId = dataset.target;
+                if (tabId === 'terminal' || tabId === 'log') {
+                    this.gameState.setState({
+                        uiState: {
+                            ...state.uiState,
+                            activeMissionTab: tabId
+                        }
+                    });
                 }
                 break;
             }
@@ -295,7 +301,13 @@ export class ActionClickHandler {
                 this.uiManager.hideModal('mission-modal');
                 // Auto-switch to Log tab to show the new mission
                 if (this.uiManager.missionControl) {
-                    this.uiManager.missionControl.handleMissionTabSwitch('log');
+                    // We can also trigger the tab switch directly via state here for consistency
+                    this.gameState.setState({
+                        uiState: {
+                            ...this.gameState.getState().uiState,
+                            activeMissionTab: 'log'
+                        }
+                    });
                 }
                 actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
                 break;

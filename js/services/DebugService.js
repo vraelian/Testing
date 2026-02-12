@@ -23,6 +23,86 @@ const TUTORIAL_PRESETS_PERCENT = {
     topLeft: [15, 15],
 };
 
+// --- EPHEMERAL DEBUG MISSIONS ---
+// These are injected into DB.MISSIONS at runtime for testing purposes.
+const DEBUG_MISSIONS = {
+    'debug_kitchen_sink': {
+        id: 'debug_kitchen_sink',
+        name: '[DEBUG] Kitchen Sink Rewards',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Instantly completes to test multiple reward types (Credits, Items, Licenses).',
+        triggers: [],
+        objectives: [], // Auto-complete
+        completion: {
+            locationId: null, // Complete anywhere
+            title: 'Debug Success',
+            text: 'You have received a bounty of debug rewards.',
+            buttonText: 'Claim Loot'
+        },
+        rewards: [
+            { type: 'credits', amount: 50000 },
+            { type: 'item', goodId: 'fuel', quantity: 100 },
+            { type: 'license', licenseId: 't2_license' } 
+        ]
+    },
+    'debug_obj_travel': {
+        id: 'debug_obj_travel',
+        name: '[DEBUG] Travel Logic (Mars)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Requires travel to Mars to verify location triggers.',
+        triggers: [],
+        objectives: [
+            { type: 'TRAVEL_TO', target: 'loc_mars' }
+        ],
+        completion: {
+            locationId: 'loc_mars',
+            title: 'Arrived at Mars',
+            text: 'Travel objective verified.',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 100 }]
+    },
+    'debug_obj_wealth': {
+        id: 'debug_obj_wealth',
+        name: '[DEBUG] Wealth Check (>10k)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Requires player to have > 10,000 credits.',
+        triggers: [],
+        objectives: [
+            { type: 'WEALTH_CHECK', value: 10000 }
+        ],
+        completion: {
+            locationId: null,
+            title: 'Wealth Verified',
+            text: 'You are wealthy enough.',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 1 }]
+    },
+    'debug_obj_delivery': {
+        id: 'debug_obj_delivery',
+        name: '[DEBUG] Delivery (Water Ice)',
+        type: 'DEBUG',
+        host: 'DEV',
+        description: 'Deliver 5 Water Ice. (Cargo provided on accept)',
+        triggers: [],
+        objectives: [
+            { type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 5 }
+        ],
+        providedCargo: [{ goodId: 'water_ice', quantity: 5 }],
+        completion: {
+            locationId: null,
+            title: 'Delivery Done',
+            text: 'Items deducted correctly?',
+            buttonText: 'OK'
+        },
+        rewards: [{ type: 'credits', amount: 500 }]
+    }
+};
+
 export class DebugService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state object.
@@ -48,11 +128,10 @@ export class DebugService {
             targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
-            // [FIX] Added safe check for empty array using optional chaining
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
-            // [FIX] Added safe check for empty array using optional chaining
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
-            selectedMission: Object.values(DB.MISSIONS)[0]?.id || null,
+            // Default to first debug mission if available
+            selectedMission: 'debug_kitchen_sink',
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
@@ -91,6 +170,13 @@ export class DebugService {
      */
     init() {
         if (this.gui) return;
+        
+        // --- INJECTION START ---
+        // Inject debug missions into the runtime database
+        Object.assign(DB.MISSIONS, DEBUG_MISSIONS);
+        this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
+        // --- INJECTION END ---
+
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
@@ -806,7 +892,18 @@ ${logHistory}
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
-        const missionOptions = Object.values(DB.MISSIONS).reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        // --- UPDATED MISSION OPTIONS (Include injected missions) ---
+        const missionOptions = Object.values(DB.MISSIONS)
+            .sort((a, b) => {
+                // Sort [DEBUG] missions to top
+                const aIsDebug = a.id.startsWith('debug_');
+                const bIsDebug = b.id.startsWith('debug_');
+                if (aIsDebug && !bIsDebug) return -1;
+                if (!aIsDebug && bIsDebug) return 1;
+                return a.name.localeCompare(b.name);
+            })
+            .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+
         // Always show mission controls
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');

@@ -72,7 +72,10 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             // Check specific mission completability
-            const isReady = progress.isCompletable && mission.completion.locationId === gameState.currentLocationId;
+            // [FIX] Allow null location (Anywhere)
+            const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
+            const isReady = progress.isCompletable && isAtCorrectLocation;
+            
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
             contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
@@ -92,7 +95,7 @@ export class UIMissionControl {
              const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${locName}`;
         }
-        if (obj.type === 'wealth_gt') return `Earn Credits`;
+        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         return `Objective`;
     }
 
@@ -126,7 +129,9 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        const canComplete = isActive && isCompletable && mission.completion.locationId === currentLocationId;
+        // [FIX] Allow null location (Anywhere)
+        const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        const canComplete = isActive && isCompletable && isLocationValid;
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);

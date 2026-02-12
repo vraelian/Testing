@@ -52,6 +52,7 @@ export class MissionService {
     /**
      * Gets a list of all missions that are currently available to the player.
      * A mission is available if it's not active, not completed, and its triggers are met.
+     * EXCLUDES 'DEBUG' TYPE MISSIONS.
      * @returns {Array<object>} An array of available mission objects.
      */
     getAvailableMissions() {
@@ -60,6 +61,7 @@ export class MissionService {
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
+                mission.type !== 'DEBUG' && // [FIX] Hide debug missions from standard terminal
                 this.arePrerequisitesMet(mission.id);
             return isAvailable;
         });
