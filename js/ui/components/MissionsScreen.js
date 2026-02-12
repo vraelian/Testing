@@ -69,29 +69,82 @@ export function renderMissionsScreen(gameState, missionService) {
             statusClass += ' mission-turn-in';
         }
 
+        // [[UPDATED]] Dynamic Status Text Logic
+        let statusText = 'Status: In Progress';
+        if (progress.isCompletable) {
+            if (mission.completion.locationId) {
+                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'Unknown';
+                statusText = `Return to: ${locName}`;
+            } else {
+                statusText = 'Ready to Complete (Anywhere)';
+            }
+        }
+
         // Render Objectives with Progress Bars
         let objectivesHtml = '';
         if (mission.objectives) {
             objectivesHtml = '<div class="mission-objectives-list space-y-2 mt-2">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
-                // Get generic desc
-                let desc = 'Objective';
-                if(obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
-                else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
-                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') desc = 'Earn Credits';
-                
-                // Calculate %
                 const pObj = progress.objectives[objKey];
                 const current = pObj ? pObj.current : 0;
                 const target = pObj ? pObj.target : (obj.quantity || 1);
-                const percent = Math.min(100, Math.floor((current / target) * 100));
+                const comparator = obj.comparator || '>=';
+
+                // --- DESC & DISPLAY FORMATTING ---
+                let desc = 'Objective';
+                let displayStr = `${current}/${target}`;
+                let percent = 0;
+
+                // Handle specific types
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                    desc = `Deliver ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                } 
+                else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+                    desc = `Travel to ${DB.MARKETS.find(m => m.id === obj.target)?.name}`;
+                    displayStr = current === 1 ? 'Arrived' : 'En Route';
+                    percent = current * 100;
+                }
+                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
+                    desc = 'Earn Credits';
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                // [[FIX]] Handle percentage types gracefully
+                else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
+                    desc = 'Ship Fuel Level';
+                    displayStr = `${current}`;
+                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); // Rough visual approximation
+                }
+                else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
+                    desc = 'Hull Integrity';
+                    displayStr = `${current}% / ${comparator}${target}%`;
+                    
+                    if (comparator === '<=') {
+                        percent = current <= target ? 100 : 0;
+                    } else {
+                        percent = Math.min(100, current); 
+                    }
+                }
+                else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
+                    desc = 'Cargo Hold Usage';
+                    displayStr = `${current}% / ${comparator}${target}%`;
+                    
+                    if (comparator === '<=') {
+                        // Inverse logic for "Empty Hold"
+                        // If we are below target, we are "Good" (100% bar)
+                        // If we are above, we are "Bad" (0% bar)
+                        percent = current <= target ? 100 : 0;
+                    } else {
+                        percent = Math.min(100, current);
+                    }
+                }
 
                 objectivesHtml += `
                     <div class="objective-item text-xs">
                         <div class="flex justify-between mb-0.5 text-gray-400">
                             <span>${desc}</span>
-                            <span>${current}/${target}</span>
+                            <span>${displayStr}</span>
                         </div>
                         <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-cyan-500 h-full transition-all duration-500" style="width: ${percent}%"></div>
@@ -108,7 +161,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <h3 class="font-bold text-lg text-white">${mission.name}</h3>
                     <span class="mission-host text-xs px-2 py-0.5 rounded bg-black/30 border border-white/10">${mission.host}</span>
                 </div>
-                <div class="text-xs text-gray-400 italic mb-2">${mission.completion.locationId ? `Return to: ${DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name}` : 'Mission Complete'}</div>
+                <div class="text-xs text-gray-400 italic mb-2">${statusText}</div>
                 ${objectivesHtml}
             </div>
         `;

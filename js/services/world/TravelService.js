@@ -347,6 +347,12 @@ export class TravelService {
         });
 
         const finalCallback = () => {
+            // [[FIXED]] Force Mission Trigger Check on Arrival
+            // This ensures missions like "Travel to X" complete instantly upon docking.
+            if (this.simulationService.missionService) {
+                this.simulationService.missionService.checkTriggers();
+            }
+
             // --- SOL STATION: START SIMULATION IF ARRIVING ---
             if (locationId === LOCATION_IDS.SUN && this.timeService.solStationService) {
                 this.timeService.solStationService.startRealTimeSimulation();

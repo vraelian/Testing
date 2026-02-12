@@ -14,10 +14,17 @@ export class UIMissionControl {
 
     /**
      * Handles switching between the 'Terminal' and 'Mission Log' tabs.
+     * [[UPDATED]] Now forces a checkTriggers() call to ensure mission state is fresh.
      * @param {string} tabId - 'terminal' or 'log'
      */
     handleMissionTabSwitch(tabId) {
         if (tabId !== 'terminal' && tabId !== 'log') return;
+        
+        // Force re-evaluation of objectives (e.g. Travel checks) whenever we look at the log
+        if (this.manager.simulationService && this.manager.simulationService.missionService) {
+            this.manager.simulationService.missionService.checkTriggers();
+        }
+
         this.manager.lastKnownState.uiState.activeMissionTab = tabId;
         this.manager.render();
     }
