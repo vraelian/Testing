@@ -30,8 +30,23 @@ export class UIMissionControl {
     }
 
     /**
+     * Handles the user clicking the star icon to track a specific mission.
+     * @param {string} missionId 
+     */
+    handleTrackMission(missionId) {
+        if (!missionId) return;
+        const gameState = this.manager.lastKnownState;
+        
+        // Update State
+        gameState.missions.trackedMissionId = missionId;
+        
+        // Re-render UI to update star icons and sticky bar
+        this.manager.render();
+    }
+
+    /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * Note: For Phase 1, this displays the FIRST active mission if multiple exist.
+     * [[UPDATED]] Now respects gameState.missions.trackedMissionId.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -40,10 +55,10 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Phase 1: Just grab the first mission for the HUD
-        const activeMissionId = gameState.missions.activeMissionIds[0];
+        // [[FIX]] Use Tracked ID, fallback to first active if not set (sanity check)
+        const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
-        if (activeMissionId) {
+        if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
             const mission = DB.MISSIONS[activeMissionId];
             if (!mission.objectives || mission.objectives.length === 0) {
                 stickyBarEl.style.display = 'none';
@@ -74,7 +89,7 @@ export class UIMissionControl {
 
             const objectiveLabel = this._getObjectiveLabel(firstObj);
             
-            // [[FIXED]] Format display string based on objective type (Logic from MissionsScreen)
+            // Format display string based on objective type (Logic from MissionsScreen)
             let displayStr = `[${current}/${target}]`;
             
             if (firstObj) {

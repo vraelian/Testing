@@ -260,6 +260,23 @@ export class ActionClickHandler {
                 }
                 break;
             }
+            
+            // [[FIX]] Phase 3: Star Icon Tracking Logic Fixed
+            // We now directly mutate the GameState source of truth instead of delegating to UI-only logic
+            case 'track-mission': {
+                e.stopPropagation();
+                const missionId = dataset.missionId;
+                if (!missionId) return;
+
+                const currentMissions = state.missions;
+                this.gameState.setState({
+                    missions: {
+                        ...currentMissions,
+                        trackedMissionId: missionId
+                    }
+                });
+                break;
+            }
 
             case 'set-intel-tab':
                 this.uiManager.handleSetIntelTab(actionTarget);

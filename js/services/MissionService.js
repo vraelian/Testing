@@ -132,7 +132,7 @@ export class MissionService {
             {
                 id: `test_unknown_cargo_${timestamp}`,
                 name: '[TEST] Unknown Protocol (Item)',
-                type: 'MYSTERY',
+                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
                 host: 'UNKNOWN', // Host D
                 description: 'Tests checking CARGO for Propellant (Item).',
                 triggers: [],
@@ -150,7 +150,7 @@ export class MissionService {
             {
                 id: `test_unknown_tank_${timestamp}`,
                 name: '[TEST] Unknown Protocol (Tank)',
-                type: 'MYSTERY',
+                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
                 host: 'UNKNOWN', // Host D
                 description: 'Tests checking SHIP TANK for Fuel Level.',
                 triggers: [],
@@ -249,6 +249,11 @@ export class MissionService {
             objectives: {},
             isCompletable: false
         };
+
+        // [[NEW]] Auto-track logic: If no mission is being tracked, track this one.
+        if (!this.gameState.missions.trackedMissionId) {
+            this.gameState.missions.trackedMissionId = missionId;
+        }
         
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
         
@@ -281,6 +286,13 @@ export class MissionService {
         // But we DO reset isCompletable to be safe.
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+
+        // [[NEW]] Logic: If abandoned mission was tracked, clear tracking or pick next.
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            // Pick next active mission or null
+            const nextMission = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMission || null;
         }
 
         this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${missionId}`);
@@ -409,6 +421,13 @@ export class MissionService {
         // Cleanup progress if desired, though keeping it is fine for history. 
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+
+        // [[NEW]] Auto-Track Logic: If the completed mission was being tracked, auto-track the next one in the list.
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            // Grab the next available active mission (the list was already filtered above)
+            const nextMissionId = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMissionId || null;
         }
 
         // 4. Update state and re-render

@@ -130,7 +130,7 @@
 .missions-scroll-panel {
     -webkit-overflow-scrolling: touch;
     mask-image: linear-gradient(to bottom, transparent, black 20px, black 90%, transparent);
-    padding: 10px 4px 60px 4px; /* Bottom padding ensures last card clears the vignette/mask */
+    padding: 10px 4px 100px 4px; /* Increased bottom padding to 100px */
 }
 
 /* --- HOLOGRAPHIC RAIL NAVIGATION --- */
@@ -186,38 +186,59 @@
     box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border);
 }
 
-/* --- HOST FACTION COLORS --- */
-.host-guild { --host-color: #fbbf24; }      /* Amber/Gold */
-.host-syndicate { --host-color: #a855f7; }  /* Purple/Violet */
-.host-station { --host-color: #3b82f6; }    /* Blue */
-.host-unknown { --host-color: #ef4444; }    /* Red */
+/* --- HOST FACTION COLORS & GRADIENTS --- */
+/* These now force an override of the default 'm-type-*' background to apply the unique dual gradients */
 
-/* --- MISSION TYPE GRADIENTS --- */
-/* These define the base tint of the glass depending on mission type */
+/* Guild: Silver to Gold */
+.host-guild { 
+    --host-color: #fbbf24; 
+    background: linear-gradient(135deg, #52525b, #b45309) !important; /* Zinc-600 to Amber-700 */
+}
+
+/* Syndicate: Orange to Violet */
+.host-syndicate { 
+    --host-color: #a855f7; 
+    background: linear-gradient(135deg, #c2410c, #7e22ce) !important; /* Orange-700 to Purple-700 */
+}
+
+/* Station: Black to Dark Blue */
+.host-station { 
+    --host-color: #3b82f6; 
+    background: linear-gradient(135deg, #000000, #172554) !important; /* Black to Blue-950 */
+}
+
+/* Unknown: Red to Black */
+.host-unknown { 
+    --host-color: #ef4444; 
+    background: linear-gradient(135deg, #7f1d1d, #000000) !important; /* Red-900 to Black */
+}
+
+/* --- MISSION TYPE GRADIENTS (FALLBACKS/TINT) --- */
+/* These define the base tint if no Host override is present */
 .m-type-trade { 
     --type-bg-start: rgba(0, 50, 60, 0.6); 
     --type-bg-end: rgba(5, 15, 20, 0.85); 
-} /* Cyan/Teal Tint */
+} 
 
 .m-type-combat { 
     --type-bg-start: rgba(60, 10, 10, 0.6); 
     --type-bg-end: rgba(20, 5, 5, 0.85); 
-} /* Red/Rust Tint */
+}
 
 .m-type-exploration { 
     --type-bg-start: rgba(40, 10, 60, 0.6); 
     --type-bg-end: rgba(10, 5, 20, 0.85); 
-} /* Purple/Void Tint */
+}
 
 .m-type-industrial { 
     --type-bg-start: rgba(60, 40, 0, 0.6); 
     --type-bg-end: rgba(20, 15, 5, 0.85); 
-} /* Amber/Oil Tint */
+}
 
 .m-type-standard { 
     --type-bg-start: rgba(30, 35, 45, 0.6); 
     --type-bg-end: rgba(10, 15, 20, 0.85); 
-} /* Slate/Standard Tint */
+}
 
 
 /* --- VOID-GLASS CARD ARCHITECTURE --- */
@@ -231,9 +252,11 @@
     display: flex;
     flex-direction: column;
     padding: 1rem;
-    margin-bottom: 0.75rem;
     
-    /* [[UPDATED]] Use Type-Based Variables for Gradient */
+    /* Increased spacing to reduce crowding */
+    margin-bottom: 1.25rem;
+    
+    /* Default Background (Overridden by .host-*) */
     background: linear-gradient(145deg, var(--type-bg-start, rgba(30, 35, 45, 0.6)), var(--type-bg-end, rgba(10, 15, 20, 0.8)));
     
     /* Glass Effect */
@@ -267,7 +290,6 @@
 .mission-card:active {
     transform: scale(0.98);
     filter: brightness(1.3);
-    background: linear-gradient(to right, var(--theme-color-translucent), rgba(0,0,0,0.85));
     border-color: #fff;
     box-shadow: 0 0 20px var(--host-color, #444), inset 0 0 15px rgba(255,255,255,0.1);
 }
@@ -275,12 +297,46 @@
 /* Desktop Hover (Secondary) */
 @media (hover: hover) {
     .mission-card:hover {
-        background: linear-gradient(to right, var(--theme-color-translucent), rgba(0,0,0,0.85));
+        filter: brightness(1.15);
         box-shadow: 0 0 15px var(--host-color, #444), inset 0 0 10px rgba(0,0,0,0.5);
         border-color: #fff;
         transform: translateY(-2px);
         z-index: 10;
     }
+}
+
+/* --- [[NEW]] STAR TRACKING ICON --- */
+.mission-track-star {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 24px;
+    height: 24px;
+    
+    background: transparent;
+    border: none;
+    outline: none;
+    
+    color: rgba(255, 255, 255, 0.1); /* Default (Inactive) */
+    stroke: rgba(255, 255, 255, 0.5); /* Border only */
+    stroke-width: 2px;
+    fill: transparent;
+    
+    cursor: pointer;
+    z-index: 20; /* Above card content */
+    transition: all 0.2s ease;
+}
+
+.mission-track-star:hover {
+    color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.mission-track-star.active {
+    color: #fbbf24; /* Gold-400 */
+    fill: #fbbf24;
+    stroke: #f59e0b; /* Amber-500 */
+    filter: drop-shadow(0 0 5px #fbbf24);
 }
 
 /* --- TYPOGRAPHY & LAYOUT --- */
@@ -293,7 +349,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7); /* Slightly brighter for contrast on dark gradients */
 }
 
 .mission-type-badge {
@@ -324,6 +380,7 @@
     color: #fff;
     line-height: 1.1;
     max-width: 70%;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Added shadow for legibility */
 }
 
 .mission-reward-data {
@@ -333,13 +390,12 @@
     color: #fff;
     text-align: right;
     font-feature-settings: "tnum";
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 /* --- ACTIVE & READY STATES --- */
 .mission-active {
     border-left: 3px solid var(--theme-color);
-    /* [[FIX]] Removed opaque background override so glass effect persists */
-    /* background: linear-gradient(90deg, rgba(0,0,0,0.9), rgba(10,10,12,0.95)); */
 }
 
 .mission-active .mission-title {
@@ -354,7 +410,6 @@
 
 .mission-turn-in {
     animation: readyPulse 2s infinite ease-in-out;
-    background: rgba(0,0,0,0.9) !important; /* Keep opaque for turn-in to emphasize readiness */
 }
 
 /* --- PROGRESS BARS --- */
@@ -435,11 +490,21 @@
     background: rgba(0, 0, 0, 0.9);
     border: 1px solid var(--theme-border);
     backdrop-filter: blur(8px);
-    padding: 0.5rem 1rem;
-    border-radius: 0 0 8px 8px;
-    border-top: none;
+    
+    /* Reduced vertical thickness (approx 15% reduction) */
+    padding: 0.35rem 1rem;
+    
+    /* Fully rounded corners (Pill shape) */
+    border-radius: 9999px;
+    
+    /* Slightly smaller text size */
+    font-size: 0.9rem;
+    
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transition: all 0.3s ease;
+    
+    /* Ensure it floats with margin */
+    margin-bottom: 0.5rem;
 }
 
 .objective-progress-flash {

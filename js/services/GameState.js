@@ -261,7 +261,9 @@ export class GameState {
                 // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
                 activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {}
+                missionProgress: {},
+                // [[NEW]] Phase 3: Tracked Mission ID for HUD
+                trackedMissionId: null
                 // --- END MISSION SYSTEM 2.0 ---
             },
             uiState: {

@@ -51,7 +51,7 @@ const getMissionTypeClass = (missionType) => {
 
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, uiState, currentLocationId } = gameState;
-    const { activeMissionIds, missionProgress } = missions;
+    const { activeMissionIds, missionProgress, trackedMissionId } = missions;
     const activeTab = uiState.activeMissionTab || 'terminal'; // Default to terminal
 
     // Resolve Theme Class
@@ -199,11 +199,22 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml += '</div>';
         }
 
+        // [[NEW]] Star Tracking Logic
+        const isTracked = mission.id === trackedMissionId;
+        const starClass = isTracked ? 'active' : '';
+        const starIcon = `
+            <button class="mission-track-star ${starClass}" data-action="track-mission" data-mission-id="${mission.id}" title="Track on HUD">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </button>
+        `;
+
         // [[UPDATED]] Added typeClass to the list
         return `
             <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                <div class="mission-meta-row">
-                     <span class="mission-type-badge">ACTIVE CONTRACT</span>
+                ${starIcon}
+                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
                      <span class="mission-host-label">${mission.host}</span>
                 </div>
                 
@@ -237,7 +248,8 @@ export function renderMissionsScreen(gameState, missionService) {
         if (missionService) {
             const availableMissions = missionService.getAvailableMissions();
             if (availableMissions.length > 0) {
-                contentHtml = '<div class="space-y-0 max-w-2xl mx-auto">'; 
+                // [[FIX]] Removed space-y-0 to fix card crowding issue
+                contentHtml = '<div class="max-w-2xl mx-auto">'; 
                 availableMissions.forEach(m => contentHtml += renderTerminalCard(m));
                 contentHtml += '</div>';
             } else {
@@ -247,7 +259,8 @@ export function renderMissionsScreen(gameState, missionService) {
     } else {
         // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
-            contentHtml = '<div class="space-y-0 max-w-2xl mx-auto">';
+            // [[FIX]] Removed space-y-0 to fix card crowding issue
+            contentHtml = '<div class="max-w-2xl mx-auto">';
             activeMissionIds.forEach(id => {
                 const mission = DB.MISSIONS[id];
                 if (mission) contentHtml += renderLogCard(mission);
