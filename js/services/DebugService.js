@@ -629,6 +629,15 @@ ${logHistory}
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
+            
+            // NEW: MISSION TESTING BUTTON
+            missionTest: { name: 'Mission Test', type: 'button', handler: () => {
+                if (this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.injectTestMissions();
+                    this.uiManager.createFloatingText('Test Missions Injected', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                }
+            }},
+            
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -804,6 +813,8 @@ ${logHistory}
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         // NEW: Sol Testing
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
+        // NEW: Mission Test
+        flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');

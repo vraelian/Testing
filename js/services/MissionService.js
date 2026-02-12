@@ -68,6 +68,101 @@ export class MissionService {
     }
 
     /**
+     * Generates and injects a set of test missions into the database.
+     * Covers various Hosts and Objective types with trivial requirements.
+     */
+    injectTestMissions() {
+        const timestamp = Date.now();
+        const testMissions = [
+            {
+                id: `test_station_delivery_${timestamp}`,
+                name: '[TEST] Station Delivery',
+                type: 'DELIVERY', // Standard type
+                host: 'STATION', // Host A
+                description: 'Simple delivery test. Deliver 1 Water Ice.',
+                triggers: [], // Always available
+                objectives: [
+                    { type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 1 }
+                ],
+                providedCargo: [{ goodId: 'water_ice', quantity: 1 }],
+                completion: {
+                    locationId: null,
+                    title: 'Delivery Success',
+                    text: 'Station delivery logic verified.',
+                    buttonText: 'Close'
+                },
+                rewards: [{ type: 'credits', amount: 100 }]
+            },
+            {
+                id: `test_guild_travel_${timestamp}`,
+                name: '[TEST] Guild Travel',
+                type: 'TRAVEL', // Standard type
+                host: 'GUILD', // Host B
+                description: 'Simple travel test. Travel to any location.',
+                triggers: [],
+                objectives: [
+                    { type: 'TRAVEL_TO', target: 'loc_luna' } // Trivial target
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Travel Success',
+                    text: 'Guild travel logic verified.',
+                    buttonText: 'Close'
+                },
+                rewards: [{ type: 'item', goodId: 'fuel', quantity: 10 }]
+            },
+            {
+                id: `test_syndicate_wealth_${timestamp}`,
+                name: '[TEST] Syndicate Wealth',
+                type: 'WEALTH',
+                host: 'SYNDICATE', // Host C
+                description: 'Simple wealth check. Have > 1 Credit.',
+                triggers: [],
+                objectives: [
+                    { type: 'WEALTH_CHECK', value: 1 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Wealth Success',
+                    text: 'Syndicate wealth logic verified.',
+                    buttonText: 'Pay Up'
+                },
+                rewards: [{ type: 'credits', amount: 666 }]
+            },
+            {
+                id: `test_unknown_scan_${timestamp}`,
+                name: '[TEST] Unknown Protocol',
+                type: 'MYSTERY',
+                host: 'UNKNOWN', // Host D
+                description: 'Simple possession test. Have 1 Fuel.',
+                triggers: [],
+                objectives: [
+                    { type: 'have_item', goodId: 'fuel', quantity: 1 }
+                ],
+                completion: {
+                    locationId: null,
+                    title: 'Protocol Complete',
+                    text: 'Unknown host logic verified.',
+                    buttonText: 'End'
+                },
+                rewards: [{ type: 'credits', amount: 9999 }]
+            }
+        ];
+
+        // Inject into DB
+        testMissions.forEach(m => {
+            DB.MISSIONS[m.id] = m;
+        });
+
+        this.logger.warn('MissionService', `Injected ${testMissions.length} Test Missions into Mission Terminal.`);
+        
+        // Force refresh of the UI to show new missions in the terminal
+        if (this.uiManager) {
+            this.uiManager.render(this.gameState.getState());
+        }
+    }
+
+    /**
      * Accepts a new mission, setting it as active.
      * @param {string} missionId The ID of the mission to accept.
      * @param {boolean} [force=false] If true, bypasses checks.
