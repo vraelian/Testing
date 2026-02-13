@@ -18,7 +18,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
-| `missions` | Object | State regarding active and completed missions. |
+| `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 
@@ -107,6 +107,7 @@ Ephemeral data used to persist UI context across re-renders.
 | `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
 | `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
 | `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
+| `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
 
 ---
 
@@ -153,3 +154,22 @@ Manages the Endgame Engine mechanics.
 | `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+
+---
+
+## 8. Mission State (`state.missions`)
+
+Manages the active concurrent missions and their granular progress.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeMissionIds` | Array<String> | List of currently accepted mission IDs (Max 4). |
+| `completedMissionIds` | Array<String> | History of all completed missions. |
+| `trackedMissionId` | String | The specific mission ID currently pinned to the HUD. |
+| `missionProgress` | Object | Map of `missionId` -> `{ objectives, isCompletable }`. |
+
+**MissionProgress Structure:**
+
+* `isCompletable`: Boolean flag indicating if all objectives are met.
+* `objectives`: Map of `objectiveId` -> `{ current, target }`.
+}

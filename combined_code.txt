@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.19</title>
+    <title>Orbital Trading 35.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.19</p>
+            <p>Version 35.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -734,44 +734,78 @@
     animation: readyPulse 2s infinite ease-in-out;
 }
 
-/* --- PROGRESS BARS --- */
+/* --- [[NEW]] STATUS BANNER --- */
+.mission-status-banner {
+    background: var(--theme-color);
+    color: #000; /* High contrast black text on bright theme color */
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 800;
+    text-align: center;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    
+    /* Pulsing Animation */
+    animation: readyPulseBanner 1.5s infinite ease-in-out;
+    
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 0 10px var(--theme-color-glow);
+    border-radius: 2px;
+}
+
+@keyframes readyPulseBanner {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 5px rgba(255,255,255,0.5); box-shadow: 0 0 15px var(--theme-color-glow); }
+    100% { opacity: 0.8; }
+}
+
+
+/* --- [[NEW]] PROGRESS BARS (FILLED BACKGROUND) --- */
 .mission-objectives-list {
     margin-top: 0.75rem;
     border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 0.5rem;
 }
 
-.objective-item {
-    font-family: 'Oxanium', sans-serif;
+.objective-row-filled {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
     margin-bottom: 0.5rem;
-}
-
-.objective-track {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
     overflow: hidden;
-    position: relative;
+    height: 28px; /* Fixed height for consistency */
+    display: flex;
+    align-items: center;
 }
 
-.objective-bar {
-    height: 100%;
-    background: var(--theme-color);
-    box-shadow: 0 0 10px var(--theme-color);
-    position: relative;
-}
-
-.objective-bar::after {
-    content: '';
+.objective-fill-bar {
     position: absolute;
     top: 0;
-    right: 0;
-    width: 4px;
+    left: 0;
     height: 100%;
-    background: #fff;
-    box-shadow: 0 0 5px #fff;
+    background: var(--theme-color);
+    opacity: 0.25; /* Translucent fill behind text */
+    z-index: 0;
+    transition: width 0.5s ease-out;
+    border-right: 1px solid var(--theme-color-glow);
 }
+
+.objective-text {
+    position: relative;
+    z-index: 1; /* Sit on top of the bar */
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 0.75rem;
+    
+    font-family: 'Oxanium', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
 
 /* --- SYSTEM IDLE STATE (EMPTY) --- */
 .mission-empty-state {
@@ -8255,16 +8289,18 @@ export function renderMissionsScreen(gameState, missionService) {
             statusClass += ' mission-turn-in';
         }
 
-        // Dynamic Status Text Logic
-        let statusText = 'STATUS: IN PROGRESS';
+        // --- NEW STATUS BANNER LOGIC ---
+        let statusBannerHtml = '';
         if (progress.isCompletable) {
-            if (mission.completion.locationId) {
-                const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
-                statusText = `RETURN TO: ${locName.toUpperCase()}`;
-            } else {
-                statusText = 'READY TO COMPLETE';
-            }
+             let bannerText = 'READY TO COMPLETE';
+             if (mission.completion.locationId) {
+                 const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
+                 bannerText = `RETURN TO: ${locName.toUpperCase()}`;
+             }
+             // Prominent pulsing banner
+             statusBannerHtml = `<div class="mission-status-banner">${bannerText}</div>`;
         }
+        // -------------------------------
 
         // Render Objectives with Continuous Flow Bars
         let objectivesHtml = '';
@@ -8320,14 +8356,13 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
 
+                // --- NEW PROGRESS FILL LAYOUT ---
                 objectivesHtml += `
-                    <div class="objective-item text-xs">
-                        <div class="flex justify-between mb-1 text-gray-400 font-bold">
+                    <div class="objective-row-filled">
+                        <div class="objective-fill-bar" style="width: ${percent}%"></div>
+                        <div class="objective-text">
                             <span>${desc}</span>
                             <span>${displayStr}</span>
-                        </div>
-                        <div class="objective-track">
-                            <div class="objective-bar transition-all duration-500" style="width: ${percent}%"></div>
                         </div>
                     </div>
                 `;
@@ -8356,7 +8391,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 
                 <div class="mission-title mb-2">${mission.name}</div>
                 
-                <div class="text-xs text-gray-400 font-bold mb-2 animate-pulse" style="color: var(--theme-color-glow)">${statusText}</div>
+                ${statusBannerHtml}
                 
                 ${objectivesHtml}
             </div>
@@ -8395,11 +8430,28 @@ export function renderMissionsScreen(gameState, missionService) {
     } else {
         // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
-            // [[FIX]] Removed space-y-0 to fix card crowding issue
             contentHtml = '<div class="max-w-2xl mx-auto">';
-            activeMissionIds.forEach(id => {
-                const mission = DB.MISSIONS[id];
-                if (mission) contentHtml += renderLogCard(mission);
+            
+            // --- NEW SORTING LOGIC ---
+            // 1. Map to Mission Objects
+            // 2. Sort: Completable First, then default
+            const sortedMissions = activeMissionIds
+                .map(id => DB.MISSIONS[id])
+                .filter(m => m) // Safety check
+                .sort((a, b) => {
+                    const progA = missionProgress[a.id] || { isCompletable: false };
+                    const progB = missionProgress[b.id] || { isCompletable: false };
+                    
+                    // Priority 1: Completable first
+                    if (progA.isCompletable && !progB.isCompletable) return -1;
+                    if (!progA.isCompletable && progB.isCompletable) return 1;
+                    
+                    // Fallback: Keep original order (usually insertion order)
+                    return 0; 
+                });
+
+            sortedMissions.forEach(mission => {
+                contentHtml += renderLogCard(mission);
             });
             contentHtml += '</div>';
         } else {
@@ -14864,17 +14916,14 @@ export class UIMissionControl {
 
     /**
      * Handles switching between the 'Terminal' and 'Mission Log' tabs.
-     * [[UPDATED]] Now forces a checkTriggers() call to ensure mission state is fresh.
+     * [[UPDATED]] Removed redundant checkTriggers call; now handled by render loop.
      * @param {string} tabId - 'terminal' or 'log'
      */
     handleMissionTabSwitch(tabId) {
         if (tabId !== 'terminal' && tabId !== 'log') return;
         
-        // Force re-evaluation of objectives (e.g. Travel checks) whenever we look at the log
-        if (this.manager.simulationService && this.manager.simulationService.missionService) {
-            this.manager.simulationService.missionService.checkTriggers();
-        }
-
+        // Manual checkTriggers removed; UIManager.render() now auto-checks via MissionService.
+        
         this.manager.lastKnownState.uiState.activeMissionTab = tabId;
         this.manager.render();
     }
@@ -20836,8 +20885,10 @@ export class MissionService {
     /**
      * Checks all mission triggers against the current game state.
      * Iterates through ALL active missions and evaluates objectives using the Logic Engine.
+     * [[UPDATED]] Supports silent execution for render loop integration.
+     * @param {boolean} [suppressNotify=false] - If true, mutates state but skips setState/render to avoid loops.
      */
-    checkTriggers() {
+    checkTriggers(suppressNotify = false) {
         const { activeMissionIds } = this.gameState.missions;
         if (!activeMissionIds || activeMissionIds.length === 0) return;
     
@@ -20889,7 +20940,7 @@ export class MissionService {
             if (progress.isCompletable !== allObjectivesMet) {
                 progress.isCompletable = allObjectivesMet;
                 stateChanged = true;
-                if (allObjectivesMet) {
+                if (allObjectivesMet && !suppressNotify) {
                     this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${missionId} are met.`);
                 }
             }
@@ -20897,8 +20948,8 @@ export class MissionService {
             if (progressChanged) stateChanged = true;
         });
     
-        // Only update state and re-render if there's a change.
-        if (stateChanged) {
+        // Only update state and re-render if there's a change AND we aren't suppressing notifications.
+        if (stateChanged && !suppressNotify) {
             this.gameState.setState({}); // Set the new state
             this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
             this.uiManager.flashObjectiveProgress();
@@ -27168,6 +27219,12 @@ export class UIManager {
     render(gameState) {
         if (!gameState || !gameState.player) return;
 
+        // [[NEW]] Pre-Render Mission Check (Real-Time Sync)
+        // Silently updates mission progress (e.g. Cargo/Wealth) based on the exact state about to be rendered.
+        if (this.missionService) {
+            this.missionService.checkTriggers(true);
+        }
+
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
@@ -32302,6 +32359,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.20] - 2026-2-12
+-  mission screen polish
+-  updated meta files
 
 # [35.19] - 2026-2-11
 -  overhauled mission system v2
@@ -33199,10 +33259,6 @@ If OutcomeRoll < 70, Success triggers.
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
-{
-type: file_update,
-fileName: meta/UI_LIBRARY.md,
-fullContent:
 Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 TypographyThe game uses a dual-font system to establish its "Industrial Sci-Fi" aesthetic.Primary Font: Oxanium (Variable Weight)Usage: All UI text, data readouts, body copy, and buttons.Weights: Light (300) for body, Medium (500) for labels, Bold (700) for headers.Accent Font: Zorque (Regular)Usage: Logos, Major Section Headers, "Hero" numbers (e.g., Credits balance).Characteristics: Blocky, retro-futuristic.1.2 Color Palette (CSS Variables)Do not hardcode hex values. Use these semantic variables defined in global.css.VariableRole--bg-colorApp background (Deep Space Black).--panel-bgComponent background (Semi-transparent dark grey).--color-text-primaryMain text (White/Off-White).--color-text-secondaryLabels and dim text (Light Grey).--color-accentPrimary action color (Cyan/Blue).--color-successPositive values/Profits (Green).--color-dangerNegative values/Costs/Alerts (Red).--color-warningCautions (Yellow/Orange).--color-borderStandard border color for cards/panels.1.3 Z-Index RegistryStrict layering ensures modals and overlays behave correctly.LayerZ-IndexComponentsBase0Background, Canvas Starfield.Content10Main Screen Containers, Carousel.Chrome50Top Bar, Bottom Nav, Sticky HUD.Modal Mask900The generic modal-overlay background.Modal1000Active Modal Dialogs.Toast2000Tutorial Popups, Notifications.Cursor9999Custom hardware cursors (if applicable).2. Component Blueprints2.1 Standard Card (.card)Used for Commodities, Ships, and Missions.HTML<div class="card" data-id="{id}">
     <div class="card-header">
         <span class="card-title">{Title}</span>
@@ -33238,8 +33294,22 @@ Interactive elements must always use the `.btn` class and **MUST** include `type
         </div>
     </div>
 </div>
+2.5 Tab Navigation (.mission-tabs-nav)
+Used in Missions/Data screens to toggle sub-views.
+HTML<div class="mission-tabs-nav">
+    <button class="mission-tab-btn active" data-action="switch-tab" data-target="A">TAB A</button>
+    <button class="mission-tab-btn" data-action="switch-tab" data-target="B">TAB B</button>
+</div>
+2.6 Objective Progress Bar (.objective-row-filled)
+Used in Mission Log cards to show continuous progress.
+HTML<div class="objective-row-filled">
+    <div class="objective-fill-bar" style="width: 50%"></div>
+    <div class="objective-text">
+        <span>DELIVER ICE</span>
+        <span>5/10</span>
+    </div>
+</div>
 3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
-}
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
@@ -34620,18 +34690,8 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## Mission Engine Updates
--  Narrative missions should be available
--  Side missions available at specific locations
--  Mission chaining
--  Mission completion triggers to include player actions (paying off debt, making an action in the UI, going somewhere specific, completing another mission or mission chain)	
--  Update mission qty allowance to >1
--  Improve UI appearance of mission cards for narrative mission, side mission, active mission, unavailable mission
--  add events to blockade locations
-
 
 ## Ongoing, WIP Efforts
--  Mission System V2
 -  Increase chance for events depending on distance traveled
 -  How can I make time matter more?
 -  How to increase risk and add difficulty mid-game?
@@ -34639,6 +34699,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
 -  Review spawn logic of upgrades and by location.
 -  Scale upgrade price by percentage per tier instead of hardcoding.
+- add events to blockade locations
 
 
 ## Imminent Projects
@@ -34937,14 +34998,284 @@ lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_
 
 lore/lore_broadstrokes.js: Defines the base lore content.
 
+officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.{
+type: file_update,
+fileName: meta/SERVICES.md,
+fullContent:
+Service Responsibility & Dependency Matrix
+Core Architecture
+SimulationService acts as the central Facade. It is the only service that the EventManager talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the Event System 2.0, handling Debug Event injection and high-level resolution orchestration.
+
+1. State Management
+GameState (F009)
+
+Responsibility: Single source of truth. Holds all mutable data (player, market, day, ships).
+
+Key Behavior: Emits notifications to subscribers (UIManager) whenever setState is called.
+
+Dependencies: None (Leaf node).
+
+2. Game Logic Services
+PlayerActionService (F034)
+
+Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
+
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs.
+
+Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
+
+GameAttributes (F069)
+
+Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
+
+Key Behavior: Provides definition objects for Upgrade IDs. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
+
+Dependencies: None.
+
+TravelService (F036)
+
+Responsibility: Manages the travel loop. Calculates fuel/time costs, triggers random events.
+
+Key Behavior:
+* Uses GameState.TRAVEL_DATA for distances.
+* Pauses travel for event resolution.
+* Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
+* **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
+
+Dependencies: GameState, TimeService, RandomEventService.
+
+MarketService (F010)
+
+Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
+
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Triggers asset hydration when new ships are spawned in shipyards.
+
+Dependencies: GameState, IntelService, AssetService.
+
+IntelService (F057)
+
+Responsibility: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
+
+Key Behavior: Creates temporary activeIntelDeal objects in GameState that override market prices.
+
+Dependencies: GameState.
+
+TimeService (F035)
+
+Responsibility: Advances the calendar and manages long-term progression.
+
+Key Behavior:
+
+Triggers daily/weekly simulation ticks (Market, News).
+
+Manages the "3-Era Age Engine", applying procedural stat bonuses and world modifiers based on player age.
+
+Checks for debt interest, Intel expiration, and loan garnishment.
+
+Dependencies: GameState, MarketService.
+
+MissionService (F018)
+
+Responsibility: Coordinators the Mission System 2.0 lifecycle. Delegates logic to evaluators.
+
+Key Behavior: 
+* Orchestrates `MissionTriggerEvaluator` to check prerequisites for available missions.
+* Orchestrates `MissionObjectiveEvaluator` to update progress on active missions.
+* Manages the "Terminal" vs "Log" state flow and completion logic.
+
+Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
+
+TutorialService (F016)
+
+Responsibility: Manages the state and flow of interactive tutorials (Logic Layer).
+
+Key Behavior:
+
+Checks game state/actions against triggers defined in tutorials.js.
+
+Manages activeBatchId and activeStepId.
+
+Enforces navLock in the GameState to restrict player movement during critical lessons.
+
+Delegates visual rendering to UIManager -> UITutorialManager.
+
+Dependencies: GameState, UIManager, SimulationService, js/data/tutorials.js.
+
+3. Event System Services (Event 2.0)
+RandomEventService
+
+Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected.
+
+Key Behavior: Filters the RANDOM_EVENTS registry based on current context (location, tags) and relative weights. Passes the selected event to the UI for display.
+
+Dependencies: GameState, ConditionEvaluator.
+
+ConditionEvaluator
+
+Responsibility: A stateless utility service that validates requirements.
+
+Key Behavior: Parses the requirements array of an event or choice (e.g., "Has Item: Water Ice > 5", "Has Perk: Navigator"). Returns true or false based on the current GameState.
+
+Dependencies: GameState (Read-only).
+
+OutcomeResolver
+
+Responsibility: Handles the logic of the player's choice.
+
+Key Behavior: Processes the resolution block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to eventEffectResolver for application.
+
+Dependencies: GameState, eventEffectResolver.
+
+DynamicValueResolver
+
+Responsibility: Calculates dynamic integer values for event effects based on game state context.
+
+Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties.
+
+Dependencies: GameState (Read-only), DB.
+
+eventEffectResolver
+
+Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
+
+Key Behavior: Routes effect types (e.g., MODIFY_FUEL, REMOVE_ITEM) to specific handler functions. Mutates GameState or pendingTravel accordingly. Pure state mutation only; does not handle game-over consequences.
+
+Dependencies: GameState, SimulationService, DynamicValueResolver.
+
+4. UI & Presentation Services
+UIManager (F017) [FACADE]
+
+Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers. Handles the main render loop and navigation bars.
+
+Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
+
+Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
+
+Controllers (Delegates):
+
+UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
+
+UITutorialManager: Manages the "Presentation Layer" of tutorials. Handles Popper.js instantiation, positioning of toast elements relative to targets, and rendering of SVG highlight overlays.
+
+UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
+
+UIMissionControl: Manages Mission data screens, the new `MissionsScreen` renderer, sticky bar HUD tracking, and Intel interactions.
+
+UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
+
+UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
+
+UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, and the in-modal Officer Roster sub-view.
+
+IntelMarketRenderer (F058)
+
+Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content (Called by UIMissionControl).
+
+Dependencies: IntelService.
+
+NewsTickerService (F053)
+
+Responsibility: Manages the scrolling text bar content.
+
+Key Behavior: Implements V2 logic with dynamic message types (SYSTEM, INTEL, FLAVOR, ALERT, STORY, STATUS) and live data injection.
+
+Dependencies: GameState.
+
+AssetService (F065)
+
+Responsibility: Centralized path resolution and "Hydration" for visual assets.
+
+Dependencies: AssetStorageService, assets_config.js.
+
+AssetStorageService (F070)
+
+Responsibility: Low-level IndexedDB wrapper.
+
+Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
+
+Dependencies: None (Native IndexedDB API).
+
+TravelAnimationService.js
+
+Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
+
+Dependencies: DB (Travel Visuals).
+
+5. Input & Event Handling
+EventManager (F015): The root listener. Binds global click/touch events.
+
+ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation and Travel initiation (including Consumable flags).
+
+HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
+
+CarouselEventHandler (F042): Manages swipe/drag for the Hangar.
+
+MarketEventHandler (F040): Manages the buy/sell sliders on market cards.
+
+TooltipHandler (F043): Manages hover states and popups for graphs and attribute pills.
+
+Effects
+EffectsManager.js: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
+
+BaseEffect.js: The abstract base class for all visual effects.
+
+Debug & Automation
+DebugService.js: Manages the debug panel (lil-gui), synchronizing its UI controls with the GameState and providing cheat/test functionalities. Triggers asset hydration for debug actions.
+
+bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machine-driven bot designed to stress-test the economy. It mimics a human player by directly calling service methods, bypassing the input layer.
+
+Static Data Files (js/data/)
+database.js: Aggregates and exports static game data imported from other modules.
+
+ship_database.js: Defines the static data for all player-tradable ships.
+
+assets_config.js: Defines configuration for ship asset variants.
+
+constants.js: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
+
+items.js: Defines the registry of Consumable Items (e.g., Folded Space Drives).
+
+age_events.js: Defines static data for narrative events triggered by game progression.
+
+events.js: (Facade) Aggregates all event categories into the master RANDOM_EVENTS registry.
+
+events_traffic.js: Encounters & Distress signals.
+
+events_entropy.js: System failures & maintenance issues.
+
+events_hazards.js: Environmental threats (Solar flares, Asteroids).
+
+events_bureaucracy.js: Customs, fines, and inspections.
+
+events_logistics.js: Cargo spoilage & storage issues.
+
+events_salvage.js: Derelict recovery & looting.
+
+events_opportunity.js: Trade deals & windfalls.
+
+events_story.js: Unique narrative encounters.
+
+missions.js: Defines static data for all player missions.
+
+tutorials.js: Defines static data for all tutorial batches and steps.
+
+flavorAds.js: Defines static, location-specific flavor text ads for the news ticker.
+
+intelMessages.js: Defines message templates for free and purchased market intel.
+
+intelContent.js: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
+
+eulaContent.js: Defines the static HTML content for the EULA modal.
+
+lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
+
+lore/lore_broadstrokes.js: Defines the base lore content.
+
 officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.
+}
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
-{
-type: file_update,
-fileName: meta/ARCHITECTURAL_DECISIONS.md,
-fullContent:
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -35464,7 +35795,7 @@ Context: The tutorial system required complex visual positioning (Popper.js) and
 
 Decision: Split the tutorial responsibilities into two distinct layers:
 
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
+TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock in the GameState. It knows what to show, but not how.
 
 UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
 
@@ -35513,7 +35844,24 @@ Pro: Permanently eliminates "phantom" page reloads and state reverts.
 Pro: Decouples game logic triggers from standard HTML form behaviors.
 
 Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
-}
+
+ADR-027: Mission System 2.0 (Logic/State Separation)
+Status: Accepted (2026-02-08)
+
+Context: The initial Mission System was limited to a single active mission and hard-coded prerequisite logic within the `MissionService` itself. This became unscalable when planning for concurrent missions, complex multi-variable objectives (e.g., "Have < 10% Cargo + > 500 Credits"), and HUD tracking.
+
+Decision: The system was rebuilt into a modular "Engine" architecture.
+* **State Expansion:** The `missions` state moved from a single ID to an `activeMissionIds` array and a detailed `missionProgress` map that tracks every objective's current/target value independently.
+* **Logic Delegation:** Two stateless helper classes were created:
+    * `MissionTriggerEvaluator`: Evaluates "Can I see this mission?" (Prerequisites).
+    * `MissionObjectiveEvaluator`: Evaluates "Is this objective met?" (Progress).
+* **Split UI:** The `MissionsScreen` was updated to support a "Terminal" (Available) vs "Log" (Active) tab view.
+
+Consequences:
+* **Pro:** Supports concurrent active missions (currently capped at 4).
+* **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
+* **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
+
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -35795,7 +36143,7 @@ graph TD
     end
 
 2.11 Mission System Architecture
-Flow from static Registry definition to dynamic player state and UI interaction.
+Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
 Code snippet
 graph TD
@@ -35806,24 +36154,28 @@ graph TD
 
     subgraph Availability Check
         C --> D[MissionService.getAvailableMissions];
-        D --> E{Check Prerequisites};
-        E -- Met --> F[Available Pool];
-        E -- Not Met --> G[Hidden/Locked];
+        D --> E[MissionTriggerEvaluator];
+        E -->|Check Triggers| F{Passed?};
+        F -- Yes --> G[Render 'Terminal' Card];
     end
 
-    subgraph Lifecycle
-        F --> H[User Accepts Mission];
-        H --> I[SimulationService.grantMissionCargo];
-        I --> J[Set activeMissionId];
-        J --> K((Mutate GameState));
+    subgraph Active Lifecycle
+        G --> H[User Accepts];
+        H --> I[Push to activeMissionIds];
+        I --> J[Init missionProgress];
+    end
+
+    subgraph Progress Evaluation
+        J --> K[MissionObjectiveEvaluator];
+        K -->|Evaluate Frame| L{Is Met?};
+        L -- Partial --> M[Update Progress Bar];
+        L -- All Met --> N[Mark isCompletable=true];
     end
 
     subgraph Completion
-        K --> L[UIMissionControl: Render Sticky Bar];
-        L --> M[User Delivers Goods];
-        M --> N[MissionService.completeActiveMission];
-        N --> O[Grant Rewards / Remove Cargo];
-        O --> P[Add to completedMissionIds];
+        N --> O[User Returns to Host];
+        O --> P[MissionService.completeMission];
+        P --> Q[Grant Rewards & Archive];
     end
 
 2.12 Consumable Item Usage (Folded Space)
@@ -35853,6 +36205,7 @@ graph TD
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
     end
+
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -35876,7 +36229,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
-| `missions` | Object | State regarding active and completed missions. |
+| `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 
@@ -35965,6 +36318,7 @@ Ephemeral data used to persist UI context across re-renders.
 | `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
 | `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
 | `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
+| `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
 
 ---
 
@@ -36011,6 +36365,25 @@ Manages the Endgame Engine mechanics.
 | `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+
+---
+
+## 8. Mission State (`state.missions`)
+
+Manages the active concurrent missions and their granular progress.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeMissionIds` | Array<String> | List of currently accepted mission IDs (Max 4). |
+| `completedMissionIds` | Array<String> | History of all completed missions. |
+| `trackedMissionId` | String | The specific mission ID currently pinned to the HUD. |
+| `missionProgress` | Object | Map of `missionId` -> `{ objectives, isCompletable }`. |
+
+**MissionProgress Structure:**
+
+* `isCompletable`: Boolean flag indicating if all objectives are met.
+* `objectives`: Map of `objectiveId` -> `{ current, target }`.
+}
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---

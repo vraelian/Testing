@@ -276,7 +276,7 @@ graph TD
     end
 
 2.11 Mission System Architecture
-Flow from static Registry definition to dynamic player state and UI interaction.
+Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
 Code snippet
 graph TD
@@ -287,24 +287,28 @@ graph TD
 
     subgraph Availability Check
         C --> D[MissionService.getAvailableMissions];
-        D --> E{Check Prerequisites};
-        E -- Met --> F[Available Pool];
-        E -- Not Met --> G[Hidden/Locked];
+        D --> E[MissionTriggerEvaluator];
+        E -->|Check Triggers| F{Passed?};
+        F -- Yes --> G[Render 'Terminal' Card];
     end
 
-    subgraph Lifecycle
-        F --> H[User Accepts Mission];
-        H --> I[SimulationService.grantMissionCargo];
-        I --> J[Set activeMissionId];
-        J --> K((Mutate GameState));
+    subgraph Active Lifecycle
+        G --> H[User Accepts];
+        H --> I[Push to activeMissionIds];
+        I --> J[Init missionProgress];
+    end
+
+    subgraph Progress Evaluation
+        J --> K[MissionObjectiveEvaluator];
+        K -->|Evaluate Frame| L{Is Met?};
+        L -- Partial --> M[Update Progress Bar];
+        L -- All Met --> N[Mark isCompletable=true];
     end
 
     subgraph Completion
-        K --> L[UIMissionControl: Render Sticky Bar];
-        L --> M[User Delivers Goods];
-        M --> N[MissionService.completeActiveMission];
-        N --> O[Grant Rewards / Remove Cargo];
-        O --> P[Add to completedMissionIds];
+        N --> O[User Returns to Host];
+        O --> P[MissionService.completeMission];
+        P --> Q[Grant Rewards & Archive];
     end
 
 2.12 Consumable Item Usage (Folded Space)

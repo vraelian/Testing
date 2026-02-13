@@ -1,7 +1,3 @@
-{
-type: file_update,
-fileName: meta/ARCHITECTURAL_DECISIONS.md,
-fullContent:
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -521,7 +517,7 @@ Context: The tutorial system required complex visual positioning (Popper.js) and
 
 Decision: Split the tutorial responsibilities into two distinct layers:
 
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock rules in the GameState. It knows what to show, but not how.
+TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock in the GameState. It knows what to show, but not how.
 
 UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
 
@@ -570,4 +566,20 @@ Pro: Permanently eliminates "phantom" page reloads and state reverts.
 Pro: Decouples game logic triggers from standard HTML form behaviors.
 
 Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
-}
+
+ADR-027: Mission System 2.0 (Logic/State Separation)
+Status: Accepted (2026-02-08)
+
+Context: The initial Mission System was limited to a single active mission and hard-coded prerequisite logic within the `MissionService` itself. This became unscalable when planning for concurrent missions, complex multi-variable objectives (e.g., "Have < 10% Cargo + > 500 Credits"), and HUD tracking.
+
+Decision: The system was rebuilt into a modular "Engine" architecture.
+* **State Expansion:** The `missions` state moved from a single ID to an `activeMissionIds` array and a detailed `missionProgress` map that tracks every objective's current/target value independently.
+* **Logic Delegation:** Two stateless helper classes were created:
+    * `MissionTriggerEvaluator`: Evaluates "Can I see this mission?" (Prerequisites).
+    * `MissionObjectiveEvaluator`: Evaluates "Is this objective met?" (Progress).
+* **Split UI:** The `MissionsScreen` was updated to support a "Terminal" (Available) vs "Log" (Active) tab view.
+
+Consequences:
+* **Pro:** Supports concurrent active missions (currently capped at 4).
+* **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
+* **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
