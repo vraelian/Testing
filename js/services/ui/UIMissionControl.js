@@ -126,7 +126,8 @@ export class UIMissionControl {
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
-            contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
+            // [[NEW]] sci-fi-frame removed to strip corner bracket accents
+            contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
 
             // [[NEW]] Progress Fill Gradient
             // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable

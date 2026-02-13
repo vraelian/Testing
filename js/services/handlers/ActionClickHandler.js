@@ -214,6 +214,14 @@ export class ActionClickHandler {
                 this.uiManager.hideGenericTooltip(); 
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
+                // [[NEW]] Intercept Sticky Bar clicks to force Log tab
+                if (dataset.navId === 'missions' || dataset.navId === NAV_IDS.MISSIONS) {
+                    if (actionTarget.id === 'mission-sticky-bar' || actionTarget.closest('#mission-sticky-bar') || actionTarget.closest('.sticky-content')) {
+                        state.uiState.activeMissionTab = 'log';
+                        this.gameState.setState({}); // Save the forced log state
+                    }
+                }
+
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());

@@ -70,7 +70,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     TERMINAL
                 </button>
                 <button class="${getTabClass('log')}" data-action="switch-mission-tab" data-target="log">
-                    LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
+                    LOG
                 </button>
             </div>
         `;
@@ -232,9 +232,6 @@ export function renderMissionsScreen(gameState, missionService) {
     const renderEmptyState = (msg) => {
         return `
             <div class="mission-empty-state">
-                <svg class="mission-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
                 <div class="mission-empty-text">${msg}</div>
             </div>
         `;
@@ -292,7 +289,6 @@ export function renderMissionsScreen(gameState, missionService) {
     // [[PHASE 3]] Added missions-screen-container class for vignette support
     return `
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
-            <h1 class="text-3xl font-orbitron text-center mb-4 flex-shrink-0" style="color: var(--theme-color-glow); text-shadow: 0 0 10px var(--theme-border);">MISSION CONTROL</h1>
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
                 ${contentHtml}
