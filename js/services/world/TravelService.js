@@ -151,6 +151,10 @@ export class TravelService {
         // -------------------------------------------------
 
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
+        
+        // Capture distance-equivalent base time BEFORE modifiers for Phase 2 Hull Entropy
+        const baseTravelTime = travelInfo.time;
+        
         this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
 
         const activeShip = this.simulationService._getActiveShip();
@@ -247,8 +251,35 @@ export class TravelService {
         travelInfo.time = Math.max(0, Math.round(travelInfo.time)); // Allow 0 for warp
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
+        // --- PHASE 2: STRANDING MECHANIC ---
         if (activeShipState.fuel < travelInfo.fuelCost) {
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `Trip modifications left you without enough fuel. You need ${travelInfo.fuelCost} but only have ${Math.floor(activeShipState.fuel)}.`);
+            const originName = DB.MARKETS.find(m => m.id === fromId)?.name || "Origin";
+            const lostDays = travelInfo.time;
+            
+            // Apply consequences
+            activeShipState.fuel = 0;
+            this.timeService.advanceDays(lostDays);
+            this.gameState.setState({ pendingTravel: null });
+            
+            this.logger.info.player(this.gameState.day, 'TRAVEL_STRANDED', `Stranded returning to ${originName}.`);
+            
+            // Route to UI Control
+            if (this.uiManager.eventControl && this.uiManager.eventControl.showStrandedModal) {
+                this.uiManager.eventControl.showStrandedModal(originName, lostDays);
+            } else {
+                // Safe Fallback
+                this.uiManager.showEventResultModal(
+                    "Critical Failure: Stranded",
+                    `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`,
+                    [
+                        { type: 'EFF_FUEL', value: 0 },
+                        { type: 'EFF_TRAVEL_TIME', value: lostDays }
+                    ]
+                );
+            }
+            
+            // Abort intended travel screen flow, refresh market
+            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
 
@@ -258,7 +289,9 @@ export class TravelService {
             }
         }
 
-        let travelHullDamage = travelInfo.time * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY;
+        // --- PHASE 2: DISTANCE-BASED HULL ENTROPY ---
+        const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
+        let travelHullDamage = baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod;
         
         // --- Z-CLASS HULL LOGIC ---
         if (shipAttributes.includes('ATTR_XENO_HULL') || 
@@ -515,24 +548,11 @@ export class TravelService {
             return;
         }
 
-        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
+        // 2. Check Fuel Depletion (Fuel < 0) -> Clamp to zero.
         if (ship.fuel <= 0) {
-            this.gameState.pendingTravel = null;
-            
             this.gameState.player.shipStates[ship.id].fuel = 0;
-            
-            this.logger.info.player(this.gameState.day, 'TRAVEL_ABORT', `Ship ran out of fuel after event. Towed back to port.`);
-            
-            const originName = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId)?.name || "Port";
-            
-            this.uiManager.queueModal(
-                'event-modal', 
-                'Fuel Depleted', 
-                `Your engines sputter and die, leaving you drifting in the void. <br><br>After days of signaling, a passing freighter tows you back to <b>${originName}</b>. The rescue fees have left you with an empty tank.`
-            );
-            
-            this.gameState.setState({});
-            return;
+            // Legacy Tow Back logic removed. 
+            // The resumeTravel -> initiateTravel sequence will handle Stranding if required fuel cannot be met.
         }
 
         // 3. All Systems Nominal - Proceed

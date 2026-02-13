@@ -9,7 +9,7 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 /**
@@ -125,6 +125,48 @@ const effectHandlers = {
             // FIX: Enforce Integer for days
             const change = Math.round(effect.value);
             gameState.pendingTravel.travelTimeAdd = (gameState.pendingTravel.travelTimeAdd || 0) + change;
+
+            // --- PHASE 3: FUEL-COUPLED TIME DELAYS ---
+            // If the event adds time (delays), calculate the proportional fuel cost and deduct it.
+            if (change > 0) {
+                const fromId = gameState.currentLocationId;
+                const toId = gameState.pendingTravel.destinationId;
+                const travelData = gameState.TRAVEL_DATA[fromId]?.[toId];
+
+                if (travelData && travelData.time > 0) {
+                    const ship = simulationService._getActiveShip();
+                    const shipState = gameState.player.shipStates[ship.id];
+                    const upgrades = shipState.upgrades || [];
+                    const shipAttributes = GameAttributes.getShipAttributes(ship.id);
+
+                    // Calculate base daily fuel rate for the original route
+                    const dailyFuelRate = travelData.fuelCost / travelData.time;
+                    let extraFuelCost = dailyFuelRate * change;
+
+                    // Apply Player Build Modifiers
+                    if (gameState.player.activePerks && gameState.player.activePerks[PERK_IDS.NAVIGATOR]) {
+                        extraFuelCost *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
+                    }
+
+                    extraFuelCost *= GameAttributes.getFuelBurnModifier(upgrades);
+
+                    // Apply Z-Class / Alien Mechanics
+                    if (shipAttributes.includes('ATTR_METABOLIC_BURN')) extraFuelCost *= 0.5;
+                    if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) extraFuelCost = 0;
+                    if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
+                        const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+                        const toDist = DB.MARKETS.find(m => m.id === toId)?.distance || 0;
+                        if (toDist < fromDist) extraFuelCost = 0;
+                    }
+
+                    extraFuelCost = Math.round(extraFuelCost);
+
+                    if (extraFuelCost > 0) {
+                        shipState.fuel = Math.max(0, shipState.fuel - extraFuelCost);
+                    }
+                }
+            }
+            // --- END PHASE 3 ---
         }
     },
 

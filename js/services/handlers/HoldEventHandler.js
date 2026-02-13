@@ -287,6 +287,12 @@ export class HoldEventHandler {
                 if (cost > 0 && this.repairBtn) {
                     const rect = this.repairBtn.getBoundingClientRect();
                     this.uiManager.createFloatingText(`-${formatCredits(cost, false)}`, rect.left + (rect.width / 2), rect.top, '#f87171');
+                    
+                    // --- PHASE 4: DRYDOCKING TIME VISUAL ---
+                    setTimeout(() => {
+                        this.uiManager.createFloatingText("+1 Day", rect.left + (rect.width / 2), rect.top - 20, '#60a5fa');
+                    }, 150);
+
                     serviceStillActive = true;
                 } else {
                     this.isRepairing = false; // Ran out of money or hull is full

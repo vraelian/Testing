@@ -288,12 +288,13 @@ export function renderServicesScreen(gameState, simulationService) {
                             <div id="repair-bar" class="progress-bar-fill h-full rounded-md" style="width: ${healthPct}%; background-color: var(--resource-color); --glow-color: var(--resource-color); background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                           </div>
                         </div>
-                        <div class="control-deck flex justify-center items-center gap-4">
-                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                        <div class="control-deck flex justify-center items-center gap-4 relative">
+                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4 relative">
                             <span class="price-label text-sm engraved-text">COST</span>
                             <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
+                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #60a5fa; opacity: 0.9;">+1 Day / Tick</div>
                           </div>
                           <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
                               <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>

@@ -787,6 +787,11 @@ export class PlayerActionService {
         state.player.credits -= totalCost;
         state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, currentHealth + tickAmount);
         
+        // --- PHASE 4: DRYDOCKING (TIME-COST REPAIRS) ---
+        this.timeService.advanceDays(1);
+        if (this.gameState.isGameOver) return totalCost;
+        // --- END PHASE 4 ---
+
         this.simulationService._logConsolidatedTransaction('repair', -totalCost, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
 

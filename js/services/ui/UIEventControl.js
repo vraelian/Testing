@@ -405,6 +405,21 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
+    /**
+     * Phase 2: Displays the critical failure Stranding modal and routes to the standard event modal processor.
+     */
+    showStrandedModal(originName, lostDays, callback) {
+        const title = "Critical Failure: Stranded";
+        const text = `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`;
+        
+        const effects = [
+            { type: 'EFF_FUEL', value: 0 }, 
+            { type: 'EFF_TRAVEL_TIME', value: lostDays }
+        ];
+
+        this.showEventResultModal(title, text, effects, callback);
+    }
+
     showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
         let onDismiss = (typeof callback === 'function') ? callback : null;
