@@ -277,53 +277,53 @@ const ATTRIBUTE_DEFINITIONS = {
     // --- UPGRADES: ENGINE ---
     'UPG_ENG_SPEED_1': {
         name: "Injector I",
-        description: "Reduces travel time by 10%, but increases fuel burn by 15%.",
+        description: "Reduces travel time by 10%, but increases fuel burn & hull stress by 15%.",
         cost: 5000,
         tier: 1,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 5000,
-        modifiers: { travelTime: 0.90, fuelBurn: 1.15 },
+        modifiers: { travelTime: 0.90, fuelBurn: 1.15, hullStress: 1.15 },
         color: COLORS.BLUE
     },
     'UPG_ENG_SPEED_2': {
         name: "Injector II",
-        description: "Reduces travel time by 20%, but increases fuel burn by 30%.",
+        description: "Reduces travel time by 20%, but increases fuel burn & hull stress by 30%.",
         cost: 15000,
         tier: 2,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 15000,
-        modifiers: { travelTime: 0.80, fuelBurn: 1.30 },
+        modifiers: { travelTime: 0.80, fuelBurn: 1.30, hullStress: 1.30 },
         color: COLORS.INDIGO
     },
     'UPG_ENG_SPEED_3': {
         name: "Injector III",
-        description: "Reduces travel time by 30%, but increases fuel burn by 45%.",
+        description: "Reduces travel time by 30%, but increases fuel burn & hull stress by 45%.",
         cost: 45000,
         tier: 3,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 45000,
-        modifiers: { travelTime: 0.70, fuelBurn: 1.45 },
+        modifiers: { travelTime: 0.70, fuelBurn: 1.45, hullStress: 1.45 },
         color: COLORS.VIOLET
     },
     'UPG_ENG_SPEED_4': {
         name: "Injector IV",
-        description: "Reduces travel time by 36%, but increases fuel burn by 54%.",
+        description: "Reduces travel time by 36%, but increases fuel burn & hull stress by 54%.",
         cost: 12500000,
         tier: 4,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 12500000,
-        modifiers: { travelTime: 0.64, fuelBurn: 1.54 },
+        modifiers: { travelTime: 0.64, fuelBurn: 1.54, hullStress: 1.54 },
         color: COLORS.RED,
         pillColor: "#ef4444"
     },
     'UPG_ENG_SPEED_5': {
         name: "Injector V",
-        description: "Reduces travel time by 40%, but increases fuel burn by 60%.",
+        description: "Reduces travel time by 40%, but increases fuel burn & hull stress by 60%.",
         cost: 25000000,
         tier: 5,
         type: UPGRADE_TYPES.MOD_TRAVEL_SPEED,
         value: 25000000,
-        modifiers: { travelTime: 0.60, fuelBurn: 1.60 },
+        modifiers: { travelTime: 0.60, fuelBurn: 1.60, hullStress: 1.60 },
         color: COLORS.VIOLET
     },
 
@@ -1090,6 +1090,16 @@ export class GameAttributes {
      */
     static getHullResistanceModifier(upgrades = []) {
         return this._getAdditiveModifier(upgrades, 'hullResistance', 0.0);
+    }
+
+    /**
+     * Calculates Hull Stress modifier based on installed engine upgrades (Multiplicative).
+     * Used for modifying distance-based hull decay during travel.
+     * @param {string[]} upgrades 
+     * @returns {number} Multiplier.
+     */
+    static getHullStressModifier(upgrades = []) {
+        return this._getMultiplicativeModifier(upgrades, 'hullStress');
     }
 
     /**

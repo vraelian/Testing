@@ -2,6 +2,13 @@
 
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+## Sudden Ideas
+-  rounded corners of mission cards
+-  remove corner brackets from mission sticky bar
+-  Time & Hull Update V2 GDD
+-  Build Mission Maker V3
+-  Update and refactor Sol Station timekeeping
+
 
 ## Ongoing, WIP Efforts
 -  Increase chance for events depending on distance traveled
