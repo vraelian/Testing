@@ -1,3 +1,5 @@
+// meta/DATA_FLOW.md
+
 Orbital Trading - Data Flow Architecture
 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
@@ -17,7 +19,6 @@ Persistence Layer: AssetStorageService (IndexedDB), AssetService (Memory Cache).
 2.1 Core Game Loop
 The primary cycle for user interaction and state updates.
 
-Code snippet
 graph TD
     subgraph Input Layer
         A[User Interaction] --> B{EventManager};
@@ -45,7 +46,6 @@ graph TD
 2.2 Boot Sequence & Pre-Flight (ADR-021)
 Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
 
-Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -70,7 +70,6 @@ graph TD
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction.
 
-Code snippet
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -97,7 +96,6 @@ graph TD
 2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
 
-Code snippet
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -125,7 +123,6 @@ graph TD
 2.5 Upgrade Installation (Destructive Replacement)
 Logic handling the 3-slot limit and replacement confirmation.
 
-Code snippet
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -151,7 +148,6 @@ graph TD
 2.6 Animated Transaction Flow
 Handling asynchronous visual blocking during state transitions.
 
-Code snippet
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -177,7 +173,6 @@ graph TD
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer.
 
-Code snippet
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -195,35 +190,35 @@ graph TD
         G --> A;
     end
 
-2.8 Travel Sequence (Visual Handoff)
-Separation of instant logic calculation and delayed visual presentation.
+2.8 Travel Sequence (Visual Handoff & Stranding Interception)
+Separation of instant logic calculation, fuel/stranding checks, and delayed visual presentation.
 
-Code snippet
 graph TD
     subgraph Initiation
-        A[Launch Click] --> B[SimulationService.handleTravel];
-        B --> C[TravelService.calculateTrip];
-        C --> D[Deduct Resources & Roll Events];
-        D --> E[Return TravelResult Object];
+        A[Launch Click] --> B[TravelService.initiateTravel];
+        B --> C{Sufficient Fuel for Base + Events?};
+        C -- No --> D[Stranding Protocol: Fuel=0, Add Time, Abort];
+        C -- Yes --> E[Deduct Resources, Apply Damage & Roll Events];
     end
 
     subgraph Visualization
-        E --> F[UIManager.showTravelAnimation];
-        F --> G[TravelAnimationService: Canvas Overlay];
-        G -- 2.5s Delay --> H[Animation Complete];
+        D --> F[UI: Render Stranded Modal];
+        E --> G[UIManager.showTravelAnimation];
+        G --> H[TravelAnimationService: Canvas Overlay];
+        H -- 2.5s Delay --> I[Animation Complete];
     end
 
     subgraph Resolution
-        H --> I[Execute Result Callback];
-        I --> J[UIManager.render: New Location];
-        I --> K{Event Triggered?};
-        K -- Yes --> L[Show Event Modal];
+        I --> J[Execute Result Callback];
+        J --> K[UIManager.render: New Location];
+        J --> L{Event Triggered?};
+        L -- Yes --> M[Show Event Modal];
+        F --> N[UIManager.render: Origin Location];
     end
 
 2.9 Event System 2.0 Resolution
 Data-driven event selection and effect application.
 
-Code snippet
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];
@@ -250,7 +245,6 @@ graph TD
 2.10 Tutorial Trigger & Interaction Flow
 The interaction loop between Logic (TutorialService) and View (UITutorialManager).
 
-Code snippet
 graph TD
     subgraph Triggering
         A[User Action / Screen Load] --> B[TutorialService.checkState];
@@ -278,7 +272,6 @@ graph TD
 2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
-Code snippet
 graph TD
     subgraph Definition
         A[Mission Modules] --> B[missionRegistry.js];
@@ -314,7 +307,6 @@ graph TD
 2.12 Consumable Item Usage (Folded Space)
 Flow for using an item to bypass standard travel costs.
 
-Code snippet
 graph TD
     subgraph UI Interaction
         A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};

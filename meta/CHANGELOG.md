@@ -9,6 +9,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  updated fuel cost of event delays
 -  hull deterioration rate increased by 1%
 -  hull deterioration detached from time and attached to distance instead
+-  updated meta files
 
 # [35.20] - 2026-2-12
 -  mission screen polish

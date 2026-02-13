@@ -1,3 +1,5 @@
+// meta/ARCHITECTURAL_DECISIONS.md
+
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -583,3 +585,20 @@ Consequences:
 * **Pro:** Supports concurrent active missions (currently capped at 4).
 * **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
 * **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
+
+ADR-028: Decoupling of Time and Distance (Travel Entropy)
+Status: Accepted (2026-02-12)
+
+Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer. Time lost to events was a narrative annoyance rather than a systemic resource drain.
+
+Decision: Time and Distance have been mechanically decoupled.
+* **Distance Proxy:** The base, unmodified route duration is now statically evaluated at launch and used as a proxy for "Distance". Hull decay scales against this static distance proxy, entirely ignoring how fast or slow the ship actually travels.
+* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff (speed vs. maintenance costs).
+* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel, mathematically mapping time loss into the resource economy.
+* **Stranding Mechanic:** If fuel requirements for a trip (plus event delays) exceed current reserves, a critical "Stranding" state forces the loss of all travel time and fuel, returning the ship to the origin port.
+* **Drydocking:** Hull repairs at a station now advance the global game clock (1 Day per Repair Tick), weaponizing time against ship damage.
+
+Consequences:
+* **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
+* **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
+* **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.

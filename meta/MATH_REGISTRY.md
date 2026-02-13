@@ -1,4 +1,7 @@
+// meta/MATH_REGISTRY.md
+
 Orbital Trading: Math Registry
+
 1. Market Simulation Formulas
 1.1 Target Price Calculation
 The baseline price a market "wants" to have before player influence.
@@ -14,6 +17,7 @@ Determines how scarce an item is relative to the market's expectation.
 
 JavaScript
 AvailabilityRatio = CurrentStock / TargetStock
+
 1.3 Availability Effect (The Price Driver)
 The primary formula converting scarcity into a price multiplier.
 
@@ -28,7 +32,7 @@ JavaScript
 FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
 RandomFluctuation: ±5-10% daily noise.
 
-2. Travel & Fuel Formulas
+2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
 How much fuel is removed from the tank per trip.
 
@@ -44,6 +48,28 @@ How many days a trip takes.
 JavaScript
 TravelDays = (DistanceAU / ShipSpeed) * (1 - TravelSpeedBonus)
 TravelSpeedBonus: Accumulated from Age Perks or Upgrades.
+
+2.3 Distance-Based Hull Entropy
+Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance".
+
+JavaScript
+BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
+HullDecay = BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod
+HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
+
+2.4 Fuel-Coupled Event Delays
+When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.
+
+JavaScript
+DailyFuelRate = BaseFuelCost / BaseTravelTime
+EventDelayFuelCost = DailyFuelRate * EventDelayDays * PlayerBuildModifiers
+
+2.5 Time-Cost Repairs (Drydocking)
+Repairing a ship at a station consumes both credits and time.
+
+JavaScript
+Time Cost = 1 In-Game Day per Repair Tick 
+(A Repair Tick typically restores 5% of Max Hull, or 1% if precision topping-off is required).
 
 3. Ship Economy
 3.1 Resale Value

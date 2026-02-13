@@ -32464,6 +32464,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  updated fuel cost of event delays
 -  hull deterioration rate increased by 1%
 -  hull deterioration detached from time and attached to distance instead
+-  updated meta files
 
 # [35.20] - 2026-2-12
 -  mission screen polish
@@ -33278,7 +33279,10 @@ V. Glossary of Terms
 --- END OF FILE: ./meta/LORE_COMPENDIUM.md ---
 
 --- START OF FILE: ./meta/MATH_REGISTRY.md ---
+// meta/MATH_REGISTRY.md
+
 Orbital Trading: Math Registry
+
 1. Market Simulation Formulas
 1.1 Target Price Calculation
 The baseline price a market "wants" to have before player influence.
@@ -33294,6 +33298,7 @@ Determines how scarce an item is relative to the market's expectation.
 
 JavaScript
 AvailabilityRatio = CurrentStock / TargetStock
+
 1.3 Availability Effect (The Price Driver)
 The primary formula converting scarcity into a price multiplier.
 
@@ -33308,7 +33313,7 @@ JavaScript
 FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
 RandomFluctuation: ±5-10% daily noise.
 
-2. Travel & Fuel Formulas
+2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
 How much fuel is removed from the tank per trip.
 
@@ -33324,6 +33329,28 @@ How many days a trip takes.
 JavaScript
 TravelDays = (DistanceAU / ShipSpeed) * (1 - TravelSpeedBonus)
 TravelSpeedBonus: Accumulated from Age Perks or Upgrades.
+
+2.3 Distance-Based Hull Entropy
+Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance".
+
+JavaScript
+BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
+HullDecay = BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod
+HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
+
+2.4 Fuel-Coupled Event Delays
+When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.
+
+JavaScript
+DailyFuelRate = BaseFuelCost / BaseTravelTime
+EventDelayFuelCost = DailyFuelRate * EventDelayDays * PlayerBuildModifiers
+
+2.5 Time-Cost Repairs (Drydocking)
+Repairing a ship at a station consumes both credits and time.
+
+JavaScript
+Time Cost = 1 In-Game Day per Repair Tick 
+(A Repair Tick typically restores 5% of Max Hull, or 1% if precision topping-off is required).
 
 3. Ship Economy
 3.1 Resale Value
@@ -35389,6 +35416,8 @@ officers.js: Defines the registry of Sol Station Directorate officers and their 
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
+// meta/ARCHITECTURAL_DECISIONS.md
+
 Architectural Decision Records (ADRs)
 This document records the key architectural decisions made during the development of Orbital Trading. Understanding the "why" behind these decisions is crucial for maintaining a consistent and robust codebase.
 
@@ -35975,9 +36004,27 @@ Consequences:
 * **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
 * **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
 
+ADR-028: Decoupling of Time and Distance (Travel Entropy)
+Status: Accepted (2026-02-12)
+
+Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer. Time lost to events was a narrative annoyance rather than a systemic resource drain.
+
+Decision: Time and Distance have been mechanically decoupled.
+* **Distance Proxy:** The base, unmodified route duration is now statically evaluated at launch and used as a proxy for "Distance". Hull decay scales against this static distance proxy, entirely ignoring how fast or slow the ship actually travels.
+* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff (speed vs. maintenance costs).
+* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel, mathematically mapping time loss into the resource economy.
+* **Stranding Mechanic:** If fuel requirements for a trip (plus event delays) exceed current reserves, a critical "Stranding" state forces the loss of all travel time and fuel, returning the ship to the origin port.
+* **Drydocking:** Hull repairs at a station now advance the global game clock (1 Day per Repair Tick), weaponizing time against ship damage.
+
+Consequences:
+* **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
+* **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
+* **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
+// meta/DATA_FLOW.md
+
 Orbital Trading - Data Flow Architecture
 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
@@ -35997,7 +36044,6 @@ Persistence Layer: AssetStorageService (IndexedDB), AssetService (Memory Cache).
 2.1 Core Game Loop
 The primary cycle for user interaction and state updates.
 
-Code snippet
 graph TD
     subgraph Input Layer
         A[User Interaction] --> B{EventManager};
@@ -36025,7 +36071,6 @@ graph TD
 2.2 Boot Sequence & Pre-Flight (ADR-021)
 Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
 
-Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -36050,7 +36095,6 @@ graph TD
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction.
 
-Code snippet
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -36077,7 +36121,6 @@ graph TD
 2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
 
-Code snippet
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -36105,7 +36148,6 @@ graph TD
 2.5 Upgrade Installation (Destructive Replacement)
 Logic handling the 3-slot limit and replacement confirmation.
 
-Code snippet
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -36131,7 +36173,6 @@ graph TD
 2.6 Animated Transaction Flow
 Handling asynchronous visual blocking during state transitions.
 
-Code snippet
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -36157,7 +36198,6 @@ graph TD
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer.
 
-Code snippet
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -36175,35 +36215,35 @@ graph TD
         G --> A;
     end
 
-2.8 Travel Sequence (Visual Handoff)
-Separation of instant logic calculation and delayed visual presentation.
+2.8 Travel Sequence (Visual Handoff & Stranding Interception)
+Separation of instant logic calculation, fuel/stranding checks, and delayed visual presentation.
 
-Code snippet
 graph TD
     subgraph Initiation
-        A[Launch Click] --> B[SimulationService.handleTravel];
-        B --> C[TravelService.calculateTrip];
-        C --> D[Deduct Resources & Roll Events];
-        D --> E[Return TravelResult Object];
+        A[Launch Click] --> B[TravelService.initiateTravel];
+        B --> C{Sufficient Fuel for Base + Events?};
+        C -- No --> D[Stranding Protocol: Fuel=0, Add Time, Abort];
+        C -- Yes --> E[Deduct Resources, Apply Damage & Roll Events];
     end
 
     subgraph Visualization
-        E --> F[UIManager.showTravelAnimation];
-        F --> G[TravelAnimationService: Canvas Overlay];
-        G -- 2.5s Delay --> H[Animation Complete];
+        D --> F[UI: Render Stranded Modal];
+        E --> G[UIManager.showTravelAnimation];
+        G --> H[TravelAnimationService: Canvas Overlay];
+        H -- 2.5s Delay --> I[Animation Complete];
     end
 
     subgraph Resolution
-        H --> I[Execute Result Callback];
-        I --> J[UIManager.render: New Location];
-        I --> K{Event Triggered?};
-        K -- Yes --> L[Show Event Modal];
+        I --> J[Execute Result Callback];
+        J --> K[UIManager.render: New Location];
+        J --> L{Event Triggered?};
+        L -- Yes --> M[Show Event Modal];
+        F --> N[UIManager.render: Origin Location];
     end
 
 2.9 Event System 2.0 Resolution
 Data-driven event selection and effect application.
 
-Code snippet
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];
@@ -36230,7 +36270,6 @@ graph TD
 2.10 Tutorial Trigger & Interaction Flow
 The interaction loop between Logic (TutorialService) and View (UITutorialManager).
 
-Code snippet
 graph TD
     subgraph Triggering
         A[User Action / Screen Load] --> B[TutorialService.checkState];
@@ -36258,7 +36297,6 @@ graph TD
 2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
-Code snippet
 graph TD
     subgraph Definition
         A[Mission Modules] --> B[missionRegistry.js];
@@ -36294,7 +36332,6 @@ graph TD
 2.12 Consumable Item Usage (Folded Space)
 Flow for using an item to bypass standard travel costs.
 
-Code snippet
 graph TD
     subgraph UI Interaction
         A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
@@ -36318,7 +36355,6 @@ graph TD
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
     end
-
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
