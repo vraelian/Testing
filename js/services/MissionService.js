@@ -303,8 +303,10 @@ export class MissionService {
     /**
      * Checks all mission triggers against the current game state.
      * Iterates through ALL active missions and evaluates objectives using the Logic Engine.
+     * [[UPDATED]] Supports silent execution for render loop integration.
+     * @param {boolean} [suppressNotify=false] - If true, mutates state but skips setState/render to avoid loops.
      */
-    checkTriggers() {
+    checkTriggers(suppressNotify = false) {
         const { activeMissionIds } = this.gameState.missions;
         if (!activeMissionIds || activeMissionIds.length === 0) return;
     
@@ -356,7 +358,7 @@ export class MissionService {
             if (progress.isCompletable !== allObjectivesMet) {
                 progress.isCompletable = allObjectivesMet;
                 stateChanged = true;
-                if (allObjectivesMet) {
+                if (allObjectivesMet && !suppressNotify) {
                     this.logger.info.player(this.gameState.day, 'OBJECTIVES_MET', `All objectives for mission ${missionId} are met.`);
                 }
             }
@@ -364,8 +366,8 @@ export class MissionService {
             if (progressChanged) stateChanged = true;
         });
     
-        // Only update state and re-render if there's a change.
-        if (stateChanged) {
+        // Only update state and re-render if there's a change AND we aren't suppressing notifications.
+        if (stateChanged && !suppressNotify) {
             this.gameState.setState({}); // Set the new state
             this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
             this.uiManager.flashObjectiveProgress();

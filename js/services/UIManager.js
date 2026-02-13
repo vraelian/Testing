@@ -158,6 +158,12 @@ export class UIManager {
     render(gameState) {
         if (!gameState || !gameState.player) return;
 
+        // [[NEW]] Pre-Render Mission Check (Real-Time Sync)
+        // Silently updates mission progress (e.g. Cargo/Wealth) based on the exact state about to be rendered.
+        if (this.missionService) {
+            this.missionService.checkTriggers(true);
+        }
+
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
