@@ -151,7 +151,8 @@
     
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    border: 1px solid var(--theme-border);
+    /* [[FIX FOR D]] Tie directly into the global location theme border color */
+    border: 1px solid var(--theme-border-color, var(--theme-border));
     border-radius: 9999px; /* Capsule Shape */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 15px var(--theme-color-translucent);
     
@@ -188,7 +189,8 @@
     background: var(--theme-color-translucent);
     color: #fff;
     text-shadow: 0 0 10px var(--theme-color-glow);
-    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border);
+    /* [[FIX FOR D]] Override the fallback with global border color so the switch matches location visually */
+    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border-color, var(--theme-border));
 }
 
 /* --- HOST FACTION COLORS & GRADIENTS --- */
