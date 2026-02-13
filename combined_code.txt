@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.26</title>
+    <title>Orbital Trading 35.35</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.26</p>
+            <p>Version 35.35</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -132,8 +132,8 @@
              </div>
         </div>
     </main>
-    <div id="mission-sticky-bar" class="bottom-sticky-bar">
-        <div class="sticky-content sci-fi-frame">
+    <div id="mission-sticky-bar" class="bottom-sticky-bar cursor-pointer" data-action="set-screen" data-nav-id="data" data-screen-id="missions">
+        <div class="sticky-content">
             <p id="sticky-objective-text"></p>
             <p id="sticky-objective-progress" class="font-roboto-mono"></p>
         </div>
@@ -453,6 +453,11 @@
     -webkit-overflow-scrolling: touch;
     mask-image: linear-gradient(to bottom, transparent, black 20px, black 90%, transparent);
     padding: 10px 4px 100px 4px; /* Increased bottom padding to 100px */
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+
+.missions-scroll-panel::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Chrome/Safari/Edge */
 }
 
 /* --- HOLOGRAPHIC RAIL NAVIGATION --- */
@@ -468,9 +473,10 @@
     
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* [[FIX FOR D]] Tie directly into the global location theme border color */
+    border: 1px solid var(--theme-border-color, var(--theme-border));
     border-radius: 9999px; /* Capsule Shape */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 15px var(--theme-color-translucent);
     
     /* Perf */
     transform: translateZ(0);
@@ -480,7 +486,7 @@
 .mission-tab-btn {
     flex: 1;
     position: relative;
-    padding: 0.6rem 0;
+    padding: 0.4rem 0; /* Reduced from 0.6rem for ~30% height reduction */
     
     background: transparent;
     border: none;
@@ -505,7 +511,8 @@
     background: var(--theme-color-translucent);
     color: #fff;
     text-shadow: 0 0 10px var(--theme-color-glow);
-    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border);
+    /* [[FIX FOR D]] Override the fallback with global border color so the switch matches location visually */
+    box-shadow: inset 0 0 12px var(--theme-color-translucent), 0 0 1px var(--theme-border-color, var(--theme-border));
 }
 
 /* --- HOST FACTION COLORS & GRADIENTS --- */
@@ -588,7 +595,7 @@
     border: 1px solid var(--host-color, #444);
     box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 0 5px rgba(255,255,255,0.05);
     
-    border-radius: 4px;
+    border-radius: 8px; /* Softer, rounded corners */
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     overflow: hidden;
@@ -8240,7 +8247,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     TERMINAL
                 </button>
                 <button class="${getTabClass('log')}" data-action="switch-mission-tab" data-target="log">
-                    LOG <span class="text-xs ml-1 opacity-70">(${activeMissionIds.length}/4)</span>
+                    LOG
                 </button>
             </div>
         `;
@@ -8402,9 +8409,6 @@ export function renderMissionsScreen(gameState, missionService) {
     const renderEmptyState = (msg) => {
         return `
             <div class="mission-empty-state">
-                <svg class="mission-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
                 <div class="mission-empty-text">${msg}</div>
             </div>
         `;
@@ -8462,7 +8466,6 @@ export function renderMissionsScreen(gameState, missionService) {
     // [[PHASE 3]] Added missions-screen-container class for vignette support
     return `
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
-            <h1 class="text-3xl font-orbitron text-center mb-4 flex-shrink-0" style="color: var(--theme-color-glow); text-shadow: 0 0 10px var(--theme-border);">MISSION CONTROL</h1>
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
                 ${contentHtml}
@@ -15029,7 +15032,8 @@ export class UIMissionControl {
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
-            contentEl.className = `sticky-content sci-fi-frame ${hostClass} ${turnInClass}`;
+            // [[NEW]] sci-fi-frame removed to strip corner bracket accents
+            contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
 
             // [[NEW]] Progress Fill Gradient
             // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
@@ -30935,6 +30939,16 @@ export class ActionClickHandler {
                 this.uiManager.hideGenericTooltip(); 
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
+                // [[FIX for G]] Intercept Sticky Bar clicks to strictly force Log tab routing via State Mutation
+                if (actionTarget.id === 'mission-sticky-bar' || actionTarget.closest('#mission-sticky-bar')) {
+                    this.gameState.setState({
+                        uiState: {
+                            ...state.uiState,
+                            activeMissionTab: 'log'
+                        }
+                    });
+                }
+
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
                     this.gameState.subNavCollapsed = !this.gameState.subNavCollapsed;
                     this.uiManager.render(this.gameState.getState());
@@ -32456,6 +32470,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [35.35] - 2026-2-13
+-  Missions Screen polish
 
 # [35.26] - 2026-2-13
 -  added time-cost to hull repair

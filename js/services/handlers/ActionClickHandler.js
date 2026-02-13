@@ -214,9 +214,14 @@ export class ActionClickHandler {
                 this.uiManager.hideGenericTooltip(); 
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
-                // [[FIX for G]] Intercept Sticky Bar clicks to strictly force Log tab routing
+                // [[FIX for G]] Intercept Sticky Bar clicks to strictly force Log tab routing via State Mutation
                 if (actionTarget.id === 'mission-sticky-bar' || actionTarget.closest('#mission-sticky-bar')) {
-                    this.gameState.getState().uiState.activeMissionTab = 'log';
+                    this.gameState.setState({
+                        uiState: {
+                            ...state.uiState,
+                            activeMissionTab: 'log'
+                        }
+                    });
                 }
 
                 if (dataset.navId === state.activeNav && !isSubNavClick) {
