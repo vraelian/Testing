@@ -146,8 +146,8 @@ export class TravelService {
         
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === LOCATION_IDS.SUN && this.timeService.solStationService) {
-            if (typeof this.timeService.solStationService._syncStateJIT === 'function') {
-                this.timeService.solStationService._syncStateJIT();
+            if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
+                this.timeService.solStationService.stopLocalLiveLoop();
             }
         }
         // -------------------------------------------------
@@ -389,8 +389,11 @@ export class TravelService {
 
             // --- SOL STATION: SYNC JIT STATE IF ARRIVING ---
             if (locationId === LOCATION_IDS.SUN && this.timeService.solStationService) {
-                if (typeof this.timeService.solStationService._syncStateJIT === 'function') {
-                    this.timeService.solStationService._syncStateJIT();
+                if (typeof this.timeService.solStationService.catchUpDays === 'function') {
+                    // 1. Batch calculate all missed time instantly
+                    this.timeService.solStationService.catchUpDays(this.gameState.day);
+                    // 2. Start the local 120s real-time ticking
+                    this.timeService.solStationService.startLocalLiveLoop();
                 }
             }
             // -------------------------------------------------

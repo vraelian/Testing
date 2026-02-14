@@ -12,6 +12,7 @@ export const STATION_CONFIG = {
     MAX_CACHE: 100000, // Baseline reference for max cache capacity
     BASE_UNIT_PRICE: 45, // Designer dial for average commodity value
     EFFICIENCY_CLIFF: 0.5, // 50% health threshold for efficiency curve
+    REAL_TIME_SECONDS_PER_DAY: 120, // 1 In-Game Day = 120 seconds of simulation math
     MODES: {
         STABILITY: { 
             id: 'STABILITY', 
@@ -39,8 +40,9 @@ export const STATION_CONFIG = {
 
 /**
  * @class SolStationService
- * @description Manages the Sol Station endgame engine using an O(1) Deterministic 
- * Timestamp-Based Engine (JIT Math), 100% immune to background app suspension.
+ * @description Manages the Sol Station endgame engine using a Strict In-Game Time Paradigm.
+ * Math is evaluated incrementally via a Local Live Loop when on-station, and evaluated
+ * hyper-performatively in bulk (catchUpDays) when returning from off-station travel.
  */
 export class SolStationService {
     /**
@@ -50,30 +52,132 @@ export class SolStationService {
     constructor(gameState, logger) {
         this.gameState = gameState;
         this.logger = logger;
-        // Background interval removed in Phase 2 for JIT evaluation
+        this.timeService = null; // Injected later to allow local loop to advance global day
+        
+        this.liveLoopActive = false;
+        this.animationFrameId = null;
+        this.lastRealTimeTick = 0;
+        this.localTimeAccumulator = 0;
+    }
+
+    setTimeService(timeService) {
+        this.timeService = timeService;
     }
 
     /**
-     * Phase 2: The Deterministic JIT Math Engine (Timestamp Math)
-     * Evaluates exact exponential decay and definite integrals for generation.
-     * Pure function logic that projects state forward.
-     * * @param {object} currentState - The current station state
-     * @param {number} targetTimestamp - Date.now() in ms
-     * @returns {object} A new object representing the state at targetTimestamp
+     * Phase 2: Batch Catch-Up Logic
+     * Executes instantaneous exact math for days missed while the player was off-station.
+     * @param {number} currentDay - The global game day
      */
-    calculateStateAt(currentState, targetTimestamp) {
-        // Deep copy state to avoid mutating original during projection
-        const newState = JSON.parse(JSON.stringify(currentState));
-        
-        if (!newState.unlocked) return newState;
-        if (!newState.lastUpdateTime) {
-            newState.lastUpdateTime = targetTimestamp;
-            return newState;
+    catchUpDays(currentDay) {
+        const station = this.gameState.solStation;
+        if (!station || !station.unlocked) return;
+
+        // Migration from old real-time paradigm
+        if (typeof station.lastProcessedDay === 'undefined') {
+            station.lastProcessedDay = currentDay;
+            if (station.lastUpdateTime) delete station.lastUpdateTime;
+            return;
         }
 
-        // Calculate dt in seconds
-        const dt = Math.max(0, (targetTimestamp - newState.lastUpdateTime) / 1000);
-        if (dt === 0) return newState;
+        const daysMissed = currentDay - station.lastProcessedDay;
+        if (daysMissed <= 0) return;
+
+        // Convert days to standard simulation seconds
+        const dt = daysMissed * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY;
+        
+        const projectedState = this._calculateExactState(station, dt);
+        Object.assign(station, projectedState);
+        
+        station.lastProcessedDay = currentDay;
+        this.logger.info.system(currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
+    }
+
+    /**
+     * Phase 3: The Local Live Loop
+     * Runs continuously only while the player is docked at Sol Station.
+     * Evaluates fractional real-time deltas and pushes the global clock forward.
+     */
+    startLocalLiveLoop() {
+        if (this.liveLoopActive) return;
+        this.liveLoopActive = true;
+        this.lastRealTimeTick = Date.now();
+        this.localTimeAccumulator = 0;
+
+        const station = this.gameState.solStation;
+
+        // Ensure baseline exists to prevent NaN crashes
+        if (station && station.unlocked && typeof station.lastProcessedDay === 'undefined') {
+            station.lastProcessedDay = this.gameState.day;
+        }
+
+        const tick = () => {
+            if (!this.liveLoopActive) return;
+
+            try {
+                const now = Date.now();
+                const realDeltaMs = now - this.lastRealTimeTick;
+                this.lastRealTimeTick = now;
+
+                // 1 real second = 1 simulation second in the live loop
+                const dt = realDeltaMs / 1000;
+
+                if (dt > 0 && station && station.unlocked) {
+                    // Update state with fractional math silently
+                    const newState = this._calculateExactState(station, dt);
+                    Object.assign(station, newState);
+                    
+                    // Accumulate time to trigger global calendar advancement
+                    this.localTimeAccumulator += dt;
+                    if (this.localTimeAccumulator >= STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY) {
+                        const daysToAdvance = Math.floor(this.localTimeAccumulator / STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
+                        this.localTimeAccumulator -= (daysToAdvance * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
+                        
+                        // Keep local tracker synced before global loop fires
+                        station.lastProcessedDay += daysToAdvance;
+
+                        // Advance global game calendar (TimeService automatically triggers global setState)
+                        if (this.timeService) {
+                            this.timeService.advanceDays(daysToAdvance);
+                        }
+                    }
+                }
+            } catch (error) {
+                this.logger.error('SolStationService', 'Live loop execution failed:', error);
+            }
+
+            this.animationFrameId = requestAnimationFrame(tick);
+        };
+
+        this.animationFrameId = requestAnimationFrame(tick);
+        this.logger.info.system(this.gameState.day, 'SOL_LOOP', `Local live loop started at Sol Station.`);
+    }
+
+    stopLocalLiveLoop() {
+        if (!this.liveLoopActive) return;
+        this.liveLoopActive = false;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
+        // Anchor the departure day
+        if (this.gameState.solStation && this.gameState.solStation.unlocked) {
+            this.gameState.solStation.lastProcessedDay = this.gameState.day;
+        }
+        
+        this.logger.info.system(this.gameState.day, 'SOL_LOOP', `Local live loop terminated.`);
+    }
+
+    /**
+     * Pure function logic that projects state forward by exactly dt seconds.
+     * @param {object} currentState - The current station state
+     * @param {number} dt - Time delta in simulation seconds
+     * @returns {object} A new object representing the projected state
+     */
+    _calculateExactState(currentState, dt) {
+        const newState = JSON.parse(JSON.stringify(currentState));
+        if (dt <= 0) return newState;
 
         const modeConfig = STATION_CONFIG.MODES[newState.mode];
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
@@ -123,7 +227,6 @@ export class SolStationService {
 
         // Set instantaneous efficiency for UI/Projections
         newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
-        newState.lastUpdateTime = targetTimestamp;
 
         return newState;
     }
@@ -160,7 +263,7 @@ export class SolStationService {
     }
 
     /**
-     * Phase 3: Expose the "Death Spiral" Threshold
+     * Expose the "Death Spiral" Threshold
      * The mathematical point where decay replacement costs exceed generation profits.
      * @returns {number} Threshold as a decimal percentage clamped 0 to EFFICIENCY_CLIFF.
      */
@@ -180,30 +283,11 @@ export class SolStationService {
     }
 
     /**
-     * Synchronizes the actual GameState to Date.now() using the JIT engine.
-     * Called before any state mutations.
-     */
-    _syncStateJIT() {
-        const now = Date.now();
-        const station = this.gameState.solStation;
-        
-        if (!station.unlocked) return;
-        
-        const projectedState = this.calculateStateAt(station, now);
-        Object.assign(station, projectedState);
-    }
-
-    /**
-     * Phase 4: Service Class Architecture & API
-     * Returns mathematically perfect real-time values for the UI without mutating state.
+     * Returns the live state. Because of the live loop or catch-up mechanics,
+     * gameState is always the single source of truth.
      */
     getLiveState() {
-        const station = this.gameState.solStation;
-        // Intercept missing timestamps from debug teleports and force a baseline
-        if (!station.lastUpdateTime) {
-            station.lastUpdateTime = Date.now();
-        }
-        return this.calculateStateAt(station, Date.now());
+        return this.gameState.solStation;
     }
 
     /**
@@ -239,11 +323,11 @@ export class SolStationService {
     }
 
     // ==========================================
-    // API Mutations (JIT Synchronized)
+    // API Mutations (Always Catch Up First)
     // ==========================================
 
     setMode(newModeId) {
-        this._syncStateJIT(); 
+        this.catchUpDays(this.gameState.day);
         
         if (STATION_CONFIG.MODES[newModeId]) {
             this.gameState.solStation.mode = newModeId;
@@ -253,7 +337,7 @@ export class SolStationService {
     }
 
     donateToCache(commodityId, quantity) {
-        this._syncStateJIT(); 
+        this.catchUpDays(this.gameState.day);
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
@@ -294,7 +378,7 @@ export class SolStationService {
     }
 
     claimStockpile(type = null) {
-        this._syncStateJIT(); 
+        this.catchUpDays(this.gameState.day);
 
         const stockpile = this.gameState.solStation.stockpile;
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
@@ -334,7 +418,7 @@ export class SolStationService {
     }
 
     assignOfficer(slotId, officerId) {
-        this._syncStateJIT(); 
+        this.catchUpDays(this.gameState.day);
 
         const station = this.gameState.solStation;
         const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
@@ -352,11 +436,10 @@ export class SolStationService {
     }
 
     getProjectedOutput() {
-        // Evaluates based on a full 120-second Game Day
-        const REAL_TIME_SECONDS_PER_DAY = 120;
-        
-        // Generate projections from a perfectly up-to-date JIT state
+        // Evaluate based on 1 full Game Day (120 simulation seconds)
         const liveState = this.getLiveState();
+        if(!liveState || !liveState.unlocked) return { credits: 0, antimatter: 0, entropy: 1 };
+        
         const modeConfig = STATION_CONFIG.MODES[liveState.mode];
         
         // Calculate starting efficiency
@@ -367,8 +450,8 @@ export class SolStationService {
         const buffs = this._calculateOfficerBuffs(liveState.officers);
         const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
 
-        const credits = Math.floor(modeConfig.yieldCredits * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
-        const antimatter = (modeConfig.yieldAm * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
+        const credits = Math.floor(modeConfig.yieldCredits * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
+        const antimatter = (modeConfig.yieldAm * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
 
         return { credits, antimatter, entropy };
     }

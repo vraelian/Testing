@@ -55,6 +55,8 @@ export class SimulationService {
         this.solStationService = new SolStationService(gameState, logger);
         // Inject into TimeService for daily tick processing
         this.timeService.solStationService = this.solStationService;
+        // Inject TimeService into SolStationService for the local live loop
+        this.solStationService.setTimeService(this.timeService);
         // ---------------------------
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
@@ -74,7 +76,7 @@ export class SimulationService {
         // --- INITIALIZATION CHECK ---
         // If the game loads and we are already at Sol Station, start the heartbeat.
         if (this.gameState.currentLocationId === LOCATION_IDS.SUN) {
-            this.solStationService.startRealTimeSimulation();
+            this.solStationService.startLocalLiveLoop();
         }
     }
 
