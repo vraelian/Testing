@@ -5,52 +5,32 @@ import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 import { AssetService } from '../AssetService.js'; 
 
-/**
- * @class UISolStationControl
- * @description Domain Controller responsible for the Sol Station Dashboard.
- * Utilizes strict DOM Caching, State Diffing, and JIT State Binding for maximum performance and accuracy.
- */
 export class UISolStationControl {
-    /**
-     * @param {import('../UIManager.js').UIManager} uiManager
-     */
     constructor(uiManager) {
         this.uiManager = uiManager;
-        this.refreshInterval = null;
+        this.animationFrameId = null;
+        this.visualState = null; 
         
-        // Performance Caching
         this.domCache = null; 
         this.lastRendered = {}; 
     }
 
-    /**
-     * Helper method to intercept the dormant GameState and project it Just-In-Time to the current millisecond.
-     * @param {object} gameState 
-     * @returns {object} The projected, live Sol Station state
-     */
     _getLiveStationState(gameState) {
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
             return this.uiManager.simulationService.solStationService.getLiveState();
         }
-        // Fallback to static state if service is uninitialized
         return gameState.solStation;
     }
 
-    /**
-     * Builds and displays the main Sol Station Dashboard modal.
-     * @param {object} gameState
-     */
     showDashboard(gameState) {
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
-        // --- BULLETPROOF IGNITION ---
-        // If the dashboard is explicitly opened, guarantee the math loop is running and caught up
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-            this.uiManager.simulationService.solStationService.catchUpDays(gameState.day);
-            this.uiManager.simulationService.solStationService.startLocalLiveLoop();
+            const svc = this.uiManager.simulationService.solStationService;
+            svc.catchUpDays(gameState.day);
+            svc.startTracking();
         }
-        // ----------------------------
 
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
@@ -66,19 +46,31 @@ export class UISolStationControl {
 
         if (existingRoot && isModalVisible) {
             existingRoot.outerHTML = contentHtml;
-            this.domCache = null; // Force cache rebuild since DOM was replaced
+            this.domCache = null; 
             
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
+                    if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+                        const svc = this.uiManager.simulationService.solStationService;
+                        svc.stopTracking();
+                        svc.commitPendingUniverseDays();
+                    }
                     this.uiManager.hideModal('event-modal');
                 };
             }
         } else {
-            this.domCache = null; // Ensure cache resets on fresh open
-            this.uiManager.queueModal('event-modal', '', contentHtml, null, {
+            this.domCache = null; 
+            this.uiManager.queueModal('event-modal', '', contentHtml, () => {
+                this._stopRefreshLoop();
+                if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+                    const svc = this.uiManager.simulationService.solStationService;
+                    svc.stopTracking();
+                    svc.commitPendingUniverseDays();
+                }
+            }, {
                 width: '800px', 
                 dismissOutside: true,
                 specialClass: 'sol-station-modal',
@@ -87,14 +79,9 @@ export class UISolStationControl {
             });
         }
         
-        // Begin the visualization loop
         this._startRefreshLoop();
     }
 
-    /**
-     * Caches direct references to all manipulatable DOM nodes to prevent 
-     * expensive document traversals during the 100ms update loop.
-     */
     _buildDomCache(root) {
         this.domCache = {
             integrityLabel: root.querySelector('.sol-health-bar-label span'),
@@ -111,7 +98,6 @@ export class UISolStationControl {
             caches: {}
         };
 
-        // Pre-cache individual cache rows
         root.querySelectorAll('.sol-cache-row').forEach(row => {
             const commId = row.dataset.commId;
             if (commId) {
@@ -124,27 +110,30 @@ export class UISolStationControl {
         });
     }
 
-    /**
-     * Updates values using strict State Diffing to prevent redundant DOM painting.
-     * @param {object} gameState 
-     */
     update(gameState) {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
 
-        // 1. Ensure DOM references and diffing state exist
         if (!this.domCache) {
             this._buildDomCache(root);
             this.lastRendered = { caches: {} };
         }
 
         const station = this._getLiveStationState(gameState);
+        
+        // Resync Visual State to True State
+        if (this.visualState) {
+            this.visualState.credits = station.stockpile.credits;
+            this.visualState.antimatter = station.stockpile.antimatter;
+            Object.entries(station.caches).forEach(([id, c]) => {
+                this.visualState.caches[id] = c.current;
+            });
+        }
+
         const output = this._calculateProjections(gameState);
-        const stockpile = station.stockpile;
         const c = this.domCache;
         const lr = this.lastRendered;
 
-        // 2. Diff Health
         if (lr.health !== station.health) {
             if (c.integrityLabel && c.integrityBar) {
                 c.integrityLabel.className = this._getHealthColorClass(station.health);
@@ -155,13 +144,11 @@ export class UISolStationControl {
             lr.health = station.health;
         }
 
-        // 3. Diff Entropy
         if (lr.entropy !== output.entropy) {
             if (c.entropyVal) c.entropyVal.textContent = `${output.entropy.toFixed(2)}x`;
             lr.entropy = output.entropy;
         }
 
-        // 4. Diff Threshold Marker
         if (lr.threshold !== output.threshold) {
             if (c.thresholdMarker) {
                 c.thresholdMarker.style.left = `${output.threshold}%`;
@@ -169,14 +156,11 @@ export class UISolStationControl {
             lr.threshold = output.threshold;
         }
 
-        // 5. Diff Antimatter Stockpile
         const amMax = 150; 
-        const amCurrent = Math.min(amMax, stockpile.antimatter); 
-        
+        const amCurrent = Math.min(amMax, station.stockpile.antimatter); 
         if (lr.amCurrent !== amCurrent) {
             const amFillPct = (amCurrent / amMax) * 100;
             if (c.amBar) c.amBar.style.width = `${amFillPct}%`;
-            if (c.amText) c.amText.textContent = `${amCurrent.toFixed(2)} / ${amMax}`;
             if (c.amCollectBtn) {
                  c.amCollectBtn.disabled = amCurrent < 1; 
                  c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
@@ -184,10 +168,8 @@ export class UISolStationControl {
             lr.amCurrent = amCurrent;
         }
 
-        // 6. Diff Credit Stockpile
-        const creds = Math.floor(stockpile.credits);
+        const creds = Math.floor(station.stockpile.credits);
         if (lr.credits !== creds) {
-            if (c.credVal) c.credVal.textContent = formatCredits(creds);
             if (c.credCollectBtn) {
                 c.credCollectBtn.disabled = creds <= 0;
                 c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
@@ -195,7 +177,6 @@ export class UISolStationControl {
             lr.credits = creds;
         }
 
-        // 7. Diff Mode
         if (lr.mode !== station.mode) {
             c.modeBtns.forEach(btn => {
                 const mode = btn.dataset.mode;
@@ -207,13 +188,11 @@ export class UISolStationControl {
             lr.mode = station.mode;
         }
 
-        // 8. Diff Maintenance Caches
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const cacheEntries = Object.entries(station.caches).filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
 
         cacheEntries.forEach(([commId, cache]) => {
             const playerStock = playerInventory[commId]?.quantity || 0;
-            // Create a compound key to detect if station capacity OR player hold changes
             const cacheKey = `${cache.current}_${playerStock}`; 
 
             if (lr.caches[commId] !== cacheKey) {
@@ -223,7 +202,6 @@ export class UISolStationControl {
                     const canDonate = playerStock > 0 && cache.current < cache.max;
 
                     if (ui.bar) ui.bar.style.width = `${fillPct}%`;
-                    if (ui.text) ui.text.textContent = `${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}`;
                     if (ui.btn) {
                         ui.btn.disabled = !canDonate;
                         ui.btn.style.opacity = canDonate ? '1' : '0.5';
@@ -235,33 +213,76 @@ export class UISolStationControl {
     }
 
     _startRefreshLoop() {
-        if (this.refreshInterval) clearInterval(this.refreshInterval);
+        if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
         
-        // Rapid 100ms update for smooth visualization
-        this.refreshInterval = setInterval(() => {
+        const svc = this.uiManager.simulationService ? this.uiManager.simulationService.solStationService : null;
+        if (!svc) return;
+
+        this.visualState = {
+            credits: svc.gameState.solStation.stockpile.credits,
+            antimatter: svc.gameState.solStation.stockpile.antimatter,
+            caches: {}
+        };
+        Object.entries(svc.gameState.solStation.caches).forEach(([id, c]) => {
+            this.visualState.caches[id] = c.current;
+        });
+
+        let lastFrameTime = performance.now();
+        let lastCommitTime = performance.now();
+
+        const loop = (now) => {
             const root = document.getElementById('sol-dashboard-root');
-            
             if (!root || !document.body.contains(root) || root.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }
 
-            // Fallback to last known state if the simulation service goes out of scope momentarily
-            const liveGameState = this.uiManager.simulationService ? this.uiManager.simulationService.gameState : this.uiManager.lastKnownState;
+            const dtReal = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
 
-            if (liveGameState) {
-                this.update(liveGameState);
+            const rates = svc.getPerSecondRates();
+
+            this.visualState.credits += rates.creditsPerSec * dtReal;
+            this.visualState.antimatter = Math.min(150, this.visualState.antimatter + rates.amPerSec * dtReal);
+            
+            Object.keys(this.visualState.caches).forEach(id => {
+                this.visualState.caches[id] = this.visualState.caches[id] * Math.exp(-rates.k * dtReal);
+            });
+
+            if (this.domCache) {
+                if (this.domCache.credVal) this.domCache.credVal.textContent = Math.floor(this.visualState.credits).toLocaleString();
+                if (this.domCache.amText) this.domCache.amText.textContent = `${this.visualState.antimatter.toFixed(2)} / 150`;
+                
+                Object.entries(this.visualState.caches).forEach(([id, val]) => {
+                    const cacheUi = this.domCache.caches[id];
+                    if (cacheUi) {
+                        const max = svc.gameState.solStation.caches[id].max;
+                        cacheUi.text.textContent = `${Math.floor(val).toLocaleString()} / ${max.toLocaleString()}`;
+                    }
+                });
             }
 
-        }, 100); 
+            if (now - lastCommitTime > 1000) {
+                svc.commitLiveTime();
+                this.update(svc.gameState);
+                
+                const navDay = document.getElementById('nav-date') || document.querySelector('.nav-date'); 
+                if (navDay && svc.gameState.day) navDay.innerText = `Day ${svc.gameState.day}`;
+                
+                lastCommitTime = now;
+            }
+
+            this.animationFrameId = requestAnimationFrame(loop);
+        };
+
+        this.animationFrameId = requestAnimationFrame(loop);
     }
 
     _stopRefreshLoop() {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-            this.refreshInterval = null;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
         }
-        // Wipe cache to ensure a fresh DOM structure is mapped if reopened
         this.domCache = null; 
     }
 
@@ -269,7 +290,6 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return; 
 
-        // Roster pauses the visualization view (not the sim)
         this._stopRefreshLoop();
 
         const station = this._getLiveStationState(gameState);
@@ -321,7 +341,7 @@ export class UISolStationControl {
             ${footerHtml}
         `;
 
-        this.domCache = null; // Roster wipes out standard dashboard DOM elements
+        this.domCache = null; 
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {

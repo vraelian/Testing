@@ -13,6 +13,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  hull deterioration rate increased by 1%
 -  hull deterioration detached from time and attached to distance instead
 -  updated meta files
+- refueling/repairing resets scroll position on services screen
 
 # [35.20] - 2026-2-12
 -  mission screen polish
