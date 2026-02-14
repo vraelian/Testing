@@ -622,10 +622,8 @@ ${logHistory}
                 this.actions.godMode.handler();
                 // 3. Teleport to Sun
                 this.gameState.currentLocationId = LOCATION_IDS.SUN;
-                // 4. [CRITICAL] Start the real-time loop because we teleported (skipping travel trigger)
-                if (this.simulationService.solStationService) {
-                    this.simulationService.solStationService.startRealTimeSimulation();
-                }
+                // 4. [OBSOLETE] startRealTimeSimulation() was removed. The new JIT engine 
+                //    automatically calculates the correct state upon arrival.
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},

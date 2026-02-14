@@ -35,15 +35,15 @@ export class TimeService {
      * @param {import('../UIManager.js').UIManager} uiManager
      * @param {import('../../services/LoggingService.js').Logger} logger
      */
-    constructor(gameState, marketService, uiManager, logger, newsTickerService) { // Received newsTickerService from SimService
+    constructor(gameState, marketService, uiManager, logger, newsTickerService) { 
         this.gameState = gameState;
         this.marketService = marketService;
         this.uiManager = uiManager;
         this.logger = logger;
         this.newsTickerService = newsTickerService;
-        this.simulationService = null; // Injected by SimulationService
-        this.intelService = null;      // Injected by SimulationService
-        this.solStationService = null; // Injected by SimulationService
+        this.simulationService = null; 
+        this.intelService = null;      
+        this.solStationService = null; 
     }
 
     /**
@@ -74,13 +74,6 @@ export class TimeService {
             if (this.simulationService) {
                 this.simulationService.pulseNewsTicker();
             }
-
-            // --- SOL STATION: PROCESS TICK ---
-            // Replaced .processTick() with .processTimeStep(1) to align with new real-time logic
-            if (this.solStationService) {
-                this.solStationService.processTimeStep(1); 
-            }
-            // ---------------------------------
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Base upgrade modifier

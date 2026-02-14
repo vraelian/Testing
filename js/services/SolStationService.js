@@ -4,42 +4,43 @@ import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS } from '../data/constants.js';
 
 /**
- * Constants defining the station's operational parameters.
- * Rates are defined PER REAL-TIME SECOND.
- * 1 Game Day = 120 Real Time Seconds.
+ * Phase 1: "Designer Dials" Configuration Block
+ * Centralized economy variables to allow safe balancing of the endgame.
  */
-const REAL_TIME_SECONDS_PER_DAY = 120;
-const MAX_ANTIMATTER_STOCKPILE = 150;
-
-const MODES = {
-    STABILITY: { 
-        id: 'STABILITY', 
-        creditsPerSec: 35, 
-        amPerSec: 0.12, 
-        decayPerSec: 0.00025, // -0.025%
-        entropyMult: 1 
-    },
-    COMMERCE: { 
-        id: 'COMMERCE', 
-        creditsPerSec: 140, 
-        amPerSec: 0.12, 
-        decayPerSec: 0.00075, // -0.075%
-        entropyMult: 3 
-    },
-    PRODUCTION: { 
-        id: 'PRODUCTION', 
-        creditsPerSec: 35, 
-        amPerSec: 0.48, 
-        decayPerSec: 0.0012, // -0.12%
-        entropyMult: 4 
+export const STATION_CONFIG = {
+    MAX_ANTIMATTER_STOCKPILE: 150,
+    MAX_CACHE: 100000, // Baseline reference for max cache capacity
+    BASE_UNIT_PRICE: 45, // Designer dial for average commodity value
+    EFFICIENCY_CLIFF: 0.5, // 50% health threshold for efficiency curve
+    MODES: {
+        STABILITY: { 
+            id: 'STABILITY', 
+            yieldCredits: 35, 
+            yieldAm: 0.12, 
+            decayK: 0.00025, // Base decay rate k
+            entropyMult: 1 
+        },
+        COMMERCE: { 
+            id: 'COMMERCE', 
+            yieldCredits: 140, 
+            yieldAm: 0.12, 
+            decayK: 0.00075, 
+            entropyMult: 3 
+        },
+        PRODUCTION: { 
+            id: 'PRODUCTION', 
+            yieldCredits: 35, 
+            yieldAm: 0.48, 
+            decayK: 0.0012, 
+            entropyMult: 4 
+        }
     }
 };
 
 /**
  * @class SolStationService
- * @description Manages the Sol Station endgame engine. Handles entropy decay,
- * resource consumption, and output generation.
- * Now manages its own "Heartbeat" simulation loop when the player is on-site.
+ * @description Manages the Sol Station endgame engine using an O(1) Deterministic 
+ * Timestamp-Based Engine (JIT Math), 100% immune to background app suspension.
  */
 export class SolStationService {
     /**
@@ -49,187 +50,165 @@ export class SolStationService {
     constructor(gameState, logger) {
         this.gameState = gameState;
         this.logger = logger;
-        this.simulationInterval = null;
-        this.lastTickTime = 0;
+        // Background interval removed in Phase 2 for JIT evaluation
     }
 
     /**
-     * Starts the background real-time simulation loop.
-     * Should be called when the player arrives at the Sol Station location.
+     * Phase 2: The Deterministic JIT Math Engine (Timestamp Math)
+     * Evaluates exact exponential decay and definite integrals for generation.
+     * Pure function logic that projects state forward.
+     * * @param {object} currentState - The current station state
+     * @param {number} targetTimestamp - Date.now() in ms
+     * @returns {object} A new object representing the state at targetTimestamp
      */
-    startRealTimeSimulation() {
-        if (this.simulationInterval) return; // Already running
-
-        this.logger.info.system('SolStation', this.gameState.day, 'SIM_START', 'Station real-time simulation active.');
-        this.lastTickTime = performance.now();
-
-        // 1-second heartbeat (1000ms)
-        this.simulationInterval = setInterval(() => {
-            const now = performance.now();
-            const deltaTime = (now - this.lastTickTime) / 1000; // Seconds since last tick
-            this.lastTickTime = now;
-            
-            // Fix: Clamp delta to 1 day (86400s) instead of 5s.
-            // This allows the game to "catch up" if the tab was backgrounded/throttled,
-            // while preventing massive jumps from system hibernation.
-            const safeDelta = Math.min(deltaTime, 86400); 
-            
-            this.processRealTimeTick(safeDelta);
-        }, 1000);
-    }
-
-    /**
-     * Stops the background real-time simulation loop.
-     * Should be called when the player leaves the Sol Station location.
-     */
-    stopRealTimeSimulation() {
-        if (this.simulationInterval) {
-            clearInterval(this.simulationInterval);
-            this.simulationInterval = null;
-            this.logger.info.system('SolStation', this.gameState.day, 'SIM_STOP', 'Station real-time simulation paused.');
+    calculateStateAt(currentState, targetTimestamp) {
+        // Deep copy state to avoid mutating original during projection
+        const newState = JSON.parse(JSON.stringify(currentState));
+        
+        if (!newState.unlocked) return newState;
+        if (!newState.lastUpdateTime) {
+            newState.lastUpdateTime = targetTimestamp;
+            return newState;
         }
-    }
 
-    /**
-     * Processes a "Batch" of time (e.g., sleeping, traveling).
-     * Converts days into total active seconds and applies the per-second rates.
-     * @param {number} days - The number of days to simulate.
-     */
-    processTimeStep(days = 1) {
-        const station = this.gameState.solStation;
+        // Calculate dt in seconds
+        const dt = Math.max(0, (targetTimestamp - newState.lastUpdateTime) / 1000);
+        if (dt === 0) return newState;
+
+        const modeConfig = STATION_CONFIG.MODES[newState.mode];
+        const officerBuffs = this._calculateOfficerBuffs(newState.officers);
+        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
         
-        // If not unlocked, the station does not operate.
-        if (!station.unlocked) return;
+        // k represents the exact exponential decay constant
+        const k = modeConfig.decayK * entropy;
 
-        // Convert days to "simulation seconds" to ensure math consistency
-        const totalSeconds = days * REAL_TIME_SECONDS_PER_DAY;
-        
-        this._executeLogic(totalSeconds, days);
-    }
-
-    /**
-     * Executes a micro-tick for the Real-Time simulation.
-     * @param {number} secondsPassed - Actual real-time seconds elapsed.
-     */
-    processRealTimeTick(secondsPassed) {
-        const station = this.gameState.solStation;
-        if (!station.unlocked) return;
-
-        // Calculate fraction of a day for logging/tracking purposes
-        const dayFraction = secondsPassed / REAL_TIME_SECONDS_PER_DAY;
-        
-        this._executeLogic(secondsPassed, dayFraction);
-    }
-
-    /**
-     * Core logic engine.
-     * @param {number} seconds - The duration of the operation in real-time seconds.
-     * @param {number} daysEquivalent - The duration in game days (for entropy scaling).
-     * @private
-     */
-    _executeLogic(seconds, daysEquivalent) {
-        const station = this.gameState.solStation;
-        const modeConfig = MODES[station.mode];
-        const officerBuffs = this.getOfficerBuffs();
-        
-        // 1. Calculate Entropy
-        // Entropy scales with *Days Passed* specifically, to keep decay meaningful over long periods
-        const entropy = this.calculateEntropy(modeConfig.entropyMult);
-
-        // 2. Decay Caches
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        // Filter out non-maintenance items (like Folded Drives or Antimatter)
-        // Checks for specific ID exclusion AND ensuring max > 0 to prevent division by zero.
-        const validCacheEntries = Object.entries(station.caches).filter(([id, cache]) => {
+        // Filter valid maintenance caches
+        const validCaches = Object.entries(newState.caches).filter(([id, cache]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache.max > 0;
         });
 
-        for (const [commodityId, cache] of validCacheEntries) {
-            // Rate is "Percentage of Total Stock" per second
-            // Decay = Max Capacity * RatePerSec * Seconds * Entropy Scalar
-            const baseDecay = cache.max * modeConfig.decayPerSec * seconds;
-            
-            // Entropy accelerates decay
-            const actualDecay = baseDecay * entropy;
-
-            if (cache.current > 0) {
-                cache.current = Math.max(0, cache.current - actualDecay);
-            }
-
-            // Safe division check (redundant given filter, but safe)
-            const fillRatio = cache.max > 0 ? (cache.current / cache.max) : 0;
-            totalFillRatio += fillRatio;
+        // Calculate x0 (Start Health)
+        validCaches.forEach(([id, c]) => {
+            totalFillRatio += (c.current / c.max);
             activeCaches++;
+        });
+        const x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+
+        // Decay Cache using Exact Exponential formula: C_new = C_old * exp(-k * dt)
+        validCaches.forEach(([id, cache]) => {
+            const exactCache = cache.current * Math.exp(-k * dt);
+            cache.current = exactCache;
+        });
+
+        // Calculate x1 (End Health)
+        const x1 = x0 * Math.exp(-k * dt);
+        newState.health = Math.round(x1 * 100);
+
+        // Exact Stockpile Generation (Integral Calculus)
+        // Apply Officer Buffs (Additively)
+        const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
+        const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
+
+        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k, dt);
+        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k, dt);
+
+        newState.stockpile.credits += generatedCredits;
+        newState.stockpile.antimatter = Math.min(
+            STATION_CONFIG.MAX_ANTIMATTER_STOCKPILE, 
+            newState.stockpile.antimatter + generatedAm
+        );
+
+        // Set instantaneous efficiency for UI/Projections
+        newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
+        newState.lastUpdateTime = targetTimestamp;
+
+        return newState;
+    }
+
+    /**
+     * Helper to calculate the definite integral of Yield over time dt.
+     * Math: Integral of YieldMax * E(x(t)) dt
+     */
+    _calculateYieldIntegral(yieldRate, x0, k, dt) {
+        if (k === 0) {
+            // Fallback to linear if k=0 to prevent division by zero
+            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? 1.0 : 2 * Math.pow(x0, 2);
+            return yieldRate * eff * dt;
         }
 
-        // 3. Update Health
-        // Prevent NaN if no active caches exist (though rare)
-        const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = Math.round(averageFill * 100);
+        const x1 = x0 * Math.exp(-k * dt);
 
-        // 4. Generate Output (If Health > 0)
-        if (station.health > 0) {
-            // Efficiency Logic:
-            // Fix: Use a continuous Bezier curve below 50% to prevent the "Efficiency Cliff".
-            // Old: efficiency = averageFill^2 (at 0.49 -> 0.24, huge drop from 0.50)
-            // New: efficiency = 2 * (averageFill^2)
-            // At 0.50 -> 2 * 0.25 = 0.50 (Smooth connection)
-            // At 0.40 -> 2 * 0.16 = 0.32
-            // At 0.25 -> 2 * 0.0625 = 0.125
-            let efficiency = averageFill;
-            if (averageFill < 0.5) {
-                efficiency = 2 * Math.pow(averageFill, 2); 
-            }
-
-            // Calculate Base Outputs (Per Second * Seconds Passed)
-            let creditGen = modeConfig.creditsPerSec * seconds;
-            let amGen = modeConfig.amPerSec * seconds;
-
-            // Apply Officer Buffs (Additively)
-            // Example: +10% buff = 1.1 multiplier
-            creditGen *= (1 + officerBuffs.creditMult);
-            amGen *= (1 + officerBuffs.amMult);
-
-            // Apply Efficiency
-            creditGen *= efficiency;
-            amGen *= efficiency;
-
-            // Apply to Stockpile
-            station.stockpile.credits += creditGen;
+        if (x1 >= STATION_CONFIG.EFFICIENCY_CLIFF) {
+            // Case A: Health stayed >= 0.5 the whole time (Efficiency = 1.0)
+            return yieldRate * dt;
+        } else if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) {
+            // Case B: Health started and stayed < 0.5 (Efficiency = 2x^2)
+            return (yieldRate * Math.pow(x0, 2) / k) * (1 - Math.exp(-2 * k * dt));
+        } else {
+            // Case C: Crossed the 0.5 boundary during this offline period
+            const t_cross = -Math.log(STATION_CONFIG.EFFICIENCY_CLIFF / x0) / k;
+            const genBefore = yieldRate * t_cross;
             
-            if (station.stockpile.antimatter < MAX_ANTIMATTER_STOCKPILE) {
-                station.stockpile.antimatter = Math.min(MAX_ANTIMATTER_STOCKPILE, station.stockpile.antimatter + amGen);
-            }
-
-            // Log operational warnings only on significant time steps (full days)
-            if (daysEquivalent >= 1 && station.health < 20) {
-                this.logger.info.system('SolStation', this.gameState.day, 'CRITICAL', `Station health critical (${station.health}%). Efficiency plummeting.`);
-            }
+            const dt_remaining = dt - t_cross;
+            const genAfter = (yieldRate * Math.pow(STATION_CONFIG.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
+            
+            return genBefore + genAfter;
         }
     }
 
     /**
-     * Calculates the final entropy multiplier.
-     * @param {number} baseModeMult 
+     * Phase 3: Expose the "Death Spiral" Threshold
+     * The mathematical point where decay replacement costs exceed generation profits.
+     * @returns {number} Threshold as a decimal percentage clamped 0 to EFFICIENCY_CLIFF.
      */
-    calculateEntropy(baseModeMult) {
-        let multiplier = baseModeMult;
-        const buffs = this.getOfficerBuffs();
-        multiplier += buffs.entropy; // Officer buffs are usually negative here (reducing entropy)
-        return Math.max(0.1, multiplier);
+    getDeathSpiralThreshold() {
+        const station = this.gameState.solStation;
+        const modeConfig = STATION_CONFIG.MODES[station.mode];
+        const officerBuffs = this.getOfficerBuffs();
+        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
+        const k = modeConfig.decayK * entropy;
+        
+        const commerceYield = STATION_CONFIG.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult);
+        if (commerceYield <= 0) return STATION_CONFIG.EFFICIENCY_CLIFF;
+
+        const threshold = (k * STATION_CONFIG.MAX_CACHE * STATION_CONFIG.BASE_UNIT_PRICE) / (2 * commerceYield);
+        
+        return Math.max(0, Math.min(threshold, STATION_CONFIG.EFFICIENCY_CLIFF));
     }
 
     /**
-     * Helper to aggregate buffs from all assigned officers.
-     * @returns {object} { entropy, creditMult, amMult }
+     * Synchronizes the actual GameState to Date.now() using the JIT engine.
+     * Called before any state mutations.
      */
-    getOfficerBuffs() {
+    _syncStateJIT() {
+        const now = Date.now();
         const station = this.gameState.solStation;
-        let total = { entropy: 0, creditMult: 0, amMult: 0 };
         
-        station.officers.forEach(slot => {
+        if (!station.unlocked) return;
+        
+        const projectedState = this.calculateStateAt(station, now);
+        Object.assign(station, projectedState);
+    }
+
+    /**
+     * Phase 4: Service Class Architecture & API
+     * Returns mathematically perfect real-time values for the UI without mutating state.
+     */
+    getLiveState() {
+        return this.calculateStateAt(this.gameState.solStation, Date.now());
+    }
+
+    /**
+     * Helper methods decoupled to accept state objects dynamically
+     */
+    _calculateOfficerBuffs(officersList) {
+        let total = { entropy: 0, creditMult: 0, amMult: 0 };
+        if (!officersList) return total;
+
+        officersList.forEach(slot => {
             if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
                 const b = OFFICERS[slot.assignedOfficerId].buffs;
                 total.entropy += b.entropy;
@@ -237,12 +216,31 @@ export class SolStationService {
                 total.amMult += b.amMult;
             }
         });
-
         return total;
     }
 
+    getOfficerBuffs() {
+        return this._calculateOfficerBuffs(this.gameState.solStation.officers);
+    }
+
+    _calculateEntropyFromBuffs(baseModeMult, buffs) {
+        let multiplier = baseModeMult;
+        multiplier += buffs.entropy; 
+        return Math.max(0.1, multiplier);
+    }
+
+    calculateEntropy(baseModeMult) {
+        return this._calculateEntropyFromBuffs(baseModeMult, this.getOfficerBuffs());
+    }
+
+    // ==========================================
+    // API Mutations (JIT Synchronized)
+    // ==========================================
+
     setMode(newModeId) {
-        if (MODES[newModeId]) {
+        this._syncStateJIT(); 
+        
+        if (STATION_CONFIG.MODES[newModeId]) {
             this.gameState.solStation.mode = newModeId;
             this.logger.info.player(this.gameState.day, 'STATION_MODE', `Sol Station mode switched to ${newModeId}`);
             this.gameState.setState({});
@@ -250,6 +248,8 @@ export class SolStationService {
     }
 
     donateToCache(commodityId, quantity) {
+        this._syncStateJIT(); 
+
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
@@ -270,7 +270,6 @@ export class SolStationService {
         // Recalculate Health immediately using filtered logic
         let totalFillRatio = 0;
         let activeCaches = 0;
-        // Filter non-maintenance items in donation recalculation too
         const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
         });
@@ -280,7 +279,6 @@ export class SolStationService {
             activeCaches++;
         }
         
-        // Prevent division by zero if all caches are empty/invalid
         const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
         station.health = Math.round(averageFill * 100);
 
@@ -291,6 +289,8 @@ export class SolStationService {
     }
 
     claimStockpile(type = null) {
+        this._syncStateJIT(); 
+
         const stockpile = this.gameState.solStation.stockpile;
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         
@@ -328,28 +328,9 @@ export class SolStationService {
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
 
-    /**
-     * Helper to get the current output estimates per day for the UI (Projections).
-     * Calculates based on 120 seconds (1 day).
-     */
-    getProjectedOutput() {
-        const station = this.gameState.solStation;
-        const modeConfig = MODES[station.mode];
-        const averageFill = station.health / 100;
-        const buffs = this.getOfficerBuffs();
-
-        let efficiency = averageFill;
-        if (averageFill < 0.5) efficiency = 2 * Math.pow(averageFill, 2);
-
-        // Daily Estimate = RatePerSec * 120 * Efficiency * Buffs
-        const credits = Math.floor(modeConfig.creditsPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
-        const antimatter = (modeConfig.amPerSec * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
-        const entropy = this.calculateEntropy(modeConfig.entropyMult);
-
-        return { credits, antimatter, entropy };
-    }
-
     assignOfficer(slotId, officerId) {
+        this._syncStateJIT(); 
+
         const station = this.gameState.solStation;
         const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
         
@@ -363,5 +344,27 @@ export class SolStationService {
         this.logger.info.player(this.gameState.day, 'OFFICER_ASSIGN', `Officer ${officerName} ${action} to Slot ${slotId}.`);
         this.gameState.setState({});
         return true;
+    }
+
+    getProjectedOutput() {
+        // Evaluates based on a full 120-second Game Day
+        const REAL_TIME_SECONDS_PER_DAY = 120;
+        
+        // Generate projections from a perfectly up-to-date JIT state
+        const liveState = this.getLiveState();
+        const modeConfig = STATION_CONFIG.MODES[liveState.mode];
+        
+        // Calculate starting efficiency
+        const x0 = liveState.health / 100;
+        let efficiency = x0;
+        if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
+
+        const buffs = this._calculateOfficerBuffs(liveState.officers);
+        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
+
+        const credits = Math.floor(modeConfig.yieldCredits * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
+        const antimatter = (modeConfig.yieldAm * REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
+
+        return { credits, antimatter, entropy };
     }
 }
