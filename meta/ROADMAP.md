@@ -3,23 +3,20 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Sudden Ideas
--  rounded corners of mission cards
--  remove corner brackets from mission sticky bar
--  Time & Hull Update V2 GDD
--  Build Mission Maker V3
--  Update and refactor Sol Station timekeeping
--  Review language of events and edit 'hard coded' writing, ie 'it takes a week'.
-
+-
 
 ## Ongoing, WIP Efforts
 -  Increase chance for events depending on distance traveled
--  How can I make time matter more?
+- add events to blockade locations
+-  Review language of events and edit 'hard coded' writing, ie 'it takes a week'.
 -  How to increase risk and add difficulty mid-game?
 -  How to increase usefulness of multiple ships, improve Muti-ship game play?
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
+-  Add sun station progression and escalation
+-  Implement Officers GDD V1
 -  Review spawn logic of upgrades and by location.
 -  Scale upgrade price by percentage per tier instead of hardcoding.
-- add events to blockade locations
+-  Build Mission Maker V3
 
 
 ## Imminent Projects
