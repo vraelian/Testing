@@ -44,6 +44,14 @@ export class UISolStationControl {
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
+        // --- BULLETPROOF IGNITION ---
+        // If the dashboard is explicitly opened, guarantee the math loop is running and caught up
+        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+            this.uiManager.simulationService.solStationService.catchUpDays(gameState.day);
+            this.uiManager.simulationService.solStationService.startLocalLiveLoop();
+        }
+        // ----------------------------
+
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
         

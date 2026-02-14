@@ -75,7 +75,7 @@ export class SimulationService {
 
         // --- INITIALIZATION CHECK ---
         // If the game loads and we are already at Sol Station, start the heartbeat.
-        if (this.gameState.currentLocationId === LOCATION_IDS.SUN) {
+        if (this.gameState.currentLocationId === 'sol') {
             this.solStationService.startLocalLiveLoop();
         }
     }
