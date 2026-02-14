@@ -8,6 +8,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 -  Time & Hull Update V2 GDD
 -  Build Mission Maker V3
 -  Update and refactor Sol Station timekeeping
+-  Review language of events and edit 'hard coded' writing, ie 'it takes a week'.
 
 
 ## Ongoing, WIP Efforts

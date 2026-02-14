@@ -144,9 +144,11 @@ export class TravelService {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         
-        // --- SOL STATION: STOP SIMULATION IF DEPARTING ---
+        // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === LOCATION_IDS.SUN && this.timeService.solStationService) {
-            this.timeService.solStationService.stopRealTimeSimulation();
+            if (typeof this.timeService.solStationService._syncStateJIT === 'function') {
+                this.timeService.solStationService._syncStateJIT();
+            }
         }
         // -------------------------------------------------
 
@@ -381,14 +383,15 @@ export class TravelService {
 
         const finalCallback = () => {
             // [[FIXED]] Force Mission Trigger Check on Arrival
-            // This ensures missions like "Travel to X" complete instantly upon docking.
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
             }
 
-            // --- SOL STATION: START SIMULATION IF ARRIVING ---
+            // --- SOL STATION: SYNC JIT STATE IF ARRIVING ---
             if (locationId === LOCATION_IDS.SUN && this.timeService.solStationService) {
-                this.timeService.solStationService.startRealTimeSimulation();
+                if (typeof this.timeService.solStationService._syncStateJIT === 'function') {
+                    this.timeService.solStationService._syncStateJIT();
+                }
             }
             // -------------------------------------------------
 
@@ -551,8 +554,6 @@ export class TravelService {
         // 2. Check Fuel Depletion (Fuel < 0) -> Clamp to zero.
         if (ship.fuel <= 0) {
             this.gameState.player.shipStates[ship.id].fuel = 0;
-            // Legacy Tow Back logic removed. 
-            // The resumeTravel -> initiateTravel sequence will handle Stranding if required fuel cannot be met.
         }
 
         // 3. All Systems Nominal - Proceed

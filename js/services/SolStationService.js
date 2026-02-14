@@ -198,7 +198,12 @@ export class SolStationService {
      * Returns mathematically perfect real-time values for the UI without mutating state.
      */
     getLiveState() {
-        return this.calculateStateAt(this.gameState.solStation, Date.now());
+        const station = this.gameState.solStation;
+        // Intercept missing timestamps from debug teleports and force a baseline
+        if (!station.lastUpdateTime) {
+            station.lastUpdateTime = Date.now();
+        }
+        return this.calculateStateAt(station, Date.now());
     }
 
     /**

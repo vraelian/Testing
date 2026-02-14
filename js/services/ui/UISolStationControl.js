@@ -8,7 +8,7 @@ import { AssetService } from '../AssetService.js';
 /**
  * @class UISolStationControl
  * @description Domain Controller responsible for the Sol Station Dashboard.
- * Utilizes strict DOM Caching and State Diffing for maximum 10Hz performance.
+ * Utilizes strict DOM Caching, State Diffing, and JIT State Binding for maximum performance and accuracy.
  */
 export class UISolStationControl {
     /**
@@ -24,11 +24,24 @@ export class UISolStationControl {
     }
 
     /**
+     * Helper method to intercept the dormant GameState and project it Just-In-Time to the current millisecond.
+     * @param {object} gameState 
+     * @returns {object} The projected, live Sol Station state
+     */
+    _getLiveStationState(gameState) {
+        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+            return this.uiManager.simulationService.solStationService.getLiveState();
+        }
+        // Fallback to static state if service is uninitialized
+        return gameState.solStation;
+    }
+
+    /**
      * Builds and displays the main Sol Station Dashboard modal.
      * @param {object} gameState
      */
     showDashboard(gameState) {
-        const station = gameState.solStation;
+        const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
         const contentHtml = this._buildDashboardHtml(gameState);
@@ -117,7 +130,7 @@ export class UISolStationControl {
             this.lastRendered = { caches: {} };
         }
 
-        const station = gameState.solStation;
+        const station = this._getLiveStationState(gameState);
         const output = this._calculateProjections(gameState);
         const stockpile = station.stockpile;
         const c = this.domCache;
@@ -225,9 +238,8 @@ export class UISolStationControl {
                 return;
             }
 
-            // Retrieve live state directly from service to catch micro-updates
-            const simService = this.uiManager.simulationService;
-            const liveGameState = simService && simService.solStationService ? simService.solStationService.gameState : this.uiManager.lastKnownState;
+            // Fallback to last known state if the simulation service goes out of scope momentarily
+            const liveGameState = this.uiManager.simulationService ? this.uiManager.simulationService.gameState : this.uiManager.lastKnownState;
 
             if (liveGameState) {
                 this.update(liveGameState);
@@ -252,8 +264,9 @@ export class UISolStationControl {
         // Roster pauses the visualization view (not the sim)
         this._stopRefreshLoop();
 
-        const roster = gameState.solStation.roster || [];
-        const assignedIds = gameState.solStation.officers.map(s => s.assignedOfficerId).filter(id => id);
+        const station = this._getLiveStationState(gameState);
+        const roster = station.roster || [];
+        const assignedIds = station.officers.map(s => s.assignedOfficerId).filter(id => id);
         const availableOfficers = roster.filter(id => !assignedIds.includes(id));
 
         let listHtml = '';
@@ -278,7 +291,7 @@ export class UISolStationControl {
             }).join('');
         }
 
-        const currentAssignment = gameState.solStation.officers.find(s => s.slotId === parseInt(slotId));
+        const currentAssignment = station.officers.find(s => s.slotId === parseInt(slotId));
         let footerHtml = '';
         if (currentAssignment && currentAssignment.assignedOfficerId) {
             footerHtml = `
@@ -312,7 +325,7 @@ export class UISolStationControl {
     // --- HTML GENERATORS ---
 
     _buildDashboardHtml(gameState) {
-        const station = gameState.solStation;
+        const station = this._getLiveStationState(gameState);
         const output = this._calculateProjections(gameState);
         const stockpile = station.stockpile;
         const playerVisualSeed = gameState.player.visualSeed;
@@ -441,7 +454,8 @@ export class UISolStationControl {
     }
 
     _renderCacheList(gameState) {
-        const caches = gameState.solStation.caches;
+        const station = this._getLiveStationState(gameState);
+        const caches = station.caches;
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const playerVisualSeed = gameState.player.visualSeed;
 
@@ -491,7 +505,8 @@ export class UISolStationControl {
     }
 
     _renderOfficerSlots(gameState) {
-        const slots = gameState.solStation.officers;
+        const station = this._getLiveStationState(gameState);
+        const slots = station.officers;
         
         return slots.map(slot => {
             const officerId = slot.assignedOfficerId;
