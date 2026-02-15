@@ -216,7 +216,7 @@ export const EVENTS_BUREAUCRACY = [
             },
             'out_dispute_fail': {
                 title: 'Appeal Denied',
-                text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
+                text: 'The lengthy arbitration process ends with the magistrate AI rejecting your appeal. You pay the reinstatement fee plus the late penalty.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }

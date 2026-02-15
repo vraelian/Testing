@@ -214,5 +214,69 @@ export const EVENTS_HAZARDS = [
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
             }
         }
+    },
+    {
+        id: 'evt_hazard_kessler',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 8,
+        requirements: [],
+        template: {
+            title: 'Kessler Cascade',
+            description: 'A catastrophic satellite collision has blanketed the orbital lane ahead in hyper-velocity debris. The corridor is effectively blocked.'
+        },
+        choices: [
+            {
+                id: 'choice_reinforce',
+                text: 'Reinforce & Push (-10 Plasteel * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
+            },
+            {
+                id: 'choice_crawl',
+                text: 'Crawl Through (Trip Delay & Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_crawl_success', weight: 60 },
+                        { outcomeId: 'out_crawl_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert Course (Redirect & -Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            }
+        ],
+        outcomes: {
+            'out_reinforce': {
+                title: 'Punched Through',
+                text: 'You weld extra Plasteel to the prow and ram your way through the thinnest part of the debris field. The armor holds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_crawl_success': {
+                title: 'Navigated Safely',
+                text: 'You drop to maneuvering thrusters and painstakingly weave through the shrapnel over several days.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_crawl_fail': {
+                title: 'Hull Strike',
+                text: 'Despite your slow speed, a rogue shard of metal shears off a stabilizer fin, causing damage and delaying your trip.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                ]
+            },
+            'out_divert': {
+                title: 'Diverted Course',
+                text: 'You burn extra fuel to find a completely new vector, abandoning your original destination.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }
+                ]
+            }
+        }
     }
 ];

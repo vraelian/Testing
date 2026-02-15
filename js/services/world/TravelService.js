@@ -144,6 +144,13 @@ export class TravelService {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         
+        // --- PHASE 4 FIX: Safe-guard against Origin Redirects ---
+        if (fromId === locationId) {
+             this.gameState.setState({ pendingTravel: null });
+             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+             return;
+        }
+
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === 'sol' && this.timeService.solStationService) {
             if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
@@ -523,6 +530,9 @@ export class TravelService {
                         break;
                     case 'EFF_LOSE_RANDOM_CARGO':
                          effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         break;
+                    case 'EFF_REDIRECT_TRAVEL':
+                         effectText = `Course Diverted`;
                          break;
                     default:
                         effectText = `Effect Applied`;

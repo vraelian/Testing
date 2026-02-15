@@ -87,7 +87,7 @@ export const EVENTS_OPPORTUNITY = [
         outcomes: {
             'out_entertain_success': {
                 title: 'Generous Patron',
-                text: 'You spend hours recounting your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
+                text: 'You entertain them with tales of your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
@@ -95,7 +95,7 @@ export const EVENTS_OPPORTUNITY = [
             },
             'out_entertain_fail': {
                 title: 'Tough Crowd',
-                text: 'You try to entertain them with drinks and stories, but they quickly grow bored and cut the feed. You wasted your resources.',
+                text: 'You entertain them with tales of your closest calls, but they quickly grow bored and cut the feed. You wasted your resources.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
             },
             'out_ignore': {

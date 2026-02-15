@@ -1,3 +1,4 @@
+// js/data/events/events_traffic.js
 /**
  * @fileoverview
  * Event Category: TRAFFIC
@@ -231,6 +232,57 @@ export const EVENTS_TRAFFIC = [
                 title: 'Overtaking',
                 text: 'You overtake the slow convoy.',
                 effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_traffic_spill',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 8,
+        requirements: [],
+        template: {
+            title: 'Industrial Spill Cordon',
+            description: 'A massive commercial freighter has ruptured, spilling thousands of tons of raw material across the transit vector. Automated drones have erected a hard cordon until cleanup is complete.'
+        },
+        choices: [
+            {
+                id: 'choice_bribe',
+                text: 'Bribe Cleanup Crews (-15 Propellant * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
+            },
+            {
+                id: 'choice_wait',
+                text: 'Wait for Clearance (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert Course (Redirect & -Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            }
+        ],
+        outcomes: {
+            'out_bribe': {
+                title: 'Escort Granted',
+                text: 'You discreetly transfer the much-needed propellant to a strained cleanup crew. In exchange, they guide you through a safe lane in the cordon.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_wait': {
+                title: 'Lane Cleared',
+                text: 'You cut your engines and drift at the edge of the cordon for days while the drones slowly scoop up the hazardous sludge.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.25 } }]
+            },
+            'out_divert': {
+                title: 'Diverted Course',
+                text: 'You begrudgingly alter course and burn extra fuel to find a detour, abandoning your original destination.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }
+                ]
             }
         }
     }

@@ -99,7 +99,7 @@ export const LOCATION_IDS = Object.freeze({
 
 /**
  * Defines the orbital order from the Sun (Index 0) outwards.
- * Used for "Solar Harmony" calculations.
+ * Used for "Solar Harmony" calculations and Blockade Redirects.
  */
 export const ORBITAL_ORDER = [
     LOCATION_IDS.SUN,
@@ -109,13 +109,13 @@ export const ORBITAL_ORDER = [
     LOCATION_IDS.LUNA,
     LOCATION_IDS.MARS,
     LOCATION_IDS.BELT,
+    LOCATION_IDS.EXCHANGE,
     LOCATION_IDS.JUPITER,
     LOCATION_IDS.SATURN,
     LOCATION_IDS.URANUS,
     LOCATION_IDS.NEPTUNE,
-    LOCATION_IDS.PLUTO,
     LOCATION_IDS.KEPLER,
-    LOCATION_IDS.EXCHANGE
+    LOCATION_IDS.PLUTO
 ];
 
 /**
@@ -275,9 +275,9 @@ export const EVENT_CONSTANTS = Object.freeze({
         TRIGGER_FOLLOWUP: 'EFF_TRIGGER_EVENT', // Chain another event
         LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
         ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO', // Specific logic
-        ADD_UPGRADE: 'EFF_ADD_UPGRADE', // [[NEW]]: Grants a specific ship upgrade
-        FULL_REFUEL: 'EFF_FULL_REFUEL',  // [[NEW]]: Sets active ship fuel to 100%
-        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL' // [[NEW]]: Diverts travel to an intermediate or origin location
+        ADD_UPGRADE: 'EFF_ADD_UPGRADE', // Grants a specific ship upgrade
+        FULL_REFUEL: 'EFF_FULL_REFUEL',  // Sets active ship fuel to 100%
+        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL' // Diverts travel to an intermediate or origin location
     }
 });
 // --- [[END]] EVENT SYSTEM 2.0 ---
@@ -304,7 +304,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.15, // [[UPDATED]]: Increased from 0.07 (7%) to 0.15 (15%) per Balance Request
+    RANDOM_EVENT_CHANCE: 0.15, 
 });
 
 /**
