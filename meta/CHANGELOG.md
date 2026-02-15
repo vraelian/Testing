@@ -2,6 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.42] - 2026-2-15
+-  added blockade style events
+-  increased chance for events for longer trips
+-  updated event writing
+-  event bug fixes
+
 # [35.39] - 2026-2-13
 -  sol simulation math rebalance
 -  added deferred universe calculations to sol sim

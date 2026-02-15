@@ -298,7 +298,8 @@ export const EVENTS_BUREAUCRACY = [
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
                 ]
             },
             'out_turn_away': {
@@ -306,7 +307,8 @@ export const EVENTS_BUREAUCRACY = [
                 text: 'You begrudgingly alter course and burn extra fuel to find a detour, abandoning your original destination.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
                 ]
             }
         }

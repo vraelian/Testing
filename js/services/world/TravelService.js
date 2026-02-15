@@ -146,6 +146,10 @@ export class TravelService {
         
         // --- PHASE 4 FIX: Safe-guard against Origin Redirects ---
         if (fromId === locationId) {
+             // NEW: Process any time delays incurred during the failed trip before aborting
+             if (eventMods && eventMods.travelTimeAdd > 0) {
+                 this.timeService.advanceDays(eventMods.travelTimeAdd);
+             }
              this.gameState.setState({ pendingTravel: null });
              this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
              return;
