@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.45] - 2026-2-15
+-  tuned ship upgrade drop rate
+-  added location bias to ship upgrades
+-  tuned ship upgrade price scaling
+
 # [35.42] - 2026-2-15
 -  added blockade style events
 -  increased chance for events for longer trips

@@ -11,13 +11,11 @@ All notable plans and desirables for the Orbital Trading project will be documen
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
 -  Add sun station progression and escalation
 -  Implement Officers GDD V1
--  Review spawn logic of upgrades and by location.
--  Scale upgrade price by percentage per tier instead of hardcoding.
 -  Build Mission Maker V3
 
 
 ## Imminent Projects
-
+-
 
 ## Long-Term Goals, Ideas
 - Reputation system
