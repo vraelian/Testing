@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.39</title>
+    <title>Orbital Trading 35.42</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.39</p>
+            <p>Version 35.42</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10215,7 +10215,7 @@ export const LOCATION_IDS = Object.freeze({
 
 /**
  * Defines the orbital order from the Sun (Index 0) outwards.
- * Used for "Solar Harmony" calculations.
+ * Used for "Solar Harmony" calculations and Blockade Redirects.
  */
 export const ORBITAL_ORDER = [
     LOCATION_IDS.SUN,
@@ -10225,13 +10225,13 @@ export const ORBITAL_ORDER = [
     LOCATION_IDS.LUNA,
     LOCATION_IDS.MARS,
     LOCATION_IDS.BELT,
+    LOCATION_IDS.EXCHANGE,
     LOCATION_IDS.JUPITER,
     LOCATION_IDS.SATURN,
     LOCATION_IDS.URANUS,
     LOCATION_IDS.NEPTUNE,
-    LOCATION_IDS.PLUTO,
     LOCATION_IDS.KEPLER,
-    LOCATION_IDS.EXCHANGE
+    LOCATION_IDS.PLUTO
 ];
 
 /**
@@ -10391,8 +10391,9 @@ export const EVENT_CONSTANTS = Object.freeze({
         TRIGGER_FOLLOWUP: 'EFF_TRIGGER_EVENT', // Chain another event
         LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
         ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO', // Specific logic
-        ADD_UPGRADE: 'EFF_ADD_UPGRADE', // [[NEW]]: Grants a specific ship upgrade
-        FULL_REFUEL: 'EFF_FULL_REFUEL'  // [[NEW]]: Sets active ship fuel to 100%
+        ADD_UPGRADE: 'EFF_ADD_UPGRADE', // Grants a specific ship upgrade
+        FULL_REFUEL: 'EFF_FULL_REFUEL',  // Sets active ship fuel to 100%
+        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL' // Diverts travel to an intermediate or origin location
     }
 });
 // --- [[END]] EVENT SYSTEM 2.0 ---
@@ -10419,7 +10420,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.15, // [[UPDATED]]: Increased from 0.07 (7%) to 0.15 (15%) per Balance Request
+    RANDOM_EVENT_CHANCE: 0.15, 
 });
 
 /**
@@ -10439,7 +10440,6 @@ export const WEALTH_MILESTONES = [
  * @type {string}
  */
 export const SAVE_KEY = 'orbitalTraderSave_v2';
-
 --- END OF FILE: ./js/data/constants.js ---
 
 --- START OF FILE: ./js/data/missions.js ---
@@ -13088,6 +13088,7 @@ export const LOCATION_VARIANT_COUNTS = {
 --- END OF FILE: ./js/data/assets_config.js ---
 
 --- START OF FILE: ./js/data/events/events_entropy.js ---
+// js/data/events/events_entropy.js
 /**
  * @fileoverview
  * Event Category: ENTROPY
@@ -13140,7 +13141,7 @@ export const EVENTS_ENTROPY = [
             },
             'out_shutdown_delay': {
                 title: 'Reboot Sequence',
-                text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
+                text: 'You kill the main reactor. The ship drifts for an extended period, radiating heat slowly into the black before it is safe to restart.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
             }
         }
@@ -13258,7 +13259,7 @@ export const EVENTS_ENTROPY = [
             },
             'out_override_fail': {
                 title: 'Navigational Error',
-                text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
+                text: 'You forced a bad vector. By the time you realize the error, you have wasted precious time traveling in the wrong direction.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
             }
         }
@@ -13323,6 +13324,7 @@ export const EVENTS_ENTROPY = [
 --- END OF FILE: ./js/data/events/events_entropy.js ---
 
 --- START OF FILE: ./js/data/events/events_traffic.js ---
+// js/data/events/events_traffic.js
 /**
  * @fileoverview
  * Event Category: TRAFFIC
@@ -13558,11 +13560,64 @@ export const EVENTS_TRAFFIC = [
                 effects: []
             }
         }
+    },
+    {
+        id: 'evt_traffic_spill',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 8,
+        requirements: [],
+        template: {
+            title: 'Industrial Spill Cordon',
+            description: 'A massive commercial freighter has ruptured, spilling thousands of tons of raw material across the transit vector. Automated drones have erected a hard cordon until cleanup is complete.'
+        },
+        choices: [
+            {
+                id: 'choice_bribe',
+                text: 'Bribe Cleanup Crews (-15 Propellant * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
+            },
+            {
+                id: 'choice_wait',
+                text: 'Wait for Clearance (Trip Delay)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert Course (Redirect & -Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            }
+        ],
+        outcomes: {
+            'out_bribe': {
+                title: 'Escort Granted',
+                text: 'You discreetly transfer the much-needed propellant to a strained cleanup crew. In exchange, they guide you through a safe lane in the cordon.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+            },
+            'out_wait': {
+                title: 'Lane Cleared',
+                text: 'You cut your engines and drift at the edge of the cordon for days while the drones slowly scoop up the hazardous sludge.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.25 } }]
+            },
+            'out_divert': {
+                title: 'Diverted Course',
+                text: 'You begrudgingly alter course and burn extra fuel to find a detour, abandoning your original destination.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } } // Added time penalty
+                ]
+            }
+        }
     }
 ];
 --- END OF FILE: ./js/data/events/events_traffic.js ---
 
 --- START OF FILE: ./js/data/events/events_bureaucracy.js ---
+// js/data/events/events_bureaucracy.js
 /**
  * @fileoverview
  * Event Category: BUREAUCRACY
@@ -13610,7 +13665,7 @@ export const EVENTS_BUREAUCRACY = [
             },
             'out_inspect': {
                 title: 'Bureaucratic Delay',
-                text: 'They board you. They check every seal. It takes a week.',
+                text: 'They board you. They check every seal, delaying your journey considerably.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
             },
             'out_bylaws': {
@@ -13780,10 +13835,99 @@ export const EVENTS_BUREAUCRACY = [
             },
             'out_dispute_fail': {
                 title: 'Appeal Denied',
-                text: 'The magistrate AI rejects your appeal. You pay the reinstatement fee plus the late penalty.',
+                text: 'The lengthy arbitration process ends with the magistrate AI rejecting your appeal. You pay the reinstatement fee plus the late penalty.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
+                ]
+            }
+        }
+    },
+    {
+        id: 'evt_bureau_blockade',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
+        weight: 8,
+        requirements: [],
+        template: {
+            title: 'Sector Blockade',
+            description: 'A corporate military flotilla has established a hard blockade across this sector. "Turn back, freighter. This lane is closed by order of the Board."'
+        },
+        choices: [
+            {
+                id: 'choice_bypass_hack',
+                text: 'Spoof Clearance Codes (-10 Processors * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bypass_hack' }] }
+            },
+            {
+                id: 'choice_bypass_perk',
+                text: 'Syndicate Connections (Req: Venetian Syndicate)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.VENETIAN_SYNDICATE, operator: 'EQ', value: 1 }],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bypass_perk' }] }
+            },
+            {
+                id: 'choice_bribe',
+                text: 'Bribe Commander (-15% Wealth)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
+            },
+            {
+                id: 'choice_run',
+                text: 'Run the Blockade (Risk Hull & Redirect)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_run_success', weight: 30 },
+                        { outcomeId: 'out_run_fail', weight: 70 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_turn',
+                text: 'Comply & Divert (Redirect & -Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_turn_away' }] }
+            }
+        ],
+        outcomes: {
+            'out_bypass_hack': {
+                title: 'Clearance Accepted',
+                text: 'You pump raw processing power into a transponder spoof. The military sensors read you as a corporate supply vessel and wave you through.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_bypass_perk': {
+                title: 'Syndicate Access',
+                text: 'You transmit a highly encrypted handshake. The commander realizes who you represent and quietly clears a path for you.',
+                effects: []
+            },
+            'out_bribe': {
+                title: 'Toll Extracted',
+                text: 'You quietly transfer a massive sum to an anonymous account. The blockade "temporarily fails" in your sector, allowing you to pass.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.15 } }]
+            },
+            'out_run_success': {
+                title: 'Slipped Through',
+                text: 'You kill your main drive and drift through a gap in the patrol net like a ghost. They never saw you.',
+                effects: []
+            },
+            'out_run_fail': {
+                title: 'Warning Shots',
+                text: 'They spot you immediately. Warning shots rake your hull, forcing you to abort the jump and flee to the nearest safe port.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                ]
+            },
+            'out_turn_away': {
+                title: 'Diverted Course',
+                text: 'You begrudgingly alter course and burn extra fuel to find a detour, abandoning your original destination.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
                 ]
             }
         }
@@ -13792,6 +13936,7 @@ export const EVENTS_BUREAUCRACY = [
 --- END OF FILE: ./js/data/events/events_bureaucracy.js ---
 
 --- START OF FILE: ./js/data/events/events_opportunity.js ---
+// js/data/events/events_opportunity.js
 /**
  * @fileoverview
  * Event Category: OPPORTUNITY
@@ -13880,7 +14025,7 @@ export const EVENTS_OPPORTUNITY = [
         outcomes: {
             'out_entertain_success': {
                 title: 'Generous Patron',
-                text: 'You spend hours recounting your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
+                text: 'You entertain them with tales of your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
@@ -13888,7 +14033,7 @@ export const EVENTS_OPPORTUNITY = [
             },
             'out_entertain_fail': {
                 title: 'Tough Crowd',
-                text: 'You try to entertain them with drinks and stories, but they quickly grow bored and cut the feed. You wasted your resources.',
+                text: 'You entertain them with tales of your closest calls, but they quickly grow bored and cut the feed. You wasted your resources.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
             },
             'out_ignore': {
@@ -14066,7 +14211,7 @@ export const EVENTS_OPPORTUNITY = [
         outcomes: {
             'out_repair_success': {
                 title: 'Service Rendered',
-                text: 'It takes two days of spacewalking to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
+                text: 'It takes exhaustive spacewalking efforts to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }
@@ -14088,6 +14233,7 @@ export const EVENTS_OPPORTUNITY = [
 --- END OF FILE: ./js/data/events/events_opportunity.js ---
 
 --- START OF FILE: ./js/data/events/events_salvage.js ---
+// js/data/events/events_salvage.js
 /**
  * @fileoverview
  * Event Category: SALVAGE
@@ -14254,7 +14400,7 @@ export const EVENTS_SALVAGE = [
         outcomes: {
             'out_scrap': {
                 title: 'Scrap Harvested',
-                text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
+                text: 'You spend valuable time carefully collecting hull plates. Boring, but profitable.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }
@@ -14386,6 +14532,7 @@ export const EVENTS_STORY = [
 --- END OF FILE: ./js/data/events/events_story.js ---
 
 --- START OF FILE: ./js/data/events/events_logistics.js ---
+// js/data/events/events_logistics.js
 /**
  * @fileoverview
  * Event Category: LOGISTICS
@@ -14534,7 +14681,7 @@ export const EVENTS_LOGISTICS = [
         outcomes: {
             'out_restack': {
                 title: 'Cargo Secured',
-                text: 'You spend a day in zero-G, manually winching containers back into place.',
+                text: 'You spend a grueling shift in zero-G, manually winching containers back into place.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
             },
             'out_thrust': {
@@ -14601,6 +14748,7 @@ export const EVENTS_LOGISTICS = [
 --- END OF FILE: ./js/data/events/events_logistics.js ---
 
 --- START OF FILE: ./js/data/events/events_hazards.js ---
+// js/data/events/events_hazards.js
 /**
  * @fileoverview
  * Event Category: HAZARDS
@@ -14698,7 +14846,7 @@ export const EVENTS_HAZARDS = [
             },
             'out_shadow': {
                 title: 'Storm Passed',
-                text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
+                text: 'You divert to a nearby asteroid. You wait in its shadow until the particle count drops.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
             },
             'out_run_success': {
@@ -14814,6 +14962,71 @@ export const EVENTS_HAZARDS = [
                 title: 'Collision Alert',
                 text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
+            }
+        }
+    },
+    {
+        id: 'evt_hazard_kessler',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
+        weight: 8,
+        requirements: [],
+        template: {
+            title: 'Kessler Cascade',
+            description: 'A catastrophic satellite collision has blanketed the orbital lane ahead in hyper-velocity debris. The corridor is effectively blocked.'
+        },
+        choices: [
+            {
+                id: 'choice_reinforce',
+                text: 'Reinforce & Push (-10 Plasteel * Scale)',
+                requirements: [
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                ],
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
+            },
+            {
+                id: 'choice_crawl',
+                text: 'Crawl Through (Trip Delay & Risk Hull)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_crawl_success', weight: 60 },
+                        { outcomeId: 'out_crawl_fail', weight: 40 }
+                    ]
+                }
+            },
+            {
+                id: 'choice_divert',
+                text: 'Divert Course (Redirect & -Fuel)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+            }
+        ],
+        outcomes: {
+            'out_reinforce': {
+                title: 'Punched Through',
+                text: 'You weld extra Plasteel to the prow and ram your way through the thinnest part of the debris field. The armor holds.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            },
+            'out_crawl_success': {
+                title: 'Navigated Safely',
+                text: 'You drop to maneuvering thrusters and painstakingly weave through the shrapnel over several days.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
+            },
+            'out_crawl_fail': {
+                title: 'Hull Strike',
+                text: 'Despite your slow speed, a rogue shard of metal shears off a stabilizer fin, causing damage and delaying your trip.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                ]
+            },
+            'out_divert': {
+                title: 'Diverted Course',
+                text: 'You burn extra fuel to find a completely new vector, abandoning your original destination.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
+                ]
             }
         }
     }
@@ -22628,6 +22841,17 @@ export class TravelService {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         
+        // --- PHASE 4 FIX: Safe-guard against Origin Redirects ---
+        if (fromId === locationId) {
+             // NEW: Process any time delays incurred during the failed trip before aborting
+             if (eventMods && eventMods.travelTimeAdd > 0) {
+                 this.timeService.advanceDays(eventMods.travelTimeAdd);
+             }
+             this.gameState.setState({ pendingTravel: null });
+             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+             return;
+        }
+
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === 'sol' && this.timeService.solStationService) {
             if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
@@ -22916,6 +23140,7 @@ export class TravelService {
         const shipState = this.gameState.player.shipStates[activeShip.id];
         const upgrades = shipState.upgrades || [];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const currentLoc = this.gameState.currentLocationId;
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
@@ -22928,6 +23153,13 @@ export class TravelService {
         // Apply Upgrade Modifier (Radar Mod - Additive)
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
+
+        // --- PHASE 2: Distance-Scaled Event Probability ---
+        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
+        if (baseTime > 0) {
+            eventChance += ((baseTime / 3) * 0.005);
+        }
+        // --- END PHASE 2 ---
 
         // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
@@ -22951,9 +23183,6 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         
         // [[UPDATED]] - Populate base travel time to ensure scalar calculations work
-        const currentLoc = this.gameState.currentLocationId;
-        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
-        
         this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
@@ -23002,6 +23231,9 @@ export class TravelService {
                         break;
                     case 'EFF_LOSE_RANDOM_CARGO':
                          effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
+                         break;
+                    case 'EFF_REDIRECT_TRAVEL':
+                         effectText = `Course Diverted`;
                          break;
                     default:
                         effectText = `Effect Applied`;
@@ -27019,7 +27251,7 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 /**
@@ -27275,6 +27507,39 @@ const effectHandlers = {
 
         if (outcome) {
             outcome.text += ` (Fuel tanks topped off!)`;
+        }
+    },
+
+    // 13. REDIRECT TRAVEL (Blockade)
+    [EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL]: (gameState, simulationService, effect, outcome) => {
+        if (!gameState.pendingTravel) return;
+
+        const originId = gameState.currentLocationId;
+        const destId = gameState.pendingTravel.destinationId;
+
+        if (originId === destId) return;
+
+        const originIndex = ORBITAL_ORDER.indexOf(originId);
+        const destIndex = ORBITAL_ORDER.indexOf(destId);
+
+        if (originIndex === -1 || destIndex === -1 || Math.abs(destIndex - originIndex) <= 1) {
+            // No intermediate locations, return to origin
+            gameState.pendingTravel.destinationId = originId;
+            if (outcome) outcome.text += ` <br><br><span class="text-yellow-400">Course forcefully diverted back to origin.</span>`;
+            return;
+        }
+
+        // Determine the location strictly between origin and destination, closest to destination
+        // Direction is 1 if moving outward (e.g. Earth -> Jupiter), -1 if moving inward
+        const direction = destIndex > originIndex ? 1 : -1;
+        const intermediateIndex = destIndex - direction;
+        const newDestId = ORBITAL_ORDER[intermediateIndex];
+
+        gameState.pendingTravel.destinationId = newDestId;
+        const newDestName = DB.MARKETS.find(m => m.id === newDestId)?.name || "a nearby station";
+
+        if (outcome) {
+            outcome.text += ` <br><br><span class="text-yellow-400">Course forcefully diverted to ${newDestName}.</span>`;
         }
     }
 };
@@ -32613,6 +32878,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [35.42] - 2026-2-15
+-  added blockade style events
+-  increased chance for events for longer trips
+-  updated event writing
+-  event bug fixes
 
 # [35.39] - 2026-2-13
 -  sol simulation math rebalance
