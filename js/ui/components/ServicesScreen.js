@@ -4,6 +4,7 @@
  * It displays options for refueling and repairing the player's active ship, calculating
  * costs based on the current location and any active player perks.
  * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
+ * * UPDATED: Fleet Quick-Swap UI.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -234,6 +235,28 @@ export function renderServicesScreen(gameState, simulationService) {
     const canAffordRepair = player.credits >= repairCostPerTick;
     const isDisabledRefuel = isFuelFull || !canAffordRefuel;
     const isDisabledRepair = isHealthFull || !canAffordRepair;
+
+    // --- FLEET OVERFLOW SYSTEM: QUICK SWAP ARROWS ---
+    let shipNavArrowsHtml = '';
+    if (player.ownedShipIds && player.ownedShipIds.length > 1) {
+        shipNavArrowsHtml = `
+            <div class="flex items-center justify-center w-full relative h-full px-12">
+                <button type="button" data-action="cycle-ship-left" class="absolute left-2 text-gray-400 hover:text-white transition-colors p-2 z-10 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                <div class="ship-header-title text-center" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>
+                <button type="button" data-action="cycle-ship-right" class="absolute right-2 text-gray-400 hover:text-white transition-colors p-2 z-10 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            </div>
+        `;
+    } else {
+        shipNavArrowsHtml = `<div class="ship-header-title" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>`;
+    }
     
     return `
         <div class="flex flex-col h-full">
@@ -246,8 +269,8 @@ export function renderServicesScreen(gameState, simulationService) {
                 ${solStationButtonHtml}
 
                 <div class="ship-services-panel max-w-4xl mx-auto" style="${themeStyleVars}">
-                    <div class="themed-header-bar">
-                        <div class="ship-header-title" style="color: ${shipClassColorVar}; text-shadow: 0 0 5px ${shipClassColorVar}80;">${shipName}</div>
+                    <div class="themed-header-bar relative flex justify-center items-center w-full min-h-[3rem]">
+                        ${shipNavArrowsHtml}
                     </div>
 
                     <div class="flex flex-col md:flex-row justify-center items-center gap-8 p-4 md:p-8">

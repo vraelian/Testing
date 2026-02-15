@@ -92,7 +92,6 @@ export class MarketEventHandler {
                     const color = mode === 'buy' ? '#f87171' : '#34d399';
                     this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
 
-                    // Check for tutorial completion on relevant actions
                     if (mode === 'sell') {
                         const actionData = { type: 'ACTION', action: 'sell-item', goodId };
                         this.simulationService.tutorialService.checkState(actionData);
@@ -101,16 +100,26 @@ export class MarketEventHandler {
                 break;
             }
             case 'set-max-trade': {
-                const ship = this.simulationService._getActiveShip();
-                const inventory = this.simulationService._getActiveInventory();
                 if (mode === 'sell') {
-                    qtyInput.value = inventory[goodId]?.quantity || 0;
+                    // --- FLEET OVERFLOW SYSTEM: MAX SELL ---
+                    let fleetOwnedQty = 0;
+                    state.player.ownedShipIds.forEach(shipId => {
+                        fleetOwnedQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+                    });
+                    qtyInput.value = fleetOwnedQty;
                 } else { // 'buy'
+                    // --- FLEET OVERFLOW SYSTEM: MAX BUY ---
+                    let fleetAvailableSpace = 0;
+                    state.player.ownedShipIds.forEach(shipId => {
+                        const stats = this.simulationService.getEffectiveShipStats(shipId);
+                        const used = calculateInventoryUsed(state.player.inventories[shipId]);
+                        fleetAvailableSpace += Math.max(0, stats.cargoCapacity - used);
+                    });
+                    
                     const price = this.uiManager.getItemPrice(state, goodId);
-                    const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
                     const canAfford = price > 0 ? Math.floor(state.player.credits / price) : Infinity;
                     const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
-                    qtyInput.value = Math.max(0, Math.min(space, canAfford, stock));
+                    qtyInput.value = Math.max(0, Math.min(fleetAvailableSpace, canAfford, stock));
                 }
                 
                 const newQuantity = parseInt(qtyInput.value) || 0;
@@ -141,22 +150,30 @@ export class MarketEventHandler {
      */
     _updateMaxButtonState(controls, currentQty, mode, goodId) {
         const state = this.gameState.getState();
-        const ship = this.simulationService._getActiveShip();
-        const inventory = this.simulationService._getActiveInventory();
-        let maxQty;
+        let maxQty = 0;
 
         if (mode === 'sell') {
-            maxQty = inventory[goodId]?.quantity || 0;
+            // --- FLEET OVERFLOW SYSTEM: MAX SELL ---
+            state.player.ownedShipIds.forEach(shipId => {
+                maxQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+            });
         } else { // 'buy'
+            // --- FLEET OVERFLOW SYSTEM: MAX BUY ---
+            let fleetAvailableSpace = 0;
+            state.player.ownedShipIds.forEach(shipId => {
+                const stats = this.simulationService.getEffectiveShipStats(shipId);
+                const used = calculateInventoryUsed(state.player.inventories[shipId]);
+                fleetAvailableSpace += Math.max(0, stats.cargoCapacity - used);
+            });
+            
             const price = this.uiManager.getItemPrice(state, goodId);
-            const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
             const canAfford = price > 0 ? Math.floor(state.player.credits / price) : Infinity;
             const stock = state.market.inventory[state.currentLocationId][goodId].quantity;
-            maxQty = Math.max(0, Math.min(space, canAfford, stock));
+            maxQty = Math.max(0, Math.min(fleetAvailableSpace, canAfford, stock));
         }
 
         const maxBtn = controls.querySelector('.max-btn');
-        if (currentQty > 0 && currentQty === maxQty) { // Don't press if max is 0
+        if (currentQty > 0 && currentQty === maxQty) {
             maxBtn.classList.add('pressed');
         } else {
             maxBtn.classList.remove('pressed');

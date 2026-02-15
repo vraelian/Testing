@@ -42,6 +42,21 @@ const effectHandlers = {
         // FIX: Enforce Integer
         const change = Math.round(effect.value);
         shipState.fuel = Math.max(0, Math.min(ship.maxFuel, shipState.fuel + change));
+
+        // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (EVENT FUEL) ---
+        if (change < 0) {
+            const convoyFuelTax = Math.abs(change) * 0.05;
+            if (convoyFuelTax > 0) {
+                for (const shipId of gameState.player.ownedShipIds) {
+                    if (shipId === ship.id) continue;
+                    const inactiveState = gameState.player.shipStates[shipId];
+                    if (inactiveState && inactiveState.fuel > 25) {
+                        inactiveState.fuel = Math.max(25, inactiveState.fuel - convoyFuelTax);
+                    }
+                }
+            }
+        }
+        // --- END CONVOY TAX ---
     },
 
     // 3. HULL
@@ -57,6 +72,19 @@ const effectHandlers = {
             const resistance = GameAttributes.getHullResistanceModifier(upgrades);
             // resistance is a decimal (e.g., 0.20 for 20% reduction)
             change = Math.round(change * (1 - resistance));
+
+            // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (EVENT HULL) ---
+            const convoyHullTax = Math.abs(change) * 0.05;
+            if (convoyHullTax > 0) {
+                for (const shipId of gameState.player.ownedShipIds) {
+                    if (shipId === ship.id) continue;
+                    const inactiveState = gameState.player.shipStates[shipId];
+                    if (inactiveState && inactiveState.health > 10) {
+                        inactiveState.health = Math.max(10, inactiveState.health - convoyHullTax);
+                    }
+                }
+            }
+            // --- END CONVOY TAX ---
         }
         // --- END CHANGE ---
 
@@ -163,6 +191,19 @@ const effectHandlers = {
 
                     if (extraFuelCost > 0) {
                         shipState.fuel = Math.max(0, shipState.fuel - extraFuelCost);
+                        
+                        // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (EVENT DELAY FUEL) ---
+                        const convoyFuelTax = extraFuelCost * 0.05;
+                        if (convoyFuelTax > 0) {
+                            for (const shipId of gameState.player.ownedShipIds) {
+                                if (shipId === ship.id) continue;
+                                const inactiveState = gameState.player.shipStates[shipId];
+                                if (inactiveState && inactiveState.fuel > 25) {
+                                    inactiveState.fuel = Math.max(25, inactiveState.fuel - convoyFuelTax);
+                                }
+                            }
+                        }
+                        // --- END CONVOY TAX ---
                     }
                 }
             }

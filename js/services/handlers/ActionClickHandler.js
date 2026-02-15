@@ -73,6 +73,30 @@ export class ActionClickHandler {
                 break;
             }
 
+            // --- FLEET SERVICING ACTIONS ---
+            case 'cycle-ship-left':
+            case 'cycle-ship-right': {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const ownedIds = state.player.ownedShipIds;
+                if (!ownedIds || ownedIds.length <= 1) return;
+
+                let currentIndex = ownedIds.indexOf(state.player.activeShipId);
+                if (currentIndex === -1) currentIndex = 0;
+
+                if (action === 'cycle-ship-left') {
+                    currentIndex = (currentIndex - 1 + ownedIds.length) % ownedIds.length;
+                } else {
+                    currentIndex = (currentIndex + 1) % ownedIds.length;
+                }
+
+                this.gameState.player.activeShipId = ownedIds[currentIndex];
+                this.gameState.uiState.hangarActiveIndex = currentIndex;
+                this.gameState.setState({});
+                break;
+            }
+
             // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
@@ -214,7 +238,6 @@ export class ActionClickHandler {
                 this.uiManager.hideGenericTooltip(); 
                 const isSubNavClick = e.target.tagName === 'A' && actionTarget.contains(e.target);
 
-                // [[FIX for G]] Intercept Sticky Bar clicks to strictly force Log tab routing via State Mutation
                 if (actionTarget.id === 'mission-sticky-bar' || actionTarget.closest('#mission-sticky-bar')) {
                     this.gameState.setState({
                         uiState: {
@@ -256,8 +279,6 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- MISSION SYSTEM NAVIGATION ---
-            // Fixed: Direct state mutation ensures UI updates correctly
             case 'switch-mission-tab': {
                 const tabId = dataset.target;
                 if (tabId === 'terminal' || tabId === 'log') {
@@ -271,8 +292,6 @@ export class ActionClickHandler {
                 break;
             }
             
-            // [[FIX]] Phase 3: Star Icon Tracking Logic Fixed
-            // We now directly mutate the GameState source of truth instead of delegating to UI-only logic
             case 'track-mission': {
                 e.stopPropagation();
                 const missionId = dataset.missionId;
@@ -326,9 +345,7 @@ export class ActionClickHandler {
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
-                // Auto-switch to Log tab to show the new mission
                 if (this.uiManager.missionControl) {
-                    // We can also trigger the tab switch directly via state here for consistency
                     this.gameState.setState({
                         uiState: {
                             ...this.gameState.getState().uiState,
@@ -386,7 +403,6 @@ export class ActionClickHandler {
                 break;
             }
 
-            // NEW: "Deposit All" Logic
             case 'sol-donate-all': {
                 e.preventDefault(); 
                 const commId = dataset.commodityId;
@@ -396,19 +412,14 @@ export class ActionClickHandler {
                 
                 if (!cache || !inventory) return;
 
-                // 1. Calculate Player Max
                 const playerStock = inventory[commId]?.quantity || 0;
-                
-                // 2. Calculate Space Max
                 const spaceAvailable = cache.max - cache.current;
 
-                // 3. Determine actual donate amount (min of stock vs space)
                 const donateAmount = Math.min(playerStock, spaceAvailable);
 
                 if (donateAmount > 0) {
                     const donateResult = this.simulationService.solStationService.donateToCache(commId, donateAmount);
                     if (donateResult.success) {
-                        // CHANGE: Red floating text '-XXX'
                         this.uiManager.createFloatingText(`-${donateAmount}`, e.clientX, e.clientY, "#ef4444");
                         this.uiManager.solStationControl.update(this.gameState.getState());
                     } else {
@@ -425,7 +436,6 @@ export class ActionClickHandler {
                 const type = dataset.type; // 'credits' or 'antimatter'
                 const stockpile = this.gameState.solStation.stockpile;
                 
-                // Prepare floating text content based on what we are about to claim
                 let text = '';
                 let color = '#fff';
 
@@ -433,13 +443,13 @@ export class ActionClickHandler {
                     const amount = Math.floor(stockpile.credits);
                     if (amount > 0) {
                         text = `+${amount}`;
-                        color = '#34d399'; // Green
+                        color = '#34d399'; 
                     }
                 } else if (type === 'antimatter') {
                     const amount = Math.floor(stockpile.antimatter);
                     if (amount >= 1) {
                         text = `+${amount} Antimatter`;
-                        color = '#a855f7'; // Purple
+                        color = '#a855f7'; 
                     }
                 }
 

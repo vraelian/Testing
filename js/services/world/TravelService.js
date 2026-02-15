@@ -330,6 +330,28 @@ export class TravelService {
         }
         
         activeShipState.fuel -= travelInfo.fuelCost;
+
+        // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
+        const convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
+        const convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+
+        if (convoyFuelTax > 0 || convoyHullTax > 0) {
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                if (shipId === activeShip.id) continue;
+                
+                const inactiveState = this.gameState.player.shipStates[shipId];
+                if (!inactiveState) continue;
+
+                if (inactiveState.fuel > 25 && convoyFuelTax > 0) {
+                    inactiveState.fuel = Math.max(25, inactiveState.fuel - convoyFuelTax);
+                }
+                if (inactiveState.health > 10 && convoyHullTax > 0) {
+                    inactiveState.health = Math.max(10, inactiveState.health - convoyHullTax);
+                }
+            }
+        }
+        // --- END CONVOY TAX ---
+
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
