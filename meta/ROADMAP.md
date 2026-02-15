@@ -3,7 +3,7 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Sudden Ideas
--
+- Cargo Screen insight messages
 
 ## Ongoing, WIP Efforts
 -  How to increase risk and add difficulty mid-game?
@@ -18,6 +18,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 -
 
 ## Long-Term Goals, Ideas
+- Optional game upgrades: fleet repair, fleet refueling
 - Reputation system
 - Additional tutorials
 - Finalize mobile views

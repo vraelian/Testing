@@ -23,6 +23,27 @@ export class UIMarketControl {
     }
 
     /**
+     * Helper to retrieve aggregated fleet inventory for a specific commodity
+     * @param {object} state 
+     * @param {string} goodId 
+     * @returns {object|null}
+     */
+    _getFleetItem(state, goodId) {
+        let totalQty = 0;
+        let totalCostValue = 0;
+        
+        for (const shipId of state.player.ownedShipIds) {
+            const item = state.player.inventories[shipId]?.[goodId];
+            if (item && item.quantity > 0) {
+                totalQty += item.quantity;
+                totalCostValue += item.quantity * item.avgCost;
+            }
+        }
+        
+        return totalQty > 0 ? { quantity: totalQty, avgCost: totalCostValue / totalQty } : null;
+    }
+
+    /**
      * Renders the market screen, preserving scroll position and input states.
      * @param {object} gameState 
      */
@@ -138,7 +159,7 @@ export class UIMarketControl {
 
         const state = this.manager.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
-        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
+        const playerItem = this._getFleetItem(state, goodId);
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
@@ -184,8 +205,8 @@ export class UIMarketControl {
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
         const basePrice = this.getItemPrice(state, goodId, true);
-        const playerItem = state.player.inventories[state.player.activeShipId]?.[goodId];
-        const avgCost = playerItem?.avgCost || 0;
+        const fleetItem = this._getFleetItem(state, goodId);
+        const avgCost = fleetItem?.avgCost || 0;
 
         const effectivePrice = basePrice; 
         const totalPrice = Math.floor(effectivePrice * quantity);
@@ -208,17 +229,19 @@ export class UIMarketControl {
      * Generates the SVG string for the Price History graph.
      * @param {string} goodId 
      * @param {object} gameState 
-     * @param {object} playerItem 
+     * @param {object} _playerItem - Kept for signature compatibility, unused.
      * @returns {string} SVG HTML string
      */
-    renderPriceGraph(goodId, gameState, playerItem) {
+    renderPriceGraph(goodId, gameState, _playerItem) {
         const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
         if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Data Available!</div>`;
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         const staticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
         const width = 280, height = 140, padding = 35;
         const prices = history.map(p => p.price);
-        const playerBuyPrice = playerItem?.avgCost > 0 ? playerItem.avgCost : null;
+        
+        const fleetItem = this._getFleetItem(gameState, goodId);
+        const playerBuyPrice = fleetItem?.avgCost > 0 ? fleetItem.avgCost : null;
 
         let allValues = [...prices, staticAvg];
         if (playerBuyPrice) allValues.push(playerBuyPrice);

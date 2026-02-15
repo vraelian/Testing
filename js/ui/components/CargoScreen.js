@@ -1,7 +1,7 @@
 // js/ui/components/CargoScreen.js
 /**
  * @fileoverview This file contains the rendering logic for the Cargo screen.
- * It is responsible for displaying the contents of the player's active ship's cargo hold.
+ * It is responsible for displaying the aggregated contents of the player's fleet cargo hold.
  * The new design features a grid of small cargo items ('min-cargo') that expand into
  * a detailed modal view ('max-cargo').
  */
@@ -11,19 +11,42 @@ import { AssetService } from '../../services/AssetService.js';
 import { ACTION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Cargo screen UI, displaying a grid of items.
+ * Renders the entire Cargo screen UI, displaying a grid of aggregated fleet items.
  * @param {object} gameState - The current state of the game.
  * @returns {string} The HTML content for the Cargo screen.
  */
 export function renderCargoScreen(gameState) {
-    const inventory = gameState.player.inventories[gameState.player.activeShipId];
-    if (!inventory) return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
+    if (!gameState.player.ownedShipIds || gameState.player.ownedShipIds.length === 0) {
+        return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
+    }
 
-    const ownedGoods = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
-    const visualSeed = gameState.player.visualSeed; // Required for AssetService
+    const fleetInventory = {};
+    
+    // Aggregate cargo across the entire fleet
+    for (const shipId of gameState.player.ownedShipIds) {
+        const inventory = gameState.player.inventories[shipId];
+        if (!inventory) continue;
+        
+        for (const [goodId, item] of Object.entries(inventory)) {
+            if (item.quantity > 0) {
+                if (!fleetInventory[goodId]) {
+                    fleetInventory[goodId] = { quantity: 0, avgCost: 0, _totalValue: 0 };
+                }
+                fleetInventory[goodId].quantity += item.quantity;
+                fleetInventory[goodId]._totalValue += (item.quantity * item.avgCost);
+            }
+        }
+    }
+
+    const ownedGoods = Object.entries(fleetInventory).map(([goodId, data]) => {
+        data.avgCost = data._totalValue / data.quantity;
+        return [goodId, data];
+    });
+
+    const visualSeed = gameState.player.visualSeed;
 
     if (ownedGoods.length === 0) {
-        return '<p class="text-center text-gray-500 text-lg">Your cargo hold is empty.</p>';
+        return '<p class="text-center text-gray-500 text-lg">Your fleet\'s cargo holds are empty.</p>';
     }
 
     const cargoItemsHtml = ownedGoods.map(([goodId, item]) => {
@@ -37,7 +60,7 @@ export function renderCargoScreen(gameState) {
 /**
  * Renders a single small, clickable cargo item for the grid view.
  * @param {object} good - The static data for the commodity from the database.
- * @param {object} item - The player's inventory data for the item (quantity, avgCost).
+ * @param {object} item - The player's aggregated inventory data for the item.
  * @param {number} visualSeed - The player's visual seed for generating consistent art.
  * @returns {string} The HTML for a single min-cargo item.
  * @private
@@ -51,7 +74,6 @@ function _renderMinCargoItem(good, item, visualSeed) {
     const backgroundStyle = `background: ${scrimGradient}, url('${imagePath}'), ${styles.gradient};`;
 
     // ABBREVIATION COLOR & CONTRAST LOGIC
-    // Specific overrides for distinct "Very Light" colors + White for legacy support.
     const abbrevColorMap = {
         'CRYO': '#a5f3fc', // Very Light Turquoise
         'ATMO': '#fef08a', // Very Light Gold
@@ -86,7 +108,7 @@ function _renderMinCargoItem(good, item, visualSeed) {
 /**
  * Renders the detailed modal view for a selected cargo item.
  * @param {object} good - The static data for the commodity.
- * @param {object} item - The player's inventory data for the item.
+ * @param {object} item - The player's aggregated inventory data for the item.
  * @returns {string} The HTML for the max-cargo modal content.
  */
 export function _renderMaxCargoModal(good, item) {
@@ -118,7 +140,7 @@ export function _renderMaxCargoModal(good, item) {
             <p class="flavor-text">${good.lore}</p>
             <div class="avg-cost">
                 <div>Avg. Cost: <span class="font-bold credits-text-pulsing">${formatCredits(item.avgCost, true)}</span></div>
-                <div>Qty Aboard: <span class="font-bold">${item.quantity}</span></div>
+                <div>Fleet Qty: <span class="font-bold">${item.quantity}</span></div>
                 <div>Avg. Value: <span class="font-bold credits-text-pulsing">${formatCredits(avgValue, true)}</span></div>
             </div>
         </div>
