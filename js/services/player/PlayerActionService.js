@@ -363,14 +363,14 @@ export class PlayerActionService {
                 return false;
             }
             
-            // --- UPGRADE SYSTEM: ECONOMIC RETROFITTING ---
-            // Calculate total value: Ship Base Price + Sum of Upgrade Values
+            // --- PHASE 1: PERCENTAGE-BASED UPGRADE PRICING ---
+            // Calculate total value: Ship Base Price + Dynamic Hardware Value of Upgrades
             let upgradeValue = 0;
             if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
                 shipState.upgrades.forEach(upgradeId => {
                     const def = GameAttributes.getDefinition(upgradeId);
                     if (def) {
-                        upgradeValue += def.value;
+                        upgradeValue += GameAttributes.getUpgradeHardwareCost(def.tier || 1, ship.price);
                     }
                 });
             }

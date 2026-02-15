@@ -308,6 +308,24 @@ export function renderServicesScreen(gameState, simulationService) {
     `;
 }
 
+// Map of locations to their preferred upgrade prefixes for thematic bias
+const LOCATION_PREFERENCES = {
+    [LOCATION_IDS.SUN]: ['UPG_ENG_SPEED_', 'UPG_UTIL_NANO_'],
+    [LOCATION_IDS.MERCURY]: ['UPG_UTIL_HULL_', 'UPG_UTIL_NANO_'],
+    [LOCATION_IDS.VENUS]: ['UPG_ECO_BUY_'], // Guild badges are mission only
+    [LOCATION_IDS.EARTH]: ['UPG_UTIL_CARGO_'],
+    [LOCATION_IDS.LUNA]: ['UPG_ECO_REPAIR_', 'UPG_UTIL_CARGO_'],
+    [LOCATION_IDS.MARS]: ['UPG_UTIL_FUEL_', 'UPG_UTIL_CARGO_'],
+    [LOCATION_IDS.BELT]: ['UPG_UTIL_CARGO_', 'UPG_UTIL_HULL_'],
+    [LOCATION_IDS.EXCHANGE]: ['UPG_ECO_BUY_', 'UPG_UTIL_RADAR_'],
+    [LOCATION_IDS.JUPITER]: ['UPG_ECO_FUEL_', 'UPG_UTIL_FUEL_'],
+    [LOCATION_IDS.SATURN]: ['UPG_ENG_SPEED_'],
+    [LOCATION_IDS.URANUS]: ['UPG_UTIL_NANO_', 'UPG_ENG_SPEED_'],
+    [LOCATION_IDS.NEPTUNE]: ['UPG_UTIL_HULL_', 'UPG_ENG_SPEED_'],
+    [LOCATION_IDS.KEPLER]: ['UPG_UTIL_RADAR_', 'UPG_UTIL_NANO_'],
+    [LOCATION_IDS.PLUTO]: ['UPG_UTIL_FUEL_', 'UPG_UTIL_RADAR_']
+};
+
 /**
  * Deterministically filters and selects daily stock using a "Quantity First, Selection Second" logic.
  * * 1. Quantity Roll: Determines shop size (0-5 items) based on fixed distribution.
@@ -329,7 +347,6 @@ function _getDailyStock(gameState) {
 
         // --- NEW: Hard Exclusion ---
         // Exclude Rewards (Guild/Syndicate) from standard shop rotation.
-        // NOTE: Guild Badges use UPG_ECO_SELL_ and Syndicate use UPG_ECO_DEBT_.
         if (id.startsWith('UPG_ECO_SELL_') || id.startsWith('UPG_ECO_DEBT_')) {
             return false;
         }
@@ -358,10 +375,11 @@ function _getDailyStock(gameState) {
 
     // 3. ASSIGN WEIGHTS TO CANDIDATES
     // Tier 1: 17, Tier 2: 11, Tier 3: 9, Tier 4: 6, Tier 5: 4
-    // Modifiers: Age Perk (+), Uranus Quirk (Advanced x2)
+    // Modifiers: Age Perk (Multiplicative), Uranus Quirk, Location Bias Penalty
     
-    const ageBonusWeight = (gameState.player.statModifiers?.upgradeSpawnRate || 0) * 100;
+    const ageMultiplier = 1 + (gameState.player.statModifiers?.upgradeSpawnRate || 0);
     const isUranus = currentLocationId === LOCATION_IDS.URANUS;
+    const preferredPrefixes = LOCATION_PREFERENCES[currentLocationId] || [];
 
     let weightedPool = candidates.map(id => {
         let weight = 0;
@@ -373,12 +391,18 @@ function _getDailyStock(gameState) {
         else if (id.endsWith('_4')) weight = 6;
         else if (id.endsWith('_5')) weight = 4;
         
-        // Age Perk (Additive)
-        weight += ageBonusWeight;
+        // Age Perk (Multiplicative to preserve relative tier rarity)
+        weight *= ageMultiplier;
 
         // Uranus Quirk (Advanced Multiplier)
         if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
             weight *= 2;
+        }
+
+        // Off-Nominal Penalty (Location Bias)
+        const isPreferred = preferredPrefixes.some(prefix => id.startsWith(prefix));
+        if (!isPreferred) {
+            weight *= 0.80; // 20% weight reduction for upgrades not matching station theme
         }
 
         return { id, weight };
@@ -419,17 +443,23 @@ function _getDailyStock(gameState) {
 }
 
 /**
- * Generates a deterministic pseudo-random number (0-1) from a string seed.
+ * Generates a deterministic pseudo-random number (0-1) from a string seed using Mulberry32.
  * @param {string} seedString 
  * @returns {number} 0.0 to 1.0
  */
 function _generatePseudoRandom(seedString) {
-    let hash = 0;
-    for (let i = 0; i < seedString.length; i++) {
-        hash = ((hash << 5) - hash) + seedString.charCodeAt(i);
-        hash |= 0; 
+    // 1. Simple hash to create an initial integer seed from the string
+    let h = 0xdeadbeef;
+    for(let i = 0; i < seedString.length; i++) {
+        h = Math.imul(h ^ seedString.charCodeAt(i), 2654435761);
     }
-    return (Math.abs(hash) % 1000) / 1000;
+    let seed = ((h ^ h >>> 16) >>> 0);
+
+    // 2. Mulberry32 PRNG for mathematically uniform distribution
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 
 /**
@@ -452,23 +482,26 @@ function _renderTuningView(gameState) {
         `;
     }
     
-    // [[NEW]] LABOR CALCULATION
+    // [[NEW]] LABOR & HARDWARE DYNAMIC CALCULATION
     const activeShipId = gameState.player.activeShipId;
     const activeShipStatic = DB.SHIPS[activeShipId];
-    const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
+    const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
+    const laborFee = GameAttributes.getInstallationFee(shipBasePrice);
 
     const upgradesHtml = availableUpgradeIds.map(id => {
         const def = GameAttributes.getDefinition(id);
         if (!def) return '';
 
-        // [[FIXED]] Color Logic for shop view to match pills
+        // Color Logic for shop view to match pills
         const baseColor = def.pillColor || def.color || UPGRADE_COLORS.GREY;
         const styleVars = `
             --item-color: ${baseColor};
             --item-glow: ${baseColor}80;
         `;
         
-        const totalCost = def.value + laborFee;
+        // PHASE 1: Percentage-based cost calculation
+        const hardwareCost = GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice);
+        const totalCost = hardwareCost + laborFee;
         const canAfford = gameState.player.credits >= totalCost;
         
         // VIRTUAL WORKBENCH: Dynamic Name Size logic
@@ -486,7 +519,7 @@ function _renderTuningView(gameState) {
                         </div>
                         <div class="text-xs text-gray-400 mt-1 leading-tight">${def.description}</div>
                         <div class="text-[11.5px] text-gray-500 mt-2 font-mono">
-                            HARDWARE: ${formatCredits(def.value)}<br>
+                            HARDWARE: ${formatCredits(hardwareCost)}<br>
                             LABOR: ${formatCredits(laborFee)} (5%)
                         </div>
                     </div>

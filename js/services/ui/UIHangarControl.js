@@ -214,7 +214,8 @@ export class UIHangarControl {
             if (shipDynamic.upgrades) {
                 shipDynamic.upgrades.forEach(uId => {
                     const def = GameAttributes.getDefinition(uId);
-                    if (def) upgradeValue += def.value;
+                    // PHASE 1: Percentage-based cost calculation
+                    if (def) upgradeValue += GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipStatic.price);
                 });
             }
             const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
@@ -342,6 +343,11 @@ export class UIHangarControl {
                     const modalTitle = modal.querySelector('#event-title');
                     modalTitle.textContent = "Upgrade Capacity Full";
                     
+                    // Grab active ship base price for dynamic value calculation
+                    const activeShipId = this.manager.lastKnownState?.player?.activeShipId;
+                    const activeShipStatic = activeShipId ? DB.SHIPS[activeShipId] : null;
+                    const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
+                    
                     const upgradesList = currentUpgrades.map((uId, idx) => {
                         const def = GameAttributes.getDefinition(uId);
                         // [[FIXED]] Fallback to color if pillColor missing
@@ -349,7 +355,10 @@ export class UIHangarControl {
                         const uName = def ? def.name : uId;
                         // [[FIXED]] Corrected reference: 'statText' was undefined in schema, using 'description'.
                         const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
-                        const valText = def ? formatCredits(def.value, true) : '0';
+                        
+                        // PHASE 1: Percentage-based cost calculation for Resale UI
+                        const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
+                        const valText = formatCredits(hwCost, true);
 
                         // [[FIXED]] VIRTUAL WORKBENCH: UI Marquee Fix
                         // Wrapped the statText in a marquee container to ensure readability.

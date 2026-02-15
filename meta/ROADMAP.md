@@ -6,9 +6,6 @@ All notable plans and desirables for the Orbital Trading project will be documen
 -
 
 ## Ongoing, WIP Efforts
--  Increase chance for events depending on distance traveled
-- add events to blockade locations
--  Review language of events and edit 'hard coded' writing, ie 'it takes a week'.
 -  How to increase risk and add difficulty mid-game?
 -  How to increase usefulness of multiple ships, improve Muti-ship game play?
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
