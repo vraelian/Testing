@@ -1,3 +1,4 @@
+// js/data/events/events_salvage.js
 /**
  * @fileoverview
  * Event Category: SALVAGE
@@ -164,7 +165,7 @@ export const EVENTS_SALVAGE = [
         outcomes: {
             'out_scrap': {
                 title: 'Scrap Harvested',
-                text: 'You spend a few hours collecting hull plates. Boring, but profitable.',
+                text: 'You spend valuable time carefully collecting hull plates. Boring, but profitable.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.ADD_ITEM, target: COMMODITY_IDS.PLASTEEL, value: 5 }

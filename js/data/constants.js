@@ -276,7 +276,8 @@ export const EVENT_CONSTANTS = Object.freeze({
         LOSE_RANDOM_CARGO: 'EFF_LOSE_RANDOM_CARGO', // Specific logic
         ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO', // Specific logic
         ADD_UPGRADE: 'EFF_ADD_UPGRADE', // [[NEW]]: Grants a specific ship upgrade
-        FULL_REFUEL: 'EFF_FULL_REFUEL'  // [[NEW]]: Sets active ship fuel to 100%
+        FULL_REFUEL: 'EFF_FULL_REFUEL',  // [[NEW]]: Sets active ship fuel to 100%
+        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL' // [[NEW]]: Diverts travel to an intermediate or origin location
     }
 });
 // --- [[END]] EVENT SYSTEM 2.0 ---

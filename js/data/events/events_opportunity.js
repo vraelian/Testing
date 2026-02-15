@@ -1,3 +1,4 @@
+// js/data/events/events_opportunity.js
 /**
  * @fileoverview
  * Event Category: OPPORTUNITY
@@ -272,7 +273,7 @@ export const EVENTS_OPPORTUNITY = [
         outcomes: {
             'out_repair_success': {
                 title: 'Service Rendered',
-                text: 'It takes two days of spacewalking to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
+                text: 'It takes exhaustive spacewalking efforts to free the valve. "Thank you," the captain says. "Let me top you off." Your fuel gauge hits 100%.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } },
                     { type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }

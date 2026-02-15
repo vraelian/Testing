@@ -9,7 +9,7 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 /**
@@ -265,6 +265,39 @@ const effectHandlers = {
 
         if (outcome) {
             outcome.text += ` (Fuel tanks topped off!)`;
+        }
+    },
+
+    // 13. REDIRECT TRAVEL (Blockade)
+    [EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL]: (gameState, simulationService, effect, outcome) => {
+        if (!gameState.pendingTravel) return;
+
+        const originId = gameState.currentLocationId;
+        const destId = gameState.pendingTravel.destinationId;
+
+        if (originId === destId) return;
+
+        const originIndex = ORBITAL_ORDER.indexOf(originId);
+        const destIndex = ORBITAL_ORDER.indexOf(destId);
+
+        if (originIndex === -1 || destIndex === -1 || Math.abs(destIndex - originIndex) <= 1) {
+            // No intermediate locations, return to origin
+            gameState.pendingTravel.destinationId = originId;
+            if (outcome) outcome.text += ` <br><br><span class="text-yellow-400">Course forcefully diverted back to origin.</span>`;
+            return;
+        }
+
+        // Determine the location strictly between origin and destination, closest to destination
+        // Direction is 1 if moving outward (e.g. Earth -> Jupiter), -1 if moving inward
+        const direction = destIndex > originIndex ? 1 : -1;
+        const intermediateIndex = destIndex - direction;
+        const newDestId = ORBITAL_ORDER[intermediateIndex];
+
+        gameState.pendingTravel.destinationId = newDestId;
+        const newDestName = DB.MARKETS.find(m => m.id === newDestId)?.name || "a nearby station";
+
+        if (outcome) {
+            outcome.text += ` <br><br><span class="text-yellow-400">Course forcefully diverted to ${newDestName}.</span>`;
         }
     }
 };

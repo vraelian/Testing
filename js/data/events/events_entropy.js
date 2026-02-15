@@ -1,3 +1,4 @@
+// js/data/events/events_entropy.js
 /**
  * @fileoverview
  * Event Category: ENTROPY
@@ -50,7 +51,7 @@ export const EVENTS_ENTROPY = [
             },
             'out_shutdown_delay': {
                 title: 'Reboot Sequence',
-                text: 'You kill the main reactor. The ship drifts for days, radiating heat slowly into the black before it is safe to restart.',
+                text: 'You kill the main reactor. The ship drifts for an extended period, radiating heat slowly into the black before it is safe to restart.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
             }
         }
@@ -168,7 +169,7 @@ export const EVENTS_ENTROPY = [
             },
             'out_override_fail': {
                 title: 'Navigational Error',
-                text: 'You forced a bad vector. By the time you realize the error, you have wasted days traveling in the wrong direction.',
+                text: 'You forced a bad vector. By the time you realize the error, you have wasted precious time traveling in the wrong direction.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.35 } }]
             }
         }

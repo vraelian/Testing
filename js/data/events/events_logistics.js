@@ -1,3 +1,4 @@
+// js/data/events/events_logistics.js
 /**
  * @fileoverview
  * Event Category: LOGISTICS
@@ -146,7 +147,7 @@ export const EVENTS_LOGISTICS = [
         outcomes: {
             'out_restack': {
                 title: 'Cargo Secured',
-                text: 'You spend a day in zero-G, manually winching containers back into place.',
+                text: 'You spend a grueling shift in zero-G, manually winching containers back into place.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
             },
             'out_thrust': {

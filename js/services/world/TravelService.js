@@ -432,6 +432,7 @@ export class TravelService {
         const shipState = this.gameState.player.shipStates[activeShip.id];
         const upgrades = shipState.upgrades || [];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const currentLoc = this.gameState.currentLocationId;
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
@@ -444,6 +445,13 @@ export class TravelService {
         // Apply Upgrade Modifier (Radar Mod - Additive)
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
+
+        // --- PHASE 2: Distance-Scaled Event Probability ---
+        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
+        if (baseTime > 0) {
+            eventChance += ((baseTime / 3) * 0.005);
+        }
+        // --- END PHASE 2 ---
 
         // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
@@ -467,9 +475,6 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         
         // [[UPDATED]] - Populate base travel time to ensure scalar calculations work
-        const currentLoc = this.gameState.currentLocationId;
-        const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
-        
         this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));

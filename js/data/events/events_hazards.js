@@ -1,3 +1,4 @@
+// js/data/events/events_hazards.js
 /**
  * @fileoverview
  * Event Category: HAZARDS
@@ -95,7 +96,7 @@ export const EVENTS_HAZARDS = [
             },
             'out_shadow': {
                 title: 'Storm Passed',
-                text: 'You divert to a nearby asteroid. You wait there for days until the particle count drops.',
+                text: 'You divert to a nearby asteroid. You wait in its shadow until the particle count drops.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
             },
             'out_run_success': {
