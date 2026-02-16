@@ -312,7 +312,6 @@ export class UIEventControl {
         const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
         const contentHtml = `
-            ${navigateBtnHtml}
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                  <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
@@ -337,6 +336,9 @@ export class UIEventControl {
                 <div class="mt-2">
                      <h5 class="font-bold imprinted-text">Needs:</h5>
                      <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                </div>
+                <div class="mt-6 mb-2">
+                    ${navigateBtnHtml}
                 </div>
             </div>
         `;
