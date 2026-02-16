@@ -406,7 +406,7 @@ export class PlayerActionService {
                 success: true, // It is allowed, but requires warning
                 ship: ship, 
                 requiresForfeit: true, 
-                forfeitMessage: `This ship has ${cargoToMove} units of cargo aboard, but the rest of your fleet only has space for ${availableSpace} units.<br><br>Selling this ship will permanently destroy the excess cargo.`
+                forfeitMessage: `This ship has ${cargoToMove} units of cargo aboard, but the rest of your fleet only has space for ${availableSpace} units.<br>Selling this ship will permanently destroy the excess cargo.`
             };
         }
         // --- END PHASE 4 ---
@@ -434,6 +434,9 @@ export class PlayerActionService {
 
             // --- PHASE 4: FLEET OVERFLOW SYSTEM (AUTO-TRANSFER CARGO) ---
             const inventoryToMove = this.gameState.player.inventories[shipId];
+            let transferredSome = false;
+            let forfeitedSome = false;
+
             if (inventoryToMove) {
                 const remainingFleet = this.gameState.player.ownedShipIds
                     .filter(id => id !== shipId)
@@ -461,6 +464,7 @@ export class PlayerActionService {
                         
                         const toMove = Math.min(remainingToTransfer, space);
                         if (toMove > 0) {
+                            transferredSome = true;
                             if (!targetInv[goodId]) {
                                 targetInv[goodId] = { quantity: 0, avgCost: 0 };
                             }
@@ -471,6 +475,9 @@ export class PlayerActionService {
                             
                             remainingToTransfer -= toMove;
                         }
+                    }
+                    if (remainingToTransfer > 0) {
+                        forfeitedSome = true;
                     }
                 }
             }
@@ -520,7 +527,17 @@ export class PlayerActionService {
 
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.<br>Its cargo has been transferred to your fleet where space permitted.`;
+            // Dynamic post-sale cargo statement based on precise outcomes
+            let cargoOutcomeText = "";
+            if (transferredSome && !forfeitedSome) {
+                cargoOutcomeText = "<br>Its cargo has been fully transferred to your fleet.";
+            } else if (transferredSome && forfeitedSome) {
+                cargoOutcomeText = "<br>Its cargo was partially transferred, but excess was <span class=\"text-red-400 font-bold\">permanently destroyed</span> due to lack of space.";
+            } else if (!transferredSome && forfeitedSome) {
+                cargoOutcomeText = "<br>All cargo aboard was <span class=\"text-red-400 font-bold\">permanently destroyed</span> due to lack of space in the remaining fleet.";
+            }
+
+            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.${cargoOutcomeText}`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
 
             this.gameState.setState({

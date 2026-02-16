@@ -45,7 +45,7 @@ export class ActionClickHandler {
                 
                 const target = e.target; 
 
-                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', async () => {
+                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId, { target });
                     this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
@@ -59,7 +59,15 @@ export class ActionClickHandler {
 
                 const target = e.target;
 
-                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', async () => {
+                // Pre-validate to check for cargo forfeit warnings
+                const validation = this.simulationService.playerActionService.validateSellShip(shipId);
+                if (!validation.success) {
+                    this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+                    return;
+                }
+
+                // Pass the optional forfeit message to the confirmation modal
+                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.sellShip(shipId, { target });
                 });

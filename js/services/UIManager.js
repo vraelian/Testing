@@ -27,7 +27,7 @@ import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
-import { UISolStationControl } from './ui/UISolStationControl.js'; // NEW IMPORT
+import { UISolStationControl } from './ui/UISolStationControl.js';
 
 export class UIManager {
     /**
@@ -59,7 +59,7 @@ export class UIManager {
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
-        this.solStationControl = new UISolStationControl(this); // NEW CONTROLLER
+        this.solStationControl = new UISolStationControl(this); 
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -158,8 +158,6 @@ export class UIManager {
     render(gameState) {
         if (!gameState || !gameState.player) return;
 
-        // [[NEW]] Pre-Render Mission Check (Real-Time Sync)
-        // Silently updates mission progress (e.g. Cargo/Wealth) based on the exact state about to be rendered.
         if (this.missionService) {
             this.missionService.checkTriggers(true);
         }
@@ -595,7 +593,7 @@ export class UIManager {
     // LEGACY / SAFEGUARD METHODS
     // =========================================================================
 
-    showShipTransactionConfirmation(shipId, transactionType, onConfirm) {
+    showShipTransactionConfirmation(shipId, transactionType, forfeitWarning, onConfirm) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
 
@@ -621,13 +619,19 @@ export class UIManager {
             if (shipState && shipState.upgrades) {
                 shipState.upgrades.forEach(uId => {
                     const def = GameAttributes.getDefinition(uId);
-                    if (def) upgradeValue += def.value;
+                    if (def) {
+                        upgradeValue += GameAttributes.getUpgradeHardwareCost(def.tier || 1, ship.price);
+                    }
                 });
             }
             price = Math.floor((ship.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
             amountStr = formatCredits(price, true);
             description = `Are you sure you want to sell the ${shipNameSpan}?`;
             description += `<br><br>Income: <span class="credits-text-pulsing">+${amountStr}</span>`;
+            
+            if (forfeitWarning) {
+                description += `<br><br><span class="text-red-400 font-bold">WARNING:</span><br><span class="text-sm text-gray-300">${forfeitWarning}</span>`;
+            }
         }
 
         this.queueModal('event-modal', title, description, null, {
