@@ -4,6 +4,7 @@
  * to their corresponding handler functions, providing a centralized and extensible way to
  * apply the consequences of player choices during events.
  * UPDATED: Added Math.round() to enforce integer values and preventing float drift.
+ * UPDATED: Fleet Overflow logic applied to all cargo rewards and penalties.
  */
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
@@ -25,7 +26,6 @@ const effectHandlers = {
     // 1. CREDITS
     [EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS]: (gameState, simulationService, effect) => {
         const oldValue = gameState.player.credits;
-        // FIX: Enforce Integer
         const change = Math.round(effect.value); 
         gameState.player.credits = Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, gameState.player.credits + change));
         
@@ -39,7 +39,6 @@ const effectHandlers = {
     [EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL]: (gameState, simulationService, effect) => {
         const ship = simulationService._getActiveShip();
         const shipState = gameState.player.shipStates[ship.id];
-        // FIX: Enforce Integer
         const change = Math.round(effect.value);
         shipState.fuel = Math.max(0, Math.min(ship.maxFuel, shipState.fuel + change));
 
@@ -65,12 +64,9 @@ const effectHandlers = {
         const shipState = gameState.player.shipStates[ship.id];
         let change = Math.round(effect.value);
 
-        // --- NEW: Hull Resistance Mitigation ---
-        // If damage is occurring (negative change), apply resistance from plating
         if (change < 0) {
             const upgrades = shipState.upgrades || [];
             const resistance = GameAttributes.getHullResistanceModifier(upgrades);
-            // resistance is a decimal (e.g., 0.20 for 20% reduction)
             change = Math.round(change * (1 - resistance));
 
             // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (EVENT HULL) ---
@@ -86,7 +82,6 @@ const effectHandlers = {
             }
             // --- END CONVOY TAX ---
         }
-        // --- END CHANGE ---
 
         shipState.health = Math.max(0, Math.min(ship.maxHealth, shipState.health + change));
     },
@@ -97,65 +92,109 @@ const effectHandlers = {
             gameState.player.loanStartDate = gameState.day;
             gameState.player.weeklyInterestAmount = 0;
         }
-        // FIX: Enforce Integer
         const change = Math.round(effect.value);
         gameState.player.debt = Math.max(0, gameState.player.debt + change);
     },
 
     // 5. ADD ITEM (Specific)
     [EVENT_CONSTANTS.EFFECTS.ADD_ITEM]: (gameState, simulationService, effect, outcome) => {
-        const ship = simulationService._getActiveShip();
-        const inventory = simulationService._getActiveInventory();
         const commodityId = effect.target; 
         const quantity = Math.floor(effect.value); 
-        
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
         
-        // --- NEW: Tier Gating ---
         if (commodity && commodity.tier > gameState.player.revealedTier) {
             if (outcome) outcome.text += ` (Recovered ${commodity.name}, but lacked the data-encryption keys to secure it. Cargo abandoned.)`;
             return;
         }
-        // --- END CHANGE ---
         
-        if (calculateInventoryUsed(inventory) + quantity <= ship.cargoCapacity) {
-            if (!inventory[commodityId]) {
-                inventory[commodityId] = { quantity: 0, avgCost: 0 };
-            }
-            inventory[commodityId].quantity += quantity;
+        // --- FLEET OVERFLOW SYSTEM: AGGREGATE CAPACITY CHECK ---
+        let totalAvailableSpace = 0;
+        const shipCapacities = [];
+        const activeShipId = gameState.player.activeShipId;
 
-            // [[UPDATED]]: Return details for UI instead of appending to text
+        gameState.player.ownedShipIds.forEach(shipId => {
+            const stats = simulationService.getEffectiveShipStats(shipId);
+            const used = calculateInventoryUsed(gameState.player.inventories[shipId]);
+            const space = Math.max(0, stats.cargoCapacity - used);
+            totalAvailableSpace += space;
+            shipCapacities.push({ shipId, maxCapacity: stats.cargoCapacity, available: space });
+        });
+
+        if (quantity <= totalAvailableSpace) {
+            // Sort: Active ship first, then descending by max capacity
+            shipCapacities.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.maxCapacity - a.maxCapacity;
+            });
+
+            let remainingToAdd = quantity;
+            for (const shipData of shipCapacities) {
+                if (remainingToAdd <= 0) break;
+                const toAdd = Math.min(remainingToAdd, shipData.available);
+                if (toAdd > 0) {
+                    const invItem = gameState.player.inventories[shipData.shipId][commodityId];
+                    if (!invItem) gameState.player.inventories[shipData.shipId][commodityId] = { quantity: 0, avgCost: 0 };
+                    
+                    const actualItem = gameState.player.inventories[shipData.shipId][commodityId];
+                    // Found salvage is free, so we blend a cost of 0 into the average
+                    actualItem.avgCost = (actualItem.quantity * actualItem.avgCost) / (actualItem.quantity + toAdd);
+                    actualItem.quantity += toAdd;
+                    remainingToAdd -= toAdd;
+                }
+            }
+
             if (commodity) {
                 return { addedItem: commodity.name, addedQty: quantity };
             }
 
         } else {
             if (outcome && commodity) {
-                outcome.text += ` (Cargo hold full! Abandoned ${quantity}x ${commodity.name}.)`;
+                outcome.text += ` (Fleet holds full! Abandoned ${quantity}x ${commodity.name}.)`;
             }
         }
+        // --- END FLEET OVERFLOW SYSTEM ---
     },
 
     // 6. REMOVE ITEM (Specific)
     [EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM]: (gameState, simulationService, effect) => {
-        const inventory = simulationService._getActiveInventory();
         const commodityId = effect.target;
-        const quantity = Math.ceil(effect.value); // FIX: Ceiling removals to be safe
+        const quantityToLose = Math.ceil(effect.value); 
 
-        if (inventory[commodityId]) {
-            inventory[commodityId].quantity = Math.max(0, inventory[commodityId].quantity - quantity);
+        // --- FLEET OVERFLOW SYSTEM: SEQUENTIAL DRAIN ---
+        const activeShipId = gameState.player.activeShipId;
+        const shipInventories = gameState.player.ownedShipIds.map(shipId => {
+            const qty = gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0;
+            const maxCapacity = simulationService.getEffectiveShipStats(shipId).cargoCapacity;
+            return { shipId, qty, maxCapacity };
+        });
+
+        shipInventories.sort((a, b) => {
+            if (a.shipId === activeShipId) return -1;
+            if (b.shipId === activeShipId) return 1;
+            return b.maxCapacity - a.maxCapacity;
+        });
+
+        let remainingToRemove = quantityToLose;
+        for (const shipData of shipInventories) {
+            if (remainingToRemove <= 0) break;
+            const toRemove = Math.min(remainingToRemove, shipData.qty);
+            if (toRemove > 0) {
+                const invItem = gameState.player.inventories[shipData.shipId][commodityId];
+                invItem.quantity -= toRemove;
+                if (invItem.quantity === 0) invItem.avgCost = 0;
+                remainingToRemove -= toRemove;
+            }
         }
+        // --- END FLEET OVERFLOW SYSTEM ---
     },
 
     // 7. TRAVEL TIME (Modify)
     [EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL]: (gameState, simulationService, effect) => {
         if (gameState.pendingTravel) {
-            // FIX: Enforce Integer for days
             const change = Math.round(effect.value);
             gameState.pendingTravel.travelTimeAdd = (gameState.pendingTravel.travelTimeAdd || 0) + change;
 
-            // --- PHASE 3: FUEL-COUPLED TIME DELAYS ---
-            // If the event adds time (delays), calculate the proportional fuel cost and deduct it.
             if (change > 0) {
                 const fromId = gameState.currentLocationId;
                 const toId = gameState.pendingTravel.destinationId;
@@ -167,18 +206,15 @@ const effectHandlers = {
                     const upgrades = shipState.upgrades || [];
                     const shipAttributes = GameAttributes.getShipAttributes(ship.id);
 
-                    // Calculate base daily fuel rate for the original route
                     const dailyFuelRate = travelData.fuelCost / travelData.time;
                     let extraFuelCost = dailyFuelRate * change;
 
-                    // Apply Player Build Modifiers
                     if (gameState.player.activePerks && gameState.player.activePerks[PERK_IDS.NAVIGATOR]) {
                         extraFuelCost *= DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod;
                     }
 
                     extraFuelCost *= GameAttributes.getFuelBurnModifier(upgrades);
 
-                    // Apply Z-Class / Alien Mechanics
                     if (shipAttributes.includes('ATTR_METABOLIC_BURN')) extraFuelCost *= 0.5;
                     if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) extraFuelCost = 0;
                     if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
@@ -192,7 +228,6 @@ const effectHandlers = {
                     if (extraFuelCost > 0) {
                         shipState.fuel = Math.max(0, shipState.fuel - extraFuelCost);
                         
-                        // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (EVENT DELAY FUEL) ---
                         const convoyFuelTax = extraFuelCost * 0.05;
                         if (convoyFuelTax > 0) {
                             for (const shipId of gameState.player.ownedShipIds) {
@@ -203,67 +238,126 @@ const effectHandlers = {
                                 }
                             }
                         }
-                        // --- END CONVOY TAX ---
                     }
                 }
             }
-            // --- END PHASE 3 ---
         }
     },
 
     // 8. UNLOCK INTEL
     [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect) => {
         const randomLoc = DB.MARKETS[Math.floor(Math.random() * DB.MARKETS.length)];
-        // Logic handled by IntelService later, currently just visual/placeholder
     },
 
     // 9. LOSE RANDOM CARGO (Percentage)
     [EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO]: (gameState, simulationService, effect) => {
-        const inventory = simulationService._getActiveInventory();
-        const heldCommodities = Object.entries(inventory).filter(([, item]) => item.quantity > 0);
+        // --- FLEET OVERFLOW SYSTEM: AGGREGATE FLEET COMMODITIES ---
+        const fleetInventory = {};
+        for (const shipId of gameState.player.ownedShipIds) {
+            const inv = gameState.player.inventories[shipId];
+            if (!inv) continue;
+            for (const [id, item] of Object.entries(inv)) {
+                if (item.quantity > 0) {
+                    fleetInventory[id] = (fleetInventory[id] || 0) + item.quantity;
+                }
+            }
+        }
+
+        const heldCommodityIds = Object.keys(fleetInventory);
         
-        if (heldCommodities.length > 0) {
-            const [id, item] = heldCommodities[Math.floor(Math.random() * heldCommodities.length)];
-            const quantityToLose = Math.ceil(item.quantity * effect.value);
-            item.quantity = Math.max(0, item.quantity - quantityToLose);
+        if (heldCommodityIds.length > 0) {
+            const targetId = heldCommodityIds[Math.floor(Math.random() * heldCommodityIds.length)];
+            const totalQty = fleetInventory[targetId];
+            const quantityToLose = Math.ceil(totalQty * effect.value);
             
-            const commodity = DB.COMMODITIES.find(c => c.id === id);
+            // Sequential Fleet Drain
+            const activeShipId = gameState.player.activeShipId;
+            const shipInventories = gameState.player.ownedShipIds.map(shipId => {
+                const qty = gameState.player.inventories[shipId]?.[targetId]?.quantity || 0;
+                const maxCapacity = simulationService.getEffectiveShipStats(shipId).cargoCapacity;
+                return { shipId, qty, maxCapacity };
+            }).sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.maxCapacity - a.maxCapacity;
+            });
+
+            let remainingToRemove = quantityToLose;
+            for (const shipData of shipInventories) {
+                if (remainingToRemove <= 0) break;
+                const toRemove = Math.min(remainingToRemove, shipData.qty);
+                if (toRemove > 0) {
+                    const invItem = gameState.player.inventories[shipData.shipId][targetId];
+                    invItem.quantity -= toRemove;
+                    if (invItem.quantity === 0) invItem.avgCost = 0;
+                    remainingToRemove -= toRemove;
+                }
+            }
+            
+            const commodity = DB.COMMODITIES.find(c => c.id === targetId);
             if (commodity) {
                 return { lostItem: commodity.name, lostQty: quantityToLose };
             }
         }
+        // --- END FLEET OVERFLOW SYSTEM ---
     },
 
     // 10. ADD RANDOM CARGO (Quantity)
     [EVENT_CONSTANTS.EFFECTS.ADD_RANDOM_CARGO]: (gameState, simulationService, effect, outcome) => {
-        const ship = simulationService._getActiveShip();
-        const inventory = simulationService._getActiveInventory();
-        const space = ship.cargoCapacity - calculateInventoryUsed(inventory);
+        // --- FLEET OVERFLOW SYSTEM: AGGREGATE CAPACITY ---
+        let totalAvailableSpace = 0;
+        const activeShipId = gameState.player.activeShipId;
+        const shipCapacities = [];
+
+        gameState.player.ownedShipIds.forEach(shipId => {
+            const stats = simulationService.getEffectiveShipStats(shipId);
+            const used = calculateInventoryUsed(gameState.player.inventories[shipId]);
+            const space = Math.max(0, stats.cargoCapacity - used);
+            totalAvailableSpace += space;
+            shipCapacities.push({ shipId, maxCapacity: stats.cargoCapacity, available: space });
+        });
         
-        if (space <= 0) {
-             if (outcome) outcome.text += ` (Cargo hold full! Could not salvage goods.)`;
+        if (totalAvailableSpace <= 0) {
+             if (outcome) outcome.text += ` (Fleet holds full! Could not salvage goods.)`;
              return;
         }
 
-        // --- NEW: Tier Gating ---
         const validCommodities = DB.COMMODITIES.filter(c => 
             c.id !== 'fuel_rod' && 
             c.tier <= gameState.player.revealedTier
         ); 
-        // --- END CHANGE ---
 
         if (validCommodities.length === 0) return;
 
         const randomCom = validCommodities[Math.floor(Math.random() * validCommodities.length)];
-        const amountToAdd = Math.min(Math.floor(effect.value), space);
+        const amountToAdd = Math.min(Math.floor(effect.value), totalAvailableSpace);
         
         if (amountToAdd > 0) {
-            if (!inventory[randomCom.id]) inventory[randomCom.id] = { quantity: 0, avgCost: 0 };
-            inventory[randomCom.id].quantity += amountToAdd;
+            // Sort: Active ship first, then descending by max capacity
+            shipCapacities.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.maxCapacity - a.maxCapacity;
+            });
+
+            let remainingToAdd = amountToAdd;
+            for (const shipData of shipCapacities) {
+                if (remainingToAdd <= 0) break;
+                const toAdd = Math.min(remainingToAdd, shipData.available);
+                if (toAdd > 0) {
+                    const currentItem = gameState.player.inventories[shipData.shipId][randomCom.id];
+                    if (!currentItem) gameState.player.inventories[shipData.shipId][randomCom.id] = { quantity: 0, avgCost: 0 };
+                    
+                    const actualItem = gameState.player.inventories[shipData.shipId][randomCom.id];
+                    actualItem.avgCost = (actualItem.quantity * actualItem.avgCost) / (actualItem.quantity + toAdd);
+                    actualItem.quantity += toAdd;
+                    remainingToAdd -= toAdd;
+                }
+            }
             
-            // [[UPDATED]]: Return details for UI instead of appending to text
             return { addedItem: randomCom.name, addedQty: amountToAdd };
         }
+        // --- END FLEET OVERFLOW SYSTEM ---
     },
 
     // 11. ADD UPGRADE (Grant Specific Upgrade)
@@ -277,7 +371,6 @@ const effectHandlers = {
         if (!shipState.upgrades.includes(upgradeId)) {
             shipState.upgrades.push(upgradeId);
             
-            // [[UPDATED]]: Removed text appending. Now returns the name for the UI.
             const def = GameAttributes.getDefinition(upgradeId);
             const name = def ? def.name : upgradeId;
 
@@ -322,14 +415,11 @@ const effectHandlers = {
         const destIndex = ORBITAL_ORDER.indexOf(destId);
 
         if (originIndex === -1 || destIndex === -1 || Math.abs(destIndex - originIndex) <= 1) {
-            // No intermediate locations, return to origin
             gameState.pendingTravel.destinationId = originId;
             if (outcome) outcome.text += ` <br><br><span class="text-yellow-400">Course forcefully diverted back to origin.</span>`;
             return;
         }
 
-        // Determine the location strictly between origin and destination, closest to destination
-        // Direction is 1 if moving outward (e.g. Earth -> Jupiter), -1 if moving inward
         const direction = destIndex > originIndex ? 1 : -1;
         const intermediateIndex = destIndex - direction;
         const newDestId = ORBITAL_ORDER[intermediateIndex];
@@ -343,9 +433,6 @@ const effectHandlers = {
     }
 };
 
-/**
- * Acts as a router, calling the appropriate handler function for a given event effect type.
- */
 export function applyEffect(gameState, simulationService, effect, outcome) {
     const handler = effectHandlers[effect.type];
     if (handler) {
