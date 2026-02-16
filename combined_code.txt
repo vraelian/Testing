@@ -32582,7 +32582,7 @@ export class PlayerActionService {
     /**
      * Validates if a ship sale is possible.
      * @param {string} shipId - The ID of the ship to sell.
-     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
+     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string, requiresForfeit?: boolean, forfeitMessage?: string }
      */
     validateSellShip(shipId) {
         if (this.isTransactionInProgress) {
@@ -32595,18 +32595,37 @@ export class PlayerActionService {
         if (shipId === state.player.activeShipId) {
             return { success: false, errorTitle: "Action Blocked", errorMessage: "You cannot sell your active ship." };
         }
-        if (calculateInventoryUsed(state.player.inventories[shipId]) > 0) {
-            return { success: false, errorTitle: "Cannot Sell Ship", errorMessage: "This vessel's cargo hold is not empty." };
-        }
-    
-     const ship = DB.SHIPS[shipId];
+        
+        const ship = DB.SHIPS[shipId];
         if (!ship) {
             this.logger.error('PlayerActionService', `validateSellShip called with invalid shipId: ${shipId}`);
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist." };
         }
-        return { success: true, ship: ship };
-    }
 
+        // --- PHASE 4: FLEET OVERFLOW SYSTEM (SALE VALIDATION) ---
+        let cargoToMove = calculateInventoryUsed(state.player.inventories[shipId]);
+        let availableSpace = 0;
+
+        state.player.ownedShipIds.forEach(id => {
+            if (id !== shipId) {
+                const stats = this.simulationService.getEffectiveShipStats(id);
+                const used = calculateInventoryUsed(state.player.inventories[id]);
+                availableSpace += Math.max(0, stats.cargoCapacity - used);
+            }
+        });
+
+        if (cargoToMove > 0 && cargoToMove > availableSpace) {
+            return { 
+                success: true, // It is allowed, but requires warning
+                ship: ship, 
+                requiresForfeit: true, 
+                forfeitMessage: `This ship has ${cargoToMove} units of cargo aboard, but the rest of your fleet only has space for ${availableSpace} units.<br><br>Selling this ship will permanently destroy the excess cargo.`
+            };
+        }
+        // --- END PHASE 4 ---
+
+        return { success: true, ship: ship, requiresForfeit: false };
+    }
 
     /**
      * Executes the sale of a ship (Assumes validation passed).
@@ -32625,8 +32644,52 @@ export class PlayerActionService {
                 this.logger.error('PlayerActionService', `executeSellShip called with invalid shipId or state: ${shipId}`);
                 return false;
             }
+
+            // --- PHASE 4: FLEET OVERFLOW SYSTEM (AUTO-TRANSFER CARGO) ---
+            const inventoryToMove = this.gameState.player.inventories[shipId];
+            if (inventoryToMove) {
+                const remainingFleet = this.gameState.player.ownedShipIds
+                    .filter(id => id !== shipId)
+                    .map(id => ({
+                        id,
+                        maxCapacity: this.simulationService.getEffectiveShipStats(id).cargoCapacity
+                    }))
+                    .sort((a, b) => {
+                        // Prioritize Active Ship, then descending max capacity
+                        if (a.id === this.gameState.player.activeShipId) return -1;
+                        if (b.id === this.gameState.player.activeShipId) return 1;
+                        return b.maxCapacity - a.maxCapacity;
+                    });
+
+                for (const [goodId, item] of Object.entries(inventoryToMove)) {
+                    let remainingToTransfer = item.quantity;
+                    if (remainingToTransfer <= 0) continue;
+
+                    for (const fleetShip of remainingFleet) {
+                        if (remainingToTransfer <= 0) break;
+                        
+                        const targetInv = this.gameState.player.inventories[fleetShip.id];
+                        const currentUsed = calculateInventoryUsed(targetInv);
+                        const space = Math.max(0, fleetShip.maxCapacity - currentUsed);
+                        
+                        const toMove = Math.min(remainingToTransfer, space);
+                        if (toMove > 0) {
+                            if (!targetInv[goodId]) {
+                                targetInv[goodId] = { quantity: 0, avgCost: 0 };
+                            }
+                            // Calculate blended average cost for the receiving ship
+                            const targetItem = targetInv[goodId];
+                            targetItem.avgCost = ((targetItem.quantity * targetItem.avgCost) + (toMove * item.avgCost)) / (targetItem.quantity + toMove);
+                            targetItem.quantity += toMove;
+                            
+                            remainingToTransfer -= toMove;
+                        }
+                    }
+                }
+            }
+            // --- END AUTO-TRANSFER ---
             
-            // --- PHASE 1: PERCENTAGE-BASED UPGRADE PRICING ---
+            // --- PERCENTAGE-BASED UPGRADE PRICING ---
             let upgradeValue = 0;
             if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
                 shipState.upgrades.forEach(upgradeId => {
@@ -32639,7 +32702,6 @@ export class PlayerActionService {
 
             const totalBaseValue = ship.price + upgradeValue;
             const salePrice = Math.floor(totalBaseValue * GAME_RULES.SHIP_SELL_MODIFIER);
-            // --- END UPGRADE SYSTEM ---
             
             this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + salePrice);
 
@@ -32652,7 +32714,7 @@ export class PlayerActionService {
             const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
             this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
             delete this.gameState.player.shipStates[shipId];
-            delete this.gameState.player.inventories[shipId];
+            delete this.gameState.player.inventories[shipId]; // Remaining un-transferred cargo is naturally deleted here
 
             let newActiveIndex = this.gameState.uiState.hangarActiveIndex;
             if (shipIndex < newActiveIndex) {
@@ -32671,7 +32733,7 @@ export class PlayerActionService {
 
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.`;
+            const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.<br>Its cargo has been transferred to your fleet where space permitted.`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
 
             this.gameState.setState({
