@@ -42,6 +42,38 @@ export function getCommodityStyle(styleClass) {
 }
 
 /**
+ * Formats a number into a compact, human-readable string with appropriate suffixes (k, M, B, T).
+ * Specifically designed to maintain layout integrity on tight mobile displays by abbreviating large values.
+ * Example: -12345 becomes '-12.3k'.
+ * @param {number} amount The numeric value to format.
+ * @returns {string} The formatted abbreviated string.
+ */
+export function formatAbbreviatedNumber(amount) {
+    const isNegative = amount < 0;
+    const num = Math.abs(Math.floor(amount));
+    const sign = isNegative ? '-' : '';
+
+    let formattedNumber;
+    if (num >= 1e18) {
+        formattedNumber = `${(num).toExponential(1)}`;
+    } else if (num >= 1e15) {
+        formattedNumber = `${parseFloat((num / 1e15).toFixed(2))}Q`;
+    } else if (num >= 1e12) {
+        formattedNumber = `${parseFloat((num / 1e12).toFixed(2))}T`;
+    } else if (num >= 1e9) {
+        formattedNumber = `${parseFloat((num / 1e9).toFixed(2))}B`;
+    } else if (num >= 1e6) {
+        formattedNumber = `${parseFloat((num / 1e6).toFixed(2))}M`;
+    } else if (num >= 1e3) {
+        formattedNumber = `${parseFloat((num / 1e3).toFixed(1))}k`;
+    } else {
+        formattedNumber = num.toString();
+    }
+
+    return `${sign}${formattedNumber}`;
+}
+
+/**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
  * This function now correctly handles negative values.
  * Example: -12345 becomes '⌬ -12.3k'.

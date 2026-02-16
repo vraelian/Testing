@@ -5652,14 +5652,67 @@ WORKBENCH --- */
 /* css/screens/cargo-screen.css */
 .cargo-scroll-panel {
     /* height: 75vh; */ /* REMOVED */
+    margin-top: -1rem; /* Note: adjust to -0.5rem if it overlaps too much */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    padding: 0.25rem;
+    padding: 0;
+    padding-bottom: 0.25rem;
     touch-action: pan-y; /* Allow vertical scrolling */
+    position: relative; /* ensure sticky works */
 }
 .cargo-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* --- Cargo Band Telemetry Trench --- */
+@keyframes slideDownReveal {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+.cargo-band {
+    position: sticky;
+    top: 0; /* Hugs tightly to the top edge, overlapping any sub-pixel gap */
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    background-color: rgba(10, 10, 10, 0.85);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.5); /* Inner trench shadow + outer drop shadow */
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 300;
+    font-size: 12px; /* Increased by 2 points */
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    animation: slideDownReveal 0.3s ease-out forwards;
+    border: 1px solid var(--location-color, #555);
+    border-top: none; /* Make flush with nav */
+    border-radius: 0 0 8px 8px; /* Rounded bottom corners */
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    will-change: transform;
+    box-sizing: border-box;
+    white-space: nowrap;
+    color: var(--location-color, #9ca3af);
+}
+
+.cargo-band-label {
+    color: var(--location-color, #9ca3af);
+    filter: brightness(0.8);
+}
+
+.cargo-band-pipe {
+    color: var(--location-color, #9ca3af);
+    opacity: 0.5;
+    margin: 0 4px;
+}
+
+.cargo-band-value {
+    color: var(--location-color, #ffffff);
+    font-weight: bold;
+    filter: brightness(1.2);
 }
 
 /* Grid container for the min-cargo items */
@@ -5744,7 +5797,6 @@ WORKBENCH --- */
     padding-top: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
-
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -9221,18 +9273,100 @@ function _renderTuningView(gameState) {
  * a detailed modal view ('max-cargo').
  */
 import { DB } from '../../data/database.js';
-import { formatCredits, getCommodityStyle } from '../../utils.js';
+import { formatCredits, formatAbbreviatedNumber, getCommodityStyle } from '../../utils.js';
 import { AssetService } from '../../services/AssetService.js';
 import { ACTION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Cargo screen UI, displaying a grid of aggregated fleet items.
+ * Aggregates fleet capacity, cost basis, and local sale value for the telemetry band.
  * @param {object} gameState - The current state of the game.
+ * @param {object} simulationService - The active simulation service to check dynamic pricing.
+ * @returns {object} The structured summary data for the fleet.
+ * @private
+ */
+function _buildFleetSummaryData(gameState, simulationService) {
+    let totalCapacity = 0;
+    let usedCapacity = 0;
+    let totalCostBasis = 0;
+    let totalLocalValue = 0;
+
+    for (const shipId of (gameState.player.ownedShipIds || [])) {
+        const shipStatic = DB.SHIPS[shipId];
+        if (shipStatic) {
+            totalCapacity += shipStatic.cargoCapacity || 0;
+        }
+
+        const inventory = gameState.player.inventories[shipId];
+        if (!inventory) continue;
+
+        for (const [goodId, item] of Object.entries(inventory)) {
+            if (item.quantity > 0) {
+                usedCapacity += item.quantity;
+                totalCostBasis += (item.quantity * item.avgCost);
+
+                let localPrice = item.avgCost; // fallback
+                if (gameState.market && gameState.market.prices && gameState.market.prices[gameState.currentLocationId]) {
+                    localPrice = gameState.market.prices[gameState.currentLocationId][goodId] || localPrice;
+                }
+                
+                // Ensure dynamic modifications (Intel, Perks, etc.) via Service lookup if available
+                if (simulationService) {
+                     if (simulationService.market && typeof simulationService.market.getPrice === 'function') {
+                         localPrice = simulationService.market.getPrice(gameState.currentLocationId, goodId);
+                     } else if (typeof simulationService.getPrice === 'function') {
+                         localPrice = simulationService.getPrice(gameState.currentLocationId, goodId);
+                     } else if (simulationService.marketService && typeof simulationService.marketService.getPrice === 'function') {
+                         localPrice = simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
+                     }
+                }
+                totalLocalValue += (item.quantity * localPrice);
+            }
+        }
+    }
+
+    return { totalCapacity, usedCapacity, totalCostBasis, totalLocalValue };
+}
+
+/**
+ * Renders the entire Cargo screen UI, displaying a grid of aggregated fleet items and a telemetry band.
+ * @param {object} gameState - The current state of the game.
+ * @param {object} simulationService - The injected simulation service to pull dynamic economy rules.
  * @returns {string} The HTML content for the Cargo screen.
  */
-export function renderCargoScreen(gameState) {
+export function renderCargoScreen(gameState, simulationService) {
+    let bandHtml = '';
+    
+    if (gameState.player.ownedShipIds && gameState.player.ownedShipIds.length > 0) {
+        const summary = _buildFleetSummaryData(gameState, simulationService);
+        const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
+        const locationColor = location?.navTheme?.borderColor || '#555';
+
+        if (summary.usedCapacity > 0) {
+            const costStr = formatAbbreviatedNumber(summary.totalCostBasis);
+            const localStr = formatAbbreviatedNumber(summary.totalLocalValue);
+
+            bandHtml = `
+                <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${summary.usedCapacity}/${summary.totalCapacity}</span></div>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">LOCAL VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${localStr}</span></div>
+                </div>
+            `;
+        } else {
+            bandHtml = `
+                <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: center;">
+                    <span class="cargo-band-label">[ FLEET CARGO MANIFEST EMPTY ]</span>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${summary.totalCapacity}</span></div>
+                </div>
+            `;
+        }
+    }
+
     if (!gameState.player.ownedShipIds || gameState.player.ownedShipIds.length === 0) {
-        return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
+        return `${bandHtml}<p class="text-center text-gray-500 text-lg mt-4">No active ship.</p>`;
     }
 
     const fleetInventory = {};
@@ -9261,7 +9395,7 @@ export function renderCargoScreen(gameState) {
     const visualSeed = gameState.player.visualSeed;
 
     if (ownedGoods.length === 0) {
-        return '<p class="text-center text-gray-500 text-lg">Your fleet\'s cargo holds are empty.</p>';
+        return `<div class="cargo-scroll-panel">${bandHtml}<p class="text-center text-gray-500 text-lg mt-4">Your fleet's cargo holds are empty.</p></div>`;
     }
 
     const cargoItemsHtml = ownedGoods.map(([goodId, item]) => {
@@ -9269,7 +9403,7 @@ export function renderCargoScreen(gameState) {
         return _renderMinCargoItem(good, item, visualSeed);
     }).join('');
 
-    return `<div class="cargo-scroll-panel"><div class="cargo-grid">${cargoItemsHtml}</div></div>`;
+    return `<div class="cargo-scroll-panel">${bandHtml}<div class="cargo-grid">${cargoItemsHtml}</div></div>`;
 }
 
 /**
@@ -9869,6 +10003,38 @@ const commodityStyleMap = {
  */
 export function getCommodityStyle(styleClass) {
     return commodityStyleMap[styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
+}
+
+/**
+ * Formats a number into a compact, human-readable string with appropriate suffixes (k, M, B, T).
+ * Specifically designed to maintain layout integrity on tight mobile displays by abbreviating large values.
+ * Example: -12345 becomes '-12.3k'.
+ * @param {number} amount The numeric value to format.
+ * @returns {string} The formatted abbreviated string.
+ */
+export function formatAbbreviatedNumber(amount) {
+    const isNegative = amount < 0;
+    const num = Math.abs(Math.floor(amount));
+    const sign = isNegative ? '-' : '';
+
+    let formattedNumber;
+    if (num >= 1e18) {
+        formattedNumber = `${(num).toExponential(1)}`;
+    } else if (num >= 1e15) {
+        formattedNumber = `${parseFloat((num / 1e15).toFixed(2))}Q`;
+    } else if (num >= 1e12) {
+        formattedNumber = `${parseFloat((num / 1e12).toFixed(2))}T`;
+    } else if (num >= 1e9) {
+        formattedNumber = `${parseFloat((num / 1e9).toFixed(2))}B`;
+    } else if (num >= 1e6) {
+        formattedNumber = `${parseFloat((num / 1e6).toFixed(2))}M`;
+    } else if (num >= 1e3) {
+        formattedNumber = `${parseFloat((num / 1e3).toFixed(1))}k`;
+    } else {
+        formattedNumber = num.toString();
+    }
+
+    return `${sign}${formattedNumber}`;
 }
 
 /**
@@ -27994,6 +28160,7 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
+        // FIXED: Re-added gameState. to currentLocationId 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
@@ -28168,7 +28335,7 @@ export class UIManager {
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
-                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
+                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
                 break;
             case SCREEN_IDS.HANGAR:
                 // Expanded Full Render condition for Boarding/Buy/Sell

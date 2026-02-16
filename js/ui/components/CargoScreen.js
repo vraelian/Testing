@@ -6,18 +6,100 @@
  * a detailed modal view ('max-cargo').
  */
 import { DB } from '../../data/database.js';
-import { formatCredits, getCommodityStyle } from '../../utils.js';
+import { formatCredits, formatAbbreviatedNumber, getCommodityStyle } from '../../utils.js';
 import { AssetService } from '../../services/AssetService.js';
 import { ACTION_IDS } from '../../data/constants.js';
 
 /**
- * Renders the entire Cargo screen UI, displaying a grid of aggregated fleet items.
+ * Aggregates fleet capacity, cost basis, and local sale value for the telemetry band.
  * @param {object} gameState - The current state of the game.
+ * @param {object} simulationService - The active simulation service to check dynamic pricing.
+ * @returns {object} The structured summary data for the fleet.
+ * @private
+ */
+function _buildFleetSummaryData(gameState, simulationService) {
+    let totalCapacity = 0;
+    let usedCapacity = 0;
+    let totalCostBasis = 0;
+    let totalLocalValue = 0;
+
+    for (const shipId of (gameState.player.ownedShipIds || [])) {
+        const shipStatic = DB.SHIPS[shipId];
+        if (shipStatic) {
+            totalCapacity += shipStatic.cargoCapacity || 0;
+        }
+
+        const inventory = gameState.player.inventories[shipId];
+        if (!inventory) continue;
+
+        for (const [goodId, item] of Object.entries(inventory)) {
+            if (item.quantity > 0) {
+                usedCapacity += item.quantity;
+                totalCostBasis += (item.quantity * item.avgCost);
+
+                let localPrice = item.avgCost; // fallback
+                if (gameState.market && gameState.market.prices && gameState.market.prices[gameState.currentLocationId]) {
+                    localPrice = gameState.market.prices[gameState.currentLocationId][goodId] || localPrice;
+                }
+                
+                // Ensure dynamic modifications (Intel, Perks, etc.) via Service lookup if available
+                if (simulationService) {
+                     if (simulationService.market && typeof simulationService.market.getPrice === 'function') {
+                         localPrice = simulationService.market.getPrice(gameState.currentLocationId, goodId);
+                     } else if (typeof simulationService.getPrice === 'function') {
+                         localPrice = simulationService.getPrice(gameState.currentLocationId, goodId);
+                     } else if (simulationService.marketService && typeof simulationService.marketService.getPrice === 'function') {
+                         localPrice = simulationService.marketService.getPrice(gameState.currentLocationId, goodId);
+                     }
+                }
+                totalLocalValue += (item.quantity * localPrice);
+            }
+        }
+    }
+
+    return { totalCapacity, usedCapacity, totalCostBasis, totalLocalValue };
+}
+
+/**
+ * Renders the entire Cargo screen UI, displaying a grid of aggregated fleet items and a telemetry band.
+ * @param {object} gameState - The current state of the game.
+ * @param {object} simulationService - The injected simulation service to pull dynamic economy rules.
  * @returns {string} The HTML content for the Cargo screen.
  */
-export function renderCargoScreen(gameState) {
+export function renderCargoScreen(gameState, simulationService) {
+    let bandHtml = '';
+    
+    if (gameState.player.ownedShipIds && gameState.player.ownedShipIds.length > 0) {
+        const summary = _buildFleetSummaryData(gameState, simulationService);
+        const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
+        const locationColor = location?.navTheme?.borderColor || '#555';
+
+        if (summary.usedCapacity > 0) {
+            const costStr = formatAbbreviatedNumber(summary.totalCostBasis);
+            const localStr = formatAbbreviatedNumber(summary.totalLocalValue);
+
+            bandHtml = `
+                <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${summary.usedCapacity}/${summary.totalCapacity}</span></div>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">LOCAL VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${localStr}</span></div>
+                </div>
+            `;
+        } else {
+            bandHtml = `
+                <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: center;">
+                    <span class="cargo-band-label">[ FLEET CARGO MANIFEST EMPTY ]</span>
+                    <span class="cargo-band-pipe">|</span>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${summary.totalCapacity}</span></div>
+                </div>
+            `;
+        }
+    }
+
     if (!gameState.player.ownedShipIds || gameState.player.ownedShipIds.length === 0) {
-        return '<p class="text-center text-gray-500 text-lg">No active ship.</p>';
+        return `${bandHtml}<p class="text-center text-gray-500 text-lg mt-4">No active ship.</p>`;
     }
 
     const fleetInventory = {};
@@ -46,7 +128,7 @@ export function renderCargoScreen(gameState) {
     const visualSeed = gameState.player.visualSeed;
 
     if (ownedGoods.length === 0) {
-        return '<p class="text-center text-gray-500 text-lg">Your fleet\'s cargo holds are empty.</p>';
+        return `<div class="cargo-scroll-panel">${bandHtml}<p class="text-center text-gray-500 text-lg mt-4">Your fleet's cargo holds are empty.</p></div>`;
     }
 
     const cargoItemsHtml = ownedGoods.map(([goodId, item]) => {
@@ -54,7 +136,7 @@ export function renderCargoScreen(gameState) {
         return _renderMinCargoItem(good, item, visualSeed);
     }).join('');
 
-    return `<div class="cargo-scroll-panel"><div class="cargo-grid">${cargoItemsHtml}</div></div>`;
+    return `<div class="cargo-scroll-panel">${bandHtml}<div class="cargo-grid">${cargoItemsHtml}</div></div>`;
 }
 
 /**

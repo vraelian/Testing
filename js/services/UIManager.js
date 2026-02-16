@@ -179,6 +179,7 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
+        // FIXED: Re-added gameState. to currentLocationId 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
@@ -353,7 +354,7 @@ export class UIManager {
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
-                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState);
+                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
                 break;
             case SCREEN_IDS.HANGAR:
                 // Expanded Full Render condition for Boarding/Buy/Sell
