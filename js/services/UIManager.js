@@ -179,7 +179,6 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
-        // FIXED: Re-added gameState. to currentLocationId 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
@@ -323,7 +322,32 @@ export class UIManager {
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
 
-        this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        const existingContextBar = this.cache.navBar.querySelector('.context-bar');
+        const existingNavWrapper = this.cache.navBar.querySelector('.nav-wrapper');
+
+        // Surgical DOM Update to prevent CSS animation restart
+        if (existingContextBar && existingNavWrapper) {
+            existingContextBar.className = containerClass;
+            existingContextBar.style.background = theme.gradient;
+            existingContextBar.style.color = theme.textColor;
+
+            const locSpan = existingContextBar.querySelector('.location-name-text');
+            if (locSpan) locSpan.textContent = location?.name || 'In Transit';
+
+            const dateSpan = existingContextBar.querySelector('.date-text');
+            if (dateSpan) dateSpan.textContent = dateText;
+
+            const creditSpan = existingContextBar.querySelector('.credit-text');
+            if (creditSpan) {
+                creditSpan.className = `credit-text ${creditClass}`;
+                creditSpan.textContent = creditText;
+            }
+
+            existingNavWrapper.outerHTML = navWrapperHtml;
+        } else {
+            this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        }
+        
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 

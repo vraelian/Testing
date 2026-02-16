@@ -293,11 +293,12 @@
 /* --- VIRTUAL WORKBENCH: NEW NAVIGATE BUTTON --- */
 .map-navigate-btn {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
     font-family: 'Oxanium', sans-serif;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: calc(0.8rem + 1.5pt);
     color: var(--ot-cyan-base, #22d3ee);
     text-shadow: 0 0 5px var(--ot-cyan-glow, #67e8f9);
     cursor: pointer;
@@ -309,5 +310,5 @@
 
 .map-navigate-btn:hover {
     text-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
-    transform: scale(1.05);
+    transform: translateX(-50%) scale(1.05);
 }
