@@ -377,9 +377,26 @@ export class UIEventControl {
 
     showCargoDetailModal(gameState, goodId) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const item = gameState.player.inventories[gameState.player.activeShipId]?.[goodId];
+        
+        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY FOR MODAL ---
+        let totalQty = 0;
+        let totalCostValue = 0;
+        
+        for (const shipId of gameState.player.ownedShipIds) {
+            const invItem = gameState.player.inventories[shipId]?.[goodId];
+            if (invItem && invItem.quantity > 0) {
+                totalQty += invItem.quantity;
+                totalCostValue += invItem.quantity * invItem.avgCost;
+            }
+        }
 
-        if (!good || !item) return;
+        if (!good || totalQty === 0) return;
+
+        const fleetItem = {
+            quantity: totalQty,
+            avgCost: totalCostValue / totalQty
+        };
+        // --- END FLEET OVERFLOW SYSTEM ---
 
         this.manager.queueModal('cargo-detail-modal', null, null, null, {
             dismissInside: true,
@@ -388,7 +405,7 @@ export class UIEventControl {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('#cargo-detail-content');
                  if (modalContent) {
-                    modalContent.innerHTML = _renderMaxCargoModal(good, item);
+                    modalContent.innerHTML = _renderMaxCargoModal(good, fleetItem);
                  }
             }
         });
@@ -405,9 +422,6 @@ export class UIEventControl {
         setTimeout(() => el.remove(), 2450);
     }
 
-    /**
-     * Phase 2: Displays the critical failure Stranding modal and routes to the standard event modal processor.
-     */
     showStrandedModal(originName, lostDays, callback) {
         const title = "Critical Failure: Stranded";
         const text = `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`;
@@ -423,37 +437,25 @@ export class UIEventControl {
     showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
         let onDismiss = (typeof callback === 'function') ? callback : null;
-
-        // --- REFACTOR: Robust Argument Parsing (Final) ---
         
-        // 1. Modern Signature: (Title, Text, EffectsArray)
-        // We prioritize checking the 3rd argument for an Array. 
-        // This ensures proper mapping even if 'text' is empty/null.
         if (Array.isArray(effectsOrUndefined)) {
             title = titleOrText || 'System Alert';
             text = textOrEffects || '';
             effects = effectsOrUndefined;
         } 
-        // 2. Legacy Signature: (Text, EffectsArray)
-        // We detect this if the 2nd argument is an Array (and 3rd wasn't).
         else if (Array.isArray(textOrEffects)) {
-            // Optional: console.warn('[UIEventControl] Legacy signature detected.');
-            title = 'System Alert'; // Legacy implies no title provided
+            title = 'System Alert'; 
             text = titleOrText || '';
             effects = textOrEffects;
-            // Support callback in 3rd position for legacy calls if needed
             if (typeof effectsOrUndefined === 'function') {
                 onDismiss = effectsOrUndefined;
             }
         } 
-        // 3. Simple Message Signature: (Title, Text) - No effects
-        // Fallback for simple messages where both are strings
         else if (typeof titleOrText === 'string') {
              title = titleOrText;
              text = (typeof textOrEffects === 'string') ? textOrEffects : '';
              effects = [];
         }
-        // 4. Safe Fallback
         else {
              console.warn('[UIEventControl] Invalid arguments passed to showEventResultModal', { titleOrText, textOrEffects, effectsOrUndefined });
              title = 'System Alert'; 
@@ -463,11 +465,9 @@ export class UIEventControl {
 
         let effectsHtml = '';
         if (effects && effects.length > 0) {
-            // Increased text size (text-lg) and center alignment
             effectsHtml = '<ul class="list-none text-lg text-gray-300 mt-6 space-y-3 text-center">';
             effects.forEach(eff => {
                 let effectText = '';
-                // Common styling for consistency
                 const baseStyle = "font-medium";
                 
                 switch (eff.type) {
@@ -489,7 +489,6 @@ export class UIEventControl {
                         effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
-                        // [[UPDATED]]: Check for resolved name, fallback to target ID
                         const itemName = eff.addedItem || eff.target;
                         const itemQty = eff.addedQty || Math.round(eff.value);
                         effectText = `<span class="${baseStyle} text-result-cargo">Received: ${itemQty}x ${itemName}</span>`; 
@@ -500,16 +499,13 @@ export class UIEventControl {
                     case 'EFF_LOSE_RANDOM_CARGO':
                          effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${Math.round(eff.value * 100)}%</span>`;
                          break;
-                    // [[UPDATED]]: Added specific handler for Random Cargo to show what was got
                     case 'EFF_ADD_RANDOM_CARGO':
                         if (eff.addedItem && eff.addedQty) {
                              effectText = `<span class="${baseStyle} text-result-cargo">Received: ${eff.addedQty}x ${eff.addedItem}</span>`;
                         } else {
-                             // Fallback if full or failed
                              effectText = `<span class="${baseStyle} text-gray-500">No salvage recovered.</span>`;
                         }
                         break;
-                    // [[UPDATED]]: Added Handler for Upgrades
                     case 'EFF_ADD_UPGRADE':
                         if (eff.installedUpgrade) {
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
@@ -518,7 +514,6 @@ export class UIEventControl {
                         }
                         break;
                     default:
-                         // User Instruction: Remove 'Effect Applied' to reduce noise
                          return;
                 }
                 effectsHtml += `<li>${effectText}</li>`;
@@ -527,9 +522,9 @@ export class UIEventControl {
         }
 
         this.manager.queueModal('event-result-modal', title, text + effectsHtml, onDismiss, {
-            dismissOutside: false, // Enforced user interaction
+            dismissOutside: false, 
             dismissInside: false,
-            contentClass: 'text-center', // Enforced Center Alignment
+            contentClass: 'text-center', 
             buttonText: 'Continue'
         });
     }

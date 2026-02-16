@@ -76,7 +76,7 @@ export class TimeService {
             }
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
-            // Base upgrade modifier
+            // Only applies to the active ship.
             let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
             
             // ATTR_SELF_ASSEMBLY (Engine of Recursion): +5% Daily Repair
@@ -153,15 +153,6 @@ export class TimeService {
                     this.intelService.generateIntelRefresh();
                 }
             }
-            
-            // Passive Repair for INACTIVE ships (Hangar)
-            this.gameState.player.ownedShipIds.forEach(shipId => {
-                if (shipId !== this.gameState.player.activeShipId) {
-                    const ship = DB.SHIPS[shipId]; 
-                    const repairAmount = ship.maxHealth * GAME_RULES.PASSIVE_REPAIR_RATE;
-                    this.gameState.player.shipStates[shipId].health = Math.min(ship.maxHealth, this.gameState.player.shipStates[shipId].health + repairAmount);
-                }
-            });
 
             // --- UPGRADE SYSTEM: Debt Interest (Syndicate Badge) ---
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
@@ -263,7 +254,6 @@ export class TimeService {
 
                 // Era 2 uses specific narrative text
                 title = `Augmentation Installed: ${event.title}`;
-                // --- CHANGED: Now prepends "You are now [Age]." per user request ---
                 this.uiManager.queueModal('event-modal', title, `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
             }
         }
