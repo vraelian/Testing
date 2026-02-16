@@ -205,14 +205,46 @@ export class UIMarketControl {
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
         const basePrice = this.getItemPrice(state, goodId, true);
-        const fleetItem = this._getFleetItem(state, goodId);
-        const avgCost = fleetItem?.avgCost || 0;
-
         const effectivePrice = basePrice; 
         const totalPrice = Math.floor(effectivePrice * quantity);
 
-        const totalCost = avgCost * quantity;
-        let netProfit = totalPrice - totalCost;
+        // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
+        // Instead of using the blended average, simulate the exact drain order
+        // (Active Ship first, then by max capacity descending) to project real profit.
+        const activeShipId = state.player.activeShipId;
+        const shipInventories = [];
+        
+        for (const shipId of state.player.ownedShipIds) {
+            const qty = state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+            // Safely fetch max capacity, falling back to static DB if simulation service isn't ready
+            const maxCapacity = this.manager.simulationService ? 
+                this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                DB.SHIPS[shipId].maxCapacity;
+                
+            shipInventories.push({ shipId, qty, maxCapacity });
+        }
+
+        shipInventories.sort((a, b) => {
+            if (a.shipId === activeShipId) return -1;
+            if (b.shipId === activeShipId) return 1;
+            return b.maxCapacity - a.maxCapacity;
+        });
+
+        let remainingToSell = quantity;
+        let exactCostBasis = 0;
+
+        for (const shipData of shipInventories) {
+            if (remainingToSell <= 0) break;
+            const toRemove = Math.min(remainingToSell, shipData.qty);
+            if (toRemove > 0) {
+                const invItem = state.player.inventories[shipData.shipId][goodId];
+                exactCostBasis += (toRemove * invItem.avgCost);
+                remainingToSell -= toRemove;
+            }
+        }
+        // --- END SIMULATION ---
+
+        let netProfit = totalPrice - exactCostBasis;
         if (netProfit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.statModifiers?.profitBonus || 0);
             netProfit += netProfit * totalBonus;
