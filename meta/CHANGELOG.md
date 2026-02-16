@@ -2,6 +2,14 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.51] - 2026-2-15
+-  implemented fleet trading, storage
+-  updated UI for fleet cost averaging
+-  updated cargo screen information
+-  added fleet resource use, 'convoy tax'
+-  updated systems integration with fleet use
+-  added ship cycling to services screen
+
 # [35.45] - 2026-2-15
 -  tuned ship upgrade drop rate
 -  added location bias to ship upgrades

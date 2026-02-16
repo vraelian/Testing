@@ -408,13 +408,16 @@ export class ActionClickHandler {
                 const commId = dataset.commodityId;
                 const station = this.gameState.solStation;
                 const cache = station.caches[commId];
-                const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
                 
-                if (!cache || !inventory) return;
+                if (!cache) return;
 
-                const playerStock = inventory[commId]?.quantity || 0;
+                // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
+                let playerStock = 0;
+                for (const shipId of this.gameState.player.ownedShipIds) {
+                    playerStock += (this.gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
+                }
+
                 const spaceAvailable = cache.max - cache.current;
-
                 const donateAmount = Math.min(playerStock, spaceAvailable);
 
                 if (donateAmount > 0) {

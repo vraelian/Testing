@@ -295,11 +295,17 @@ export class SolStationService {
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
-        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
 
         if (!cache) return { success: false, message: "Invalid cache commodity." };
-        if (!inventory[commodityId] || inventory[commodityId].quantity < quantity) {
-            return { success: false, message: "Insufficient cargo." };
+
+        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
+        let totalFleetStock = 0;
+        for (const shipId of this.gameState.player.ownedShipIds) {
+            totalFleetStock += (this.gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
+        }
+
+        if (totalFleetStock < quantity) {
+            return { success: false, message: "Insufficient fleet cargo." };
         }
         
         const spaceAvailable = cache.max - cache.current;
@@ -307,7 +313,35 @@ export class SolStationService {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
 
-        inventory[commodityId].quantity -= quantity;
+        // --- FLEET OVERFLOW SYSTEM: SEQUENTIAL DRAIN ---
+        const activeShipId = this.gameState.player.activeShipId;
+        const shipInventories = [];
+        
+        for (const shipId of this.gameState.player.ownedShipIds) {
+            const qty = this.gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0;
+            shipInventories.push({ shipId, qty });
+        }
+
+        // Sort: Active ship first, then the remaining ships with the largest stockpile of the requested item
+        shipInventories.sort((a, b) => {
+            if (a.shipId === activeShipId) return -1;
+            if (b.shipId === activeShipId) return 1;
+            return b.qty - a.qty; 
+        });
+
+        let remainingToDonate = quantity;
+        for (const shipData of shipInventories) {
+            if (remainingToDonate <= 0) break;
+            const toRemove = Math.min(remainingToDonate, shipData.qty);
+            if (toRemove > 0) {
+                const invItem = this.gameState.player.inventories[shipData.shipId][commodityId];
+                invItem.quantity -= toRemove;
+                if (invItem.quantity === 0) invItem.avgCost = 0;
+                remainingToDonate -= toRemove;
+            }
+        }
+        // --- END FLEET OVERFLOW SYSTEM ---
+
         cache.current += quantity;
 
         let totalFillRatio = 0;

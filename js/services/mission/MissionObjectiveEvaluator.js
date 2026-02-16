@@ -36,14 +36,19 @@ export class MissionObjectiveEvaluator {
         switch (objective.type) {
             // --- RESOURCE / INVENTORY CHECKS ---
             case 'have_item':
-            case 'DELIVER_ITEM':
-                const shipId = gameState.player.activeShipId;
-                const inventory = gameState.player.inventories[shipId];
+            case 'DELIVER_ITEM': {
                 const itemId = objective.goodId || objective.target;
-                if (inventory && inventory[itemId]) {
-                    current = inventory[itemId].quantity || 0;
+                let totalQty = 0;
+                // --- FLEET OVERFLOW SYSTEM: Aggregate across entire fleet ---
+                for (const shipId of gameState.player.ownedShipIds) {
+                    const inventory = gameState.player.inventories[shipId];
+                    if (inventory && inventory[itemId]) {
+                        totalQty += (inventory[itemId].quantity || 0);
+                    }
                 }
+                current = totalQty;
                 break;
+            }
 
             case 'have_credits':
             case 'WEALTH_CHECK':
@@ -59,7 +64,6 @@ export class MissionObjectiveEvaluator {
                 }
                 break;
 
-            // [[FIX]] Hull Percentage
             case 'have_hull_pct':
             case 'HAVE_HULL_PCT':
                 const activeShipId = gameState.player.activeShipId;
@@ -73,21 +77,29 @@ export class MissionObjectiveEvaluator {
                 }
                 break;
 
-            // [[FIX]] Cargo Percentage
+            // --- FLEET OVERFLOW SYSTEM: Aggregate Fleet Cargo Percentage ---
             case 'have_cargo_pct':
-            case 'HAVE_CARGO_PCT':
-                const cShipId = gameState.player.activeShipId;
-                const cShipDef = getShipStats(cShipId); // Use effective stats (upgrades included)
-                const cInventory = gameState.player.inventories[cShipId];
-                
-                // [[FIX]] Property is 'cargoCapacity', NOT 'maxCargo'
-                if (cShipDef && cInventory && cShipDef.cargoCapacity > 0) {
-                    const totalUsed = Object.values(cInventory).reduce((sum, item) => sum + (item.quantity || 0), 0);
-                    current = Math.floor((totalUsed / cShipDef.cargoCapacity) * 100);
+            case 'HAVE_CARGO_PCT': {
+                let fleetTotalUsed = 0;
+                let fleetTotalCapacity = 0;
+
+                for (const shipId of gameState.player.ownedShipIds) {
+                    const cShipDef = getShipStats(shipId); 
+                    const cInventory = gameState.player.inventories[shipId];
+                    
+                    if (cShipDef && cInventory && cShipDef.cargoCapacity > 0) {
+                        fleetTotalCapacity += cShipDef.cargoCapacity;
+                        fleetTotalUsed += Object.values(cInventory).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    }
+                }
+
+                if (fleetTotalCapacity > 0) {
+                    current = Math.floor((fleetTotalUsed / fleetTotalCapacity) * 100);
                 } else {
                     current = 0;
                 }
                 break;
+            }
 
             // --- WORLD STATE CHECKS ---
             case 'travel_to':

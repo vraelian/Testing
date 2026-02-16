@@ -393,18 +393,45 @@ export class MissionService {
             return; // Can't complete yet
         }
 
-        const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
-
-        // 1. Deduct objective items (if applicable)
+        // 1. Deduct objective items (if applicable) using Sequential Fleet Drain
         if (mission.objectives) {
             mission.objectives.forEach(obj => {
                 // Only deduct if it's an item delivery type
-                if ((obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') && inventory) {
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                     const itemId = obj.goodId || obj.target;
-                    if (inventory[itemId]) {
-                        const targetQty = obj.quantity || 1;
-                        const qtyToRemove = Math.min(inventory[itemId].quantity, targetQty);
-                        inventory[itemId].quantity -= qtyToRemove;
+                    let remainingToRemove = obj.quantity || 1;
+                    
+                    if (remainingToRemove > 0) {
+                        const activeShipId = this.gameState.player.activeShipId;
+                        const shipInventories = [];
+                        
+                        for (const shipId of this.gameState.player.ownedShipIds) {
+                            const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
+                            // Sort heuristic requires maxCapacity
+                            const maxCapacity = this.simulationService ? 
+                                this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                            
+                            shipInventories.push({ shipId, qty, maxCapacity });
+                        }
+
+                        // Sort: Active ship first, then remaining inactive ships by max capacity descending
+                        shipInventories.sort((a, b) => {
+                            if (a.shipId === activeShipId) return -1;
+                            if (b.shipId === activeShipId) return 1;
+                            return b.maxCapacity - a.maxCapacity;
+                        });
+
+                        for (const shipData of shipInventories) {
+                            if (remainingToRemove <= 0) break;
+                            const toRemove = Math.min(remainingToRemove, shipData.qty);
+                            if (toRemove > 0) {
+                                const invItem = this.gameState.player.inventories[shipData.shipId][itemId];
+                                invItem.quantity -= toRemove;
+                                if (invItem.quantity === 0) invItem.avgCost = 0;
+                                remainingToRemove -= toRemove;
+                            }
+                        }
                     }
                 }
             });
