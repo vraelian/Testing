@@ -4646,19 +4646,17 @@ card.
 
 /* --- VIRTUAL WORKBENCH: NEW NAVIGATE BUTTON --- */
 .map-navigate-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+    display: inline-block;
     font-family: 'Oxanium', sans-serif;
     font-weight: 600;
-    font-size: 0.8rem;
-    color: var(--ot-cyan-base, #22d3ee);
-    text-shadow: 0 0 5px var(--ot-cyan-glow, #67e8f9);
+    font-size: calc(0.8rem + 3.0pt);
+    color: #fde047; /* Base gold color */
+    text-shadow: 0 0 5px #facc15; /* Gold glow */
     cursor: pointer;
     pointer-events: auto;
     z-index: 50;
     letter-spacing: 0.05em;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, text-shadow 0.2s ease;
 }
 
 .map-navigate-btn:hover {
@@ -5683,7 +5681,7 @@ WORKBENCH --- */
     box-shadow: inset 0 3px 6px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.5); /* Inner trench shadow + outer drop shadow */
     font-family: 'Oxanium', sans-serif;
     font-weight: 300;
-    font-size: 12px; /* Increased by 2 points */
+    font-size: 12.5px; /* Increased by 2 points */
     text-transform: uppercase;
     font-variant-numeric: tabular-nums;
     animation: slideDownReveal 0.3s ease-out forwards;
@@ -16220,7 +16218,6 @@ export class UIEventControl {
         const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
         const contentHtml = `
-            ${navigateBtnHtml}
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                  <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
@@ -16245,6 +16242,9 @@ export class UIEventControl {
                 <div class="mt-2">
                      <h5 class="font-bold imprinted-text">Needs:</h5>
                      <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
+                </div>
+                <div class="mt-6 mb-2">
+                    ${navigateBtnHtml}
                 </div>
             </div>
         `;
@@ -16386,8 +16386,17 @@ export class UIEventControl {
                         
                         effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
                         break;
+                    case 'EFF_DEBT':
+                        const isDebtGain = eff.value > 0;
+                        const debtSign = isDebtGain ? '+' : '';
+                        const debtClass = isDebtGain ? 'text-result-credit-loss' : 'text-result-credit-gain';
+                        effectText = `<span class="${baseStyle} ${debtClass}">Debt: ${debtSign}${formatCredits(eff.value)}</span>`;
+                        break;
                     case 'EFF_FUEL':
                         effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
+                        break;
+                    case 'EFF_FULL_REFUEL':
+                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel Tanks Replenished</span>`;
                         break;
                     case 'EFF_HULL':
                         effectText = `<span class="${baseStyle} text-result-hull">Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
@@ -16395,6 +16404,9 @@ export class UIEventControl {
                     case 'EFF_TRAVEL_TIME':
                     case 'EFF_MODIFY_TRAVEL':
                         effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
+                        break;
+                    case 'EFF_REDIRECT_TRAVEL':
+                        effectText = `<span class="${baseStyle} text-yellow-400">Course Diverted</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
                         const itemName = eff.addedItem || eff.target;
@@ -16419,6 +16431,13 @@ export class UIEventControl {
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
                         } else {
                              effectText = `<span class="${baseStyle} text-gray-500">Upgrade already installed.</span>`;
+                        }
+                        break;
+                    case 'EFF_UNLOCK_INTEL':
+                        if (eff.intelLocation && eff.intelCommodity) {
+                            effectText = `<span class="${baseStyle} text-req-yellow">Intel Acquired: ${eff.intelCommodity} at ${eff.intelLocation}</span>`;
+                        } else {
+                            effectText = `<span class="${baseStyle} text-gray-500">Encrypted Data Unreadable</span>`;
                         }
                         break;
                     default:
@@ -27545,7 +27564,7 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 /**
@@ -27780,8 +27799,72 @@ const effectHandlers = {
     },
 
     // 8. UNLOCK INTEL
-    [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect) => {
-        const randomLoc = DB.MARKETS[Math.floor(Math.random() * DB.MARKETS.length)];
+    [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect, outcome) => {
+        // Obey One-Deal Lock economy constraint
+        if (gameState.activeIntelDeal !== null) {
+            if (outcome) {
+                outcome.text += ` (Data corrupted. You can only maintain one active intel deal at a time.)`;
+            }
+            return;
+        }
+
+        const revealedTier = gameState.player.revealedTier;
+        const unlockedCommodities = DB.COMMODITIES.filter(c => c.tier <= revealedTier).map(c => c.id);
+
+        if (unlockedCommodities.length === 0) return;
+
+        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
+        
+        const playerUnlockedLocations = gameState.player.unlockedLocationIds || [];
+        const possibleDealLocations = DB.MARKETS.map(m => m.id).filter(id => playerUnlockedLocations.includes(id));
+
+        if (possibleDealLocations.length === 0) return;
+        const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+
+        const discountPercent = 0.20 + Math.random() * 0.30; // 20% - 50%
+        
+        let travelTime = gameState.TRAVEL_DATA[gameState.currentLocationId]?.[dealLocationId]?.time || 30;
+
+        if (gameState.player.activePerks && gameState.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+
+        let durationMultiplier = 1.9;
+        if (gameState.currentLocationId === LOCATION_IDS.VENUS) {
+            durationMultiplier *= 2.0;
+        }
+
+        const ageDurationBonus = gameState.player.statModifiers?.intelDuration || 0;
+        if (ageDurationBonus > 0) {
+            durationMultiplier *= (1 + ageDurationBonus);
+        }
+
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
+        const expiryDay = gameState.day + newDurationDays;
+
+        let galacticAverage = 0;
+        if (simulationService.marketService) {
+            galacticAverage = simulationService.marketService.getGalacticAverage(commodityId);
+        } else {
+             const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+             galacticAverage = commodity ? commodity.basePrice : 100;
+        }
+        
+        const overridePrice = Math.floor(galacticAverage * (1 - discountPercent));
+
+        gameState.activeIntelDeal = {
+            locationId: dealLocationId,
+            commodityId: commodityId,
+            overridePrice: overridePrice,
+            expiryDay: expiryDay,
+            sourcePacketId: `evt_intel_${gameState.day}_${Math.floor(Math.random() * 999)}`,
+            sourceSaleLocationId: gameState.currentLocationId
+        };
+
+        const commodityName = DB.COMMODITIES.find(c => c.id === commodityId)?.name || 'goods';
+        const locationName = DB.MARKETS.find(m => m.id === dealLocationId)?.name || 'a local market';
+
+        return { intelLocation: locationName, intelCommodity: commodityName };
     },
 
     // 9. LOSE RANDOM CARGO (Percentage)
@@ -28160,7 +28243,6 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
-        // FIXED: Re-added gameState. to currentLocationId 
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         if (location) {
             this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
@@ -28304,7 +28386,32 @@ export class UIManager {
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
 
-        this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        const existingContextBar = this.cache.navBar.querySelector('.context-bar');
+        const existingNavWrapper = this.cache.navBar.querySelector('.nav-wrapper');
+
+        // Surgical DOM Update to prevent CSS animation restart
+        if (existingContextBar && existingNavWrapper) {
+            existingContextBar.className = containerClass;
+            existingContextBar.style.background = theme.gradient;
+            existingContextBar.style.color = theme.textColor;
+
+            const locSpan = existingContextBar.querySelector('.location-name-text');
+            if (locSpan) locSpan.textContent = location?.name || 'In Transit';
+
+            const dateSpan = existingContextBar.querySelector('.date-text');
+            if (dateSpan) dateSpan.textContent = dateText;
+
+            const creditSpan = existingContextBar.querySelector('.credit-text');
+            if (creditSpan) {
+                creditSpan.className = `credit-text ${creditClass}`;
+                creditSpan.textContent = creditText;
+            }
+
+            existingNavWrapper.outerHTML = navWrapperHtml;
+        } else {
+            this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
+        }
+        
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
@@ -33442,6 +33549,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [35.52] - 2026-2-15
+-  added cargo intel band to cargo screen
+-  map screen POI modal polish
+-  nav bar polish
+
 
 # [35.51] - 2026-2-15
 -  implemented fleet trading, storage

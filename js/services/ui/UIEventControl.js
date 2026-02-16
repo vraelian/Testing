@@ -480,8 +480,17 @@ export class UIEventControl {
                         
                         effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
                         break;
+                    case 'EFF_DEBT':
+                        const isDebtGain = eff.value > 0;
+                        const debtSign = isDebtGain ? '+' : '';
+                        const debtClass = isDebtGain ? 'text-result-credit-loss' : 'text-result-credit-gain';
+                        effectText = `<span class="${baseStyle} ${debtClass}">Debt: ${debtSign}${formatCredits(eff.value)}</span>`;
+                        break;
                     case 'EFF_FUEL':
                         effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
+                        break;
+                    case 'EFF_FULL_REFUEL':
+                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel Tanks Replenished</span>`;
                         break;
                     case 'EFF_HULL':
                         effectText = `<span class="${baseStyle} text-result-hull">Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
@@ -489,6 +498,9 @@ export class UIEventControl {
                     case 'EFF_TRAVEL_TIME':
                     case 'EFF_MODIFY_TRAVEL':
                         effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
+                        break;
+                    case 'EFF_REDIRECT_TRAVEL':
+                        effectText = `<span class="${baseStyle} text-yellow-400">Course Diverted</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
                         const itemName = eff.addedItem || eff.target;
@@ -513,6 +525,13 @@ export class UIEventControl {
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
                         } else {
                              effectText = `<span class="${baseStyle} text-gray-500">Upgrade already installed.</span>`;
+                        }
+                        break;
+                    case 'EFF_UNLOCK_INTEL':
+                        if (eff.intelLocation && eff.intelCommodity) {
+                            effectText = `<span class="${baseStyle} text-req-yellow">Intel Acquired: ${eff.intelCommodity} at ${eff.intelLocation}</span>`;
+                        } else {
+                            effectText = `<span class="${baseStyle} text-gray-500">Encrypted Data Unreadable</span>`;
                         }
                         break;
                     default:

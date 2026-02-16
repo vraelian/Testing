@@ -10,7 +10,7 @@ import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
-import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER } from '../data/constants.js';
+import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 /**
@@ -245,8 +245,72 @@ const effectHandlers = {
     },
 
     // 8. UNLOCK INTEL
-    [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect) => {
-        const randomLoc = DB.MARKETS[Math.floor(Math.random() * DB.MARKETS.length)];
+    [EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL]: (gameState, simulationService, effect, outcome) => {
+        // Obey One-Deal Lock economy constraint
+        if (gameState.activeIntelDeal !== null) {
+            if (outcome) {
+                outcome.text += ` (Data corrupted. You can only maintain one active intel deal at a time.)`;
+            }
+            return;
+        }
+
+        const revealedTier = gameState.player.revealedTier;
+        const unlockedCommodities = DB.COMMODITIES.filter(c => c.tier <= revealedTier).map(c => c.id);
+
+        if (unlockedCommodities.length === 0) return;
+
+        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
+        
+        const playerUnlockedLocations = gameState.player.unlockedLocationIds || [];
+        const possibleDealLocations = DB.MARKETS.map(m => m.id).filter(id => playerUnlockedLocations.includes(id));
+
+        if (possibleDealLocations.length === 0) return;
+        const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+
+        const discountPercent = 0.20 + Math.random() * 0.30; // 20% - 50%
+        
+        let travelTime = gameState.TRAVEL_DATA[gameState.currentLocationId]?.[dealLocationId]?.time || 30;
+
+        if (gameState.player.activePerks && gameState.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+
+        let durationMultiplier = 1.9;
+        if (gameState.currentLocationId === LOCATION_IDS.VENUS) {
+            durationMultiplier *= 2.0;
+        }
+
+        const ageDurationBonus = gameState.player.statModifiers?.intelDuration || 0;
+        if (ageDurationBonus > 0) {
+            durationMultiplier *= (1 + ageDurationBonus);
+        }
+
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
+        const expiryDay = gameState.day + newDurationDays;
+
+        let galacticAverage = 0;
+        if (simulationService.marketService) {
+            galacticAverage = simulationService.marketService.getGalacticAverage(commodityId);
+        } else {
+             const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+             galacticAverage = commodity ? commodity.basePrice : 100;
+        }
+        
+        const overridePrice = Math.floor(galacticAverage * (1 - discountPercent));
+
+        gameState.activeIntelDeal = {
+            locationId: dealLocationId,
+            commodityId: commodityId,
+            overridePrice: overridePrice,
+            expiryDay: expiryDay,
+            sourcePacketId: `evt_intel_${gameState.day}_${Math.floor(Math.random() * 999)}`,
+            sourceSaleLocationId: gameState.currentLocationId
+        };
+
+        const commodityName = DB.COMMODITIES.find(c => c.id === commodityId)?.name || 'goods';
+        const locationName = DB.MARKETS.find(m => m.id === dealLocationId)?.name || 'a local market';
+
+        return { intelLocation: locationName, intelCommodity: commodityName };
     },
 
     // 9. LOSE RANDOM CARGO (Percentage)
