@@ -3,19 +3,22 @@
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Sudden Ideas
-- Cargo Screen insight messages
+- 
 
 ## Ongoing, WIP Efforts
--  How to increase risk and add difficulty mid-game?
--  How to increase usefulness of multiple ships, improve Muti-ship game play?
+-  How to increase scaling  risk and difficulty mid-game through to end game?
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
 -  Add sun station progression and escalation
 -  Implement Officers GDD V1
 -  Build Mission Maker V3
+-  More UI CSS keyframes animations
 
 
-## Imminent Projects
--
+## Balance To-Do’s
+- Wealth milestones
+- Commodity pricing
+- Ship pricing
+- Ship Upgrade pricing 
 
 ## Long-Term Goals, Ideas
 - Optional game upgrades: fleet repair, fleet refueling
