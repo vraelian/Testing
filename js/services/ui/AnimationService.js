@@ -90,4 +90,43 @@ export async function playBlockingAnimationAndRemove(element, animationClass) {
         element.classList.add(animationClass);
     });
 }
+
+/**
+ * Spawns a temporary floating text element anchored to a target DOM node.
+ * Automatically handles its own animation and DOM removal.
+ *
+ * @param {HTMLElement} targetElement - The element to anchor the text to.
+ * @param {string} text - The string to display.
+ * @param {string} colorClass - Tailwind classes for styling (e.g., 'text-red-500 font-bold').
+ */
+export function spawnFloatingText(targetElement, text, colorClass = 'text-white font-bold') {
+    if (!targetElement) return;
+
+    const rect = targetElement.getBoundingClientRect();
+    const floatEl = document.createElement('div');
+    
+    floatEl.textContent = text;
+    floatEl.className = `fixed pointer-events-none z-50 ${colorClass}`;
+    floatEl.style.left = `${rect.left + (rect.width / 2)}px`;
+    floatEl.style.top = `${rect.top}px`;
+    floatEl.style.transform = 'translate(-50%, -50%)';
+    floatEl.style.transition = 'all 1s ease-out';
+    floatEl.style.opacity = '1';
+    
+    document.body.appendChild(floatEl);
+    
+    // Force a reflow to ensure the initial state is painted before animating
+    void floatEl.offsetWidth;
+    
+    // Animate up and fade out
+    floatEl.style.top = `${rect.top - 40}px`;
+    floatEl.style.opacity = '0';
+    
+    // Cleanup after animation completes
+    setTimeout(() => {
+        if (floatEl.parentNode) {
+            floatEl.parentNode.removeChild(floatEl);
+        }
+    }, 1000);
+}
 // --- [[END]] VIRTUAL WORKBENCH ---

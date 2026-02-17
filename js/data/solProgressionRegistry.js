@@ -1,3 +1,4 @@
+// js/data/solProgressionRegistry.js
 /**
  * @fileoverview Registry for Sol Station progression levels (1-50).
  * Defines the requirements and additive rewards for each station level up.
@@ -10,13 +11,13 @@ export const LEVEL_REGISTRY = {
         projectName: "Ice Reservoir Integration",
         lore: "Expanding the thermal coolant buffers to allow for slightly higher reactor operating temperatures.",
         requirements: {
-            "c_water_ice": 1000,
+            "water_ice": 1000,
             "credits": 50000
         },
         rewards: {
             description: "+10,000 Water Ice Capacity, +5% Antimatter Yield",
             stats: {
-                cacheCapacity: { "c_water_ice": 10000 },
+                cacheCapacity: { "water_ice": 10000 },
                 amYieldMult: 0.05,
                 creditYieldMult: 0,
                 globalEntropyRed: 0
@@ -27,7 +28,7 @@ export const LEVEL_REGISTRY = {
         projectName: "Hull Plating Reinforcement",
         lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced trade operations.",
         requirements: {
-            "c_plasteel": 2500,
+            "plasteel": 2500,
             "credits": 150000
         },
         rewards: {
@@ -44,13 +45,13 @@ export const LEVEL_REGISTRY = {
         projectName: "Advanced Robotics Bay",
         lore: "Automated maintenance drones improve the efficiency of mechanical repairs and part replacements.",
         requirements: {
-            "c_machine_parts": 800,
+            "processors": 800,
             "credits": 300000
         },
         rewards: {
-            description: "+5,000 Machine Parts Capacity, +10% Credit Yield",
+            description: "+5,000 Processors Capacity, +10% Credit Yield",
             stats: {
-                cacheCapacity: { "c_machine_parts": 5000 },
+                cacheCapacity: { "processors": 5000 },
                 amYieldMult: 0,
                 creditYieldMult: 0.10,
                 globalEntropyRed: 0
@@ -61,7 +62,7 @@ export const LEVEL_REGISTRY = {
         projectName: "Expanded Directorate Quarters",
         lore: "Constructing high-end habitats to attract top-tier administrative and engineering talent to the station.",
         requirements: {
-            "c_luxury_goods": 500,
+            "cybernetics": 500,
             "credits": 600000
         },
         rewards: {

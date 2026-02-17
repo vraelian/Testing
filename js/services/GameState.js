@@ -1,6 +1,7 @@
 // js/services/GameState.js
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
+import { OFFICERS } from '../data/officers.js';
 import { skewedRandom } from '../utils.js';
 
 /**
@@ -192,7 +193,7 @@ export class GameState {
                 seenCommodityMilestones: [], financeLog: [],
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
-                officerRoster: [], // Expanded officer universe pool tracking
+                officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
                 // Added `upgrades: []` to the initial Wanderer state
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },

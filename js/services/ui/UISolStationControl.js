@@ -4,6 +4,7 @@ import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
 import { AssetService } from '../AssetService.js';
+import { spawnFloatingText } from './AnimationService.js';
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
 export class UISolStationControl {
@@ -90,7 +91,7 @@ export class UISolStationControl {
         }
 
         this._clickHandler = (e) => {
-            const btn = e.target.closest('button[data-local-action]');
+            const btn = e.target.closest('[data-local-action]');
             if (!btn) return;
             e.preventDefault();
             const action = btn.dataset.localAction;
@@ -101,6 +102,9 @@ export class UISolStationControl {
                 this.showOfficerManagement(gameState);
             } else if (action === 'open-engineering') {
                 this.showEngineeringModal(gameState);
+            } else if (action === 'info-officer') {
+                const officerId = btn.dataset.officerId;
+                if (officerId) this.showOfficerDetailModal(officerId, gameState);
             } else if (action === 'eng-donate-max-credits') {
                 const reqs = LEVEL_REGISTRY[svc.gameState.solStation.level + 1].requirements;
                 const banked = svc.gameState.solStation.activeProjectBank['credits'] || 0;
@@ -112,6 +116,8 @@ export class UISolStationControl {
                 const input = document.getElementById('eng-credit-input');
                 const qty = parseInt(input?.value || 0, 10);
                 if (qty > 0) {
+                    // Trigger visual text BEFORE DOM replacement
+                    spawnFloatingText(btn, `-⌬ ${formatCredits(qty, false)}`, 'text-red-500 font-bold text-lg');
                     const res = svc.contributeToProject('credits', qty);
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
@@ -126,6 +132,8 @@ export class UISolStationControl {
                 const depositQty = Math.min(needed, pStock);
 
                 if (depositQty > 0) {
+                    // Trigger visual text BEFORE DOM replacement
+                    spawnFloatingText(btn, `-${depositQty.toLocaleString()}`, 'text-red-500 font-bold text-lg');
                     const res = svc.contributeToProject(commId, depositQty);
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
@@ -306,7 +314,7 @@ export class UISolStationControl {
         this.domCache = null; 
     }
 
-    // --- PHASE 3: OFFICER MANAGEMENT (DUAL COLUMN) ---
+    // --- PHASE 3: OFFICER MANAGEMENT & DETAILS ---
 
     showOfficerManagement(gameState) {
         this._stopRefreshLoop();
@@ -328,26 +336,29 @@ export class UISolStationControl {
                 return this._buildOfficerRowHtml(slot.assignedOfficerId, true, slot.slotId);
             } else {
                 return `
-                    <div class="officer-mgmt-row empty-slot" data-slot-id="${slot.slotId}">
-                        <div class="slot-indicator">SLOT ${slot.slotId}</div>
-                        <div class="empty-text">Empty</div>
+                    <div class="officer-mgmt-row empty-slot flex items-center justify-between p-2 bg-gray-800/50 border border-gray-700 border-dashed rounded mb-1" data-slot-id="${slot.slotId}">
+                        <div class="flex items-center gap-2">
+                            <div class="text-xs bg-gray-700 px-1 rounded text-gray-400">S${slot.slotId}</div>
+                            <div class="text-sm text-gray-500 italic">Empty Slot</div>
+                        </div>
                     </div>
                 `;
             }
         }).join('');
 
+        // Ensure constrained height with internal scrolling
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-4">
                 <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container">
-                <div class="column-avail">
-                    <div class="col-title">AVAILABLE ROSTER</div>
-                    <div class="col-content">${availHtml}</div>
+            <div class="officer-mgmt-container flex gap-2 w-full" style="height: 50vh; min-height: 350px;">
+                <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
+                    <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
+                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
                 </div>
-                <div class="column-active">
-                    <div class="col-title">ACTIVE SLOTS</div>
-                    <div class="col-content">${slotsHtml}</div>
+                <div class="column-active flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
+                    <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">ACTIVE SLOTS</div>
+                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
                 </div>
             </div>
         `;
@@ -358,9 +369,7 @@ export class UISolStationControl {
             footerBtn.onclick = () => this.showDashboard(gameState);
         }
 
-        // Setup double-tap and selection logic
         const svc = this.uiManager.simulationService.solStationService;
-        
         const handleInteraction = (e) => {
             const row = e.target.closest('.officer-mgmt-row');
             if (!row) return;
@@ -369,20 +378,22 @@ export class UISolStationControl {
             const isDoubleTap = (now - this.lastTapTime < 350) && this.selectedOfficerId === row.dataset.officerId;
             this.lastTapTime = now;
 
-            const isAssigned = row.classList.contains('assigned');
+            const isAssigned = row.dataset.assigned === 'true';
             const officerId = row.dataset.officerId;
             const slotId = row.dataset.slotId;
 
-            // Handle inline button clicks OR double taps
+            if (e.target.closest('[data-local-action="info-officer"]')) {
+                // Ignore, handled by standard click delegator
+                return;
+            }
+
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
-                // Assign first available empty slot
                 const emptySlot = slots.find(s => !s.assignedOfficerId);
                 if (emptySlot) {
                     svc.assignOfficer(emptySlot.slotId, officerId);
                     this.showOfficerManagement(svc.gameState);
                 }
             } else if (e.target.closest('.btn-inline-remove') || (isDoubleTap && isAssigned)) {
-                // Request Un-slot
                 const res = svc.assignOfficer(slotId, null);
                 if (res.requiresConfirmation) {
                     this.showUnslotWarningModal(slotId, officerId, res.payload, svc.gameState);
@@ -390,14 +401,16 @@ export class UISolStationControl {
                     this.showOfficerManagement(svc.gameState);
                 }
             } else {
-                // Highlight logic
-                root.querySelectorAll('.officer-mgmt-row').forEach(r => r.classList.remove('selected'));
-                row.classList.add('selected');
+                root.querySelectorAll('.officer-mgmt-row').forEach(r => {
+                    r.style.borderColor = r.classList.contains('empty-slot') ? '#374151' : '#4b5563';
+                    r.style.backgroundColor = r.classList.contains('empty-slot') ? 'rgba(31,41,55,0.5)' : '#1f2937';
+                });
+                row.style.borderColor = '#60a5fa';
+                row.style.backgroundColor = '#1e3a8a';
                 this.selectedOfficerId = officerId;
             }
         };
 
-        // Use pointerup for better mobile responsiveness
         root.removeEventListener('pointerup', this._mgmtHandler);
         this._mgmtHandler = handleInteraction;
         root.addEventListener('pointerup', this._mgmtHandler);
@@ -406,21 +419,120 @@ export class UISolStationControl {
     _buildOfficerRowHtml(officerId, isAssigned, slotId = null) {
         const officer = OFFICERS[officerId];
         if (!officer) return '';
+        
         const actionBtn = isAssigned ? 
-            `<button type="button" class="btn-inline-remove">REMOVE</button>` : 
-            `<button type="button" class="btn-inline-assign">ASSIGN</button>`;
+            `<button type="button" class="btn-inline-remove bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold py-1 px-2 rounded">REMOVE</button>` : 
+            `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
+
+        const rarityColor = this._getRarityColorClass(officer.rarity);
 
         return `
-            <div class="officer-mgmt-row ${isAssigned ? 'assigned' : 'avail'}" data-officer-id="${officerId}" ${slotId ? `data-slot-id="${slotId}"` : ''}>
-                ${isAssigned ? `<div class="slot-indicator">SLOT ${slotId}</div>` : ''}
-                <div class="row-info">
-                    <div class="o-name">${officer.name}</div>
-                    <div class="o-role">${officer.role}</div>
-                    <div class="o-buffs">${this._formatBuffs(officer.buffs, true)}</div>
+            <div class="officer-mgmt-row flex items-center justify-between p-2 bg-gray-800 border border-gray-600 rounded mb-1 cursor-pointer select-none" 
+                 data-officer-id="${officerId}" 
+                 data-assigned="${isAssigned}"
+                 ${slotId ? `data-slot-id="${slotId}"` : ''}>
+                
+                <div class="flex items-center gap-2 overflow-hidden flex-1 mr-2">
+                    ${isAssigned ? `<div class="text-xs bg-blue-900/50 px-1 rounded border border-blue-700 text-blue-300 font-mono shrink-0">S${slotId}</div>` : ''}
+                    <button type="button" class="shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-gray-700 hover:bg-gray-600 border border-gray-500 text-xs font-bold text-gray-300 transition-colors" data-local-action="info-officer" data-officer-id="${officerId}">i</button>
+                    <div class="flex flex-col min-w-0">
+                        <div class="font-bold text-sm truncate ${rarityColor} leading-tight">${officer.name}</div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-wide truncate leading-tight">${officer.role}</div>
+                    </div>
                 </div>
-                <div class="row-action">${actionBtn}</div>
+                
+                <div class="shrink-0">
+                    ${actionBtn}
+                </div>
             </div>
         `;
+    }
+
+    showOfficerDetailModal(officerId, gameState) {
+        this._stopRefreshLoop();
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return;
+
+        const officer = OFFICERS[officerId];
+        if (!officer) return;
+
+        const rarityColor = this._getRarityColorClass(officer.rarity);
+        
+        let buffsHtml = '';
+        if (officer.buffs.entropy !== 0) buffsHtml += `<div class="text-sm border-b border-gray-800 pb-1 mb-1"><span class="text-red-300 font-bold uppercase text-xs tracking-wider inline-block w-32">Entropy:</span> ${officer.buffs.entropy > 0 ? '+' : ''}${Math.round(officer.buffs.entropy * 100)}%</div>`;
+        if (officer.buffs.creditMult !== 0) buffsHtml += `<div class="text-sm border-b border-gray-800 pb-1 mb-1"><span class="text-green-300 font-bold uppercase text-xs tracking-wider inline-block w-32">Credit Yield:</span> +${Math.round(officer.buffs.creditMult * 100)}%</div>`;
+        if (officer.buffs.amMult !== 0) buffsHtml += `<div class="text-sm border-b border-gray-800 pb-1 mb-1"><span class="text-purple-300 font-bold uppercase text-xs tracking-wider inline-block w-32">AM Yield:</span> +${Math.round(officer.buffs.amMult * 100)}%</div>`;
+        
+        if (officer.buffs.capacityMods) {
+            Object.entries(officer.buffs.capacityMods).forEach(([k, v]) => {
+                const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+                buffsHtml += `<div class="text-sm border-b border-gray-800 pb-1 mb-1"><span class="text-blue-300 font-bold uppercase text-xs tracking-wider inline-block w-32">+ Capacity:</span> ${cName} (${v.toLocaleString()})</div>`;
+            });
+        }
+        if (officer.buffs.consumptionMods) {
+            Object.entries(officer.buffs.consumptionMods).forEach(([k, v]) => {
+                const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+                buffsHtml += `<div class="text-sm border-b border-gray-800 pb-1 mb-1"><span class="text-yellow-300 font-bold uppercase text-xs tracking-wider inline-block w-32">- Consumption:</span> ${cName} (-${Math.round(v * 100)}%)</div>`;
+            });
+        }
+
+        root.innerHTML = `
+            <div class="sol-subview-header flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                <div class="sol-level-header text-white text-lg">OFFICER DOSSIER</div>
+            </div>
+            
+            <div class="flex flex-col p-5 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
+                <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-4">
+                    <div>
+                        <div class="text-2xl font-bold ${rarityColor} tracking-wide">${officer.name}</div>
+                        <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">${officer.role}</div>
+                    </div>
+                    <div class="text-[10px] font-bold uppercase px-2 py-1 rounded border border-gray-600 ${rarityColor} opacity-80">
+                        ${(officer.rarity || 'common').replace('_', ' ')}
+                    </div>
+                </div>
+                
+                <div class="text-sm text-gray-300 italic mb-6 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600">
+                    "${officer.lore}"
+                </div>
+                
+                <div class="w-full">
+                    <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Parameter Effects</div>
+                    <div class="flex flex-col bg-black/50 p-3 rounded border border-gray-800">
+                        ${buffsHtml || '<div class="text-sm text-gray-500">No measurable effects.</div>'}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-4">
+                <button type="button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-sm shadow transition-colors" data-local-action="open-officer-mgmt">
+                    &larr; RETURN TO ROSTER
+                </button>
+            </div>
+        `;
+
+        const footerBtn = document.querySelector('#event-button-container button');
+        if (footerBtn) {
+            footerBtn.innerHTML = 'DISMISS MODAL'; 
+            footerBtn.onclick = () => {
+                this._stopRefreshLoop();
+                this.uiManager.hideModal('event-modal');
+            };
+        }
+
+        this._bindLocalListeners(gameState);
+    }
+
+    _getRarityColorClass(rarity) {
+        switch (rarity) {
+            case 'uncommon': return 'text-green-400';
+            case 'valuable': return 'text-blue-400';
+            case 'rare': return 'text-yellow-400';
+            case 'very_rare': return 'text-orange-400';
+            case 'hyper_rare': return 'text-red-500';
+            case 'common':
+            default: return 'text-white';
+        }
     }
 
     // --- PHASE 3: ENGINEERING INTERFACE & WARNINGS ---
@@ -434,7 +546,7 @@ export class UISolStationControl {
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
 
         if (!nextLevelData) {
-            root.innerHTML = `<div class="text-center p-8"><h3 class="level-50-glow">STATION MAXIMIZED</h3></div>`;
+            root.innerHTML = `<div class="text-center p-8"><h3 class="level-50-glow text-2xl font-bold">STATION MAXIMIZED</h3></div>`;
             return;
         }
 
@@ -450,19 +562,19 @@ export class UISolStationControl {
             if (resId === 'credits') {
                 const playerCr = gameState.player.credits;
                 reqsHtml += `
-                    <div class="eng-req-row">
-                        <div class="req-header">
-                            <span>Credits</span>
-                            <span>${formatCredits(bankedQty, false)} / ${formatCredits(reqQty, false)}</span>
+                    <div class="eng-req-row bg-gray-800 border border-gray-600 rounded p-3 mb-3">
+                        <div class="req-header flex justify-between items-center mb-1">
+                            <span class="font-bold text-sm">Credits</span>
+                            <span class="font-mono text-sm text-blue-300">${formatCredits(bankedQty, false)} / ${formatCredits(reqQty, false)}</span>
                         </div>
-                        <div class="eng-progress-track"><div class="eng-progress-fill" style="width: ${pct}%; background-color: #10b981;"></div></div>
+                        <div class="eng-progress-track h-2 bg-black rounded overflow-hidden"><div class="eng-progress-fill h-full bg-green-500 transition-all" style="width: ${pct}%;"></div></div>
                         ${!isComplete ? `
-                            <div class="credit-stepper">
-                                <input type="number" id="eng-credit-input" min="0" max="${Math.min(reqQty - bankedQty, playerCr)}" value="0" step="1000">
-                                <button type="button" class="btn-sm" data-local-action="eng-donate-max-credits">MAX</button>
-                                <button type="button" class="btn-sm btn-green" data-local-action="eng-contribute-credits">FUND</button>
+                            <div class="credit-stepper flex gap-2 mt-3">
+                                <input type="number" id="eng-credit-input" min="0" max="${Math.min(reqQty - bankedQty, playerCr)}" value="0" step="1000" class="flex-1 bg-black border border-gray-600 text-white rounded px-2 font-mono">
+                                <button type="button" class="btn-sm bg-gray-700 hover:bg-gray-600 px-3 rounded text-xs font-bold" data-local-action="eng-donate-max-credits">MAX</button>
+                                <button type="button" class="btn-sm bg-green-700 hover:bg-green-600 px-4 rounded text-xs font-bold text-white" data-local-action="eng-contribute-credits">FUND</button>
                             </div>
-                        ` : '<div class="text-green-400 text-sm font-bold mt-1 text-right">FUNDED</div>'}
+                        ` : '<div class="text-green-400 text-sm font-bold mt-2 text-right">FUNDED</div>'}
                     </div>
                 `;
             } else {
@@ -470,18 +582,18 @@ export class UISolStationControl {
                 const pStock = gameState.player.ownedShipIds.reduce((total, id) => total + (gameState.player.inventories[id]?.[resId]?.quantity || 0), 0);
                 
                 reqsHtml += `
-                    <div class="eng-req-row">
-                        <div class="req-header">
-                            <span>${comm ? comm.name : resId}</span>
-                            <span>${bankedQty.toLocaleString()} / ${reqQty.toLocaleString()}</span>
+                    <div class="eng-req-row bg-gray-800 border border-gray-600 rounded p-3 mb-3">
+                        <div class="req-header flex justify-between items-center mb-1">
+                            <span class="font-bold text-sm">${comm ? comm.name : resId}</span>
+                            <span class="font-mono text-sm text-blue-300">${bankedQty.toLocaleString()} / ${reqQty.toLocaleString()}</span>
                         </div>
-                        <div class="eng-progress-track"><div class="eng-progress-fill" style="width: ${pct}%;"></div></div>
+                        <div class="eng-progress-track h-2 bg-black rounded overflow-hidden"><div class="eng-progress-fill h-full bg-blue-500 transition-all" style="width: ${pct}%;"></div></div>
                         ${!isComplete ? `
-                            <div class="flex justify-between items-center mt-1">
+                            <div class="flex justify-between items-center mt-3">
                                 <span class="text-xs text-gray-400">Fleet Stock: ${pStock.toLocaleString()}</span>
-                                <button type="button" class="btn-sm" data-local-action="eng-contribute-cargo" data-comm-id="${resId}" ${pStock <= 0 ? 'disabled' : ''}>DEPOSIT</button>
+                                <button type="button" class="btn-sm bg-blue-700 hover:bg-blue-600 px-4 py-1 rounded text-xs font-bold text-white transition-colors" data-local-action="eng-contribute-cargo" data-comm-id="${resId}" ${pStock <= 0 ? 'disabled style="opacity:0.5;"' : ''}>DEPOSIT</button>
                             </div>
-                        ` : '<div class="text-green-400 text-sm font-bold mt-1 text-right">SUPPLIED</div>'}
+                        ` : '<div class="text-green-400 text-sm font-bold mt-2 text-right">SUPPLIED</div>'}
                     </div>
                 `;
             }
@@ -489,12 +601,12 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-4">
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">ENGINEERING: PROJECT ${station.level + 1}</div>
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
             </div>
-            <div class="eng-project-info mb-4">
-                <div class="text-lg font-bold mb-1">${nextLevelData.projectName}</div>
-                <div class="text-xs text-gray-400 italic mb-2">${nextLevelData.lore}</div>
-                <div class="text-sm text-blue-300">Reward: ${nextLevelData.rewards.description}</div>
+            <div class="eng-project-info mb-6 p-4 bg-black/40 border border-gray-700 rounded">
+                <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
+                <div class="text-xs text-gray-400 italic mb-3 leading-relaxed border-b border-gray-700 pb-3">"${nextLevelData.lore}"</div>
+                <div class="text-sm font-bold text-blue-300 flex items-center gap-2"><span class="text-white text-xs bg-blue-900 px-1 rounded">REWARD</span> ${nextLevelData.rewards.description}</div>
             </div>
             <div class="eng-requirements-list">
                 ${reqsHtml}
@@ -528,26 +640,25 @@ export class UISolStationControl {
         }
 
         const modalHtml = `
-            <div id="unslot-warning-root" class="text-center">
-                <h3 class="text-xl font-bold text-red-500 mb-4">CRITICAL LOAD WARNING</h3>
-                <p class="mb-4 text-sm text-gray-300">Removing ${officer.name} will destabilize station operations.</p>
-                <div class="text-left bg-gray-900 border border-red-900 p-3 rounded mb-6">
+            <div id="unslot-warning-root" class="text-center p-4">
+                <h3 class="text-xl font-bold text-red-500 mb-4 tracking-wider">CRITICAL LOAD WARNING</h3>
+                <p class="mb-4 text-sm text-gray-300">Removing <span class="text-white font-bold">${officer.name}</span> will destabilize station operations.</p>
+                <div class="text-left bg-black border border-red-900 p-4 rounded mb-6 shadow-inner">
                     ${warningsHtml}
                 </div>
                 <div class="flex gap-4 justify-center">
-                    <button type="button" class="btn btn-red" id="btn-confirm-unslot">CONFIRM REMOVAL</button>
-                    <button type="button" class="btn btn-outline" id="btn-cancel-unslot">ABORT</button>
+                    <button type="button" class="btn bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" id="btn-confirm-unslot">CONFIRM REMOVAL</button>
+                    <button type="button" class="btn border border-gray-500 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded" id="btn-cancel-unslot">ABORT</button>
                 </div>
             </div>
         `;
 
-        // We temporarily replace the management view with the warning view.
         const root = document.getElementById('sol-dashboard-root');
         root.innerHTML = modalHtml;
 
         document.getElementById('btn-confirm-unslot').onclick = () => {
             const svc = this.uiManager.simulationService.solStationService;
-            svc.assignOfficer(slotId, null, true); // Force bypass validation
+            svc.assignOfficer(slotId, null, true); 
             this.showOfficerManagement(svc.gameState);
         };
 
@@ -556,7 +667,7 @@ export class UISolStationControl {
         };
     }
 
-    // --- HTML GENERATORS (Updated for Phase 3) ---
+    // --- HTML GENERATORS ---
 
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
@@ -574,16 +685,30 @@ export class UISolStationControl {
         const hasAm = amCurrent >= 1;
         const hasCredits = stockpile.credits > 0;
 
-        // Engineering Overview Prep
         const nextLvl = LEVEL_REGISTRY[station.level + 1];
         let engOverview = '<div class="text-center text-gray-500 text-xs">STATION MAXIMIZED</div>';
         if (nextLvl) {
-            const reqs = Object.entries(nextLvl.requirements).map(([resId, qty]) => {
+            const reqRows = Object.entries(nextLvl.requirements).map(([resId, qty]) => {
                 const banked = station.activeProjectBank[resId] || 0;
-                const name = resId === 'credits' ? 'Cr' : (DB.COMMODITIES.find(c => c.id === resId)?.name || resId);
-                return `${name}: ${banked >= qty ? '<span class="text-green-400">DONE</span>' : `${formatCredits(banked, false)}/${formatCredits(qty, false)}`}`;
-            }).join(' | ');
-            engOverview = `<div class="text-xs text-center text-blue-200 mt-1">${reqs}</div>`;
+                const isComplete = banked >= qty;
+                const name = resId === 'credits' ? 'Credits' : (DB.COMMODITIES.find(c => c.id === resId)?.name || resId);
+                const progressText = isComplete 
+                    ? '<span class="text-green-400 font-bold tracking-wider">DONE</span>' 
+                    : `<span style="font-family: 'Roboto Mono', monospace;">${formatCredits(banked, false)} / ${formatCredits(qty, false)}</span>`;
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+                        <span class="text-gray-400 uppercase tracking-wider">${name}</span>
+                        <span class="text-blue-200">${progressText}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            engOverview = `
+                <div style="display: flex; flex-direction: column; margin-top: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-transform: none; letter-spacing: normal;">
+                    ${reqRows}
+                </div>
+            `;
         }
 
         return `
@@ -670,14 +795,14 @@ export class UISolStationControl {
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-gray-700">
-                    <button type="button" class="w-full bg-blue-900 border border-blue-500 text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg" data-local-action="open-officer-mgmt">
+                    <button type="button" class="w-full bg-blue-900 border border-blue-500 text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg transition-transform hover:scale-[1.02]" data-local-action="open-officer-mgmt">
                         OFFICER MANAGEMENT
                     </button>
                 </div>
 
-                <div class="mt-4 p-3 border border-gray-600 rounded cursor-pointer bg-gray-900 hover:bg-gray-800 transition-colors" data-local-action="open-engineering">
-                    <div class="text-xs text-gray-400 uppercase font-bold text-center">ENGINEERING BAY</div>
-                    ${nextLvl ? `<div class="text-center font-bold text-sm text-yellow-400 mt-1">${nextLvl.projectName}</div>` : ''}
+                <div class="mt-4 p-3 border border-gray-600 rounded cursor-pointer bg-gray-900 hover:bg-gray-800 transition-colors shadow-lg" data-local-action="open-engineering">
+                    <div class="text-xs text-gray-400 uppercase font-bold text-center tracking-widest">ENGINEERING BAY</div>
+                    ${nextLvl ? `<div class="text-center font-bold text-sm text-yellow-400 mt-1 uppercase tracking-wider">${nextLvl.projectName}</div>` : ''}
                     ${engOverview}
                 </div>
             </div>
@@ -758,26 +883,6 @@ export class UISolStationControl {
                     </div>
                 `;
             }).join('');
-    }
-
-    _formatBuffs(buffs, mini = false) {
-        const parts = [];
-        if (buffs.entropy !== 0) parts.push(`<span class="text-red-300">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
-        if (buffs.creditMult !== 0) parts.push(`<span class="text-green-300">+${Math.round(buffs.creditMult * 100)}% Cr</span>`);
-        if (buffs.amMult !== 0) parts.push(`<span class="text-purple-300">+${Math.round(buffs.amMult * 100)}% AM</span>`);
-        
-        if (buffs.capacityMods) {
-            Object.keys(buffs.capacityMods).forEach(k => {
-                parts.push(`<span class="text-blue-300">+Cap</span>`);
-            });
-        }
-        if (buffs.consumptionMods) {
-            Object.keys(buffs.consumptionMods).forEach(k => {
-                parts.push(`<span class="text-yellow-300">-Burn</span>`);
-            });
-        }
-
-        return parts.join(mini ? ' ' : ' • ');
     }
 
     _calculateProjections(gameState) {
