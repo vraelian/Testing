@@ -9,8 +9,6 @@ export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
         this.animationFrameId = null;
-        this.visualState = null; 
-        
         this.domCache = null; 
         this.lastRendered = {}; 
     }
@@ -26,10 +24,13 @@ export class UISolStationControl {
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
+        // SAFETY HOOK: Ensure engine is running if UI opens (fixes Load Game bypass)
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
             const svc = this.uiManager.simulationService.solStationService;
-            svc.catchUpDays(gameState.day);
-            svc.startTracking();
+            if (!svc.trackingActive) {
+                svc.catchUpDays(gameState.day);
+                svc.startLocalLiveLoop();
+            }
         }
 
         const contentHtml = this._buildDashboardHtml(gameState);
@@ -53,11 +54,6 @@ export class UISolStationControl {
                 footerBtn.innerHTML = 'Dismiss';
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
-                    if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                        const svc = this.uiManager.simulationService.solStationService;
-                        svc.stopTracking();
-                        svc.commitPendingUniverseDays();
-                    }
                     this.uiManager.hideModal('event-modal');
                 };
             }
@@ -65,11 +61,6 @@ export class UISolStationControl {
             this.domCache = null; 
             this.uiManager.queueModal('event-modal', '', contentHtml, () => {
                 this._stopRefreshLoop();
-                if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                    const svc = this.uiManager.simulationService.solStationService;
-                    svc.stopTracking();
-                    svc.commitPendingUniverseDays();
-                }
             }, {
                 width: '800px', 
                 dismissOutside: true,
@@ -120,28 +111,19 @@ export class UISolStationControl {
         }
 
         const station = this._getLiveStationState(gameState);
-        
-        // Resync Visual State to True State
-        if (this.visualState) {
-            this.visualState.credits = station.stockpile.credits;
-            this.visualState.antimatter = station.stockpile.antimatter;
-            Object.entries(station.caches).forEach(([id, c]) => {
-                this.visualState.caches[id] = c.current;
-            });
-        }
-
         const output = this._calculateProjections(gameState);
         const c = this.domCache;
         const lr = this.lastRendered;
 
-        if (lr.health !== station.health) {
+        const healthDisp = station.health.toFixed(2);
+        if (lr.health !== healthDisp) {
             if (c.integrityLabel && c.integrityBar) {
                 c.integrityLabel.className = this._getHealthColorClass(station.health);
-                c.integrityLabel.textContent = `${station.health}%`;
+                c.integrityLabel.textContent = `${healthDisp}%`;
                 c.integrityBar.style.width = `${station.health}%`;
                 c.integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
             }
-            lr.health = station.health;
+            lr.health = healthDisp;
         }
 
         if (lr.entropy !== output.entropy) {
@@ -156,25 +138,16 @@ export class UISolStationControl {
             lr.threshold = output.threshold;
         }
 
-        const amMax = 150; 
-        const amCurrent = Math.min(amMax, station.stockpile.antimatter); 
-        if (lr.amCurrent !== amCurrent) {
-            const amFillPct = (amCurrent / amMax) * 100;
-            if (c.amBar) c.amBar.style.width = `${amFillPct}%`;
-            if (c.amCollectBtn) {
-                 c.amCollectBtn.disabled = amCurrent < 1; 
-                 c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
-            }
-            lr.amCurrent = amCurrent;
+        const amCurrent = Math.min(150, station.stockpile.antimatter); 
+        if (c.amCollectBtn) {
+             c.amCollectBtn.disabled = amCurrent < 1; 
+             c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
         const creds = Math.floor(station.stockpile.credits);
-        if (lr.credits !== creds) {
-            if (c.credCollectBtn) {
-                c.credCollectBtn.disabled = creds <= 0;
-                c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
-            }
-            lr.credits = creds;
+        if (c.credCollectBtn) {
+            c.credCollectBtn.disabled = creds <= 0;
+            c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
         }
 
         if (lr.mode !== station.mode) {
@@ -189,25 +162,15 @@ export class UISolStationControl {
         }
 
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
-        const cacheEntries = Object.entries(station.caches).filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
-
-        cacheEntries.forEach(([commId, cache]) => {
-            const playerStock = playerInventory[commId]?.quantity || 0;
-            const cacheKey = `${cache.current}_${playerStock}`; 
-
-            if (lr.caches[commId] !== cacheKey) {
+        Object.entries(station.caches).forEach(([commId, cache]) => {
+            if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
+                const playerStock = playerInventory[commId]?.quantity || 0;
+                const canDonate = playerStock > 0 && cache.current < cache.max;
                 const ui = c.caches[commId];
-                if (ui) {
-                    const fillPct = (cache.current / cache.max) * 100;
-                    const canDonate = playerStock > 0 && cache.current < cache.max;
-
-                    if (ui.bar) ui.bar.style.width = `${fillPct}%`;
-                    if (ui.btn) {
-                        ui.btn.disabled = !canDonate;
-                        ui.btn.style.opacity = canDonate ? '1' : '0.5';
-                    }
+                if (ui && ui.btn) {
+                    ui.btn.disabled = !canDonate;
+                    ui.btn.style.opacity = canDonate ? '1' : '0.5';
                 }
-                lr.caches[commId] = cacheKey;
             }
         });
     }
@@ -218,58 +181,52 @@ export class UISolStationControl {
         const svc = this.uiManager.simulationService ? this.uiManager.simulationService.solStationService : null;
         if (!svc) return;
 
-        this.visualState = {
-            credits: svc.gameState.solStation.stockpile.credits,
-            antimatter: svc.gameState.solStation.stockpile.antimatter,
-            caches: {}
-        };
-        Object.entries(svc.gameState.solStation.caches).forEach(([id, c]) => {
-            this.visualState.caches[id] = c.current;
-        });
+        let lastSyncTime = 0;
 
-        let lastFrameTime = performance.now();
-        let lastCommitTime = performance.now();
-
-        const loop = (now) => {
+        const loop = () => {
             const root = document.getElementById('sol-dashboard-root');
             if (!root || !document.body.contains(root) || root.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }
 
-            const dtReal = (now - lastFrameTime) / 1000;
-            lastFrameTime = now;
-
+            const station = svc.gameState.solStation;
             const rates = svc.getPerSecondRates();
-
-            this.visualState.credits += rates.creditsPerSec * dtReal;
-            this.visualState.antimatter = Math.min(150, this.visualState.antimatter + rates.amPerSec * dtReal);
             
-            Object.keys(this.visualState.caches).forEach(id => {
-                this.visualState.caches[id] = this.visualState.caches[id] * Math.exp(-rates.k * dtReal);
-            });
+            const timeNow = Date.now();
+            
+            // Hardened dtReal calculation to prevent Epoch 1.7 Billion Second Bug
+            let dtReal = 0;
+            if (svc.trackingActive && svc.lastCommitTime > 0) {
+                dtReal = Math.max(0, (timeNow - svc.lastCommitTime) / 1000);
+            }
+
+            const projectedCredits = station.stockpile.credits + rates.creditsPerSec * dtReal;
+            const projectedAm = Math.min(150, station.stockpile.antimatter + rates.amPerSec * dtReal);
 
             if (this.domCache) {
-                if (this.domCache.credVal) this.domCache.credVal.textContent = Math.floor(this.visualState.credits).toLocaleString();
-                if (this.domCache.amText) this.domCache.amText.textContent = `${this.visualState.antimatter.toFixed(2)} / 150`;
+                if (this.domCache.credVal) this.domCache.credVal.textContent = formatCredits(Math.floor(projectedCredits));
                 
-                Object.entries(this.visualState.caches).forEach(([id, val]) => {
-                    const cacheUi = this.domCache.caches[id];
-                    if (cacheUi) {
-                        const max = svc.gameState.solStation.caches[id].max;
-                        cacheUi.text.textContent = `${Math.floor(val).toLocaleString()} / ${max.toLocaleString()}`;
+                if (this.domCache.amText) this.domCache.amText.textContent = `${projectedAm.toFixed(2)} / 150`;
+                const amFillPct = (projectedAm / 150) * 100;
+                if (this.domCache.amBar) this.domCache.amBar.style.width = `${amFillPct}%`;
+                
+                Object.entries(station.caches).forEach(([id, cache]) => {
+                    if (id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER) {
+                        const cacheUi = this.domCache.caches[id];
+                        if (cacheUi && cacheUi.text && cacheUi.bar) {
+                            const projectedVal = cache.current * Math.exp(-rates.k * dtReal);
+                            cacheUi.text.textContent = `${Math.floor(projectedVal).toLocaleString()} / ${cache.max.toLocaleString()}`;
+                            const fillPct = (projectedVal / cache.max) * 100;
+                            cacheUi.bar.style.width = `${fillPct}%`;
+                        }
                     }
                 });
             }
 
-            if (now - lastCommitTime > 1000) {
-                svc.commitLiveTime();
-                this.update(svc.gameState);
-                
-                const navDay = document.getElementById('nav-date') || document.querySelector('.nav-date'); 
-                if (navDay && svc.gameState.day) navDay.innerText = `Day ${svc.gameState.day}`;
-                
-                lastCommitTime = now;
+            if (timeNow - lastSyncTime > 1000) {
+                this.update(svc.gameState); 
+                lastSyncTime = timeNow;
             }
 
             this.animationFrameId = requestAnimationFrame(loop);
@@ -373,7 +330,7 @@ export class UISolStationControl {
                 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health.toFixed(2)}%</span></div>
                         <div class="sol-health-track" style="position: relative;">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>

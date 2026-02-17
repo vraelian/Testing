@@ -43,36 +43,52 @@ export class SolStationService {
         this.trackingActive = false;
         this.lastCommitTime = 0;
         this.localTimeAccumulator = 0;
-        this.pendingUniverseDays = 0; // Tracks days deferred from TimeService
+        this.pendingUniverseDays = 0; 
+        this.heartbeatInterval = null;
     }
 
     setTimeService(timeService) {
         this.timeService = timeService;
+        if (this.gameState && this.gameState.currentLocationId === 'sol') {
+            this.startLocalLiveLoop();
+        }
     }
 
     catchUpDays(currentDay) {
         const station = this.gameState.solStation;
         if (!station || !station.unlocked) return;
 
+        console.group(`[SOL_MATH_DEBUG] catchUpDays`);
+        console.log(`Current Day: ${currentDay}`);
+
         if (typeof station.lastProcessedDay === 'undefined') {
-            station.lastProcessedDay = currentDay;
+            // FIX: Assume the station has been operating since Day 1, capturing all past history.
+            console.log(`First visit. Initializing lastProcessedDay to 1 to simulate past activity.`);
+            station.lastProcessedDay = 1;
             if (station.lastUpdateTime) delete station.lastUpdateTime;
-            return;
         }
 
         const daysMissed = currentDay - station.lastProcessedDay;
-        if (daysMissed <= 0) return;
+        console.log(`Days Missed: ${daysMissed}`);
+
+        if (daysMissed <= 0) {
+            console.log(`No days missed. Aborting catchUp.`);
+            console.groupEnd();
+            return;
+        }
 
         const dt = daysMissed * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY;
+        console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
         const projectedState = this._calculateExactState(station, dt);
         Object.assign(station, projectedState);
         
         station.lastProcessedDay = currentDay;
         this.logger.info.system(currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
+        console.groupEnd();
     }
 
-    startTracking() {
+    startLocalLiveLoop() {
         if (this.trackingActive) return;
         this.trackingActive = true;
         this.lastCommitTime = Date.now();
@@ -84,12 +100,22 @@ export class SolStationService {
         }
         
         this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
+
+        this.heartbeatInterval = setInterval(() => {
+            this.commitLiveTime();
+            this.commitPendingUniverseDays();
+        }, 1000);
     }
 
-    stopTracking() {
+    stopLocalLiveLoop() {
         if (!this.trackingActive) return;
         this.commitLiveTime();
         this.trackingActive = false;
+        
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
         
         if (this.gameState.solStation && this.gameState.solStation.unlocked) {
             this.gameState.solStation.lastProcessedDay = this.gameState.day;
@@ -120,9 +146,10 @@ export class SolStationService {
                 
                 station.lastProcessedDay += daysToAdvance;
                 
-                // Advance the phantom calendar, but defer execution
                 this.gameState.day += daysToAdvance; 
                 this.pendingUniverseDays += daysToAdvance;
+                
+                this.gameState.setState({});
             }
         }
     }
@@ -130,7 +157,7 @@ export class SolStationService {
     commitPendingUniverseDays() {
         if (this.pendingUniverseDays > 0 && this.timeService) {
             const daysToProcess = this.pendingUniverseDays;
-            this.pendingUniverseDays = 0; // Clear before execution to prevent recursion loops
+            this.pendingUniverseDays = 0; 
             this.timeService.advanceDays(daysToProcess);
             this.logger.info.system(this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
         }
@@ -140,18 +167,24 @@ export class SolStationService {
         const liveState = this.gameState.solStation;
         if (!liveState || !liveState.unlocked) return { k: 0, creditsPerSec: 0, amPerSec: 0 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode];
+        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
         const buffs = this._calculateOfficerBuffs(liveState.officers);
         const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
         const k = modeConfig.decayK * entropy;
         
-        const x0 = liveState.health / 100;
+        // Sanitize health to prevent NaN propagation
+        const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
+        const x0 = safeHealth / 100;
         let efficiency = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
 
         const creditsPerSec = modeConfig.yieldCredits * (1 + buffs.creditMult) * efficiency;
         const amPerSec = modeConfig.yieldAm * (1 + buffs.amMult) * efficiency;
         
-        return { k, creditsPerSec, amPerSec };
+        return { 
+            k: isNaN(k) ? 0 : k, 
+            creditsPerSec: isNaN(creditsPerSec) ? 0 : creditsPerSec, 
+            amPerSec: isNaN(amPerSec) ? 0 : amPerSec 
+        };
     }
 
     _syncTime() {
@@ -166,7 +199,7 @@ export class SolStationService {
         const newState = JSON.parse(JSON.stringify(currentState));
         if (dt <= 0) return newState;
 
-        const modeConfig = STATION_CONFIG.MODES[newState.mode];
+        const modeConfig = STATION_CONFIG.MODES[newState.mode] || STATION_CONFIG.MODES.STABILITY;
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
         const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
         const k = modeConfig.decayK * entropy;
@@ -174,23 +207,34 @@ export class SolStationService {
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        const validCaches = Object.entries(newState.caches).filter(([id, cache]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache.max > 0;
+        const validCaches = Object.entries(newState.caches || {}).filter(([id, cache]) => {
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache && cache.max > 0;
         });
 
         validCaches.forEach(([id, c]) => {
-            totalFillRatio += (c.current / c.max);
+            // Sanitize cache values
+            const safeCurrent = isNaN(c.current) ? 0 : c.current;
+            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+            totalFillRatio += (safeCurrent / safeMax);
             activeCaches++;
         });
-        const x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+        
+        let x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+        if (isNaN(x0)) x0 = 0;
+
+        // Diagnostic output for mathematical tracking
+        if (dt > 2.0) {
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k=${k}`);
+        }
 
         validCaches.forEach(([id, cache]) => {
-            const exactCache = cache.current * Math.exp(-k * dt);
+            const safeCurrent = isNaN(cache.current) ? 0 : cache.current;
+            const exactCache = safeCurrent * Math.exp(-k * dt);
             cache.current = exactCache;
         });
 
         const x1 = x0 * Math.exp(-k * dt);
-        newState.health = Math.round(x1 * 100);
+        newState.health = x1 * 100;
 
         const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
         const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
@@ -198,10 +242,20 @@ export class SolStationService {
         const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k, dt);
         const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k, dt);
 
-        newState.stockpile.credits += generatedCredits;
+        if (dt > 2.0) {
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Gen AM: ${generatedAm.toFixed(4)} | Final x1: ${x1.toFixed(4)}`);
+        }
+
+        // Final Sanitize to ensure the stockpile is never poisoned
+        const safeGeneratedCredits = isNaN(generatedCredits) ? 0 : generatedCredits;
+        const safeGeneratedAm = isNaN(generatedAm) ? 0 : generatedAm;
+        const safeCurrentCredits = isNaN(newState.stockpile.credits) ? 0 : newState.stockpile.credits;
+        const safeCurrentAm = isNaN(newState.stockpile.antimatter) ? 0 : newState.stockpile.antimatter;
+
+        newState.stockpile.credits = safeCurrentCredits + safeGeneratedCredits;
         newState.stockpile.antimatter = Math.min(
             STATION_CONFIG.MAX_ANTIMATTER_STOCKPILE, 
-            newState.stockpile.antimatter + generatedAm
+            safeCurrentAm + safeGeneratedAm
         );
 
         newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
@@ -211,19 +265,19 @@ export class SolStationService {
 
     _calculateYieldIntegral(yieldRate, x0, k, dt) {
         if (k === 0) {
-            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? 1.0 : 2 * Math.pow(x0, 2);
+            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
             return yieldRate * eff * dt;
         }
 
         const x1 = x0 * Math.exp(-k * dt);
 
         if (x1 >= STATION_CONFIG.EFFICIENCY_CLIFF) {
-            return yieldRate * dt;
+            return yieldRate * (x0 / k) * (1 - Math.exp(-k * dt));
         } else if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) {
             return (yieldRate * Math.pow(x0, 2) / k) * (1 - Math.exp(-2 * k * dt));
         } else {
             const t_cross = -Math.log(STATION_CONFIG.EFFICIENCY_CLIFF / x0) / k;
-            const genBefore = yieldRate * t_cross;
+            const genBefore = yieldRate * (x0 / k) * (1 - Math.exp(-k * t_cross));
             
             const dt_remaining = dt - t_cross;
             const genAfter = (yieldRate * Math.pow(STATION_CONFIG.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
@@ -258,9 +312,9 @@ export class SolStationService {
         officersList.forEach(slot => {
             if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
                 const b = OFFICERS[slot.assignedOfficerId].buffs;
-                total.entropy += b.entropy;
-                total.creditMult += b.creditMult;
-                total.amMult += b.amMult;
+                total.entropy += (b.entropy || 0);
+                total.creditMult += (b.creditMult || 0);
+                total.amMult += (b.amMult || 0);
             }
         });
         return total;
@@ -298,7 +352,6 @@ export class SolStationService {
 
         if (!cache) return { success: false, message: "Invalid cache commodity." };
 
-        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
         let totalFleetStock = 0;
         for (const shipId of this.gameState.player.ownedShipIds) {
             totalFleetStock += (this.gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
@@ -313,7 +366,6 @@ export class SolStationService {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
 
-        // --- FLEET OVERFLOW SYSTEM: SEQUENTIAL DRAIN ---
         const activeShipId = this.gameState.player.activeShipId;
         const shipInventories = [];
         
@@ -322,7 +374,6 @@ export class SolStationService {
             shipInventories.push({ shipId, qty });
         }
 
-        // Sort: Active ship first, then the remaining ships with the largest stockpile of the requested item
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -340,7 +391,6 @@ export class SolStationService {
                 remainingToDonate -= toRemove;
             }
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         cache.current += quantity;
 
@@ -351,12 +401,14 @@ export class SolStationService {
         });
 
         for (const [id, c] of validCacheEntries) {
-            totalFillRatio += (c.current / c.max);
+            const safeCurrent = isNaN(c.current) ? 0 : c.current;
+            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+            totalFillRatio += (safeCurrent / safeMax);
             activeCaches++;
         }
         
         const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = Math.round(averageFill * 100);
+        station.health = averageFill * 100;
 
         this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         this.gameState.setState({});
@@ -426,9 +478,10 @@ export class SolStationService {
         const liveState = this.getLiveState();
         if(!liveState || !liveState.unlocked) return { credits: 0, antimatter: 0, entropy: 1 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode];
+        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
         
-        const x0 = liveState.health / 100;
+        const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
+        const x0 = safeHealth / 100;
         let efficiency = x0;
         if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
 
