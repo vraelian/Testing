@@ -29,7 +29,8 @@ export class UISolStationControl {
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
             const svc = this.uiManager.simulationService.solStationService;
             svc.catchUpDays(gameState.day);
-            svc.startTracking();
+            // Ensure the service background loop is alive
+            svc.startLocalLiveLoop();
         }
 
         const contentHtml = this._buildDashboardHtml(gameState);
@@ -53,11 +54,7 @@ export class UISolStationControl {
                 footerBtn.innerHTML = 'Dismiss';
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
-                    if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                        const svc = this.uiManager.simulationService.solStationService;
-                        svc.stopTracking();
-                        svc.commitPendingUniverseDays();
-                    }
+                    // NO stopTracking() HERE - Allow the engine to run in background
                     this.uiManager.hideModal('event-modal');
                 };
             }
@@ -65,11 +62,7 @@ export class UISolStationControl {
             this.domCache = null; 
             this.uiManager.queueModal('event-modal', '', contentHtml, () => {
                 this._stopRefreshLoop();
-                if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                    const svc = this.uiManager.simulationService.solStationService;
-                    svc.stopTracking();
-                    svc.commitPendingUniverseDays();
-                }
+                // NO stopTracking() HERE - Allow the engine to run in background
             }, {
                 width: '800px', 
                 dismissOutside: true,
@@ -121,7 +114,6 @@ export class UISolStationControl {
 
         const station = this._getLiveStationState(gameState);
         
-        // Resync Visual State to True State
         if (this.visualState) {
             this.visualState.credits = station.stockpile.credits;
             this.visualState.antimatter = station.stockpile.antimatter;
@@ -137,7 +129,7 @@ export class UISolStationControl {
         if (lr.health !== station.health) {
             if (c.integrityLabel && c.integrityBar) {
                 c.integrityLabel.className = this._getHealthColorClass(station.health);
-                c.integrityLabel.textContent = `${station.health}%`;
+                c.integrityLabel.textContent = `${station.health.toFixed(2)}%`;
                 c.integrityBar.style.width = `${station.health}%`;
                 c.integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
             }
@@ -228,7 +220,7 @@ export class UISolStationControl {
         });
 
         let lastFrameTime = performance.now();
-        let lastCommitTime = performance.now();
+        let lastSyncTime = performance.now();
 
         const loop = (now) => {
             const root = document.getElementById('sol-dashboard-root');
@@ -250,7 +242,7 @@ export class UISolStationControl {
             });
 
             if (this.domCache) {
-                if (this.domCache.credVal) this.domCache.credVal.textContent = Math.floor(this.visualState.credits).toLocaleString();
+                if (this.domCache.credVal) this.domCache.credVal.textContent = formatCredits(Math.floor(this.visualState.credits));
                 if (this.domCache.amText) this.domCache.amText.textContent = `${this.visualState.antimatter.toFixed(2)} / 150`;
                 
                 Object.entries(this.visualState.caches).forEach(([id, val]) => {
@@ -262,14 +254,14 @@ export class UISolStationControl {
                 });
             }
 
-            if (now - lastCommitTime > 1000) {
-                svc.commitLiveTime();
+            // Sync visual representation to the true background state once per second
+            if (now - lastSyncTime > 1000) {
                 this.update(svc.gameState);
                 
                 const navDay = document.getElementById('nav-date') || document.querySelector('.nav-date'); 
                 if (navDay && svc.gameState.day) navDay.innerText = `Day ${svc.gameState.day}`;
                 
-                lastCommitTime = now;
+                lastSyncTime = now;
             }
 
             this.animationFrameId = requestAnimationFrame(loop);
@@ -373,7 +365,7 @@ export class UISolStationControl {
                 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health.toFixed(2)}%</span></div>
                         <div class="sol-health-track" style="position: relative;">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>

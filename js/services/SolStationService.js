@@ -43,7 +43,10 @@ export class SolStationService {
         this.trackingActive = false;
         this.lastCommitTime = 0;
         this.localTimeAccumulator = 0;
-        this.pendingUniverseDays = 0; // Tracks days deferred from TimeService
+        this.pendingUniverseDays = 0; 
+        
+        // Decoupled background heartbeat
+        this.tickInterval = null;
     }
 
     setTimeService(timeService) {
@@ -72,6 +75,15 @@ export class SolStationService {
         this.logger.info.system(currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
     }
 
+    // Alias mapping to capture the SimulationService and TravelService initialization calls
+    startLocalLiveLoop() {
+        this.startTracking();
+    }
+    
+    stopLocalLiveLoop() {
+        this.stopTracking();
+    }
+
     startTracking() {
         if (this.trackingActive) return;
         this.trackingActive = true;
@@ -79,17 +91,30 @@ export class SolStationService {
         this.localTimeAccumulator = 0;
         
         const station = this.gameState.solStation;
-        if (station && station.unlocked && typeof station.lastProcessedDay === 'undefined') {
-            station.lastProcessedDay = this.gameState.day;
+        if (station) {
+            station.unlocked = true; // FORCE UNLOCK: Prevent silent aborts if state flags were missed
+            if (typeof station.lastProcessedDay === 'undefined') {
+                station.lastProcessedDay = this.gameState.day;
+            }
         }
         
-        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
+        // Start the independent background heartbeat (1000ms)
+        this.tickInterval = setInterval(() => {
+            this.commitLiveTime();
+        }, 1000);
+        
+        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Active).`);
     }
 
     stopTracking() {
         if (!this.trackingActive) return;
         this.commitLiveTime();
         this.trackingActive = false;
+        
+        if (this.tickInterval) {
+            clearInterval(this.tickInterval);
+            this.tickInterval = null;
+        }
         
         if (this.gameState.solStation && this.gameState.solStation.unlocked) {
             this.gameState.solStation.lastProcessedDay = this.gameState.day;
@@ -120,9 +145,21 @@ export class SolStationService {
                 
                 station.lastProcessedDay += daysToAdvance;
                 
-                // Advance the phantom calendar, but defer execution
-                this.gameState.day += daysToAdvance; 
-                this.pendingUniverseDays += daysToAdvance;
+                // Directly advance the calendar and markets via TimeService
+                if (this.timeService) {
+                    this.timeService.advanceDays(daysToAdvance);
+                } else {
+                    // Fallback if no timeService is bound yet
+                    this.gameState.day += daysToAdvance; 
+                    this.pendingUniverseDays += daysToAdvance;
+                }
+
+                // EXPLICIT VISUAL UPDATE: Force the global UI to acknowledge the time passed
+                const navDay = document.getElementById('nav-date') || document.querySelector('.nav-date'); 
+                if (navDay) navDay.innerText = `Day ${this.gameState.day}`;
+                
+                // Trigger global redraw for markets/services
+                this.gameState.setState({});
             }
         }
     }
@@ -130,7 +167,7 @@ export class SolStationService {
     commitPendingUniverseDays() {
         if (this.pendingUniverseDays > 0 && this.timeService) {
             const daysToProcess = this.pendingUniverseDays;
-            this.pendingUniverseDays = 0; // Clear before execution to prevent recursion loops
+            this.pendingUniverseDays = 0; 
             this.timeService.advanceDays(daysToProcess);
             this.logger.info.system(this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
         }
@@ -190,7 +227,7 @@ export class SolStationService {
         });
 
         const x1 = x0 * Math.exp(-k * dt);
-        newState.health = Math.round(x1 * 100);
+        newState.health = x1 * 100;
 
         const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
         const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
@@ -298,7 +335,6 @@ export class SolStationService {
 
         if (!cache) return { success: false, message: "Invalid cache commodity." };
 
-        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
         let totalFleetStock = 0;
         for (const shipId of this.gameState.player.ownedShipIds) {
             totalFleetStock += (this.gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
@@ -313,7 +349,6 @@ export class SolStationService {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
 
-        // --- FLEET OVERFLOW SYSTEM: SEQUENTIAL DRAIN ---
         const activeShipId = this.gameState.player.activeShipId;
         const shipInventories = [];
         
@@ -322,7 +357,6 @@ export class SolStationService {
             shipInventories.push({ shipId, qty });
         }
 
-        // Sort: Active ship first, then the remaining ships with the largest stockpile of the requested item
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -340,7 +374,6 @@ export class SolStationService {
                 remainingToDonate -= toRemove;
             }
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         cache.current += quantity;
 
@@ -356,7 +389,7 @@ export class SolStationService {
         }
         
         const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = Math.round(averageFill * 100);
+        station.health = averageFill * 100;
 
         this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         this.gameState.setState({});

@@ -156,9 +156,10 @@ export class TravelService {
         }
 
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
-        if (fromId === 'sol' && this.timeService.solStationService) {
-            if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
-                this.timeService.solStationService.stopLocalLiveLoop();
+        // DECOUPLED FIX: Reference SimulationService directly to avoid injection timing bugs
+        if (fromId === 'sol' && this.simulationService.solStationService) {
+            if (typeof this.simulationService.solStationService.stopLocalLiveLoop === 'function') {
+                this.simulationService.solStationService.stopLocalLiveLoop();
             }
         }
         // -------------------------------------------------
@@ -421,12 +422,13 @@ export class TravelService {
             }
 
             // --- SOL STATION: SYNC JIT STATE IF ARRIVING ---
-            if (locationId === 'sol' && this.timeService.solStationService) {
-                if (typeof this.timeService.solStationService.catchUpDays === 'function') {
+            // DECOUPLED FIX: Reference SimulationService directly
+            if (locationId === 'sol' && this.simulationService.solStationService) {
+                if (typeof this.simulationService.solStationService.catchUpDays === 'function') {
                     // 1. Batch calculate all missed time instantly
-                    this.timeService.solStationService.catchUpDays(this.gameState.day);
+                    this.simulationService.solStationService.catchUpDays(this.gameState.day);
                     // 2. Start the local 120s real-time ticking
-                    this.timeService.solStationService.startLocalLiveLoop();
+                    this.simulationService.solStationService.startLocalLiveLoop();
                 }
             }
             // -------------------------------------------------
