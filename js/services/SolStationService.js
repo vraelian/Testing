@@ -84,7 +84,7 @@ export class SolStationService {
         Object.assign(station, projectedState);
         
         station.lastProcessedDay = currentDay;
-        this.logger.info.system(currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
+        this.logger.info.system('SolStation', currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
         console.groupEnd();
     }
 
@@ -99,7 +99,7 @@ export class SolStationService {
             station.lastProcessedDay = this.gameState.day;
         }
         
-        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
+        this.logger.info.system('SolStation', this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
 
         this.heartbeatInterval = setInterval(() => {
             this.commitLiveTime();
@@ -121,7 +121,7 @@ export class SolStationService {
             this.gameState.solStation.lastProcessedDay = this.gameState.day;
         }
         
-        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking terminated.`);
+        this.logger.info.system('SolStation', this.gameState.day, 'SOL_TRACK', `Sol Station tracking terminated.`);
     }
 
     commitLiveTime() {
@@ -146,7 +146,7 @@ export class SolStationService {
                 
                 station.lastProcessedDay += daysToAdvance;
                 
-                this.gameState.day += daysToAdvance; 
+                // Universe day increment deferred strictly to TimeService to prevent double-incrementation
                 this.pendingUniverseDays += daysToAdvance;
                 
                 this.gameState.setState({});
@@ -159,7 +159,7 @@ export class SolStationService {
             const daysToProcess = this.pendingUniverseDays;
             this.pendingUniverseDays = 0; 
             this.timeService.advanceDays(daysToProcess);
-            this.logger.info.system(this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
+            this.logger.info.system('SolStation', this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
         }
     }
 

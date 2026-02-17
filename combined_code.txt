@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.51</title>
+    <title>Orbital Trading 35.56</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.51</p>
+            <p>Version 35.56</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -17849,8 +17849,6 @@ export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
         this.animationFrameId = null;
-        this.visualState = null; 
-        
         this.domCache = null; 
         this.lastRendered = {}; 
     }
@@ -17866,10 +17864,13 @@ export class UISolStationControl {
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
+        // SAFETY HOOK: Ensure engine is running if UI opens (fixes Load Game bypass)
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
             const svc = this.uiManager.simulationService.solStationService;
-            svc.catchUpDays(gameState.day);
-            svc.startTracking();
+            if (!svc.trackingActive) {
+                svc.catchUpDays(gameState.day);
+                svc.startLocalLiveLoop();
+            }
         }
 
         const contentHtml = this._buildDashboardHtml(gameState);
@@ -17893,11 +17894,6 @@ export class UISolStationControl {
                 footerBtn.innerHTML = 'Dismiss';
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
-                    if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                        const svc = this.uiManager.simulationService.solStationService;
-                        svc.stopTracking();
-                        svc.commitPendingUniverseDays();
-                    }
                     this.uiManager.hideModal('event-modal');
                 };
             }
@@ -17905,11 +17901,6 @@ export class UISolStationControl {
             this.domCache = null; 
             this.uiManager.queueModal('event-modal', '', contentHtml, () => {
                 this._stopRefreshLoop();
-                if (this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-                    const svc = this.uiManager.simulationService.solStationService;
-                    svc.stopTracking();
-                    svc.commitPendingUniverseDays();
-                }
             }, {
                 width: '800px', 
                 dismissOutside: true,
@@ -17960,28 +17951,19 @@ export class UISolStationControl {
         }
 
         const station = this._getLiveStationState(gameState);
-        
-        // Resync Visual State to True State
-        if (this.visualState) {
-            this.visualState.credits = station.stockpile.credits;
-            this.visualState.antimatter = station.stockpile.antimatter;
-            Object.entries(station.caches).forEach(([id, c]) => {
-                this.visualState.caches[id] = c.current;
-            });
-        }
-
         const output = this._calculateProjections(gameState);
         const c = this.domCache;
         const lr = this.lastRendered;
 
-        if (lr.health !== station.health) {
+        const healthDisp = station.health.toFixed(2);
+        if (lr.health !== healthDisp) {
             if (c.integrityLabel && c.integrityBar) {
                 c.integrityLabel.className = this._getHealthColorClass(station.health);
-                c.integrityLabel.textContent = `${station.health}%`;
+                c.integrityLabel.textContent = `${healthDisp}%`;
                 c.integrityBar.style.width = `${station.health}%`;
                 c.integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
             }
-            lr.health = station.health;
+            lr.health = healthDisp;
         }
 
         if (lr.entropy !== output.entropy) {
@@ -17996,25 +17978,16 @@ export class UISolStationControl {
             lr.threshold = output.threshold;
         }
 
-        const amMax = 150; 
-        const amCurrent = Math.min(amMax, station.stockpile.antimatter); 
-        if (lr.amCurrent !== amCurrent) {
-            const amFillPct = (amCurrent / amMax) * 100;
-            if (c.amBar) c.amBar.style.width = `${amFillPct}%`;
-            if (c.amCollectBtn) {
-                 c.amCollectBtn.disabled = amCurrent < 1; 
-                 c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
-            }
-            lr.amCurrent = amCurrent;
+        const amCurrent = Math.min(150, station.stockpile.antimatter); 
+        if (c.amCollectBtn) {
+             c.amCollectBtn.disabled = amCurrent < 1; 
+             c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
         const creds = Math.floor(station.stockpile.credits);
-        if (lr.credits !== creds) {
-            if (c.credCollectBtn) {
-                c.credCollectBtn.disabled = creds <= 0;
-                c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
-            }
-            lr.credits = creds;
+        if (c.credCollectBtn) {
+            c.credCollectBtn.disabled = creds <= 0;
+            c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
         }
 
         if (lr.mode !== station.mode) {
@@ -18029,25 +18002,15 @@ export class UISolStationControl {
         }
 
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
-        const cacheEntries = Object.entries(station.caches).filter(([id]) => id !== COMMODITY_IDS.FOLDED_DRIVES);
-
-        cacheEntries.forEach(([commId, cache]) => {
-            const playerStock = playerInventory[commId]?.quantity || 0;
-            const cacheKey = `${cache.current}_${playerStock}`; 
-
-            if (lr.caches[commId] !== cacheKey) {
+        Object.entries(station.caches).forEach(([commId, cache]) => {
+            if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
+                const playerStock = playerInventory[commId]?.quantity || 0;
+                const canDonate = playerStock > 0 && cache.current < cache.max;
                 const ui = c.caches[commId];
-                if (ui) {
-                    const fillPct = (cache.current / cache.max) * 100;
-                    const canDonate = playerStock > 0 && cache.current < cache.max;
-
-                    if (ui.bar) ui.bar.style.width = `${fillPct}%`;
-                    if (ui.btn) {
-                        ui.btn.disabled = !canDonate;
-                        ui.btn.style.opacity = canDonate ? '1' : '0.5';
-                    }
+                if (ui && ui.btn) {
+                    ui.btn.disabled = !canDonate;
+                    ui.btn.style.opacity = canDonate ? '1' : '0.5';
                 }
-                lr.caches[commId] = cacheKey;
             }
         });
     }
@@ -18058,58 +18021,52 @@ export class UISolStationControl {
         const svc = this.uiManager.simulationService ? this.uiManager.simulationService.solStationService : null;
         if (!svc) return;
 
-        this.visualState = {
-            credits: svc.gameState.solStation.stockpile.credits,
-            antimatter: svc.gameState.solStation.stockpile.antimatter,
-            caches: {}
-        };
-        Object.entries(svc.gameState.solStation.caches).forEach(([id, c]) => {
-            this.visualState.caches[id] = c.current;
-        });
+        let lastSyncTime = 0;
 
-        let lastFrameTime = performance.now();
-        let lastCommitTime = performance.now();
-
-        const loop = (now) => {
+        const loop = () => {
             const root = document.getElementById('sol-dashboard-root');
             if (!root || !document.body.contains(root) || root.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }
 
-            const dtReal = (now - lastFrameTime) / 1000;
-            lastFrameTime = now;
-
+            const station = svc.gameState.solStation;
             const rates = svc.getPerSecondRates();
-
-            this.visualState.credits += rates.creditsPerSec * dtReal;
-            this.visualState.antimatter = Math.min(150, this.visualState.antimatter + rates.amPerSec * dtReal);
             
-            Object.keys(this.visualState.caches).forEach(id => {
-                this.visualState.caches[id] = this.visualState.caches[id] * Math.exp(-rates.k * dtReal);
-            });
+            const timeNow = Date.now();
+            
+            // Hardened dtReal calculation to prevent Epoch 1.7 Billion Second Bug
+            let dtReal = 0;
+            if (svc.trackingActive && svc.lastCommitTime > 0) {
+                dtReal = Math.max(0, (timeNow - svc.lastCommitTime) / 1000);
+            }
+
+            const projectedCredits = station.stockpile.credits + rates.creditsPerSec * dtReal;
+            const projectedAm = Math.min(150, station.stockpile.antimatter + rates.amPerSec * dtReal);
 
             if (this.domCache) {
-                if (this.domCache.credVal) this.domCache.credVal.textContent = Math.floor(this.visualState.credits).toLocaleString();
-                if (this.domCache.amText) this.domCache.amText.textContent = `${this.visualState.antimatter.toFixed(2)} / 150`;
+                if (this.domCache.credVal) this.domCache.credVal.textContent = formatCredits(Math.floor(projectedCredits));
                 
-                Object.entries(this.visualState.caches).forEach(([id, val]) => {
-                    const cacheUi = this.domCache.caches[id];
-                    if (cacheUi) {
-                        const max = svc.gameState.solStation.caches[id].max;
-                        cacheUi.text.textContent = `${Math.floor(val).toLocaleString()} / ${max.toLocaleString()}`;
+                if (this.domCache.amText) this.domCache.amText.textContent = `${projectedAm.toFixed(2)} / 150`;
+                const amFillPct = (projectedAm / 150) * 100;
+                if (this.domCache.amBar) this.domCache.amBar.style.width = `${amFillPct}%`;
+                
+                Object.entries(station.caches).forEach(([id, cache]) => {
+                    if (id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER) {
+                        const cacheUi = this.domCache.caches[id];
+                        if (cacheUi && cacheUi.text && cacheUi.bar) {
+                            const projectedVal = cache.current * Math.exp(-rates.k * dtReal);
+                            cacheUi.text.textContent = `${Math.floor(projectedVal).toLocaleString()} / ${cache.max.toLocaleString()}`;
+                            const fillPct = (projectedVal / cache.max) * 100;
+                            cacheUi.bar.style.width = `${fillPct}%`;
+                        }
                     }
                 });
             }
 
-            if (now - lastCommitTime > 1000) {
-                svc.commitLiveTime();
-                this.update(svc.gameState);
-                
-                const navDay = document.getElementById('nav-date') || document.querySelector('.nav-date'); 
-                if (navDay && svc.gameState.day) navDay.innerText = `Day ${svc.gameState.day}`;
-                
-                lastCommitTime = now;
+            if (timeNow - lastSyncTime > 1000) {
+                this.update(svc.gameState); 
+                lastSyncTime = timeNow;
             }
 
             this.animationFrameId = requestAnimationFrame(loop);
@@ -18213,7 +18170,7 @@ export class UISolStationControl {
                 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health}%</span></div>
+                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health.toFixed(2)}%</span></div>
                         <div class="sol-health-track" style="position: relative;">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>
@@ -20907,36 +20864,52 @@ export class SolStationService {
         this.trackingActive = false;
         this.lastCommitTime = 0;
         this.localTimeAccumulator = 0;
-        this.pendingUniverseDays = 0; // Tracks days deferred from TimeService
+        this.pendingUniverseDays = 0; 
+        this.heartbeatInterval = null;
     }
 
     setTimeService(timeService) {
         this.timeService = timeService;
+        if (this.gameState && this.gameState.currentLocationId === 'sol') {
+            this.startLocalLiveLoop();
+        }
     }
 
     catchUpDays(currentDay) {
         const station = this.gameState.solStation;
         if (!station || !station.unlocked) return;
 
+        console.group(`[SOL_MATH_DEBUG] catchUpDays`);
+        console.log(`Current Day: ${currentDay}`);
+
         if (typeof station.lastProcessedDay === 'undefined') {
-            station.lastProcessedDay = currentDay;
+            // FIX: Assume the station has been operating since Day 1, capturing all past history.
+            console.log(`First visit. Initializing lastProcessedDay to 1 to simulate past activity.`);
+            station.lastProcessedDay = 1;
             if (station.lastUpdateTime) delete station.lastUpdateTime;
-            return;
         }
 
         const daysMissed = currentDay - station.lastProcessedDay;
-        if (daysMissed <= 0) return;
+        console.log(`Days Missed: ${daysMissed}`);
+
+        if (daysMissed <= 0) {
+            console.log(`No days missed. Aborting catchUp.`);
+            console.groupEnd();
+            return;
+        }
 
         const dt = daysMissed * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY;
+        console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
         const projectedState = this._calculateExactState(station, dt);
         Object.assign(station, projectedState);
         
         station.lastProcessedDay = currentDay;
-        this.logger.info.system(currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
+        this.logger.info.system('SolStation', currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
+        console.groupEnd();
     }
 
-    startTracking() {
+    startLocalLiveLoop() {
         if (this.trackingActive) return;
         this.trackingActive = true;
         this.lastCommitTime = Date.now();
@@ -20947,19 +20920,29 @@ export class SolStationService {
             station.lastProcessedDay = this.gameState.day;
         }
         
-        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
+        this.logger.info.system('SolStation', this.gameState.day, 'SOL_TRACK', `Sol Station tracking started (Universe Execution Deferred).`);
+
+        this.heartbeatInterval = setInterval(() => {
+            this.commitLiveTime();
+            this.commitPendingUniverseDays();
+        }, 1000);
     }
 
-    stopTracking() {
+    stopLocalLiveLoop() {
         if (!this.trackingActive) return;
         this.commitLiveTime();
         this.trackingActive = false;
+        
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
         
         if (this.gameState.solStation && this.gameState.solStation.unlocked) {
             this.gameState.solStation.lastProcessedDay = this.gameState.day;
         }
         
-        this.logger.info.system(this.gameState.day, 'SOL_TRACK', `Sol Station tracking terminated.`);
+        this.logger.info.system('SolStation', this.gameState.day, 'SOL_TRACK', `Sol Station tracking terminated.`);
     }
 
     commitLiveTime() {
@@ -20984,9 +20967,10 @@ export class SolStationService {
                 
                 station.lastProcessedDay += daysToAdvance;
                 
-                // Advance the phantom calendar, but defer execution
-                this.gameState.day += daysToAdvance; 
+                // Universe day increment deferred strictly to TimeService to prevent double-incrementation
                 this.pendingUniverseDays += daysToAdvance;
+                
+                this.gameState.setState({});
             }
         }
     }
@@ -20994,9 +20978,9 @@ export class SolStationService {
     commitPendingUniverseDays() {
         if (this.pendingUniverseDays > 0 && this.timeService) {
             const daysToProcess = this.pendingUniverseDays;
-            this.pendingUniverseDays = 0; // Clear before execution to prevent recursion loops
+            this.pendingUniverseDays = 0; 
             this.timeService.advanceDays(daysToProcess);
-            this.logger.info.system(this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
+            this.logger.info.system('SolStation', this.gameState.day, 'SOL_CATCHUP', `Universe caught up ${daysToProcess} deferred days.`);
         }
     }
 
@@ -21004,18 +20988,24 @@ export class SolStationService {
         const liveState = this.gameState.solStation;
         if (!liveState || !liveState.unlocked) return { k: 0, creditsPerSec: 0, amPerSec: 0 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode];
+        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
         const buffs = this._calculateOfficerBuffs(liveState.officers);
         const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
         const k = modeConfig.decayK * entropy;
         
-        const x0 = liveState.health / 100;
+        // Sanitize health to prevent NaN propagation
+        const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
+        const x0 = safeHealth / 100;
         let efficiency = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
 
         const creditsPerSec = modeConfig.yieldCredits * (1 + buffs.creditMult) * efficiency;
         const amPerSec = modeConfig.yieldAm * (1 + buffs.amMult) * efficiency;
         
-        return { k, creditsPerSec, amPerSec };
+        return { 
+            k: isNaN(k) ? 0 : k, 
+            creditsPerSec: isNaN(creditsPerSec) ? 0 : creditsPerSec, 
+            amPerSec: isNaN(amPerSec) ? 0 : amPerSec 
+        };
     }
 
     _syncTime() {
@@ -21030,7 +21020,7 @@ export class SolStationService {
         const newState = JSON.parse(JSON.stringify(currentState));
         if (dt <= 0) return newState;
 
-        const modeConfig = STATION_CONFIG.MODES[newState.mode];
+        const modeConfig = STATION_CONFIG.MODES[newState.mode] || STATION_CONFIG.MODES.STABILITY;
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
         const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
         const k = modeConfig.decayK * entropy;
@@ -21038,23 +21028,34 @@ export class SolStationService {
         let totalFillRatio = 0;
         let activeCaches = 0;
 
-        const validCaches = Object.entries(newState.caches).filter(([id, cache]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache.max > 0;
+        const validCaches = Object.entries(newState.caches || {}).filter(([id, cache]) => {
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache && cache.max > 0;
         });
 
         validCaches.forEach(([id, c]) => {
-            totalFillRatio += (c.current / c.max);
+            // Sanitize cache values
+            const safeCurrent = isNaN(c.current) ? 0 : c.current;
+            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+            totalFillRatio += (safeCurrent / safeMax);
             activeCaches++;
         });
-        const x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+        
+        let x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+        if (isNaN(x0)) x0 = 0;
+
+        // Diagnostic output for mathematical tracking
+        if (dt > 2.0) {
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k=${k}`);
+        }
 
         validCaches.forEach(([id, cache]) => {
-            const exactCache = cache.current * Math.exp(-k * dt);
+            const safeCurrent = isNaN(cache.current) ? 0 : cache.current;
+            const exactCache = safeCurrent * Math.exp(-k * dt);
             cache.current = exactCache;
         });
 
         const x1 = x0 * Math.exp(-k * dt);
-        newState.health = Math.round(x1 * 100);
+        newState.health = x1 * 100;
 
         const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
         const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
@@ -21062,10 +21063,20 @@ export class SolStationService {
         const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k, dt);
         const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k, dt);
 
-        newState.stockpile.credits += generatedCredits;
+        if (dt > 2.0) {
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Gen AM: ${generatedAm.toFixed(4)} | Final x1: ${x1.toFixed(4)}`);
+        }
+
+        // Final Sanitize to ensure the stockpile is never poisoned
+        const safeGeneratedCredits = isNaN(generatedCredits) ? 0 : generatedCredits;
+        const safeGeneratedAm = isNaN(generatedAm) ? 0 : generatedAm;
+        const safeCurrentCredits = isNaN(newState.stockpile.credits) ? 0 : newState.stockpile.credits;
+        const safeCurrentAm = isNaN(newState.stockpile.antimatter) ? 0 : newState.stockpile.antimatter;
+
+        newState.stockpile.credits = safeCurrentCredits + safeGeneratedCredits;
         newState.stockpile.antimatter = Math.min(
             STATION_CONFIG.MAX_ANTIMATTER_STOCKPILE, 
-            newState.stockpile.antimatter + generatedAm
+            safeCurrentAm + safeGeneratedAm
         );
 
         newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
@@ -21075,19 +21086,19 @@ export class SolStationService {
 
     _calculateYieldIntegral(yieldRate, x0, k, dt) {
         if (k === 0) {
-            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? 1.0 : 2 * Math.pow(x0, 2);
+            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
             return yieldRate * eff * dt;
         }
 
         const x1 = x0 * Math.exp(-k * dt);
 
         if (x1 >= STATION_CONFIG.EFFICIENCY_CLIFF) {
-            return yieldRate * dt;
+            return yieldRate * (x0 / k) * (1 - Math.exp(-k * dt));
         } else if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) {
             return (yieldRate * Math.pow(x0, 2) / k) * (1 - Math.exp(-2 * k * dt));
         } else {
             const t_cross = -Math.log(STATION_CONFIG.EFFICIENCY_CLIFF / x0) / k;
-            const genBefore = yieldRate * t_cross;
+            const genBefore = yieldRate * (x0 / k) * (1 - Math.exp(-k * t_cross));
             
             const dt_remaining = dt - t_cross;
             const genAfter = (yieldRate * Math.pow(STATION_CONFIG.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
@@ -21122,9 +21133,9 @@ export class SolStationService {
         officersList.forEach(slot => {
             if (slot.assignedOfficerId && OFFICERS[slot.assignedOfficerId]) {
                 const b = OFFICERS[slot.assignedOfficerId].buffs;
-                total.entropy += b.entropy;
-                total.creditMult += b.creditMult;
-                total.amMult += b.amMult;
+                total.entropy += (b.entropy || 0);
+                total.creditMult += (b.creditMult || 0);
+                total.amMult += (b.amMult || 0);
             }
         });
         return total;
@@ -21162,7 +21173,6 @@ export class SolStationService {
 
         if (!cache) return { success: false, message: "Invalid cache commodity." };
 
-        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
         let totalFleetStock = 0;
         for (const shipId of this.gameState.player.ownedShipIds) {
             totalFleetStock += (this.gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
@@ -21177,7 +21187,6 @@ export class SolStationService {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
 
-        // --- FLEET OVERFLOW SYSTEM: SEQUENTIAL DRAIN ---
         const activeShipId = this.gameState.player.activeShipId;
         const shipInventories = [];
         
@@ -21186,7 +21195,6 @@ export class SolStationService {
             shipInventories.push({ shipId, qty });
         }
 
-        // Sort: Active ship first, then the remaining ships with the largest stockpile of the requested item
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -21204,7 +21212,6 @@ export class SolStationService {
                 remainingToDonate -= toRemove;
             }
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         cache.current += quantity;
 
@@ -21215,12 +21222,14 @@ export class SolStationService {
         });
 
         for (const [id, c] of validCacheEntries) {
-            totalFillRatio += (c.current / c.max);
+            const safeCurrent = isNaN(c.current) ? 0 : c.current;
+            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+            totalFillRatio += (safeCurrent / safeMax);
             activeCaches++;
         }
         
         const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = Math.round(averageFill * 100);
+        station.health = averageFill * 100;
 
         this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         this.gameState.setState({});
@@ -21290,9 +21299,10 @@ export class SolStationService {
         const liveState = this.getLiveState();
         if(!liveState || !liveState.unlocked) return { credits: 0, antimatter: 0, entropy: 1 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode];
+        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
         
-        const x0 = liveState.health / 100;
+        const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
+        const x0 = safeHealth / 100;
         let efficiency = x0;
         if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
 
@@ -33550,11 +33560,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [35.52] - 2026-2-15
+# [35.56] - 2026-2-16
+-  fixed sol simulation time bug
+-  added sol simulation console debug messaging
+
+# [35.56] - 2026-2-15
 -  added cargo intel band to cargo screen
 -  map screen POI modal polish
 -  nav bar polish
-
+-  fixed events bug
+-  added intel reward to events
 
 # [35.51] - 2026-2-15
 -  implemented fleet trading, storage
@@ -35952,19 +35967,22 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Sudden Ideas
-- Cargo Screen insight messages
+- 
 
 ## Ongoing, WIP Efforts
--  How to increase risk and add difficulty mid-game?
--  How to increase usefulness of multiple ships, improve Muti-ship game play?
+-  How to increase scaling  risk and difficulty mid-game through to end game?
 -  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
 -  Add sun station progression and escalation
 -  Implement Officers GDD V1
 -  Build Mission Maker V3
+-  More UI CSS keyframes animations
 
 
-## Imminent Projects
--
+## Balance To-Do’s
+- Wealth milestones
+- Commodity pricing
+- Ship pricing
+- Ship Upgrade pricing 
 
 ## Long-Term Goals, Ideas
 - Optional game upgrades: fleet repair, fleet refueling
