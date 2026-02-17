@@ -120,8 +120,13 @@ export class UISolStationControl {
                 const reqs = LEVEL_REGISTRY[svc.gameState.solStation.level + 1].requirements;
                 const banked = svc.gameState.solStation.activeProjectBank[commId] || 0;
                 const needed = reqs[commId] - banked;
-                if (needed > 0) {
-                    const res = svc.contributeToProject(commId, needed);
+
+                // Calculate fleet stock locally to determine the exact partial/full deposit amount
+                const pStock = svc.gameState.player.ownedShipIds.reduce((total, id) => total + (svc.gameState.player.inventories[id]?.[commId]?.quantity || 0), 0);
+                const depositQty = Math.min(needed, pStock);
+
+                if (depositQty > 0) {
+                    const res = svc.contributeToProject(commId, depositQty);
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
             }
